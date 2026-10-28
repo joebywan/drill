@@ -21,32 +21,32 @@ export function lumi(mood = 'teach', light = 'soft') {
   if (!GLASS[light]) light = 'soft';
   const glass = GLASS[light];
   const halo = light === 'bright'
-    ? `<circle data-part="halo" cx="50" cy="62" r="46" fill="${GLASS.bright}" opacity=".22"/>` : '';
+    ? `<circle data-part="halo" cx="50" cy="60" r="48" fill="${GLASS.bright}" opacity=".22"/>` : '';
   // The ember sits low in the glass, so the face reads as resting rather than fading.
   const core = light === 'ember'
-    ? `<ellipse data-part="core" cx="50" cy="86" rx="12" ry="5" fill="${CORE.ember}"/>`
-    : `<ellipse data-part="core" cx="50" cy="64" rx="15" ry="20" fill="${CORE[light]}" opacity=".85"/>`;
+    ? `<ellipse data-part="core" cx="50" cy="84" rx="15" ry="5" fill="${CORE.ember}"/>`
+    : `<ellipse data-part="core" cx="50" cy="62" rx="19" ry="20" fill="${CORE[light]}" opacity=".85"/>`;
   const up = mood === 'correct' || mood === 'complete';
   const arms = up
-    ? limb([25, 64], [14, 50], FRAME, FRAME, 7) + limb([75, 64], [86, 50], FRAME, FRAME, 7)
+    ? limb([20, 62], [9, 46], FRAME, FRAME, 9) + limb([80, 62], [91, 46], FRAME, FRAME, 9)
     : mood === 'struggling'
-      ? limb([25, 66], [17, 76], FRAME, FRAME, 7) + limb([75, 64], [90, 56], FRAME, FRAME, 7)
-      : limb([25, 66], [17, 76], FRAME, FRAME, 7) + limb([75, 66], [83, 76], FRAME, FRAME, 7);
+      ? limb([20, 66], [11, 78], FRAME, FRAME, 9) + limb([80, 62], [94, 54], FRAME, FRAME, 9)
+      : limb([20, 66], [11, 78], FRAME, FRAME, 9) + limb([80, 66], [89, 78], FRAME, FRAME, 9);
   return svg('lumi', mood, `
     ${halo}
-    ${shadow(22)}
+    ${shadow(24)}
     <g data-part="body">
-      ${limb([42, 100], [41, 111], FRAME, FRAME, 7)}${limb([58, 100], [59, 111], FRAME, FRAME, 7)}
+      ${limb([41, 100], [40, 107], FRAME, FRAME, 10)}${limb([59, 100], [60, 107], FRAME, FRAME, 10)}
       <g data-part="arms">${arms}</g>
-      <path d="M41 19 Q50 2 59 19" fill="none" stroke="${FRAME}" stroke-width="5" stroke-linecap="round"/>
-      <rect x="26" y="26" width="48" height="72" rx="14" fill="${FRAME}"/>
-      <path d="M60 26 Q74 26 74 40 L74 84 Q74 98 60 98 Z" fill="${FRAME_SHADE}"/>
-      <rect data-part="glass" x="31" y="32" width="38" height="61" rx="10" fill="${glass}"/>
+      <path d="M40 18 Q50 0 60 18" fill="none" stroke="${FRAME}" stroke-width="6" stroke-linecap="round"/>
+      <rect x="18" y="26" width="64" height="70" rx="20" fill="${FRAME}"/>
+      <path d="M64 26 Q82 26 82 44 L82 78 Q82 96 64 96 Z" fill="${FRAME_SHADE}"/>
+      <rect data-part="glass" x="24" y="33" width="52" height="56" rx="15" fill="${glass}"/>
       ${core}
-      <rect x="35" y="37" width="4" height="13" rx="2" fill="#fff" opacity=".45"/>
+      <rect x="28" y="40" width="4" height="13" rx="2" fill="#fff" opacity=".45"/>
       <!-- the cap and base flare wider than the body: that flare is what says "lantern" -->
-      <path d="M19 32 Q20 18 50 16 Q80 18 81 32 Z" fill="${FRAME}"/>
-      <rect x="20" y="92" width="60" height="10" rx="5" fill="${BASE}"/>
-      ${face(mood, { cx: 50, cy: 58, skin: glass, mouthY: 13 })}
+      <path d="M12 34 Q14 17 50 15 Q86 17 88 34 Z" fill="${FRAME}"/>
+      <rect x="14" y="88" width="72" height="12" rx="6" fill="${BASE}"/>
+      ${face(mood, { cx: 50, cy: 57, skin: glass, mouthY: 12 })}
     </g>`);
 }
