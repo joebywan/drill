@@ -1,0 +1,47 @@
+<!doctype html>
+<!-- Render harness for the cast: every character and mood at 200, 96 and 48 px, on light and on
+     dark, plus solid-black silhouettes at 48 px. `npm start`, then open /tools/cast.html.
+     A drawing is not done until it reads here at every size, on both backgrounds. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cast</title>
+<style>
+  body { font: 13px system-ui, sans-serif; margin: 0; }
+  .panel { padding: 12px 16px; }
+  .light { background: #f6f7f9; color: #1c2230; }
+  .dark { background: #151a22; color: #e8ebf0; }
+  h2 { font-size: 15px; margin: 8px 0; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: end; margin-bottom: 10px; }
+  figure { margin: 0; text-align: center; }
+  figcaption { opacity: .7; }
+  .s200 svg { width: 200px; } .s96 svg { width: 96px; } .s48 svg { width: 48px; }
+  .silhouette svg { filter: brightness(0); }
+  .dark .silhouette svg { filter: brightness(0) invert(1); }
+</style>
+</head>
+<body>
+<div id="sheet"></div>
+<script type="module">
+  import { MOODS, blink } from '../src/cast/kit.js';
+  import { rosa } from '../src/cast/rosa.js';
+  import { lumi, LIGHTS } from '../src/cast/lumi.js';
+
+  const cast = [
+    ['Rosa', MOODS.map((m) => [m, rosa(m)])],
+    ['Lumi', MOODS.map((m) => [m, lumi(m)])],
+    ['Lumi lights', LIGHTS.map((l) => [l, lumi('teach', l)])],
+  ];
+  const fig = ([label, svg]) => `<figure>${svg}<figcaption>${label}</figcaption></figure>`;
+  const panel = (theme) => `<div class="panel ${theme}">` + cast.map(([name, items]) => `
+    <h2>${name} (${theme})</h2>
+    <div class="row s200">${items.slice(0, 4).map(fig).join('')}</div>
+    <div class="row s96">${items.map(fig).join('')}</div>
+    <div class="row s48">${items.map(fig).join('')}</div>
+    <div class="row s48 silhouette">${items.map(fig).join('')}</div>`).join('') + '</div>';
+  document.getElementById('sheet').innerHTML = panel('light') + panel('dark');
+  for (const el of document.querySelectorAll('svg.cast')) blink(el);
+</script>
+</body>
+</html>
