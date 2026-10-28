@@ -1,7 +1,17 @@
 # Drill — working notes for Claude
 
-A lesson-and-streak practice app. Static page, vanilla ES modules, no build step, no server.
-Chess is live; maths, Japanese, JavaScript, TypeScript and TS test-writing are planned.
+A Duolingo-style learning app: lessons that teach, a cast of characters, a streak, review.
+Static page, vanilla ES modules, no build step, no server. Chess is live; maths, Japanese,
+JavaScript, TypeScript and TS test-writing are planned.
+
+**Read the cast brief before building anything:** https://claude.ai/artifact/Td5spDrFgAah2w4PtBc2pn
+(a Claude Doc: read it with the docs tools). It holds the cast, the character states, the
+guardrails, events/widgets/notifications, and the **First build** plan — the Forks unit as a
+complete pilot — which is the next piece of work.
+
+The product is a Duolingo-*style* course, not a Daybook-style puzzle app. Daybook supplies repo
+conventions only. Learn Duolingo's functions, never copy its characters: "Oscar" is Duolingo's
+chess teacher, so that name and the draft knight are retired.
 
 ## Run
 
@@ -37,6 +47,14 @@ npm test                   # node --test, no framework
 - Commits use `4845431+joebywan@users.noreply.github.com`. The personal address must never reach
   a commit or a remote. No `Co-Authored-By: Claude` trailer.
 
+## Settled — do not reopen
+
+- No hearts, no leagues, no currency or shop. Rewards are cosmetic and granted directly.
+- No character shows sadness, guilt or urgency about the learner's absence.
+- Characters are hand-written SVG animated with CSS and the Web Animations API, not Rive.
+- Android home-screen widgets and local notifications are wanted, via a WebView wrapper with a
+  JS bridge, as Saffron Road does. Drill is meant to drive people to learn, not to earn.
+
 ## Open
 
-Other subjects; PWA install/offline; Android wrapper; promotion picker; accessibility.
+Live friend features (needs a server) vs share cards; promotion picker; accessibility.
