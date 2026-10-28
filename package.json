@@ -1,0 +1,20 @@
+{
+  "name": "drill",
+  "version": "0.1.0",
+  "description": "Short daily lessons with streaks and spaced review. Chess first; a static page with no server.",
+  "scripts": {
+    "start": "node tools/serve.js",
+    "test": "node --test test/*.test.js",
+    "puzzles": "curl -sf https://database.lichess.org/lichess_db_puzzle.csv.zst | zstd -dc | head -n 600000 | node tools/puzzles.js > src/data/chess.json"
+  },
+  "type": "module",
+  "dependencies": {
+    "chess.js": "^1.4.0",
+    "cm-chessboard": "^8.15.4",
+    "ts-fsrs": "^5.4.2"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  }
+}

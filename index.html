@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Short daily lessons for subjects you pick. Runs entirely in the browser.">
+<title>Drill</title>
+<link rel="stylesheet" href="node_modules/cm-chessboard/assets/chessboard.css">
+<link rel="stylesheet" href="node_modules/cm-chessboard/assets/extensions/markers/markers.css">
+<link rel="stylesheet" href="styles.css">
+<script type="importmap">
+{
+  "imports": {
+    "chess.js": "./node_modules/chess.js/dist/esm/chess.js",
+    "ts-fsrs": "./node_modules/ts-fsrs/dist/index.mjs",
+    "cm-chessboard/": "./node_modules/cm-chessboard/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="app"></div>
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
