@@ -39,9 +39,10 @@ const FACES = {
 /**
  * A face centred between the eyes at (cx, cy). Eyes are whites with a pupil, 22 apart; `skin`
  * colours the lids; `lashes` adds a flick at each outer corner. The mouth sits `mouthY` below the eye line, a little off centre.
+ * `mood` is a name from FACES or a settings object of the same shape, for a character's own moods.
  */
 export function face(mood, { cx, cy, skin, mouthY = 12, lashes = false }) {
-  const f = FACES[mood] || FACES.teach;
+  const f = typeof mood === 'object' ? mood : FACES[mood] || FACES.teach;
   const gx = f.dx || 0, gy = f.dy || 0;
   const eyes = [-1, 1].map((side) => {
     const x = cx + side * 11;
