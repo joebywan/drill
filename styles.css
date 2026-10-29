@@ -154,13 +154,34 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
 .confetti i { position: absolute; top: -14px; width: 8px; height: 12px; border-radius: 2px; }
 
-/* Board markers in the app's colours, strong enough to read on a phone in sunlight. */
-.cm-chessboard .markers .marker.marker-circle { stroke: #3b6fd6; stroke-width: 4px; opacity: .85; }
-.cm-chessboard .markers .marker.marker-frame-primary { stroke: #2f9d5a; stroke-width: 4px; opacity: .95; }
-.cm-chessboard .markers .marker.marker-circle-danger { stroke: #d0583c; stroke-width: 4px; opacity: .9; }
-.cm-chessboard .markers .marker.marker-circle-primary { stroke: #2f9d5a; stroke-width: 4px; opacity: .9; }
+/* ---- Board skin: Drill's board, pieces (assets/pieces/drill.svg) and markers ---- */
+:root {
+  --sq-light: #E9F4EC; --sq-dark: #86C8A9; --sq-frame: #4E9C7D; --sq-coord: #F4FBF6; --sq-ledge: #3C7F64;
+  --sq-hl: #F5C542; --sq-good: #1F7A45;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sq-light: #8496AC; --sq-dark: #5B6B80; --sq-frame: #2B3443; --sq-coord: #C9D3E0; --sq-ledge: #1A2029;
+    --sq-hl: #F5B83D; --sq-good: #5AD08A;
+  }
+}
+/* Rounded and raised on a solid ledge, like the quest markers. */
+.board .cm-chessboard { display: block; border-radius: 14px; box-shadow: 0 5px 0 var(--sq-ledge); }
+.cm-chessboard.drill .board .square.white { fill: var(--sq-light); }
+.cm-chessboard.drill .board .square.black { fill: var(--sq-dark); }
+.cm-chessboard.drill .board .border { fill: var(--sq-frame); stroke: none; rx: 14px; }
+.cm-chessboard.drill .board .border-inner { fill: none; stroke: none; }
 /* The frame's a-h and 1-8 are taught in the first lesson, so they must be easy to read. */
-.cm-chessboard.default .coordinates .coordinate.file, .cm-chessboard.default .coordinates .coordinate.rank { fill: #4a3420; font-weight: 700; }
+.cm-chessboard.drill .coordinates { pointer-events: none; user-select: none; }
+.cm-chessboard.drill .coordinates .coordinate { fill: var(--sq-coord); font-size: 7px; font-weight: 800; }
+/* Markers strong enough to read on a phone in sunlight, on both palettes. */
+.cm-chessboard .markers .marker.marker-square { fill: var(--sq-hl); opacity: .55; }
+.cm-chessboard .markers .marker.marker-circle { stroke: #3b6fd6; stroke-width: 4px; opacity: .85; }
+.cm-chessboard .markers .marker.marker-frame,
+.cm-chessboard .markers .marker.marker-frame-primary { stroke: var(--sq-good); stroke-width: 4px; opacity: 1; }
+.cm-chessboard .markers .marker.marker-circle-danger { stroke: #d0583c; stroke-width: 4px; opacity: .95; }
+.cm-chessboard .markers .marker.marker-circle-primary { stroke: var(--sq-good); stroke-width: 4px; opacity: .95; }
+/* ---- end board skin ---- */
 
 .survey { padding: 32px 16px; text-align: center; }
 .survey .hero { width: 130px; }
