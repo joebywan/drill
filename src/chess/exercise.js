@@ -2,6 +2,7 @@ import { Chess } from 'chess.js';
 import { Chessboard, COLOR, INPUT_EVENT_TYPE, POINTER_EVENTS } from 'cm-chessboard/src/Chessboard.js';
 import { Markers, MARKER_TYPE } from 'cm-chessboard/src/extensions/markers/Markers.js';
 import { Arrows, ARROW_TYPE } from 'cm-chessboard/src/extensions/arrows/Arrows.js';
+import { Accessibility } from 'cm-chessboard/src/extensions/accessibility/Accessibility.js';
 import { startPuzzle, playerColor, tryMove, hint } from './puzzle.js';
 import { answer, explanation, grade, hop, kind, meets, solutions, starPath, starsPrompt, targets } from './items.js';
 import { move as animate, play } from '../feel.js';
@@ -84,12 +85,19 @@ function board(el, fen, color = fen.split(' ')[1]) {  // seen from `color`, else
     // The frame carries the a-h and 1-8 coordinates: beginners learn to read squares from it.
     // Drill's own pieces (tools/pieces.js) and colours (the "Board skin" block in styles.css).
     style: {
-      cssClass: 'drill', borderType: 'frame', animationDuration: 250,
+      cssClass: 'drill', borderType: 'frame', animationDuration: reducedMotion() ? 0 : 250,
       pieces: { file: new URL('../../assets/pieces/drill.svg', import.meta.url).href },
     },
-    extensions: [{ class: Markers, props: { autoMarkers: MARKER_TYPE.frame } }, { class: Arrows }],
+    // Keyboard play: arrows walk the squares (each one is announced), Enter picks up and drops.
+    // The board is also read out as a table and piece lists. The typed move form stays off: it
+    // would be a focusable field nobody can see.
+    extensions: [{ class: Markers, props: { autoMarkers: MARKER_TYPE.frame } }, { class: Arrows },
+      { class: Accessibility, props: { language: 'en', keyboardMoveInput: true, movePieceForm: false } }],
   });
 }
+
+/** The square the keyboard cursor is on, from the Accessibility extension. */
+const cursorSquare = (b) => b.getExtension(Accessibility).components.find((c) => c.getCurrentSquare)?.getCurrentSquare();
 
 /**
  * Choice buttons as [label, value]. The first tap is final: it is marked right or wrong, the
@@ -141,8 +149,9 @@ const MOUNTS = {
     // For 'ends', a nearer square on a right line is a nudge, not a miss.
     const along = item.rule === 'ends' ? answer({ ...item, rule: 'moves' }) : [];
     const progress = () => (want.length > 1 ? ` Found ${found.size} of ${want.length}.` : '');
-    b.enableSquareSelect(POINTER_EVENTS.pointerdown, ({ square }) => {
-      if (!square || square === item.square || found.has(square)) return;
+    let over = false;
+    const pick = ({ square }) => {
+      if (over || !square || square === item.square || found.has(square)) return;
       const right = want.includes(square);
       if (!right && along.includes(square)) { say(`It can go further that way.${progress()}`, 'think'); return; }
       if (right) {
@@ -153,8 +162,14 @@ const MOUNTS = {
         b.addMarker(MARKER_TYPE.circleDanger, square);
         for (const sq of want) if (!found.has(sq)) b.addMarker(MARKER_TYPE.circlePrimary, sq);
       }
+      over = true;
       b.disableSquareSelect(POINTER_EVENTS.pointerdown);
       done(right, feedback(item));
+    };
+    b.enableSquareSelect(POINTER_EVENTS.pointerdown, pick);
+    // The keyboard taps the square under the cursor: move input is off here, so the extension ignores Enter.
+    b.view.svg.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') pick({ square: cursorSquare(b) });
     });
     say(item.prompt, 'think');
     return () => b.destroy();

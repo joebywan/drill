@@ -101,7 +101,7 @@ export const limb = ([x1, y1], [x2, y2], colour, hand = colour, width = 8) =>
 export const shadow = (rx = 26) => `<ellipse data-part="shadow" cx="50" cy="111" rx="${rx}" ry="6" fill="#3C4A55"/>`;
 
 export const svg = (name, mood, body) =>
-  `<svg class="cast cast-${name} mood-${mood}" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${name}, ${mood}">${body}</svg>`;
+  `<svg class="cast cast-${name} mood-${mood}" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
 
 // --- Motion -------------------------------------------------------------------------------
 
