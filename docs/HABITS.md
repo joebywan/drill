@@ -26,9 +26,9 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
    and kind. Pure, tested with fixed dates.
 2. [ ] **Habit chips and the habit view.** One chip per started habit on the home bar, each
    with its own light; the habit view described above.
-3. [ ] **Practice engine.** A Practice subject's `mount()` runs a timed routine with a coach and
+3. [x] **Practice engine.** A Practice subject's `mount()` runs a timed routine with a coach and
    calls `done()` when finished; the end screen asks "how do you feel?" as one optional tap.
-4. [ ] **Calm.** Its own coach character; 4-in-8-out breathing, 5-4-3-2-1 grounding and the
+4. [x] **Calm.** Its own coach character; 4-in-8-out breathing, 5-4-3-2-1 grounding and the
    bottom-to-top body scan, each taught once then practised, with cycles growing along the
    path. Guardrail tests: no claims to be therapy, no urgency, and a line pointing to real
    help (Lifeline 13 11 14).

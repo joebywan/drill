@@ -88,6 +88,75 @@ test("a habit's chip opens its view, with today's session listed", async ({ page
   await expect(page.getByRole('button', { name: 'Learning: 1-day streak' })).toBeFocused();
 });
 
+/** Switches home to Calm and does the first breathing lesson, on a fake clock: 3 breaths, 36 s. */
+async function firstBreathing(page) {
+  await page.clock.install();
+  await placeAtStart(page);
+  await page.getByRole('button', { name: '🌿 Calm', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Breathing' })).toBeVisible();
+  await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
+  await expect(page.getByText('Lifeline is 13 11 14')).toBeVisible(); // real help, on the first Calm lesson
+  await page.getByRole('button', { name: 'Start' }).click();
+  await expect(page.getByText('Breath 1 of 3')).toBeVisible();
+  // Pausing holds the clock: a long pause moves nothing on.
+  await page.getByRole('button', { name: 'Pause' }).click();
+  await page.clock.runFor(60_000);
+  await expect(page.getByText('Breath 1 of 3')).toBeVisible();
+  await page.getByRole('button', { name: 'Carry on' }).click();
+  await page.clock.runFor(30_000);
+  await expect(page.getByText('Breath 3 of 3')).toBeVisible();
+  await page.clock.runFor(7_000);
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+}
+
+test('a Calm breathing session keeps its own streak, and asks how you feel', async ({ page }) => {
+  await firstBreathing(page);
+  await expect(page.getByText(/^3 breaths · \d+ min$/)).toBeVisible();
+  await expect(page.locator('.chip.calm')).toContainText('🌿 1');
+  await page.getByRole('button', { name: 'Calmer' }).click();
+  await expect(page.getByRole('button', { name: 'Calmer' })).toHaveCount(0);
+  await continueButton(page).click();
+
+  // Home remembers Calm, the next breathing lesson is open, and Learning's streak is untouched.
+  await expect(page.getByRole('button', { name: '🌿 Calm', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'The long out-breath, done' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continue · Five slow breaths' })).toBeVisible();
+  await expect(page.getByTitle('Day streak')).toHaveText('🔥 0');
+
+  await page.getByRole('button', { name: 'Calm: 1-day streak' }).click();
+  await expect(page.locator('.day').first().getByRole('listitem')).toHaveText(/^Breathing · \d+ min · felt calmer$/);
+  await page.getByRole('button', { name: 'Back' }).click();
+
+  await page.reload();
+  await expect(page.getByRole('button', { name: '🌿 Calm', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: '🔥 Learning', exact: true }).click();
+  await expect(page.getByRole('button', { name: `Continue · ${first.title}` })).toBeVisible();
+});
+
+test('"Not really" gets a kind line and the help line', async ({ page }) => {
+  await firstBreathing(page);
+  await page.getByRole('button', { name: 'Not really' }).click();
+  await expect(page.getByRole('status')).not.toBeEmpty();
+  await expect(page.getByText("If you're struggling, talk to someone. In Australia, Lifeline is 13 11 14, any time.")).toBeVisible();
+});
+
+test('grounding is tap-to-count, and stopping is one tap with no questions', async ({ page }) => {
+  await firstBreathing(page); // grounding opens once breathing has been started
+  await continueButton(page).click();
+  await page.getByRole('button', { name: 'Five senses' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await expect(page.getByRole('heading', { name: '5 things you can see' })).toBeVisible();
+  for (let i = 1; i <= 5; i++) await page.getByRole('button', { name: `Noticed ${i} of 5` }).click();
+  await expect(page.getByRole('heading', { name: '4 things you can hear' })).toBeVisible();
+  await page.getByRole('button', { name: 'Next' }).click(); // moving on with none tapped is fine
+  await expect(page.getByRole('heading', { name: '3 things you can touch' })).toBeVisible();
+  await page.getByRole('button', { name: 'Stop' }).click();
+  await expect(page.getByRole('button', { name: '🌿 Calm', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  // Stopping logs nothing: today still shows just the breathing.
+  await page.getByRole('button', { name: 'Calm: 1-day streak' }).click();
+  await expect(page.locator('.day').first().getByRole('listitem')).toHaveCount(1);
+});
+
 test('mute stays muted after a reload', async ({ page }) => {
   await placeAtStart(page);
   const sound = page.getByRole('button', { name: 'Sound' });

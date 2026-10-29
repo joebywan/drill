@@ -1,11 +1,13 @@
 import { HABITS, subjects } from './subjects.js';
-import { LEARN, emptyProgress, finishSession, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, soonestKeys, startedHabits, today } from './progress.js';
+import { LEARN, emptyProgress, finishPractice, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, soonestKeys, startedHabits, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
+import { moss, NAME as MOSS } from './cast/moss.js';
+import { helpHtml } from './calm/practice.js';
 import { reducedMotion } from './cast/kit.js';
-import { STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
+import { CALM_LINES, FEELS, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
 import { buzz, move, play, setSound, soundOn } from './feel.js';
 
 const STORE = 'drill.progress';
@@ -55,6 +57,18 @@ const focusOn = (sel) => {
 
 let stopHome = () => {};
 
+// The habit whose path home shows. Remembered across visits when storage allows.
+const HABIT_KEY = 'drill.habit';
+let habitShown = (() => {
+  let h = null;
+  try { h = localStorage.getItem(HABIT_KEY); } catch { /* private mode */ }
+  return HABITS.some((x) => x.id === h) ? h : HABITS[0].id;
+})();
+function showHabit(id) {
+  habitShown = id;
+  try { localStorage.setItem(HABIT_KEY, id); } catch { /* lasts the visit */ }
+}
+
 const ROW = 112; // px from one node to the next; the drawn path assumes it
 const SWAY = 70; // px a node sits off centre at most
 
@@ -65,15 +79,15 @@ const SWAY = 70; // px a node sits off centre at most
  */
 function home(arrived = null) {
   stopHome();
-  const due = dueKeys(progress).filter((k) => items.has(k));
+  const learning = habitShown === 'learn';
+  const due = learning ? dueKeys(progress).filter((k) => items.has(k)) : [];
   // A repair needs a review even when nothing is due yet: then the soonest cards stand in.
-  const repair = needsRepair(progress);
+  const repair = learning && needsRepair(progress);
   const reviewKeys = (due.length ? due : repair ? soonestKeys(progress).filter((k) => items.has(k)) : []).slice(0, REVIEW_SIZE);
-  const units = subjects.flatMap(unitsOf);
+  const units = subjects.filter((s) => s.habit === habitShown).flatMap(unitsOf);
   // The next lesson, from the placement survey's starting unit on.
   const from = Math.max(0, units.findIndex((u) => u.title === progress.start));
   const current = [...units.slice(from), ...units].flatMap((u) => u.nodes).find((n) => n.state === 'open');
-  const todays = light(progress);
   const minutes = `about ${Math.max(1, Math.round(reviewKeys.length * 0.4))} min`;
   const dueChip = !reviewKeys.length ? ''
     : repair ? `<button class="due" data-review>${esc(line('repair'))} · ${minutes}</button>`
@@ -115,6 +129,9 @@ function home(arrived = null) {
       <button class="menu" aria-label="Your progress">⋯</button>
     </header>
     <main class="home">
+      <nav class="paths" aria-label="Show the path for">
+        ${HABITS.map((h) => `<button class="path-tab" data-path="${h.id}" aria-pressed="${h.id === habitShown}">${h.icon} ${esc(h.name)}</button>`).join('')}
+      </nav>
       ${units.map((u) => `
         <section class="street">
           <h2>${esc(u.title)}</h2>
@@ -131,7 +148,8 @@ function home(arrived = null) {
     // Lumi rests once today is done, and is content otherwise: never sad, whatever the light.
     const late = new Date().getHours() >= 21;
     const lumiCoach = coach(guide, lumi);
-    const settle = () => lumiCoach.set(todays === 'bright' ? (late ? 'sleepy' : 'complete') : 'teach');
+    const guideLight = light(progress, new Date(), habitShown);
+    const settle = () => lumiCoach.set(guideLight === 'bright' ? (late ? 'sleepy' : 'complete') : 'teach');
     const from = arrived && app.querySelector(`.node[data-lesson="${arrived}"]`);
     app.querySelector('.here').scrollIntoView({ block: 'center' });
     const walk = from && walkTo(guide, from, app.querySelector('.node.here'));
@@ -144,6 +162,9 @@ function home(arrived = null) {
   app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); focusOn('.sound'); });
   app.querySelector('.menu').addEventListener('click', () => { stopHome(); keep(); });
   for (const chip of app.querySelectorAll('[data-habit]')) chip.addEventListener('click', () => habitView(chip.dataset.habit));
+  for (const b of app.querySelectorAll('[data-path]')) {
+    b.addEventListener('click', () => { showHabit(b.dataset.path); home(); focusOn(`[data-path="${b.dataset.path}"]`); });
+  }
   app.querySelector('[data-review]')?.addEventListener('click', () =>
     run(null, reviewKeys.map((k) => ({ key: k, ...items.get(k) })), 'Review'));
   for (const btn of app.querySelectorAll('[data-lesson]')) {
@@ -245,6 +266,9 @@ function unitsOf(subject) {
  */
 function run(lessonId, queue, title) {
   stopHome();
+  // A practice routine (Calm) has no right or wrong: no meter heat, no runs, no review cards.
+  const practice = queue[0]?.subject.kind === 'practice';
+  const did = []; // what each practice item did, for its end screen ("3 breaths")
   const results = [];
   let at = 0;
   let streak = 0; // right answers in a row, this session
@@ -252,13 +276,13 @@ function run(lessonId, queue, title) {
   const started = Date.now();
   app.innerHTML = `
     <header class="bar">
-      <button class="close" aria-label="Quit lesson">✕</button>
-      <div class="meter" data-heat="0" role="progressbar" aria-label="Lesson progress" aria-valuemin="0"><div class="fill"><i class="shine"></i></div><span class="flare" aria-hidden="true"></span></div>
+      <button class="close" aria-label="${practice ? 'Stop' : 'Quit lesson'}">✕</button>
+      <div ${practice ? 'hidden ' : ''}class="meter" data-heat="0" role="progressbar" aria-label="Lesson progress" aria-valuemin="0"><div class="fill"><i class="shine"></i></div><span class="flare" aria-hidden="true"></span></div>
     </header>
     <main class="play">
       <p class="topic"></p>
       <div class="coach">
-        <button class="who" aria-label="Rosa"></button>
+        <button class="who" aria-label="${practice ? MOSS : 'Rosa'}"></button>
         <p class="bubble" id="said" aria-live="polite"></p>
       </div>
       <div class="stage"></div>
@@ -269,7 +293,7 @@ function run(lessonId, queue, title) {
     </footer>`;
   const $ = (sel) => app.querySelector(sel);
   const [topic, bubble, stage, foot, next] = ['.topic', '.bubble', '.stage', '.foot', '.next'].map($);
-  const rosaCoach = coach($('.who'), rosa);
+  const rosaCoach = coach($('.who'), practice ? moss : rosa);
   let said = '';
   const quit = () => { cleanup(); rosaCoach.stop(); };
   $('.close').addEventListener('click', () => { quit(); home(); focusOn('.cta .next'); });
@@ -279,7 +303,7 @@ function run(lessonId, queue, title) {
   $('.who').addEventListener('click', () => {
     play('tap');
     rosaCoach.hop();
-    bubble.textContent = line('tapped');
+    bubble.textContent = practice ? line('tapped', Math.random(), CALM_LINES) : line('tapped');
     clearTimeout(aside);
     aside = setTimeout(() => { bubble.textContent = said; }, 2500);
   });
@@ -307,16 +331,19 @@ function run(lessonId, queue, title) {
     cleanup();
     meter();
     foot.className = 'foot';
-    if (at === queue.length) { rosaCoach.stop(); return finish(); }
+    if (at === queue.length) { rosaCoach.stop(); return practice ? finishCalm() : finish(); }
     const entry = queue[at];
     topic.textContent = entry.topic;
-    rosaCoach.set('think');
+    rosaCoach.set(practice ? 'guide' : 'think');
     cleanup = entry.subject.mount(stage, entry.item, {
       say: (text, mood) => {
         said = bubble.textContent = text;
         if (mood) rosaCoach.set(mood);
       },
+      coachEl: $('.who'),
       done: (correct, text = '') => {
+        // A practice item goes straight on: its own buttons were the Continue.
+        if (practice) { if (text) did.push(text); at++; return step(); }
         if (correct !== null && !entry.retry) results.push({ key: entry.key, correct });
         if (correct === false && !entry.retry) queue.push({ ...entry, retry: true });
         at++;
@@ -349,9 +376,60 @@ function run(lessonId, queue, title) {
       },
     });
     // A question starts on its board (or its answers), not back at the top of the page.
-    if (!foot.classList.contains('show')) stage.querySelector('svg[tabindex], .choice')?.focus();
+    if (!foot.classList.contains('show')) stage.querySelector('svg[tabindex], .choice, .calm-go')?.focus();
   };
   next.addEventListener('click', step);
+
+  /**
+   * The end of a practice routine: settled, not a party. What was done, the habit's streak, and
+   * "How do you feel?" as one optional tap that is kept on the log and never judged.
+   */
+  const finishCalm = () => {
+    const { subject, topic: technique } = queue[0];
+    const firstTime = lessonId && !progress.done[lessonId];
+    const mins = Math.max(1, Math.round((Date.now() - started) / 60000));
+    progress = finishPractice(progress, subject.habit, lessonId, new Date(), { title: technique, mins });
+    save();
+    const h = HABITS.find((x) => x.id === subject.habit);
+    const n = currentStreak(progress, new Date(), h.id);
+    app.innerHTML = `
+      <main class="summary calm-end">
+        <div class="hero"></div>
+        <p class="kicker">${esc(technique)}</p>
+        <h1>${esc(line('done', Math.random(), CALM_LINES))}</h1>
+        <p class="said">${esc([...did, `${mins} min`].join(' · '))}</p>
+        <div class="chips">
+          <div class="chip calm"><span>${esc(h.name.toUpperCase())} STREAK</span><b>${h.icon} ${n}</b></div>
+        </div>
+        <section class="feel" aria-labelledby="feel-q">
+          <h2 id="feel-q">How do you feel?</h2>
+          <div class="feels">${FEELS.map(([value, label]) => `<button class="choice" data-feel="${value}">${esc(label)}</button>`).join('')}</div>
+          <p class="said" role="status"></p>
+        </section>
+      </main>
+      <footer class="cta"><button class="next">Continue</button></footer>`;
+    const mossCoach = coach(app.querySelector('.hero'), moss);
+    mossCoach.set('done');
+    focusOn('h1');
+    for (const b of app.querySelectorAll('[data-feel]')) {
+      b.addEventListener('click', () => {
+        const feel = b.dataset.feel;
+        progress = noteFeel(progress, h.id, feel);
+        save();
+        play('tap');
+        const section = app.querySelector('.feel');
+        section.querySelector('.feels').remove();
+        section.querySelector('[role="status"]').textContent = line(feel, Math.random(), CALM_LINES);
+        if (feel === 'no different') section.insertAdjacentHTML('beforeend', helpHtml());
+        focusOn('.cta .next');
+      });
+    }
+    app.querySelector('.next').addEventListener('click', () => {
+      mossCoach.stop();
+      home(firstTime ? lessonId : null);
+      focusOn('.cta .next');
+    });
+  };
 
   const perfectRun = () => results.length > 0 && results.every((r) => r.correct);
   const finish = () => {
