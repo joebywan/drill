@@ -1,4 +1,7 @@
-/** Static file server for `npm start`. Loopback only; no dependencies. */
+/**
+ * Static file server for `npm start`; no dependencies. Loopback only, unless HOST is set
+ * (`HOST=0.0.0.0 npm start` to try it from a phone on the same network).
+ */
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
@@ -24,4 +27,4 @@ createServer(async (req, res) => {
   } catch {
     res.writeHead(404).end('404 Not Found');
   }
-}).listen(PORT, '127.0.0.1', () => console.log(`Drill running at http://localhost:${PORT}`));
+}).listen(PORT, process.env.HOST || '127.0.0.1', () => console.log(`Drill running at http://${process.env.HOST || 'localhost'}:${PORT}`));

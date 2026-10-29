@@ -25,3 +25,16 @@ export const LINES = {
 
 /** A line of the given kind; `pick` in [0, 1) chooses which. */
 export const line = (kind, pick = Math.random()) => LINES[kind][Math.floor(pick * LINES[kind].length)];
+
+/**
+ * The learning events that earn a celebration. None is about XP: a run of right answers, a
+ * lesson right first time all through, a streak relit by a review.
+ */
+export const CELEBRATIONS = ['run3', 'run5', 'perfect', 'relit'];
+
+/** The banner line kind for a right answer, given the run of right answers so far. */
+export const rightAnswer = (run) => (run === 5 ? 'run5' : run === 3 ? 'run3' : 'correct');
+
+/** The summary line kind for a finished session. */
+export const finished = ({ review, perfect, relit }) =>
+  review ? (relit ? 'relit' : 'review') : perfect ? 'perfect' : 'complete';
