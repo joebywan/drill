@@ -117,7 +117,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
   font-weight: 600;
 }
 .choice:disabled { cursor: default; }
-.choice.check:disabled:not(.right) { opacity: .5; }
 .choice.right { border-color: var(--accent); background: var(--accent); color: var(--accent-text); opacity: 1; }
 .choice.wrong { border-color: #d0583c; color: #d0583c; }
 /* The answer banner rides over the bottom of the screen, so the board never moves. */
