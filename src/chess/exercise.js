@@ -78,10 +78,13 @@ const MOUNTS = {
     const want = answer(item);
     const found = new Set();
     if (item.square) b.addMarker(MARKER_TYPE.square, item.square);
+    // For 'ends', a nearer square on a right line is a nudge, not a miss.
+    const along = item.rule === 'ends' ? answer({ ...item, rule: 'moves' }) : [];
     const progress = () => (want.length > 1 ? ` Found ${found.size} of ${want.length}.` : '');
     b.enableSquareSelect(POINTER_EVENTS.pointerdown, ({ square }) => {
       if (!square || square === item.square || found.has(square)) return;
       const right = want.includes(square);
+      if (!right && along.includes(square)) { say(`It can go further that way.${progress()}`, 'think'); return; }
       if (right) {
         found.add(square);
         b.addMarker(MARKER_TYPE.framePrimary, square);
