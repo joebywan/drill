@@ -164,10 +164,14 @@ export const CALM_LINES = {
 /** Real help, shown as plain text on the first Calm lesson and after "Not really". */
 export const HELP_LINE = "If you're struggling, talk to someone. In Australia, Lifeline is 13 11 14, any time.";
 export const HELP_TEL = 'tel:131114';
+/** Calm's (and Reflect's) help, for the subject's coach: shown on the first lesson and after "Not really". */
+export const CALM_HELP = { text: HELP_LINE, tel: HELP_TEL, call: '13 11 14' };
 
 /** The optional "How do you feel?" answers: [stored value, button label]. Never scored. */
 // The stored value reads after "felt" in the habit view: "Breathing · 2 min · felt calmer".
 export const FEELS = [['calmer', 'Calmer'], ['about the same', 'About the same'], ['no different', 'Not really']];
+/** The answers for a habit whose good outcome is `good` ('better', 'refreshed'…). Only the first differs. */
+export const feelsFor = (good = 'calmer') => [[good, good[0].toUpperCase() + good.slice(1)], ...FEELS.slice(1)];
 
 /**
  * Lumi, the screen break's coach: short, bouncy, a baby seal who loves a stretch. Plain words,
@@ -177,7 +181,7 @@ export const BREAK_LINES = {
   paused: ['Paused. I will just float here.'],
   tapped: ['Seals stretch all day. It is most of the job.', 'Look far. Further. Is that a fish?', 'Wiggle allowed.'],
   done: ['Break done. Back to it, nice and loose.', 'That was a good stretch.', 'Eyes rested, shoulders rolled. Arf.'],
-  'calmer': ['Nice. A loose seal is a happy seal.'],
+  'refreshed': ['Nice. A loose seal is a happy seal.'],
   'about the same': ['That is fine. A short break still counts.'],
   'no different': ['That is alright. Thanks for telling me.'],
 };
@@ -200,7 +204,7 @@ export const REFLECT_LINES = {
   ],
   // The end screen: settled, not a party.
   done: ['Kept, just for you.', 'That is today, noted.', 'Done. Short and sweet.'],
-  'calmer': ['Good. Writing it down can do that.', 'Nice. Keep a bit of that.'],
+  'clearer': ['Good. Writing it down can do that.', 'Nice. Keep a bit of that.'],
   'about the same': ['That is fine. The lines are kept either way.', 'Fair enough. Thanks for stopping by.'],
   'no different': ["That's alright. Thanks for telling me. Some days are heavy, and that's not on you."],
 };
@@ -221,7 +225,7 @@ export const MOVE_LINES = {
   ],
   // The end screen: settled, not a party.
   done: ['A few minutes of moving, just for you.', 'Done. Nice and easy does it.', 'All moved. Have a sip of water.'],
-  'calmer': ['Lovely. Hold on to that for later.', 'Good to hear. Your body says thanks.'],
+  'better': ['Lovely. Hold on to that for later.', 'Good to hear. Your body says thanks.'],
   'about the same': ["That's fine. Some days it just feels like moving, and that counts.", 'Fair enough. Thanks for moving with me.'],
   'no different': ["That's alright. Thanks for telling me. Go gently today."],
 };

@@ -1,16 +1,12 @@
 import course from '../data/calm.json' with { type: 'json' };
 import { breathe } from '../cast/moss.js';
-import { CALM_LINES, HELP_LINE, HELP_TEL, line } from '../cast/lines.js';
+import { CALM_LINES, line } from '../cast/lines.js';
 import { breaths, scan } from './routines.js';
 import { pauseBar, routine, steps, teach } from '../practice/kit.js';
 import { buzz, move, play } from '../feel.js';
 import { esc } from '../html.js';
 
 const calm = (kind) => line(kind, Math.random(), CALM_LINES);
-
-/** The help line as plain text, with the number also as a link for phones. */
-export const helpHtml = () =>
-  `<p class="help">${esc(HELP_LINE)} <a href="${HELP_TEL}">Call 13 11 14</a></p>`;
 
 /**
  * Mounts one Calm item in `el`: a teach card, or a guided routine (breathe, ground, scan).
@@ -23,7 +19,7 @@ export function mount(el, item, ctx) {
 }
 
 const MOUNTS = {
-  teach: (el, item, ctx) => teach(el, item, ctx, item.help ? helpHtml() : ''),
+  teach,
   breathe: breathing, ground: grounding, scan: scanning,
 };
 
