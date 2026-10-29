@@ -14,6 +14,9 @@ npm start          # http://localhost:8124
 npm test
 ```
 
+To try it on a phone on the same network: `HOST=0.0.0.0 npm start`, then open
+`http://<this computer's IP>:8124` on the phone.
+
 There is no build step. `index.html` maps the three dependencies straight out of
 `node_modules/` with an import map.
 

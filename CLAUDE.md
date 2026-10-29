@@ -52,6 +52,9 @@ npm test                   # node --test, no framework
   to three days (or a second miss that week) is repaired by a review. A lesson finished in a
   repairable gap leaves the streak waiting for that review. Rules in `progress.js`, tested with
   fixed dates.
+- **Guardrails are tests.** `test/guardrails.test.js` lints every cast line (and what Rosa says
+  mid-puzzle) for ability praise and loss or guilt words, and holds celebrations to the
+  `CELEBRATIONS` whitelist in `lines.js`: learning events only, never XP.
 - **XP pays for recall and stays off the headline.** 5 per item recalled in review; 5 a lesson
   plus 2 per first-try right. The summary leads with what was learned.
 - **Exercises that grade code must grade it independently.** For the planned TS test-writing

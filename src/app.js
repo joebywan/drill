@@ -5,7 +5,7 @@ import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
 import { lamp } from './cast/lamp.js';
 import { reducedMotion } from './cast/kit.js';
-import { line } from './cast/lines.js';
+import { finished, line, rightAnswer } from './cast/lines.js';
 import { buzz, play, setSound, soundOn } from './feel.js';
 
 const STORE = 'drill.progress';
@@ -185,7 +185,7 @@ function run(lessonId, queue, title) {
         let kind = 'plain';
         if (correct === true) {
           streak++;
-          kind = streak === 5 ? 'run5' : streak === 3 ? 'run3' : 'correct';
+          kind = rightAnswer(streak);
           rosaCoach.set('correct');
           rosaCoach.hop();
           play(kind === 'correct' ? 'right' : 'run');
@@ -212,7 +212,7 @@ function run(lessonId, queue, title) {
     const before = progress.xp;
     const relit = needsRepair(progress);
     progress = finishSession(progress, lessonId, results);
-    const said = !lessonId ? (relit && !needsRepair(progress) ? 'relit' : 'review') : perfectRun() ? 'perfect' : 'complete';
+    const said = finished({ review: !lessonId, perfect: perfectRun(), relit: relit && !needsRepair(progress) });
     save();
     const right = results.filter((r) => r.correct).length;
     const perfect = perfectRun();
