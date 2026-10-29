@@ -204,3 +204,27 @@ export const REFLECT_LINES = {
   'about the same': ['That is fine. The lines are kept either way.', 'Fair enough. Thanks for stopping by.'],
   'no different': ["That's alright. Thanks for telling me. Some days are heavy, and that's not on you."],
 };
+
+/**
+ * Move's coach: playful and gentle. Never pushes for more, never mentions bodies' shape or size;
+ * the count is a guide, not a target (the guardrail tests check).
+ */
+export const MOVE_LINES = {
+  go: ['Copy me, nice and easy.', 'Your pace is the right pace.', 'Smaller is fine. Comfy is the goal.', 'Breathe as you go.'],
+  rest: ['Have a breather.', 'Shake it out.', 'Rest. Next one coming up.'],
+  paused: ["Paused. Rest as long as you like. I'll stretch while I wait."],
+  tapped: [
+    'I do these every morning. Well, most mornings.',
+    'Wiggle your toes. No reason. It just feels nice.',
+    'Stiff is normal. Bodies like moving, a little at a time.',
+    'My favourite move is the reach-up. Hello, ceiling.',
+  ],
+  // The end screen: settled, not a party.
+  done: ['A few minutes of moving, just for you.', 'Done. Nice and easy does it.', 'All moved. Have a sip of water.'],
+  'calmer': ['Lovely. Hold on to that for later.', 'Good to hear. Your body says thanks.'],
+  'about the same': ["That's fine. Some days it just feels like moving, and that counts.", 'Fair enough. Thanks for moving with me.'],
+  'no different': ["That's alright. Thanks for telling me. Go gently today."],
+};
+
+/** Safety, shown as plain text on the first Move lesson and after "Not really". */
+export const MOVE_SAFETY = 'Move gently and stop if anything hurts. If you have an injury or a health condition, check with a doctor first.';

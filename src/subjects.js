@@ -12,9 +12,12 @@ import * as calm from './calm/practice.js';
 import breakCourse from './data/break.json' with { type: 'json' };
 import * as screenBreak from './break/practice.js';
 import { lumi } from './cast/lumi.js';
-import { BREAK_LINES } from './cast/lines.js';
+import { BREAK_LINES, MOVE_LINES } from './cast/lines.js';
 import * as reflect from './reflect/practice.js';
 import { REFLECT_LINES } from './cast/lines.js';
+import moveCourse from './data/move.json' with { type: 'json' };
+import * as move from './move/practice.js';
+import { clover, NAME as CLOVER } from './cast/clover.js';
 
 /**
  * The contract. A subject is a course plus one `mount(el, item, { say, done })` that plays a
@@ -41,6 +44,7 @@ export const HABITS = [
   { id: 'calm', name: 'Calm', icon: '🌿' },
   { id: 'break', name: 'Screen break', icon: '👀' },
   { id: 'reflect', name: 'Reflect', icon: '📓' },
+  { id: 'move', name: 'Move', icon: '🌱' },
 ];
 
 // Chess from zero comes first (the board, how pieces move, capturing, check and mate), then the
@@ -77,4 +81,10 @@ export const subjects = [{
   habit: 'reflect',
   kind: 'practice',
   coach: { draw: lumi, name: 'Lumi', start: 'teach', lines: REFLECT_LINES, help: helpHtml },
+}, {
+  ...moveCourse,
+  mount: move.mount,
+  habit: 'move',
+  kind: 'practice',
+  coach: { draw: clover, name: CLOVER, start: 'guide', lines: MOVE_LINES, help: move.helpHtml },
 }];

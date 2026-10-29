@@ -1,5 +1,5 @@
 import { esc } from '../html.js';
-import { timeline } from './timeline.js';
+import { countOf, timeline } from './timeline.js';
 import { move, play } from '../feel.js';
 
 /**
@@ -24,18 +24,20 @@ export const pauseBar = '<div class="choices"><button class="choice practice-pau
  * Runs a timed routine in `el` (which already holds the routine's markup and `pauseBar`). Leaving
  * the page pauses it too, so it never finishes unattended. `draw(phase, index, say)` shows each
  * phase and returns its animations, which pause and play with the clock. `paused` is the coach's
- * line while paused. Any `.count` in `el` shows the seconds left in the phase. Ends with
+ * line while paused. Any `.count` in `el` shows the seconds left in the phase, or for a phase with
+ * `reps`, which rep it is on (see countOf). Ends with
  * `ctx.done(null, summary)`. Returns the cleanup function.
  */
 export function routine(el, phases, ctx, draw, summary, paused) {
   let anims = [];
   let said = '';
+  let now = null; // the phase playing
   // Each phase's words are kept, so carrying on after a pause puts them back.
   const say = (text, mood) => { said = text; ctx.say(text, mood); };
   const pause = el.querySelector('.practice-pause');
   const clock = timeline(phases, {
-    onPhase: (p, i) => { anims = draw(p, i, say).filter(Boolean); },
-    onTick: (s) => { const c = el.querySelector('.count'); if (c) c.textContent = s; },
+    onPhase: (p, i) => { now = p; anims = draw(p, i, say).filter(Boolean); },
+    onTick: (s) => { const c = el.querySelector('.count'); if (c) c.textContent = countOf(now, s); },
     onEnd: () => { cleanup(); ctx.done(null, summary); },
   });
   const hold = () => {
