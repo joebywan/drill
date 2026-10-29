@@ -8,6 +8,8 @@ No ads. No accounts. No server. It is a static page; progress lives in the brows
 
 ## Running it
 
+Play it at **https://knowhowit.com.au/drill/** — published from `main` by `.github/workflows/pages.yml`.
+
 ```bash
 npm install
 npm start          # http://localhost:8124

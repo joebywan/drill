@@ -1,0 +1,62 @@
+name: Web
+
+# Publishes Drill to GitHub Pages: https://knowhowit.com.au/drill/ (the custom domain comes from the
+# joebywan.github.io user site). There is no build: the site is the repo's own files plus the three
+# libraries the import map in index.html points into node_modules.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/workflows/renovate.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+
+      # Only what the page loads. Keep in step with the import map and the <link>s in index.html.
+      - name: Assemble the site
+        run: |
+          mkdir -p site/node_modules/chess.js/dist site/node_modules/ts-fsrs site/node_modules/cm-chessboard
+          cp -r index.html styles.css src assets site/
+          cp -r node_modules/chess.js/dist/esm site/node_modules/chess.js/dist/
+          cp -r node_modules/ts-fsrs/dist site/node_modules/ts-fsrs/
+          cp -r node_modules/cm-chessboard/src node_modules/cm-chessboard/assets site/node_modules/cm-chessboard/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
