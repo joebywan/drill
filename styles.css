@@ -66,7 +66,7 @@ html { scroll-padding-bottom: 160px; }
 .trail .ahead { stroke: var(--line); }
 .trail .walked { stroke: var(--accent); opacity: .55; }
 .path { position: relative; list-style: none; margin: 0; padding: 0; }
-.path li { position: relative; height: 112px; display: flex; flex-direction: column; align-items: center; transform: translateX(var(--x)); }
+.path li { position: relative; width: fit-content; margin-inline: auto; height: 112px; display: flex; flex-direction: column; align-items: center; transform: translateX(var(--x)); }
 /* Quest markers: a raised round button, "!" until done, then a tick. */
 .node {
   width: 64px; height: 64px; flex: none; border-radius: 50%; border: 0; padding: 0;

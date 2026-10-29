@@ -108,10 +108,6 @@ test('progress saved to a file loads back', async ({ page }) => {
   await expect(page.getByRole('button', { name: `${first.title}, done` })).toBeVisible();
 });
 
-// Path rows are as wide as the trail and shifted sideways by --x, so the shifted ones poke past
-// the screen edge and home scrolls sideways (41px at 360, 15px at 412). Marked as a known
-// failure: once styles.css clips it, Playwright reports these as unexpectedly passing, so delete
-// the test.fail line then.
 const overflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
 for (const colorScheme of ['light', 'dark']) {
@@ -120,7 +116,6 @@ for (const colorScheme of ['light', 'dark']) {
       test.use({ colorScheme, viewport: { width, height: 800 } });
 
       test('home has no sideways scroll', async ({ page }) => {
-        test.fail(true, 'path rows overflow the screen: see the comment above');
         await placeAtStart(page);
         await expect(page.getByTitle('Day streak')).toBeVisible();
         expect(await overflow(page)).toBe(0);
