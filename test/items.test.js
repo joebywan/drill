@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import forks from '../src/data/forks.json' with { type: 'json' };
 import chess from '../src/data/chess.json' with { type: 'json' };
-import { answer, attacked, explanation, grade, kind, problem } from '../src/chess/items.js';
+import { answer, attacked, explanation, grade, kind, meets, problem, solutions, words } from '../src/chess/items.js';
 
 const all = [forks, ...chess.units].flatMap((u) => u.lessons.flatMap((l) => l.items));
 
@@ -38,16 +38,40 @@ test('true/false is decided by the board, not by the author', () => {
   assert.ok(grade(tf, true) && !grade(tf, false));
 });
 
-test('an illegal pick option is caught', () => {
-  assert.match(problem({ ...byId['fork-0-pick'], options: ['Nc7+', 'Nb8'] }), /Invalid move/);
+test('a move item accepts any move that meets the goal, and only legal ones', () => {
+  const fork = byId['fork-1-pick'];
+  assert.equal(meets(fork, 'Nf7+').correct, true);
+  assert.equal(meets(fork, 'Ne6').correct, false);
+  assert.equal(meets(fork, { from: 'g5', to: 'g7' }).legal, false);
+  assert.deepEqual(solutions(fork).map((m) => m.san), ['Nf7+']);
+});
+
+test('a move goal the position cannot meet is caught', () => {
+  assert.equal(problem({ ...byId['fork-1-pick'], targets: ['h8', 'a1'] }), 'no legal move meets the goal');
+});
+
+test('tap can ask for a named square or every square a piece reaches', () => {
+  assert.deepEqual(answer({ type: 'tap', rule: 'name', answer: 'e4' }), ['e4']);
+  assert.deepEqual(answer({ type: 'tap', rule: 'moves', fen: '7k/8/8/8/8/8/8/R3K3 w - - 0 1', square: 'a1' }),
+    ['a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'b1', 'c1', 'd1']);
+});
+
+test('true/false can claim check and mate, judged by the board', () => {
+  assert.equal(answer({ type: 'truefalse', claim: 'check', fen: '4k3/8/8/8/8/8/8/4R1K1 b - - 0 1' }), true);
+  assert.equal(answer({ type: 'truefalse', claim: 'mate', fen: '4k3/8/8/8/8/8/8/4R1K1 b - - 0 1' }), false);
+});
+
+test('moves read as words', () => {
+  assert.equal(words('Nxf7+'), 'Knight takes on f7, check');
+  assert.equal(words('e8=Q#'), 'Pawn to e8, becomes a queen, checkmate');
+  assert.equal(words('O-O-O'), 'Castles queenside');
 });
 
 test('a puzzle with no written explanation explains with its line', () => {
   const { explain, ...bare } = byId['fork-0-find'];
-  assert.equal(explanation(bare), 'The line: Nc7+.');
+  assert.equal(explanation(bare), 'The line: Knight to c7, check.');
 });
 
 test('a fork claim the board does not back up is caught', () => {
-  assert.match(problem({ ...byId['fork-1-pick'], targets: ['h8', 'a1'] }), /options hitting every target/);
   assert.equal(problem({ ...byId['fork-1-find-a'], targets: ['g8', 'a8'] }), 'the move misses a target');
 });

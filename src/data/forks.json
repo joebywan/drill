@@ -10,7 +10,7 @@
           "type": "teach",
           "side": "w",
           "fen": "r3k3/2N5/8/8/8/8/8/4K3 b - - 0 1",
-          "text": "A fork is one piece attacking two enemy pieces at once. Here the knight checks the king and hits the rook. The king must move, so the rook falls."
+          "text": "A fork is one piece attacking two enemy pieces at once. Here the knight on c7 checks the king and attacks the rook. The king must move, so the rook is lost."
         },
         {
           "id": "fork-0-tap",
@@ -22,20 +22,15 @@
         },
         {
           "id": "fork-0-pick",
-          "type": "pick",
+          "type": "move",
           "fen": "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1",
-          "prompt": "Which move forks the king and the rook?",
-          "options": [
-            "Nd6+",
-            "Nc7+",
-            "Na7"
-          ],
-          "answer": "Nc7+",
-          "explain": "Nc7+ checks the king and attacks the rook on a8 together. Nd6+ is check too, but it hits nothing else.",
+          "prompt": "Move the knight so it attacks the king and the rook at the same time.",
+          "explain": "Knight to c7 checks the king on e8 and attacks the rook on a8 at once. The king has to move, and the knight takes the rook.",
           "targets": [
             "e8",
             "a8"
-          ]
+          ],
+          "goal": "fork"
         },
         {
           "id": "fork-0-tf",
@@ -46,7 +41,7 @@
             "h8",
             "d8"
           ],
-          "prompt": "True or false: after Nf7+, the knight attacks both the king and the queen.",
+          "prompt": "True or false: after the knight jumps to f7, it attacks both the king and the queen.",
           "explain": "From f7 the knight checks the king on h8 and attacks the queen on d8."
         },
         {
@@ -56,11 +51,12 @@
             "h7h6",
             "b5c7"
           ],
-          "explain": "Nc7+ checks the king and hits the rook on a8. The king has to step away, and the knight takes the rook.",
+          "explain": "Knight to c7 checks the king and hits the rook on a8. The king has to step away, and the knight takes the rook.",
           "targets": [
             "e8",
             "a8"
-          ]
+          ],
+          "prompt": "Black moved a pawn. Now find the knight fork."
         }
       ]
     },
@@ -85,20 +81,15 @@
         },
         {
           "id": "fork-1-pick",
-          "type": "pick",
+          "type": "move",
           "fen": "7k/6pp/3q4/6N1/8/8/8/6K1 w - - 0 1",
-          "prompt": "Which knight move forks the king and the queen?",
-          "options": [
-            "Ne6",
-            "Nf7+",
-            "Nh3"
-          ],
-          "answer": "Nf7+",
+          "prompt": "Move the knight so it attacks the king and the queen together.",
           "targets": [
             "h8",
             "d6"
           ],
-          "explain": "Nf7+ checks the king on h8 and attacks the queen on d6. The king must answer the check, then the queen falls."
+          "explain": "Knight to f7 checks the king on h8 and attacks the queen on d6. The king must deal with the check first, so the queen is lost.",
+          "goal": "fork"
         },
         {
           "id": "fork-1-tf",
@@ -109,7 +100,7 @@
             "a8",
             "f8"
           ],
-          "prompt": "True or false: after Nc7, the knight attacks both rooks.",
+          "prompt": "True or false: after the knight jumps to c7, it attacks both rooks.",
           "explain": "From c7 the knight reaches a8 and e8, but not f8. One rook attacked is a threat, not a fork."
         },
         {
@@ -123,7 +114,8 @@
             "g8",
             "d5"
           ],
-          "explain": "Nf6+ checks the king and attacks the queen on d5. After the king moves, the knight takes the queen."
+          "explain": "Knight to f6 checks the king and attacks the queen on d5. After the king moves, the knight takes the queen.",
+          "prompt": "Black just moved the queen to d5. Find the fork."
         },
         {
           "id": "fork-1-find-b",
@@ -137,7 +129,8 @@
             "a8",
             "a6"
           ],
-          "explain": "Nc7+ hits the king, the rook on a8 and the queen on a6 at once: a family fork. Whatever Black does, the queen falls."
+          "explain": "Knight to c7 hits the king, the rook on a8 and the queen on a6 at once: a family fork. Whatever Black does, the queen falls.",
+          "prompt": "Black moved the queen to a6. Find a fork that hits three pieces."
         }
       ]
     },
@@ -162,20 +155,15 @@
         },
         {
           "id": "fork-2-pick",
-          "type": "pick",
+          "type": "move",
           "fen": "6k1/8/8/2n1n3/8/1P1P4/7P/6K1 w - - 0 1",
-          "prompt": "Which pawn move forks both knights?",
-          "options": [
-            "b4",
-            "d4",
-            "h4"
-          ],
-          "answer": "d4",
+          "prompt": "Push a pawn so it attacks both knights.",
           "targets": [
             "c5",
             "e5"
           ],
-          "explain": "d4 attacks both knights at once, and neither knight can take it. b4 hits only one."
+          "explain": "Pawn to d4 attacks the knights on c5 and e5 at once, and neither knight can take it. Black can save only one.",
+          "goal": "fork"
         },
         {
           "id": "fork-2-tap-queen",
@@ -194,8 +182,8 @@
             "h7",
             "a8"
           ],
-          "prompt": "True or false: after Qe4+, the queen attacks both the king and the rook.",
-          "explain": "Qe4+ checks along the diagonal to h7 and hits the rook on a8 along the other. Black must answer the check, and the rook goes."
+          "prompt": "True or false: after the queen moves to e4, she attacks both the king and the rook.",
+          "explain": "From e4 the queen checks the king on h7 along one diagonal and hits the rook on a8 along the other. Black must answer the check, and the rook goes."
         },
         {
           "id": "fork-2-find",
@@ -208,7 +196,8 @@
             "g8",
             "a8"
           ],
-          "explain": "Qd5+ checks the king along one diagonal and attacks the rook on a8 along the other. After the king steps aside, the queen takes the rook."
+          "explain": "Queen to d5 checks the king along one diagonal and attacks the rook on a8 along the other. After the king steps aside, the queen takes the rook.",
+          "prompt": "Black moved the king to g8. Find the queen fork."
         }
       ]
     }
