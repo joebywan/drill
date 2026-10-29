@@ -28,8 +28,12 @@ npm test                   # node --test, no framework
   bright/soft/ember habit display on the streak chip. `app.js` owns storage
   (one `localStorage` key, every access in try/catch).
 - `src/chess/puzzle.js` — pure puzzle rules on chess.js. `src/chess/items.js` — the item types
-  (teach, tap, move, true/false, find), their answers and explanations, and `problem()`, the
+  (teach, tap, move, true/false, stars, find), their answers and explanations, and `problem()`, the
   rules check every shipped item passes. `src/chess/exercise.js` — the board and buttons.
+- **Stars** teach pieces by play: move your piece onto every gold star within a move budget; the
+  other side never moves, and kings are optional (chess.js `skipValidation`). A piece's first
+  puzzle (`new`, `demo`, `intro`) slides it along a path before input opens. `problem()` proves
+  each one solvable in its budget by breadth-first search. Picked-up pieces show legal-move dots.
 - `src/cast/` — the characters (`kit.js`, `rosa.js`, `lumi.js`), `coach.js` (a character that
   reacts in place) and `lines.js` (everything the cast says; the guardrail tests lint it).
   `tools/cast.html` renders every mood at 200/96/48 px, light and dark.

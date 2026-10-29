@@ -37,6 +37,9 @@ A move is right if it is the stored move **or any legal move that checkmates**, 
 Two wrong tries and the answer's squares are marked; the player still has to play it, and the
 puzzle counts as missed.
 
+Before the tactics, *Chess from zero* teaches the board and the pieces by play: "collect the
+stars" puzzles on a near-empty board, each new piece first sliding along a path by itself.
+
 ## Review
 
 Every answered item gets an [FSRS](https://github.com/open-spaced-repetition/ts-fsrs) card:
