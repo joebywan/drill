@@ -5,9 +5,10 @@ import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
 import { reducedMotion } from './cast/kit.js';
-import { FEELS, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
+import { feelsFor, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
 import { buzz, move, play, setSound, soundOn } from './feel.js';
 import { chip, esc } from './html.js';
+import { helpHtml } from './practice/kit.js';
 
 const STORE = 'drill.progress';
 const REVIEW_SIZE = 8;
@@ -285,7 +286,7 @@ function run(lessonId, queue, title) {
     </header>
     <main class="play">
       <p class="topic"></p>
-      <div class="coach">
+      <div class="coach${who.demonstrates ? ' demonstrates' : ''}">
         <button class="who" aria-label="${esc(who.name)}"></button>
         <p class="bubble" id="said" aria-live="polite"></p>
       </div>
@@ -345,6 +346,7 @@ function run(lessonId, queue, title) {
         if (mood) sessionCoach.set(mood);
       },
       coachEl: $('.who'),
+      help: who.help,
       done: (correct, text = '', kept = null) => {
         // A practice item goes straight on: its own buttons were the Continue.
         if (practice) { if (text) did.push(text); if (kept) journal = kept; at++; return step(); }
@@ -407,7 +409,7 @@ function run(lessonId, queue, title) {
         </div>
         <section class="feel" aria-labelledby="feel-q">
           <h2 id="feel-q">How do you feel?</h2>
-          <div class="feels">${FEELS.map(([value, label]) => `<button class="choice" data-feel="${value}">${esc(label)}</button>`).join('')}</div>
+          <div class="feels">${feelsFor(who.feel).map(([value, label]) => `<button class="choice" data-feel="${value}">${esc(label)}</button>`).join('')}</div>
           <p class="said" role="status"></p>
         </section>
       </main>
@@ -424,7 +426,7 @@ function run(lessonId, queue, title) {
         const section = app.querySelector('.feel');
         section.querySelector('.feels').remove();
         section.querySelector('[role="status"]').textContent = line(feel, Math.random(), who.lines);
-        if (feel === 'no different' && who.help) section.insertAdjacentHTML('beforeend', who.help());
+        if (feel === 'no different' && who.help) section.insertAdjacentHTML('beforeend', helpHtml(who.help));
         focusOn('.cta .next');
       });
     }

@@ -6,15 +6,12 @@ import reflectCourse from './data/reflect.json' with { type: 'json' };
 import * as chess from './chess/exercise.js';
 import { rosa } from './cast/rosa.js';
 import { moss, NAME as MOSS } from './cast/moss.js';
-import { CALM_LINES } from './cast/lines.js';
-import { helpHtml } from './calm/practice.js';
 import * as calm from './calm/practice.js';
 import breakCourse from './data/break.json' with { type: 'json' };
 import * as screenBreak from './break/practice.js';
 import { lumi } from './cast/lumi.js';
-import { BREAK_LINES, MOVE_LINES } from './cast/lines.js';
+import { BREAK_LINES, CALM_HELP, CALM_LINES, MOVE_LINES, MOVE_SAFETY, REFLECT_LINES, SAFETY_LINE } from './cast/lines.js';
 import * as reflect from './reflect/practice.js';
-import { REFLECT_LINES } from './cast/lines.js';
 import moveCourse from './data/move.json' with { type: 'json' };
 import * as move from './move/practice.js';
 import { clover, NAME as CLOVER } from './cast/clover.js';
@@ -31,7 +28,10 @@ import { clover, NAME as CLOVER } from './cast/clover.js';
  *
  * `coach` is who runs the subject's sessions: { draw, name, start, lines?, help? } — the
  * character (rosa, moss…), its name for screen readers, the mood an item starts in, its own
- * lines (default: Rosa's LINES) and, for a practice habit, the help shown after "Not really".
+ * lines (default: Rosa's LINES) and, for a practice habit, its help line { text, tel?, call? },
+ * shown on a teach card that asks for it and after "Not really" (rendered by practice/kit.js helpHtml),
+ * `feel`, the good answer to "How do you feel?" (default 'calmer'; its reply is a key in `lines`),
+ * and `demonstrates`, for a coach the learner copies, which is drawn large above their line.
  * Sessions and the practice end screen read everything subject-specific from here.
  *
  * Optional: `again`, { label, lesson }: once the path is done, home keeps a button with that label
@@ -67,24 +67,24 @@ export const subjects = [{
   mount: calm.mount,
   habit: 'calm',
   kind: 'practice',
-  coach: { draw: moss, name: MOSS, start: 'guide', lines: CALM_LINES, help: helpHtml },
+  coach: { draw: moss, name: MOSS, start: 'guide', lines: CALM_LINES, help: CALM_HELP },
 }, {
   ...breakCourse,
   mount: screenBreak.mount,
   habit: 'break',
   kind: 'practice',
-  coach: { draw: lumi, name: 'Lumi', start: 'teach', lines: BREAK_LINES, help: screenBreak.safetyHtml },
+  coach: { draw: lumi, name: 'Lumi', start: 'teach', lines: BREAK_LINES, help: { text: SAFETY_LINE }, feel: 'refreshed' },
 }, {
   ...reflectCourse,
   mount: reflect.mount,
   dayDetail: reflect.dayDetail,
   habit: 'reflect',
   kind: 'practice',
-  coach: { draw: lumi, name: 'Lumi', start: 'teach', lines: REFLECT_LINES, help: helpHtml },
+  coach: { draw: lumi, name: 'Lumi', start: 'teach', lines: REFLECT_LINES, help: CALM_HELP, feel: 'clearer' },
 }, {
   ...moveCourse,
   mount: move.mount,
   habit: 'move',
   kind: 'practice',
-  coach: { draw: clover, name: CLOVER, start: 'guide', lines: MOVE_LINES, help: move.helpHtml },
+  coach: { draw: clover, name: CLOVER, start: 'guide', lines: MOVE_LINES, help: { text: MOVE_SAFETY }, feel: 'better', demonstrates: true },
 }];

@@ -7,10 +7,17 @@ import { move, play } from '../feel.js';
  * teach card, one pausable routine runner and one Pause button rather than a copy each.
  */
 
-/** A teach card: paragraphs, optional extra html (a help line), and Start. `say` is the coach's line. */
-export function teach(el, item, { say, done }, extra = '') {
+/**
+ * A habit's help or safety line as plain text, with an optional phone link as an extra (never the
+ * only way: the number is in the text). `help` is the subject coach's { text, tel?, call? }.
+ */
+export const helpHtml = ({ text, tel, call }) =>
+  `<p class="help">${esc(text)}${tel ? ` <a href="${esc(tel)}">Call ${esc(call)}</a>` : ''}</p>`;
+
+/** A teach card: paragraphs, the habit's help line when the item asks for it, and Start. */
+export function teach(el, item, { say, done, help }) {
   el.innerHTML = `<div class="practice-teach">${item.text.map((t) => `<p>${esc(t)}</p>`).join('')}
-    ${extra}</div>
+    ${item.help && help ? helpHtml(help) : ''}</div>
     <div class="choices"><button class="next practice-go">Start</button></div>`;
   say(item.say, 'guide');
   el.querySelector('.practice-go').addEventListener('click', () => done(null, ''));

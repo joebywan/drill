@@ -2,10 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY } from '../src/habitview.js';
-import { helpHtml } from '../src/calm/practice.js';
-import { helpHtml as moveHelp } from '../src/move/practice.js';
+import { helpHtml } from '../src/practice/kit.js';
 import { subjects } from '../src/subjects.js';
-import { ACCURACY, BREAK_LINES, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, CELEBRATIONS, FEELS, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
+import { ACCURACY, BREAK_LINES, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
 // Praise the process, never the person: no ability words. No absence, loss or guilt either.
 const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intelligen\w*|born to)\b/i;
@@ -85,7 +84,7 @@ const strings = (v) => (typeof v === 'string' ? [v] : v && typeof v === 'object'
 const calmText = [
   ...Object.entries(CALM_LINES).flatMap(([kind, list]) => list.map((text) => [kind, text])),
   ...strings(calmCourse).filter((t) => /\s/.test(t)).map((text) => ['calm.json', text]),
-  ...FEELS.map(([, label]) => ['feel', label]),
+  ...subjects.filter((x) => x.kind === 'practice').flatMap((x) => feelsFor(x.coach.feel).map(([, label]) => ['feel', label])),
   ['help', HELP_LINE],
 ];
 
@@ -110,9 +109,9 @@ test('real help is reachable from Calm, as plain text', () => {
   // ...and after "Not really". The number is text; the tel: link is only an extra.
   assert.deepEqual(FEELS.find(([, label]) => label === 'Not really'), ['no different', 'Not really']);
   const calmSubject = subjects.find((x) => x.habit === 'calm');
-  assert.equal(calmSubject.coach.help, helpHtml, 'Calm supplies the help line to the end screen');
-  assert.match(readFileSync('src/app.js', 'utf8'), /feel === 'no different' && who\.help\) .*who\.help\(\)/);
-  const html = helpHtml();
+  assert.equal(calmSubject.coach.help.text, HELP_LINE, 'Calm supplies the help line to the end screen');
+  assert.match(readFileSync('src/app.js', 'utf8'), /feel === 'no different' && who\.help\) .*helpHtml\(who\.help\)/);
+  const html = helpHtml(calmSubject.coach.help);
   assert.ok(html.replace(/<[^>]+>/g, '').includes(HELP_LINE), html);
   assert.match(html, /href="tel:131114"/);
 });
@@ -153,7 +152,6 @@ test('journal text is read only by the habit view and the file export, and nothi
 
 // The screen break: no health claims, no urgency, no guilt, and no screen-time shaming.
 import { STEPS } from '../src/break/routines.js';
-import { safetyHtml } from '../src/break/practice.js';
 const BREAK_CLAIMS = /\b(prevent\w*|cure[sd]?|fix(es|ed)? (your )?posture|eye strain|strain|protect\w*|improve\w* (your )?(eyes|eyesight|vision|posture)|healthy|health)\b/i;
 const SHAMING = /\b(too (long|much)|addict\w*|screen time|glued|hooked|doomscroll\w*|you'?ve been on|should(n'?t)?|must)\b/i;
 const breakCourse = JSON.parse(readFileSync('src/data/break.json', 'utf8'));
@@ -176,8 +174,9 @@ test('the screen break makes no health claims, never hurries and never shames sc
 test('the screen break says to move gently, on the first lesson and after "Not really"', () => {
   assert.equal(SAFETY_LINE, 'Move gently and stop if anything hurts.');
   assert.equal(breakCourse.units[0].lessons[0].items[0].help, true);
-  assert.equal(subjects.find((x) => x.habit === 'break').coach.help, safetyHtml);
-  assert.ok(safetyHtml().includes(SAFETY_LINE));
+  const breakHelp = subjects.find((x) => x.habit === 'break').coach.help;
+  assert.equal(breakHelp.text, SAFETY_LINE);
+  assert.ok(helpHtml(breakHelp).includes(SAFETY_LINE));
   for (const kind of Object.keys(BREAK_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
 });
 
@@ -212,7 +211,12 @@ test('the safety line is on the first Move lesson and after "Not really"', () =>
   assert.equal(MOVE_SAFETY, 'Move gently and stop if anything hurts. If you have an injury or a health condition, check with a doctor first.');
   assert.equal(moveCourse.units[0].lessons[0].items[0].help, true);
   const moveSubject = subjects.find((x) => x.habit === 'move');
-  assert.equal(moveSubject.coach.help, moveHelp, 'Move supplies the safety line to the end screen');
-  assert.ok(moveHelp().replace(/<[^>]+>/g, '').includes(MOVE_SAFETY));
+  assert.equal(moveSubject.coach.help.text, MOVE_SAFETY, 'Move supplies the safety line to the end screen');
+  assert.ok(helpHtml(moveSubject.coach.help).replace(/<[^>]+>/g, '').includes(MOVE_SAFETY));
   for (const kind of Object.keys(MOVE_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
+});
+
+test('every practice habit answers each "How do you feel?" reply in its own coach\'s voice', () => {
+  for (const s of subjects.filter((x) => x.kind === 'practice'))
+    for (const [value] of feelsFor(s.coach.feel)) assert.ok(s.coach.lines[value]?.length, `${s.habit}: ${value}`);
 });

@@ -1,10 +1,9 @@
 import course from '../data/move.json' with { type: 'json' };
 import { clover, demo as cloverDemo } from '../cast/clover.js';
-import { MOVE_LINES, MOVE_SAFETY, line } from '../cast/lines.js';
+import { MOVE_LINES, line } from '../cast/lines.js';
 import { phases, summary } from './routines.js';
 import { pauseBar, routine, teach } from '../practice/kit.js';
 import { buzz, play } from '../feel.js';
-import { esc } from '../html.js';
 
 const say = (kind) => line(kind, Math.random(), MOVE_LINES);
 
@@ -18,8 +17,6 @@ function demo(el, pose, seconds, reps) {
   return anims ?? [];
 }
 
-/** The safety line, as plain text. */
-export const helpHtml = () => `<p class="help">${esc(MOVE_SAFETY)}</p>`;
 
 /**
  * Mounts one Move item in `el`: a teach card, or a routine of timed exercises with rests between.
@@ -27,7 +24,7 @@ export const helpHtml = () => `<p class="help">${esc(MOVE_SAFETY)}</p>`;
  * rests show what's next. The coach (`ctx.coachEl`) demonstrates. `done(null, "5 moves · 8 squats")` at the end.
  */
 export function mount(el, item, ctx) {
-  if (item.type === 'teach') return teach(el, item, ctx, item.help ? helpHtml() : '');
+  if (item.type === 'teach') return teach(el, item, ctx);
   el.innerHTML = `<div class="exercise">
       <p class="which" aria-live="polite"></p>
       <h2></h2>
