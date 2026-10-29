@@ -2,7 +2,7 @@ import { INK, face, limb, shadow, svg } from './kit.js';
 
 /**
  * Lumi, the guide: a baby seal who walks the learner along the street. The habit display
- * (bright, soft, ember) lives on the lamps of the home path and in the widget, not on Lumi.
+ * (bright, soft, ember) lives on the streak chip and in the widget, not on Lumi.
  */
 const SEAL = '#6E82A8';
 const SEAL_SHADE = '#5A6D92';
