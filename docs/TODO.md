@@ -45,3 +45,17 @@ no internet permission, then a JS bridge passing a session summary, a home-scree
 (streak flame tinted by today's light; Lumi plus one line) and opt-in local notifications.
 Release setup copies Daybook's: one signing key from the first build, `assembleRelease` only,
 checks that fail unsigned, wrong-key or debuggable APKs. App id `com.joebywan.drill`.
+
+Widget and reminder mechanics, from a friend's Android habit app (Fizz) reviewed 2026-10-30:
+
+- **Refresh at the boundaries, not just on a timer.** A 15-minute WorkManager job plus an
+  inexact alarm at each point where the widget's look changes (midnight, and any time-of-day
+  line pools). Midnight matters most: that's when `light()` can turn soft or ember.
+- **One pure function picks the look:** `(light, hour) → background, Lumi pose, line pool`.
+  Test it on the JS side and pass the result over the bridge, so the Kotlin side only renders.
+- **Re-arm on `BOOT_COMPLETED` and `MY_PACKAGE_REPLACED`.** Android drops alarms on reboot
+  and on update; a receiver for both re-schedules reminders and the widget refresh.
+- **The reminder checks before it speaks:** if today's session is done, post nothing.
+- **Not copied:** Fizz's escalating 19:30 / 21:45 / 23:00 "code red" nudges and panicking
+  mascot (guilt, against the guardrails), and `USE_EXACT_ALARM`, which Play reserves for
+  alarm and calendar apps. Inexact alarms are fine for a once-a-day reminder.
