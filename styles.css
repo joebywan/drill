@@ -47,21 +47,38 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .meter { flex: 1; height: 12px; border-radius: 6px; background: var(--line); overflow: hidden; }
 .fill { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
 
-.home { padding: 0 16px 32px; }
-.subject { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 20px 0 4px; }
-.unit { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin: 10px 0; }
-.unit h2 { font-size: 1.05rem; margin: 0 0 10px; }
-.lessons { display: flex; gap: 8px; }
-.lesson {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 10px 4px; border-radius: 12px; border: 2px solid var(--line); background: none; font-size: .9rem;
+.home { padding: 0 16px 120px; }
+.street h2 {
+  margin: 28px auto 12px; width: fit-content; padding: 6px 16px; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--line); font-size: 1rem;
 }
-.lesson .badge { font-size: 1.1rem; }
-.lesson.open { border-color: var(--accent); }
-.lesson.done { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
-.lesson.locked { color: var(--locked); cursor: default; }
+.path { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.path li { position: relative; display: flex; flex-direction: column; align-items: center; transform: translateX(var(--x)); }
+.lamp { width: 62px; height: 100px; padding: 0; border: 0; background: none; color: var(--muted); }
+.lamp:disabled { color: var(--locked); cursor: default; }
+.lamp svg { display: block; width: 100%; height: 100%; }
+.path .label { max-width: 120px; font-size: .8rem; color: var(--muted); text-align: center; }
+.path .locked .label { color: var(--locked); }
+.path .here .label { color: var(--text); font-weight: 700; }
+.guide { position: absolute; bottom: 22px; width: 76px; }
+.guide.left { right: 100%; margin-right: 4px; }
+.guide.right { left: 100%; margin-left: 4px; }
+.guide svg { display: block; width: 100%; transform-origin: 50% 100%; }
+.due {
+  margin-bottom: 6px; padding: 6px 12px; border-radius: 999px; font-size: .85rem; font-weight: 600;
+  background: var(--card); border: 2px solid var(--accent); color: var(--text);
+}
+.home > .due { display: block; margin: 16px auto 0; }
+.lamp-soft [data-part="glass"] { animation: flicker 2.6s ease-in-out infinite; }
+@keyframes flicker { 0%, 100% { opacity: 1; } 40% { opacity: .7; } 55% { opacity: .9; } 70% { opacity: .75; } }
+@media (prefers-reduced-motion: reduce) { .lamp-soft [data-part="glass"] { animation: none; } }
+.cta {
+  position: fixed; left: 0; right: 0; bottom: 0; max-width: 520px; margin: 0 auto;
+  padding: 24px 16px max(12px, env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--bg) 40%);
+}
+.cta .next { margin: 0; }
 
-.review, .next {
+.next {
   display: block; width: 100%; padding: 14px; margin: 12px 0;
   border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-text); font-weight: 700;
 }
