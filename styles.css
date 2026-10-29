@@ -51,7 +51,7 @@ html { scroll-padding-bottom: 160px; }
 }
 .bar h1 { font-size: 1.3rem; margin: 0; flex: 1; }
 .stat { font-weight: 600; }
-.close, .sound, .menu { background: none; border: 0; font-size: 1.3rem; padding: 4px 8px; }
+.close, .sound, .menu, .back { background: none; border: 0; font-size: 1.3rem; padding: 4px 8px; }
 .meter { flex: 1; height: 12px; border-radius: 6px; background: var(--line); overflow: hidden; }
 .fill { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
 
@@ -255,3 +255,26 @@ html { scroll-padding-bottom: 160px; }
 .learned { margin: 0; font-size: .85rem; color: var(--muted); }
 /* .fill's transition is redefined above, after the earlier reduced-motion rule, so it is repeated here. */
 @media (prefers-reduced-motion: reduce) { .meter[data-heat="2"] .fill { animation: none; } .fill { transition: none; } }
+
+/* ---- Habit chips and the habit view ---- */
+.bar .stat { background: none; border: 0; padding: 6px; border-radius: 999px; white-space: nowrap; }
+.habit { padding: 0 16px 40px; }
+.habit h1 { margin: 0 0 2px; font-size: 1.6rem; }
+.habit .said { margin: 0; }
+.habit h2 { margin: 28px 0 10px; font-size: 1.05rem; }
+.week, .month { display: grid; grid-template-columns: repeat(7, 1fr); }
+.week { list-style: none; margin: 0 0 8px; padding: 0; gap: 6px; text-align: center; font-size: .75rem; color: var(--muted); }
+.week b {
+  display: grid; place-items: center; aspect-ratio: 1; max-width: 44px; margin: 4px auto 0; border-radius: 50%;
+  border: 2px solid var(--line); background: var(--card); color: var(--text); font-size: .9rem;
+}
+.week .on b { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+/* A rest day the streak forgave: a soft dashed ring, not a mark against the day. */
+.week .rest b { border-style: dashed; border-color: var(--accent); }
+.day h3 { margin: 16px 0 6px; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.day ul { list-style: none; margin: 0; padding: 0; }
+.day li { margin-bottom: 6px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); }
+.day .quiet { margin: 0; color: var(--muted); font-size: .9rem; }
+.month { gap: 4px; max-width: 280px; margin-top: 10px; }
+.month i { aspect-ratio: 1; border-radius: 4px; background: var(--line); }
+.month i.on { background: var(--accent); }

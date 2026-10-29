@@ -73,6 +73,21 @@ test('finishing the first lesson shows the summary, starts the streak, and survi
   await expect(page.getByRole('button', { name: `${first.title}, done` })).toBeVisible();
 });
 
+test("a habit's chip opens its view, with today's session listed", async ({ page }) => {
+  await placeAtStart(page);
+  await finishFirstLesson(page);
+  await continueButton(page).click();
+
+  await page.getByRole('button', { name: 'Learning: 1-day streak' }).click();
+  await expect(page.getByRole('heading', { name: 'Learning' })).toBeFocused();
+  await expect(page.locator('.day').first()).toContainText('Today');
+  await expect(page.locator('.day').first().getByRole('listitem')).toContainText(`${first.title} · `);
+  await expect(page.getByText('1 of the last 14 days')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(page.getByRole('button', { name: 'Learning: 1-day streak' })).toBeFocused();
+});
+
 test('mute stays muted after a reload', async ({ page }) => {
   await placeAtStart(page);
   const sound = page.getByRole('button', { name: 'Sound' });
@@ -118,6 +133,13 @@ for (const colorScheme of ['light', 'dark']) {
       test('home has no sideways scroll', async ({ page }) => {
         await placeAtStart(page);
         await expect(page.getByTitle('Day streak')).toBeVisible();
+        expect(await overflow(page)).toBe(0);
+      });
+
+      test('the habit view has no sideways scroll', async ({ page }) => {
+        await placeAtStart(page);
+        await page.getByTitle('Day streak').click();
+        await expect(page.getByRole('heading', { name: 'Learning' })).toBeVisible();
         expect(await overflow(page)).toBe(0);
       });
 
