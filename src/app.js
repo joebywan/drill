@@ -312,11 +312,11 @@ function run(lessonId, queue, title) {
   const finish = () => {
     const relit = needsRepair(progress);
     const firstTime = lessonId && !progress.done[lessonId];
-    progress = finishSession(progress, lessonId, results);
+    const seconds = Math.round((Date.now() - started) / 1000);
+    progress = finishSession(progress, lessonId, results, new Date(), { title: title || 'Review', mins: Math.max(1, Math.round(seconds / 60)) });
     save();
     const right = results.filter((r) => r.correct).length;
     const perfect = perfectRun();
-    const seconds = Math.round((Date.now() - started) / 1000);
     const missed = results.some((r) => !r.correct);
     // Speed is only praised when it wasn't bought with mistakes.
     const pace = missed ? 'STEADY' : paceLabel(seconds / queue.length);

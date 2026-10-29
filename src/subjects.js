@@ -8,7 +8,17 @@ import * as chess from './chess/exercise.js';
  * single item (see src/chess/exercise.js). Course shape: { id, title, units: [{ title, lessons: [{ id, title, items }] }] },
  * and every item has a stable `id`. Home, lessons, streak and review pick a subject up from
  * this list alone.
+ *
+ * Every subject feeds one habit (`habit`, an id from HABITS) and is one of two kinds: 'learn'
+ * (teach then test, right or wrong, spaced review) or 'practice' (a guided routine with no right
+ * or wrong and no review; finishing it is the point). See docs/HABITS.md.
  */
+/** Every habit, in the order the home bar shows them. A habit appears once it has a session (Learning always). */
+export const HABITS = [
+  { id: 'learn', name: 'Learning', icon: '🔥' },
+  { id: 'calm', name: 'Calm', icon: '🌿' },
+];
+
 // Chess from zero comes first (the board, how pieces move, capturing, check and mate), then the
 // hand-written Forks unit, whose Lichess puzzles join it as its last lessons; the other Lichess
 // themes follow.
@@ -21,4 +31,6 @@ export const subjects = [{
   ...chessCourse,
   units: [...basics.units, forksUnit, ...chessCourse.units.filter((u) => u !== lichessForks)],
   mount: chess.mount,
+  habit: 'learn',
+  kind: 'learn',
 }];

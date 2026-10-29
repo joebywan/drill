@@ -26,7 +26,9 @@ npm test                   # node --test, no framework
   Adding one is a course file, a mount function and one line there.
 - `src/progress.js` — pure: streak, completed lessons, FSRS cards, and `light()`, today's
   bright/soft/ember habit display on the streak chip. `app.js` owns storage
-  (one `localStorage` key, every access in try/catch). The object carries `version`; `migrate()`
+  (one `localStorage` key, every access in try/catch). Each habit has its own streak
+  (`habits.learn`, `habits.calm`, …) and every session goes in `log`, which the habit view
+  reads. `finishSession` records Learning, `finishPractice` a practice routine. The object carries `version`; `migrate()`
   validates and upgrades every older shape, on load and on import (the home bar's ⋯ saves and
   loads a file). Bump `VERSION` and extend `migrate()` whenever the shape changes.
 - `src/chess/puzzle.js` — pure puzzle rules on chess.js. `src/chess/items.js` — the item types
