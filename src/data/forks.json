@@ -1,0 +1,50 @@
+{
+  "title": "Forks",
+  "lessons": [
+    {
+      "id": "forks-0",
+      "title": "What a fork is",
+      "items": [
+        {
+          "id": "fork-0-teach",
+          "type": "teach",
+          "side": "w",
+          "fen": "r3k3/2N5/8/8/8/8/8/4K3 b - - 0 1",
+          "text": "A fork is one piece attacking two enemy pieces at once. Here the knight checks the king and hits the rook. The king must move, so the rook falls."
+        },
+        {
+          "id": "fork-0-tap",
+          "type": "tap",
+          "fen": "7k/3q1r2/6p1/4N3/8/8/8/6K1 w - - 0 1",
+          "square": "e5",
+          "prompt": "Tap every black piece the knight attacks.",
+          "explain": "The knight on e5 hits the queen on d7, the rook on f7 and the pawn on g6. Knights jump, so nothing can block them."
+        },
+        {
+          "id": "fork-0-pick",
+          "type": "pick",
+          "fen": "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1",
+          "prompt": "Which move forks the king and the rook?",
+          "options": ["Nd6+", "Nc7+", "Na7"],
+          "answer": "Nc7+",
+          "explain": "Nc7+ checks the king and attacks the rook on a8 together. Nd6+ is check too, but it hits nothing else."
+        },
+        {
+          "id": "fork-0-tf",
+          "type": "truefalse",
+          "fen": "3q3k/6pp/8/4N3/8/8/8/6K1 w - - 0 1",
+          "move": "Nf7+",
+          "targets": ["h8", "d8"],
+          "prompt": "True or false: after Nf7+, the knight attacks both the king and the queen.",
+          "explain": "From f7 the knight checks the king on h8 and attacks the queen on d8."
+        },
+        {
+          "id": "fork-0-find",
+          "fen": "r3k3/7p/8/1N6/8/8/8/4K3 b - - 0 1",
+          "moves": ["h7h6", "b5c7"],
+          "explain": "Nc7+ checks the king and hits the rook on a8. The king has to step away, and the knight takes the rook."
+        }
+      ]
+    }
+  ]
+}
