@@ -4,14 +4,13 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  * Everything the learner has done, as one plain JSON-able object. Pure functions only; the
  * app decides where it is stored.
  *
- *   xp       total points
  *   streak   { count, last, forgiven }  — `last` is the local date (YYYY-MM-DD) of the last
  *            finished session; `forgiven` lists the dates a missed day was forgiven
  *   done     { lessonId: true }
  *   cards    { itemKey: FSRS card }  — every item ever answered, scheduled for review
  *   start    unit title the placement survey chose, absent until it is answered
  */
-export const emptyProgress = () => ({ xp: 0, streak: { count: 0, last: null, forgiven: [] }, done: {}, cards: {} });
+export const emptyProgress = () => ({ streak: { count: 0, last: null, forgiven: [] }, done: {}, cards: {} });
 
 const scheduler = fsrs();
 
@@ -40,8 +39,7 @@ export function gap(streak, date) {
  * Records a finished session. `results` is [{ key, correct }] — `correct` means right first
  * time. `lessonId` is null for a review session, which unlocks nothing but is the one thing that
  * repairs a longer gap. A lesson finished during a repairable gap leaves the streak waiting for
- * that review. XP pays more for recall: 5 per item recalled in review, against 5 a lesson plus 2
- * per item right first time.
+ * that review. Nothing is scored: what a session leaves behind is what was learned.
  */
 export function finishSession(progress, lessonId, results, now = new Date()) {
   const cards = { ...progress.cards };
@@ -49,9 +47,9 @@ export function finishSession(progress, lessonId, results, now = new Date()) {
     const card = cards[key] || createEmptyCard(now);
     cards[key] = scheduler.next(card, now, correct ? Rating.Good : Rating.Again).card;
   }
-  const right = results.filter((r) => r.correct).length;
+  const { xp, ...kept } = progress; // points from earlier builds are dropped
   return {
-    xp: progress.xp + (lessonId ? 5 + 2 * right : 5 * right),
+    ...kept,
     streak: nextStreak(progress.streak, today(now), !lessonId),
     done: lessonId ? { ...progress.done, [lessonId]: true } : progress.done,
     cards,

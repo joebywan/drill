@@ -24,7 +24,7 @@ npm test                   # node --test, no framework
 
 - `src/subjects.js` — the contract. A subject is a course JSON plus `mount(el, item, { say, done })`.
   Adding one is a course file, a mount function and one line there.
-- `src/progress.js` — pure: XP, streak, completed lessons, FSRS cards, and `light()`, today's
+- `src/progress.js` — pure: streak, completed lessons, FSRS cards, and `light()`, today's
   bright/soft/ember habit display on the streak chip. `app.js` owns storage
   (one `localStorage` key, every access in try/catch).
 - `src/chess/puzzle.js` — pure puzzle rules on chess.js. `src/chess/items.js` — the item types
@@ -55,9 +55,9 @@ npm test                   # node --test, no framework
   fixed dates.
 - **Guardrails are tests.** `test/guardrails.test.js` lints every cast line (and what Rosa says
   mid-puzzle) for ability praise and loss or guilt words, and holds celebrations to the
-  `CELEBRATIONS` whitelist in `lines.js`: learning events only, never XP.
-- **XP pays for recall and stays off the headline.** 5 per item recalled in review; 5 a lesson
-  plus 2 per first-try right. The summary leads with what was learned.
+  `CELEBRATIONS` whitelist in `lines.js`: learning events only.
+- **No XP or points.** Leagues and boosts are out, so points would only reward activity. The
+  summary shows what was learned: right first time, the streak, and items learned so far.
 - **Exercises that grade code must grade it independently.** For the planned TS test-writing
   subject, a learner's tests pass against the real implementation and fail against several
   broken ones; don't grade by matching text.

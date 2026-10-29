@@ -6,7 +6,7 @@ import * as chess from './chess/exercise.js';
 /**
  * The contract. A subject is a course plus one `mount(el, item, { say, done })` that plays a
  * single item (see src/chess/exercise.js). Course shape: { id, title, units: [{ title, lessons: [{ id, title, items }] }] },
- * and every item has a stable `id`. Home, lessons, XP, streak and review pick a subject up from
+ * and every item has a stable `id`. Home, lessons, streak and review pick a subject up from
  * this list alone.
  */
 // Chess from zero comes first (the board, how pieces move, capturing, check and mate), then the

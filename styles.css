@@ -146,7 +146,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .stats div { flex: 1; padding: 12px 6px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
 .stats b { display: block; font-size: 1.4rem; }
 .stats span { font-size: .85rem; color: var(--muted); }
-.stats .xp { color: var(--accent); }
 .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
 .confetti i { position: absolute; top: -14px; width: 8px; height: 12px; border-radius: 2px; }
 

@@ -27,8 +27,8 @@ export const LINES = {
 export const line = (kind, pick = Math.random()) => LINES[kind][Math.floor(pick * LINES[kind].length)];
 
 /**
- * The learning events that earn a celebration. None is about XP: a run of right answers, a
- * lesson right first time all through, a streak relit by a review.
+ * The learning events that earn a celebration: a run of right answers, a lesson right first
+ * time all through, a streak relit by a review.
  */
 export const CELEBRATIONS = ['run3', 'run5', 'perfect', 'relit'];
 

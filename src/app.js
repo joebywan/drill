@@ -233,14 +233,12 @@ function run(lessonId, queue, title) {
 
   const perfectRun = () => results.length > 0 && results.every((r) => r.correct);
   const finish = () => {
-    const before = progress.xp;
     const relit = needsRepair(progress);
     progress = finishSession(progress, lessonId, results);
     const said = finished({ review: !lessonId, perfect: perfectRun(), relit: relit && !needsRepair(progress) });
     save();
     const right = results.filter((r) => r.correct).length;
     const perfect = perfectRun();
-    const xp = progress.xp - before;
     app.innerHTML = `
       <main class="summary">
         <div class="hero"></div>
@@ -250,7 +248,7 @@ function run(lessonId, queue, title) {
         <div class="stats">
           <div><b>${right}/${results.length}</b><span>${lessonId ? 'first try' : 'recalled'}</span></div>
           <div><b>🔥 ${currentStreak(progress)}</b><span>day streak</span></div>
-          <div><b class="xp">+${xp}</b><span>XP</span></div>
+          <div><b>${Object.keys(progress.cards).length}</b><span>learned so far</span></div>
         </div>
         <button class="next">Continue</button>
       </main>`;
@@ -259,7 +257,7 @@ function run(lessonId, queue, title) {
     hero.hop();
     play('done');
     buzz('done');
-    const stopParty = celebrate(app.querySelector('.xp'), xp, perfect);
+    const stopParty = perfect ? confetti() : () => {};
     app.querySelector('.summary').addEventListener('click', stopParty);
     app.querySelector('.next').addEventListener('click', () => { stopParty(); hero.stop(); home(); });
   };
@@ -268,40 +266,27 @@ function run(lessonId, queue, title) {
 }
 
 /**
- * The lesson-complete moment: XP counts up and, on a perfect lesson, confetti falls. About 2.6 s,
- * skipped by a tap (the returned function) and by reduced motion.
+ * Confetti for a lesson right first time all through. About 2.6 s, skipped by a tap (the returned
+ * function) and by reduced motion.
  */
-function celebrate(xpEl, xp, confetti) {
+function confetti() {
   if (reducedMotion()) return () => {};
-  const t0 = performance.now();
-  let frame = requestAnimationFrame(function tick(now) {
-    const k = Math.min(1, (now - t0) / 900);
-    xpEl.textContent = `+${Math.round(xp * (1 - (1 - k) ** 3))}`;
-    if (k < 1) frame = requestAnimationFrame(tick);
-  });
   const layer = document.createElement('div');
   layer.className = 'confetti';
-  if (confetti) {
-    const colours = ['#F5A524', '#4caf73', '#6E82A8', '#F28C8C', '#FFD978'];
-    for (let i = 0; i < 40; i++) {
-      const bit = document.createElement('i');
-      bit.style.left = `${Math.random() * 100}%`;
-      bit.style.background = colours[i % colours.length];
-      layer.append(bit);
-      bit.animate([
-        { transform: `translateY(0) rotate(0)` },
-        { transform: `translateY(${window.innerHeight + 40}px) rotate(${360 + Math.random() * 360}deg)` },
-      ], { duration: 1800 + Math.random() * 800, delay: Math.random() * 300, easing: 'cubic-bezier(.3,.6,.5,1)', fill: 'forwards' });
-    }
-    document.body.append(layer);
+  const colours = ['#F5A524', '#4caf73', '#6E82A8', '#F28C8C', '#FFD978'];
+  for (let i = 0; i < 40; i++) {
+    const bit = document.createElement('i');
+    bit.style.left = `${Math.random() * 100}%`;
+    bit.style.background = colours[i % colours.length];
+    layer.append(bit);
+    bit.animate([
+      { transform: 'translateY(0) rotate(0)' },
+      { transform: `translateY(${window.innerHeight + 40}px) rotate(${360 + Math.random() * 360}deg)` },
+    ], { duration: 1800 + Math.random() * 800, delay: Math.random() * 300, easing: 'cubic-bezier(.3,.6,.5,1)', fill: 'forwards' });
   }
+  document.body.append(layer);
   const timer = setTimeout(() => layer.remove(), 2600);
-  return () => {
-    cancelAnimationFrame(frame);
-    clearTimeout(timer);
-    xpEl.textContent = `+${xp}`;
-    layer.remove();
-  };
+  return () => { clearTimeout(timer); layer.remove(); };
 }
 
 /** A first visit with nothing done yet: ask once where to start. */
