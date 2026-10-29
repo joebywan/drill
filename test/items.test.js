@@ -57,6 +57,13 @@ test('tap can ask for a named square or every square a piece reaches', () => {
     ['a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'b1', 'c1', 'd1']);
 });
 
+test('ends asks only for the furthest square along each line', () => {
+  const rook = { type: 'tap', rule: 'ends', fen: '7k/8/8/8/8/8/8/R3K3 w - - 0 1', square: 'a1' };
+  assert.deepEqual(answer(rook), ['a8', 'd1']);
+  const knight = { type: 'tap', rule: 'ends', fen: '4k3/8/8/8/3N4/8/8/4K3 w - - 0 1', square: 'd4' };
+  assert.equal(answer(knight).length, 8, 'every knight jump is its own direction');
+});
+
 test('true/false can claim check and mate, judged by the board', () => {
   assert.equal(answer({ type: 'truefalse', claim: 'check', fen: '4k3/8/8/8/8/8/8/4R1K1 b - - 0 1' }), true);
   assert.equal(answer({ type: 'truefalse', claim: 'mate', fen: '4k3/8/8/8/8/8/8/4R1K1 b - - 0 1' }), false);

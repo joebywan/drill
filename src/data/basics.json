@@ -87,11 +87,11 @@
             {
               "id": "moves-0-rook-tap",
               "type": "tap",
-              "rule": "moves",
+              "rule": "ends",
               "fen": "7k/8/3P4/8/1p1R1P2/8/8/K7 w - - 0 1",
               "square": "d4",
-              "prompt": "Tap every square the rook can move to.",
-              "explain": "Your own pawns on d6 and f4 stop the rook short. It can take the pawn on b4, but it can't go past it."
+              "prompt": "Tap the furthest square the rook can reach in each direction.",
+              "explain": "Up, the rook stops at d5 before your own pawn. Down it runs to d1, right it stops at e4, and left it can take the pawn on b4 but go no further."
             },
             {
               "id": "moves-0-rook-move",
@@ -112,11 +112,11 @@
             {
               "id": "moves-0-bishop-tap",
               "type": "tap",
-              "rule": "moves",
+              "rule": "ends",
               "fen": "8/7k/1p6/8/3B4/8/5P2/7K w - - 0 1",
               "square": "d4",
-              "prompt": "Tap every square the bishop can move to.",
-              "explain": "The bishop runs along four diagonals. It can take the pawn on b6 but not pass it, and your own pawn on f2 stops it at e3."
+              "prompt": "Tap the furthest square the bishop can reach along each diagonal.",
+              "explain": "Up-left it can take the pawn on b6. Up-right it runs to h8, down-left to a1, and down-right your own pawn on f2 stops it at e3."
             },
             {
               "id": "moves-0-bishop-move",
@@ -143,11 +143,11 @@
             {
               "id": "moves-1-queen-tap",
               "type": "tap",
-              "rule": "moves",
+              "rule": "ends",
               "fen": "6k1/8/8/2p1p3/2PQP3/2P1P3/8/K7 w - - 0 1",
               "square": "d4",
-              "prompt": "Tap every square the queen can move to.",
-              "explain": "Hemmed in by her own pawns, the queen still has the whole d-file both ways, and she can take either black pawn on the diagonal."
+              "prompt": "Tap the furthest square the queen can reach in each direction.",
+              "explain": "Hemmed in by her own pawns, the queen can still run up to d8 and down to d1, and take either black pawn on c5 or e5."
             },
             {
               "id": "moves-1-queen-move",
@@ -248,11 +248,11 @@
             {
               "id": "moves-3-start",
               "type": "tap",
-              "rule": "moves",
+              "rule": "ends",
               "fen": "4k3/8/8/8/8/8/4P3/4K3 w - - 0 1",
               "square": "e2",
-              "prompt": "Tap every square this pawn can move to.",
-              "explain": "From its starting square the pawn can go one or two squares forward."
+              "prompt": "Tap the furthest square this pawn can move to.",
+              "explain": "On its very first move a pawn may go two squares: e2 to e4."
             },
             {
               "id": "moves-3-take",

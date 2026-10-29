@@ -8,6 +8,7 @@ import { uci } from './puzzle.js';
  *   tap        { fen, rule, square?, answer?, prompt, explain }
  *                rule 'attacks' (default): every enemy piece the piece on `square` attacks
  *                rule 'moves': every square the piece on `square` can move to
+ *                rule 'ends': the furthest square the piece can reach in each direction
  *                rule 'name': the one square named by `answer`, e.g. "e4"
  *   move       { fen, goal, targets?, to?, prompt, explain }   play a move that meets the goal:
  *                fork (attack every target), reach (land on `to`), capture (take on `to`),
@@ -68,7 +69,10 @@ export function answer(item) {
     case 'tap': {
       const rule = item.rule || 'attacks';
       if (rule === 'name') return [item.answer];
-      if (rule === 'moves') return [...new Set(new Chess(item.fen).moves({ square: item.square, verbose: true }).map((m) => m.to))].sort();
+      if (rule === 'moves' || rule === 'ends') {
+        const to = [...new Set(new Chess(item.fen).moves({ square: item.square, verbose: true }).map((m) => m.to))];
+        return (rule === 'ends' ? furthest(item.square, to) : to).sort();
+      }
       return attacked(item.fen, item.square);
     }
     case 'truefalse': {
@@ -77,6 +81,24 @@ export function answer(item) {
       return hitsAll(hitsAfter(item.fen, item.move), item.targets);
     }
   }
+}
+
+/**
+ * Of the squares a piece can reach from `from`, the furthest along each straight or diagonal
+ * line. A knight's jumps are each their own direction, so they all stay.
+ */
+function furthest(from, squares) {
+  const xy = (sq) => [sq.charCodeAt(0) - 97, Number(sq[1]) - 1];
+  const [fx, fy] = xy(from);
+  const best = new Map(); // direction -> [distance, square]
+  for (const sq of squares) {
+    const [dx, dy] = xy(sq).map((v, i) => v - [fx, fy][i]);
+    const line = dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy);
+    const dir = line ? `${Math.sign(dx)},${Math.sign(dy)}` : sq;
+    const dist = Math.max(Math.abs(dx), Math.abs(dy));
+    if (!best.has(dir) || best.get(dir)[0] < dist) best.set(dir, [dist, sq]);
+  }
+  return [...best.values()].map(([, sq]) => sq);
 }
 
 export const grade = (item, response) =>
@@ -111,7 +133,7 @@ export function problem(item) {
       case 'tap': {
         if (item.rule === 'name') return /^[a-h][1-8]$/.test(item.answer) ? null : 'not a square';
         const game = new Chess(item.fen);
-        if (item.rule === 'moves' && game.get(item.square)?.color !== game.turn()) return 'the piece is not the side to move';
+        if (['moves', 'ends'].includes(item.rule) && game.get(item.square)?.color !== game.turn()) return 'the piece is not the side to move';
         return answer(item).length ? null : 'nothing to tap';
       }
       case 'move': return solutions(item).length ? null : 'no legal move meets the goal';
