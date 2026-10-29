@@ -41,6 +41,17 @@ for (const s of subjects)
 
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 
+/**
+ * A new screen replaces the page, so focus would fall back to the top of the document. This puts
+ * it where the screen starts (its heading, for a screen reader to read out) or on the control
+ * that brought the learner back.
+ */
+const focusOn = (sel) => {
+  const el = app.querySelector(sel);
+  if (el && !el.matches('button')) el.tabIndex = -1;
+  el?.focus();
+};
+
 let stopHome = () => {};
 
 const ROW = 112; // px from one node to the next; the drawn path assumes it
@@ -71,12 +82,12 @@ function home(arrived = null) {
   const node = (n, i) => {
     const here = n === current;
     const mark = n.state === 'done' ? '✓' : '!';
-    const status = n.state === 'done' ? ', done' : n.state === 'locked' ? ', locked' : '';
+    const status = n.state === 'done' ? ', done' : n.state === 'locked' ? ', locked' : here ? ', current' : '';
     return `<li style="--x:${xAt(i)}px">
-      <button class="node ${n.state}${here ? ' here' : ''}" data-lesson="${n.id}" ${n.state === 'locked' ? 'disabled' : ''}
+      <button class="node ${n.state}${here ? ' here' : ''}" data-lesson="${n.id}" ${n.state === 'locked' ? 'disabled' : ''}${here ? ' aria-current="step"' : ''}
         aria-label="${esc(n.lesson.title)}${status}"><span aria-hidden="true">${mark}</span></button>
       ${here ? `<div class="guide ${xAt(i) > 0 ? 'left' : 'right'}"></div>` : ''}
-      <span class="label">${esc(n.lesson.title)}</span>
+      <span class="label" aria-hidden="true">${esc(n.lesson.title)}</span>
     </li>`;
   };
 
@@ -98,7 +109,7 @@ function home(arrived = null) {
   app.innerHTML = `
     <header class="bar">
       <h1>Drill</h1>
-      <span class="stat streak-${todays}" title="Day streak">🔥 ${currentStreak(progress)}</span>
+      <span class="stat streak-${todays}" title="Day streak" role="img" aria-label="Day streak: ${currentStreak(progress)}">🔥 ${currentStreak(progress)}</span>
       <button class="sound" aria-pressed="${soundOn()}" aria-label="Sound">${soundOn() ? '🔊' : '🔇'}</button>
       <button class="menu" aria-label="Your progress">⋯</button>
     </header>
@@ -129,7 +140,7 @@ function home(arrived = null) {
     } else settle();
     stopHome = () => { walk?.cancel(); lumiCoach.stop(); };
   } else app.querySelector('.here')?.scrollIntoView({ block: 'center' });
-  app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); });
+  app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); focusOn('.sound'); });
   app.querySelector('.menu').addEventListener('click', () => { stopHome(); keep(); });
   app.querySelector('[data-review]')?.addEventListener('click', () =>
     run(null, reviewKeys.map((k) => ({ key: k, ...items.get(k) })), 'Review'));
@@ -197,18 +208,18 @@ function run(lessonId, queue, title) {
   app.innerHTML = `
     <header class="bar">
       <button class="close" aria-label="Quit lesson">✕</button>
-      <div class="meter" data-heat="0"><div class="fill"><i class="shine"></i></div><span class="flare" aria-hidden="true"></span></div>
+      <div class="meter" data-heat="0" role="progressbar" aria-label="Lesson progress" aria-valuemin="0"><div class="fill"><i class="shine"></i></div><span class="flare" aria-hidden="true"></span></div>
     </header>
     <main class="play">
       <p class="topic"></p>
       <div class="coach">
         <button class="who" aria-label="Rosa"></button>
-        <p class="bubble" aria-live="polite"></p>
+        <p class="bubble" id="said" aria-live="polite"></p>
       </div>
       <div class="stage"></div>
     </main>
-    <footer class="foot" aria-live="polite">
-      <div class="verdict"><strong></strong><p></p></div>
+    <footer class="foot">
+      <div class="verdict" id="verdict"><strong></strong><p></p></div>
       <button class="next">Continue</button>
     </footer>`;
   const $ = (sel) => app.querySelector(sel);
@@ -216,7 +227,7 @@ function run(lessonId, queue, title) {
   const rosaCoach = coach($('.who'), rosa);
   let said = '';
   const quit = () => { cleanup(); rosaCoach.stop(); };
-  $('.close').addEventListener('click', () => { quit(); home(); });
+  $('.close').addEventListener('click', () => { quit(); home(); focusOn('.cta .next'); });
 
   // Tapping Rosa: a hop and a line, then back to the question.
   let aside;
@@ -233,6 +244,8 @@ function run(lessonId, queue, title) {
   const meter = () => {
     meterEl.style.setProperty('--at', `${(100 * at) / queue.length}%`);
     meterEl.dataset.heat = streak >= 5 ? 2 : streak >= 3 ? 1 : 0;
+    meterEl.setAttribute('aria-valuemax', queue.length);
+    meterEl.setAttribute('aria-valuenow', at);
   };
   const shine = () => move($('.shine'), [{ transform: 'translateX(-100%)' }, { transform: 'translateX(350%)' }], { duration: 650, easing: 'ease-out' });
   const flare = (text) => {
@@ -284,9 +297,14 @@ function run(lessonId, queue, title) {
         foot.className = `foot show ${correct === null ? 'plain' : correct ? 'right' : 'wrong'}`;
         foot.querySelector('strong').textContent = kind === 'plain' ? '' : line(kind);
         foot.querySelector('p').textContent = text;
+        // Focus moves to Continue, which reads out the verdict (a teach card: Rosa's line). The
+        // banner is fixed over the bottom, so nothing on the page moves.
+        next.setAttribute('aria-describedby', correct === null ? 'said' : 'verdict');
         next.focus();
       },
     });
+    // A question starts on its board (or its answers), not back at the top of the page.
+    if (!foot.classList.contains('show')) stage.querySelector('svg[tabindex], .choice')?.focus();
   };
   next.addEventListener('click', step);
 
@@ -356,6 +374,7 @@ function run(lessonId, queue, title) {
       setTimeout(() => !left && cast[1].hop(), 140);
     };
     if (leanIn) leanIn.finished.then(settle, () => {}); else settle();
+    focusOn('h1');
     play('done');
     buzz('done');
     const stopParty = perfect ? confetti() : () => {};
@@ -365,6 +384,7 @@ function run(lessonId, queue, title) {
       stopParty();
       for (const c of cast) c.stop();
       home(firstTime ? lessonId : null);
+      focusOn('.cta .next');
     });
   };
 
@@ -432,6 +452,7 @@ function suggest(unit) {
   const guide = coach(app.querySelector('.hero'), lumi);
   guide.set('correct');
   guide.hop();
+  focusOn('h1');
   app.querySelector('[data-start]').addEventListener('click', () => { guide.stop(); place(unit); });
   app.querySelector('[data-first]').addEventListener('click', () => { guide.stop(); place(first); });
 }
@@ -440,6 +461,7 @@ function place(unit) {
   progress = { ...progress, start: unit };
   save();
   home();
+  focusOn('.cta .next');
 }
 
 /** Save progress to a file, or load one back: for a new device, or a browser that cleared it. */
@@ -456,7 +478,8 @@ function keep(note = '') {
     </main>`;
   const status = app.querySelector('[role="status"]');
   const input = app.querySelector('input');
-  app.querySelector('[data-back]').addEventListener('click', () => home());
+  focusOn('h1');
+  app.querySelector('[data-back]').addEventListener('click', () => { home(); focusOn('.menu'); });
   app.querySelector('[data-save]').addEventListener('click', () => {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([JSON.stringify(progress)], { type: 'application/json' }));
@@ -488,7 +511,8 @@ function confirmLoad(p) {
       <button class="next" data-use>Use this file</button>
       <button class="choice" data-keep>Keep what's here</button>
     </main>`;
-  app.querySelector('[data-use]').addEventListener('click', () => { progress = p; save(); home(); });
+  focusOn('h1');
+  app.querySelector('[data-use]').addEventListener('click', () => { progress = p; save(); home(); focusOn('.cta .next'); });
   app.querySelector('[data-keep]').addEventListener('click', () => keep('Nothing changed.'));
 }
 

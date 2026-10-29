@@ -10,6 +10,7 @@
   --wrong: #c2492c;
   --right-bg: #e9f6ee;
   --wrong-bg: #fdeeea;
+  --streak: #94600F;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -24,6 +25,7 @@
     --wrong: #ff8a6b;
     --right-bg: #16301f;
     --wrong-bg: #3a1d17;
+    --streak: #B9741A;
   }
 }
 
@@ -36,6 +38,12 @@ body {
 }
 #app { max-width: 520px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
 button { font: inherit; color: inherit; cursor: pointer; }
+/* One focus ring for every control, in the text colour so it reads on both themes. */
+:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
+/* Headings take focus when a screen opens, for screen readers; they aren't controls. */
+[tabindex="-1"]:focus { outline: none; }
+/* Fixed footers cover the bottom of the page: keep a focused control clear of them. */
+html { scroll-padding-bottom: 160px; }
 
 .bar {
   display: flex; align-items: center; gap: 12px;
@@ -63,7 +71,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .node {
   width: 64px; height: 64px; flex: none; border-radius: 50%; border: 0; padding: 0;
   font-size: 32px; font-weight: 900; line-height: 64px;
-  background: var(--card); color: #E39418; box-shadow: inset 0 0 0 4px #F5A524, 0 5px 0 #C77B2F;
+  background: var(--card); color: #B9741A; box-shadow: inset 0 0 0 4px #F5A524, 0 5px 0 #C77B2F;
 }
 .node.done { background: var(--accent); color: var(--accent-text); box-shadow: 0 5px 0 #1f5a37; }
 .node.here { background: #F5A524; color: #1E1B2E; box-shadow: 0 5px 0 #B9741A; animation: beckon 1.8s ease-in-out infinite; }
@@ -72,7 +80,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @keyframes beckon { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
 @media (prefers-reduced-motion: reduce) { .node.here { animation: none; } }
 .path .label { margin-top: 10px; max-width: 120px; padding: 1px 6px; border-radius: 6px; background: var(--bg); font-size: .8rem; color: var(--muted); text-align: center; }
-.path li:has(.locked) .label { color: var(--locked); }
 .path li:has(.here) .label { color: var(--text); font-weight: 700; }
 .guide { position: absolute; top: -6px; width: 72px; }
 .guide.left { right: 50%; margin-right: 40px; }
@@ -82,7 +89,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   display: block; margin: 0 auto 8px; padding: 6px 12px; border-radius: 999px; font-size: .85rem; font-weight: 600;
   background: var(--card); border: 2px solid var(--accent); color: var(--text);
 }
-.streak-bright { color: #B9741A; }
+.streak-bright { color: var(--streak); }
 .streak-ember { opacity: .75; }
 .cta {
   position: fixed; left: 0; right: 0; bottom: 0; max-width: 520px; margin: 0 auto;
@@ -122,15 +129,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .choice:disabled { cursor: default; }
 .choice.right { border-color: var(--accent); background: var(--accent); color: var(--accent-text); opacity: 1; }
-.choice.wrong { border-color: #d0583c; color: #d0583c; }
+.choice.wrong { border-color: var(--wrong); color: var(--wrong); }
 /* The answer banner rides over the bottom of the screen, so the board never moves. */
 .foot {
   position: fixed; left: 0; right: 0; bottom: 0; max-width: 520px; margin: 0 auto;
   padding: 16px; padding-bottom: max(16px, env(safe-area-inset-bottom));
   background: var(--card); border-top: 2px solid var(--line);
-  transform: translateY(110%); transition: transform .22s ease-out;
+  transform: translateY(110%); transition: transform .22s ease-out, visibility 0s .22s; visibility: hidden;
 }
-.foot.show { transform: none; }
+.foot.show { transform: none; visibility: visible; transition: transform .22s ease-out; }
 .foot.right { background: var(--right-bg); border-color: var(--accent); }
 .foot.wrong { background: var(--wrong-bg); border-color: var(--wrong); }
 .foot.right strong { color: var(--accent); }
@@ -140,7 +147,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .verdict p { margin: 6px 0 0; }
 .foot.wrong .next { background: var(--wrong); }
 .foot .next { margin-bottom: 0; }
-@media (prefers-reduced-motion: reduce) { .foot, .fill { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .foot, .foot.show, .fill { transition: none; } }
 
 .summary { padding: 32px 16px; text-align: center; }
 .hero { width: 150px; margin: 0 auto 8px; }
@@ -152,13 +159,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* ---- Board skin: Drill's board, pieces (assets/pieces/drill.svg) and markers ---- */
 :root {
-  --sq-light: #E9F4EC; --sq-dark: #86C8A9; --sq-frame: #4E9C7D; --sq-coord: #F4FBF6; --sq-ledge: #3C7F64;
-  --sq-hl: #F5C542; --sq-good: #1F7A45;
+  --sq-light: #E9F4EC; --sq-dark: #86C8A9; --sq-frame: #3A7F62; --sq-coord: #F4FBF6; --sq-ledge: #2C6650;
+  --sq-hl: #F5C542; --sq-good: #155c34; --sq-bad: #a8361f;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --sq-light: #8496AC; --sq-dark: #5B6B80; --sq-frame: #2B3443; --sq-coord: #C9D3E0; --sq-ledge: #1A2029;
-    --sq-hl: #F5B83D; --sq-good: #5AD08A;
+    --sq-hl: #F5B83D; --sq-good: #5AD08A; --sq-bad: #d0583c;
   }
 }
 /* Rounded and raised on a solid ledge, like the quest markers. */
@@ -175,8 +182,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .cm-chessboard .markers .marker.marker-circle { stroke: #3b6fd6; stroke-width: 4px; opacity: .85; }
 .cm-chessboard .markers .marker.marker-frame,
 .cm-chessboard .markers .marker.marker-frame-primary { stroke: var(--sq-good); stroke-width: 4px; opacity: 1; }
-.cm-chessboard .markers .marker.marker-circle-danger { stroke: #d0583c; stroke-width: 4px; opacity: .95; }
+.cm-chessboard .markers .marker.marker-circle-danger { stroke: var(--sq-bad); stroke-width: 4px; opacity: .95; }
 .cm-chessboard .markers .marker.marker-circle-primary { stroke: var(--sq-good); stroke-width: 4px; opacity: .95; }
+/* The keyboard cursor: dark ink reads on every square of both palettes. */
+.cm-chessboard .keyboard-focus-indicator .keyboard-focus { stroke: #101820; stroke-width: 4px; }
+.cm-chessboard .keyboard-focus-indicator .keyboard-from-square { fill: rgba(16, 24, 32, .25); stroke: #101820; }
+.cm-chessboard:focus { outline: none; }
+.cm-chessboard:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
 /* ---- end board skin ---- */
 
 .survey { padding: 32px 16px; text-align: center; }
@@ -191,7 +203,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   --heat-ember: #F0772A;
   --chip-acc: #2f7d4f;
   --chip-time: #3b62c4;
-  --chip-fire: #c2620a;
+  --chip-fire: #a8540a;
   --chip-ink: #ffffff;
 }
 @media (prefers-color-scheme: dark) {
@@ -241,4 +253,5 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .chip.time { --c: var(--chip-time); }
 .chip.fire { --c: var(--chip-fire); }
 .learned { margin: 0; font-size: .85rem; color: var(--muted); }
-@media (prefers-reduced-motion: reduce) { .meter[data-heat="2"] .fill { animation: none; } }
+/* .fill's transition is redefined above, after the earlier reduced-motion rule, so it is repeated here. */
+@media (prefers-reduced-motion: reduce) { .meter[data-heat="2"] .fill { animation: none; } .fill { transition: none; } }
