@@ -87,7 +87,7 @@ export const soonestKeys = (progress) =>
   Object.entries(progress.cards).sort(([, a], [, b]) => new Date(a.due) - new Date(b.due)).map(([key]) => key);
 
 /**
- * Today's light, the habit display on the current lamp and the widget: bright once today's
+ * Today's light, the habit display on the streak chip and the widget: bright once today's
  * session is done, soft until then, and a warm ember after a missed day. It is never dark.
  */
 export function light(progress, now = new Date()) {

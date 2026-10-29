@@ -3,7 +3,6 @@ import { emptyProgress, finishSession, currentStreak, dueKeys, light, needsRepai
 import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
-import { lamp } from './cast/lamp.js';
 import { reducedMotion } from './cast/kit.js';
 import { finished, line, rightAnswer } from './cast/lines.js';
 import { buzz, play, setSound, soundOn } from './feel.js';
@@ -32,9 +31,13 @@ const esc = (t) => String(t).replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 
 let stopHome = () => {};
 
+const ROW = 112; // px from one node to the next; the drawn path assumes it
+const SWAY = 70; // px a node sits off centre at most
+
 /**
- * Home: every subject as a winding path of street lamps. Finished lessons are lit; the current
- * lamp carries today's light, with Lumi beside it and any review due. One Continue button.
+ * Home: every unit as a winding path of quest markers, joined by a drawn line. A finished lesson
+ * shows a tick; the next one a gold "!" with Lumi beside it; locked ones a grey "!". Reviews due
+ * and one Continue button sit at the bottom. Today's light colours the streak chip.
  */
 function home() {
   stopHome();
@@ -49,35 +52,52 @@ function home() {
   const dueChip = !reviewKeys.length ? ''
     : repair ? `<button class="due" data-review>${esc(line('repair'))} · ${minutes}</button>`
     : `<button class="due" data-review>${due.length} to review · ${minutes}</button>`;
+  const xAt = (i) => Math.round(Math.sin((i * Math.PI) / 3) * SWAY);
 
   const node = (n, i) => {
-    const x = Math.round(Math.sin((i * Math.PI) / 3) * 64);
     const here = n === current;
-    const state = here ? todays : n.state === 'done' ? 'lit' : 'off';
-    return `<li class="${n.state}${here ? ' here' : ''}" style="--x:${x}px">
-      ${here ? dueChip : ''}
-      <button class="lamp" data-lesson="${n.id}" ${n.state === 'locked' ? 'disabled' : ''}
-        aria-label="${esc(n.lesson.title)}${n.state === 'done' ? ', done' : n.state === 'locked' ? ', locked' : ''}">${lamp(state)}</button>
-      ${here ? `<div class="guide ${x > 0 ? 'left' : 'right'}"></div>` : ''}
+    const mark = n.state === 'done' ? '✓' : '!';
+    const status = n.state === 'done' ? ', done' : n.state === 'locked' ? ', locked' : '';
+    return `<li style="--x:${xAt(i)}px">
+      <button class="node ${n.state}${here ? ' here' : ''}" data-lesson="${n.id}" ${n.state === 'locked' ? 'disabled' : ''}
+        aria-label="${esc(n.lesson.title)}${status}"><span aria-hidden="true">${mark}</span></button>
+      ${here ? `<div class="guide ${xAt(i) > 0 ? 'left' : 'right'}"></div>` : ''}
       <span class="label">${esc(n.lesson.title)}</span>
     </li>`;
+  };
+
+  // The line through every node centre; the stretch up to the last finished node is drawn in green.
+  const trail = (nodes) => {
+    const pts = nodes.map((_, i) => [xAt(i), i * ROW + 32]);
+    const d = (to) => pts.slice(0, to).map(([x, y], i) => {
+      if (!i) return `M${x} ${y}`;
+      const [px, py] = pts[i - 1];
+      return `C${px} ${py + ROW / 2} ${x} ${y - ROW / 2} ${x} ${y}`;
+    }).join(' ');
+    const walked = nodes.filter((n) => n.state === 'done').length + 1;
+    const h = (nodes.length - 1) * ROW + 64;
+    return `<svg class="trail" viewBox="-160 0 320 ${h}" width="320" height="${h}" aria-hidden="true">
+      <path d="${d(pts.length)}" class="ahead"/>${walked > 1 ? `<path d="${d(Math.min(walked, pts.length))}" class="walked"/>` : ''}
+    </svg>`;
   };
 
   app.innerHTML = `
     <header class="bar">
       <h1>Drill</h1>
-      <span class="stat" title="Day streak">🔥 ${currentStreak(progress)}</span>
+      <span class="stat streak-${todays}" title="Day streak">🔥 ${currentStreak(progress)}</span>
       <button class="sound" aria-pressed="${soundOn()}" aria-label="Sound">${soundOn() ? '🔊' : '🔇'}</button>
     </header>
     <main class="home">
-      ${current ? '' : dueChip}
       ${units.map((u) => `
         <section class="street">
           <h2>${esc(u.title)}</h2>
-          <ol class="path">${u.nodes.map(node).join('')}</ol>
+          <div class="trailhead">${trail(u.nodes)}<ol class="path">${u.nodes.map(node).join('')}</ol></div>
         </section>`).join('')}
     </main>
-    ${current ? `<footer class="cta"><button class="next" data-lesson="${current.id}">Continue · ${esc(current.lesson.title)}</button></footer>` : ''}`;
+    <footer class="cta">
+      ${dueChip}
+      ${current ? `<button class="next" data-lesson="${current.id}">Continue · ${esc(current.lesson.title)}</button>` : ''}
+    </footer>`;
 
   const guide = app.querySelector('.guide');
   if (guide) {
