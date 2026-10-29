@@ -128,7 +128,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 .summary { padding: 32px 16px; text-align: center; }
 .hero { width: 150px; margin: 0 auto 8px; }
-.summary h1 { margin: 8px 0 4px; }
+.kicker { margin: 8px 0 0; font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
+.summary h1 { margin: 2px 0 4px; }
 .said { color: var(--muted); margin: 0 0 20px; }
 .stats { display: flex; gap: 10px; margin-bottom: 20px; }
 .stats div { flex: 1; padding: 12px 6px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
