@@ -46,7 +46,9 @@ function home() {
   const repair = needsRepair(progress);
   const reviewKeys = (due.length ? due : repair ? soonestKeys(progress).filter((k) => items.has(k)) : []).slice(0, REVIEW_SIZE);
   const units = subjects.flatMap(unitsOf);
-  const current = units.flatMap((u) => u.nodes).find((n) => n.state === 'open');
+  // The next lesson, from the placement survey's starting unit on.
+  const from = Math.max(0, units.findIndex((u) => u.title === progress.start));
+  const current = [...units.slice(from), ...units].flatMap((u) => u.nodes).find((n) => n.state === 'open');
   const todays = light(progress);
   const minutes = `about ${Math.max(1, Math.round(reviewKeys.length * 0.4))} min`;
   const dueChip = !reviewKeys.length ? ''
@@ -122,17 +124,19 @@ function home() {
 /**
  * One subject's units, each lesson marked done, open or locked. A unit opens when the previous
  * unit's first lesson is done, so a beginner can move across topics without first clearing every
- * hard tier; within a unit, lessons open in order.
+ * hard tier; within a unit, lessons open in order. Units before the placement survey's starting
+ * point are open all through, to go back to.
  */
 function unitsOf(subject) {
+  const start = subject.units.findIndex((u) => u.title === progress.start);
   let unitOpen = true;
-  return subject.units.map((unit) => {
-    let open = unitOpen;
+  return subject.units.map((unit, i) => {
+    let open = unitOpen || i <= start;
     unitOpen = !!progress.done[`${subject.id}:${unit.lessons[0].id}`];
     const nodes = unit.lessons.map((lesson) => {
       const id = `${subject.id}:${lesson.id}`;
       const state = progress.done[id] ? 'done' : open ? 'open' : 'locked';
-      if (state !== 'done') open = false;
+      if (state !== 'done' && i >= start) open = false;
       return { id, subject, lesson, state };
     });
     return { title: unit.title, nodes };
@@ -300,4 +304,52 @@ function celebrate(xpEl, xp, confetti) {
   };
 }
 
-home();
+/** A first visit with nothing done yet: ask once where to start. */
+const PLACEMENT = [
+  ["I've never played", 'The board'],
+  ['I know how the pieces move', 'Capturing'],
+  ['I play now and then', 'Forks'],
+  ['I play often and know some tactics', 'Mate in one'],
+];
+
+function survey() {
+  app.innerHTML = `
+    <main class="survey">
+      <div class="hero"></div>
+      <h1>Have you played chess before?</h1>
+      <p class="said">Pick the closest. It only sets where you start: every earlier lesson stays open.</p>
+      ${PLACEMENT.map(([label], i) => `<button class="choice" data-i="${i}">${esc(label)}</button>`).join('')}
+    </main>`;
+  const guide = coach(app.querySelector('.hero'), lumi);
+  guide.set('teach');
+  for (const b of app.querySelectorAll('[data-i]')) {
+    b.addEventListener('click', () => { guide.stop(); suggest(PLACEMENT[b.dataset.i][1]); });
+  }
+}
+
+function suggest(unit) {
+  const first = subjects[0].units[0].title;
+  if (unit === first) return place(first);
+  app.innerHTML = `
+    <main class="survey">
+      <div class="hero"></div>
+      <h1>Start at ${esc(unit)}?</h1>
+      <p class="said">That's where Lumi suggests you begin. The lessons before it stay open, if you want a refresher.</p>
+      <button class="next" data-start>Start at ${esc(unit)}</button>
+      <button class="choice" data-first>Start from the beginning</button>
+    </main>`;
+  const guide = coach(app.querySelector('.hero'), lumi);
+  guide.set('correct');
+  guide.hop();
+  app.querySelector('[data-start]').addEventListener('click', () => { guide.stop(); place(unit); });
+  app.querySelector('[data-first]').addEventListener('click', () => { guide.stop(); place(first); });
+}
+
+function place(unit) {
+  progress = { ...progress, start: unit };
+  save();
+  home();
+}
+
+const fresh = progress.start == null && !Object.keys(progress.done).length && !Object.keys(progress.cards).length;
+if (fresh) survey(); else home();

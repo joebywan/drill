@@ -9,6 +9,7 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            finished session; `forgiven` lists the dates a missed day was forgiven
  *   done     { lessonId: true }
  *   cards    { itemKey: FSRS card }  — every item ever answered, scheduled for review
+ *   start    unit title the placement survey chose, absent until it is answered
  */
 export const emptyProgress = () => ({ xp: 0, streak: { count: 0, last: null, forgiven: [] }, done: {}, cards: {} });
 

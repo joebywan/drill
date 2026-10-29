@@ -158,3 +158,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .cm-chessboard .markers .marker.marker-circle-primary { stroke: #2f9d5a; stroke-width: 4px; opacity: .9; }
 /* The frame's a-h and 1-8 are taught in the first lesson, so they must be easy to read. */
 .cm-chessboard.default .coordinates .coordinate.file, .cm-chessboard.default .coordinates .coordinate.rank { fill: #4a3420; font-weight: 700; }
+
+.survey { padding: 32px 16px; text-align: center; }
+.survey .hero { width: 130px; }
+.survey .choice { display: block; width: 100%; margin: 10px 0; padding: 14px 16px; text-align: left; }
+.survey .next { margin-top: 8px; }
+.survey [data-first] { text-align: center; }
