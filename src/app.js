@@ -374,7 +374,7 @@ function run(lessonId, queue, title) {
       },
     });
     // A question starts on its board (or its answers), not back at the top of the page.
-    if (!foot.classList.contains('show')) stage.querySelector('svg[tabindex], .choice, .calm-go')?.focus();
+    if (!foot.classList.contains('show')) stage.querySelector('svg[tabindex], .choice, .practice-go')?.focus();
   };
   next.addEventListener('click', step);
 
@@ -391,7 +391,7 @@ function run(lessonId, queue, title) {
     const h = HABITS.find((x) => x.id === subject.habit);
     const n = currentStreak(progress, new Date(), h.id);
     app.innerHTML = `
-      <main class="summary calm-end">
+      <main class="summary practice-end">
         <div class="hero"></div>
         <p class="kicker">${esc(technique)}</p>
         <h1>${esc(line('done', Math.random(), who.lines))}</h1>
