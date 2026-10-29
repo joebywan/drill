@@ -156,3 +156,5 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .cm-chessboard .markers .marker.marker-frame-primary { stroke: #2f9d5a; stroke-width: 4px; opacity: .95; }
 .cm-chessboard .markers .marker.marker-circle-danger { stroke: #d0583c; stroke-width: 4px; opacity: .9; }
 .cm-chessboard .markers .marker.marker-circle-primary { stroke: #2f9d5a; stroke-width: 4px; opacity: .9; }
+/* The frame's a-h and 1-8 are taught in the first lesson, so they must be easy to read. */
+.cm-chessboard.default .coordinates .coordinate.file, .cm-chessboard.default .coordinates .coordinate.rank { fill: #4a3420; font-weight: 700; }

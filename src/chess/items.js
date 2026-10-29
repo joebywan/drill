@@ -4,7 +4,7 @@ import { uci } from './puzzle.js';
 /**
  * Lesson items. `type` says how one is played; a Lichess puzzle has none and is 'find'.
  *
- *   teach      { text, fen?, side? }                  a card to read: not marked, not reviewed
+ *   teach      { text, fen? }                         a card to read: not marked, not reviewed
  *   tap        { fen, rule, square?, answer?, prompt, explain }
  *                rule 'attacks' (default): every enemy piece the piece on `square` attacks
  *                rule 'moves': every square the piece on `square` can move to
@@ -17,7 +17,8 @@ import { uci } from './puzzle.js';
  *                otherwise "after `move`, the piece attacks every target"
  *   find       { fen, moves, prompt?, explain? }      a puzzle: play the line on the board
  *
- * Every answer is worked out from the position by chess.js, never stored, so a typo in the
+ * Any item may set `side` ('w' or 'b') to choose which way the board faces; by default it
+ * faces the side to move. Every answer is worked out from the position by chess.js, never stored, so a typo in the
  * course can't make a right answer wrong. `problem()` proves each item can be answered.
  */
 export const kind = (item) => item.type || 'find';

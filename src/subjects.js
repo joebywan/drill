@@ -1,4 +1,5 @@
 import chessCourse from './data/chess.json' with { type: 'json' };
+import basics from './data/basics.json' with { type: 'json' };
 import forks from './data/forks.json' with { type: 'json' };
 import * as chess from './chess/exercise.js';
 
@@ -8,8 +9,9 @@ import * as chess from './chess/exercise.js';
  * and every item has a stable `id`. Home, lessons, XP, streak and review pick a subject up from
  * this list alone.
  */
-// Forks leads: it is the hand-written pilot unit. Its Lichess puzzles join it as the last lessons,
-// so the unit ends on real games; the other Lichess themes follow.
+// Chess from zero comes first (the board, how pieces move, capturing, check and mate), then the
+// hand-written Forks unit, whose Lichess puzzles join it as its last lessons; the other Lichess
+// themes follow.
 const lichessForks = chessCourse.units.find((u) => u.title === 'Forks');
 const forksUnit = {
   ...forks,
@@ -17,6 +19,6 @@ const forksUnit = {
 };
 export const subjects = [{
   ...chessCourse,
-  units: [forksUnit, ...chessCourse.units.filter((u) => u !== lichessForks)],
+  units: [...basics.units, forksUnit, ...chessCourse.units.filter((u) => u !== lichessForks)],
   mount: chess.mount,
 }];

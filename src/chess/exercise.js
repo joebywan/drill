@@ -68,7 +68,7 @@ const MOUNTS = {
   },
 
   tap(boardEl, choices, item, { say, done }) {
-    const b = board(boardEl, item.fen);
+    const b = board(boardEl, item.fen, item.side);
     const picked = new Set();
     if (item.square) b.addMarker(MARKER_TYPE.square, item.square);
     choices.innerHTML = '<button class="choice check" disabled>Check</button>';
@@ -98,7 +98,7 @@ const MOUNTS = {
    */
   move(boardEl, choices, item, { say, done }) {
     choices.remove();
-    const b = board(boardEl, item.fen);
+    const b = board(boardEl, item.fen, item.side);
     const game = new Chess(item.fen);
     let timer;
     const input = (event) => {
@@ -136,7 +136,7 @@ const MOUNTS = {
   },
 
   truefalse(boardEl, choices, item, { say, done }) {
-    const b = board(boardEl, item.fen);
+    const b = board(boardEl, item.fen, item.side);
     buttons(choices, item, [['True', true], ['False', false]], (correct) => {
       if (item.move) playMove(b, item.fen, item.move);
       for (const sq of item.targets || []) b.addMarker(MARKER_TYPE.framePrimary, sq);
