@@ -1,0 +1,463 @@
+{
+  "units": [
+    {
+      "title": "The board",
+      "lessons": [
+        {
+          "id": "board-0",
+          "title": "Squares and coordinates",
+          "items": [
+            {
+              "id": "board-0-teach",
+              "type": "teach",
+              "text": "The board has 64 squares. Columns are files, lettered a to h from left to right. Rows are ranks, numbered 1 to 8 from White's side. A square is named file first, then rank: e4 is file e, rank 4. The letters and numbers are printed round the edge of every board here.",
+              "side": "w",
+              "fen": "4k3/8/8/8/8/8/8/4K3 w - - 0 1"
+            },
+            {
+              "id": "board-0-e4",
+              "type": "tap",
+              "rule": "name",
+              "fen": "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+              "answer": "e4",
+              "prompt": "Tap the square e4.",
+              "explain": "e4 is on file e, the fifth from the left, and rank 4, the fourth row up from White's side."
+            },
+            {
+              "id": "board-0-a1",
+              "type": "tap",
+              "rule": "name",
+              "fen": "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+              "answer": "a1",
+              "prompt": "Tap the square a1.",
+              "explain": "a1 is White's bottom-left corner: file a, rank 1."
+            },
+            {
+              "id": "board-0-setup",
+              "type": "teach",
+              "text": "At the start, White's pieces fill ranks 1 and 2 and Black's fill ranks 7 and 8. Each player has a light square in the bottom-right corner.",
+              "side": "w",
+              "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+            },
+            {
+              "id": "board-0-h8",
+              "type": "tap",
+              "rule": "name",
+              "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+              "answer": "h8",
+              "prompt": "Tap the square h8.",
+              "explain": "h8 is the top-right corner from White's side: the last file and the last rank."
+            },
+            {
+              "id": "board-0-d5",
+              "type": "tap",
+              "rule": "name",
+              "fen": "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+              "answer": "d5",
+              "prompt": "Tap the square d5.",
+              "explain": "Find file d along the bottom, then go up to rank 5."
+            },
+            {
+              "id": "board-0-g2",
+              "type": "tap",
+              "rule": "name",
+              "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+              "answer": "g2",
+              "prompt": "Tap the square g2.",
+              "explain": "File g is second from the right, and rank 2 is where White's pawns start."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "How pieces move",
+      "lessons": [
+        {
+          "id": "moves-0",
+          "title": "Rook and bishop",
+          "items": [
+            {
+              "id": "moves-0-rook",
+              "type": "teach",
+              "text": "The rook moves in straight lines: up, down, left or right, as far as it likes, until something is in the way.",
+              "side": "w",
+              "fen": "4k3/8/8/8/3R4/8/8/4K3 w - - 0 1"
+            },
+            {
+              "id": "moves-0-rook-tap",
+              "type": "tap",
+              "rule": "moves",
+              "fen": "7k/8/3P4/8/1p1R1P2/8/8/K7 w - - 0 1",
+              "square": "d4",
+              "prompt": "Tap every square the rook can move to.",
+              "explain": "Your own pawns on d6 and f4 stop the rook short. It can take the pawn on b4, but it can't go past it."
+            },
+            {
+              "id": "moves-0-rook-move",
+              "type": "move",
+              "fen": "7k/8/8/8/3R4/8/8/K7 w - - 0 1",
+              "goal": "reach",
+              "prompt": "Move the rook to d8.",
+              "explain": "Straight up the d-file. Nothing is in the way, so the rook goes all the way.",
+              "to": "d8"
+            },
+            {
+              "id": "moves-0-bishop",
+              "type": "teach",
+              "text": "The bishop moves diagonally, as far as it likes. A bishop stays on squares of one colour all game.",
+              "side": "w",
+              "fen": "4k3/8/8/8/3B4/8/8/4K3 w - - 0 1"
+            },
+            {
+              "id": "moves-0-bishop-tap",
+              "type": "tap",
+              "rule": "moves",
+              "fen": "8/7k/1p6/8/3B4/8/5P2/7K w - - 0 1",
+              "square": "d4",
+              "prompt": "Tap every square the bishop can move to.",
+              "explain": "The bishop runs along four diagonals. It can take the pawn on b6 but not pass it, and your own pawn on f2 stops it at e3."
+            },
+            {
+              "id": "moves-0-bishop-move",
+              "type": "move",
+              "fen": "6k1/8/8/8/3B4/8/8/K7 w - - 0 1",
+              "goal": "reach",
+              "prompt": "Move the bishop to a7.",
+              "explain": "Diagonally up and to the left: d4, c5, b6, a7.",
+              "to": "a7"
+            }
+          ]
+        },
+        {
+          "id": "moves-1",
+          "title": "Queen and king",
+          "items": [
+            {
+              "id": "moves-1-queen",
+              "type": "teach",
+              "text": "The queen moves like a rook and a bishop together: straight or diagonal, as far as she likes. She is the strongest piece.",
+              "side": "w",
+              "fen": "4k3/8/8/8/3Q4/8/8/4K3 w - - 0 1"
+            },
+            {
+              "id": "moves-1-queen-tap",
+              "type": "tap",
+              "rule": "moves",
+              "fen": "6k1/8/8/2p1p3/2PQP3/2P1P3/8/K7 w - - 0 1",
+              "square": "d4",
+              "prompt": "Tap every square the queen can move to.",
+              "explain": "Hemmed in by her own pawns, the queen still has the whole d-file both ways, and she can take either black pawn on the diagonal."
+            },
+            {
+              "id": "moves-1-queen-move",
+              "type": "move",
+              "fen": "6k1/8/8/8/3Q4/8/8/K7 w - - 0 1",
+              "goal": "reach",
+              "prompt": "Move the queen to a4.",
+              "explain": "Straight along rank 4: d4, c4, b4, a4.",
+              "to": "a4"
+            },
+            {
+              "id": "moves-1-king",
+              "type": "teach",
+              "text": "The king moves one square in any direction. He may never step onto a square an enemy piece attacks.",
+              "side": "w",
+              "fen": "4k3/8/8/8/4K3/8/8/8 w - - 0 1"
+            },
+            {
+              "id": "moves-1-king-tap",
+              "type": "tap",
+              "rule": "moves",
+              "fen": "7k/8/8/8/4K3/8/3r4/8 w - - 0 1",
+              "square": "e4",
+              "prompt": "Tap every square the king can move to.",
+              "explain": "The rook on d2 attacks the whole d-file, so the king can't step onto d3, d4 or d5. Five squares are left."
+            },
+            {
+              "id": "moves-1-king-move",
+              "type": "move",
+              "fen": "7k/8/8/8/4K3/8/3r4/8 w - - 0 1",
+              "goal": "reach",
+              "prompt": "Step the king to f5.",
+              "explain": "One step diagonally, up and to the right. Kings only ever move one square.",
+              "to": "f5"
+            }
+          ]
+        },
+        {
+          "id": "moves-2",
+          "title": "Knight",
+          "items": [
+            {
+              "id": "moves-2-teach",
+              "type": "teach",
+              "text": "The knight moves in an L: two squares one way, then one square to the side. It is the only piece that jumps over others.",
+              "side": "w",
+              "fen": "4k3/8/8/8/3N4/8/8/4K3 w - - 0 1"
+            },
+            {
+              "id": "moves-2-centre",
+              "type": "tap",
+              "rule": "moves",
+              "fen": "4k3/8/8/8/3N4/8/8/4K3 w - - 0 1",
+              "square": "d4",
+              "prompt": "Tap every square the knight can move to.",
+              "explain": "From the middle a knight has eight squares, every one an L-shape away."
+            },
+            {
+              "id": "moves-2-corner",
+              "type": "tap",
+              "rule": "moves",
+              "fen": "4k3/8/8/8/8/8/8/N3K3 w - - 0 1",
+              "square": "a1",
+              "prompt": "Tap every square the knight can move to.",
+              "explain": "In the corner a knight has only two squares. Knights are strongest in the middle."
+            },
+            {
+              "id": "moves-2-jump",
+              "type": "tap",
+              "rule": "moves",
+              "fen": "4k3/8/8/2PPP3/2PNP3/2PPP3/8/4K3 w - - 0 1",
+              "square": "d4",
+              "prompt": "Pawns all round it. Tap every square the knight can move to.",
+              "explain": "Still all eight: the knight jumps straight over the pawns."
+            },
+            {
+              "id": "moves-2-move",
+              "type": "move",
+              "fen": "4k3/8/8/8/3N4/8/8/4K3 w - - 0 1",
+              "goal": "reach",
+              "prompt": "Move the knight to f5.",
+              "explain": "Two squares to the right and one up: that L takes the knight from d4 to f5.",
+              "to": "f5"
+            }
+          ]
+        },
+        {
+          "id": "moves-3",
+          "title": "Pawn",
+          "items": [
+            {
+              "id": "moves-3-teach",
+              "type": "teach",
+              "text": "Pawns move straight forward one square, or two on their very first move. They capture differently: one square diagonally forward.",
+              "side": "w",
+              "fen": "4k3/8/8/8/8/8/4P3/4K3 w - - 0 1"
+            },
+            {
+              "id": "moves-3-start",
+              "type": "tap",
+              "rule": "moves",
+              "fen": "4k3/8/8/8/8/8/4P3/4K3 w - - 0 1",
+              "square": "e2",
+              "prompt": "Tap every square this pawn can move to.",
+              "explain": "From its starting square the pawn can go one or two squares forward."
+            },
+            {
+              "id": "moves-3-take",
+              "type": "tap",
+              "rule": "moves",
+              "fen": "4k3/8/8/3p1p2/4P3/8/8/4K3 w - - 0 1",
+              "square": "e4",
+              "prompt": "Tap every square this pawn can move to.",
+              "explain": "Forward to e5, or take diagonally on d5 or f5. Pawns take on the diagonal, never straight ahead."
+            },
+            {
+              "id": "moves-3-blocked",
+              "type": "teach",
+              "text": "A pawn can't move forward if anything stands in front of it, friend or enemy. It can't take straight ahead either.",
+              "side": "w",
+              "fen": "4k3/8/8/4p3/4P3/8/8/4K3 w - - 0 1"
+            },
+            {
+              "id": "moves-3-capture",
+              "type": "move",
+              "fen": "4k3/8/8/3p4/4P3/8/8/4K3 w - - 0 1",
+              "goal": "capture",
+              "prompt": "Take the black pawn with your pawn.",
+              "explain": "Pawn takes on d5: one square diagonally forward.",
+              "to": "d5"
+            },
+            {
+              "id": "moves-3-promote",
+              "type": "move",
+              "fen": "4k3/1P6/8/8/8/8/8/4K3 w - - 0 1",
+              "goal": "reach",
+              "prompt": "Push the pawn to the last rank.",
+              "explain": "A pawn that reaches the far side becomes a queen. That's promotion, and it's how one pawn can win a game.",
+              "to": "b8"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Capturing",
+      "lessons": [
+        {
+          "id": "capture-0",
+          "title": "Taking pieces",
+          "items": [
+            {
+              "id": "capture-0-teach",
+              "type": "teach",
+              "text": "To capture, move onto an enemy piece's square: it leaves the board. Pieces are worth points: pawn 1, knight 3, bishop 3, rook 5, queen 9. The king is never captured.",
+              "side": "w",
+              "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+            },
+            {
+              "id": "capture-0-tap",
+              "type": "tap",
+              "fen": "4k3/8/3n4/8/1b1R2p1/8/3q4/7K w - - 0 1",
+              "square": "d4",
+              "prompt": "Tap every black piece your rook can capture.",
+              "explain": "The rook reaches the bishop on b4, the queen on d2, the knight on d6 and the pawn on g4."
+            },
+            {
+              "id": "capture-0-best",
+              "type": "move",
+              "fen": "4k3/8/3n4/8/1b1R2p1/8/3q4/7K w - - 0 1",
+              "goal": "capture",
+              "prompt": "Take the most valuable piece you can.",
+              "explain": "Rook takes the queen on d2: 9 points for a piece worth 5. Look at what every capture wins before you choose.",
+              "to": "d2"
+            },
+            {
+              "id": "capture-0-defended",
+              "type": "teach",
+              "text": "Before you take, check whether the piece is defended. Here the pawn on e4 is guarded by the pawn on d5: take it with your queen and the queen is lost.",
+              "side": "w",
+              "fen": "4k3/8/8/3p4/4p3/8/8/3QK3 w - - 0 1"
+            },
+            {
+              "id": "capture-0-free",
+              "type": "move",
+              "fen": "4k3/8/8/7p/n5b1/8/8/3Q3K w - - 0 1",
+              "goal": "capture",
+              "prompt": "Take the piece that nothing defends.",
+              "explain": "The knight on a4 is free. Take the bishop on g4 instead and the pawn on h5 takes your queen.",
+              "to": "a4"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Check and checkmate",
+      "lessons": [
+        {
+          "id": "check-0",
+          "title": "Check",
+          "items": [
+            {
+              "id": "check-0-teach",
+              "type": "teach",
+              "text": "When a piece attacks the king, the king is in check. The player in check must end it straight away: move the king, block the attack, or capture the attacker.",
+              "side": "w",
+              "fen": "4k3/8/8/8/8/8/8/4R1K1 b - - 0 1"
+            },
+            {
+              "id": "check-0-yes",
+              "type": "truefalse",
+              "side": "w",
+              "fen": "4k3/8/8/8/8/8/8/4R1K1 b - - 0 1",
+              "claim": "check",
+              "prompt": "True or false: the black king is in check.",
+              "explain": "The rook on e1 looks straight up the e-file at the king on e8."
+            },
+            {
+              "id": "check-0-no",
+              "type": "truefalse",
+              "side": "w",
+              "fen": "4k3/8/8/8/8/8/8/3R2K1 b - - 0 1",
+              "claim": "check",
+              "prompt": "True or false: the black king is in check.",
+              "explain": "The rook is on the d-file and the king is on e8. Nothing attacks it."
+            },
+            {
+              "id": "check-0-give",
+              "type": "move",
+              "fen": "4k3/8/8/8/8/8/8/R5K1 w - - 0 1",
+              "goal": "check",
+              "prompt": "Give check with the rook.",
+              "explain": "Rook to e1 or rook to a8: either way the rook attacks the king. That's check."
+            },
+            {
+              "id": "check-0-escape",
+              "type": "move",
+              "fen": "4k1r1/8/8/8/8/8/8/6K1 w - - 0 1",
+              "goal": "escape",
+              "prompt": "Your king is in check from the rook. Get out of check.",
+              "explain": "Step off the g-file, out of the rook's line. Moving along the file, like to g2, stays in check."
+            },
+            {
+              "id": "check-0-take",
+              "type": "move",
+              "fen": "8/8/k7/8/8/8/5q2/5RK1 w - - 0 1",
+              "goal": "capture",
+              "prompt": "You're in check. End it by capturing the piece giving it.",
+              "explain": "Nothing defends the queen on f2: take it with the rook or the king. Capturing the attacker ends the check and wins the queen.",
+              "to": "f2"
+            }
+          ]
+        },
+        {
+          "id": "check-1",
+          "title": "Checkmate",
+          "items": [
+            {
+              "id": "check-1-teach",
+              "type": "teach",
+              "text": "Checkmate is check with no way out: the king can't move, the attack can't be blocked, and the attacker can't be taken. Checkmate wins the game.",
+              "side": "w",
+              "fen": "3R2k1/5ppp/8/8/8/8/8/6K1 b - - 0 1"
+            },
+            {
+              "id": "check-1-yes",
+              "type": "truefalse",
+              "side": "w",
+              "fen": "3R2k1/5ppp/8/8/8/8/8/6K1 b - - 0 1",
+              "claim": "mate",
+              "prompt": "True or false: Black is checkmated.",
+              "explain": "The rook on d8 checks along the back rank, Black's own pawns block every escape, and nothing can take or block the rook."
+            },
+            {
+              "id": "check-1-no",
+              "type": "truefalse",
+              "side": "w",
+              "fen": "3R2k1/5pp1/7p/8/8/8/8/6K1 b - - 0 1",
+              "claim": "mate",
+              "prompt": "True or false: Black is checkmated.",
+              "explain": "It's check, but the king can step to h7, where the h-pawn used to stand. Mate needs no way out at all."
+            },
+            {
+              "id": "check-1-rook",
+              "type": "move",
+              "fen": "6k1/5ppp/8/8/8/8/8/3R2K1 w - - 0 1",
+              "goal": "mate",
+              "prompt": "Checkmate in one move.",
+              "explain": "Rook to d8 is checkmate: the black pawns trap their own king on the back rank."
+            },
+            {
+              "id": "check-1-queen",
+              "type": "move",
+              "fen": "k7/8/1K6/8/8/8/8/7Q w - - 0 1",
+              "goal": "mate",
+              "prompt": "Checkmate in one move.",
+              "explain": "Queen to b7, guarded by your king, or queen to h8 along the back rank: either way the black king has nowhere to go."
+            },
+            {
+              "id": "check-1-ladder",
+              "type": "move",
+              "fen": "7k/8/6K1/8/8/8/8/R7 w - - 0 1",
+              "goal": "mate",
+              "prompt": "Checkmate in one move.",
+              "explain": "Rook to a8 covers the whole back rank, and your king guards g7 and h7."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,10 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import basics from '../src/data/basics.json' with { type: 'json' };
 import forks from '../src/data/forks.json' with { type: 'json' };
 import chess from '../src/data/chess.json' with { type: 'json' };
 import { answer, attacked, explanation, grade, kind, meets, problem, solutions, words } from '../src/chess/items.js';
 
-const all = [forks, ...chess.units].flatMap((u) => u.lessons.flatMap((l) => l.items));
+const all = [...basics.units, forks, ...chess.units].flatMap((u) => u.lessons.flatMap((l) => l.items));
 
 test('every item in the course passes the rules check', () => {
   for (const item of all) assert.equal(problem(item), null, item.id);
