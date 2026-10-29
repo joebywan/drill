@@ -1,0 +1,94 @@
+{
+  "id": "calm",
+  "title": "Calm",
+  "units": [
+    {
+      "title": "Breathing",
+      "lessons": [
+        {
+          "id": "breathe1",
+          "title": "The long out-breath",
+          "items": [
+            {
+              "id": "breathe-teach",
+              "type": "teach",
+              "help": true,
+              "say": "Hello. I'm Moss. We're going to do some breathing. You're already good at the basic version.",
+              "text": [
+                "Breathe in for 4, then out slowly for 8.",
+                "A long, slow out-breath is the body's own way of easing off. Your heartbeat settles a touch with each one, and your shoulders tend to follow.",
+                "No need to get it perfect. If 8 feels long, breathe out as slowly as is comfortable."
+              ]
+            },
+            { "id": "breathe-3", "type": "breathe", "cycles": 3 }
+          ]
+        },
+        { "id": "breathe2", "title": "Five slow breaths", "items": [{ "id": "breathe-5", "type": "breathe", "cycles": 5 }] },
+        { "id": "breathe3", "title": "Six slow breaths", "items": [{ "id": "breathe-6", "type": "breathe", "cycles": 6 }] }
+      ]
+    },
+    {
+      "title": "Grounding",
+      "lessons": [
+        {
+          "id": "ground1",
+          "title": "Five senses",
+          "items": [
+            {
+              "id": "ground-teach",
+              "type": "teach",
+              "say": "This one is called 5, 4, 3, 2, 1. It's counting, but nicer.",
+              "text": [
+                "When your head is busy, your senses are a quiet way back to the room you're in.",
+                "Notice 5 things you can see, 4 you can hear, 3 you can touch, 2 you can smell and 1 you can taste.",
+                "Tap a bubble for each thing you notice. Nothing to type, and nothing counts as wrong. If a smell won't turn up, move on: that's allowed."
+              ]
+            },
+            { "id": "ground-a", "type": "ground" }
+          ]
+        },
+        { "id": "ground2", "title": "Back to the room", "items": [{ "id": "ground-b", "type": "ground" }] }
+      ]
+    },
+    {
+      "title": "Body scan",
+      "lessons": [
+        {
+          "id": "scan1",
+          "title": "Feet to head",
+          "items": [
+            {
+              "id": "scan-teach",
+              "type": "teach",
+              "say": "A body scan. We visit each part of you and say hello. Very polite.",
+              "text": [
+                "We start at your feet and move slowly up to the top of your head.",
+                "At each place, just notice how it feels: warm, heavy, tight, nothing much. Then let it soften, if it wants to.",
+                "Sit or lie however is comfortable. Eyes closed is fine; the words change as we move."
+              ]
+            },
+            { "id": "scan-15", "type": "scan", "seconds": 15 }
+          ]
+        },
+        { "id": "scan2", "title": "A slower scan", "items": [{ "id": "scan-20", "type": "scan", "seconds": 20 }] }
+      ]
+    }
+  ],
+  "senses": [
+    { "count": 5, "prompt": "5 things you can see", "hint": "Something near, something far, something small." },
+    { "count": 4, "prompt": "4 things you can hear", "hint": "Close sounds, then the ones further off." },
+    { "count": 3, "prompt": "3 things you can touch", "hint": "Your clothes, the chair, the air on your skin." },
+    { "count": 2, "prompt": "2 things you can smell", "hint": "Even a faint one counts. So does just air." },
+    { "count": 1, "prompt": "1 thing you can taste", "hint": "Whatever is there, or just your own mouth." }
+  ],
+  "zones": [
+    { "name": "Feet", "line": "Start with your feet. Notice where they touch the floor." },
+    { "name": "Legs", "line": "Up to your legs. Let them be heavy." },
+    { "name": "Hips", "line": "Your hips. Let the seat hold you." },
+    { "name": "Belly", "line": "Your belly. Let it rise and fall on its own." },
+    { "name": "Chest", "line": "Your chest. Just notice the breath moving." },
+    { "name": "Hands and shoulders", "line": "Your hands and shoulders. Let the shoulders drop a little." },
+    { "name": "Jaw and face", "line": "Your jaw and face. Unclench, soften round the eyes." },
+    { "name": "Top of the head", "line": "And the top of your head. That's all of you." }
+  ]
+}

@@ -278,3 +278,53 @@ html { scroll-padding-bottom: 160px; }
 .month { gap: 4px; max-width: 280px; margin-top: 10px; }
 .month i { aspect-ratio: 1; border-radius: 4px; background: var(--line); }
 .month i.on { background: var(--accent); }
+
+/* ---- Home's habit switcher, and Calm's practice screens ---- */
+:root { --calm: #5E8F5A; --calm-soft: #E3EFE0; --chip-calm: #4E8049; }
+@media (prefers-color-scheme: dark) {
+  :root { --calm: #8CC487; --calm-soft: #22331F; --chip-calm: #8CC487; }
+}
+.paths { display: flex; gap: 8px; justify-content: center; margin: 4px 0 0; }
+.path-tab {
+  padding: 8px 16px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); font-weight: 600;
+}
+.path-tab[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
+
+.calm-teach p { margin: 0 0 12px; }
+.help { padding: 10px 12px; border-radius: 12px; background: var(--card); border: 2px solid var(--line); font-size: .95rem; }
+.help a { color: inherit; font-weight: 700; white-space: nowrap; }
+.choices .next { margin: 0; }
+
+.breath { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 8px; }
+.orb {
+  width: min(64vw, 240px); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 40% 35%, #E3EFE0, #6FA86A); transform: scale(.55);
+}
+/* Under reduced motion the orb stays still; the words and the count carry the breath. */
+@media (prefers-reduced-motion: reduce) { .orb { transform: none; } .orb[data-phase="out"] { opacity: .7; } }
+.count { font-size: 2.4rem; font-weight: 800; }
+.orb .count { color: #10241a; }
+.which { margin: 0; color: var(--muted); font-weight: 600; }
+
+@property --fill { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
+.zones { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column-reverse; gap: 6px; }
+.zones li {
+  padding: 8px 12px; border-radius: 10px; border: 2px solid var(--line); color: var(--muted);
+  background: linear-gradient(90deg, var(--calm-soft) var(--fill), var(--card) var(--fill));
+}
+.zones li.past { color: var(--text); border-color: var(--calm); }
+.zones li.now { color: var(--text); font-weight: 700; border-color: var(--calm); --fill: 100%; }
+.scan-left { text-align: center; color: var(--muted); margin: 10px 0 0; }
+
+.ground { text-align: center; }
+.ground h2 { margin: 0 0 4px; font-size: 1.3rem; }
+.bubbles { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 24px; }
+.bubble-tap { width: 60px; height: 60px; border-radius: 50%; border: 3px dashed var(--calm); background: var(--card); }
+.bubble-tap[aria-pressed="true"] { border-style: solid; background: var(--calm); }
+
+.calm-end .hero { width: 130px; }
+.chip.calm { --c: var(--chip-calm); flex: 0 1 180px; margin: 0 auto; }
+.feel h2 { font-size: 1.05rem; margin: 16px 0 8px; }
+.feels { display: flex; flex-direction: column; gap: 8px; }
+.feel .said { margin: 8px 0; }
+.feels .choice { flex: none; }

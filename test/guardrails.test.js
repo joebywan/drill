@@ -2,13 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY } from '../src/habitview.js';
-import { ACCURACY, CELEBRATIONS, HEADLINES, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
+import { helpHtml } from '../src/calm/practice.js';
+import { ACCURACY, CALM_LINES, CELEBRATIONS, FEELS, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
 // Praise the process, never the person: no ability words. No absence, loss or guilt either.
 const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intelligen\w*|born to)\b/i;
 const LOSS = /\b(lose|losing|lost|gone|we miss you|missed you|sad|disappoint\w*|abandon\w*|forg[eo]t\w*|broke(n)?|break(ing)? your|come back (soon|to us|tomorrow)|where were you|absen\w*|guilt\w*|shame)\b/i;
 
-const lines = [LINES, HEADLINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
+const lines = [LINES, HEADLINES, CALM_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
 const labels = [...ACCURACY, ...PACE].map(([, label]) => label).concat(STREAK_LABEL, QUIET_DAY, REST_DAY, NO_STREAK, FIRST_SQUARE);
 
 test('end-screen headlines and chip labels pass the same lint', () => {
@@ -70,4 +71,48 @@ test('there are no points: no XP anywhere in the app', () => {
     const code = readFileSync(file, 'utf8').replace(/points from earlier builds|const \{ xp, \.\.\.kept \}/g, '');
     assert.doesNotMatch(code, /\bxp\b|\bpoints\b/i, file);
   }
+});
+
+// Calm is a breathing coach, not a health service: no claims to treat, cure or be therapy, no
+// diagnosis words, and nothing that hurries. No exclamation marks in Moss's mouth either.
+const CLAIMS = /\b(therap\w*|treat\w*|cure[sd]?|curing|heal(s|ing)?|diagnos\w*|disorder\w*|panic attacks?|anxiety|depress\w*|symptom\w*|clinical\w*|medic\w*|prescri\w*|patients?)\b/i;
+const URGENCY = /now!|\bhurry\b|\bdon'?t miss\b|\bquick(ly)?\b|\bfast(er)?\b|\bright now\b|\blast chance\b|\btoo late\b|\bstreak\b|!/i;
+
+const calmCourse = JSON.parse(readFileSync('src/data/calm.json', 'utf8'));
+const strings = (v) => (typeof v === 'string' ? [v] : v && typeof v === 'object' ? Object.values(v).flatMap(strings) : []);
+const calmText = [
+  ...Object.entries(CALM_LINES).flatMap(([kind, list]) => list.map((text) => [kind, text])),
+  ...strings(calmCourse).filter((t) => /\s/.test(t)).map((text) => ['calm.json', text]),
+  ...FEELS.map(([, label]) => ['feel', label]),
+  ['help', HELP_LINE],
+];
+
+test('Calm makes no health claims and never hurries', () => {
+  assert.ok(calmText.length > 40);
+  for (const [kind, text] of calmText) {
+    assert.doesNotMatch(text, CLAIMS, `${kind}: ${text}`);
+    assert.doesNotMatch(text, URGENCY, `${kind}: ${text}`);
+    assert.doesNotMatch(text, ABILITY, `${kind}: ${text}`);
+    assert.doesNotMatch(text, LOSS, `${kind}: ${text}`);
+  }
+  // The lint itself catches what it is for.
+  for (const bad of ['This is therapy.', 'It can treat stress.', 'A cure for worry', 'Stops a panic attack', 'For anxiety disorder'])
+    assert.match(bad, CLAIMS, bad);
+  for (const bad of ['Breathe now!', 'Hurry up', "Don't miss today"]) assert.match(bad, URGENCY, bad);
+});
+
+test('real help is reachable from Calm, as plain text', () => {
+  assert.equal(HELP_LINE, "If you're struggling, talk to someone. In Australia, Lifeline is 13 11 14, any time.");
+  // On the first Calm lesson...
+  assert.equal(calmCourse.units[0].lessons[0].items[0].help, true);
+  // ...and after "Not really". The number is text; the tel: link is only an extra.
+  assert.deepEqual(FEELS.find(([, label]) => label === 'Not really'), ['no different', 'Not really']);
+  assert.match(readFileSync('src/app.js', 'utf8'), /feel === 'no different'\) .*helpHtml\(\)/);
+  const html = helpHtml();
+  assert.ok(html.replace(/<[^>]+>/g, '').includes(HELP_LINE), html);
+  assert.match(html, /href="tel:131114"/);
+});
+
+test('the end of a practice session is not a celebration', () => {
+  for (const kind of Object.keys(CALM_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
 });

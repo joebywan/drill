@@ -1,7 +1,9 @@
 import chessCourse from './data/chess.json' with { type: 'json' };
 import basics from './data/basics.json' with { type: 'json' };
 import forks from './data/forks.json' with { type: 'json' };
+import calmCourse from './data/calm.json' with { type: 'json' };
 import * as chess from './chess/exercise.js';
+import * as calm from './calm/practice.js';
 
 /**
  * The contract. A subject is a course plus one `mount(el, item, { say, done })` that plays a
@@ -33,4 +35,9 @@ export const subjects = [{
   mount: chess.mount,
   habit: 'learn',
   kind: 'learn',
+}, {
+  ...calmCourse,
+  mount: calm.mount,
+  habit: 'calm',
+  kind: 'practice',
 }];

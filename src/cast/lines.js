@@ -137,3 +137,34 @@ export const PACE = [[-8, 'BLAZING'], [-14, 'SWIFT'], [-Infinity, 'STEADY']];
 export const accuracyLabel = (percent) => band(ACCURACY, percent);
 export const paceLabel = (secondsPerItem) => band(PACE, -secondsPerItem);
 export const STREAK_LABEL = 'DAY STREAK';
+
+/**
+ * Moss, Calm's coach: a capybara, unhurried and warm, with a little dry humour. Never clinical,
+ * never in a rush, no exclamation marks. Calm makes no health claims (the guardrail tests check).
+ */
+export const CALM_LINES = {
+  breatheIn: ['Breathe in…'],
+  breatheOut: ['and slowly out'],
+  paused: ['Paused. Take as long as you like. I have nowhere to be.'],
+  ground: ['Look around. No rush.', 'Whatever you notice counts.', "Take your time. I'll wait. I'm good at waiting."],
+  tapped: [
+    'Capybaras invented sitting still. I like to think so, anyway.',
+    "A bird sat on my head once for an hour. I didn't mention it.",
+    "There's no wrong way to do this. I've checked.",
+    'Slow is a perfectly good speed.',
+    'I am very relaxed. It took years of lying in warm water.',
+  ],
+  // The end screen: settled, not a party.
+  done: ['That was a few quiet minutes, just for you.', 'Done. Have a moment to notice how you are.', 'Nicely done. Slow and steady.'],
+  'calmer': ['Good. Keep a bit of that for later.', "That's nice to hear. The breath is always there when you want it."],
+  'about the same': ["That's fine. Some days it's just a pause, and a pause still counts.", 'Fair enough. Thanks for taking the time anyway.'],
+  'no different': ["That's alright. Thanks for telling me. Some days are heavy, and that's not on you."],
+};
+
+/** Real help, shown as plain text on the first Calm lesson and after "Not really". */
+export const HELP_LINE = "If you're struggling, talk to someone. In Australia, Lifeline is 13 11 14, any time.";
+export const HELP_TEL = 'tel:131114';
+
+/** The optional "How do you feel?" answers: [stored value, button label]. Never scored. */
+// The stored value reads after "felt" in the habit view: "Breathing · 2 min · felt calmer".
+export const FEELS = [['calmer', 'Calmer'], ['about the same', 'About the same'], ['no different', 'Not really']];
