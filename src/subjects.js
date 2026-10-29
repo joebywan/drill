@@ -8,5 +8,15 @@ import * as chess from './chess/exercise.js';
  * and every item has a stable `id`. Home, lessons, XP, streak and review pick a subject up from
  * this list alone.
  */
-// Forks leads: it is the hand-written pilot unit; the Lichess themes follow it.
-export const subjects = [{ ...chessCourse, units: [forks, ...chessCourse.units], mount: chess.mount }];
+// Forks leads: it is the hand-written pilot unit. Its Lichess puzzles join it as the last lessons,
+// so the unit ends on real games; the other Lichess themes follow.
+const lichessForks = chessCourse.units.find((u) => u.title === 'Forks');
+const forksUnit = {
+  ...forks,
+  lessons: [...forks.lessons, ...lichessForks.lessons.map((l) => ({ ...l, title: `Real games: ${l.title}` }))],
+};
+export const subjects = [{
+  ...chessCourse,
+  units: [forksUnit, ...chessCourse.units.filter((u) => u !== lichessForks)],
+  mount: chess.mount,
+}];

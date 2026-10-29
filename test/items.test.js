@@ -46,3 +46,8 @@ test('a puzzle with no written explanation explains with its line', () => {
   const { explain, ...bare } = byId['fork-0-find'];
   assert.equal(explanation(bare), 'The line: Nc7+.');
 });
+
+test('a fork claim the board does not back up is caught', () => {
+  assert.match(problem({ ...byId['fork-1-pick'], targets: ['h8', 'a1'] }), /options hitting every target/);
+  assert.equal(problem({ ...byId['fork-1-find-a'], targets: ['g8', 'a8'] }), 'the move misses a target');
+});
