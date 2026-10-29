@@ -60,6 +60,13 @@ npm test                   # node --test, no framework
 
 ## Rules
 
+- **Reuse before you add.** Daybook bloated from copied code; Drill must not. Before writing a
+  helper, screen or exercise, look for one to extend: `src/html.js` (esc, chip), `focusOn()`,
+  `coach()`, `src/calm/routines.js` (`timeline()` runs any timed routine), the subject contract
+  (`coach`, `habit`, `kind`) and `finishRoutine()`, the one end screen for every practice habit.
+  A new practice habit is a course file, a mount and a subject entry, not a new session flow.
+  If two features need the same thing, extract it once. Review PRs for duplicated blocks.
+
 - **Correct is decided by the rules, not by comparing to the stored answer.** Any checkmate
   solves a puzzle. Keep the stored line for hints.
 - **Feedback must not move the board.** Rosa's bubble keeps its height; the answer banner is

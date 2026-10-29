@@ -3,8 +3,8 @@ import { breathe } from '../cast/moss.js';
 import { CALM_LINES, HELP_LINE, HELP_TEL, line } from '../cast/lines.js';
 import { breaths, scan, timeline } from './routines.js';
 import { buzz, move, play } from '../feel.js';
+import { esc } from '../html.js';
 
-const esc = (t) => String(t).replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 const calm = (kind) => line(kind, Math.random(), CALM_LINES);
 
 /** The help line as plain text, with the number also as a link for phones. */
