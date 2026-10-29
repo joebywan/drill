@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { emptyProgress, finishSession, currentStreak, dueKeys } from '../src/progress.js';
+import { emptyProgress, finishSession, currentStreak, dueKeys, light } from '../src/progress.js';
 
 const day = (d, h = 12) => new Date(2026, 9, d, h);
 const roundTrip = (p) => JSON.parse(JSON.stringify(p)); // as it comes back out of localStorage
@@ -34,4 +34,12 @@ test('a missed item comes back sooner than a solved one, and both come back', ()
   assert.ok(new Date(p.cards.miss.due) < new Date(p.cards.hit.due));
   assert.deepEqual(dueKeys(p, day(1)), []);
   assert.deepEqual(dueKeys(p, day(28)), ['miss', 'hit']);
+});
+
+test('the light is soft before the first lesson, bright when today is done, ember after a gap', () => {
+  assert.equal(light(emptyProgress(), day(1)), 'soft');
+  const p = finishSession(emptyProgress(), 'a', [], day(1));
+  assert.equal(light(p, day(1, 23)), 'bright');
+  assert.equal(light(p, day(2)), 'soft');
+  assert.equal(light(p, day(3)), 'ember');
 });

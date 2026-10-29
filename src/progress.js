@@ -58,3 +58,14 @@ export function dueKeys(progress, now = new Date()) {
     .sort(([, a], [, b]) => new Date(a.due) - new Date(b.due))
     .map(([key]) => key);
 }
+
+/**
+ * Today's light, the habit display on the current lamp and the widget: bright once today's
+ * lesson is done, soft until then, and a warm ember after a missed day. It is never dark.
+ */
+export function light(progress, now = new Date()) {
+  const { last } = progress.streak;
+  const date = today(now);
+  if (last === date) return 'bright';
+  return !last || last === dayBefore(date) ? 'soft' : 'ember';
+}

@@ -1,7 +1,9 @@
 import { subjects } from './subjects.js';
-import { emptyProgress, finishSession, currentStreak, dueKeys } from './progress.js';
+import { emptyProgress, finishSession, currentStreak, dueKeys, light } from './progress.js';
 import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
+import { lumi } from './cast/lumi.js';
+import { lamp } from './cast/lamp.js';
 import { reducedMotion } from './cast/kit.js';
 import { line } from './cast/lines.js';
 import { buzz, play, setSound, soundOn } from './feel.js';
@@ -28,57 +30,88 @@ for (const s of subjects)
 
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 
+let stopHome = () => {};
+
+/**
+ * Home: every subject as a winding path of street lamps. Finished lessons are lit; the current
+ * lamp carries today's light, with Lumi beside it and any review due. One Continue button.
+ */
 function home() {
+  stopHome();
   const due = dueKeys(progress).filter((k) => items.has(k));
+  const units = subjects.flatMap(unitsOf);
+  const current = units.flatMap((u) => u.nodes).find((n) => n.state === 'open');
+  const todays = light(progress);
+  const dueChip = due.length
+    ? `<button class="due" data-review>${due.length} to review · about ${Math.max(1, Math.round(Math.min(due.length, REVIEW_SIZE) * 0.4))} min</button>` : '';
+
+  const node = (n, i) => {
+    const x = Math.round(Math.sin((i * Math.PI) / 3) * 64);
+    const here = n === current;
+    const state = here ? todays : n.state === 'done' ? 'lit' : 'off';
+    return `<li class="${n.state}${here ? ' here' : ''}" style="--x:${x}px">
+      ${here ? dueChip : ''}
+      <button class="lamp" data-lesson="${n.id}" ${n.state === 'locked' ? 'disabled' : ''}
+        aria-label="${esc(n.lesson.title)}${n.state === 'done' ? ', done' : n.state === 'locked' ? ', locked' : ''}">${lamp(state)}</button>
+      ${here ? `<div class="guide ${x > 0 ? 'left' : 'right'}"></div>` : ''}
+      <span class="label">${esc(n.lesson.title)}</span>
+    </li>`;
+  };
+
   app.innerHTML = `
     <header class="bar">
       <h1>Drill</h1>
       <span class="stat" title="Day streak">🔥 ${currentStreak(progress)}</span>
-      <span class="stat" title="Total XP">⭐ ${progress.xp}</span>
       <button class="sound" aria-pressed="${soundOn()}" aria-label="Sound">${soundOn() ? '🔊' : '🔇'}</button>
     </header>
     <main class="home">
-      ${due.length ? `<button class="review" data-review>Review ${Math.min(due.length, REVIEW_SIZE)} of ${due.length} due</button>` : ''}
-      ${subjects.map(subjectPath).join('')}
-    </main>`;
+      ${current ? '' : dueChip}
+      ${units.map((u) => `
+        <section class="street">
+          <h2>${esc(u.title)}</h2>
+          <ol class="path">${u.nodes.map(node).join('')}</ol>
+        </section>`).join('')}
+    </main>
+    ${current ? `<footer class="cta"><button class="next" data-lesson="${current.id}">Continue · ${esc(current.lesson.title)}</button></footer>` : ''}`;
+
+  const guide = app.querySelector('.guide');
+  if (guide) {
+    // Lumi rests once today is done, and is content otherwise: never sad, whatever the light.
+    const late = new Date().getHours() >= 21;
+    const lumiCoach = coach(guide, lumi);
+    lumiCoach.set(todays === 'bright' ? (late ? 'sleepy' : 'complete') : 'teach');
+    stopHome = lumiCoach.stop;
+  }
+  app.querySelector('.here')?.scrollIntoView({ block: 'center' });
   app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); });
   app.querySelector('[data-review]')?.addEventListener('click', () =>
     run(null, due.slice(0, REVIEW_SIZE).map((k) => ({ key: k, ...items.get(k) }))));
   for (const btn of app.querySelectorAll('[data-lesson]')) {
     btn.addEventListener('click', () => {
-      const [sid, lid] = btn.dataset.lesson.split('|');
-      const subject = subjects.find((s) => s.id === sid);
-      const lesson = subject.units.flatMap((u) => u.lessons).find((l) => l.id === lid);
-      run(`${sid}:${lid}`, lesson.items.map((item) => ({ key: `${sid}:${item.id}`, ...items.get(`${sid}:${item.id}`) })));
+      const n = units.flatMap((u) => u.nodes).find((x) => x.id === btn.dataset.lesson);
+      run(n.id, n.lesson.items.map((item) => ({ key: `${n.subject.id}:${item.id}`, ...items.get(`${n.subject.id}:${item.id}`) })));
     });
   }
 }
 
 /**
- * One subject's units. A unit opens when the previous unit's first lesson is done, so a
- * beginner can move across topics without first clearing every hard tier; within a unit,
- * lessons open in order.
+ * One subject's units, each lesson marked done, open or locked. A unit opens when the previous
+ * unit's first lesson is done, so a beginner can move across topics without first clearing every
+ * hard tier; within a unit, lessons open in order.
  */
-function subjectPath(subject) {
+function unitsOf(subject) {
   let unitOpen = true;
-  const units = subject.units.map((unit) => {
+  return subject.units.map((unit) => {
     let open = unitOpen;
     unitOpen = !!progress.done[`${subject.id}:${unit.lessons[0].id}`];
-    return `
-    <section class="unit">
-      <h2>${esc(unit.title)}</h2>
-      <div class="lessons">
-        ${unit.lessons.map((l) => {
-          const done = progress.done[`${subject.id}:${l.id}`];
-          const state = done ? 'done' : open ? 'open' : 'locked';
-          if (!done) open = false;
-          return `<button class="lesson ${state}" data-lesson="${subject.id}|${l.id}" ${state === 'locked' ? 'disabled' : ''}>
-            <span class="badge">${done ? '✓' : state === 'locked' ? '🔒' : '▶'}</span>${esc(l.title)}</button>`;
-        }).join('')}
-      </div>
-    </section>`;
-  }).join('');
-  return `<h2 class="subject">${esc(subject.title)}</h2>${units}`;
+    const nodes = unit.lessons.map((lesson) => {
+      const id = `${subject.id}:${lesson.id}`;
+      const state = progress.done[id] ? 'done' : open ? 'open' : 'locked';
+      if (state !== 'done') open = false;
+      return { id, subject, lesson, state };
+    });
+    return { title: unit.title, nodes };
+  });
 }
 
 /**
@@ -86,6 +119,7 @@ function subjectPath(subject) {
  * comes back once at the end; only the first try counts toward review scheduling.
  */
 function run(lessonId, queue) {
+  stopHome();
   const results = [];
   let at = 0;
   let streak = 0; // right answers in a row, this session
