@@ -110,10 +110,14 @@ button { font: inherit; color: inherit; cursor: pointer; }
   background: var(--card); border: 2px solid var(--line); border-width: 0 0 2px 2px; transform: rotate(45deg);
 }
 .board { width: 100%; aspect-ratio: 1; }
-.choices { display: flex; gap: 8px; margin-top: 12px; }
+/* Answer buttons sit in the thumb zone, exactly where Continue will appear: no reaching. */
+.choices {
+  position: fixed; left: 0; right: 0; bottom: 0; max-width: 520px; margin: 0 auto; display: flex; gap: 8px;
+  padding: 16px; padding-bottom: max(16px, env(safe-area-inset-bottom)); background: var(--bg);
+}
 .choices:empty { display: none; }
 .choice {
-  flex: 1; padding: 12px 8px; border-radius: 12px; border: 2px solid var(--line); background: var(--card);
+  flex: 1; padding: 12px 8px; line-height: 1.4; border-radius: 12px; border: 2px solid var(--line); background: var(--card);
   font-weight: 600;
 }
 .choice:disabled { cursor: default; }
@@ -135,6 +139,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .verdict strong { display: block; font-size: 1.2rem; }
 .verdict p { margin: 6px 0 0; }
 .foot.wrong .next { background: var(--wrong); }
+.foot .next { margin-bottom: 0; }
 @media (prefers-reduced-motion: reduce) { .foot, .fill { transition: none; } }
 
 .summary { padding: 32px 16px; text-align: center; }
