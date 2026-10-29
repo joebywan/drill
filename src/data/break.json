@@ -1,0 +1,30 @@
+{
+  "id": "break",
+  "title": "Screen break",
+  "units": [
+    {
+      "title": "Screen break",
+      "lessons": [
+        {
+          "id": "break1",
+          "title": "Why breaks help",
+          "items": [
+            {
+              "id": "break-teach",
+              "type": "teach",
+              "help": true,
+              "say": "Hi, I'm Lumi. Two minutes, then back to it. Flippers ready.",
+              "text": [
+                "Looking at something close for a long time keeps your eye muscles working. Looking far away lets them ease off.",
+                "Sitting still for a while can leave your shoulders and neck stiff. A little movement loosens them up.",
+                "One idea to try: every 20 minutes, look at something 20 feet (about 6 metres) away for 20 seconds. We'll start with that, then move a bit."
+              ]
+            },
+            { "id": "break-a", "type": "steps" }
+          ]
+        },
+        { "id": "break2", "title": "Take a break", "items": [{ "id": "break-b", "type": "steps" }] }
+      ]
+    }
+  ]
+}

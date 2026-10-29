@@ -37,7 +37,7 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
    doctor for injuries, never push to do more.
 6. [ ] **Reflect.** Three lines a day (one good thing, one thing learned, one for tomorrow),
    kept on the device, never read or scored.
-7. [ ] **Eyes and posture break.** A two-minute screen break: look far away, roll the
+7. [x] **Eyes and posture break.** A two-minute screen break: look far away, roll the
    shoulders, stand up.
 8. [ ] **Self-reported habits.** One tap to log things Drill can't guide (walked, read, drank
    water, went outside), then "add your own habit".

@@ -168,3 +168,19 @@ export const HELP_TEL = 'tel:131114';
 /** The optional "How do you feel?" answers: [stored value, button label]. Never scored. */
 // The stored value reads after "felt" in the habit view: "Breathing · 2 min · felt calmer".
 export const FEELS = [['calmer', 'Calmer'], ['about the same', 'About the same'], ['no different', 'Not really']];
+
+/**
+ * Lumi, the screen break's coach: short, bouncy, a baby seal who loves a stretch. Plain words,
+ * no health claims, no hurry, and never a word about how long you have been on a screen.
+ */
+export const BREAK_LINES = {
+  paused: ['Paused. I will just float here.'],
+  tapped: ['Seals stretch all day. It is most of the job.', 'Look far. Further. Is that a fish?', 'Wiggle allowed.'],
+  done: ['Break done. Back to it, nice and loose.', 'That was a good stretch.', 'Eyes rested, shoulders rolled. Arf.'],
+  'calmer': ['Nice. A loose seal is a happy seal.'],
+  'about the same': ['That is fine. A short break still counts.'],
+  'no different': ['That is alright. Thanks for telling me.'],
+};
+
+/** On the first screen break lesson and after "Not really". */
+export const SAFETY_LINE = 'Move gently and stop if anything hurts.';

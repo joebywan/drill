@@ -8,6 +8,10 @@ import { moss, NAME as MOSS } from './cast/moss.js';
 import { CALM_LINES } from './cast/lines.js';
 import { helpHtml } from './calm/practice.js';
 import * as calm from './calm/practice.js';
+import breakCourse from './data/break.json' with { type: 'json' };
+import * as screenBreak from './break/practice.js';
+import { lumi } from './cast/lumi.js';
+import { BREAK_LINES } from './cast/lines.js';
 
 /**
  * The contract. A subject is a course plus one `mount(el, item, { say, done })` that plays a
@@ -28,6 +32,7 @@ import * as calm from './calm/practice.js';
 export const HABITS = [
   { id: 'learn', name: 'Learning', icon: '🔥' },
   { id: 'calm', name: 'Calm', icon: '🌿' },
+  { id: 'break', name: 'Screen break', icon: '👀' },
 ];
 
 // Chess from zero comes first (the board, how pieces move, capturing, check and mate), then the
@@ -51,4 +56,10 @@ export const subjects = [{
   habit: 'calm',
   kind: 'practice',
   coach: { draw: moss, name: MOSS, start: 'guide', lines: CALM_LINES, help: helpHtml },
+}, {
+  ...breakCourse,
+  mount: screenBreak.mount,
+  habit: 'break',
+  kind: 'practice',
+  coach: { draw: lumi, name: 'Lumi', start: 'teach', lines: BREAK_LINES, help: screenBreak.safetyHtml },
 }];

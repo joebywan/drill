@@ -2,7 +2,7 @@ import course from '../data/calm.json' with { type: 'json' };
 import { breathe } from '../cast/moss.js';
 import { CALM_LINES, HELP_LINE, HELP_TEL, line } from '../cast/lines.js';
 import { breaths, scan } from './routines.js';
-import { pauseBar, routine, teach } from '../practice/kit.js';
+import { pauseBar, routine, steps, teach } from '../practice/kit.js';
 import { buzz, move, play } from '../feel.js';
 import { esc } from '../html.js';
 
@@ -53,21 +53,10 @@ function breathing(el, item, ctx) {
 
 function scanning(el, item, ctx) {
   const zones = course.zones;
-  el.innerHTML = `<div class="scan">
-      <ol class="zones" aria-label="Body scan, feet to head">${zones.map((z) => `<li>${esc(z.name)}</li>`).join('')}</ol>
-      <p class="scan-left" aria-hidden="true"><span class="count"></span> s</p>
-    </div>${pauseBar}`;
-  const rows = [...el.querySelectorAll('.zones li')];
-  return routine(el, scan(zones, item.seconds), ctx, (p, i, say) => {
-    rows.forEach((r, j) => {
-      r.className = j < i ? 'past' : j === i ? 'now' : '';
-      if (j === i) r.setAttribute('aria-current', 'step'); else r.removeAttribute('aria-current');
-    });
-    say(p.line, 'notice');
-    play('exhale');
-    // A slow fill along the current zone: the gentle progress cue.
-    return [move(rows[i], [{ '--fill': '0%' }, { '--fill': '100%' }], { duration: p.seconds * 1000, fill: 'forwards' })];
-  }, `${zones.length} places, feet to head`, calm('paused'));
+  return steps(el, scan(zones, item.seconds), ctx, {
+    label: 'Body scan, feet to head', rising: true, mood: 'notice',
+    summary: `${zones.length} places, feet to head`, paused: calm('paused'),
+  });
 }
 
 /** 5-4-3-2-1: tap a bubble for each thing noticed. Self-paced, so no clock and no Pause. */

@@ -1,5 +1,6 @@
 import { esc } from '../html.js';
 import { timeline } from './timeline.js';
+import { move, play } from '../feel.js';
 
 /**
  * The parts every practice habit's mount reuses, so Calm, Move, Eyes and the rest share one
@@ -56,4 +57,28 @@ export function routine(el, phases, ctx, draw, summary, paused) {
   document.addEventListener('visibilitychange', hidden);
   const cleanup = () => { clock.stop(); document.removeEventListener('visibilitychange', hidden); };
   return cleanup;
+}
+
+/**
+ * A routine shown as a list of named steps (`phases` are { name, line, seconds }): the current
+ * step fills slowly as the calm progress cue, with a `.count` of seconds left under the list.
+ * `label` names the list for screen readers, `mood` is the coach's while it reads each line,
+ * `rising` lists the steps bottom to top (the body scan), and `tone` is a class for the
+ * habit's colours. Calm's body scan and the screen break both use it.
+ */
+export function steps(el, phases, ctx, { label, summary, paused, mood, rising = false, tone = '' }) {
+  el.innerHTML = `<div class="scan ${tone}">
+      <ol class="steps${rising ? ' rising' : ''}" aria-label="${esc(label)}">${phases.map((p) => `<li>${esc(p.name)}</li>`).join('')}</ol>
+      <p class="scan-left" aria-hidden="true"><span class="count"></span> s</p>
+    </div>${pauseBar}`;
+  const rows = [...el.querySelectorAll('.steps li')];
+  return routine(el, phases, ctx, (p, i, say) => {
+    rows.forEach((r, j) => {
+      r.className = j < i ? 'past' : j === i ? 'now' : '';
+      if (j === i) r.setAttribute('aria-current', 'step'); else r.removeAttribute('aria-current');
+    });
+    say(p.line, mood);
+    play('exhale');
+    return [move(rows[i], [{ '--fill': '0%' }, { '--fill': '100%' }], { duration: p.seconds * 1000, fill: 'forwards' })];
+  }, summary, paused);
 }
