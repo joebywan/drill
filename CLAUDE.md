@@ -55,6 +55,12 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
   `progress.journal` via `writeJournal`, never the log; the habit view shows it through the
   subject's `dayDetail` hook. A subject's `again` ({ label, lesson }, in the course JSON) keeps a
   lesson on home once the path is done: "Reflect today", "Take a break", "Breathe". The learner's text is never linted or sent anywhere (a test checks).
+- `src/move/` — the Move practice subject, built like Calm. `routines.js` is pure: a set of
+  exercises becomes timed phases with rests between; a rep exercise counts its reps (`countOf()` in
+  `src/practice/timeline.js`). `practice.js` mounts it; the coach demonstrates each pose through one
+  `demo()` adapter (Clover, `src/cast/clover.js`). Course in `src/data/move.json`:
+  Wake up, Strength (reps grow 5, 8, 10), Stretch. Guardrails bar pushing and body or weight
+  words, and check the safety line is on the first lesson and after "Not really".
 - **Calm is not therapy.** `test/guardrails.test.js` bars health claims, diagnosis words and urgency
   in Calm's text, and checks the Lifeline help line (13 11 14, as plain text) is on the first Calm
   lesson and after "Not really".

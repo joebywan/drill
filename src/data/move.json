@@ -1,0 +1,140 @@
+{
+  "id": "move",
+  "title": "Move",
+  "units": [
+    {
+      "title": "Wake up",
+      "lessons": [
+        {
+          "id": "wake1",
+          "title": "Loosen up",
+          "items": [
+            {
+              "id": "wake-teach",
+              "type": "teach",
+              "help": true,
+              "say": "Hi, I'm here to move with you. Copy me, nice and easy.",
+              "text": [
+                "A few gentle moves to wake your body up: neck, shoulders, arms and sides.",
+                "Each move has a little timer. Go at your own pace, and make the moves as small as feels good.",
+                "Rests come in between. Stand, or sit on a sturdy chair: both work."
+              ]
+            },
+            { "id": "wake-a", "type": "routine", "set": [
+              { "move": "neck-tilt", "seconds": 30 },
+              { "move": "shoulder-roll", "reps": 8 },
+              { "move": "reach-up", "seconds": 30 },
+              { "move": "side-bend-left", "seconds": 20 },
+              { "move": "side-bend-right", "seconds": 20 }
+            ] }
+          ]
+        },
+        { "id": "wake2", "title": "A bit longer", "items": [{ "id": "wake-b", "type": "routine", "set": [
+          { "move": "neck-tilt", "seconds": 40 },
+          { "move": "shoulder-roll", "reps": 10 },
+          { "move": "reach-up", "seconds": 40 },
+          { "move": "side-bend-left", "seconds": 30 },
+          { "move": "side-bend-right", "seconds": 30 }
+        ] }] },
+        { "id": "wake3", "title": "Morning flow", "items": [{ "id": "wake-c", "type": "routine", "set": [
+          { "move": "neck-tilt", "seconds": 40 },
+          { "move": "shoulder-roll", "reps": 12 },
+          { "move": "reach-up", "seconds": 40 },
+          { "move": "side-bend-left", "seconds": 30 },
+          { "move": "side-bend-right", "seconds": 30 },
+          { "move": "march", "seconds": 40 }
+        ] }] }
+      ]
+    },
+    {
+      "title": "Strength",
+      "lessons": [
+        {
+          "id": "strength1",
+          "title": "First sets",
+          "items": [
+            {
+              "id": "strength-teach",
+              "type": "teach",
+              "say": "Strength time. Your own body is all the kit we need.",
+              "text": [
+                "Wall push-ups, squats and marching on the spot. Slow and steady beats lots.",
+                "The count is a guide, not a target. Stop early whenever you like, and rest as long as you want.",
+                "A sturdy chair behind you makes squats easier: just touch it and stand back up."
+              ]
+            },
+            { "id": "strength-a", "type": "routine", "set": [
+              { "move": "march", "seconds": 30 },
+              { "move": "wall-push", "reps": 5 },
+              { "move": "squat", "reps": 5 },
+              { "move": "march", "seconds": 30 }
+            ] }
+          ]
+        },
+        { "id": "strength2", "title": "A few more", "items": [{ "id": "strength-b", "type": "routine", "set": [
+          { "move": "march", "seconds": 40 },
+          { "move": "wall-push", "reps": 8 },
+          { "move": "squat", "reps": 8 },
+          { "move": "march", "seconds": 40 }
+        ] }] },
+        { "id": "strength3", "title": "Two rounds", "items": [{ "id": "strength-c", "type": "routine", "set": [
+          { "move": "march", "seconds": 40 },
+          { "move": "wall-push", "reps": 10 },
+          { "move": "squat", "reps": 10 },
+          { "move": "march", "seconds": 30 },
+          { "move": "wall-push", "reps": 8 },
+          { "move": "squat", "reps": 8 }
+        ] }] }
+      ]
+    },
+    {
+      "title": "Stretch",
+      "lessons": [
+        {
+          "id": "stretch1",
+          "title": "Slow stretch",
+          "items": [
+            {
+              "id": "stretch-teach",
+              "type": "teach",
+              "say": "Stretching. The slowest thing we do. I'm a big fan.",
+              "text": [
+                "Ease into each stretch until you feel a gentle pull, then hold it and breathe.",
+                "No bouncing, and no forcing. A stretch should feel good, never sharp.",
+                "If one side feels different from the other, that's normal."
+              ]
+            },
+            { "id": "stretch-a", "type": "routine", "set": [
+              { "move": "reach-up", "seconds": 30 },
+              { "move": "side-bend-left", "seconds": 30 },
+              { "move": "side-bend-right", "seconds": 30 },
+              { "move": "lunge-left", "seconds": 30 },
+              { "move": "lunge-right", "seconds": 30 }
+            ] }
+          ]
+        },
+        { "id": "stretch2", "title": "Longer holds", "items": [{ "id": "stretch-b", "type": "routine", "set": [
+          { "move": "neck-tilt", "seconds": 30 },
+          { "move": "reach-up", "seconds": 40 },
+          { "move": "side-bend-left", "seconds": 40 },
+          { "move": "side-bend-right", "seconds": 40 },
+          { "move": "lunge-left", "seconds": 40 },
+          { "move": "lunge-right", "seconds": 40 }
+        ] }] }
+      ]
+    }
+  ],
+  "again": { "label": "Move", "lesson": "wake3" },
+  "moves": {
+    "neck-tilt": { "pose": "neck-tilt", "name": "Neck tilts", "cue": "Ear towards your shoulder, slowly, one side then the other. Shoulders stay low." },
+    "shoulder-roll": { "pose": "shoulder-roll", "name": "Shoulder rolls", "cue": "Lift your shoulders up, roll them back, let them drop.", "pace": 4, "unit": "shoulder rolls" },
+    "reach-up": { "pose": "reach-up", "name": "Reach up", "cue": "Arms up high, like you're picking fruit from a tall tree. Breathe out and lower." },
+    "side-bend-left": { "pose": "side-bend-left", "name": "Side bend, left", "cue": "Right arm up and over, lean gently to the left. Feel the stretch along your side." },
+    "side-bend-right": { "pose": "side-bend-right", "name": "Side bend, right", "cue": "Left arm up and over, lean gently to the right." },
+    "march": { "pose": "march", "name": "March on the spot", "cue": "Lift your knees at an easy pace and let your arms swing." },
+    "wall-push": { "pose": "wall-push", "name": "Wall push-ups", "cue": "Hands on the wall at shoulder height. Bend your elbows, lean in, push back.", "pace": 4, "unit": "wall push-ups" },
+    "squat": { "pose": "squat", "name": "Squats", "cue": "Feet hip-width, sit back like there's a chair, then stand tall.", "pace": 4, "unit": "squats" },
+    "lunge-left": { "pose": "lunge", "name": "Lunge stretch, left leg", "cue": "Step your left foot forward and bend that knee a little. Feel the stretch in the back leg's hip." },
+    "lunge-right": { "pose": "lunge", "name": "Lunge stretch, right leg", "cue": "Now the right foot forward. Easy does it." }
+  }
+}

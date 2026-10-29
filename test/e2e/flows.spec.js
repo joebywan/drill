@@ -223,6 +223,41 @@ test('once the short Reflect path is done, "Reflect today" stays on home', async
   await expect(page.getByRole('heading', { name: 'One good thing' })).toBeVisible();
 });
 
+test('a Move session plays timed exercises with rests, and keeps its own streak', async ({ page }) => {
+  await page.clock.install();
+  await placeAtStart(page);
+  await page.getByRole('button', { name: '🌱 Move', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Wake up' })).toBeVisible();
+  await page.getByRole('button', { name: 'Continue · Loosen up' }).click();
+  // Safety first, on the first Move lesson.
+  await expect(page.getByText('Move gently and stop if anything hurts. If you have an injury or a health condition, check with a doctor first.')).toBeVisible();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await expect(page.getByRole('heading', { name: 'Neck tilts' })).toBeVisible();
+  await expect(page.getByText('Exercise 1 of 5')).toBeVisible();
+  await expect(page.locator('.count')).toHaveText('30');
+  await page.clock.runFor(30_000);
+  await expect(page.getByRole('heading', { name: 'Rest' })).toBeVisible();
+  await expect(page.getByText('Rest · next: Shoulder rolls')).toBeVisible();
+  await expect(page.getByText(/Exercise \d of/)).toHaveCount(0);
+  await page.clock.runFor(10_000);
+  await expect(page.getByText('Exercise 2 of 5')).toBeVisible();
+  await expect(page.locator('.tally')).toHaveText('1 of 8'); // a rep move counts reps
+  await page.clock.runFor(140_000);
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+  await expect(page.getByText(/^5 moves · 8 shoulder rolls · \d+ min$/)).toBeVisible();
+  await expect(page.locator('.chip.move')).toContainText('🌱 1');
+  await page.getByRole('button', { name: 'Not really' }).click();
+  await expect(page.getByText('Move gently and stop if anything hurts.', { exact: false })).toBeVisible();
+  await continueButton(page).click();
+
+  // The next Wake up lesson is open; Calm and Learning are untouched.
+  await expect(page.getByRole('button', { name: 'Continue · A bit longer' })).toBeVisible();
+  await expect(page.getByTitle('Day streak')).toHaveText('🔥 0');
+  await expect(page.getByRole('button', { name: /^Calm: / })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Move: 1-day streak' }).click();
+  await expect(page.locator('.day').first().getByRole('listitem')).toHaveText(/^Wake up · \d+ min · felt no different$/);
+});
+
 test('mute stays muted after a reload', async ({ page }) => {
   await placeAtStart(page);
   const sound = page.getByRole('button', { name: 'Sound' });

@@ -355,3 +355,14 @@ html { scroll-padding-bottom: 160px; }
 .journal { margin-top: 6px; }
 .day .journal li { background: none; }
 .journal span { display: block; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+
+/* ---- Move's practice screens ---- */
+:root { --chip-move: #8A4A86; }
+@media (prefers-color-scheme: dark) { :root { --chip-move: #E0A6DA; } }
+.chip.move { --c: var(--chip-move); flex: 0 1 180px; margin: 0 auto; }
+.exercise { text-align: center; margin-top: 8px; }
+.exercise h2 { margin: 4px 0 6px; font-size: 1.4rem; }
+.exercise .cue { margin: 0 auto; max-width: 30ch; min-height: 3em; }
+.exercise .tally { margin: 16px 0 0; color: var(--muted); font-weight: 600; }
+.exercise .tally .count { color: var(--text); }
+.exercise[data-kind="rest"] h2 { color: var(--muted); }

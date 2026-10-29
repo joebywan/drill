@@ -32,9 +32,9 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
    bottom-to-top body scan, each taught once then practised, with cycles growing along the
    path. Guardrail tests: no claims to be therapy, no urgency, and a line pointing to real
    help (Lifeline 13 11 14).
-5. [ ] **Move.** Stretching, mobility and bodyweight sets with reps growing along the path.
+5. [x] **Move.** Stretching, mobility and bodyweight sets with reps growing along the path.
    Needs a character who demonstrates moves. Guardrails: stop if anything hurts, check with a
-   doctor for injuries, never push to do more.
+   doctor for injuries, never push to do more. Clover demonstrates each move.
 6. [x] **Reflect.** Three lines a day (one good thing, one thing learned, one for tomorrow),
    kept on the device, never read or scored. Lumi coaches; the lines live in progress v3's
    `journal`, never in the log, and only the habit view (the subject's `dayDetail`) and the file

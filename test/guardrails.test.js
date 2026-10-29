@@ -3,14 +3,15 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY } from '../src/habitview.js';
 import { helpHtml } from '../src/calm/practice.js';
+import { helpHtml as moveHelp } from '../src/move/practice.js';
 import { subjects } from '../src/subjects.js';
-import { ACCURACY, BREAK_LINES, SAFETY_LINE, CALM_LINES, REFLECT_LINES, CELEBRATIONS, FEELS, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
+import { ACCURACY, BREAK_LINES, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, CELEBRATIONS, FEELS, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
 // Praise the process, never the person: no ability words. No absence, loss or guilt either.
 const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intelligen\w*|born to)\b/i;
 const LOSS = /\b(lose|losing|lost|gone|we miss you|missed you|sad|disappoint\w*|abandon\w*|forg[eo]t\w*|broke(n)?|break(ing)? your|come back (soon|to us|tomorrow)|where were you|absen\w*|guilt\w*|shame)\b/i;
 
-const lines = [LINES, HEADLINES, CALM_LINES, BREAK_LINES, REFLECT_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
+const lines = [LINES, HEADLINES, CALM_LINES, BREAK_LINES, REFLECT_LINES, MOVE_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
 const labels = [...ACCURACY, ...PACE].map(([, label]) => label).concat(STREAK_LABEL, QUIET_DAY, REST_DAY, NO_STREAK, FIRST_SQUARE);
 
 test('end-screen headlines and chip labels pass the same lint', () => {
@@ -178,4 +179,40 @@ test('the screen break says to move gently, on the first lesson and after "Not r
   assert.equal(subjects.find((x) => x.habit === 'break').coach.help, safetyHtml);
   assert.ok(safetyHtml().includes(SAFETY_LINE));
   for (const kind of Object.keys(BREAK_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
+});
+
+// Move is gentle movement, never a workout that pushes: no "no pain, no gain", nothing about
+// bodies' size or shape, no weight loss and no calorie numbers. Safety comes first and stays visible.
+const PUSHING = /no pain|no gain|push (through|it|harder|yourself)|\bburn\w*|\bharder\b|\bfaster\b|\bmax(imum|ed)?\b|\bbeast\b|every rep counts|\bkill\w*|\bcrush\w*|\bsweat\w*|\bhurry\b|\bquick(ly)?\b|don'?t stop|keep going|\bearn\w*|\blazy\b|\bwimp\w*|\bweak\w*|\bgo hard\b/i;
+const BODY = /\bweight\b|\bfat\b|\bcalor\w*|\bkcal\b|\bslim\w*|\bthin(ner)?\b|\bbikini\b|beach body|\btone[sd]?\b|\btoning\b|\bflab\w*|\bbelly\b|\bskinny\b|\bdiet\w*|\bshape up\b|\bbody goals?\b|\bwaist\w*/i;
+const CALORIE_NUMBERS = /\d+\s*(k?cal|calories)/i;
+
+const moveCourse = JSON.parse(readFileSync('src/data/move.json', 'utf8'));
+const moveText = [
+  ...Object.entries(MOVE_LINES).flatMap(([kind, list]) => list.map((text) => [kind, text])),
+  ...strings(moveCourse).filter((t) => /\s/.test(t)).map((text) => ['move.json', text]),
+  ...[...readFileSync('src/move/practice.js', 'utf8').matchAll(/`([^`$]*)/g)].map((m) => ['practice.js', m[1]]),
+  ['safety', MOVE_SAFETY],
+];
+
+test('Move never pushes, never body-shames, and has no calorie numbers', () => {
+  assert.ok(moveText.length > 40);
+  for (const [kind, text] of moveText) {
+    for (const lint of [PUSHING, BODY, CALORIE_NUMBERS, ABILITY, LOSS]) assert.doesNotMatch(text, lint, `${kind}: ${text}`);
+  }
+  // The lint itself catches what it is for.
+  for (const bad of ['No pain, no gain', 'Push through it', 'Feel the burn', 'Go harder', 'Faster now', 'Max effort', 'Beast mode', 'Every rep counts'])
+    assert.match(bad, PUSHING, bad);
+  for (const bad of ['Lose weight', 'Burn fat', 'Burn calories', 'Get slim', 'Bikini season', 'Beach body ready'])
+    assert.match(bad, BODY, bad);
+  assert.match('That burned 120 calories', CALORIE_NUMBERS);
+});
+
+test('the safety line is on the first Move lesson and after "Not really"', () => {
+  assert.equal(MOVE_SAFETY, 'Move gently and stop if anything hurts. If you have an injury or a health condition, check with a doctor first.');
+  assert.equal(moveCourse.units[0].lessons[0].items[0].help, true);
+  const moveSubject = subjects.find((x) => x.habit === 'move');
+  assert.equal(moveSubject.coach.help, moveHelp, 'Move supplies the safety line to the end screen');
+  assert.ok(moveHelp().replace(/<[^>]+>/g, '').includes(MOVE_SAFETY));
+  for (const kind of Object.keys(MOVE_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
 });
