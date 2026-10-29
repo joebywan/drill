@@ -3,6 +3,10 @@ import basics from './data/basics.json' with { type: 'json' };
 import forks from './data/forks.json' with { type: 'json' };
 import calmCourse from './data/calm.json' with { type: 'json' };
 import * as chess from './chess/exercise.js';
+import { rosa } from './cast/rosa.js';
+import { moss, NAME as MOSS } from './cast/moss.js';
+import { CALM_LINES } from './cast/lines.js';
+import { helpHtml } from './calm/practice.js';
 import * as calm from './calm/practice.js';
 
 /**
@@ -14,6 +18,11 @@ import * as calm from './calm/practice.js';
  * Every subject feeds one habit (`habit`, an id from HABITS) and is one of two kinds: 'learn'
  * (teach then test, right or wrong, spaced review) or 'practice' (a guided routine with no right
  * or wrong and no review; finishing it is the point). See docs/HABITS.md.
+ *
+ * `coach` is who runs the subject's sessions: { draw, name, start, lines?, help? } — the
+ * character (rosa, moss…), its name for screen readers, the mood an item starts in, its own
+ * lines (default: Rosa's LINES) and, for a practice habit, the help shown after "Not really".
+ * Sessions and the practice end screen read everything subject-specific from here.
  */
 /** Every habit, in the order the home bar shows them. A habit appears once it has a session (Learning always). */
 export const HABITS = [
@@ -35,9 +44,11 @@ export const subjects = [{
   mount: chess.mount,
   habit: 'learn',
   kind: 'learn',
+  coach: { draw: rosa, name: 'Rosa', start: 'think' },
 }, {
   ...calmCourse,
   mount: calm.mount,
   habit: 'calm',
   kind: 'practice',
+  coach: { draw: moss, name: MOSS, start: 'guide', lines: CALM_LINES, help: helpHtml },
 }];

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY } from '../src/habitview.js';
 import { helpHtml } from '../src/calm/practice.js';
+import { subjects } from '../src/subjects.js';
 import { ACCURACY, CALM_LINES, CELEBRATIONS, FEELS, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
 // Praise the process, never the person: no ability words. No absence, loss or guilt either.
@@ -107,7 +108,9 @@ test('real help is reachable from Calm, as plain text', () => {
   assert.equal(calmCourse.units[0].lessons[0].items[0].help, true);
   // ...and after "Not really". The number is text; the tel: link is only an extra.
   assert.deepEqual(FEELS.find(([, label]) => label === 'Not really'), ['no different', 'Not really']);
-  assert.match(readFileSync('src/app.js', 'utf8'), /feel === 'no different'\) .*helpHtml\(\)/);
+  const calmSubject = subjects.find((x) => x.habit === 'calm');
+  assert.equal(calmSubject.coach.help, helpHtml, 'Calm supplies the help line to the end screen');
+  assert.match(readFileSync('src/app.js', 'utf8'), /feel === 'no different' && who\.help\) .*who\.help\(\)/);
   const html = helpHtml();
   assert.ok(html.replace(/<[^>]+>/g, '').includes(HELP_LINE), html);
   assert.match(html, /href="tel:131114"/);

@@ -4,11 +4,10 @@ import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, dayName, restDays
 import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
-import { moss, NAME as MOSS } from './cast/moss.js';
-import { helpHtml } from './calm/practice.js';
 import { reducedMotion } from './cast/kit.js';
-import { CALM_LINES, FEELS, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
+import { FEELS, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
 import { buzz, move, play, setSound, soundOn } from './feel.js';
+import { chip, esc } from './html.js';
 
 const STORE = 'drill.progress';
 const REVIEW_SIZE = 8;
@@ -41,8 +40,6 @@ for (const s of subjects)
   for (const u of s.units)
     for (const l of u.lessons)
       for (const item of l.items) items.set(`${s.id}:${item.id}`, { subject: s, item, topic: u.title });
-
-const esc = (t) => String(t).replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 
 /**
  * A new screen replaces the page, so focus would fall back to the top of the document. This puts
@@ -268,6 +265,7 @@ function run(lessonId, queue, title) {
   stopHome();
   // A practice routine (Calm) has no right or wrong: no meter heat, no runs, no review cards.
   const practice = queue[0]?.subject.kind === 'practice';
+  const who = queue[0].subject.coach; // the session's coach and their lines
   const did = []; // what each practice item did, for its end screen ("3 breaths")
   const results = [];
   let at = 0;
@@ -282,7 +280,7 @@ function run(lessonId, queue, title) {
     <main class="play">
       <p class="topic"></p>
       <div class="coach">
-        <button class="who" aria-label="${practice ? MOSS : 'Rosa'}"></button>
+        <button class="who" aria-label="${esc(who.name)}"></button>
         <p class="bubble" id="said" aria-live="polite"></p>
       </div>
       <div class="stage"></div>
@@ -293,17 +291,17 @@ function run(lessonId, queue, title) {
     </footer>`;
   const $ = (sel) => app.querySelector(sel);
   const [topic, bubble, stage, foot, next] = ['.topic', '.bubble', '.stage', '.foot', '.next'].map($);
-  const rosaCoach = coach($('.who'), practice ? moss : rosa);
+  const sessionCoach = coach($('.who'), who.draw);
   let said = '';
-  const quit = () => { cleanup(); rosaCoach.stop(); };
+  const quit = () => { cleanup(); sessionCoach.stop(); };
   $('.close').addEventListener('click', () => { quit(); home(); focusOn('.cta .next'); });
 
   // Tapping Rosa: a hop and a line, then back to the question.
   let aside;
   $('.who').addEventListener('click', () => {
     play('tap');
-    rosaCoach.hop();
-    bubble.textContent = practice ? line('tapped', Math.random(), CALM_LINES) : line('tapped');
+    sessionCoach.hop();
+    bubble.textContent = line('tapped', Math.random(), who.lines);
     clearTimeout(aside);
     aside = setTimeout(() => { bubble.textContent = said; }, 2500);
   });
@@ -331,14 +329,14 @@ function run(lessonId, queue, title) {
     cleanup();
     meter();
     foot.className = 'foot';
-    if (at === queue.length) { rosaCoach.stop(); return practice ? finishCalm() : finish(); }
+    if (at === queue.length) { sessionCoach.stop(); return practice ? finishRoutine() : finish(); }
     const entry = queue[at];
     topic.textContent = entry.topic;
-    rosaCoach.set(practice ? 'guide' : 'think');
+    sessionCoach.set(who.start);
     cleanup = entry.subject.mount(stage, entry.item, {
       say: (text, mood) => {
         said = bubble.textContent = text;
-        if (mood) rosaCoach.set(mood);
+        if (mood) sessionCoach.set(mood);
       },
       coachEl: $('.who'),
       done: (correct, text = '') => {
@@ -352,15 +350,15 @@ function run(lessonId, queue, title) {
           streak++;
           kind = rightAnswer(streak);
           if (kind !== 'correct') flare(`${streak} in a row`);
-          rosaCoach.set('correct');
-          rosaCoach.hop();
+          sessionCoach.set('correct');
+          sessionCoach.hop();
           play(kind === 'correct' ? 'right' : 'run');
           buzz('right');
         } else if (correct === false) {
           streak = 0;
           kind = 'wrong';
-          rosaCoach.set('wrong');
-          rosaCoach.sway();
+          sessionCoach.set('wrong');
+          sessionCoach.sway();
           play('wrong');
           buzz('wrong');
         }
@@ -381,10 +379,10 @@ function run(lessonId, queue, title) {
   next.addEventListener('click', step);
 
   /**
-   * The end of a practice routine: settled, not a party. What was done, the habit's streak, and
+   * The end of any practice routine (Calm, Move…): settled, not a party. What was done, the habit's streak, and
    * "How do you feel?" as one optional tap that is kept on the log and never judged.
    */
-  const finishCalm = () => {
+  const finishRoutine = () => {
     const { subject, topic: technique } = queue[0];
     const firstTime = lessonId && !progress.done[lessonId];
     const mins = Math.max(1, Math.round((Date.now() - started) / 60000));
@@ -396,10 +394,10 @@ function run(lessonId, queue, title) {
       <main class="summary calm-end">
         <div class="hero"></div>
         <p class="kicker">${esc(technique)}</p>
-        <h1>${esc(line('done', Math.random(), CALM_LINES))}</h1>
+        <h1>${esc(line('done', Math.random(), who.lines))}</h1>
         <p class="said">${esc([...did, `${mins} min`].join(' · '))}</p>
         <div class="chips">
-          <div class="chip calm"><span>${esc(h.name.toUpperCase())} STREAK</span><b>${h.icon} ${n}</b></div>
+          ${chip(h.id, `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`)}
         </div>
         <section class="feel" aria-labelledby="feel-q">
           <h2 id="feel-q">How do you feel?</h2>
@@ -408,8 +406,8 @@ function run(lessonId, queue, title) {
         </section>
       </main>
       <footer class="cta"><button class="next">Continue</button></footer>`;
-    const mossCoach = coach(app.querySelector('.hero'), moss);
-    mossCoach.set('done');
+    const endCoach = coach(app.querySelector('.hero'), who.draw);
+    endCoach.set('done');
     focusOn('h1');
     for (const b of app.querySelectorAll('[data-feel]')) {
       b.addEventListener('click', () => {
@@ -419,13 +417,13 @@ function run(lessonId, queue, title) {
         play('tap');
         const section = app.querySelector('.feel');
         section.querySelector('.feels').remove();
-        section.querySelector('[role="status"]').textContent = line(feel, Math.random(), CALM_LINES);
-        if (feel === 'no different') section.insertAdjacentHTML('beforeend', helpHtml());
+        section.querySelector('[role="status"]').textContent = line(feel, Math.random(), who.lines);
+        if (feel === 'no different' && who.help) section.insertAdjacentHTML('beforeend', who.help());
         focusOn('.cta .next');
       });
     }
     app.querySelector('.next').addEventListener('click', () => {
-      mossCoach.stop();
+      endCoach.stop();
       home(firstTime ? lessonId : null);
       focusOn('.cta .next');
     });
@@ -449,7 +447,6 @@ function run(lessonId, queue, title) {
     });
     const percent = results.length ? Math.round((100 * right) / results.length) : null;
     const clock = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
-    const chip = (tone, label, value) => `<div class="chip ${tone}"><span>${esc(label)}</span><b>${esc(value)}</b></div>`;
     app.innerHTML = `
       <main class="summary">
         <div class="duo">
