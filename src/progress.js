@@ -12,12 +12,14 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *   done     { lessonId: true }
  *   cards    { itemKey: FSRS card }  — every item ever answered, scheduled for review
  *   start    unit title the placement survey chose, absent until it is answered
+ *   journal  { 'YYYY-MM-DD': { good?, learned?, tomorrow? } }  — Reflect's lines, the learner's
+ *            own words. Kept here, not in the log; only the habit view and the file export read them
  *   version  the shape's version; `migrate()` brings any older shape up to VERSION
  */
-export const VERSION = 2;
+export const VERSION = 3;
 export const LEARN = 'learn';
 const emptyStreak = () => ({ count: 0, last: null, forgiven: [] });
-export const emptyProgress = () => ({ version: VERSION, habits: { [LEARN]: emptyStreak() }, log: [], done: {}, cards: {} });
+export const emptyProgress = () => ({ version: VERSION, habits: { [LEARN]: emptyStreak() }, log: [], done: {}, cards: {}, journal: {} });
 
 const isObject = (v) => v != null && typeof v === 'object' && !Array.isArray(v);
 const isDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
@@ -31,13 +33,17 @@ function readStreak(raw) {
   return { ...raw, forgiven };
 }
 
+const JOURNAL_KEYS = ['good', 'learned', 'tomorrow'];
+const isJournal = (j) => isObject(j) && Object.entries(j).every(([date, day]) =>
+  isDate(date) && isObject(day) && JOURNAL_KEYS.every((k) => day[k] == null || typeof day[k] === 'string'));
+
 const isEntry = (e) => isObject(e) && isDate(e.date) && typeof e.habit === 'string' && typeof e.title === 'string';
 
 /**
  * Any stored or imported progress, brought to the current shape, or null when it isn't progress
  * at all (so the caller keeps what it has). Unversioned is version 0; up to version 1 there was
- * one `streak`, which becomes Learning's, and no log. Unknown fields are kept, so a file from a
- * newer build loses nothing.
+ * one `streak`, which becomes Learning's, and no log; up to version 2 there was no journal.
+ * Unknown fields are kept, so a file from a newer build loses nothing.
  */
 export function migrate(raw) {
   if (!isObject(raw) || !isObject(raw.done) || !isObject(raw.cards)) return null;
@@ -58,7 +64,9 @@ export function migrate(raw) {
   }
   const log = raw.log ?? [];
   if (!Array.isArray(log) || !log.every(isEntry)) return null;
-  return { ...kept, version: Math.max(VERSION, Number(raw.version) || 0), habits, log };
+  const journal = raw.journal ?? {};
+  if (!isJournal(journal)) return null;
+  return { ...kept, version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal };
 }
 
 const scheduler = fsrs();
@@ -134,6 +142,18 @@ export function finishPractice(progress, habit, lessonId, now = new Date(), abou
     log: logged(progress, { habit, title: about.title || 'Practice', mins: about.mins || 0 }, now),
     done: lessonId ? { ...progress.done, [lessonId]: true } : progress.done,
   };
+}
+
+/**
+ * Keeps today's Reflect lines in the journal. Blank lines are left out, and a second visit the
+ * same day adds to the first rather than wiping it. Nothing written, nothing kept.
+ */
+export function writeJournal(progress, entry, now = new Date()) {
+  const lines = Object.fromEntries(JOURNAL_KEYS.filter((k) => entry?.[k]?.trim()).map((k) => [k, entry[k].trim()]));
+  if (!Object.keys(lines).length) return progress;
+  const date = today(now);
+  const journal = progress.journal || {};
+  return { ...progress, journal: { ...journal, [date]: { ...journal[date], ...lines } } };
 }
 
 /** The optional "how do you feel?" answer, kept on the latest session of `habit`. */

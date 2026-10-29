@@ -184,3 +184,23 @@ export const BREAK_LINES = {
 
 /** On the first screen break lesson and after "Not really". */
 export const SAFETY_LINE = 'Move gently and stop if anything hurts.';
+
+/**
+ * Lumi, Reflect's coach: short and warm, as ever, but quiet here. No exclamation marks, no hurry,
+ * and nothing that judges what was written (the guardrail tests check). The learner's own lines
+ * are never linted: only what Lumi says is.
+ */
+export const REFLECT_LINES = {
+  write: ['Any size is fine.', 'A few words is plenty.', 'Skip it if nothing comes.', 'Whatever comes first.'],
+  tapped: [
+    'Seals think a lot while floating. I float a lot.',
+    'Small things count. Fish are small.',
+    "Nobody reads these. Not even me. I can't read.",
+    'Take your time. The tide comes back anyway.',
+  ],
+  // The end screen: settled, not a party.
+  done: ['Kept, just for you.', 'That is today, noted.', 'Done. Short and sweet.'],
+  'calmer': ['Good. Writing it down can do that.', 'Nice. Keep a bit of that.'],
+  'about the same': ['That is fine. The lines are kept either way.', 'Fair enough. Thanks for stopping by.'],
+  'no different': ["That's alright. Thanks for telling me. Some days are heavy, and that's not on you."],
+};

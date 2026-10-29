@@ -1,5 +1,5 @@
 import { HABITS, subjects } from './subjects.js';
-import { LEARN, emptyProgress, finishPractice, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, soonestKeys, startedHabits, today } from './progress.js';
+import { LEARN, emptyProgress, finishPractice, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, soonestKeys, startedHabits, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
@@ -85,6 +85,9 @@ function home(arrived = null) {
   // The next lesson, from the placement survey's starting unit on.
   const from = Math.max(0, units.findIndex((u) => u.title === progress.start));
   const current = [...units.slice(from), ...units].flatMap((u) => u.nodes).find((n) => n.state === 'open');
+  // A finished path whose subject has `again` ("Reflect today") keeps its last lesson one tap away.
+  const again = !current && subjects.find((s) => s.habit === habitShown)?.again;
+  const last = units.at(-1)?.nodes.at(-1);
   const minutes = `about ${Math.max(1, Math.round(reviewKeys.length * 0.4))} min`;
   const dueChip = !reviewKeys.length ? ''
     : repair ? `<button class="due" data-review>${esc(line('repair'))} · ${minutes}</button>`
@@ -137,7 +140,8 @@ function home(arrived = null) {
     </main>
     <footer class="cta">
       ${dueChip}
-      ${current ? `<button class="next" data-lesson="${current.id}">Continue · ${esc(current.lesson.title)}</button>` : ''}
+      ${current ? `<button class="next" data-lesson="${current.id}">Continue · ${esc(current.lesson.title)}</button>`
+        : again ? `<button class="next" data-lesson="${last.id}">${esc(again)}</button>` : ''}
     </footer>`;
 
   const guide = app.querySelector('.guide');
@@ -191,13 +195,14 @@ function habitView(id) {
   const now = new Date();
   const n = currentStreak(progress, now, id);
   const rest = restDays(progress.habits[id]);
+  const detail = subjects.find((s) => s.habit === id)?.dayDetail || (() => '');
   const month = habitDays(progress, id, 28, now);
   const week = month.slice(-7);
   const active = month.slice(-14).filter((d) => d.sessions.length).length;
   const cell = ({ date, sessions }) => `<li class="${sessions.length ? 'on' : rest.has(date) ? 'rest' : ''}">
     <span>${dateOf(date).toLocaleDateString('en', { weekday: 'narrow' })}</span><b>${dateOf(date).getDate()}</b></li>`;
   const day = ({ date, sessions }) => `<section class="day"><h3>${dayName(date, now)}</h3>${sessions.length
-    ? `<ul>${sessions.map((e) => `<li>${esc(sessionLine(e))}</li>`).join('')}</ul>`
+    ? `<ul>${sessions.map((e) => `<li>${esc(sessionLine(e))}</li>`).join('')}</ul>${detail(progress, date)}`
     : `<p class="quiet">${rest.has(date) ? REST_DAY : QUIET_DAY}</p>`}</section>`;
   app.innerHTML = `
     <header class="bar"><button class="back" aria-label="Back">←</button></header>
@@ -267,6 +272,7 @@ function run(lessonId, queue, title) {
   const practice = queue[0]?.subject.kind === 'practice';
   const who = queue[0].subject.coach; // the session's coach and their lines
   const did = []; // what each practice item did, for its end screen ("3 breaths")
+  let journal = null; // what a Reflect item wrote, for the journal (never the log)
   const results = [];
   let at = 0;
   let streak = 0; // right answers in a row, this session
@@ -339,9 +345,9 @@ function run(lessonId, queue, title) {
         if (mood) sessionCoach.set(mood);
       },
       coachEl: $('.who'),
-      done: (correct, text = '') => {
+      done: (correct, text = '', kept = null) => {
         // A practice item goes straight on: its own buttons were the Continue.
-        if (practice) { if (text) did.push(text); at++; return step(); }
+        if (practice) { if (text) did.push(text); if (kept) journal = kept; at++; return step(); }
         if (correct !== null && !entry.retry) results.push({ key: entry.key, correct });
         if (correct === false && !entry.retry) queue.push({ ...entry, retry: true });
         at++;
@@ -374,7 +380,7 @@ function run(lessonId, queue, title) {
       },
     });
     // A question starts on its board (or its answers), not back at the top of the page.
-    if (!foot.classList.contains('show')) stage.querySelector('svg[tabindex], .choice, .practice-go')?.focus();
+    if (!foot.classList.contains('show')) stage.querySelector('[autofocus], svg[tabindex], .choice, .practice-go')?.focus();
   };
   next.addEventListener('click', step);
 
@@ -386,7 +392,7 @@ function run(lessonId, queue, title) {
     const { subject, topic: technique } = queue[0];
     const firstTime = lessonId && !progress.done[lessonId];
     const mins = Math.max(1, Math.round((Date.now() - started) / 60000));
-    progress = finishPractice(progress, subject.habit, lessonId, new Date(), { title: technique, mins });
+    progress = writeJournal(finishPractice(progress, subject.habit, lessonId, new Date(), { title: technique, mins }), journal);
     save();
     const h = HABITS.find((x) => x.id === subject.habit);
     const n = currentStreak(progress, new Date(), h.id);
