@@ -26,7 +26,9 @@ npm test                   # node --test, no framework
   Adding one is a course file, a mount function and one line there.
 - `src/progress.js` — pure: streak, completed lessons, FSRS cards, and `light()`, today's
   bright/soft/ember habit display on the streak chip. `app.js` owns storage
-  (one `localStorage` key, every access in try/catch).
+  (one `localStorage` key, every access in try/catch). The object carries `version`; `migrate()`
+  validates and upgrades every older shape, on load and on import (the home bar's ⋯ saves and
+  loads a file). Bump `VERSION` and extend `migrate()` whenever the shape changes.
 - `src/chess/puzzle.js` — pure puzzle rules on chess.js. `src/chess/items.js` — the item types
   (teach, tap, move, true/false, stars, find), their answers and explanations, and `problem()`, the
   rules check every shipped item passes. `src/chess/exercise.js` — the board and buttons.
