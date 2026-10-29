@@ -1,74 +1,175 @@
-import { Chessboard, COLOR, INPUT_EVENT_TYPE } from 'cm-chessboard/src/Chessboard.js';
+import { Chess } from 'chess.js';
+import { Chessboard, COLOR, INPUT_EVENT_TYPE, POINTER_EVENTS } from 'cm-chessboard/src/Chessboard.js';
 import { Markers, MARKER_TYPE } from 'cm-chessboard/src/extensions/markers/Markers.js';
 import { startPuzzle, playerColor, tryMove, hint } from './puzzle.js';
+import { answer, explanation, grade, kind } from './items.js';
 
 const ASSETS = new URL('../../node_modules/cm-chessboard/assets/', import.meta.url).href;
 const REPLY_DELAY = 450;
 
 /**
- * Mounts one puzzle in `el`. `say(text)` sets the caption under the board; `done(correct)` is
- * called once, when the puzzle is solved — `correct` is false if a mistake was made on the way.
- * Two mistakes and the answer's squares are marked; the player still has to play it.
- * Returns a cleanup function.
+ * Mounts one item in `el`. `say(text)` sets the caption; `done(correct)` is called once, when
+ * the item is over: true or false for a marked item (false if any mistake was made), null for
+ * a teach card. Returns a cleanup function.
  */
-export function mount(el, puzzle, { say, done }) {
-  const state = startPuzzle(puzzle);
-  const color = playerColor(state);
-  const side = color === 'w' ? 'White' : 'Black';
-  let mistakes = 0;
-  let timer;
+export function mount(el, item, ctx) {
+  el.innerHTML = '<div class="board"></div><div class="choices"></div>';
+  return MOUNTS[kind(item)](el.firstChild, el.lastChild, item, ctx);
+}
 
-  const board = new Chessboard(el, {
-    position: puzzle.fen,
+function board(el, fen, color = fen.split(' ')[1]) {  // seen from `color`, else the side to move
+  return new Chessboard(el, {
+    position: fen,
     orientation: color === 'w' ? COLOR.white : COLOR.black,
     assetsUrl: ASSETS,
     style: { cssClass: 'default', borderType: 'none', animationDuration: 250 },
     extensions: [{ class: Markers, props: { autoMarkers: MARKER_TYPE.frame } }],
   });
+}
 
-  const show = () => {
-    board.setPosition(state.game.fen(), true);
-    board.removeMarkers(MARKER_TYPE.square);
-    for (const sq of state.lastMove) board.addMarker(MARKER_TYPE.square, sq);
-  };
+/**
+ * Choice buttons as [label, value]. The first tap is final: it is marked right or wrong, the
+ * right one is shown either way, and `then(correct)` runs.
+ */
+function buttons(el, item, options, then) {
+  el.innerHTML = options.map(([label]) => `<button class="choice">${label}</button>`).join('');
+  [...el.children].forEach((b, i) => b.addEventListener('click', () => {
+    for (const other of el.children) other.disabled = true;
+    const correct = grade(item, options[i][1]);
+    b.classList.add(correct ? 'right' : 'wrong');
+    el.children[options.findIndex(([, v]) => grade(item, v))].classList.add('right');
+    then(correct);
+  }));
+}
 
-  const input = (event) => {
-    if (event.type === INPUT_EVENT_TYPE.moveInputStarted) return true;
-    if (event.type !== INPUT_EVENT_TYPE.validateMoveInput) return;
-    const result = tryMove(state, event.squareFrom, event.squareTo);
-    if (result === 'wrong') {
-      mistakes++;
-      if (mistakes >= 2) {
-        board.removeMarkers(MARKER_TYPE.circlePrimary);
-        for (const sq of hint(state)) board.addMarker(MARKER_TYPE.circlePrimary, sq);
-        say(`Not that. The marked piece moves — ${side} to play.`);
-      } else {
-        say(`Not that one. ${side} to play.`);
+/** Plays `san` on the board and marks the squares it moved between. */
+function playMove(b, fen, san) {
+  const game = new Chess(fen);
+  const move = game.move(san);
+  b.setPosition(game.fen(), true);
+  b.addMarker(MARKER_TYPE.square, move.from);
+  b.addMarker(MARKER_TYPE.square, move.to);
+  return move;
+}
+
+const verdict = (item, correct) => [
+  correct ? 'Right.' : 'Not quite.',
+  kind(item) === 'truefalse' && `It's ${answer(item) ? 'true' : 'false'}.`,
+  explanation(item),
+].filter(Boolean).join(' ');
+
+const MOUNTS = {
+  teach(boardEl, choices, item, { say, done }) {
+    const b = item.fen && board(boardEl, item.fen, item.side);
+    if (!b) boardEl.remove();
+    say(item.text);
+    done(null);
+    return () => b?.destroy();
+  },
+
+  tap(boardEl, choices, item, { say, done }) {
+    const b = board(boardEl, item.fen);
+    const picked = new Set();
+    b.addMarker(MARKER_TYPE.square, item.square);
+    choices.innerHTML = '<button class="choice check" disabled>Check</button>';
+    const check = choices.firstChild;
+    b.enableSquareSelect(POINTER_EVENTS.pointerdown, ({ square }) => {
+      if (!square || square === item.square) return;
+      if (picked.delete(square)) b.removeMarkers(MARKER_TYPE.circle, square);
+      else { picked.add(square); b.addMarker(MARKER_TYPE.circle, square); }
+      check.disabled = !picked.size;
+    });
+    check.addEventListener('click', () => {
+      b.disableSquareSelect(POINTER_EVENTS.pointerdown);
+      check.disabled = true;
+      const correct = grade(item, picked);
+      // Show the answer over the learner's picks: the right squares framed, wrong picks flagged.
+      for (const sq of answer(item)) b.addMarker(MARKER_TYPE.framePrimary, sq);
+      for (const sq of picked) if (!answer(item).includes(sq)) b.addMarker(MARKER_TYPE.circleDanger, sq);
+      say(verdict(item, correct));
+      done(correct);
+    });
+    say(item.prompt);
+    return () => b.destroy();
+  },
+
+  pick(boardEl, choices, item, { say, done }) {
+    const b = board(boardEl, item.fen);
+    buttons(choices, item, item.options.map((o) => [o, o]), (correct) => {
+      playMove(b, item.fen, item.answer);
+      say(verdict(item, correct));
+      done(correct);
+    });
+    say(item.prompt);
+    return () => b.destroy();
+  },
+
+  truefalse(boardEl, choices, item, { say, done }) {
+    const b = board(boardEl, item.fen);
+    buttons(choices, item, [['True', true], ['False', false]], (correct) => {
+      playMove(b, item.fen, item.move);
+      for (const sq of item.targets) b.addMarker(MARKER_TYPE.framePrimary, sq);
+      say(verdict(item, correct));
+      done(correct);
+    });
+    say(item.prompt);
+    return () => b.destroy();
+  },
+
+  /** A puzzle: two mistakes and the answer's squares are marked; the player still plays it. */
+  find(boardEl, choices, item, { say, done }) {
+    choices.remove();
+    const state = startPuzzle(item);
+    const color = playerColor(state);
+    const side = color === 'w' ? 'White' : 'Black';
+    let mistakes = 0;
+    let timer;
+    const b = board(boardEl, item.fen, color);
+
+    const show = () => {
+      b.setPosition(state.game.fen(), true);
+      b.removeMarkers(MARKER_TYPE.square);
+      for (const sq of state.lastMove) b.addMarker(MARKER_TYPE.square, sq);
+    };
+
+    const input = (event) => {
+      if (event.type === INPUT_EVENT_TYPE.moveInputStarted) return true;
+      if (event.type !== INPUT_EVENT_TYPE.validateMoveInput) return;
+      const result = tryMove(state, event.squareFrom, event.squareTo);
+      if (result === 'wrong') {
+        mistakes++;
+        if (mistakes >= 2) {
+          b.removeMarkers(MARKER_TYPE.circlePrimary);
+          for (const sq of hint(state)) b.addMarker(MARKER_TYPE.circlePrimary, sq);
+          say(`Not that. The marked piece moves — ${side} to play.`);
+        } else {
+          say(`Not that one. ${side} to play.`);
+        }
+        return false;
       }
-      return false;
-    }
-    board.removeMarkers(MARKER_TYPE.circlePrimary);
-    board.disableMoveInput();
-    // The opponent's reply (or the solved position) is redrawn from the game, which also
-    // corrects castling, en passant and promotion the board's own animation leaves half-done.
+      b.removeMarkers(MARKER_TYPE.circlePrimary);
+      b.disableMoveInput();
+      // The opponent's reply (or the solved position) is redrawn from the game, which also
+      // corrects castling, en passant and promotion the board's own animation leaves half-done.
+      timer = setTimeout(() => {
+        show();
+        if (result === 'solved') {
+          say(`${mistakes ? 'Solved, with help.' : 'Solved!'} ${explanation(item)}`);
+          done(mistakes === 0);
+        } else {
+          say(`Good. Keep going — ${side} to play.`);
+          b.enableMoveInput(input, b.getOrientation());
+        }
+      }, REPLY_DELAY);
+      return true;
+    };
+
+    say(`${side} to play.`);
     timer = setTimeout(() => {
       show();
-      if (result === 'solved') {
-        say(mistakes ? 'Solved, with help.' : 'Solved!');
-        done(mistakes === 0);
-      } else {
-        say(`Good. Keep going — ${side} to play.`);
-        board.enableMoveInput(input, board.getOrientation());
-      }
+      b.enableMoveInput(input, b.getOrientation());
     }, REPLY_DELAY);
-    return true;
-  };
 
-  say(`${side} to play.`);
-  timer = setTimeout(() => {
-    show();
-    board.enableMoveInput(input, board.getOrientation());
-  }, REPLY_DELAY);
-
-  return () => { clearTimeout(timer); board.destroy(); };
-}
+    return () => { clearTimeout(timer); b.destroy(); };
+  },
+};

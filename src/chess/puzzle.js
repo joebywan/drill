@@ -47,4 +47,4 @@ export const hint = (state) => {
   return [m.slice(0, 2), m.slice(2, 4)];
 };
 
-const uci = (m) => ({ from: m.slice(0, 2), to: m.slice(2, 4), promotion: m[4] });
+export const uci = (m) => ({ from: m.slice(0, 2), to: m.slice(2, 4), promotion: m[4] });

@@ -38,13 +38,15 @@ puzzle counts as missed.
 
 Every answered item gets an [FSRS](https://github.com/open-spaced-repetition/ts-fsrs) card:
 right first time is rated *Good*, anything else *Again*. Due items show up as a review session
-on the home screen. Reviews keep the streak alive but unlock nothing.
+on the home screen. Reviews keep the streak alive but unlock nothing. In any session, an item
+missed the first time comes back once before the end.
 
 ## Adding a subject
 
 1. Produce a course JSON: `{ id, title, units: [{ title, lessons: [{ id, title, items }] }] }`,
    every item with a stable `id`.
-2. Write `mount(el, item, { say, done })` that plays one item and calls `done(correct)` once.
+2. Write `mount(el, item, { say, done })` that plays one item and calls `done(correct)` once
+   (`null` for an unmarked card such as a teach card).
 3. Add both to `src/subjects.js`.
 
 Home, lessons, XP, streak and review pick it up from there.

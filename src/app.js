@@ -2,7 +2,6 @@ import { subjects } from './subjects.js';
 import { emptyProgress, finishSession, currentStreak, dueKeys } from './progress.js';
 
 const STORE = 'drill.progress';
-const LESSON_SIZE = 8;
 const REVIEW_SIZE = 8;
 const app = document.getElementById('app');
 
@@ -43,7 +42,7 @@ function home() {
       const [sid, lid] = btn.dataset.lesson.split('|');
       const subject = subjects.find((s) => s.id === sid);
       const lesson = subject.units.flatMap((u) => u.lessons).find((l) => l.id === lid);
-      run(`${sid}:${lid}`, lesson.items.slice(0, LESSON_SIZE).map((item) => ({ key: `${sid}:${item.id}`, ...items.get(`${sid}:${item.id}`) })));
+      run(`${sid}:${lid}`, lesson.items.map((item) => ({ key: `${sid}:${item.id}`, ...items.get(`${sid}:${item.id}`) })));
     });
   }
 }
@@ -75,9 +74,13 @@ function subjectPath(subject) {
   return `<h2 class="subject">${esc(subject.title)}</h2>${units}`;
 }
 
-/** Plays a session: a lesson (lessonId set) or a review (null). */
+/**
+ * Plays a session: a lesson (lessonId set) or a review (null). An item missed the first time
+ * comes back once at the end; only the first try counts toward review scheduling.
+ */
 function run(lessonId, queue) {
   const results = [];
+  let at = 0;
   let cleanup = () => {};
   app.innerHTML = `
     <header class="bar">
@@ -86,26 +89,28 @@ function run(lessonId, queue) {
     </header>
     <main class="play">
       <p class="topic"></p>
-      <div class="board"></div>
+      <div class="stage"></div>
       <p class="caption" aria-live="polite"></p>
       <button class="next" hidden>Continue</button>
     </main>`;
-  const [topic, boardEl, caption, next, fill] = ['.topic', '.board', '.caption', '.next', '.fill'].map((s) => app.querySelector(s));
+  const [topic, stage, caption, next, fill] = ['.topic', '.stage', '.caption', '.next', '.fill'].map((s) => app.querySelector(s));
   app.querySelector('.close').addEventListener('click', () => { cleanup(); home(); });
 
+  const meter = () => { fill.style.width = `${(100 * at) / queue.length}%`; };
   const step = () => {
     cleanup();
-    fill.style.width = `${(100 * results.length) / queue.length}%`;
-    if (results.length === queue.length) return finish();
-    const { key, subject, item } = queue[results.length];
-    topic.textContent = queue[results.length].topic;
+    meter();
+    if (at === queue.length) return finish();
+    const entry = queue[at];
+    topic.textContent = entry.topic;
     next.hidden = true;
-    boardEl.replaceChildren();
-    cleanup = subject.mount(boardEl, item, {
+    cleanup = entry.subject.mount(stage, entry.item, {
       say: (text) => { caption.textContent = text; },
       done: (correct) => {
-        results.push({ key, correct });
-        fill.style.width = `${(100 * results.length) / queue.length}%`;
+        if (correct !== null && !entry.retry) results.push({ key: entry.key, correct });
+        if (correct === false && !entry.retry) queue.push({ ...entry, retry: true });
+        at++;
+        meter();
         next.hidden = false;
         next.focus();
       },

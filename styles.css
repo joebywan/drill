@@ -63,6 +63,16 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .play { padding: 0 16px 24px; display: flex; flex-direction: column; }
 .topic { font-weight: 700; font-size: 1.15rem; margin: 4px 0 12px; }
 .board { width: 100%; aspect-ratio: 1; }
+.choices { display: flex; gap: 8px; margin-top: 12px; }
+.choices:empty { display: none; }
+.choice {
+  flex: 1; padding: 12px 8px; border-radius: 12px; border: 2px solid var(--line); background: var(--card);
+  font-weight: 600;
+}
+.choice:disabled { cursor: default; }
+.choice.check:disabled:not(.right) { opacity: .5; }
+.choice.right { border-color: var(--accent); background: var(--accent); color: var(--accent-text); opacity: 1; }
+.choice.wrong { border-color: #d0583c; color: #d0583c; }
 /* Reserved: the caption changing length must never move the board or the button. */
 .caption { min-height: 2.8em; margin: 12px 0 0; text-align: center; }
 .next[hidden] { display: block; visibility: hidden; }
