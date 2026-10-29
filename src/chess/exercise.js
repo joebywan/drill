@@ -8,9 +8,10 @@ const ASSETS = new URL('../../node_modules/cm-chessboard/assets/', import.meta.u
 const REPLY_DELAY = 450;
 
 /**
- * Mounts one item in `el`. `say(text)` sets the caption; `done(correct)` is called once, when
- * the item is over: true or false for a marked item (false if any mistake was made), null for
- * a teach card. Returns a cleanup function.
+ * Mounts one item in `el`. `say(text, mood?)` sets what the coach says, and how she looks;
+ * `done(correct, text)` is called once, when the item is over: true or false for a marked item
+ * (false if any mistake was made), null for a teach card, with the explanation to show.
+ * Returns a cleanup function.
  */
 export function mount(el, item, ctx) {
   el.innerHTML = '<div class="board"></div><div class="choices"></div>';
@@ -52,17 +53,14 @@ function playMove(b, fen, san) {
   return move;
 }
 
-const verdict = (item, correct) => [
-  correct ? 'Right.' : 'Not quite.',
-  kind(item) === 'truefalse' && `It's ${answer(item) ? 'true' : 'false'}.`,
-  explanation(item),
-].filter(Boolean).join(' ');
+const feedback = (item) =>
+  (kind(item) === 'truefalse' ? `It's ${answer(item) ? 'true' : 'false'}. ` : '') + explanation(item);
 
 const MOUNTS = {
   teach(boardEl, choices, item, { say, done }) {
     const b = item.fen && board(boardEl, item.fen, item.side);
     if (!b) boardEl.remove();
-    say(item.text);
+    say(item.text, 'teach');
     done(null);
     return () => b?.destroy();
   },
@@ -86,10 +84,9 @@ const MOUNTS = {
       // Show the answer over the learner's picks: the right squares framed, wrong picks flagged.
       for (const sq of answer(item)) b.addMarker(MARKER_TYPE.framePrimary, sq);
       for (const sq of picked) if (!answer(item).includes(sq)) b.addMarker(MARKER_TYPE.circleDanger, sq);
-      say(verdict(item, correct));
-      done(correct);
+      done(correct, feedback(item));
     });
-    say(item.prompt);
+    say(item.prompt, 'think');
     return () => b.destroy();
   },
 
@@ -97,10 +94,9 @@ const MOUNTS = {
     const b = board(boardEl, item.fen);
     buttons(choices, item, item.options.map((o) => [o, o]), (correct) => {
       playMove(b, item.fen, item.answer);
-      say(verdict(item, correct));
-      done(correct);
+      done(correct, feedback(item));
     });
-    say(item.prompt);
+    say(item.prompt, 'think');
     return () => b.destroy();
   },
 
@@ -109,10 +105,9 @@ const MOUNTS = {
     buttons(choices, item, [['True', true], ['False', false]], (correct) => {
       playMove(b, item.fen, item.move);
       for (const sq of item.targets) b.addMarker(MARKER_TYPE.framePrimary, sq);
-      say(verdict(item, correct));
-      done(correct);
+      done(correct, feedback(item));
     });
-    say(item.prompt);
+    say(item.prompt, 'think');
     return () => b.destroy();
   },
 
@@ -141,9 +136,9 @@ const MOUNTS = {
         if (mistakes >= 2) {
           b.removeMarkers(MARKER_TYPE.circlePrimary);
           for (const sq of hint(state)) b.addMarker(MARKER_TYPE.circlePrimary, sq);
-          say(`Not that. The marked piece moves — ${side} to play.`);
+          say(`Not that. The marked piece moves — ${side} to play.`, 'struggling');
         } else {
-          say(`Not that one. ${side} to play.`);
+          say(`Not that one. ${side} to play.`, 'wrong');
         }
         return false;
       }
@@ -154,17 +149,16 @@ const MOUNTS = {
       timer = setTimeout(() => {
         show();
         if (result === 'solved') {
-          say(`${mistakes ? 'Solved, with help.' : 'Solved!'} ${explanation(item)}`);
-          done(mistakes === 0);
+          done(mistakes === 0, explanation(item));
         } else {
-          say(`Good. Keep going — ${side} to play.`);
+          say(`Good. Keep going — ${side} to play.`, 'think');
           b.enableMoveInput(input, b.getOrientation());
         }
       }, REPLY_DELAY);
       return true;
     };
 
-    say(`${side} to play.`);
+    say(item.prompt || `${side} to play. Find the best move.`, 'think');
     timer = setTimeout(() => {
       show();
       b.enableMoveInput(input, b.getOrientation());

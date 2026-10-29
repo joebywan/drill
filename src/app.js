@@ -1,5 +1,10 @@
 import { subjects } from './subjects.js';
 import { emptyProgress, finishSession, currentStreak, dueKeys } from './progress.js';
+import { coach } from './cast/coach.js';
+import { rosa } from './cast/rosa.js';
+import { reducedMotion } from './cast/kit.js';
+import { line } from './cast/lines.js';
+import { buzz, play, setSound, soundOn } from './feel.js';
 
 const STORE = 'drill.progress';
 const REVIEW_SIZE = 8;
@@ -30,11 +35,13 @@ function home() {
       <h1>Drill</h1>
       <span class="stat" title="Day streak">🔥 ${currentStreak(progress)}</span>
       <span class="stat" title="Total XP">⭐ ${progress.xp}</span>
+      <button class="sound" aria-pressed="${soundOn()}" aria-label="Sound">${soundOn() ? '🔊' : '🔇'}</button>
     </header>
     <main class="home">
       ${due.length ? `<button class="review" data-review>Review ${Math.min(due.length, REVIEW_SIZE)} of ${due.length} due</button>` : ''}
       ${subjects.map(subjectPath).join('')}
     </main>`;
+  app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); });
   app.querySelector('[data-review]')?.addEventListener('click', () =>
     run(null, due.slice(0, REVIEW_SIZE).map((k) => ({ key: k, ...items.get(k) }))));
   for (const btn of app.querySelectorAll('[data-lesson]')) {
@@ -81,6 +88,7 @@ function subjectPath(subject) {
 function run(lessonId, queue) {
   const results = [];
   let at = 0;
+  let streak = 0; // right answers in a row, this session
   let cleanup = () => {};
   app.innerHTML = `
     <header class="bar">
@@ -89,29 +97,71 @@ function run(lessonId, queue) {
     </header>
     <main class="play">
       <p class="topic"></p>
+      <div class="coach">
+        <button class="who" aria-label="Rosa"></button>
+        <p class="bubble" aria-live="polite"></p>
+      </div>
       <div class="stage"></div>
-      <p class="caption" aria-live="polite"></p>
-      <button class="next" hidden>Continue</button>
-    </main>`;
-  const [topic, stage, caption, next, fill] = ['.topic', '.stage', '.caption', '.next', '.fill'].map((s) => app.querySelector(s));
-  app.querySelector('.close').addEventListener('click', () => { cleanup(); home(); });
+    </main>
+    <footer class="foot" aria-live="polite">
+      <div class="verdict"><strong></strong><p></p></div>
+      <button class="next">Continue</button>
+    </footer>`;
+  const $ = (sel) => app.querySelector(sel);
+  const [topic, bubble, stage, fill, foot, next] = ['.topic', '.bubble', '.stage', '.fill', '.foot', '.next'].map($);
+  const rosaCoach = coach($('.who'), rosa);
+  let said = '';
+  const quit = () => { cleanup(); rosaCoach.stop(); };
+  $('.close').addEventListener('click', () => { quit(); home(); });
+
+  // Tapping Rosa: a hop and a line, then back to the question.
+  let aside;
+  $('.who').addEventListener('click', () => {
+    play('tap');
+    rosaCoach.hop();
+    bubble.textContent = line('tapped');
+    clearTimeout(aside);
+    aside = setTimeout(() => { bubble.textContent = said; }, 2500);
+  });
 
   const meter = () => { fill.style.width = `${(100 * at) / queue.length}%`; };
   const step = () => {
     cleanup();
     meter();
-    if (at === queue.length) return finish();
+    foot.className = 'foot';
+    if (at === queue.length) { rosaCoach.stop(); return finish(); }
     const entry = queue[at];
     topic.textContent = entry.topic;
-    next.hidden = true;
+    rosaCoach.set('think');
     cleanup = entry.subject.mount(stage, entry.item, {
-      say: (text) => { caption.textContent = text; },
-      done: (correct) => {
+      say: (text, mood) => {
+        said = bubble.textContent = text;
+        if (mood) rosaCoach.set(mood);
+      },
+      done: (correct, text = '') => {
         if (correct !== null && !entry.retry) results.push({ key: entry.key, correct });
         if (correct === false && !entry.retry) queue.push({ ...entry, retry: true });
         at++;
         meter();
-        next.hidden = false;
+        let kind = 'plain';
+        if (correct === true) {
+          streak++;
+          kind = streak === 5 ? 'run5' : streak === 3 ? 'run3' : 'correct';
+          rosaCoach.set('correct');
+          rosaCoach.hop();
+          play(kind === 'correct' ? 'right' : 'run');
+          buzz('right');
+        } else if (correct === false) {
+          streak = 0;
+          kind = 'wrong';
+          rosaCoach.set('wrong');
+          rosaCoach.sway();
+          play('wrong');
+          buzz('wrong');
+        }
+        foot.className = `foot show ${correct === null ? 'plain' : correct ? 'right' : 'wrong'}`;
+        foot.querySelector('strong').textContent = kind === 'plain' ? '' : line(kind);
+        foot.querySelector('p').textContent = text;
         next.focus();
       },
     });
@@ -123,18 +173,68 @@ function run(lessonId, queue) {
     progress = finishSession(progress, lessonId, results);
     save();
     const right = results.filter((r) => r.correct).length;
+    const perfect = results.length > 0 && right === results.length;
+    const xp = progress.xp - before;
     app.innerHTML = `
       <main class="summary">
+        <div class="hero"></div>
         <h1>${lessonId ? 'Lesson complete' : 'Review done'}</h1>
-        <p class="big">+${progress.xp - before} XP</p>
-        <p>${right} of ${results.length} right first time</p>
-        <p>🔥 ${currentStreak(progress)} day streak</p>
-        <button class="next">Back</button>
+        <p class="said">${esc(line(!lessonId ? 'review' : perfect ? 'perfect' : 'complete'))}</p>
+        <div class="stats">
+          <div><b class="xp">+${xp}</b><span>XP</span></div>
+          <div><b>${right}/${results.length}</b><span>first try</span></div>
+          <div><b>🔥 ${currentStreak(progress)}</b><span>day streak</span></div>
+        </div>
+        <button class="next">Continue</button>
       </main>`;
-    app.querySelector('.next').addEventListener('click', home);
+    const hero = coach(app.querySelector('.hero'), rosa);
+    hero.set('complete');
+    hero.hop();
+    play('done');
+    buzz('done');
+    const stopParty = celebrate(app.querySelector('.xp'), xp, perfect);
+    app.querySelector('.summary').addEventListener('click', stopParty);
+    app.querySelector('.next').addEventListener('click', () => { stopParty(); hero.stop(); home(); });
   };
 
   step();
+}
+
+/**
+ * The lesson-complete moment: XP counts up and, on a perfect lesson, confetti falls. About 2.6 s,
+ * skipped by a tap (the returned function) and by reduced motion.
+ */
+function celebrate(xpEl, xp, confetti) {
+  if (reducedMotion()) return () => {};
+  const t0 = performance.now();
+  let frame = requestAnimationFrame(function tick(now) {
+    const k = Math.min(1, (now - t0) / 900);
+    xpEl.textContent = `+${Math.round(xp * (1 - (1 - k) ** 3))}`;
+    if (k < 1) frame = requestAnimationFrame(tick);
+  });
+  const layer = document.createElement('div');
+  layer.className = 'confetti';
+  if (confetti) {
+    const colours = ['#F5A524', '#4caf73', '#6E82A8', '#F28C8C', '#FFD978'];
+    for (let i = 0; i < 40; i++) {
+      const bit = document.createElement('i');
+      bit.style.left = `${Math.random() * 100}%`;
+      bit.style.background = colours[i % colours.length];
+      layer.append(bit);
+      bit.animate([
+        { transform: `translateY(0) rotate(0)` },
+        { transform: `translateY(${window.innerHeight + 40}px) rotate(${360 + Math.random() * 360}deg)` },
+      ], { duration: 1800 + Math.random() * 800, delay: Math.random() * 300, easing: 'cubic-bezier(.3,.6,.5,1)', fill: 'forwards' });
+    }
+    document.body.append(layer);
+  }
+  const timer = setTimeout(() => layer.remove(), 2600);
+  return () => {
+    cancelAnimationFrame(frame);
+    clearTimeout(timer);
+    xpEl.textContent = `+${xp}`;
+    layer.remove();
+  };
 }
 
 home();
