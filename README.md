@@ -1,6 +1,6 @@
 # Drill
 
-Short daily lessons with XP, a day streak and spaced review, for the subjects I actually want
+Short daily lessons with a day streak and spaced review, for the subjects I actually want
 to practise. Chess is the first; maths, Japanese, JavaScript, TypeScript and writing TypeScript
 tests are planned.
 
@@ -52,7 +52,7 @@ missed the first time comes back once before the end.
    (`null` for an unmarked card such as a teach card).
 3. Add both to `src/subjects.js`.
 
-Home, lessons, XP, streak and review pick it up from there.
+Home, lessons, streak and review pick it up from there.
 
 ## Dependency updates
 

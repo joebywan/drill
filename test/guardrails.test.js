@@ -35,8 +35,9 @@ test('celebrations fire only on whitelisted learning events', () => {
   for (const kind of CELEBRATIONS) assert.ok(LINES[kind]?.length, `${kind} has lines`);
 });
 
-test('no celebration is decided by XP', () => {
-  const app = readFileSync('src/app.js', 'utf8');
-  assert.match(app, /celebrate\(.*\bperfect\)/, 'confetti follows a perfect lesson');
-  assert.doesNotMatch(app, /\bxp\s*(>=?|<=?|[!=]==?|%)\s*[\w(]/, 'nothing compares XP to decide a reaction');
+test('there are no points: no XP anywhere in the app', () => {
+  for (const file of ['src/app.js', 'src/progress.js', 'src/cast/lines.js']) {
+    const code = readFileSync(file, 'utf8').replace(/points from earlier builds|const \{ xp, \.\.\.kept \}/g, '');
+    assert.doesNotMatch(code, /\bxp\b|\bpoints\b/i, file);
+  }
 });

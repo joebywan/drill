@@ -45,14 +45,16 @@ test('streak crosses a month boundary', () => {
   assert.equal(p.streak.count, 2);
 });
 
-test('lessons unlock, reviews do not, and recall pays more than a first try', () => {
+test('lessons unlock, reviews do not', () => {
   const answers = [{ key: 'x', correct: true }, { key: 'y', correct: false }];
-  const review = finishSession(emptyProgress(), null, answers, day(1));
-  assert.deepEqual(review.done, {});
-  assert.equal(review.xp, 5, '5 per item recalled');
-  const lesson = finishSession(emptyProgress(), 'chess:l1', answers, day(1));
-  assert.ok(lesson.done['chess:l1']);
-  assert.equal(lesson.xp, 7, '5 for the lesson, 2 per first-try right');
+  assert.deepEqual(finishSession(emptyProgress(), null, answers, day(1)).done, {});
+  assert.ok(finishSession(emptyProgress(), 'chess:l1', answers, day(1)).done['chess:l1']);
+});
+
+test('a session keeps the placement and drops old points', () => {
+  const p = finishSession({ ...emptyProgress(), start: 'Forks', xp: 40 }, 'chess:l1', [], day(1));
+  assert.equal(p.start, 'Forks');
+  assert.equal('xp' in p, false);
 });
 
 test('a missed item comes back sooner than a solved one, and both come back', () => {
