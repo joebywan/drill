@@ -4,13 +4,13 @@ import { readFileSync } from 'node:fs';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY } from '../src/habitview.js';
 import { helpHtml } from '../src/calm/practice.js';
 import { subjects } from '../src/subjects.js';
-import { ACCURACY, CALM_LINES, CELEBRATIONS, FEELS, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
+import { ACCURACY, BREAK_LINES, SAFETY_LINE, CALM_LINES, CELEBRATIONS, FEELS, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
 // Praise the process, never the person: no ability words. No absence, loss or guilt either.
 const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intelligen\w*|born to)\b/i;
 const LOSS = /\b(lose|losing|lost|gone|we miss you|missed you|sad|disappoint\w*|abandon\w*|forg[eo]t\w*|broke(n)?|break(ing)? your|come back (soon|to us|tomorrow)|where were you|absen\w*|guilt\w*|shame)\b/i;
 
-const lines = [LINES, HEADLINES, CALM_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
+const lines = [LINES, HEADLINES, CALM_LINES, BREAK_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
 const labels = [...ACCURACY, ...PACE].map(([, label]) => label).concat(STREAK_LABEL, QUIET_DAY, REST_DAY, NO_STREAK, FIRST_SQUARE);
 
 test('end-screen headlines and chip labels pass the same lint', () => {
@@ -118,4 +118,34 @@ test('real help is reachable from Calm, as plain text', () => {
 
 test('the end of a practice session is not a celebration', () => {
   for (const kind of Object.keys(CALM_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
+});
+
+// The screen break: no health claims, no urgency, no guilt, and no screen-time shaming.
+import { STEPS } from '../src/break/routines.js';
+import { safetyHtml } from '../src/break/practice.js';
+const BREAK_CLAIMS = /\b(prevent\w*|cure[sd]?|fix(es|ed)? (your )?posture|eye strain|strain|protect\w*|improve\w* (your )?(eyes|eyesight|vision|posture)|healthy|health)\b/i;
+const SHAMING = /\b(too (long|much)|addict\w*|screen time|glued|hooked|doomscroll\w*|you'?ve been on|should(n'?t)?|must)\b/i;
+const breakCourse = JSON.parse(readFileSync('src/data/break.json', 'utf8'));
+const breakText = [
+  ...Object.entries(BREAK_LINES).flatMap(([kind, list]) => list.map((text) => [kind, text])),
+  ...strings(breakCourse).filter((t) => /\s/.test(t)).map((text) => ['break.json', text]),
+  ...STEPS.map((s) => ['step', `${s.name}: ${s.line}`]),
+  ['safety', SAFETY_LINE],
+];
+
+test('the screen break makes no health claims, never hurries and never shames screen time', () => {
+  assert.ok(breakText.length > 20);
+  for (const [kind, text] of breakText) {
+    for (const bad of [CLAIMS, BREAK_CLAIMS, URGENCY, SHAMING, ABILITY, LOSS]) assert.doesNotMatch(text, bad, `${kind}: ${text}`);
+  }
+  for (const bad of ['Prevents eye strain', 'This cures headaches', 'Fixes posture', 'It fixes your posture']) assert.match(bad, BREAK_CLAIMS, bad);
+  for (const bad of ["You've been on your phone too long", 'Addicted to scrolling?', 'Too much screen today']) assert.match(bad, SHAMING, bad);
+});
+
+test('the screen break says to move gently, on the first lesson and after "Not really"', () => {
+  assert.equal(SAFETY_LINE, 'Move gently and stop if anything hurts.');
+  assert.equal(breakCourse.units[0].lessons[0].items[0].help, true);
+  assert.equal(subjects.find((x) => x.habit === 'break').coach.help, safetyHtml);
+  assert.ok(safetyHtml().includes(SAFETY_LINE));
+  for (const kind of Object.keys(BREAK_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
 });

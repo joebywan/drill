@@ -140,6 +140,32 @@ test('"Not really" gets a kind line and the help line', async ({ page }) => {
   await expect(page.getByText("If you're struggling, talk to someone. In Australia, Lifeline is 13 11 14, any time.")).toBeVisible();
 });
 
+test('a screen break is taught once, plays its six steps on the clock, and keeps its own streak', async ({ page }) => {
+  await page.clock.install();
+  await placeAtStart(page);
+  await page.getByRole('button', { name: '👀 Screen break', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue · Why breaks help' }).click();
+  await expect(page.getByText('Move gently and stop if anything hurts.')).toBeVisible();
+  await page.getByRole('button', { name: 'Start' }).click();
+  const now = page.locator('.steps li[aria-current="step"]');
+  await expect(now).toHaveText('Look far away');
+  await expect(page.getByText(/at least 6 metres away/)).toBeVisible();
+  await page.clock.runFor(20_000);
+  await expect(now).toHaveText('Slow blinks');
+  await page.clock.runFor(85_000);
+  await expect(now).toHaveText('Sit tall');
+  await page.clock.runFor(16_000);
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+  await expect(page.getByText(/^6 steps · \d+ min$/)).toBeVisible();
+  await expect(page.locator('.chip.break')).toContainText('👀 1');
+  await page.getByRole('button', { name: 'About the same' }).click();
+  await expect(page.getByRole('status')).not.toBeEmpty();
+  await continueButton(page).click();
+  await expect(page.getByRole('button', { name: 'Continue · Take a break' })).toBeVisible();
+  await page.getByRole('button', { name: 'Screen break: 1-day streak' }).click();
+  await expect(page.locator('.day').first().getByRole('listitem')).toHaveText(/^Screen break · \d+ min · felt about the same$/);
+});
+
 test('grounding is tap-to-count, and stopping is one tap with no questions', async ({ page }) => {
   await firstBreathing(page); // grounding opens once breathing has been started
   await continueButton(page).click();

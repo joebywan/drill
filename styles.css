@@ -284,9 +284,9 @@ html { scroll-padding-bottom: 160px; }
 @media (prefers-color-scheme: dark) {
   :root { --calm: #8CC487; --calm-soft: #22331F; --chip-calm: #8CC487; }
 }
-.paths { display: flex; gap: 8px; justify-content: center; margin: 4px 0 0; }
+.paths { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 4px 0 0; }
 .path-tab {
-  padding: 8px 16px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); font-weight: 600;
+  padding: 8px 16px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); font-weight: 600; white-space: nowrap;
 }
 .path-tab[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
 
@@ -307,13 +307,14 @@ html { scroll-padding-bottom: 160px; }
 .which { margin: 0; color: var(--muted); font-weight: 600; }
 
 @property --fill { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
-.zones { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column-reverse; gap: 6px; }
-.zones li {
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.steps.rising { flex-direction: column-reverse; }
+.steps li {
   padding: 8px 12px; border-radius: 10px; border: 2px solid var(--line); color: var(--muted);
   background: linear-gradient(90deg, var(--calm-soft) var(--fill), var(--card) var(--fill));
 }
-.zones li.past { color: var(--text); border-color: var(--calm); }
-.zones li.now { color: var(--text); font-weight: 700; border-color: var(--calm); --fill: 100%; }
+.steps li.past { color: var(--text); border-color: var(--calm); }
+.steps li.now { color: var(--text); font-weight: 700; border-color: var(--calm); --fill: 100%; }
 .scan-left { text-align: center; color: var(--muted); margin: 10px 0 0; }
 
 .ground { text-align: center; }
@@ -324,6 +325,14 @@ html { scroll-padding-bottom: 160px; }
 
 .practice-end .hero { width: 130px; }
 .chip.calm { --c: var(--chip-calm); flex: 0 1 180px; margin: 0 auto; }
+
+/* ---- Screen break: the step list in its own blue ---- */
+:root { --break: #3E6E9C; --break-soft: #DDE8F3; --chip-break: #3A6895; }
+@media (prefers-color-scheme: dark) {
+  :root { --break: #8FB6DD; --break-soft: #1E2C3B; --chip-break: #8FB6DD; }
+}
+.scan.break { --calm: var(--break); --calm-soft: var(--break-soft); }
+.chip.break { --c: var(--chip-break); flex: 0 1 180px; margin: 0 auto; }
 .feel h2 { font-size: 1.05rem; margin: 16px 0 8px; }
 .feels { display: flex; flex-direction: column; gap: 8px; }
 .feel .said { margin: 8px 0; }
