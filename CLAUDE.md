@@ -83,6 +83,10 @@ npm test                   # node --test, no framework
 - Android home-screen widgets and local notifications are wanted, via a WebView wrapper with a
   JS bridge, as Saffron Road does. Drill is meant to drive people to learn, not to earn.
 
+- **Every streak is a habit's streak** (Learning, Calm, …), each with its own chip and the
+  same forgiving rules. Practice subjects are guided routines with no right or wrong. The plan
+  and its task list: `docs/HABITS.md`.
+
 ## Open
 
 Promotion picker; accessibility. Backlog (sync, friends, Android): `docs/TODO.md`.
