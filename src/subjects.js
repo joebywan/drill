@@ -31,8 +31,8 @@ import { REFLECT_LINES } from './cast/lines.js';
  * lines (default: Rosa's LINES) and, for a practice habit, the help shown after "Not really".
  * Sessions and the practice end screen read everything subject-specific from here.
  *
- * Optional: `again`, the label of a button home shows once the path is done, to run its last
- * lesson again ("Reflect today"); `dayDetail(progress, date)`, extra html under a day's sessions
+ * Optional: `again`, { label, lesson }: once the path is done, home keeps a button with that label
+ * which runs that lesson again ("Reflect today", "Breathe"); `dayDetail(progress, date)`, extra html under a day's sessions
  * in the habit view (Reflect's own lines).
  */
 /** Every habit, in the order the home bar shows them. A habit appears once it has a session (Learning always). */

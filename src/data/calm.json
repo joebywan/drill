@@ -74,6 +74,7 @@
       ]
     }
   ],
+  "again": { "label": "Breathe", "lesson": "breathe3" },
   "senses": [
     { "count": 5, "prompt": "5 things you can see", "hint": "Something near, something far, something small." },
     { "count": 4, "prompt": "4 things you can hear", "hint": "Close sounds, then the ones further off." },

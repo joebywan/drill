@@ -13,3 +13,10 @@ test("a day's own lines show in the habit view, safely, and an empty day adds no
   assert.equal(dayDetail({}, '2026-10-30'), '');
   assert.equal(subjects.find((s) => s.habit === 'reflect').dayDetail, dayDetail);
 });
+
+test("every practice path that can run out keeps a lesson on home, and it's a real one", () => {
+  for (const s of subjects.filter((x) => x.kind === 'practice')) {
+    assert.ok(s.again?.label, `${s.id} has an again label`);
+    assert.ok(s.units.some((u) => u.lessons.some((l) => l.id === s.again.lesson)), `${s.id}: ${s.again.lesson}`);
+  }
+});

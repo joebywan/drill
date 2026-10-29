@@ -85,9 +85,9 @@ function home(arrived = null) {
   // The next lesson, from the placement survey's starting unit on.
   const from = Math.max(0, units.findIndex((u) => u.title === progress.start));
   const current = [...units.slice(from), ...units].flatMap((u) => u.nodes).find((n) => n.state === 'open');
-  // A finished path whose subject has `again` ("Reflect today") keeps its last lesson one tap away.
+  // A finished path whose subject has `again` ("Reflect today") keeps one of its lessons one tap away.
   const again = !current && subjects.find((s) => s.habit === habitShown)?.again;
-  const last = units.at(-1)?.nodes.at(-1);
+  const repeat = again && units.flatMap((u) => u.nodes).find((n) => n.lesson.id === again.lesson);
   const minutes = `about ${Math.max(1, Math.round(reviewKeys.length * 0.4))} min`;
   const dueChip = !reviewKeys.length ? ''
     : repair ? `<button class="due" data-review>${esc(line('repair'))} · ${minutes}</button>`
@@ -141,7 +141,7 @@ function home(arrived = null) {
     <footer class="cta">
       ${dueChip}
       ${current ? `<button class="next" data-lesson="${current.id}">Continue · ${esc(current.lesson.title)}</button>`
-        : again ? `<button class="next" data-lesson="${last.id}">${esc(again)}</button>` : ''}
+        : repeat ? `<button class="next" data-lesson="${repeat.id}">${esc(again.label)}</button>` : ''}
     </footer>`;
 
   const guide = app.querySelector('.guide');

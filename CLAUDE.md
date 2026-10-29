@@ -18,6 +18,7 @@ chess teacher, so that name and the draft knight are retired.
 ```bash
 npm install && npm start   # http://localhost:8124
 npm test                   # node --test, no framework
+npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second worktree
 ```
 
 ## Architecture
@@ -52,8 +53,8 @@ npm test                   # node --test, no framework
 - `src/reflect/` — the Reflect practice subject: three prompts (good, learned, tomorrow), each
   skippable, self-paced like grounding, with Lumi coaching. What is written goes to
   `progress.journal` via `writeJournal`, never the log; the habit view shows it through the
-  subject's `dayDetail` hook. A subject's `again` label ("Reflect today") keeps its last lesson on
-  home once the path is done. The learner's text is never linted or sent anywhere (a test checks).
+  subject's `dayDetail` hook. A subject's `again` ({ label, lesson }, in the course JSON) keeps a
+  lesson on home once the path is done: "Reflect today", "Take a break", "Breathe". The learner's text is never linted or sent anywhere (a test checks).
 - **Calm is not therapy.** `test/guardrails.test.js` bars health claims, diagnosis words and urgency
   in Calm's text, and checks the Lifeline help line (13 11 14, as plain text) is on the first Calm
   lesson and after "Not really".
