@@ -82,7 +82,11 @@ function board(el, fen, color = fen.split(' ')[1]) {  // seen from `color`, else
     orientation: color === 'w' ? COLOR.white : COLOR.black,
     assetsUrl: ASSETS,
     // The frame carries the a-h and 1-8 coordinates: beginners learn to read squares from it.
-    style: { cssClass: 'default', borderType: 'frame', animationDuration: 250 },
+    // Drill's own pieces (tools/pieces.js) and colours (the "Board skin" block in styles.css).
+    style: {
+      cssClass: 'drill', borderType: 'frame', animationDuration: 250,
+      pieces: { file: new URL('../../assets/pieces/drill.svg', import.meta.url).href },
+    },
     extensions: [{ class: Markers, props: { autoMarkers: MARKER_TYPE.frame } }, { class: Arrows }],
   });
 }

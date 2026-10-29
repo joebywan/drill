@@ -147,23 +147,98 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .kicker { margin: 8px 0 0; font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
 .summary h1 { margin: 2px 0 4px; }
 .said { color: var(--muted); margin: 0 0 20px; }
-.stats { display: flex; gap: 10px; margin-bottom: 20px; }
-.stats div { flex: 1; padding: 12px 6px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
-.stats b { display: block; font-size: 1.4rem; }
-.stats span { font-size: .85rem; color: var(--muted); }
 .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
 .confetti i { position: absolute; top: -14px; width: 8px; height: 12px; border-radius: 2px; }
 
-/* Board markers in the app's colours, strong enough to read on a phone in sunlight. */
-.cm-chessboard .markers .marker.marker-circle { stroke: #3b6fd6; stroke-width: 4px; opacity: .85; }
-.cm-chessboard .markers .marker.marker-frame-primary { stroke: #2f9d5a; stroke-width: 4px; opacity: .95; }
-.cm-chessboard .markers .marker.marker-circle-danger { stroke: #d0583c; stroke-width: 4px; opacity: .9; }
-.cm-chessboard .markers .marker.marker-circle-primary { stroke: #2f9d5a; stroke-width: 4px; opacity: .9; }
+/* ---- Board skin: Drill's board, pieces (assets/pieces/drill.svg) and markers ---- */
+:root {
+  --sq-light: #E9F4EC; --sq-dark: #86C8A9; --sq-frame: #4E9C7D; --sq-coord: #F4FBF6; --sq-ledge: #3C7F64;
+  --sq-hl: #F5C542; --sq-good: #1F7A45;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sq-light: #8496AC; --sq-dark: #5B6B80; --sq-frame: #2B3443; --sq-coord: #C9D3E0; --sq-ledge: #1A2029;
+    --sq-hl: #F5B83D; --sq-good: #5AD08A;
+  }
+}
+/* Rounded and raised on a solid ledge, like the quest markers. */
+.board .cm-chessboard { display: block; border-radius: 14px; box-shadow: 0 5px 0 var(--sq-ledge); }
+.cm-chessboard.drill .board .square.white { fill: var(--sq-light); }
+.cm-chessboard.drill .board .square.black { fill: var(--sq-dark); }
+.cm-chessboard.drill .board .border { fill: var(--sq-frame); stroke: none; rx: 14px; }
+.cm-chessboard.drill .board .border-inner { fill: none; stroke: none; }
 /* The frame's a-h and 1-8 are taught in the first lesson, so they must be easy to read. */
-.cm-chessboard.default .coordinates .coordinate.file, .cm-chessboard.default .coordinates .coordinate.rank { fill: #4a3420; font-weight: 700; }
+.cm-chessboard.drill .coordinates { pointer-events: none; user-select: none; }
+.cm-chessboard.drill .coordinates .coordinate { fill: var(--sq-coord); font-size: 7px; font-weight: 800; }
+/* Markers strong enough to read on a phone in sunlight, on both palettes. */
+.cm-chessboard .markers .marker.marker-square { fill: var(--sq-hl); opacity: .55; }
+.cm-chessboard .markers .marker.marker-circle { stroke: #3b6fd6; stroke-width: 4px; opacity: .85; }
+.cm-chessboard .markers .marker.marker-frame,
+.cm-chessboard .markers .marker.marker-frame-primary { stroke: var(--sq-good); stroke-width: 4px; opacity: 1; }
+.cm-chessboard .markers .marker.marker-circle-danger { stroke: #d0583c; stroke-width: 4px; opacity: .95; }
+.cm-chessboard .markers .marker.marker-circle-primary { stroke: var(--sq-good); stroke-width: 4px; opacity: .95; }
+/* ---- end board skin ---- */
 
 .survey { padding: 32px 16px; text-align: center; }
 .survey .hero { width: 130px; }
 .survey .choice { display: block; width: 100%; margin: 10px 0; padding: 14px 16px; text-align: left; }
 .survey .next { margin-top: 8px; }
 .survey [data-first] { text-align: center; }
+
+/* ---- Lesson juice: the warming meter and the end screen. Kept apart from the board rules. ---- */
+:root {
+  --heat-gold: #F5A524;
+  --heat-ember: #F0772A;
+  --chip-acc: #2f7d4f;
+  --chip-time: #3b62c4;
+  --chip-fire: #c2620a;
+  --chip-ink: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --chip-acc: #4caf73; --chip-time: #86a2f0; --chip-fire: #f59a3c; --chip-ink: #10141b; }
+}
+.meter { position: relative; overflow: visible; }
+.fill {
+  position: relative; overflow: hidden; border-radius: inherit; width: var(--at, 0);
+  transition: width .3s, background-color .4s, box-shadow .4s;
+}
+.meter[data-heat="1"] .fill { background: var(--heat-gold); }
+.meter[data-heat="2"] .fill {
+  background: linear-gradient(90deg, var(--heat-gold), var(--heat-ember));
+  box-shadow: 0 0 10px 2px color-mix(in srgb, var(--heat-ember) 60%, transparent);
+  animation: ember 1.4s ease-in-out infinite;
+}
+@keyframes ember { 50% { box-shadow: 0 0 16px 4px color-mix(in srgb, var(--heat-ember) 75%, transparent); } }
+.shine {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 40%; transform: translateX(-100%);
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .7), transparent);
+}
+/* "3 in a row" rides just under the front of the fill, then fades. */
+.flare {
+  position: absolute; top: 16px; left: clamp(3em, var(--at, 0), calc(100% - 3em)); z-index: 2; opacity: 0;
+  transform: translateX(-50%); padding: 2px 8px; border-radius: 999px; white-space: nowrap; pointer-events: none;
+  font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
+  background: var(--heat-gold); color: #1E1B2E;
+}
+.meter[data-heat="2"] .flare { background: var(--heat-ember); }
+
+.summary { padding-bottom: 110px; }
+.duo { position: relative; display: flex; justify-content: center; align-items: flex-end; gap: 4px; margin: 8px auto 4px; }
+.duo .hero { margin: 0; }
+.duo .rosa { width: 132px; }
+.duo .lumi { width: 104px; }
+.spark { position: absolute; left: 50%; top: 18%; margin-left: -12px; font-size: 28px; font-style: normal; color: var(--heat-gold); opacity: 0; pointer-events: none; }
+.cheer {
+  position: absolute; right: calc(50% - 128px); top: -6px; margin: 0; padding: 3px 10px; border-radius: 12px;
+  background: var(--card); border: 2px solid var(--line); font-size: .85rem; font-weight: 700; white-space: nowrap;
+}
+.summary h1 { font-size: 1.45rem; line-height: 1.25; margin: 4px 0 8px; text-wrap: balance; }
+.chips { display: flex; gap: 10px; margin: 0 0 12px; }
+.chip { flex: 1; min-width: 0; border-radius: 14px; border: 2px solid var(--c); background: var(--c); overflow: hidden; }
+.chip span { display: block; padding: 4px 2px; font-size: .7rem; font-weight: 800; letter-spacing: .05em; color: var(--chip-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip b { display: block; padding: 10px 4px; border-radius: 12px; background: var(--card); color: var(--c); font-size: 1.3rem; }
+.chip.acc { --c: var(--chip-acc); }
+.chip.time { --c: var(--chip-time); }
+.chip.fire { --c: var(--chip-fire); }
+.learned { margin: 0; font-size: .85rem; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .meter[data-heat="2"] .fill { animation: none; } }
