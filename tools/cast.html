@@ -26,12 +26,11 @@
 <script type="module">
   import { MOODS, blink } from '../src/cast/kit.js';
   import { rosa } from '../src/cast/rosa.js';
-  import { lumi, LIGHTS } from '../src/cast/lumi.js';
+  import { lumi } from '../src/cast/lumi.js';
 
   const cast = [
     ['Rosa', MOODS.map((m) => [m, rosa(m)])],
     ['Lumi', MOODS.map((m) => [m, lumi(m)])],
-    ['Lumi lights', LIGHTS.map((l) => [l, lumi('teach', l)])],
   ];
   const fig = ([label, svg]) => `<figure>${svg}<figcaption>${label}</figcaption></figure>`;
   const panel = (theme) => `<div class="panel ${theme}">` + cast.map(([name, items]) => `
