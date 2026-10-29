@@ -48,6 +48,12 @@ npm test                   # node --test, no framework
 - **Every shipped item passes `problem()` and has an explanation.** Tap and true/false answers
   are computed from the position, never stored.
 - **A missed item comes back once, at the end of the session.** Only the first try is scheduled.
+- **The streak forgives.** One missed day in any seven is forgiven automatically; a gap of up
+  to three days (or a second miss that week) is repaired by a review. A lesson finished in a
+  repairable gap leaves the streak waiting for that review. Rules in `progress.js`, tested with
+  fixed dates.
+- **XP pays for recall and stays off the headline.** 5 per item recalled in review; 5 a lesson
+  plus 2 per first-try right. The summary leads with what was learned.
 - **Exercises that grade code must grade it independently.** For the planned TS test-writing
   subject, a learner's tests pass against the real implementation and fail against several
   broken ones; don't grade by matching text.

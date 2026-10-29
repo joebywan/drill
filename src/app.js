@@ -1,5 +1,5 @@
 import { subjects } from './subjects.js';
-import { emptyProgress, finishSession, currentStreak, dueKeys, light } from './progress.js';
+import { emptyProgress, finishSession, currentStreak, dueKeys, light, needsRepair, soonestKeys } from './progress.js';
 import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
@@ -39,11 +39,16 @@ let stopHome = () => {};
 function home() {
   stopHome();
   const due = dueKeys(progress).filter((k) => items.has(k));
+  // A repair needs a review even when nothing is due yet: then the soonest cards stand in.
+  const repair = needsRepair(progress);
+  const reviewKeys = (due.length ? due : repair ? soonestKeys(progress).filter((k) => items.has(k)) : []).slice(0, REVIEW_SIZE);
   const units = subjects.flatMap(unitsOf);
   const current = units.flatMap((u) => u.nodes).find((n) => n.state === 'open');
   const todays = light(progress);
-  const dueChip = due.length
-    ? `<button class="due" data-review>${due.length} to review · about ${Math.max(1, Math.round(Math.min(due.length, REVIEW_SIZE) * 0.4))} min</button>` : '';
+  const minutes = `about ${Math.max(1, Math.round(reviewKeys.length * 0.4))} min`;
+  const dueChip = !reviewKeys.length ? ''
+    : repair ? `<button class="due" data-review>${esc(line('repair'))} · ${minutes}</button>`
+    : `<button class="due" data-review>${due.length} to review · ${minutes}</button>`;
 
   const node = (n, i) => {
     const x = Math.round(Math.sin((i * Math.PI) / 3) * 64);
@@ -85,11 +90,11 @@ function home() {
   app.querySelector('.here')?.scrollIntoView({ block: 'center' });
   app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); });
   app.querySelector('[data-review]')?.addEventListener('click', () =>
-    run(null, due.slice(0, REVIEW_SIZE).map((k) => ({ key: k, ...items.get(k) }))));
+    run(null, reviewKeys.map((k) => ({ key: k, ...items.get(k) })), 'Review'));
   for (const btn of app.querySelectorAll('[data-lesson]')) {
     btn.addEventListener('click', () => {
       const n = units.flatMap((u) => u.nodes).find((x) => x.id === btn.dataset.lesson);
-      run(n.id, n.lesson.items.map((item) => ({ key: `${n.subject.id}:${item.id}`, ...items.get(`${n.subject.id}:${item.id}`) })));
+      run(n.id, n.lesson.items.map((item) => ({ key: `${n.subject.id}:${item.id}`, ...items.get(`${n.subject.id}:${item.id}`) })), n.lesson.title);
     });
   }
 }
@@ -118,7 +123,7 @@ function unitsOf(subject) {
  * Plays a session: a lesson (lessonId set) or a review (null). An item missed the first time
  * comes back once at the end; only the first try counts toward review scheduling.
  */
-function run(lessonId, queue) {
+function run(lessonId, queue, title) {
   stopHome();
   const results = [];
   let at = 0;
@@ -202,22 +207,26 @@ function run(lessonId, queue) {
   };
   next.addEventListener('click', step);
 
+  const perfectRun = () => results.length > 0 && results.every((r) => r.correct);
   const finish = () => {
     const before = progress.xp;
+    const relit = needsRepair(progress);
     progress = finishSession(progress, lessonId, results);
+    const said = !lessonId ? (relit && !needsRepair(progress) ? 'relit' : 'review') : perfectRun() ? 'perfect' : 'complete';
     save();
     const right = results.filter((r) => r.correct).length;
-    const perfect = results.length > 0 && right === results.length;
+    const perfect = perfectRun();
     const xp = progress.xp - before;
     app.innerHTML = `
       <main class="summary">
         <div class="hero"></div>
-        <h1>${lessonId ? 'Lesson complete' : 'Review done'}</h1>
-        <p class="said">${esc(line(!lessonId ? 'review' : perfect ? 'perfect' : 'complete'))}</p>
+        <p class="kicker">${lessonId ? 'Lesson complete' : 'Review done'}</p>
+        <h1>${esc(lessonId ? title : `${right} of ${results.length} recalled`)}</h1>
+        <p class="said">${esc(line(said))}</p>
         <div class="stats">
-          <div><b class="xp">+${xp}</b><span>XP</span></div>
-          <div><b>${right}/${results.length}</b><span>first try</span></div>
+          <div><b>${right}/${results.length}</b><span>${lessonId ? 'first try' : 'recalled'}</span></div>
           <div><b>🔥 ${currentStreak(progress)}</b><span>day streak</span></div>
+          <div><b class="xp">+${xp}</b><span>XP</span></div>
         </div>
         <button class="next">Continue</button>
       </main>`;

@@ -19,6 +19,8 @@ export const LINES = {
   ],
   perfect: ["Every one right first time. That's careful play."],
   review: ['Review done. Those patterns are sticking.'],
+  relit: ['That review relit your streak. Welcome back to the board.'],
+  repair: ['One short review relights your streak'],
 };
 
 /** A line of the given kind; `pick` in [0, 1) chooses which. */
