@@ -38,6 +38,14 @@ async function placeAtStart(page) {
   await page.getByRole('button', { name: "I've never played" }).click();
 }
 
+async function finishFirstLesson(page) {
+  await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
+  for (const item of first.items) {
+    await solve(page, item);
+    await continueButton(page).click();
+  }
+}
+
 test('first visit asks where to start, then shows the path', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Have you played chess before?' })).toBeVisible();
@@ -49,12 +57,7 @@ test('first visit asks where to start, then shows the path', async ({ page }) =>
 test('finishing the first lesson shows the summary, starts the streak, and survives a reload', async ({ page }) => {
   await placeAtStart(page);
   await expect(page.getByTitle('Day streak')).toHaveText('🔥 0');
-  await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
-
-  for (const item of first.items) {
-    await solve(page, item);
-    await continueButton(page).click();
-  }
+  await finishFirstLesson(page);
 
   const marked = first.items.filter((i) => kind(i) !== 'teach').length;
   await expect(page.getByText(`${marked} of ${marked} right first try`)).toBeVisible();
@@ -78,6 +81,31 @@ test('mute stays muted after a reload', async ({ page }) => {
   await expect(sound).toHaveAttribute('aria-pressed', 'false');
   await page.reload();
   await expect(sound).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('progress saved to a file loads back', async ({ page }) => {
+  await placeAtStart(page);
+  await finishFirstLesson(page);
+  await continueButton(page).click();
+
+  await page.getByRole('button', { name: 'Your progress' }).click();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save to a file' }).click();
+  const file = await (await download).path();
+
+  // A browser that lost everything: start over, then load the file back.
+  await page.evaluate(() => localStorage.clear());
+  await placeAtStart(page);
+  await expect(page.getByTitle('Day streak')).toHaveText('🔥 0');
+  await page.getByRole('button', { name: 'Your progress' }).click();
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Load from a file' }).click();
+  await (await chooser).setFiles(file);
+  await expect(page.getByText('The file has 1 lesson done, a 1-day streak')).toBeVisible();
+  await page.getByRole('button', { name: 'Use this file' }).click();
+
+  await expect(page.getByTitle('Day streak')).toHaveText('🔥 1');
+  await expect(page.getByRole('button', { name: `${first.title}, done` })).toBeVisible();
 });
 
 // Path rows are as wide as the trail and shifted sideways by --x, so the shifted ones poke past
