@@ -1,55 +1,72 @@
-import { face, limb, shadow, svg } from './kit.js';
+import { INK, face, limb, shadow, svg } from './kit.js';
 
 /**
- * Lumi, the guide: a small walking lightbulb. The light inside is the habit display.
+ * Lumi, the guide: a baby seal who carries a small lantern from lamp to lamp. The lantern's
+ * light is the habit display:
  *
  *   bright   today is done
  *   soft     not yet today (the app flickers it)
  *   ember    after a missed day: warm and low, one lesson rekindles it
  *
- * Lumi never goes dark, and no light state comes with a sad face.
+ * The light never goes out, and no light state comes with a sad face.
  */
 export const LIGHTS = ['bright', 'soft', 'ember'];
 
+const SEAL = '#6E82A8';
+const SEAL_SHADE = '#5A6D92';
+const BELLY = '#E4EAF3';
+const MUZZLE = '#C9D3E3';
 const FRAME = '#2E3270';
-const FRAME_SHADE = '#262A5E';
 const GLASS = { bright: '#FFD978', soft: '#F5A524', ember: '#D98A3A' };
-const SHADE = { bright: '#F2C658', soft: '#E39418', ember: '#C77B2F' };
 const CORE = { bright: '#FFF1C2', soft: '#FFC861', ember: '#F2A65A' };
 
-// The globe: a circle (centre 50,46, r 34) that tapers into the neck of the screw base.
-const GLOBE = 'M50 12 A34 34 0 0 1 72 72 Q64 80 63 88 L37 88 Q36 80 28 72 A34 34 0 0 1 50 12 Z';
-const GLOBE_SHADE = 'M62 14 A34 34 0 0 1 72 72 Q64 80 63 88 L56 88 Q58 78 65 70 A30 30 0 0 0 62 14 Z';
+// Flipper tips per mood: [left, right]. The left flipper always holds the lantern.
+const L = [25, 62], R = [75, 62];
+const ARMS = {
+  teach:      [[14, 76], [88, 58]],   // right flipper presenting
+  think:      [[14, 76], [64, 70]],   // flipper to chin
+  correct:    [[12, 38], [88, 40]],   // lantern held high
+  wrong:      [[14, 78], [88, 80]],   // open, low: "it's fine"
+  struggling: [[14, 76], [94, 52]],   // pointing out to the board
+  complete:   [[12, 38], [88, 40]],
+  sleepy:     [[14, 80], [60, 84]],
+};
+
+/** The lantern hangs from (x, y): handle, cap, glass, base. */
+function lantern(x, y, light) {
+  const halo = light === 'bright' ? `<circle data-part="halo" cx="${x}" cy="${y + 14}" r="14" fill="${GLASS.bright}" opacity=".35"/>` : '';
+  // The ember sits low in the glass, so it reads as resting rather than fading.
+  const core = light === 'ember'
+    ? `<ellipse data-part="core" cx="${x}" cy="${y + 18}" rx="4" ry="2" fill="${CORE.ember}"/>`
+    : `<ellipse data-part="core" cx="${x}" cy="${y + 13.5}" rx="3.5" ry="4.5" fill="${CORE[light]}"/>`;
+  return `<g data-part="lantern">${halo}
+    <path d="M${x - 4} ${y + 6} Q${x} ${y - 3} ${x + 4} ${y + 6}" fill="none" stroke="${FRAME}" stroke-width="2.5"/>
+    <rect x="${x - 7}" y="${y + 4}" width="14" height="4" rx="2" fill="${FRAME}"/>
+    <rect data-part="glass" x="${x - 5.5}" y="${y + 7}" width="11" height="13" rx="3" fill="${GLASS[light]}"/>
+    ${core}
+    <rect x="${x - 7}" y="${y + 19}" width="14" height="4" rx="2" fill="${FRAME}"/></g>`;
+}
 
 export function lumi(mood = 'teach', light = 'soft') {
   if (!GLASS[light]) light = 'soft';
-  const glass = GLASS[light];
-  const halo = light === 'bright'
-    ? `<circle data-part="halo" cx="50" cy="48" r="48" fill="${GLASS.bright}" opacity=".22"/>` : '';
-  // The ember sits low in the neck, so the face reads as resting rather than fading.
-  const core = light === 'ember'
-    ? `<ellipse data-part="core" cx="50" cy="78" rx="12" ry="5" fill="${CORE.ember}"/>`
-    : `<circle data-part="core" cx="50" cy="44" r="22" fill="${CORE[light]}" opacity=".85"/>`;
-  const up = mood === 'correct' || mood === 'complete';
-  const arms = up
-    ? limb([19, 56], [7, 40], FRAME, FRAME, 9) + limb([81, 56], [93, 40], FRAME, FRAME, 9)
-    : mood === 'struggling'
-      ? limb([19, 60], [9, 74], FRAME, FRAME, 9) + limb([81, 56], [96, 50], FRAME, FRAME, 9)
-      : limb([19, 60], [9, 74], FRAME, FRAME, 9) + limb([81, 60], [91, 74], FRAME, FRAME, 9);
+  const [lh, rh] = ARMS[mood] || ARMS.teach;
+  const whisker = (y1, y2) => [-1, 1].map((s) =>
+    `<path d="M${50 + s * 12} ${y1} L${50 + s * 22} ${y2}" stroke="${INK}" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>`).join('');
   return svg('lumi', mood, `
-    ${halo}
-    ${shadow(22)}
+    ${shadow(26)}
     <g data-part="body">
-      ${limb([44, 100], [42, 107], FRAME, FRAME, 10)}${limb([56, 100], [58, 107], FRAME, FRAME, 10)}
-      <g data-part="arms">${arms}</g>
-      <path data-part="glass" d="${GLOBE}" fill="${glass}"/>
-      <path d="${GLOBE_SHADE}" fill="${SHADE[light]}"/>
-      ${core}
-      <ellipse cx="32" cy="30" rx="3.5" ry="8" fill="#fff" opacity=".5" transform="rotate(35 32 30)"/>
-      <!-- the screw base: banded, so the bulb reads at any size -->
-      <rect x="35" y="86" width="30" height="7" rx="3.5" fill="${FRAME}"/>
-      <rect x="37" y="92" width="26" height="6" rx="3" fill="${FRAME_SHADE}"/>
-      <rect x="35" y="97" width="30" height="5" rx="2.5" fill="${FRAME}"/>
-      ${face(mood, { cx: 50, cy: 44, skin: glass, mouthY: 12 })}
+      <ellipse cx="35" cy="105" rx="11" ry="5" fill="${SEAL_SHADE}" transform="rotate(-18 35 105)"/>
+      <ellipse cx="65" cy="105" rx="11" ry="5" fill="${SEAL_SHADE}" transform="rotate(18 65 105)"/>
+      <path d="M50 14 C74 14 82 36 82 60 C82 86 72 104 50 104 C28 104 18 86 18 60 C18 36 26 14 50 14 Z" fill="${SEAL}"/>
+      <path d="M62 16 C76 22 82 40 82 60 C82 86 72 104 50 104 C64 96 70 80 70 60 C70 40 68 26 62 16 Z" fill="${SEAL_SHADE}"/>
+      <ellipse cx="50" cy="84" rx="22" ry="18" fill="${BELLY}"/>
+      <g data-part="head">
+        <ellipse cx="44" cy="53" rx="7" ry="5" fill="${MUZZLE}"/><ellipse cx="56" cy="53" rx="7" ry="5" fill="${MUZZLE}"/>
+        ${whisker(52, 50)}${whisker(55, 57)}
+        ${face(mood, { cx: 50, cy: 39, skin: SEAL, mouthY: 20 })}
+        <ellipse cx="50" cy="48.5" rx="4" ry="3" fill="${INK}"/>
+      </g>
+      ${lantern(lh[0], lh[1], light)}
+      <g data-part="arms">${limb(L, lh, SEAL, SEAL, 12)}${limb(R, rh, SEAL, SEAL, 12)}</g>
     </g>`);
 }
