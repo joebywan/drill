@@ -285,10 +285,12 @@ function run(lessonId, queue, title) {
     const right = results.filter((r) => r.correct).length;
     const perfect = perfectRun();
     const seconds = Math.round((Date.now() - started) / 1000);
-    const pace = paceLabel(seconds / queue.length);
+    const missed = results.some((r) => !r.correct);
+    // Speed is only praised when it wasn't bought with mistakes.
+    const pace = missed ? 'STEADY' : paceLabel(seconds / queue.length);
     const kind = finished({
       review: !lessonId, perfect, relit: relit && !needsRepair(progress),
-      fast: pace !== 'STEADY', missed: results.some((r) => !r.correct),
+      fast: pace !== 'STEADY', missed,
     });
     const percent = results.length ? Math.round((100 * right) / results.length) : null;
     const clock = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
