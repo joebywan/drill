@@ -4,7 +4,7 @@ import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
 import { reducedMotion } from './cast/kit.js';
-import { finished, line, rightAnswer } from './cast/lines.js';
+import { STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
 import { buzz, move, play, setSound, soundOn } from './feel.js';
 
 const STORE = 'drill.progress';
@@ -179,10 +179,11 @@ function run(lessonId, queue, title) {
   let at = 0;
   let streak = 0; // right answers in a row, this session
   let cleanup = () => {};
+  const started = Date.now();
   app.innerHTML = `
     <header class="bar">
       <button class="close" aria-label="Quit lesson">✕</button>
-      <div class="meter"><div class="fill"></div></div>
+      <div class="meter" data-heat="0"><div class="fill"><i class="shine"></i></div><span class="flare" aria-hidden="true"></span></div>
     </header>
     <main class="play">
       <p class="topic"></p>
@@ -197,7 +198,7 @@ function run(lessonId, queue, title) {
       <button class="next">Continue</button>
     </footer>`;
   const $ = (sel) => app.querySelector(sel);
-  const [topic, bubble, stage, fill, foot, next] = ['.topic', '.bubble', '.stage', '.fill', '.foot', '.next'].map($);
+  const [topic, bubble, stage, foot, next] = ['.topic', '.bubble', '.stage', '.foot', '.next'].map($);
   const rosaCoach = coach($('.who'), rosa);
   let said = '';
   const quit = () => { cleanup(); rosaCoach.stop(); };
@@ -213,7 +214,23 @@ function run(lessonId, queue, title) {
     aside = setTimeout(() => { bubble.textContent = said; }, 2500);
   });
 
-  const meter = () => { fill.style.width = `${(100 * at) / queue.length}%`; };
+  // The bar warms with the run: green, then gold at three in a row, then an orange glow at five.
+  const meterEl = $('.meter');
+  const meter = () => {
+    meterEl.style.setProperty('--at', `${(100 * at) / queue.length}%`);
+    meterEl.dataset.heat = streak >= 5 ? 2 : streak >= 3 ? 1 : 0;
+  };
+  const shine = () => move($('.shine'), [{ transform: 'translateX(-100%)' }, { transform: 'translateX(350%)' }], { duration: 650, easing: 'ease-out' });
+  const flare = (text) => {
+    const el = $('.flare');
+    el.textContent = text;
+    move(el, [
+      { opacity: 0, transform: 'translate(-50%, 6px) scale(.6)' },
+      { opacity: 1, transform: 'translate(-50%, 0) scale(1.1)', offset: 0.2 },
+      { opacity: 1, transform: 'translate(-50%, 0) scale(1)', offset: 0.8 },
+      { opacity: 0, transform: 'translate(-50%, -4px) scale(1)' },
+    ], { duration: 1600, easing: 'ease-out' });
+  };
   const step = () => {
     cleanup();
     meter();
@@ -231,11 +248,11 @@ function run(lessonId, queue, title) {
         if (correct !== null && !entry.retry) results.push({ key: entry.key, correct });
         if (correct === false && !entry.retry) queue.push({ ...entry, retry: true });
         at++;
-        meter();
         let kind = 'plain';
         if (correct === true) {
           streak++;
           kind = rightAnswer(streak);
+          if (kind !== 'correct') flare(`${streak} in a row`);
           rosaCoach.set('correct');
           rosaCoach.hop();
           play(kind === 'correct' ? 'right' : 'run');
@@ -248,6 +265,8 @@ function run(lessonId, queue, title) {
           play('wrong');
           buzz('wrong');
         }
+        meter();
+        shine();
         foot.className = `foot show ${correct === null ? 'plain' : correct ? 'right' : 'wrong'}`;
         foot.querySelector('strong').textContent = kind === 'plain' ? '' : line(kind);
         foot.querySelector('p').textContent = text;
@@ -262,31 +281,77 @@ function run(lessonId, queue, title) {
     const relit = needsRepair(progress);
     const firstTime = lessonId && !progress.done[lessonId];
     progress = finishSession(progress, lessonId, results);
-    const said = finished({ review: !lessonId, perfect: perfectRun(), relit: relit && !needsRepair(progress) });
     save();
     const right = results.filter((r) => r.correct).length;
     const perfect = perfectRun();
+    const seconds = Math.round((Date.now() - started) / 1000);
+    const missed = results.some((r) => !r.correct);
+    // Speed is only praised when it wasn't bought with mistakes.
+    const pace = missed ? 'STEADY' : paceLabel(seconds / queue.length);
+    const kind = finished({
+      review: !lessonId, perfect, relit: relit && !needsRepair(progress),
+      fast: pace !== 'STEADY', missed,
+    });
+    const percent = results.length ? Math.round((100 * right) / results.length) : null;
+    const clock = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+    const chip = (tone, label, value) => `<div class="chip ${tone}"><span>${esc(label)}</span><b>${esc(value)}</b></div>`;
     app.innerHTML = `
       <main class="summary">
-        <div class="hero"></div>
-        <p class="kicker">${lessonId ? 'Lesson complete' : 'Review done'}</p>
-        <h1>${esc(lessonId ? title : `${right} of ${results.length} recalled`)}</h1>
-        <p class="said">${esc(line(said))}</p>
-        <div class="stats">
-          <div><b>${right}/${results.length}</b><span>${lessonId ? 'first try' : 'recalled'}</span></div>
-          <div><b>🔥 ${currentStreak(progress)}</b><span>day streak</span></div>
-          <div><b>${Object.keys(progress.cards).length}</b><span>learned so far</span></div>
+        <div class="duo">
+          <div class="hero rosa"></div>
+          <i class="spark" aria-hidden="true">✦</i>
+          <div class="hero lumi"></div>
+          <p class="cheer">${esc(line('lumi'))}</p>
         </div>
-        <button class="next">Continue</button>
-      </main>`;
-    const hero = coach(app.querySelector('.hero'), rosa);
-    hero.set('complete');
-    hero.hop();
+        <p class="kicker">${esc(lessonId ? title : 'Review done')}</p>
+        <h1>${esc(headline(kind))}</h1>
+        <p class="said">${esc(line(kind))}</p>
+        <div class="chips">
+          ${percent === null ? '' : chip('acc', accuracyLabel(percent), `${percent}%`)}
+          ${chip('time', pace, clock)}
+          ${chip('fire', STREAK_LABEL, `🔥 ${currentStreak(progress)}`)}
+        </div>
+        <p class="learned">${Object.keys(progress.cards).length} learned so far · ${right} of ${results.length} ${lessonId ? 'right first try' : 'recalled'}</p>
+      </main>
+      <footer class="cta"><button class="next">Continue</button></footer>`;
+    const [rosaEl, lumiEl] = app.querySelectorAll('.duo .hero');
+    const cast = [coach(rosaEl, rosa), coach(lumiEl, lumi)];
+    let left = false;
+    for (const c of cast) c.set('correct');
+    // The high five: both lean in and hop, a spark where the hands meet, then a proud bounce.
+    const meet = (el, dx) => move(el, [
+      { transform: 'translate(0, 0)' },
+      { transform: `translate(${dx}px, -10px)`, offset: 0.45 },
+      { transform: `translate(${dx}px, 0)`, offset: 0.6 },
+      { transform: 'translate(0, 0)' },
+    ], { duration: 900, delay: 200, easing: 'ease-in-out' });
+    const leanIn = meet(rosaEl, 22);
+    meet(lumiEl, -22);
+    move(app.querySelector('.spark'), [
+      { opacity: 0, transform: 'scale(.3) rotate(0)' },
+      { opacity: 1, transform: 'scale(1.4) rotate(45deg)', offset: 0.4 },
+      { opacity: 0, transform: 'scale(1.8) rotate(90deg)' },
+    ], { duration: 500, delay: 560, easing: 'ease-out' });
+    move(app.querySelector('.cheer'), [{ opacity: 0, transform: 'scale(.5)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 260, delay: 560, easing: 'ease-out', fill: 'backwards' });
+    app.querySelectorAll('.chip').forEach((el, i) =>
+      move(el, [{ opacity: 0, transform: 'translateY(12px) scale(.9)' }, { opacity: 1, transform: 'none' }], { duration: 320, delay: 700 + i * 140, easing: 'ease-out', fill: 'backwards' }));
+    const settle = () => {
+      if (left) return;
+      for (const c of cast) c.set('complete');
+      cast[0].hop();
+      setTimeout(() => !left && cast[1].hop(), 140);
+    };
+    if (leanIn) leanIn.finished.then(settle, () => {}); else settle();
     play('done');
     buzz('done');
     const stopParty = perfect ? confetti() : () => {};
     app.querySelector('.summary').addEventListener('click', stopParty);
-    app.querySelector('.next').addEventListener('click', () => { stopParty(); hero.stop(); home(firstTime ? lessonId : null); });
+    app.querySelector('.next').addEventListener('click', () => {
+      left = true;
+      stopParty();
+      for (const c of cast) c.stop();
+      home(firstTime ? lessonId : null);
+    });
   };
 
   step();
