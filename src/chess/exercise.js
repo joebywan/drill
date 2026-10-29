@@ -2,10 +2,11 @@ import { Chess } from 'chess.js';
 import { Chessboard, COLOR, INPUT_EVENT_TYPE, POINTER_EVENTS } from 'cm-chessboard/src/Chessboard.js';
 import { Markers, MARKER_TYPE } from 'cm-chessboard/src/extensions/markers/Markers.js';
 import { startPuzzle, playerColor, tryMove, hint } from './puzzle.js';
-import { answer, explanation, grade, kind } from './items.js';
+import { answer, explanation, grade, kind, meets, solutions } from './items.js';
 
 const ASSETS = new URL('../../node_modules/cm-chessboard/assets/', import.meta.url).href;
 const REPLY_DELAY = 450;
+const PIECE = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
 
 /**
  * Mounts one item in `el`. `say(text, mood?)` sets what the coach says, and how she looks;
@@ -23,7 +24,8 @@ function board(el, fen, color = fen.split(' ')[1]) {  // seen from `color`, else
     position: fen,
     orientation: color === 'w' ? COLOR.white : COLOR.black,
     assetsUrl: ASSETS,
-    style: { cssClass: 'default', borderType: 'none', animationDuration: 250 },
+    // The frame carries the a-h and 1-8 coordinates: beginners learn to read squares from it.
+    style: { cssClass: 'default', borderType: 'frame', animationDuration: 250 },
     extensions: [{ class: Markers, props: { autoMarkers: MARKER_TYPE.frame } }],
   });
 }
@@ -68,7 +70,7 @@ const MOUNTS = {
   tap(boardEl, choices, item, { say, done }) {
     const b = board(boardEl, item.fen);
     const picked = new Set();
-    b.addMarker(MARKER_TYPE.square, item.square);
+    if (item.square) b.addMarker(MARKER_TYPE.square, item.square);
     choices.innerHTML = '<button class="choice check" disabled>Check</button>';
     const check = choices.firstChild;
     b.enableSquareSelect(POINTER_EVENTS.pointerdown, ({ square }) => {
@@ -90,21 +92,54 @@ const MOUNTS = {
     return () => b.destroy();
   },
 
-  pick(boardEl, choices, item, { say, done }) {
+  /**
+   * Play a move that meets the goal. A move the rules don't allow is explained and costs
+   * nothing; the first legal move is the answer. A wrong one is taken back and a right one shown.
+   */
+  move(boardEl, choices, item, { say, done }) {
+    choices.remove();
     const b = board(boardEl, item.fen);
-    buttons(choices, item, item.options.map((o) => [o, o]), (correct) => {
-      playMove(b, item.fen, item.answer);
-      done(correct, feedback(item));
-    });
+    const game = new Chess(item.fen);
+    let timer;
+    const input = (event) => {
+      if (event.type === INPUT_EVENT_TYPE.moveInputStarted) return true;
+      if (event.type !== INPUT_EVENT_TYPE.validateMoveInput) return;
+      const { squareFrom: from, squareTo: to } = event;
+      const result = meets(item, { from, to, promotion: 'q' });
+      if (!result.legal) {
+        say(game.inCheck()
+          ? 'Your king is in check, so the move has to get it out of check. Try again.'
+          : `The ${PIECE[game.get(from)?.type] || 'piece'} can't move like that. Try again.`, 'think');
+        return false;
+      }
+      b.disableMoveInput();
+      say(item.prompt);
+      timer = setTimeout(() => {
+        if (result.correct) {
+          b.setPosition(result.fen, true);
+          b.addMarker(MARKER_TYPE.square, from);
+          b.addMarker(MARKER_TYPE.square, to);
+          for (const sq of item.targets || []) b.addMarker(MARKER_TYPE.framePrimary, sq);
+        } else {
+          const right = solutions(item)[0];
+          b.setPosition(item.fen, true);
+          b.addMarker(MARKER_TYPE.circlePrimary, right.from);
+          b.addMarker(MARKER_TYPE.circlePrimary, right.to);
+        }
+      }, REPLY_DELAY);
+      done(result.correct, explanation(item));
+      return true;
+    };
     say(item.prompt, 'think');
-    return () => b.destroy();
+    b.enableMoveInput(input, b.getOrientation());
+    return () => { clearTimeout(timer); b.destroy(); };
   },
 
   truefalse(boardEl, choices, item, { say, done }) {
     const b = board(boardEl, item.fen);
     buttons(choices, item, [['True', true], ['False', false]], (correct) => {
-      playMove(b, item.fen, item.move);
-      for (const sq of item.targets) b.addMarker(MARKER_TYPE.framePrimary, sq);
+      if (item.move) playMove(b, item.fen, item.move);
+      for (const sq of item.targets || []) b.addMarker(MARKER_TYPE.framePrimary, sq);
       done(correct, feedback(item));
     });
     say(item.prompt, 'think');

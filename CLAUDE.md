@@ -28,7 +28,7 @@ npm test                   # node --test, no framework
   bright/soft/ember habit display on the streak chip. `app.js` owns storage
   (one `localStorage` key, every access in try/catch).
 - `src/chess/puzzle.js` — pure puzzle rules on chess.js. `src/chess/items.js` — the item types
-  (teach, tap, pick, true/false, find), their answers and explanations, and `problem()`, the
+  (teach, tap, move, true/false, find), their answers and explanations, and `problem()`, the
   rules check every shipped item passes. `src/chess/exercise.js` — the board and buttons.
 - `src/cast/` — the characters (`kit.js`, `rosa.js`, `lumi.js`), `coach.js` (a character that
   reacts in place) and `lines.js` (everything the cast says; the guardrail tests lint it).
@@ -79,3 +79,6 @@ npm test                   # node --test, no framework
 ## Open
 
 Live friend features (needs a server) vs share cards; promotion picker; accessibility.
+
+- **Beginners play, they don't pick notation.** Answers are moves on the board or taps on squares;
+  text says "Knight to c7", never "Nc7+" (`words()` turns SAN into words). Boards show coordinates.
