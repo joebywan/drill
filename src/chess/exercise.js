@@ -1,9 +1,11 @@
 import { Chess } from 'chess.js';
 import { Chessboard, COLOR, INPUT_EVENT_TYPE, POINTER_EVENTS } from 'cm-chessboard/src/Chessboard.js';
 import { Markers, MARKER_TYPE } from 'cm-chessboard/src/extensions/markers/Markers.js';
+import { Arrows, ARROW_TYPE } from 'cm-chessboard/src/extensions/arrows/Arrows.js';
 import { startPuzzle, playerColor, tryMove, hint } from './puzzle.js';
-import { answer, explanation, grade, kind, meets, solutions } from './items.js';
-import { play } from '../feel.js';
+import { answer, explanation, grade, hop, kind, meets, solutions, starPath, starsPrompt, targets } from './items.js';
+import { move as animate, play } from '../feel.js';
+import { reducedMotion } from '../cast/kit.js';
 
 const ASSETS = new URL('../../node_modules/cm-chessboard/assets/', import.meta.url).href;
 const REPLY_DELAY = 450;
@@ -20,7 +22,61 @@ export function mount(el, item, ctx) {
   return MOUNTS[kind(item)](el.firstChild, el.lastChild, item, ctx);
 }
 
+// A gold star, drawn by Markers like its own sprites: with cached sprites (cm-chessboard's
+// default) a marker is `<use href="#slice">`, so the star only has to be in the document once.
+// A star on an enemy piece sits small in the corner, above it, so the piece still shows.
+const STAR = { class: 'marker-star', slice: 'markerStar' };
+const STAR_ON = { class: 'marker-star', slice: 'markerStarOn', position: 'above' };
+const starPoints = Array.from({ length: 10 }, (_, i) => {
+  const r = i % 2 ? 6 : 14;
+  const a = (Math.PI / 5) * i - Math.PI / 2;
+  return `${(20 + r * Math.cos(a)).toFixed(2)},${(21 + r * Math.sin(a)).toFixed(2)}`;
+}).join(' ');
+function assets() {
+  if (document.getElementById('drill-star')) return;
+  document.body.insertAdjacentHTML('beforeend', `<svg id="drill-star" aria-hidden="true" style="position:absolute;width:0;height:0">
+    <defs><g id="markerStar"><polygon points="${starPoints}" fill="#f7c02b" stroke="#b9800a" stroke-width="2" stroke-linejoin="round"/></g>
+    <g id="markerStarOn"><use href="#markerStar" transform="translate(21 -2) scale(.5)"/></g></defs></svg>`);
+  document.head.insertAdjacentHTML('beforeend', `<link rel="stylesheet" href="${ASSETS}extensions/arrows/arrows.css">`);
+}
+
+/** A star that bursts and fades where it was collected. Under reduced motion it just goes. */
+function pop(b, square) {
+  const { x, y } = b.view.squareToPoint(square);
+  const ns = 'http://www.w3.org/2000/svg';
+  const outer = document.createElementNS(ns, 'g');
+  outer.setAttribute('transform', `translate(${x} ${y}) scale(${b.view.scalingX})`);
+  const inner = outer.appendChild(document.createElementNS(ns, 'g'));
+  inner.style.cssText = 'transform-box: fill-box; transform-origin: center';
+  inner.appendChild(document.createElementNS(ns, 'use')).setAttribute('href', '#markerStar');
+  b.view.markersTopLayer.appendChild(outer);
+  const anim = animate(inner, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.9) rotate(30deg)', opacity: 0 }],
+    { duration: 320, easing: 'ease-out' });
+  if (anim) anim.onfinish = () => outer.remove(); else outer.remove();
+}
+
+/**
+ * Legal-move dots: a picked-up piece shows where it can go. Returns the move-input handler
+ * wrapper, which adds dots on pick-up and clears them on any drop, then calls `input`.
+ */
+const withDots = (b, fenNow, input) => (event) => {
+  if (event.type === INPUT_EVENT_TYPE.moveInputStarted) {
+    b.removeMarkers(MARKER_TYPE.dot);
+    const to = targets(fenNow(), event.squareFrom);
+    for (const sq of to) b.addMarker(MARKER_TYPE.dot, sq);
+    return true; // a piece with no moves still gets picked up, so the drop can say why
+  }
+  if (event.type !== INPUT_EVENT_TYPE.movingOverSquare) b.removeMarkers(MARKER_TYPE.dot);
+  if (event.type === INPUT_EVENT_TYPE.validateMoveInput) {
+    // Clicking another of your own pieces just picks that one up instead.
+    const own = b.getPiece(event.squareTo)?.[0];
+    if (own && own === b.getPiece(event.squareFrom)?.[0]) return false;
+    return input(event);
+  }
+};
+
 function board(el, fen, color = fen.split(' ')[1]) {  // seen from `color`, else the side to move
+  assets();
   return new Chessboard(el, {
     position: fen,
     orientation: color === 'w' ? COLOR.white : COLOR.black,
@@ -31,7 +87,7 @@ function board(el, fen, color = fen.split(' ')[1]) {  // seen from `color`, else
       cssClass: 'drill', borderType: 'frame', animationDuration: 250,
       pieces: { file: new URL('../../assets/pieces/drill.svg', import.meta.url).href },
     },
-    extensions: [{ class: Markers, props: { autoMarkers: MARKER_TYPE.frame } }],
+    extensions: [{ class: Markers, props: { autoMarkers: MARKER_TYPE.frame } }, { class: Arrows }],
   });
 }
 
@@ -113,14 +169,12 @@ const MOUNTS = {
     const b = board(boardEl, item.fen, item.side);
     const game = new Chess(item.fen);
     let timer;
-    const input = (event) => {
-      if (event.type === INPUT_EVENT_TYPE.moveInputStarted) return true;
-      if (event.type !== INPUT_EVENT_TYPE.validateMoveInput) return;
+    const input = withDots(b, () => item.fen, (event) => {
       const { squareFrom: from, squareTo: to } = event;
       const result = meets(item, { from, to, promotion: 'q' });
       if (!result.legal) {
         say(game.inCheck()
-          ? 'Your king is in check, so the move has to get it out of check. Try again.'
+          ? 'That leaves your king in check. Try again.'
           : `The ${PIECE[game.get(from)?.type] || 'piece'} can't move like that. Try again.`, 'think');
         return false;
       }
@@ -141,10 +195,91 @@ const MOUNTS = {
       }, REPLY_DELAY);
       done(result.correct, explanation(item));
       return true;
-    };
+    });
     say(item.prompt, 'think');
     b.enableMoveInput(input, b.getOrientation());
     return () => { clearTimeout(timer); b.destroy(); };
+  },
+
+  /**
+   * Collect the stars: move your piece onto every star within the move budget. Illegal moves
+   * are explained and cost nothing; the other side never moves. Out of moves and the board
+   * resets with arrows along a way that works. A piece's first puzzle can slide it along a
+   * demo path first, before the player gets the board.
+   */
+  stars(boardEl, choices, item, { say, done }) {
+    choices.remove();
+    const b = board(boardEl, item.fen, item.side);
+    const prompt = starsPrompt(item);
+    const left = new Set(item.stars);
+    let fen = item.fen;
+    let budget = item.moves;
+    let timer;
+    let gone = false;
+    const wait = (ms) => new Promise((r) => { timer = setTimeout(r, ms); });
+    const unstar = (sq) => { b.removeMarkers(STAR, sq); b.removeMarkers(STAR_ON, sq); };
+    const drawStars = () => {
+      unstar();
+      for (const sq of left) b.addMarker(b.getPiece(sq) ? STAR_ON : STAR, sq);
+    };
+    drawStars();
+    if (item.new) {
+      boardEl.style.position = 'relative';
+      boardEl.insertAdjacentHTML('beforeend', `<span style="position:absolute;top:0;left:50%;transform:translate(-50%,-50%);z-index:2;
+        padding:2px 10px;border-radius:999px;background:var(--accent);color:var(--accent-text);font-size:.75rem;font-weight:800;
+        letter-spacing:.08em;white-space:nowrap;pointer-events:none">NEW PIECE · ${item.new.toUpperCase()}</span>`);
+    }
+
+    const input = withDots(b, () => fen, ({ squareFrom: from, squareTo: to }) => {
+      const result = hop(fen, { from, to, promotion: 'q' });
+      if (!result) {
+        say(`The ${PIECE[b.getPiece(from)?.[1]] || 'piece'} can't move like that. Try again.`, 'think');
+        return false;
+      }
+      fen = result.fen;
+      budget--;
+      if (left.delete(to)) { unstar(to); pop(b, to); play('tap'); }
+      if (result.played.promotion) timer = setTimeout(() => b.setPosition(fen), REPLY_DELAY);
+      if (!left.size) {
+        b.disableMoveInput();
+        say(`Every star collected.`);
+        done(true, explanation(item));
+      } else if (!budget) {
+        b.disableMoveInput();
+        say(`Out of moves. Here's one way.`, 'think');
+        timer = setTimeout(() => {
+          b.setPosition(item.fen, true);
+          left.clear();
+          for (const sq of item.stars) left.add(sq);
+          drawStars();
+          for (const m of starPath(item)) b.addArrow(ARROW_TYPE.default, m.from, m.to);
+        }, REPLY_DELAY);
+        done(false, explanation(item));
+      } else {
+        say(`${left.size} star${left.size === 1 ? '' : 's'} to go, ${budget} move${budget === 1 ? '' : 's'} left.`, 'think');
+      }
+      return true;
+    });
+
+    (async () => {
+      if (item.demo) { // the piece shows how it moves first, then goes back
+        say(item.intro || prompt, 'teach');
+        await wait(600);
+        for (let i = 1; i < item.demo.length && !gone; i++) {
+          b.addArrow(ARROW_TYPE.default, item.demo[i - 1], item.demo[i]);
+          await b.movePiece(item.demo[i - 1], item.demo[i], !reducedMotion());
+          await wait(500);
+        }
+        if (gone) return;
+        b.removeArrows();
+        await b.setPosition(item.fen, !reducedMotion());
+        await wait(300);
+        if (gone) return;
+      }
+      say(prompt, 'think');
+      b.enableMoveInput(input, b.getOrientation());
+    })().catch(() => {}); // the board was taken down mid-demo
+    return () => { gone = true; clearTimeout(timer); b.destroy(); };
   },
 
   truefalse(boardEl, choices, item, { say, done }) {

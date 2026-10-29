@@ -16,6 +16,11 @@ import { uci } from './puzzle.js';
  *   truefalse  { fen, claim?, move?, targets?, prompt, explain }
  *                claim 'check' / 'mate': "the side to move is in check / checkmated";
  *                otherwise "after `move`, the piece attacks every target"
+ *   stars      { fen, stars, moves, prompt?, explain?, new?, demo?, intro? }
+ *                move your piece(s) onto every star square within `moves` moves. The other side
+ *                never moves, and the board needs no kings. `new` ('rook'...) tags a piece's first
+ *                puzzle; `demo` (squares, e.g. ['a1','a8']) is a path the piece slides along first,
+ *                while the coach says `intro`
  *   find       { fen, moves, prompt?, explain? }      a puzzle: play the line on the board
  *
  * Any item may set `side` ('w' or 'b') to choose which way the board faces; by default it
@@ -122,8 +127,63 @@ export function line(item) {
   return item.moves.slice(1).map((m) => game.move(uci(m)).san);
 }
 
+/** A stars board: any pieces, kings optional. Legality is still all chess.js. */
+const load = (fen) => new Chess(fen, { skipValidation: true });
+const handBack = (fen, turn) => { const f = fen.split(' '); f[1] = turn; f[3] = '-'; return f.join(' '); };
+
+/**
+ * One move in a stars item: null if the rules don't allow it. The other side never replies,
+ * so the turn comes straight back to the player.
+ */
+export function hop(fen, move) {
+  const game = load(fen);
+  let played;
+  try { played = game.move(move); } catch { return null; }
+  return { played, fen: handBack(game.fen(), fen.split(' ')[1]) };
+}
+
+/** Squares the piece on `square` can move to, as chess.js sees it (stars boards included). */
+export const targets = (fen, square) => [...new Set(load(fen).moves({ square, verbose: true }).map((m) => m.to))];
+
+/** Prompt for a stars item that doesn't write its own. */
+export const starsPrompt = (item) => item.prompt ||
+  `Collect ${item.stars.length === 1 ? 'the star' : `all ${item.stars.length} stars`} in ${item.moves} move${item.moves === 1 ? '' : 's'}.`;
+
+/**
+ * A shortest way to collect every star within the budget, as chess.js moves, or null.
+ * Breadth-first over (position, stars left); positions seen before are skipped.
+ */
+export function starPath(item) {
+  const turn = item.fen.split(' ')[1];
+  let frontier = [{ fen: item.fen, left: [...item.stars], path: [] }];
+  const seen = new Set();
+  for (let depth = 0; depth < item.moves; depth++) {
+    const next = [];
+    for (const s of frontier) {
+      const game = load(s.fen);
+      for (const m of game.moves({ verbose: true })) {
+        if (m.promotion && m.promotion !== 'q') continue; // the board always makes a queen
+        game.move(m);
+        const fen = handBack(game.fen(), turn);
+        game.undo();
+        const left = s.left.filter((sq) => sq !== m.to);
+        const path = [...s.path, m];
+        if (!left.length) return path;
+        const key = fen.split(' ')[0] + left.join();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        next.push({ fen, left, path });
+      }
+    }
+    frontier = next;
+  }
+  return null;
+}
+
 /** What is said after an answer. Every marked item has one; a puzzle falls back to its line. */
-export const explanation = (item) => item.explain || `The line: ${line(item).map(words).join('. ')}.`;
+export const explanation = (item) => item.explain ||
+  (kind(item) === 'stars' ? `One way: ${starPath(item).map((m) => words(m.san)).join(', then ')}.`
+    : `The line: ${line(item).map(words).join('. ')}.`);
 
 /** Why an item can't be shipped, or null. chess.js checks every position and move. */
 export function problem(item) {
@@ -138,6 +198,23 @@ export function problem(item) {
       }
       case 'move': return solutions(item).length ? null : 'no legal move meets the goal';
       case 'truefalse': answer(item); return item.claim || item.targets.length ? null : 'no targets';
+      case 'stars': {
+        const game = load(item.fen);
+        if (!Number.isInteger(item.moves) || item.moves < 1) return 'no move budget';
+        if (!item.stars?.length) return 'no stars';
+        for (const sq of item.stars) {
+          if (!/^[a-h][1-8]$/.test(sq)) return `${sq} is not a square`;
+          if (game.get(sq)?.color === game.turn()) return `your own piece is on the star ${sq}`;
+        }
+        if (item.demo) {
+          let fen = item.fen;
+          for (let i = 1; i < item.demo.length; i++) {
+            fen = hop(fen, { from: item.demo[i - 1], to: item.demo[i], promotion: 'q' })?.fen;
+            if (!fen) return `the demo can't go ${item.demo[i - 1]}-${item.demo[i]}`;
+          }
+        }
+        return starPath(item) ? null : `the stars can't all be collected in ${item.moves} moves`;
+      }
       case 'find':
         line(item);
         if (item.targets && !hitsAll(hitsAfter(item.fen, ...item.moves.slice(0, 2).map(uci)), item.targets)) return 'the move misses a target';
