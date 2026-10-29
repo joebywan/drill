@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY } from '../src/habitview.js';
 import { ACCURACY, CELEBRATIONS, HEADLINES, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
 // Praise the process, never the person: no ability words. No absence, loss or guilt either.
@@ -8,7 +9,7 @@ const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intel
 const LOSS = /\b(lose|losing|lost|gone|we miss you|missed you|sad|disappoint\w*|abandon\w*|forg[eo]t\w*|broke(n)?|break(ing)? your|come back (soon|to us|tomorrow)|where were you|absen\w*|guilt\w*|shame)\b/i;
 
 const lines = [LINES, HEADLINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
-const labels = [...ACCURACY, ...PACE].map(([, label]) => label).concat(STREAK_LABEL);
+const labels = [...ACCURACY, ...PACE].map(([, label]) => label).concat(STREAK_LABEL, QUIET_DAY, REST_DAY, NO_STREAK, FIRST_SQUARE);
 
 test('end-screen headlines and chip labels pass the same lint', () => {
   for (const [kind, list] of Object.entries(HEADLINES)) {

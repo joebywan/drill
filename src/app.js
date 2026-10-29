@@ -1,5 +1,6 @@
-import { subjects } from './subjects.js';
-import { emptyProgress, finishSession, currentStreak, dueKeys, light, migrate, needsRepair, soonestKeys, today } from './progress.js';
+import { HABITS, subjects } from './subjects.js';
+import { LEARN, emptyProgress, finishSession, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, soonestKeys, startedHabits, today } from './progress.js';
+import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
@@ -109,7 +110,7 @@ function home(arrived = null) {
   app.innerHTML = `
     <header class="bar">
       <h1>Drill</h1>
-      <span class="stat streak-${todays}" title="Day streak" role="img" aria-label="Day streak: ${currentStreak(progress)}">🔥 ${currentStreak(progress)}</span>
+      ${startedHabits(progress, HABITS.map((h) => h.id)).map(habitChip).join('')}
       <button class="sound" aria-pressed="${soundOn()}" aria-label="Sound">${soundOn() ? '🔊' : '🔇'}</button>
       <button class="menu" aria-label="Your progress">⋯</button>
     </header>
@@ -142,6 +143,7 @@ function home(arrived = null) {
   } else app.querySelector('.here')?.scrollIntoView({ block: 'center' });
   app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); focusOn('.sound'); });
   app.querySelector('.menu').addEventListener('click', () => { stopHome(); keep(); });
+  for (const chip of app.querySelectorAll('[data-habit]')) chip.addEventListener('click', () => habitView(chip.dataset.habit));
   app.querySelector('[data-review]')?.addEventListener('click', () =>
     run(null, reviewKeys.map((k) => ({ key: k, ...items.get(k) })), 'Review'));
   for (const btn of app.querySelectorAll('[data-lesson]')) {
@@ -150,6 +152,49 @@ function home(arrived = null) {
       run(n.id, n.lesson.items.map((item) => ({ key: `${n.subject.id}:${item.id}`, ...items.get(`${n.subject.id}:${item.id}`) })), n.lesson.title);
     });
   }
+}
+
+/** A habit's chip on the home bar: its icon and streak, coloured by today's light. */
+function habitChip(id) {
+  const h = HABITS.find((x) => x.id === id);
+  const n = currentStreak(progress, new Date(), id);
+  return `<button class="stat streak-${light(progress, new Date(), id)}" data-habit="${id}"${id === LEARN ? ' title="Day streak"' : ''}
+    aria-label="${esc(h.name)}: ${n}-day streak">${h.icon} ${n}</button>`;
+}
+
+/**
+ * A habit's view: its streak, the last seven days (each day's sessions, today first) and a month
+ * of filled squares. The week ends today rather than on a Sunday, so it is always seven real days
+ * and never a row of days still to come. Days without a session are plain.
+ */
+function habitView(id) {
+  stopHome();
+  const h = HABITS.find((x) => x.id === id);
+  const now = new Date();
+  const n = currentStreak(progress, now, id);
+  const rest = restDays(progress.habits[id]);
+  const month = habitDays(progress, id, 28, now);
+  const week = month.slice(-7);
+  const active = month.slice(-14).filter((d) => d.sessions.length).length;
+  const cell = ({ date, sessions }) => `<li class="${sessions.length ? 'on' : rest.has(date) ? 'rest' : ''}">
+    <span>${dateOf(date).toLocaleDateString('en', { weekday: 'narrow' })}</span><b>${dateOf(date).getDate()}</b></li>`;
+  const day = ({ date, sessions }) => `<section class="day"><h3>${dayName(date, now)}</h3>${sessions.length
+    ? `<ul>${sessions.map((e) => `<li>${esc(sessionLine(e))}</li>`).join('')}</ul>`
+    : `<p class="quiet">${rest.has(date) ? REST_DAY : QUIET_DAY}</p>`}</section>`;
+  app.innerHTML = `
+    <header class="bar"><button class="back" aria-label="Back">←</button></header>
+    <main class="habit">
+      <h1><span aria-hidden="true">${h.icon}</span> ${esc(h.name)}</h1>
+      <p class="said">${n ? `${n}-day streak` : NO_STREAK}</p>
+      <h2>This week</h2>
+      <ol class="week" aria-hidden="true">${week.map(cell).join('')}</ol>
+      ${[...week].reverse().map(day).join('')}
+      <h2>Keeping it up</h2>
+      <p>${active ? `${active} of the last 14 days` : FIRST_SQUARE}</p>
+      <div class="month" role="img" aria-label="Days with a session, last four weeks">${month.map((d) => `<i${d.sessions.length ? ' class="on"' : ''}></i>`).join('')}</div>
+    </main>`;
+  focusOn('h1');
+  app.querySelector('.back').addEventListener('click', () => { home(); focusOn(`[data-habit="${id}"]`); });
 }
 
 /**
