@@ -5,7 +5,7 @@ import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
 import { reducedMotion } from './cast/kit.js';
 import { finished, line, rightAnswer } from './cast/lines.js';
-import { buzz, play, setSound, soundOn } from './feel.js';
+import { buzz, move, play, setSound, soundOn } from './feel.js';
 
 const STORE = 'drill.progress';
 const REVIEW_SIZE = 8;
@@ -39,7 +39,7 @@ const SWAY = 70; // px a node sits off centre at most
  * shows a tick; the next one a gold "!" with Lumi beside it; locked ones a grey "!". Reviews due
  * and one Continue button sit at the bottom. Today's light colours the streak chip.
  */
-function home() {
+function home(arrived = null) {
   stopHome();
   const due = dueKeys(progress).filter((k) => items.has(k));
   // A repair needs a review even when nothing is due yet: then the soonest cards stand in.
@@ -106,10 +106,16 @@ function home() {
     // Lumi rests once today is done, and is content otherwise: never sad, whatever the light.
     const late = new Date().getHours() >= 21;
     const lumiCoach = coach(guide, lumi);
-    lumiCoach.set(todays === 'bright' ? (late ? 'sleepy' : 'complete') : 'teach');
-    stopHome = lumiCoach.stop;
-  }
-  app.querySelector('.here')?.scrollIntoView({ block: 'center' });
+    const settle = () => lumiCoach.set(todays === 'bright' ? (late ? 'sleepy' : 'complete') : 'teach');
+    const from = arrived && app.querySelector(`.node[data-lesson="${arrived}"]`);
+    app.querySelector('.here').scrollIntoView({ block: 'center' });
+    const walk = from && walkTo(guide, from, app.querySelector('.node.here'));
+    if (walk) {
+      lumiCoach.set('correct');
+      walk.finished.then(settle, () => {});
+    } else settle();
+    stopHome = () => { walk?.cancel(); lumiCoach.stop(); };
+  } else app.querySelector('.here')?.scrollIntoView({ block: 'center' });
   app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); });
   app.querySelector('[data-review]')?.addEventListener('click', () =>
     run(null, reviewKeys.map((k) => ({ key: k, ...items.get(k) })), 'Review'));
@@ -119,6 +125,26 @@ function home() {
       run(n.id, n.lesson.items.map((item) => ({ key: `${n.subject.id}:${item.id}`, ...items.get(`${n.subject.id}:${item.id}`) })), n.lesson.title);
     });
   }
+}
+
+/**
+ * Lumi hops along the path from the lesson just finished to the next one, and that lesson's tick
+ * pops in: the learner sees themselves move forward. Skipped under reduced motion (null).
+ */
+function walkTo(guide, fromNode, toNode) {
+  const a = fromNode.getBoundingClientRect();
+  const b = toNode.getBoundingClientRect();
+  const dx = a.left - b.left;
+  const dy = a.top - b.top;
+  move(fromNode, [{ transform: 'scale(.6)' }, { transform: 'scale(1.15)' }, { transform: 'scale(1)' }], { duration: 500, easing: 'ease-out' });
+  const HOPS = 3;
+  const frames = [];
+  for (let i = 0; i <= HOPS * 2; i++) {
+    const k = i / (HOPS * 2);
+    const lift = i % 2 ? -14 : 0; // up on the odd frames: a hop between each landing
+    frames.push({ transform: `translate(${dx * (1 - k)}px, ${dy * (1 - k) + lift}px)` });
+  }
+  return move(guide, frames, { duration: 1300, delay: 350, easing: 'ease-in-out', fill: 'backwards' });
 }
 
 /**
@@ -234,6 +260,7 @@ function run(lessonId, queue, title) {
   const perfectRun = () => results.length > 0 && results.every((r) => r.correct);
   const finish = () => {
     const relit = needsRepair(progress);
+    const firstTime = lessonId && !progress.done[lessonId];
     progress = finishSession(progress, lessonId, results);
     const said = finished({ review: !lessonId, perfect: perfectRun(), relit: relit && !needsRepair(progress) });
     save();
@@ -259,7 +286,7 @@ function run(lessonId, queue, title) {
     buzz('done');
     const stopParty = perfect ? confetti() : () => {};
     app.querySelector('.summary').addEventListener('click', stopParty);
-    app.querySelector('.next').addEventListener('click', () => { stopParty(); hero.stop(); home(); });
+    app.querySelector('.next').addEventListener('click', () => { stopParty(); hero.stop(); home(firstTime ? lessonId : null); });
   };
 
   step();
