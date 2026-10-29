@@ -21,10 +21,10 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
 
 ## Tasks, in order
 
-1. [ ] **Habits model.** Progress v2: streaks keyed by habit, a session log, `migrate()` from v1
+1. [x] **Habits model.** Progress v2: streaks keyed by habit, a session log, `migrate()` from v1
    (the old streak becomes Learning's; old sessions have no log). Subjects declare their habit
    and kind. Pure, tested with fixed dates.
-2. [ ] **Habit chips and the habit view.** One chip per started habit on the home bar, each
+2. [x] **Habit chips and the habit view.** One chip per started habit on the home bar, each
    with its own light; the habit view described above.
 3. [x] **Practice engine.** A Practice subject's `mount()` runs a timed routine with a coach and
    calls `done()` when finished; the end screen asks "how do you feel?" as one optional tap.
