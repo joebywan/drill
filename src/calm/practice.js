@@ -1,7 +1,8 @@
 import course from '../data/calm.json' with { type: 'json' };
 import { breathe } from '../cast/moss.js';
 import { CALM_LINES, HELP_LINE, HELP_TEL, line } from '../cast/lines.js';
-import { breaths, scan, timeline } from './routines.js';
+import { breaths, scan } from './routines.js';
+import { pauseBar, routine, teach } from '../practice/kit.js';
 import { buzz, move, play } from '../feel.js';
 import { esc } from '../html.js';
 
@@ -21,55 +22,10 @@ export function mount(el, item, ctx) {
   return MOUNTS[item.type](el, item, ctx);
 }
 
-const MOUNTS = { teach, breathe: breathing, ground: grounding, scan: scanning };
-
-function teach(el, item, { say, done }) {
-  el.innerHTML = `<div class="calm-teach">${item.text.map((t) => `<p>${esc(t)}</p>`).join('')}
-    ${item.help ? helpHtml() : ''}</div>
-    <div class="choices"><button class="next calm-go">Start</button></div>`;
-  say(item.say, 'guide');
-  el.querySelector('.calm-go').addEventListener('click', () => done(null, ''));
-  return () => {};
-}
-
-/**
- * A timed routine with a Pause button in the thumb zone. Leaving the page pauses it too, so it
- * never finishes unattended. `draw(phase, index)` shows each phase; the returned animations are
- * paused and played with the clock.
- */
-function routine(el, phases, ctx, draw, summary) {
-  let anims = [];
-  let said = '';
-  // Each phase's words are kept, so carrying on after a pause puts them back.
-  const say = (text, mood) => { said = text; ctx.say(text, mood); };
-  const pause = el.querySelector('.calm-pause');
-  const clock = timeline(phases, {
-    onPhase: (p, i) => { anims = draw(p, i, say).filter(Boolean); },
-    onTick: (s) => { const c = el.querySelector('.count'); if (c) c.textContent = s; },
-    onEnd: () => { cleanup(); ctx.done(null, summary); },
-  });
-  const hold = () => {
-    clock.pause();
-    for (const a of anims) a.pause();
-    pause.textContent = 'Carry on';
-    pause.setAttribute('aria-pressed', 'true');
-    ctx.say(calm('paused')); // no mood change: Moss holds the breath where it was
-  };
-  const carryOn = () => {
-    pause.textContent = 'Pause';
-    pause.setAttribute('aria-pressed', 'false');
-    ctx.say(said);
-    for (const a of anims) a.play();
-    clock.resume();
-  };
-  pause.addEventListener('click', () => (clock.paused ? carryOn() : hold()));
-  const hidden = () => { if (document.hidden && !clock.paused) hold(); };
-  document.addEventListener('visibilitychange', hidden);
-  const cleanup = () => { clock.stop(); document.removeEventListener('visibilitychange', hidden); };
-  return cleanup;
-}
-
-const pauseBar = '<div class="choices"><button class="choice calm-pause" aria-pressed="false">Pause</button></div>';
+const MOUNTS = {
+  teach: (el, item, ctx) => teach(el, item, ctx, item.help ? helpHtml() : ''),
+  breathe: breathing, ground: grounding, scan: scanning,
+};
 
 function breathing(el, item, ctx) {
   const n = item.cycles;
@@ -92,7 +48,7 @@ function breathing(el, item, ctx) {
         { duration: p.seconds * 1000, easing: 'ease-in-out', fill: 'forwards' }),
       breathe(ctx.coachEl, p.phase, p.seconds),
     ];
-  }, `${n} breaths`);
+  }, `${n} breaths`, calm('paused'));
 }
 
 function scanning(el, item, ctx) {
@@ -111,7 +67,7 @@ function scanning(el, item, ctx) {
     play('exhale');
     // A slow fill along the current zone: the gentle progress cue.
     return [move(rows[i], [{ '--fill': '0%' }, { '--fill': '100%' }], { duration: p.seconds * 1000, fill: 'forwards' })];
-  }, `${zones.length} places, feet to head`);
+  }, `${zones.length} places, feet to head`, calm('paused'));
 }
 
 /** 5-4-3-2-1: tap a bubble for each thing noticed. Self-paced, so no clock and no Pause. */
@@ -129,7 +85,7 @@ function grounding(el, item, { say, done }) {
         <div class="bubbles">${Array.from({ length: s.count }, (_, i) =>
           `<button class="bubble-tap" aria-pressed="false" aria-label="Noticed ${i + 1} of ${s.count}"></button>`).join('')}</div>
       </div>
-      <div class="choices"><button class="choice calm-on">${at + 1 < senses.length ? 'Next' : 'Finish'}</button></div>`;
+      <div class="choices"><button class="choice practice-on">${at + 1 < senses.length ? 'Next' : 'Finish'}</button></div>`;
     say(calm('ground'), 'notice');
     const bubbles = [...el.querySelectorAll('.bubble-tap')];
     const noticedAll = () => bubbles.every((x) => x.getAttribute('aria-pressed') === 'true');
@@ -147,7 +103,7 @@ function grounding(el, item, { say, done }) {
         if (noticedAll()) timer = setTimeout(onward, 700);
       });
     }
-    el.querySelector('.calm-on').addEventListener('click', onward);
+    el.querySelector('.practice-on').addEventListener('click', onward);
   };
   const onward = () => {
     clearTimeout(timer);

@@ -290,7 +290,7 @@ html { scroll-padding-bottom: 160px; }
 }
 .path-tab[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
 
-.calm-teach p { margin: 0 0 12px; }
+.practice-teach p { margin: 0 0 12px; }
 .help { padding: 10px 12px; border-radius: 12px; background: var(--card); border: 2px solid var(--line); font-size: .95rem; }
 .help a { color: inherit; font-weight: 700; white-space: nowrap; }
 .choices .next { margin: 0; }
@@ -322,7 +322,7 @@ html { scroll-padding-bottom: 160px; }
 .bubble-tap { width: 60px; height: 60px; border-radius: 50%; border: 3px dashed var(--calm); background: var(--card); }
 .bubble-tap[aria-pressed="true"] { border-style: solid; background: var(--calm); }
 
-.calm-end .hero { width: 130px; }
+.practice-end .hero { width: 130px; }
 .chip.calm { --c: var(--chip-calm); flex: 0 1 180px; margin: 0 auto; }
 .feel h2 { font-size: 1.05rem; margin: 16px 0 8px; }
 .feels { display: flex; flex-direction: column; gap: 8px; }

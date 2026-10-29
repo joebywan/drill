@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 // node's mock clock moves Date to the end of a tick() before firing timers, so step a second at a time.
 const run = (ms) => { for (let i = 0; i < ms; i += 1000) mock.timers.tick(Math.min(1000, ms - i)); };
-import { EXHALE, INHALE, breaths, phaseAt, scan, timeline, total } from '../src/calm/routines.js';
+import { EXHALE, INHALE, breaths, scan } from '../src/calm/routines.js';
+import { phaseAt, timeline, total } from '../src/practice/timeline.js';
 
 const course = JSON.parse(readFileSync('src/data/calm.json', 'utf8'));
 const lessons = course.units.flatMap((u) => u.lessons.map((l) => ({ ...l, unit: u.title })));
