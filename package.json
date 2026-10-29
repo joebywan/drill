@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node tools/serve.js",
     "test": "node --test test/*.test.js",
+    "e2e": "playwright test",
     "puzzles": "curl -sf https://database.lichess.org/lichess_db_puzzle.csv.zst | zstd -dc | head -n 600000 | node tools/puzzles.js > src/data/chess.json"
   },
   "type": "module",
@@ -16,5 +17,8 @@
   "private": true,
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
   }
 }
