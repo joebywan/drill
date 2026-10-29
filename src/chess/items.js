@@ -6,12 +6,14 @@ import { uci } from './puzzle.js';
  *
  *   teach      { text, fen?, side? }                       a card to read: not marked, not reviewed
  *   tap        { fen, square, prompt, explain }            tap every enemy piece the piece on `square` attacks
- *   pick       { fen, prompt, options, answer, explain }   choose the move (SAN) from the options
+ *   pick       { fen, prompt, options, answer, targets?, explain }   choose the move (SAN)
  *   truefalse  { fen, move, targets, prompt, explain }     "after `move`, the piece attacks every target"
- *   find       { fen, moves, explain? }                    play the line on the board
+ *   find       { fen, moves, targets?, explain? }          play the line on the board
  *
  * Tap and true/false answers are worked out from the position by chess.js, never stored, so a
- * typo in the course can't make a right answer wrong.
+ * typo in the course can't make a right answer wrong. `targets` on a pick or find item is a
+ * claim the rules check proves: the answer's piece attacks every target, and (for pick) no
+ * wrong option does.
  */
 export const kind = (item) => item.type || 'find';
 
@@ -24,16 +26,21 @@ export function attacked(fen, square) {
     .map((p) => p.square).sort();
 }
 
+/** The enemy pieces attacked by whatever moved last, after `moves` are played from `fen`. */
+function hitsAfter(fen, ...moves) {
+  const game = new Chess(fen);
+  let move;
+  for (const m of moves) move = game.move(m);
+  return attacked(game.fen(), move.to);
+}
+
+const hitsAll = (hits, targets) => targets.every((t) => hits.includes(t));
+
 /** The right answer: a sorted square list (tap), a boolean (truefalse) or a SAN move (pick). */
 export function answer(item) {
   switch (kind(item)) {
     case 'tap': return attacked(item.fen, item.square);
-    case 'truefalse': {
-      const game = new Chess(item.fen);
-      const { to } = game.move(item.move);
-      const hits = attacked(game.fen(), to);
-      return item.targets.every((t) => hits.includes(t));
-    }
+    case 'truefalse': return hitsAll(hitsAfter(item.fen, item.move), item.targets);
     case 'pick': return item.answer;
   }
 }
@@ -58,11 +65,16 @@ export function problem(item) {
       case 'teach': return item.text ? null : 'no text';
       case 'tap': return answer(item).length ? null : 'the piece attacks nothing';
       case 'pick': {
-        for (const o of item.options) new Chess(item.fen).move(o);
-        return item.options.includes(item.answer) ? null : 'answer is not an option';
+        if (!item.options.includes(item.answer)) return 'answer is not an option';
+        const forks = item.options.filter((o) => hitsAll(hitsAfter(item.fen, o), item.targets || []));
+        if (item.targets && (forks.length !== 1 || forks[0] !== item.answer)) return `options hitting every target: ${forks}`;
+        return null;
       }
       case 'truefalse': answer(item); return item.targets.length ? null : 'no targets';
-      case 'find': line(item); return null;
+      case 'find':
+        line(item);
+        if (item.targets && !hitsAll(hitsAfter(item.fen, ...item.moves.slice(0, 2).map(uci)), item.targets)) return 'the move misses a target';
+        return null;
     }
     return 'unknown type';
   } catch (e) {
