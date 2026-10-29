@@ -26,5 +26,6 @@
         { "id": "break2", "title": "Take a break", "items": [{ "id": "break-b", "type": "steps" }] }
       ]
     }
-  ]
+  ],
+  "again": { "label": "Take a break", "lesson": "break2" }
 }

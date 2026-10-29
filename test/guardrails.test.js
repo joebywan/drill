@@ -1,16 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY } from '../src/habitview.js';
 import { helpHtml } from '../src/calm/practice.js';
 import { subjects } from '../src/subjects.js';
-import { ACCURACY, BREAK_LINES, SAFETY_LINE, CALM_LINES, CELEBRATIONS, FEELS, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
+import { ACCURACY, BREAK_LINES, SAFETY_LINE, CALM_LINES, REFLECT_LINES, CELEBRATIONS, FEELS, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
 // Praise the process, never the person: no ability words. No absence, loss or guilt either.
 const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intelligen\w*|born to)\b/i;
 const LOSS = /\b(lose|losing|lost|gone|we miss you|missed you|sad|disappoint\w*|abandon\w*|forg[eo]t\w*|broke(n)?|break(ing)? your|come back (soon|to us|tomorrow)|where were you|absen\w*|guilt\w*|shame)\b/i;
 
-const lines = [LINES, HEADLINES, CALM_LINES, BREAK_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
+const lines = [LINES, HEADLINES, CALM_LINES, BREAK_LINES, REFLECT_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
 const labels = [...ACCURACY, ...PACE].map(([, label]) => label).concat(STREAK_LABEL, QUIET_DAY, REST_DAY, NO_STREAK, FIRST_SQUARE);
 
 test('end-screen headlines and chip labels pass the same lint', () => {
@@ -117,7 +117,37 @@ test('real help is reachable from Calm, as plain text', () => {
 });
 
 test('the end of a practice session is not a celebration', () => {
-  for (const kind of Object.keys(CALM_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
+  for (const kind of [...Object.keys(CALM_LINES), ...Object.keys(REFLECT_LINES)]) assert.ok(!CELEBRATIONS.includes(kind), kind);
+});
+
+// Reflect is three lines kept for the learner: what Lumi says and the prompts get Calm's lint (no
+// claims, no hurry, no guilt). What the learner types is theirs, so nothing here ever lints it.
+const reflectCourse = JSON.parse(readFileSync('src/data/reflect.json', 'utf8'));
+const reflectText = [
+  ...Object.entries(REFLECT_LINES).flatMap(([kind, list]) => list.map((text) => [kind, text])),
+  ...strings(reflectCourse).filter((t) => /\s/.test(t)).map((text) => ['reflect.json', text]),
+];
+
+test('Reflect makes no claims, never hurries and never judges', () => {
+  assert.ok(reflectText.length > 20);
+  for (const [kind, text] of reflectText) {
+    for (const rule of [CLAIMS, URGENCY, ABILITY, LOSS]) assert.doesNotMatch(text, rule, `${kind}: ${text}`);
+    assert.doesNotMatch(text, /\b(should|must|wrong|bad|better|best|score\w*|grade\w*|rate|marks?)\b/i, `${kind}: ${text}`);
+  }
+});
+
+const sources = (dir) => readdirSync(dir, { withFileTypes: true, recursive: true })
+  .filter((f) => f.isFile() && f.name.endsWith('.js')).map((f) => `${f.parentPath ?? f.path}/${f.name}`);
+
+test('journal text is read only by the habit view and the file export, and nothing is sent anywhere', () => {
+  const touch = sources('src').filter((f) => /journal/.test(readFileSync(f, 'utf8'))).sort();
+  // progress.js keeps the shape (migrate, writeJournal); reflect/practice.js writes it and is the
+  // habit view's dayDetail; app.js only hands it from the routine to writeJournal.
+  assert.deepEqual(touch, ['src/app.js', 'src/progress.js', 'src/reflect/practice.js']);
+  assert.doesNotMatch(readFileSync('src/app.js', 'utf8'), /progress\.journal|\.journal\b/, 'app.js never reads the journal itself');
+  // The export is the whole progress object, journal included, saved to the learner's own file.
+  assert.match(readFileSync('src/app.js', 'utf8'), /new Blob\(\[JSON\.stringify\(progress\)\]/);
+  for (const f of sources('src')) assert.doesNotMatch(readFileSync(f, 'utf8'), /\bfetch\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource/, f);
 });
 
 // The screen break: no health claims, no urgency, no guilt, and no screen-time shaming.

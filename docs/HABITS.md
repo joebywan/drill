@@ -35,8 +35,10 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
 5. [ ] **Move.** Stretching, mobility and bodyweight sets with reps growing along the path.
    Needs a character who demonstrates moves. Guardrails: stop if anything hurts, check with a
    doctor for injuries, never push to do more.
-6. [ ] **Reflect.** Three lines a day (one good thing, one thing learned, one for tomorrow),
-   kept on the device, never read or scored.
+6. [x] **Reflect.** Three lines a day (one good thing, one thing learned, one for tomorrow),
+   kept on the device, never read or scored. Lumi coaches; the lines live in progress v3's
+   `journal`, never in the log, and only the habit view (the subject's `dayDetail`) and the file
+   export read them.
 7. [x] **Eyes and posture break.** A two-minute screen break: look far away, roll the
    shoulders, stand up.
 8. [ ] **Self-reported habits.** One tap to log things Drill can't guide (walked, read, drank

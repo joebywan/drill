@@ -183,6 +183,46 @@ test('grounding is tap-to-count, and stopping is one tap with no questions', asy
   await expect(page.locator('.day').first().getByRole('listitem')).toHaveCount(1);
 });
 
+test('Reflect keeps two lines and a skip, on its own streak, and shows them back in the habit view', async ({ page }) => {
+  await placeAtStart(page);
+  await page.getByRole('button', { name: '📓 Reflect', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue · Three small lines' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  // One prompt at a time, typed into one line; nothing is ever counted or judged.
+  await expect(page.getByRole('heading', { name: 'One good thing' })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'One good thing' })).toBeFocused();
+  await page.getByRole('textbox').fill('Tea in the sun');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByRole('heading', { name: 'One thing you learned' })).toBeVisible();
+  await page.getByRole('button', { name: 'Skip' }).click();
+  await page.getByRole('textbox', { name: 'One thing for tomorrow' }).fill('Call Sam');
+  await page.getByRole('button', { name: 'Finish' }).click();
+
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+  await page.getByRole('button', { name: 'About the same' }).click();
+  await expect(page.locator('.chip.reflect')).toContainText('📓 1');
+  await continueButton(page).click();
+  await expect(page.getByTitle('Day streak')).toHaveText('🔥 0');
+
+  await page.getByRole('button', { name: 'Reflect: 1-day streak' }).click();
+  const todayLines = page.locator('.day').first();
+  await expect(todayLines.locator('ul').first().getByRole('listitem')).toHaveText(/^Reflect · 1 min · felt about the same$/);
+  await expect(todayLines.getByRole('list', { name: 'Your lines' }).getByRole('listitem')).toHaveText(['Good Tea in the sun', 'Tomorrow Call Sam']);
+});
+
+test('once the short Reflect path is done, "Reflect today" stays on home', async ({ page }) => {
+  await placeAtStart(page);
+  await page.getByRole('button', { name: '📓 Reflect', exact: true }).click();
+  for (const title of ['Three small lines', 'Another day', 'Making it yours']) {
+    await page.getByRole('button', { name: `Continue · ${title}` }).click();
+    if (title === 'Three small lines') await page.getByRole('button', { name: 'Start' }).click();
+    for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Skip' }).click(); // an empty day still counts
+    await continueButton(page).click();
+  }
+  await page.getByRole('button', { name: 'Reflect today' }).click();
+  await expect(page.getByRole('heading', { name: 'One good thing' })).toBeVisible();
+});
+
 test('mute stays muted after a reload', async ({ page }) => {
   await placeAtStart(page);
   const sound = page.getByRole('button', { name: 'Sound' });

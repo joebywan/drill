@@ -2,6 +2,7 @@ import chessCourse from './data/chess.json' with { type: 'json' };
 import basics from './data/basics.json' with { type: 'json' };
 import forks from './data/forks.json' with { type: 'json' };
 import calmCourse from './data/calm.json' with { type: 'json' };
+import reflectCourse from './data/reflect.json' with { type: 'json' };
 import * as chess from './chess/exercise.js';
 import { rosa } from './cast/rosa.js';
 import { moss, NAME as MOSS } from './cast/moss.js';
@@ -12,6 +13,8 @@ import breakCourse from './data/break.json' with { type: 'json' };
 import * as screenBreak from './break/practice.js';
 import { lumi } from './cast/lumi.js';
 import { BREAK_LINES } from './cast/lines.js';
+import * as reflect from './reflect/practice.js';
+import { REFLECT_LINES } from './cast/lines.js';
 
 /**
  * The contract. A subject is a course plus one `mount(el, item, { say, done })` that plays a
@@ -27,12 +30,17 @@ import { BREAK_LINES } from './cast/lines.js';
  * character (rosa, moss…), its name for screen readers, the mood an item starts in, its own
  * lines (default: Rosa's LINES) and, for a practice habit, the help shown after "Not really".
  * Sessions and the practice end screen read everything subject-specific from here.
+ *
+ * Optional: `again`, { label, lesson }: once the path is done, home keeps a button with that label
+ * which runs that lesson again ("Reflect today", "Breathe"); `dayDetail(progress, date)`, extra html under a day's sessions
+ * in the habit view (Reflect's own lines).
  */
 /** Every habit, in the order the home bar shows them. A habit appears once it has a session (Learning always). */
 export const HABITS = [
   { id: 'learn', name: 'Learning', icon: '🔥' },
   { id: 'calm', name: 'Calm', icon: '🌿' },
   { id: 'break', name: 'Screen break', icon: '👀' },
+  { id: 'reflect', name: 'Reflect', icon: '📓' },
 ];
 
 // Chess from zero comes first (the board, how pieces move, capturing, check and mate), then the
@@ -62,4 +70,11 @@ export const subjects = [{
   habit: 'break',
   kind: 'practice',
   coach: { draw: lumi, name: 'Lumi', start: 'teach', lines: BREAK_LINES, help: screenBreak.safetyHtml },
+}, {
+  ...reflectCourse,
+  mount: reflect.mount,
+  dayDetail: reflect.dayDetail,
+  habit: 'reflect',
+  kind: 'practice',
+  coach: { draw: lumi, name: 'Lumi', start: 'teach', lines: REFLECT_LINES, help: helpHtml },
 }];

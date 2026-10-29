@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { VERSION, emptyProgress, finishSession, finishPractice, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, startedHabits } from '../src/progress.js';
+import { VERSION, emptyProgress, finishSession, finishPractice, writeJournal, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, startedHabits } from '../src/progress.js';
 
 const day = (d, h = 12) => new Date(2026, 9, d, h);
 const roundTrip = (p) => JSON.parse(JSON.stringify(p)); // as it comes back out of localStorage
@@ -69,10 +69,14 @@ test('migrate brings every older shape up to the current one', () => {
   assert.deepEqual(p.cards, roundTrip(first.cards));
   // Today's unversioned shape, without xp, keeps its placement.
   const v0 = { streak: { count: 0, last: null, forgiven: [] }, done: {}, cards: {}, start: 'Forks' };
-  assert.deepEqual(migrate(v0), { version: VERSION, habits: { learn: v0.streak }, log: [], done: {}, cards: {}, start: 'Forks' });
+  assert.deepEqual(migrate(v0), { version: VERSION, habits: { learn: v0.streak }, log: [], done: {}, cards: {}, journal: {}, start: 'Forks' });
   // Version 1: the one streak becomes Learning's, and there is no log yet.
   const v1 = { ...v0, version: 1, streak: { count: 4, last: '2026-10-29', forgiven: [] } };
   assert.deepEqual(migrate(v1).habits, { learn: v1.streak });
+  // Version 2: habits and a log, but no journal yet; it gains an empty one and keeps the rest.
+  const v2 = { version: 2, habits: { learn: v1.streak, calm: { count: 1, last: '2026-10-29', forgiven: [] } },
+    log: [{ date: '2026-10-29', habit: 'calm', title: 'Breathing', mins: 2 }], done: { 'calm:breathe1': true }, cards: {} };
+  assert.deepEqual(migrate(roundTrip(v2)), { ...v2, version: VERSION, journal: {} });
   // The current shape passes through unchanged, and so does one from a newer build.
   assert.deepEqual(migrate(roundTrip(p)), p);
   assert.deepEqual(migrate({ ...p, version: VERSION + 1, extra: 1 }), { ...p, version: VERSION + 1, extra: 1 });
@@ -98,6 +102,10 @@ test('migrate refuses anything that is not progress, so an import never replaces
     { ...good, cards: { x: { due: 'never' } } },
     { ...good, cards: { x: 1 } },
     { ...good, start: 3 },
+    { ...good, journal: [] },
+    { ...good, journal: { today: { good: 'x' } } },
+    { ...good, journal: { '2026-10-30': 'x' } },
+    { ...good, journal: { '2026-10-30': { good: 3 } } },
   ];
   for (const b of bad) assert.equal(migrate(b), null, JSON.stringify(b));
   assert.deepEqual(migrate(good), good);
@@ -153,4 +161,20 @@ test('habits show once started, and the habit view lists each day', () => {
   const week = habitDays(p, 'calm', 7, day(4));
   assert.deepEqual(week.map((d) => d.date), ['2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04']);
   assert.deepEqual(week.map((d) => d.sessions.length), [0, 0, 0, 0, 0, 1, 0]);
+});
+
+test('Reflect lines are kept by day, blanks left out, and a second visit adds to the first', () => {
+  const now = new Date(2026, 9, 30, 20);
+  let p = writeJournal(emptyProgress(), { good: ' Tea in the sun ', learned: '', tomorrow: 'Call Sam' }, now);
+  assert.deepEqual(p.journal, { '2026-10-30': { good: 'Tea in the sun', tomorrow: 'Call Sam' } });
+  p = writeJournal(p, { learned: 'Honey keeps' }, now);
+  assert.deepEqual(p.journal['2026-10-30'], { good: 'Tea in the sun', tomorrow: 'Call Sam', learned: 'Honey keeps' });
+  // Nothing written keeps nothing, and the text never goes in the log.
+  const q = emptyProgress();
+  assert.equal(writeJournal(q, {}, now), q);
+  assert.equal(writeJournal(q, null, now), q);
+  const done = writeJournal(finishPractice(q, 'reflect', 'reflect:reflect1', now, { title: 'Reflect', mins: 1 }), { good: 'A walk' }, now);
+  assert.deepEqual(done.log, [{ date: '2026-10-30', habit: 'reflect', title: 'Reflect', mins: 1 }]);
+  assert.equal(done.habits.reflect.count, 1);
+  assert.deepEqual(migrate(roundTrip(done)), done);
 });

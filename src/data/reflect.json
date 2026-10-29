@@ -1,0 +1,36 @@
+{
+  "id": "reflect",
+  "title": "Reflect",
+  "units": [
+    {
+      "title": "Reflect",
+      "lessons": [
+        {
+          "id": "reflect1",
+          "title": "Three small lines",
+          "items": [
+            {
+              "id": "reflect-teach",
+              "type": "teach",
+              "say": "Hi. I'm Lumi. This one is just three short lines about your day.",
+              "text": [
+                "One good thing, one thing you learned, and one thing for tomorrow.",
+                "Writing a small thing down helps you notice it. Good moments are easy to walk past, and a plan for tomorrow is lighter on paper than in your head.",
+                "A few words is plenty. Skip any line you like. What you write stays on this device, and nobody else reads it."
+              ]
+            },
+            { "id": "reflect-a", "type": "write" }
+          ]
+        },
+        { "id": "reflect2", "title": "Another day", "items": [{ "id": "reflect-b", "type": "write" }] },
+        { "id": "reflect3", "title": "Making it yours", "items": [{ "id": "reflect-c", "type": "write" }] }
+      ]
+    }
+  ],
+  "again": { "label": "Reflect today", "lesson": "reflect3" },
+  "prompts": [
+    { "key": "good", "label": "Good", "prompt": "One good thing", "example": "A warm cup of tea after lunch" },
+    { "key": "learned", "label": "Learned", "prompt": "One thing you learned", "example": "Honey never goes off" },
+    { "key": "tomorrow", "label": "Tomorrow", "prompt": "One thing for tomorrow", "example": "Text Sam back" }
+  ]
+}
