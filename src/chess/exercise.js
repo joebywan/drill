@@ -3,6 +3,7 @@ import { Chessboard, COLOR, INPUT_EVENT_TYPE, POINTER_EVENTS } from 'cm-chessboa
 import { Markers, MARKER_TYPE } from 'cm-chessboard/src/extensions/markers/Markers.js';
 import { startPuzzle, playerColor, tryMove, hint } from './puzzle.js';
 import { answer, explanation, grade, kind, meets, solutions } from './items.js';
+import { play } from '../feel.js';
 
 const ASSETS = new URL('../../node_modules/cm-chessboard/assets/', import.meta.url).href;
 const REPLY_DELAY = 450;
@@ -67,26 +68,30 @@ const MOUNTS = {
     return () => b?.destroy();
   },
 
+  /**
+   * Tap squares, judged on every tap: a right one lights up green at once, and the item is won
+   * the moment the last one is found. A wrong tap ends it and shows the rest. No Check button.
+   */
   tap(boardEl, choices, item, { say, done }) {
+    choices.remove();
     const b = board(boardEl, item.fen, item.side);
-    const picked = new Set();
+    const want = answer(item);
+    const found = new Set();
     if (item.square) b.addMarker(MARKER_TYPE.square, item.square);
-    choices.innerHTML = '<button class="choice check" disabled>Check</button>';
-    const check = choices.firstChild;
+    const progress = () => (want.length > 1 ? ` Found ${found.size} of ${want.length}.` : '');
     b.enableSquareSelect(POINTER_EVENTS.pointerdown, ({ square }) => {
-      if (!square || square === item.square) return;
-      if (picked.delete(square)) b.removeMarkers(MARKER_TYPE.circle, square);
-      else { picked.add(square); b.addMarker(MARKER_TYPE.circle, square); }
-      check.disabled = !picked.size;
-    });
-    check.addEventListener('click', () => {
+      if (!square || square === item.square || found.has(square)) return;
+      const right = want.includes(square);
+      if (right) {
+        found.add(square);
+        b.addMarker(MARKER_TYPE.framePrimary, square);
+        if (found.size < want.length) { play('tap'); say(item.prompt + progress()); return; }
+      } else {
+        b.addMarker(MARKER_TYPE.circleDanger, square);
+        for (const sq of want) if (!found.has(sq)) b.addMarker(MARKER_TYPE.circlePrimary, sq);
+      }
       b.disableSquareSelect(POINTER_EVENTS.pointerdown);
-      check.disabled = true;
-      const correct = grade(item, picked);
-      // Show the answer over the learner's picks: the right squares framed, wrong picks flagged.
-      for (const sq of answer(item)) b.addMarker(MARKER_TYPE.framePrimary, sq);
-      for (const sq of picked) if (!answer(item).includes(sq)) b.addMarker(MARKER_TYPE.circleDanger, sq);
-      done(correct, feedback(item));
+      done(right, feedback(item));
     });
     say(item.prompt, 'think');
     return () => b.destroy();
