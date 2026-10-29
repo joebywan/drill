@@ -83,7 +83,7 @@ npm test                   # node --test, no framework
 
 ## Open
 
-Live friend features (needs a server) vs share cards; promotion picker; accessibility.
+Promotion picker; accessibility. Backlog (sync, friends, Android): `docs/TODO.md`.
 
 - **Beginners play, they don't pick notation.** Answers are moves on the board or taps on squares;
   text says "Knight to c7", never "Nc7+" (`words()` turns SAN into words). Boards show coordinates.
