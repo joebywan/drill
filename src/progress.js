@@ -9,8 +9,29 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *   done     { lessonId: true }
  *   cards    { itemKey: FSRS card }  — every item ever answered, scheduled for review
  *   start    unit title the placement survey chose, absent until it is answered
+ *   version  the shape's version; `migrate()` brings any older shape up to VERSION
  */
-export const emptyProgress = () => ({ streak: { count: 0, last: null, forgiven: [] }, done: {}, cards: {} });
+export const VERSION = 1;
+export const emptyProgress = () => ({ version: VERSION, streak: { count: 0, last: null, forgiven: [] }, done: {}, cards: {} });
+
+const isObject = (v) => v != null && typeof v === 'object' && !Array.isArray(v);
+const isDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+/**
+ * Any stored or imported progress, brought to the current shape, or null when it isn't progress
+ * at all (so the caller keeps what it has). Unversioned is version 0, and a streak from before
+ * forgiving had no `forgiven`. Unknown fields are kept, so a file from a newer build loses nothing.
+ */
+export function migrate(raw) {
+  if (!isObject(raw) || !isObject(raw.streak) || !isObject(raw.done) || !isObject(raw.cards)) return null;
+  const { count, last, forgiven = [] } = raw.streak;
+  if (!Number.isInteger(count) || count < 0 || !(last === null || isDate(last))) return null;
+  if (!Array.isArray(forgiven) || !forgiven.every(isDate)) return null;
+  if (!Object.values(raw.cards).every((c) => isObject(c) && !Number.isNaN(Date.parse(c.due)))) return null;
+  if (raw.start != null && typeof raw.start !== 'string') return null;
+  const { xp, ...kept } = raw; // points from earlier builds are dropped
+  return { ...kept, version: Math.max(VERSION, Number(raw.version) || 0), streak: { ...raw.streak, forgiven } };
+}
 
 const scheduler = fsrs();
 
@@ -47,9 +68,8 @@ export function finishSession(progress, lessonId, results, now = new Date()) {
     const card = cards[key] || createEmptyCard(now);
     cards[key] = scheduler.next(card, now, correct ? Rating.Good : Rating.Again).card;
   }
-  const { xp, ...kept } = progress; // points from earlier builds are dropped
   return {
-    ...kept,
+    ...progress,
     streak: nextStreak(progress.streak, today(now), !lessonId),
     done: lessonId ? { ...progress.done, [lessonId]: true } : progress.done,
     cards,

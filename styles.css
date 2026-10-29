@@ -43,7 +43,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .bar h1 { font-size: 1.3rem; margin: 0; flex: 1; }
 .stat { font-weight: 600; }
-.close, .sound { background: none; border: 0; font-size: 1.3rem; padding: 4px 8px; }
+.close, .sound, .menu { background: none; border: 0; font-size: 1.3rem; padding: 4px 8px; }
 .meter { flex: 1; height: 12px; border-radius: 6px; background: var(--line); overflow: hidden; }
 .fill { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
 

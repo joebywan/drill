@@ -1,5 +1,5 @@
 import { subjects } from './subjects.js';
-import { emptyProgress, finishSession, currentStreak, dueKeys, light, needsRepair, soonestKeys } from './progress.js';
+import { emptyProgress, finishSession, currentStreak, dueKeys, light, migrate, needsRepair, soonestKeys, today } from './progress.js';
 import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
@@ -14,10 +14,22 @@ const app = document.getElementById('app');
 let progress = load();
 
 function load() {
-  try { return JSON.parse(localStorage.getItem(STORE)) || emptyProgress(); } catch { return emptyProgress(); }
+  let raw = null;
+  try { raw = localStorage.getItem(STORE); } catch { /* private mode */ }
+  if (raw == null) return emptyProgress();
+  let p = null;
+  try { p = migrate(JSON.parse(raw)); } catch { /* not JSON */ }
+  // Unreadable progress is set aside, not overwritten by the next save.
+  if (!p) try { localStorage.setItem(`${STORE}.unreadable`, raw); } catch { /* nowhere to keep it */ }
+  return p || emptyProgress();
 }
+let persistAsked = false;
 function save() {
   try { localStorage.setItem(STORE, JSON.stringify(progress)); } catch { /* private mode: progress lasts the visit */ }
+  // Ask the browser, quietly and once a visit, not to evict progress (Safari clears it after a week away).
+  if (persistAsked) return;
+  persistAsked = true;
+  try { navigator.storage?.persisted?.().then((kept) => kept || navigator.storage.persist()).catch(() => {}); } catch { /* unsupported */ }
 }
 
 // Every item by key, so a review can find what it is reviewing.
@@ -88,6 +100,7 @@ function home(arrived = null) {
       <h1>Drill</h1>
       <span class="stat streak-${todays}" title="Day streak">🔥 ${currentStreak(progress)}</span>
       <button class="sound" aria-pressed="${soundOn()}" aria-label="Sound">${soundOn() ? '🔊' : '🔇'}</button>
+      <button class="menu" aria-label="Your progress">⋯</button>
     </header>
     <main class="home">
       ${units.map((u) => `
@@ -117,6 +130,7 @@ function home(arrived = null) {
     stopHome = () => { walk?.cancel(); lumiCoach.stop(); };
   } else app.querySelector('.here')?.scrollIntoView({ block: 'center' });
   app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); });
+  app.querySelector('.menu').addEventListener('click', () => { stopHome(); keep(); });
   app.querySelector('[data-review]')?.addEventListener('click', () =>
     run(null, reviewKeys.map((k) => ({ key: k, ...items.get(k) })), 'Review'));
   for (const btn of app.querySelectorAll('[data-lesson]')) {
@@ -426,6 +440,56 @@ function place(unit) {
   progress = { ...progress, start: unit };
   save();
   home();
+}
+
+/** Save progress to a file, or load one back: for a new device, or a browser that cleared it. */
+function keep(note = '') {
+  app.innerHTML = `
+    <main class="survey">
+      <h1>Your progress</h1>
+      <p class="said">Keep a copy in a file, or load one from another device.</p>
+      <button class="choice" data-save>Save to a file</button>
+      <button class="choice" data-load>Load from a file</button>
+      <input type="file" accept=".json,application/json" hidden>
+      <p class="said" role="status">${esc(note)}</p>
+      <button class="choice" data-back>Back</button>
+    </main>`;
+  const status = app.querySelector('[role="status"]');
+  const input = app.querySelector('input');
+  app.querySelector('[data-back]').addEventListener('click', () => home());
+  app.querySelector('[data-save]').addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(progress)], { type: 'application/json' }));
+    a.download = `drill-progress-${today()}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    status.textContent = 'Saved.';
+  });
+  app.querySelector('[data-load]').addEventListener('click', () => input.click());
+  input.addEventListener('change', async () => {
+    let p = null;
+    try { p = migrate(JSON.parse(await input.files[0].text())); } catch { /* not JSON */ }
+    input.value = ''; // the same file can be picked again
+    if (p) confirmLoad(p);
+    else status.textContent = "That file isn't Drill progress, so nothing changed.";
+  });
+}
+
+const tally = (p) => {
+  const n = Object.keys(p.done).length;
+  return `${n} lesson${n === 1 ? '' : 's'} done, a ${currentStreak(p)}-day streak`;
+};
+
+function confirmLoad(p) {
+  app.innerHTML = `
+    <main class="survey">
+      <h1>Use this file?</h1>
+      <p class="said">The file has ${tally(p)}. It replaces what's here now: ${tally(progress)}.</p>
+      <button class="next" data-use>Use this file</button>
+      <button class="choice" data-keep>Keep what's here</button>
+    </main>`;
+  app.querySelector('[data-use]').addEventListener('click', () => { progress = p; save(); home(); });
+  app.querySelector('[data-keep]').addEventListener('click', () => keep('Nothing changed.'));
 }
 
 const fresh = progress.start == null && !Object.keys(progress.done).length && !Object.keys(progress.cards).length;

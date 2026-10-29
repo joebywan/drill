@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { emptyProgress, finishSession, currentStreak, dueKeys, light, needsRepair } from '../src/progress.js';
+import { VERSION, emptyProgress, finishSession, currentStreak, dueKeys, light, migrate, needsRepair } from '../src/progress.js';
 
 const day = (d, h = 12) => new Date(2026, 9, d, h);
 const roundTrip = (p) => JSON.parse(JSON.stringify(p)); // as it comes back out of localStorage
@@ -51,10 +51,48 @@ test('lessons unlock, reviews do not', () => {
   assert.ok(finishSession(emptyProgress(), 'chess:l1', answers, day(1)).done['chess:l1']);
 });
 
-test('a session keeps the placement and drops old points', () => {
-  const p = finishSession({ ...emptyProgress(), start: 'Forks', xp: 40 }, 'chess:l1', [], day(1));
+test('a session keeps the placement and the version', () => {
+  const p = finishSession({ ...emptyProgress(), start: 'Forks' }, 'chess:l1', [], day(1));
   assert.equal(p.start, 'Forks');
-  assert.equal('xp' in p, false);
+  assert.equal(p.version, VERSION);
+});
+
+test('migrate brings every older shape up to the current one', () => {
+  const card = finishSession(emptyProgress(), null, [{ key: 'x', correct: true }], day(1)).cards.x;
+  // The first build: xp, and a streak with no forgiven days.
+  const first = { xp: 40, streak: { count: 3, last: '2026-10-01' }, done: { 'chess:l1': true }, cards: { x: card } };
+  const p = migrate(roundTrip(first));
+  assert.equal(p.version, VERSION);
+  assert.equal('xp' in p, false, 'old points are dropped');
+  assert.deepEqual(p.streak, { count: 3, last: '2026-10-01', forgiven: [] });
+  assert.deepEqual(p.done, first.done);
+  assert.deepEqual(p.cards, roundTrip(first.cards));
+  // Today's unversioned shape, without xp, keeps its placement.
+  const now = { streak: { count: 0, last: null, forgiven: [] }, done: {}, cards: {}, start: 'Forks' };
+  assert.deepEqual(migrate(now), { ...now, version: VERSION });
+  // The current shape passes through unchanged, and so does one from a newer build.
+  assert.deepEqual(migrate(roundTrip(p)), p);
+  assert.deepEqual(migrate({ ...p, version: VERSION + 1, extra: 1 }), { ...p, version: VERSION + 1, extra: 1 });
+});
+
+test('migrate refuses anything that is not progress, so an import never replaces good progress', () => {
+  const good = emptyProgress();
+  const bad = [
+    null, 'text', 42, [], {}, { streak: {} },
+    { ...good, streak: undefined },
+    { ...good, done: [] },
+    { ...good, cards: null },
+    { ...good, streak: { count: -1, last: null } },
+    { ...good, streak: { count: 1.5, last: null } },
+    { ...good, streak: { count: '3', last: null } },
+    { ...good, streak: { count: 1, last: 'yesterday' } },
+    { ...good, streak: { count: 1, last: null, forgiven: 'no' } },
+    { ...good, cards: { x: { due: 'never' } } },
+    { ...good, cards: { x: 1 } },
+    { ...good, start: 3 },
+  ];
+  for (const b of bad) assert.equal(migrate(b), null, JSON.stringify(b));
+  assert.deepEqual(migrate(good), good);
 });
 
 test('a missed item comes back sooner than a solved one, and both come back', () => {
