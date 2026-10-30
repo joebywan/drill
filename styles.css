@@ -542,8 +542,9 @@ html { scroll-padding-bottom: 160px; }
   display: inline-grid; place-items: center; min-width: 44px; height: 44px; padding: 0 8px; border-radius: 10px;
   border: 2px solid var(--code); background: var(--code); color: var(--code-text); font: inherit; font-size: 1.3rem; font-weight: 800;
 }
-.block.hole { border-style: dashed; border-color: var(--line); background: transparent; }
+.block.hole { border-style: dashed; border-color: var(--muted); background: transparent; }
 .block.hole.fill-next { border-color: var(--code); }
+.drop-target, .block[data-hole].drop-target { border-style: solid; border-color: var(--code); background: color-mix(in srgb, var(--code) 35%, transparent); }
 .block.loop, .block.if { display: flex; flex-direction: column; align-items: flex-start; height: auto; padding: 6px 10px; background: var(--card); color: var(--text); font-size: 1rem; }
 .block .head { display: flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 700; }
 .block .head b { display: inline-grid; place-items: center; min-width: 36px; height: 36px; border-radius: 8px; background: var(--code); color: var(--code-text); }
@@ -554,6 +555,7 @@ html { scroll-padding-bottom: 160px; }
 .program.shown .block.filled { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
 .tiles .tile { font-size: 1.5rem; padding: 10px 4px; color: var(--text); }
 .tiles .tile:disabled { opacity: .4; }
+.tile-ghost { user-select: none; position: fixed; left: 0; top: 0; z-index: 50; margin: 0; pointer-events: none; opacity: .9; }
 
 /* ---- Focus: what it's for, then a calm timer that fills a ring ---- */
 :root { --chip-focus: #7A5230; --focus-ring: #9A6038; --focus-soft: #F1E4D3; }

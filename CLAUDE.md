@@ -25,8 +25,8 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>] [--avd <name>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (one per habit and course, plus onboarding, first-visit, walkthrough, garden, timings, fitting, voice, sync, scan, left); a new one is
-a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
+No scenario runs all of `test/phone/*.js` (one per habit and course, plus onboarding, first-visit, walkthrough, garden, timings, fitting, voice, sync, scan, left, drag); a new one is
+a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `dragTo`, `type`,
 `shot`, `run`, `check`).
 
 - With no `--url` it serves this checkout on a free port forwarded with `adb reverse`; Chrome opens
