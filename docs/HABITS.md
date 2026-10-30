@@ -92,7 +92,7 @@ The app's vibe moves from "build knowledge" to "grow yourself", shown as a garde
     Done: `drawGarden()` and `perches()` in art.js draw the whole garden once per render;
     `gardenView()` in app.js; both end screens show `award()`'s `newly` (three lines, then
     "and N more"). Wording (`plantWords`, `moreArrived`) is in model.js and linted.
-12. [ ] **Your own timings.** Agreed 2026-10-30. Each practice's timings can be changed (breath
+12. [x] **Your own timings.** Agreed 2026-10-30. Each practice's timings can be changed (breath
     in and out seconds, cycles, seconds per grounding step or scan zone, reps), for example to
     match what a therapist prescribed. Kept in progress (a new version with `migrate()`), reset
     to the path's defaults with one tap. Calm's `breaths()` already takes `inhale` and `exhale`.
