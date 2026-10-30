@@ -310,8 +310,17 @@ test('a wrong answer gives a small shake, never in the way', async ({ page }) =>
   await continueButton(page).click();
 });
 
-test('under reduced motion, feedback is still and the path is simply drawn', async ({ page }) => {
-  await rookAndBishop(page);
+test('under reduced motion, feedback is still and the path is simply drawn, but the cues still sound', async ({ page }) => {
+  // Counts the notes the lesson plays: reduced motion skips motion, never sound.
+  await page.addInitScript(() => {
+    window.notes = 0;
+    const make = AudioContext.prototype.createOscillator;
+    AudioContext.prototype.createOscillator = function () { window.notes++; return make.call(this); };
+  });
+  let heard = 0;
+  await rookAndBishop(page, async () => { heard = await page.evaluate(() => window.notes); });
+  expect(heard, 'the right-answer cue').toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.notes), 'more cues, up to lesson complete').toBeGreaterThan(heard);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.locator('.petals')).toHaveCount(0);
   await continueButton(page).click();

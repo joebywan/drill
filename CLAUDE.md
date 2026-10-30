@@ -127,7 +127,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   scrolls inside itself. The bar is just the title, Sound and ⋯, and fits at 360px with every habit.
 - `src/feel.js` — synthesised sounds (mute on the home bar), haptics, and `move()`, which skips
   animation under reduced motion. Lesson moments go through it: `cue(name)` (sound and buzz; the
-  sound skipped when muted or under reduced motion) for right, run, wrong, done and unlock;
+  sound follows the Sound toggle only, reduced motion skips just the animations) for right, run, wrong, done and unlock;
   `flourish(el, 'pop' | 'shake')` for the answer (under 400 ms, never blocking input); `petals()`,
   the petal-and-leaf confetti on every finished lesson. On home the next node bobs, and after a
   lesson `walkTo()` fills the trail's `.fresh` stretch as Lumi hops, then pops the next node open.

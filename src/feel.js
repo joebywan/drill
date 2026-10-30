@@ -100,11 +100,11 @@ export const buzz = (name) => { try { navigator.vibrate?.(BUZZ[name]); } catch {
 export const move = (el, frames, opts) => (el && !reducedMotion() ? el.animate(frames, opts) : null);
 
 /**
- * A lesson moment: its sound and buzz. The sound is skipped when muted (`play`) and under reduced
- * motion, like Calm's bell; the buzz stays, as haptics aren't motion.
+ * A lesson moment: its sound and buzz. The sound follows the Sound toggle only (`play`): reduced
+ * motion is about motion, so it skips the animations, never the cues.
  */
 export function cue(name) {
-  if (!reducedMotion()) play(name);
+  play(name);
   buzz(name);
 }
 
