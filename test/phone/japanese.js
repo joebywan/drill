@@ -22,10 +22,18 @@ export default async ({ page, adb, touch, btn, shot, run, seed, check }) => {
   await touch(btn(`Continue · ${lesson.title}`));
   await run(400); await shot('teach');
   if (voices.length) {
-    // Playing now: the TTS engine's (or Chrome's) audio stream is started.
+    // "Hear it again" is a real tap, so speech has the user activation Chrome asks for. Then the
+    // TTS engine's (or Chrome's) audio stream is started while it plays.
+    await touch(btn('Hear it again'));
     const uids = ['com.android.chrome', 'com.google.android.tts'].flatMap((p) =>
       adb('shell', 'cmd', 'package', 'list', 'packages', '-U', p).match(/uid:\d+/g)?.map((u) => u.slice(4)) || []);
-    const started = adb('shell', 'dumpsys', 'audio').split('\n').some((l) => l.includes('state:started') && uids.some((u) => l.includes(`u/pid:${u}/`)));
+    let started = false, speaking = false;
+    for (let i = 0; i < 8 && !started; i++) {
+      speaking ||= await page.evaluate(() => speechSynthesis.speaking);
+      started = adb('shell', 'dumpsys', 'audio').split('\n').some((l) => l.includes('state:started') && uids.some((u) => l.includes(`u/pid:${u}/`)));
+      if (!started) await new Promise((r) => setTimeout(r, 250));
+    }
+    check('speech: speechSynthesis.speaking after "Hear it again"', speaking);
     check('speech: a Chrome or TTS stream is state:started (dumpsys audio)', started);
   } else check('no ja-JP voice: the listening item shows its reading instead', true);
 
