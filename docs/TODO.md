@@ -36,7 +36,8 @@ and a self-hosted PocketBase (~€6/month, own backups) were the alternatives.
 
 ## Feel
 
-- More animation and sound throughout lessons and the path.
+- More animation and sound throughout lessons and the path. Done: answer pop and shake, petal confetti, the
+  path filling as Lumi hops, the next node bobbing, and generated cues for each (`cue()` in feel.js).
 
 ## Android wrapper
 

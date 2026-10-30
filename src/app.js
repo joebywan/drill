@@ -6,9 +6,8 @@ import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayNa
 import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
-import { reducedMotion } from './cast/kit.js';
 import { CALM_SOUNDS, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
-import { buzz, calmPref, chime, move, play, setPref, setSound, soundOn } from './feel.js';
+import { buzz, calmPref, chime, cue, flourish, move, petals, play, setPref, setSound, soundOn } from './feel.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
 import { TIMINGS, TIMING_WORDS, setTiming, timed } from './practice/timings.js';
@@ -123,17 +122,21 @@ function home(arrived = null, newly = []) {
   };
 
   // The line through every node centre; the stretch up to the last finished node is drawn in green.
+  // Just after a lesson, its stretch to the next node is its own path (.fresh), which walkTo() fills.
   const trail = (nodes) => {
     const pts = nodes.map((_, i) => [xAt(i), i * ROW + 32]);
-    const d = (to) => pts.slice(0, to).map(([x, y], i) => {
-      if (!i) return `M${x} ${y}`;
+    const d = (to, from = 0) => pts.slice(from, to).map(([x, y], k) => {
+      const i = from + k;
+      if (!k) return `M${x} ${y}`;
       const [px, py] = pts[i - 1];
       return `C${px} ${py + ROW / 2} ${x} ${y - ROW / 2} ${x} ${y}`;
     }).join(' ');
-    const walked = nodes.filter((n) => n.state === 'done').length + 1;
+    const walked = Math.min(nodes.filter((n) => n.state === 'done').length + 1, pts.length);
+    const a = nodes.findIndex((n) => n.id === arrived);
+    const fresh = a >= 0 && nodes[a + 1] === current && walked === a + 2;
     const h = (nodes.length - 1) * ROW + 64;
     return `<svg class="trail" viewBox="-160 0 320 ${h}" width="320" height="${h}" aria-hidden="true">
-      <path d="${d(pts.length)}" class="ahead"/>${walked > 1 ? `<path d="${d(Math.min(walked, pts.length))}" class="walked"/>` : ''}
+      <path d="${d(pts.length)}" class="ahead"/>${walked > 1 ? `<path d="${d(fresh ? a + 1 : walked)}" class="walked"/>` : ''}${fresh ? `<path d="${d(a + 2, a)}" class="walked fresh"/>` : ''}
     </svg>`;
   };
 
@@ -512,9 +515,17 @@ function editHabit(h) {
 
 /**
  * Lumi hops along the path from the lesson just finished to the next one, and that lesson's tick
- * pops in: the learner sees themselves move forward. Skipped under reduced motion (null).
+ * pops in: the learner sees themselves move forward. The green line fills ahead of Lumi (the
+ * trail's .fresh stretch) and the next node pops open with a chime as Lumi lands. Skipped under
+ * reduced motion (null): the line is simply drawn.
  */
 function walkTo(guide, fromNode, toNode) {
+  const fresh = app.querySelector('.trail .fresh');
+  if (fresh) {
+    const len = fresh.getTotalLength();
+    fresh.style.strokeDasharray = len;
+    move(fresh, [{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration: 1300, delay: 350, easing: 'ease-in-out', fill: 'backwards' });
+  }
   const a = fromNode.getBoundingClientRect();
   const b = toNode.getBoundingClientRect();
   const dx = a.left - b.left;
@@ -527,7 +538,9 @@ function walkTo(guide, fromNode, toNode) {
     const lift = i % 2 ? -14 : 0; // up on the odd frames: a hop between each landing
     frames.push({ transform: `translate(${dx * (1 - k)}px, ${dy * (1 - k) + lift}px)` });
   }
-  return move(guide, frames, { duration: 1300, delay: 350, easing: 'ease-in-out', fill: 'backwards' });
+  const walk = move(guide, frames, { duration: 1300, delay: 350, easing: 'ease-in-out', fill: 'backwards' });
+  walk?.finished.then(() => { flourish(toNode, 'pop'); cue('unlock'); }, () => {});
+  return walk;
 }
 
 /**
@@ -632,21 +645,21 @@ function run(lessonId, queue, title) {
           if (kind !== 'correct') flare(`${streak} in a row`);
           sessionCoach.set('correct');
           sessionCoach.hop();
-          play(kind === 'correct' ? 'right' : 'run');
-          buzz('right');
+          cue(kind === 'correct' ? 'right' : 'run');
         } else if (correct === false) {
           streak = 0;
           kind = 'wrong';
           sessionCoach.set('wrong');
           sessionCoach.sway();
-          play('wrong');
-          buzz('wrong');
+          cue('wrong');
         }
         meter();
         shine();
         foot.className = `foot show ${correct === null ? 'plain' : correct ? 'right' : 'wrong'}`;
         foot.querySelector('strong').textContent = kind === 'plain' ? '' : line(kind);
         foot.querySelector('p').textContent = text;
+        // The answer tapped (or, on a board, the verdict) pops when right and gives a small shake when not.
+        if (correct !== null) flourish(stage.querySelector(correct ? '.choice.right' : '.choice.wrong') || foot.querySelector('strong'), correct ? 'pop' : 'shake');
         // Focus moves to Continue, which reads out the verdict (a teach card: Rosa's line). The
         // banner is fixed over the bottom, so nothing on the page moves.
         next.setAttribute('aria-describedby', correct === null ? 'said' : 'verdict');
@@ -782,10 +795,10 @@ function run(lessonId, queue, title) {
     };
     if (leanIn) leanIn.finished.then(settle, () => {}); else settle();
     focusOn('h1');
-    play('done');
+    cue('done');
     arrive(newly, 900);
-    buzz('done');
-    const stopParty = perfect ? confetti() : () => {};
+    // Petals and leaves for every finished lesson, and for a review right all through.
+    const stopParty = lessonId || perfect ? petals() : () => {};
     app.querySelector('.summary').addEventListener('click', stopParty);
     app.querySelector('.next').addEventListener('click', () => {
       left = true;
@@ -797,30 +810,6 @@ function run(lessonId, queue, title) {
   };
 
   step();
-}
-
-/**
- * Confetti for a lesson right first time all through. About 2.6 s, skipped by a tap (the returned
- * function) and by reduced motion.
- */
-function confetti() {
-  if (reducedMotion()) return () => {};
-  const layer = document.createElement('div');
-  layer.className = 'confetti';
-  const colours = ['#F5A524', '#4caf73', '#6E82A8', '#F28C8C', '#FFD978'];
-  for (let i = 0; i < 40; i++) {
-    const bit = document.createElement('i');
-    bit.style.left = `${Math.random() * 100}%`;
-    bit.style.background = colours[i % colours.length];
-    layer.append(bit);
-    bit.animate([
-      { transform: 'translateY(0) rotate(0)' },
-      { transform: `translateY(${window.innerHeight + 40}px) rotate(${360 + Math.random() * 360}deg)` },
-    ], { duration: 1800 + Math.random() * 800, delay: Math.random() * 300, easing: 'cubic-bezier(.3,.6,.5,1)', fill: 'forwards' });
-  }
-  document.body.append(layer);
-  const timer = setTimeout(() => layer.remove(), 2600);
-  return () => { clearTimeout(timer); layer.remove(); };
 }
 
 /** A subject's optional placement question (`subject.placement`), offered on home by its path. */

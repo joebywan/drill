@@ -263,6 +263,61 @@ test('the "5 in a row" flare plays, then leaves nothing behind', async ({ page }
   await expect(flare).toBeHidden({ timeout: 3000 });
 });
 
+/** Home with the board unit done, then "Rook and bishop" played through: Lumi's next step is in the same unit. */
+async function rookAndBishop(page, during = async () => {}) {
+  const lesson = basics.units[1].lessons[0];
+  await page.addInitScript((p) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', p); },
+    JSON.stringify({ ...emptyProgress(), done: { [`chess:${basics.units[0].lessons[0].id}`]: true } }));
+  await firstVisit(page);
+  await page.getByRole('button', { name: `Continue · ${lesson.title}` }).click();
+  for (const [i, item] of lesson.items.entries()) {
+    if (item.demo) await expect(page.locator('#said')).not.toHaveText(item.intro, { timeout: 10000 }); // the piece's demo first
+    await solve(page, item);
+    if (!i) await during();
+    await continueButton(page).click();
+  }
+}
+
+test('lessons feel alive: answers pop, petals fall, and the path fills to the next node', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await rookAndBishop(page, async () => {
+    // The verdict pops (scale up and back), and Continue takes the tap while it plays.
+    expect(await page.evaluate(() => document.getAnimations().some((a) => a.effect.getKeyframes().some((k) => k.transform === 'scale(1.12)')))).toBe(true);
+  });
+  await expect(page.locator('.petals i.petal').first()).toBeAttached();
+  await expect(page.locator('.petals i.leaf').first()).toBeAttached();
+  await continueButton(page).click();
+  await expect(page.locator('.petals')).toHaveCount(0); // leaving the summary stops them
+  // The stretch from the lesson just done to the next node is its own path, filling as Lumi hops.
+  const fresh = page.locator('.trail .fresh');
+  await expect(fresh).toHaveCount(1);
+  expect(await fresh.evaluate((el) => el.getAnimations().length)).toBe(1);
+  await expect.poll(() => fresh.evaluate((el) => el.getAnimations().length), { timeout: 3000 }).toBe(0);
+  await expect(page.getByRole('button', { name: `${basics.units[1].lessons[1].title}, current` })).toBeVisible();
+});
+
+test('a wrong answer gives a small shake, never in the way', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await firstVisit(page);
+  await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
+  const tapItem = first.items.find((i) => kind(i) === 'tap');
+  for (const item of first.items.slice(0, first.items.indexOf(tapItem))) { await solve(page, item); await continueButton(page).click(); }
+  const right = new Set(answer(tapItem));
+  await tap(page, ['a1', 'h8', 'd4', 'e5', 'b2'].find((sq) => !right.has(sq)));
+  await expect(page.locator('.foot.wrong')).toBeVisible();
+  expect(await page.evaluate(() => document.getAnimations().some((a) => a.effect.getKeyframes().some((k) => k.transform === 'translateX(-6px)')))).toBe(true);
+  await continueButton(page).click();
+});
+
+test('under reduced motion, feedback is still and the path is simply drawn', async ({ page }) => {
+  await rookAndBishop(page);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.locator('.petals')).toHaveCount(0);
+  await continueButton(page).click();
+  await expect(page.locator('.trail .fresh')).toHaveCount(1);
+  expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+});
+
 test("a habit's chip opens its view, with today's session listed", async ({ page }) => {
   await firstVisit(page);
   await finishFirstLesson(page);
