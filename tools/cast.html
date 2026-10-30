@@ -28,15 +28,19 @@
   import { rosa } from '../src/cast/rosa.js';
   import { lumi } from '../src/cast/lumi.js';
   import { NAME, MOODS as CALM, moss, breathe } from '../src/cast/moss.js';
-  import { NAME as MOVE, MOODS as MOVE_MOODS, POSES, clover, demo } from '../src/cast/clover.js';
+  import * as clover from '../src/cast/clover.js';
+  import * as mira from '../src/cast/mira.js';
 
   const cast = [
     ['Rosa', MOODS.map((m) => [m, rosa(m)])],
     ['Lumi', MOODS.map((m) => [m, lumi(m)])],
     [NAME, CALM.map((m) => [m, moss(m)])],
-    [MOVE, MOVE_MOODS.map((m) => [m, clover(m)])],
-    [`${MOVE} poses`, POSES.map((p) => [p, clover('guide', p)])],
+    ...[[clover, clover.clover], [mira, mira.mira]].flatMap(([c, draw]) => [
+      [c.NAME, c.MOODS.map((m) => [m, draw(m)])],
+      [`${c.NAME} poses`, c.POSES.map((p) => [p, draw('guide', p)])],
+    ]),
   ];
+  const demos = { clover: clover.demo, mira: mira.demo };
   const fig = ([label, svg]) => `<figure>${svg}<figcaption>${label}</figcaption></figure>`;
   const panel = (theme) => `<div class="panel ${theme}">` + cast.map(([name, items]) => `
     <h2>${name} (${theme})</h2>
@@ -48,9 +52,9 @@
   for (const el of document.querySelectorAll('svg.cast')) blink(el);
   // The guide figures breathe 4 in, 8 out, as the Calm practice will drive them.
   const guides = document.querySelectorAll(`.s200 .cast-${NAME.toLowerCase()}.mood-guide`);
-  // The Move figures at 96 px demo their pose: 3 reps in 6 s, then a 2 s pause.
+  // The posed figures at 96 px demo their pose: 3 reps in 6 s, then a 2 s pause.
   const posed = document.querySelectorAll('.s96 svg[data-pose]:not([data-pose=""])');
-  (function reps() { posed.forEach((el) => demo(el, el.dataset.pose, 6, 3)); setTimeout(reps, 8000); })();
+  (function reps() { posed.forEach((el) => demos[el.classList[1].slice(5)](el, el.dataset.pose, 6, 3)); setTimeout(reps, 8000); })();
   (async function cycle() {
     for (;;) for (const [phase, s] of [['in', 4], ['out', 8]]) {
       guides.forEach((el) => breathe(el, phase, s));

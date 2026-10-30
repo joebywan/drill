@@ -7,6 +7,8 @@
  * - Every character answers every mood in MOODS. A mood is a face (from `face()`) plus a pose.
  * - Parts carry `data-part` so later code can animate them without redrawing.
  */
+import { move } from '../feel.js';
+
 export const INK = '#1E1B2E';
 const MOUTH_FILL = '#5A1F2B';
 const BLUSH = '#F28C8C';
@@ -40,8 +42,11 @@ const FACES = {
  * A face centred between the eyes at (cx, cy). Eyes are whites with a pupil, 22 apart; `skin`
  * colours the lids; `lashes` adds a flick at each outer corner. The mouth sits `mouthY` below the eye line, a little off centre.
  * `mood` is a name from FACES or a settings object of the same shape, for a character's own moods.
+ * For a character whose eyes are the point: `size` scales the eyes (and lifts the brows to clear
+ * them), `iris` colours the eye in place of white, and `line` colours the happy and proud curves
+ * when ink would vanish on a dark eye patch.
  */
-export function face(mood, { cx, cy, skin, mouthY = 12, lashes = false }) {
+export function face(mood, { cx, cy, skin, mouthY = 12, lashes = false, size = 1, iris = '#fff', line = INK }) {
   const f = typeof mood === 'object' ? mood : FACES[mood] || FACES.teach;
   const gx = f.dx || 0, gy = f.dy || 0;
   const eyes = [-1, 1].map((side) => {
@@ -49,11 +54,11 @@ export function face(mood, { cx, cy, skin, mouthY = 12, lashes = false }) {
     // One lash flick at the outer corner, from wherever the top of the eye is.
     const top = f.eyes === 'open' ? cy - 7 + 14 * (f.lid || 0) : cy - 1;
     const lash = lashes ? `<path d="M${x + side * 5.5} ${top + 1} L${x + side * 9} ${top - 2}" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"/>` : '';
-    return eye(f.eyes, x, cy, gx, gy, f.lid || 0, skin) + lash;
+    return eye(f.eyes, x, cy, gx, gy, f.lid || 0, skin, size, iris, line) + lash;
   }).join('');
   const [lift, tilt, raise = 0] = f.brows;
   const brows = [-1, 1].map((side) => {
-    const x = cx + side * 11, y = cy - 11 - lift - (side > 0 ? raise : 0);
+    const x = cx + side * 11, y = cy - 4 - 7 * size - lift - (side > 0 ? raise : 0);
     // Positive tilt raises the inner ends (sympathy); `raise` lifts the right brow (curiosity).
     return `<rect x="${x - 5.5}" y="${y - 1.8}" width="11" height="3.6" rx="1.8" fill="${INK}" transform="rotate(${side * tilt} ${x} ${y})"/>`;
   }).join('');
@@ -62,18 +67,18 @@ export function face(mood, { cx, cy, skin, mouthY = 12, lashes = false }) {
   return `<g data-part="face">${blush}<g data-part="eyes">${eyes}</g><g data-part="brows">${brows}</g>${mouth(f.mouth, cx + 2, cy + mouthY)}</g>`;
 }
 
-function eye(kind, x, y, gx, gy, lid, skin) {
-  const line = `fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"`;
-  if (kind === 'happy') return `<path d="M${x - 5} ${y + 2} Q${x} ${y - 5} ${x + 5} ${y + 2}" ${line}/>`;
-  if (kind === 'proud') return `<path d="M${x - 5} ${y - 1} Q${x} ${y + 5} ${x + 5} ${y - 1}" ${line}/>`;
-  const open = `<ellipse cx="${x}" cy="${y}" rx="6" ry="7" fill="#fff"/>`
-    + `<circle cx="${x + gx}" cy="${y + gy + 1}" r="3.3" fill="${INK}"/>`
-    + `<circle cx="${x + gx + 1.2}" cy="${y + gy - 0.4}" r="1" fill="#fff"/>`;
+function eye(kind, x, y, gx, gy, lid, skin, s, iris, ink) {
+  const line = `fill="none" stroke="${ink}" stroke-width="3" stroke-linecap="round"`;
+  if (kind === 'happy') return `<path d="M${x - 5 * s} ${y + 2} Q${x} ${y - 5 * s} ${x + 5 * s} ${y + 2}" ${line}/>`;
+  if (kind === 'proud') return `<path d="M${x - 5 * s} ${y - 1} Q${x} ${y + 5 * s} ${x + 5 * s} ${y - 1}" ${line}/>`;
+  const open = `<ellipse cx="${x}" cy="${y}" rx="${6 * s}" ry="${7 * s}" fill="${iris}"/>`
+    + `<circle cx="${x + gx}" cy="${y + gy + 1}" r="${3.3 * s}" fill="${INK}"/>`
+    + `<circle cx="${x + gx + 1.2 * s}" cy="${y + gy - 0.4 * s}" r="${s}" fill="#fff"/>`;
   if (!lid) return open;
-  // The lid: skin over the top of the white, with a hard ink edge.
-  const ly = y - 7 + 14 * lid;
-  return open + `<rect x="${x - 7}" y="${y - 8}" width="14" height="${ly - y + 8}" fill="${skin}"/>`
-    + `<path d="M${x - 6.5} ${ly} L${x + 6.5} ${ly}" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"/>`;
+  // The lid: skin over the top of the eye, with a hard ink edge.
+  const ly = y - 7 * s + 14 * s * lid;
+  return open + `<rect x="${x - 7 * s}" y="${y - 8 * s}" width="${14 * s}" height="${ly - y + 8 * s}" fill="${skin}"/>`
+    + `<path d="M${x - 6.5 * s} ${ly} L${x + 6.5 * s} ${ly}" stroke="${ink}" stroke-width="2.2" stroke-linecap="round"/>`;
 }
 
 // Mouths are lopsided on purpose: a symmetric mouth reads as a sticker, not a person.
@@ -103,6 +108,54 @@ export const shadow = (rx = 26) => `<ellipse data-part="shadow" cx="50" cy="111"
 
 export const svg = (name, mood, body) =>
   `<svg class="cast cast-${name} mood-${mood}" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
+
+// --- The rig ------------------------------------------------------------------------------
+
+const DATA = { armL: 'arm-left', armR: 'arm-right', legL: 'leg-left', legR: 'leg-right' };
+const PROPS = ['lids', 'seat']; // drawn at scaleY 0 until a pose opens them out
+
+/**
+ * A posable character (Clover, Mira): arms, legs, torso and head are separate groups, each moved
+ * by one CSS transform about a fixed joint. Moods and poses only change those transforms, so a
+ * pose is never a redraw and the Web Animations API can tween any part between any two poses.
+ *
+ * `joints` are { part: [x, y] } in the 100 x 120 canvas; a part without one (the eyes, closed lids)
+ * turns about its own centre. A pose is a list of phases; a phase gives per part
+ * [rotate, dx, dy, scaleY], and `body` [dx, dy] moves the whole upper body. Unset parts stand still.
+ * Positive rotation is clockwise. `stand` is the resting phase every demo starts and ends on.
+ *
+ * Returns { POSES, at, pose, demo }:
+ *   at(part, phase)     the attributes that put a part's group in that phase
+ *   pose(name, arms)    the phase to draw: the named pose's first, else `arms` (a mood's own)
+ *   demo(el, pose, seconds, reps = 1) -> Animation[] | null
+ *       Moves the character inside `el` from standing to `pose` and back, `reps` times over exactly
+ *       `seconds`, every phase the same length. Keyframes are absolute, so it is safe right after
+ *       a redraw. Null under reduced motion or for an unknown pose: keep your own clock.
+ */
+export function rig(joints, stand, poses) {
+  const phases = Object.values(poses).flat();
+  const parts = [...new Set([stand, ...phases].flatMap(Object.keys))];
+  const transform = (part, phase) => {
+    const [r = 0, dx = 0, dy = 0, sy = PROPS.includes(part) ? 0 : 1] = part === 'body' ? [0, ...(phase.body || [])] : phase[part] || [];
+    const [px, py] = joints[part] || [0, 0];
+    return `translate(${dx}px, ${dy}px) translate(${px}px, ${py}px) rotate(${r}deg) scale(1, ${sy}) translate(${-px}px, ${-py}px)`;
+  };
+  const at = (part, phase) => `data-part="${DATA[part] || part}" style="${joints[part] || part === 'body' ? ''
+    : 'transform-box: fill-box; transform-origin: center; '}transform: ${transform(part, phase)}"`;
+  return {
+    POSES: Object.keys(poses),
+    at,
+    pose: (name, arms) => ({ ...stand, ...(poses[name] ? poses[name][0] : arms) }),
+    demo(el, pose, seconds, reps = 1) {
+      if (!poses[pose] || !el?.querySelector) return null;
+      const frames = [stand, ...poses[pose].map((p) => ({ ...stand, ...p })), stand];
+      const anims = parts.map((part) => move(el.querySelector(`[data-part="${DATA[part] || part}"]`),
+        frames.map((p) => ({ transform: transform(part, p), easing: 'ease-in-out' })),
+        { duration: (seconds * 1000) / reps, iterations: reps })).filter(Boolean);
+      return anims.length ? anims : null;
+    },
+  };
+}
 
 // --- Motion -------------------------------------------------------------------------------
 

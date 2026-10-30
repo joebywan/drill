@@ -4,7 +4,7 @@ import { demo, steps, teach } from '../practice/kit.js';
 import { esc } from '../html.js';
 
 /**
- * Mounts one screen-break item: the teach card, or the routine with Clover saying each step's cue
+ * Mounts one screen-break item: the teach card, or the routine with Mira saying each step's cue
  * and demonstrating it. "How?" opens the step's guidance and pauses the routine (its own Pause)
  * until it is closed.
  */
@@ -14,7 +14,7 @@ export function mount(el, item, ctx) {
   const stop = steps(el, STEPS, ctx, {
     label: 'Screen break steps', mood: 'guide', tone: 'break', inline: true,
     summary: `${STEPS.length} steps`, paused: line('paused', Math.random(), BREAK_LINES),
-    act: (p) => { now = p; return demo(ctx.coachEl, p.pose, p.seconds, p.loops); },
+    act: (p) => { now = p; return demo(ctx, p.pose, p.seconds, p.loops); },
   });
   const pause = el.querySelector('.practice-pause');
   pause.insertAdjacentHTML('beforebegin', '<button class="choice practice-how">How?</button>');

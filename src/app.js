@@ -543,6 +543,7 @@ function run(lessonId, queue, title) {
         if (mood) sessionCoach.set(mood);
       },
       coachEl: $('.who'),
+      coach: who,
       help: who.help,
       done: (correct, text = '', kept = null) => {
         // A practice item goes straight on: its own buttons were the Continue.

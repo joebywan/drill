@@ -14,7 +14,8 @@ import { BREAK_LINES, CALM_HELP, CALM_LINES, MOVE_LINES, MOVE_SAFETY, REFLECT_LI
 import * as reflect from './reflect/practice.js';
 import moveCourse from './data/move.json' with { type: 'json' };
 import * as move from './move/practice.js';
-import { clover, NAME as CLOVER } from './cast/clover.js';
+import { clover, demo as cloverDemo, NAME as CLOVER } from './cast/clover.js';
+import { mira, demo as miraDemo, NAME as MIRA } from './cast/mira.js';
 
 /**
  * The contract. A subject is a course plus one `mount(el, item, { say, done })` that plays a
@@ -120,7 +121,7 @@ export const subjects = [{
   mount: screenBreak.mount,
   habit: 'break',
   kind: 'practice',
-  coach: { draw: clover, name: CLOVER, start: 'guide', lines: BREAK_LINES, help: { text: SAFETY_LINE }, feel: 'refreshed', demonstrates: true },
+  coach: { draw: mira, demo: miraDemo, name: MIRA, start: 'guide', lines: BREAK_LINES, help: { text: SAFETY_LINE }, feel: 'refreshed', demonstrates: true },
 }, {
   ...reflectCourse,
   mount: reflect.mount,
@@ -133,5 +134,5 @@ export const subjects = [{
   mount: move.mount,
   habit: 'move',
   kind: 'practice',
-  coach: { draw: clover, name: CLOVER, start: 'guide', lines: MOVE_LINES, help: { text: MOVE_SAFETY }, feel: 'better', demonstrates: true },
+  coach: { draw: clover, demo: cloverDemo, name: CLOVER, start: 'guide', lines: MOVE_LINES, help: { text: MOVE_SAFETY }, feel: 'better', demonstrates: true },
 }];
