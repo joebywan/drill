@@ -47,6 +47,39 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
 Later: Wind down (a bedtime sequence built from Calm's pieces) and Focus (a timed focus
 session with a check-in before and after).
 
+## The garden (agreed 2026-10-30)
+
+The app's vibe moves from "build knowledge" to "grow yourself", shown as a garden.
+
+- **Each habit is a recognisable plant** in one garden. The suggestions are Learning as a
+  tree, Calm as lavender, Move as a sunflower, Reflect as a climbing vine and Screen break as
+  daisies; the art decides the final choice, by what reads at a glance.
+- **Plants grow from total days practised, never from the current streak.** A plant never
+  shrinks, wilts or dies. A missed day just means no growth that day. Five stages: seed,
+  sprout, sapling, young, full grown. Later stages take more days, so a next stage is always
+  coming.
+- **Achievements are things that arrive and stay.** A flower when a unit is finished; a
+  butterfly at a 7-day streak; birds at 30 days practised; a bee when a new habit is tried.
+  Earned once, kept forever, never taken back. They're cosmetic and granted directly, as
+  settled.
+- **Today's light becomes the garden's mood.** Done today, it's sunlit and dewy. Not yet,
+  it's soft morning light. After a gap, it's evening with the buds closed: resting, never sad.
+- **Streak numbers stay** on the chips and in the habit view. The garden is the picture; the
+  numbers are the detail.
+- **Characters are recognisable animals** (Moss the capybara, Clover the rabbit, Lumi the
+  seal). Insects and birds are garden life, not coaches. No owls.
+- Later: seasonal events that change the whole garden (blossom, lanterns), Lumi by a pond,
+  and reconsidering the name "Drill".
+
+9. [ ] **Garden model.** Pure: days practised per habit (kept permanently, not from the
+   year-long log), growth stage, achievement rules and an `earned` record, and the garden's
+   mood. Progress v4 with `migrate()`.
+10. [ ] **Garden art.** SVG plants per habit across five stages, flowers, visitors and the
+    three moods, with a harness like tools/cast.html.
+11. [ ] **Garden screen.** A garden strip on home and a full garden view. Tapping a plant
+    opens its habit view. A quiet "a butterfly arrived" moment on the end screen when
+    something is earned.
+
 ## Kept out
 
 Diet, calories or weight (streaks plus food tracking can feed unhealthy patterns); screen-time
