@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { VERSION, emptyProgress, finishPractice, migrate, showsIntro, track } from '../src/progress.js';
+import { VERSION, emptyProgress, finishPractice, meetsCoach, metCoach, migrate, showsIntro, track } from '../src/progress.js';
 import { habitsFor, ordered } from '../src/subjects.js';
 
 const roundTrip = (v) => JSON.parse(JSON.stringify(v));
@@ -36,4 +36,13 @@ test('migrate v6 to v7: an existing save is marked as past the intro; v7 keeps i
   const picked = { ...emptyProgress(), picked: ['walk', 'learn'] };
   assert.deepEqual(migrate(roundTrip(picked)), picked);
   for (const bad of ['calm', [1], ['<b>'], ['calm', 'calm']]) assert.equal(migrate({ ...emptyProgress(), picked: bad }), null, JSON.stringify(bad));
+});
+
+test("a course's coach is met once, before its first lesson, and never by someone already on the course", () => {
+  const subject = { id: 'coding', coach: { hello: { line: 'Hi' } } };
+  assert.equal(meetsCoach(emptyProgress(), subject), true);
+  assert.equal(meetsCoach(metCoach(emptyProgress(), 'coding'), subject), false);
+  assert.equal(meetsCoach({ ...emptyProgress(), done: { 'coding:steps-0': true } }, subject), false);
+  assert.equal(meetsCoach({ ...emptyProgress(), done: { 'chess:l1': true } }, subject), true, 'another course');
+  assert.equal(meetsCoach(emptyProgress(), { id: 'calm', coach: {} }), false, 'a coach with no hello');
 });

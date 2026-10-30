@@ -155,6 +155,12 @@ export const placeAt = (progress, subjectId, unit) => ({ ...progress, start: { .
 /** True for a first visit: the intro is neither answered nor skipped, and nothing has been done yet. */
 export const showsIntro = (progress) => !progress.picked && !progress.log.length && !Object.keys(progress.done).length && !progress.tracked?.length;
 
+/** True until a course's coach has been met: only coaches with a `hello`, and never once a lesson of theirs is done. */
+export const meetsCoach = (progress, subject) => !!subject.coach.hello && !progress.met?.[subject.id]
+  && !Object.keys(progress.done).some((id) => id.startsWith(`${subject.id}:`));
+
+export const metCoach = (progress, id) => ({ ...progress, met: { ...progress.met, [id]: true } });
+
 const scheduler = fsrs();
 
 /** Local calendar date, not UTC: a streak is about the learner's day. */

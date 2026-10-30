@@ -33,7 +33,7 @@ import { hazel, NAME as HAZEL } from './cast/hazel.js';
 import codingCourse from './data/coding.json' with { type: 'json' };
 import * as coding from './coding/exercise.js';
 import { fennel, NAME as FENNEL } from './cast/fennel.js';
-import { CODING_HEADLINES, CODING_LINES } from './cast/lines.js';
+import { CODING_HEADLINES, CODING_LINES, HELLO } from './cast/lines.js';
 
 /**
  * The contract. A subject is a course plus one `mount(el, item, { say, done })` that plays a
@@ -53,6 +53,7 @@ import { CODING_HEADLINES, CODING_LINES } from './cast/lines.js';
  * question in the habit's own words (Focus: "How did it go?"),
  * and `demonstrates`, for a coach the learner copies, which is drawn large above their line.
  * A Learn coach's `lines` and `headlines` stand in for Rosa's LINES and HEADLINES (same kinds).
+ * `hello`, { line, expect, go }: a Learn coach's one-time introduction before the course's first lesson.
  * Sessions and both end screens read everything subject-specific from here.
  *
  * Optional: `again`, { label, lesson }: once the path is done, home keeps a button with that label
@@ -136,7 +137,7 @@ export const subjects = [{
   mount: chess.mount,
   habit: 'learn',
   kind: 'learn',
-  coach: { draw: rosa, name: 'Rosa', start: 'think' },
+  coach: { draw: rosa, name: 'Rosa', start: 'think', hello: HELLO.rosa },
   placement: {
     offer: 'Know some chess already? Skip ahead',
     question: 'Have you played chess before?',
@@ -153,7 +154,7 @@ export const subjects = [{
   mount: maths.mount,
   habit: 'learn',
   kind: 'learn',
-  coach: { draw: ada, name: ADA, start: 'think', lines: MATHS_LINES, headlines: MATHS_HEADLINES },
+  coach: { draw: ada, name: ADA, start: 'think', lines: MATHS_LINES, headlines: MATHS_HEADLINES, hello: HELLO.ada },
   placement: {
     offer: 'Done some maths already? Skip ahead',
     question: 'How is your maths?',
@@ -169,7 +170,7 @@ export const subjects = [{
   mount: (el, item, ctx) => quiz.mount(el, item, { ...ctx, lang: japaneseCourse.lang }),
   habit: 'learn',
   kind: 'learn',
-  coach: { draw: kaede, name: KAEDE, start: 'think', lines: KAEDE_LINES, headlines: KAEDE_HEADLINES },
+  coach: { draw: kaede, name: KAEDE, start: 'think', lines: KAEDE_LINES, headlines: KAEDE_HEADLINES, hello: HELLO.kaede },
   placement: {
     offer: 'Read some kana already? Skip ahead',
     question: 'Can you read hiragana?',
@@ -184,7 +185,7 @@ export const subjects = [{
   mount: coding.mount,
   habit: 'learn',
   kind: 'learn',
-  coach: { draw: fennel, name: FENNEL, start: 'think', lines: CODING_LINES, headlines: CODING_HEADLINES },
+  coach: { draw: fennel, name: FENNEL, start: 'think', lines: CODING_LINES, headlines: CODING_HEADLINES, hello: HELLO.fennel },
   placement: {
     offer: 'Done some coding already? Skip ahead',
     question: 'Have you made a program before?',

@@ -35,6 +35,7 @@ export function merge(local, remote) {
     timings: Object.fromEntries([...new Set([...Object.keys(b.timings), ...Object.keys(a.timings)])]
       .map((h) => [h, { ...b.timings[h], ...a.timings[h] }])),
     ...((a.start || b.start) && { start: { ...b.start, ...a.start } }),
+    ...((a.met || b.met) && { met: { ...b.met, ...a.met } }),
     ...((a.picked || b.picked) && { picked: a.picked ?? b.picked }),
     ...((a.look || b.look) && { look: latestLook(a.look, b.look) }),
   };

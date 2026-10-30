@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { readFileSync } from 'node:fs';
 import { emptyProgress, finishPractice, finishSession } from '../../src/progress.js';
 import { API } from '../../src/sync/config.js';
