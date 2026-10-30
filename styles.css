@@ -191,6 +191,9 @@ html { scroll-padding-bottom: 160px; }
 /* The keyboard cursor: dark ink reads on every square of both palettes. */
 .cm-chessboard .keyboard-focus-indicator .keyboard-focus { stroke: #101820; stroke-width: 4px; }
 .cm-chessboard .keyboard-focus-indicator .keyboard-from-square { fill: rgba(16, 24, 32, .25); stroke: #101820; }
+/* The extension draws the cursor on any focus, and the lesson focuses the board when a question
+   starts. Show it only to keyboard players (:focus-visible), never after a tap. */
+.cm-chessboard:not(:focus-visible) .keyboard-focus-indicator { display: none; }
 .cm-chessboard:focus { outline: none; }
 .cm-chessboard:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
 /* ---- end board skin ---- */
