@@ -1,6 +1,8 @@
 <resources>
     <style name="Theme.Drill" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
     <color name="bg">#F6F7F9</color>
 </resources>

@@ -51,6 +51,8 @@ html { scroll-padding-bottom: 160px; }
 }
 .bar h1 { font-size: 1.3rem; margin: 0; flex: 1; }
 .close, .sound, .menu, .back { background: none; border: 0; font-size: 1.3rem; padding: 4px 8px; }
+.close { position: relative; }
+.close::after { content: ''; position: absolute; inset: -5px; } /* a 44px target at the same size */
 .meter { flex: 1; height: 12px; border-radius: 6px; background: var(--line); overflow: hidden; }
 .fill { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
 
@@ -684,8 +686,9 @@ body:has(main.night) {
 
 /* --- Courses on the Learning tab, and the tap-and-match quiz items (src/quiz/) --- */
 /* One row that scrolls inside itself once there are more courses than fit. */
-.courses { display: flex; gap: 6px; justify-content: safe center; margin: 4px -16px 0; padding: 2px 16px; overflow-x: auto; scrollbar-width: none; }
-.course { flex: none; min-height: 36px; padding: 4px 10px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); font-weight: 600; font-size: .85rem; white-space: nowrap; }
+.courses { display: flex; gap: 6px; justify-content: safe center; margin: 0 -16px -4px; padding: 6px 16px; overflow-x: auto; scrollbar-width: none; }
+.course::after { content: ''; position: absolute; inset: -4px 0; } /* a 44px target; the row keeps its height */
+.course { position: relative; flex: none; min-height: 36px; padding: 4px 10px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); font-weight: 600; font-size: .85rem; white-space: nowrap; }
 .course[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 /* Japanese uses the system's own font for it (Noto Sans JP on Android): nothing is downloaded. */
 :lang(ja) { font-family: system-ui, "Noto Sans JP", "Noto Sans CJK JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; }
@@ -797,7 +800,11 @@ body:has(main.night) {
   .answer { gap: 4px; min-height: 36px; }
   .answer .head { min-height: 30px; }
   .code { line-height: 1.35; }
-  .play:has(.answer) .grid-world { width: min(100%, calc(var(--w) * 44px), calc(var(--w) * 17vh / var(--h))); }
+  /* Laying out takes the map, a tall tray and the answer: the coach gives way, or the answer has no room. */
+  .play:has(.answer) .grid-world { width: min(100%, calc(var(--w) * 44px), calc(var(--w) * 14vh / var(--h))); }
+  .play:has(.answer) .topic { position: absolute; clip-path: inset(50%); }
+  .play:has(.answer) .who { width: 44px; }
+  .play:has(.answer) .bubble { min-height: 80px; margin-bottom: 6px; padding: 6px 10px; font-size: .9rem; }
   .tray .tile { min-height: 38px; }
   .block .head { min-height: 28px; gap: 4px; }
   .block .head b { min-width: 26px; height: 26px; }

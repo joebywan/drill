@@ -11,6 +11,15 @@
     <!-- Android drops alarms on reboot: re-arm the widget refresh and the note. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- Without it the WebView drops navigator.vibrate, so the practices' haptics never fire. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- WebView has no speechSynthesis: speech goes through Bridge.speak to the phone's TTS engine. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"

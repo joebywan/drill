@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
 import android.util.Base64
 import android.util.Log
 import android.view.ViewGroup
@@ -19,6 +20,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
 import java.io.File
+import java.util.Locale
 
 /**
  * One WebView showing the web app from the APK's assets, as Saffron Road does. ES modules will not
@@ -28,10 +30,14 @@ import java.io.File
  */
 class MainActivity : ComponentActivity() {
     private lateinit var web: WebView
+    private var tts: TextToSpeech? = null // set once the engine is ready: until then, no voice
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (BuildConfig.DEBUG) WebView.setWebContentsDebuggingEnabled(true)
+
+        lateinit var engine: TextToSpeech
+        engine = TextToSpeech(this) { if (it == TextToSpeech.SUCCESS) tts = engine }
 
         val loader = WebViewAssetLoader.Builder()
             .addPathHandler("/", WebViewAssetLoader.AssetsPathHandler(this))
@@ -94,6 +100,18 @@ class MainActivity : ComponentActivity() {
             Daily.render(this@MainActivity)
         }
 
+        /** Whether the phone can speak `lang` ('ja-JP'): feel.js shows the written reading if not. */
+        @JavascriptInterface
+        fun hasVoice(lang: String): Boolean = (tts?.isLanguageAvailable(Locale.forLanguageTag(lang)) ?: TextToSpeech.LANG_NOT_SUPPORTED) >= TextToSpeech.LANG_AVAILABLE
+
+        @JavascriptInterface
+        fun speak(text: String, lang: String, rate: Float) {
+            val t = tts ?: return
+            t.language = Locale.forLanguageTag(lang)
+            t.setSpeechRate(rate)
+            t.speak(text, TextToSpeech.QUEUE_FLUSH, null, "drill")
+        }
+
         /** What became of the notes since last asked, as a JSON array, for `window.drill.noteReminder`. */
         @JavascriptInterface
         fun notes(): String = Daily.takeNotes(this@MainActivity)
@@ -130,6 +148,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        tts?.shutdown()
         (web.parent as? ViewGroup)?.removeView(web)
         web.destroy()
         super.onDestroy()

@@ -149,13 +149,17 @@ export function petals() {
  * Speech, for a course in another language: the browser's own voice for `lang` ('ja-JP'), if it
  * has one. `voice(lang)` is null without one, or with Sound muted: then the screen shows the
  * written reading instead, and nothing waits on speech. Voices load late in Chrome, so asking
- * once here warms the list before the first lesson needs it.
+ * once here warms the list before the first lesson needs it. Android's WebView has no
+ * speechSynthesis, so in the wrapper DrillBridge speaks through the phone's TTS engine.
  */
+const RATE = 0.8;
+const bridge = () => globalThis.DrillBridge;
 const synth = () => (typeof speechSynthesis === 'undefined' ? null : speechSynthesis);
 try { synth()?.getVoices(); } catch { /* no speech */ }
 export const voice = (lang) => {
   if (!soundOn()) return null;
   try {
+    if (bridge()) return bridge().hasVoice(lang) ? { lang } : null;
     const voices = synth()?.getVoices() || [];
     const norm = (l) => l.replace('_', '-').toLowerCase();
     return voices.find((v) => norm(v.lang) === lang.toLowerCase()) || voices.find((v) => norm(v.lang).startsWith(lang.slice(0, 2).toLowerCase())) || null;
@@ -166,8 +170,9 @@ export function speak(text, lang) {
   const v = voice(lang);
   if (!v) return false;
   try {
+    if (bridge()) { bridge().speak(text, lang, RATE); return true; }
     synth().cancel();
-    synth().speak(Object.assign(new SpeechSynthesisUtterance(text), { voice: v, lang: v.lang, rate: 0.8 }));
+    synth().speak(Object.assign(new SpeechSynthesisUtterance(text), { voice: v, lang: v.lang, rate: RATE }));
     return true;
   } catch { return false; }
 }
