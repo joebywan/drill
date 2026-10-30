@@ -353,3 +353,15 @@ export function unitsOf(progress, subject) {
     return { title: unit.title, nodes, placed: i === start };
   });
 }
+
+/**
+ * A habit's next lesson on its path (`units`, from unitsOf): `current` is the first open one from
+ * the placement question's starting unit on; once the path is done, `repeat` is `again`'s lesson
+ * (the subject's { label, lesson }), if it has one.
+ */
+export function nextUp(units, again) {
+  const from = Math.max(0, units.findIndex((u) => u.placed));
+  const current = [...units.slice(from), ...units].flatMap((u) => u.nodes).find((n) => n.state === 'open');
+  const repeat = !current && again ? units.flatMap((u) => u.nodes).find((n) => n.lesson.id === again.lesson) : undefined;
+  return { current, repeat };
+}
