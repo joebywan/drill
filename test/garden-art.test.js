@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MAX_FLOWERS, PLANTS, plant, blooms, sway, MOODS, SIZE, scene, slots, place, VISITORS, visitor, animateVisitor } from '../src/garden/art.js';
+import { MAX_FLOWERS, PLANTS, plant, blooms, sway, MOODS, SIZE, scene, slots, place, VISITORS, visitor, animateVisitor, animateScene } from '../src/garden/art.js';
 import { STAGES } from '../src/garden/model.js';
 import { HABITS } from '../src/subjects.js';
 
@@ -90,13 +90,23 @@ test('sway and visitors move, and stay still under reduced motion', () => {
   const el = { querySelector: () => part(), querySelectorAll: () => [part(), part()] };
   assert.equal(sway(el), 'anim');
   assert.equal(calls[0][1].iterations, Infinity);
-  for (const k of VISITORS) assert.equal(animateVisitor(el, k).length, 2, k);
+  // Two parts each; the butterfly and bee also wander; a fresh one also flies in, on top.
+  const wander = { butterfly: 1, bee: 1, birds: 0 };
+  for (const k of VISITORS) assert.equal(animateVisitor(el, k).length, 2 + wander[k], k);
+  calls.length = 0;
+  for (const k of VISITORS) assert.equal(animateVisitor(el, k, true).length, 3 + wander[k], k);
+  assert.equal(calls.filter(([, o]) => o.composite === 'add' && o.iterations === undefined).length, VISITORS.length, 'one fly-in each');
   assert.equal(animateVisitor(el, 'owl'), null);
+  // The scene: every living part moves forever, from a real scene's markup.
+  const svg = scene('sunlit') + scene('resting');
+  for (const p of ['cloud', 'halo', 'glint', 'star', 'firefly']) assert.match(svg, new RegExp(`data-part="${p}"`), p);
+  assert.equal(animateScene(el).length, 10, 'two of each of the five parts');
   calls.length = 0;
   globalThis.matchMedia = () => ({ matches: true });
   try {
     assert.equal(sway(el), null);
-    for (const k of VISITORS) assert.equal(animateVisitor(el, k), null, k);
+    for (const k of VISITORS) assert.equal(animateVisitor(el, k, true), null, k);
+    assert.deepEqual(animateScene(el), []);
   } finally { delete globalThis.matchMedia; }
   assert.equal(calls.length, 0);
 });
@@ -213,4 +223,13 @@ test('past six plants the garden takes more rows, up to MAX_PLANTS, and draws no
   }
   const many = Array.from({ length: 15 }, (_, i) => ({ habit: `own-${i}`, plant: KINDS[i % KINDS.length], stage: 2, flowers: [], visitors: [] }));
   assert.equal(drawGarden({ mood: 'sunlit', plants: many }, 'strip').match(/class="plant /g).length, MAX_PLANTS);
+});
+
+import { existsSync } from 'node:fs';
+import { CHIMES } from '../src/feel.js';
+import { RULES } from '../src/garden/model.js';
+
+test('everything that can arrive, and a new plant, has its own sound file', () => {
+  for (const gift of new Set([...RULES.map((r) => r.gift), 'plant'])) assert.ok(CHIMES.includes(gift), gift);
+  for (const c of CHIMES) assert.ok(existsSync(`assets/sounds/${c}.wav`), c);
 });

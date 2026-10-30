@@ -47,6 +47,21 @@ export function play(name) {
   } catch { /* no audio */ }
 }
 
+// The garden's sounds are files in assets/sounds, rendered by tools/sounds.js, loaded on first use.
+// ponytail: wav, about 90 KB each; encode to opus/mp3 if the set grows past a handful.
+export const CHIMES = ['plant', 'flower', 'butterfly', 'bee', 'birds'];
+const chimes = {};
+
+/** Plays a garden sound, if sound is on. Quietly nothing when it can't. */
+export function chime(name) {
+  if (!soundOn() || !CHIMES.includes(name)) return;
+  try {
+    const a = (chimes[name] ??= Object.assign(new Audio(new URL(`../assets/sounds/${name}.wav`, import.meta.url)), { volume: 0.5 }));
+    a.currentTime = 0;
+    a.play().catch(() => {});
+  } catch { /* no audio */ }
+}
+
 /**
  * Soft rain under a Calm practice, if turned on: looped brown noise, low-passed and quiet. It
  * holds while the page is hidden. Returns the function that fades it out.

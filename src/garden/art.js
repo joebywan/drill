@@ -1,6 +1,6 @@
 import { move } from '../feel.js';
 import { scene, slots, place, SIZE, visitor } from './scene.js';
-export { scene, slots, place, SIZE, MOODS, visitor, animateVisitor, VISITORS } from './scene.js';
+export { scene, slots, place, SIZE, MOODS, visitor, animateVisitor, animateScene, VISITORS } from './scene.js';
 
 /**
  * The garden's plants, drawn like the cast (src/cast/kit.js): hand-written SVG strings, flat
@@ -503,19 +503,21 @@ export function perches(plants, shape = 'tall') {
 /**
  * The garden as one svg string, drawn once per render: `garden()` from model.js in `shape`
  * ('strip' or 'tall'). Each plant at its stage with its flowers (plant() caps them) and shut
- * buds when resting, then each visitor at its plant's perch. A clear rect under each plant
+ * buds when resting, then each visitor at its plant's perch; one whose id is in `fresh` is marked
+ * data-new, to fly in. A clear rect under each plant
  * makes the whole plant tappable.
  */
-export function drawGarden({ mood, plants: all }, shape = 'tall') {
+export function drawGarden({ mood, plants: all }, shape = 'tall', fresh = []) {
   const at = slots(shape, all.length);
   const plants = all.slice(0, at.length); // past MAX_PLANTS, the first ones
   const closed = mood === 'resting';
   const grown = plants.map((p, i) => place(plant(p.habit, p.stage, { flowers: p.flowers.length, closed, kind: p.plant }), at[i])
     .replace(/^(<svg [^>]*>)/, '$1<rect width="100" height="120" fill="transparent"/>')).join('');
   const spots = perches(plants, shape);
-  const life = plants.flatMap((p, i) => p.visitors.map(({ gift }) => {
+  const life = plants.flatMap((p, i) => p.visitors.map(({ id, gift }) => {
     const b = spots[i][gift];
-    return b ? visitor(gift).replace('<svg ', `<svg x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" data-kind="${gift}" `) : '';
+    const isNew = fresh.includes(id) ? ' data-new' : '';
+    return b ? visitor(gift).replace('<svg ', `<svg x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" data-kind="${gift}"${isNew} `) : '';
   })).join('');
   return scene(mood, shape).replace(/<\/svg>$/, `${grown}${life}</svg>`);
 }
