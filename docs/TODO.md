@@ -140,3 +140,57 @@ permission, and the pool stays the fallback even then.
 - **From the 2026-10-30 integration walkthrough** (a design call, not a bug): above a new course's
   path sit five layers: the garden strip, habit tabs, course switcher, the welcome line and the
   "Skip ahead" offer. Nothing overlaps, but the path starts halfway down.
+
+## To test or improve
+
+From the repetition work and the Coding expansion, 2026-10-30. None of it is confirmed as a bug yet.
+
+**Test by playing**
+
+- **Coding end to end, for pacing.** All 47 lessons have never been played through. Later lessons
+  have only had automated fit and solvability checks.
+- **Session length.** Warm-ups, "Once more" and checkpoints make every Learn session longer. Check
+  it still feels like small wins, not a slog. Checkpoints now sit on every path, chess's included.
+- **Real touch on a phone** (`npm run phone`, or a real device): tapping the buggy block, dragging
+  tiles into holes and into code, and the smaller blocks on phones under 700px tall.
+- **Tap size on short phones.** At 640px tall, 5-row maps have cells of about 29px, small for
+  predict taps; inner values in programs shrink to 26-28px.
+- **Sound and motion in the new units.** Live values and the drawing trail under normal motion were
+  only seen in a one-off script: e2e runs with reduced motion.
+- **The live site** beyond its start screen, on a phone and from another network.
+
+**Coding: lessons to judge first**
+
+- `if-3` is the most samey lesson; `until-2` reuses the same undo trick.
+- `bug-1` and parts of `bug-2`: with only one kind of tile, the tiles nearly give the block away.
+- `logic-2`: and/or barely matters on maps this small; `logic-2-count` is contrived.
+- `list-2`: plain fill-a-list items, and a look overriding a list is an odd idea.
+- `draw-0`: `draw-0-extra2` and `draw-0-line` are very easy.
+- `param-0`, `param-1`: many items are just "pick the number".
+- `js-0` is mostly easy reading. `js-3` and `js-4` were cut hard to fit, and arrays hold 2 values.
+
+**Coding: bigger improvements**
+
+- **Let the learner lay out the structure.** "Build" means filling holes in a given shape; nobody
+  ever places a whole loop or if themselves. This is the biggest gap against real programming.
+- **Fresh numbers, not only flips.** A mirrored "how many times?" still has the same count, so it can
+  be remembered. Generate levels from templates (a line of n, stairs of k), with the explanation
+  worked out and `problem()` run over many seeds.
+- **Events** ("when Fennel reaches a rock") were left out; they fit the JavaScript course better.
+- **A JavaScript course where you type code,** graded by running it, with Fennel walking the result.
+
+**Repetition engine**
+
+- **Maths repeats as written.** Give it fresh numbers on repeats. Its prompts and explanations quote
+  numbers, so they need working out from the sum.
+- **Japanese repeats as written.** Consider asking the other way round on a repeat (sound to kana).
+- **Chess only varies star puzzles.** Move items and real-game puzzles don't repeat in a session.
+  Mirroring move items is possible; castling and text naming squares need care.
+- **Tune the numbers** in `src/repeat.js` (2 warm-ups, 3 echoes, 8 in a checkpoint) from play. An echo
+  is picked at random, so it can't yet favour what was hard.
+- **Warm-ups pick closest-to-slipping cards** and can repeat across lessons; check they stay varied.
+
+**Characters**
+
+- **Practice habits have no "Meet" screen.** Calm, Move, Focus and the rest only got their coach on
+  the path. Add `hello` to them if the first session feels abrupt.
