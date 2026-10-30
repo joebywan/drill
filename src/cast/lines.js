@@ -210,6 +210,8 @@ export const WINDDOWN_LINES = {
 };
 
 /** Calm's optional sounds, set from the ⋯ screen: [preference, label]. */
+// The ⋯ screen's season toggle: on when the timezone guesses south, and it can be changed.
+export const SOUTH_LABEL = 'Southern hemisphere seasons';
 export const CALM_SOUNDS = [['bell', 'A soft bell at the start and end'], ['rain', 'Soft rain while you practise']];
 
 /** Real help, shown as plain text on the first Calm lesson and after "Not really". */
