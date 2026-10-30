@@ -50,7 +50,6 @@ html { scroll-padding-bottom: 160px; }
   padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top));
 }
 .bar h1 { font-size: 1.3rem; margin: 0; flex: 1; }
-.stat { font-weight: 600; }
 .close, .sound, .menu, .back { background: none; border: 0; font-size: 1.3rem; padding: 4px 8px; }
 .meter { flex: 1; height: 12px; border-radius: 6px; background: var(--line); overflow: hidden; }
 .fill { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
@@ -262,7 +261,6 @@ html { scroll-padding-bottom: 160px; }
 @media (prefers-reduced-motion: reduce) { .meter[data-heat="2"] .fill { animation: none; } .fill { transition: none; } }
 
 /* ---- Habit chips and the habit view ---- */
-.bar .stat { background: none; border: 0; padding: 6px; border-radius: 999px; white-space: nowrap; }
 .habit { padding: 0 16px 40px; }
 .habit h1 { margin: 0 0 2px; font-size: 1.6rem; }
 .habit .said { margin: 0; }
@@ -289,7 +287,18 @@ html { scroll-padding-bottom: 160px; }
 @media (prefers-color-scheme: dark) {
   :root { --calm: #8CC487; --calm-soft: #22331F; --chip-calm: #8CC487; }
 }
-.paths { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 4px 0 0; }
+.paths {
+  display: flex; gap: 8px; margin: 4px -16px 0; padding: 2px 16px 4px;
+  overflow-x: auto; scrollbar-width: none; position: relative; /* offsetLeft is measured from here */
+}
+.paths::-webkit-scrollbar { display: none; }
+/* A tab's streak, in a small pill so today's light reads on the pressed tab too. */
+.path-tab b { display: inline-block; min-width: 1.6em; margin-left: 2px; padding: 0 6px; border-radius: 999px; background: var(--card); color: var(--text); }
+.path-tab b.streak-bright { color: var(--streak); }
+.streak-line {
+  display: block; margin: 10px auto 0; padding: 6px 12px; border: 0; border-radius: 999px; background: none;
+  color: var(--muted); font-size: .9rem; text-decoration: underline; text-underline-offset: 3px;
+}
 .path-tab {
   padding: 8px 16px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); font-weight: 600; white-space: nowrap;
 }

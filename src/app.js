@@ -1,8 +1,8 @@
 import { HABITS, subjects } from './subjects.js';
 import { award, garden, moreArrived, plantWords } from './garden/model.js';
 import { PLANTS, animateVisitor, drawGarden, flower, sway, visitor } from './garden/art.js';
-import { LEARN, emptyProgress, finishPractice, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, soonestKeys, startedHabits, today } from './progress.js';
-import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, dayName, restDays, sessionLine } from './habitview.js';
+import { emptyProgress, finishPractice, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, soonestKeys, today } from './progress.js';
+import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
@@ -128,15 +128,15 @@ function home(arrived = null) {
   app.innerHTML = `
     <header class="bar">
       <h1>Drill</h1>
-      ${startedHabits(progress, HABITS.map((h) => h.id)).map(habitChip).join('')}
       <button class="sound" aria-pressed="${soundOn()}" aria-label="Sound">${soundOn() ? '🔊' : '🔇'}</button>
       <button class="menu" aria-label="Your progress">⋯</button>
     </header>
     <main class="home">
       <button class="garden-link" aria-label="Your garden: ${g.plants.length} plant${g.plants.length === 1 ? '' : 's'}">${drawGarden(g, 'strip')}</button>
       <nav class="paths" aria-label="Show the path for">
-        ${HABITS.map((h) => `<button class="path-tab" data-path="${h.id}" aria-pressed="${h.id === habitShown}">${h.icon} ${esc(h.name)}</button>`).join('')}
+        ${HABITS.map(habitTab).join('')}
       </nav>
+      <button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), !!progress.habits[habitShown]?.last))}</button>
       ${units.map((u) => `
         <section class="street">
           <h2>${esc(u.title)}</h2>
@@ -178,7 +178,11 @@ function home(arrived = null) {
   app.querySelector('.garden-link').addEventListener('click', () => gardenView());
   app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); focusOn('.sound'); });
   app.querySelector('.menu').addEventListener('click', () => { stopHome(); keep(); });
-  for (const chip of app.querySelectorAll('.bar [data-habit]')) chip.addEventListener('click', () => habitView(chip.dataset.habit));
+  app.querySelector('.streak-line').addEventListener('click', () => habitView(habitShown));
+  // The tabs are one row that scrolls inside itself: the selected one is brought into view.
+  const tabs = app.querySelector('.paths');
+  const shown = tabs.querySelector('[aria-pressed="true"]');
+  tabs.scrollLeft = shown.offsetLeft - (tabs.clientWidth - shown.offsetWidth) / 2;
   for (const b of app.querySelectorAll('[data-path]')) {
     b.addEventListener('click', () => { showHabit(b.dataset.path); home(); focusOn(`[data-path="${b.dataset.path}"]`); });
   }
@@ -192,12 +196,15 @@ function home(arrived = null) {
   }
 }
 
-/** A habit's chip on the home bar: its icon and streak, coloured by today's light. */
-function habitChip(id) {
-  const h = HABITS.find((x) => x.id === id);
-  const n = currentStreak(progress, new Date(), id);
-  return `<button class="stat streak-${light(progress, new Date(), id)}" data-habit="${id}"${id === LEARN ? ' title="Day streak"' : ''}
-    aria-label="${esc(h.name)}: ${n}-day streak">${h.icon} ${n}</button>`;
+/**
+ * A habit's tab on home: its icon, name and, once it has had a session, its streak, coloured by
+ * today's light. Pressed when its path is the one shown.
+ */
+function habitTab(h) {
+  const n = currentStreak(progress, new Date(), h.id);
+  const started = !!progress.habits[h.id]?.last;
+  return `<button class="path-tab" data-path="${h.id}" aria-pressed="${h.id === habitShown}"
+    aria-label="${esc(h.name)}${started ? `, ${n}-day streak` : ''}">${h.icon} ${esc(h.name)}${started ? ` <b class="streak-${light(progress, new Date(), h.id)}">${n}</b>` : ''}</button>`;
 }
 
 /**
@@ -205,7 +212,7 @@ function habitChip(id) {
  * of filled squares. The week ends today rather than on a Sunday, so it is always seven real days
  * and never a row of days still to come. Days without a session are plain.
  */
-function habitView(id, back = () => { home(); focusOn(`.bar [data-habit="${id}"]`); }) {
+function habitView(id, back = () => { home(); focusOn('.streak-line'); }) {
   stopHome();
   const h = HABITS.find((x) => x.id === id);
   const now = new Date();

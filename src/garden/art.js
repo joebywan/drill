@@ -281,12 +281,17 @@ const ASPECT = { butterfly: 1, bee: 1, birds: 56 / 32 };
 /**
  * Where a plant's visitors wait, in the scene's units, as boxes { x, y, w, h }: the butterfly
  * above the plant to the left, the bee above it to the right, the birds on the ground beside it,
- * on the side towards the middle of the scene. Never over the plant itself. Pure.
+ * on the side towards the middle of the scene, inside the scene. Never over the plant itself. Pure.
  */
 export function perches({ x, y, w }, stage, shape = 'tall') {
-  const [W] = SIZE[shape] || SIZE.tall;
+  const [W, H] = SIZE[shape] || SIZE.tall;
   const top = y - ((106 - TOPS[stageOf(stage)]) * w) / 100;
-  const box = (kind, cx, bottom, h) => ({ x: f(cx - (h * ASPECT[kind]) / 2), y: f(bottom - h), w: f(h * ASPECT[kind]), h: f(h) });
+  // Kept inside the scene: a plant at the edge has its visitor slide in, still above or beside it.
+  const clamp = (v, max) => f(Math.max(0, Math.min(max, v)));
+  const box = (kind, cx, bottom, h) => {
+    const bw = h * ASPECT[kind];
+    return { x: clamp(cx - bw / 2, W - bw), y: clamp(bottom - h, H - h), w: f(bw), h: f(h) };
+  };
   return {
     butterfly: box('butterfly', x - 0.3 * w, top - 0.04 * w, 0.26 * w),
     bee: box('bee', x + 0.3 * w, top - 0.1 * w, 0.2 * w),

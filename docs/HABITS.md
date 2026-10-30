@@ -15,7 +15,7 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
   of up to three days repaired). Learning is repaired by a review; a practice habit by its
   next session.
 - **The streak shows what you did.** Every session is logged (date, habit, what, minutes, and
-  for practice an optional one-tap "how do you feel"). Tapping a habit's chip opens its view:
+  for practice an optional one-tap "how do you feel"). Tapping the streak line over a habit's path opens its view:
   this week as seven days with each day's sessions listed, "N of the last 14 days", and a month
   of filled squares. Days without a session are plain, never marked as missed.
 
@@ -64,7 +64,7 @@ The app's vibe moves from "build knowledge" to "grow yourself", shown as a garde
   settled.
 - **Today's light becomes the garden's mood.** Done today, it's sunlit and dewy. Not yet,
   it's soft morning light. After a gap, it's evening with the buds closed: resting, never sad.
-- **Streak numbers stay** on the chips and in the habit view. The garden is the picture; the
+- **Streak numbers stay** on the habit tabs and in the habit view. The garden is the picture; the
   numbers are the detail.
 - **Characters are recognisable animals** (Moss the capybara, Clover the rabbit, Lumi the
   seal). Insects and birds are garden life, not coaches. No owls.
