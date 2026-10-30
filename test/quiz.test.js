@@ -48,6 +48,24 @@ test('teaching from zero: no kana is asked before a teach card has shown it', ()
   }
 });
 
+test('teaching from zero: a term is explained on a teach card the first time it appears', () => {
+  for (const term of [/\bkana\b/i, /\bhiragana\b/i, /\bromaji\b/i, /\bvowels?\b/i, /\brows?\b/i, /\btiles?\b/i]) {
+    const first = all.find((i) => term.test(`${i.text || ''} ${i.prompt || ''}`));
+    if (first) assert.equal(first.type, 'teach', `${first.id} is the first to say ${term}`);
+  }
+});
+
+test('teaching from zero: words are explained before one is built, and a word is met before it is asked', () => {
+  const met = new Set();
+  for (const item of all) {
+    if (item.type === 'teach' && MEANS[item.show]) met.add(item.show);
+    if (item.type === 'build') assert.ok(met.size, `${item.id} builds a word before a teach card has made one`);
+    // A build's card states its meaning; a pick or pairs relies on having met the word.
+    const asked = item.type === 'pick' ? [item.show, ...item.options] : (item.pairs || []).map(([l]) => l);
+    for (const w of asked) if (MEANS[w]) assert.ok(met.has(w), `${item.id} asks ${w} before a teach card gives it`);
+  }
+});
+
 test('the placement question points at real units', async () => {
   const { subjects } = await import('../src/subjects.js');
   const jp = subjects.find((s) => s.id === 'japanese');

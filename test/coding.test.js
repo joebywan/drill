@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { answer, fill, holes, parse, problem, reaches, run, solve } from '../src/coding/program.js';
+import { answer, fill, holes, mirrored, parse, problem, reaches, run, solve, vary } from '../src/coding/program.js';
 import course from '../src/data/coding.json' with { type: 'json' };
 
 const level = ['S.#*', '....'];
@@ -73,4 +73,17 @@ test('every shipped Coding item passes problem(), and ids are unique', () => {
   for (const item of items) assert.equal(problem(item), null, item.id);
   assert.equal(new Set(items.map((i) => i.id)).size, items.length);
   for (const item of items.filter((i) => i.level)) assert.ok(parse(item.level).start, item.id);
+});
+
+test('a mirrored item is the same idea on a flipped map, with its words and tiles turned', () => {
+  const all = course.units.flatMap((u) => u.lessons.flatMap((l) => l.items)).filter((i) => i.type !== 'teach');
+  for (const flip of [{ x: true }, { y: true }, { x: true, y: true }]) {
+    for (const item of all) assert.equal(problem(mirrored(item, flip)), null, `${item.id} ${JSON.stringify(flip)}`);
+  }
+  const m = mirrored({ id: 'a', type: 'build', level: ['S.', '.*'], program: [null, null], tiles: ['right', 'down'], prompt: 'Right, then down.', explain: 'Down and right.' }, { x: true });
+  assert.deepEqual(m.level, ['.S', '*.']);
+  assert.deepEqual(m.tiles, ['left', 'down']);
+  assert.equal(m.prompt, 'Left, then down.');
+  assert.notEqual(vary(all[0], () => 0).level.join(), all[0].level.join());
+  assert.equal(vary({ type: 'teach' }), null);
 });
