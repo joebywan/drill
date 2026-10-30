@@ -193,3 +193,14 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
   checked in a desktop browser at phone size.
 - **A very fast second tap** as a piece lands can be dropped.
 - **Cast brief** (the Claude Doc) still describes lamps and predates quest markers, the garden and no XP.
+
+## Cast brief: what's out of date
+
+The brief is a Claude Doc, so these are for Joseph to update (https://claude.ai/artifact/Td5spDrFgAah2w4PtBc2pn). Checked 2026-10-31.
+
+- **Lamps.** The brief says each lesson node is a lamp, Lumi walks lamp to lamp, and "the lamps are the habit display". The path is now quest markers, and the same bright, soft, ember light (`light()`) shows on each habit's tab. "Light every lamp" is also still Lumi's goal in the cast table, and the widget section says "today's lamp".
+- **Quest markers.** The First build's "winding path of lamps" and the Home step are now a path of quest markers with a Continue button. The path isn't a street of lit lamps any more.
+- **The garden.** The brief never mentions it. It's now the record of practice: plants from days practised, flowers, visitors and landmarks (`src/garden/`). The brief's "street" and "decorations that build up the street" need replacing, and so do "lamp colours and shapes" as rewards. Seasonal events change the garden, not a street (#106 once merged).
+- **No XP.** The First build's Progress rules still say "XP pays more for recall and moves off the headline". Drill has no XP or points at all (CLAUDE.md). The Council review and the guardrail lines that say "none checks XP" can go too.
+- **New coaches.** The cast table has Teo, Ines, Yui, Goro, Emi, Leo, Kofi and Tess, none of them built. What shipped beside Lumi and Rosa: Ada the octopus (Maths), Kaede the red panda (Japanese), Fennel the fennec fox (Coding), Moss (Calm), Clover (Move), Mira the lemur (Screen break), Hazel the beaver (Focus). They're animals, so "ordinary working people" and the 2.2-heads rule don't describe them. Practice habits (Calm, Move, Reflect, Break, Focus, Wind down) aren't in the brief at all.
+- **Smaller things.** The build order and "Not in the first build" list the wrapper, widget, notifications, placement and comeback as still to come; they're done. Live friend features are an open question there, but they're built and flagged off (`SYNC`). The widget line "Spring market: 2 of 5 stalls lit" and "any active event" in the bridge summary aren't built: an event's task is one short set, and the widget doesn't mention events.
