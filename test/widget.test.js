@@ -43,3 +43,11 @@ test('summary() follows the best habit and copes with none', () => {
   assert.equal(summary(p, day(10, 9)).looks[0].light, 'bright');
   assert.equal(summary(p, day(10, 9)).doneOn, '2026-10-10');
 });
+
+test('summary() asks the reminder brain for the hour and whether to speak, and defaults without it', () => {
+  const p = emptyProgress();
+  assert.deepEqual([summary(p, day(10)).remindAt, summary(p, day(10)).wanted], [18, true]);
+  assert.deepEqual([summary(p, day(10), 3, { reminderHour: () => null, shouldRemind: () => true }).remindAt], [18], 'not enough data yet');
+  const s = summary(p, day(10), 3, { reminderHour: () => 7, shouldRemind: () => false });
+  assert.deepEqual([s.remindAt, s.wanted], [7, false]);
+});

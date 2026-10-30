@@ -11,7 +11,7 @@ test('ordered puts the picks first, in the order picked, and keeps the rest as t
   const all = habitsFor(p);
   assert.deepEqual(ordered(all), all);
   assert.deepEqual(ordered(all, []), all);
-  assert.deepEqual(ids(ordered(all, ['water', 'calm'])), ['water', 'calm', 'learn', 'break', 'reflect', 'move', 'walk']);
+  assert.deepEqual(ids(ordered(all, ['water', 'calm'])), ['water', 'calm', 'learn', 'break', 'reflect', 'move', 'winddown', 'focus', 'walk']);
   assert.deepEqual(ids(ordered(all, ['learn'])), ids(all));
   assert.deepEqual(ids(ordered(all, ['gone', 'move'])), ['move', ...ids(all).filter((id) => id !== 'move')], 'an id not in the list is passed over');
   assert.equal(ordered(all, ['move', 'calm']).length, all.length);
@@ -30,7 +30,7 @@ test('migrate v6 to v7: an existing save is marked as past the intro; v7 keeps i
   const v6 = { version: 6, habits: { learn: { count: 0, last: null, forgiven: [], days: 0 } }, log: [], done: {}, cards: {},
     journal: {}, garden: { earned: {} }, tracked: [] };
   const p = migrate(roundTrip(v6));
-  assert.deepEqual(p, { ...v6, version: VERSION, picked: [], timings: {} });
+  assert.deepEqual(p, { ...v6, version: VERSION, picked: [], timings: {}, left: [] });
   assert.equal(showsIntro(p), false, 'someone who used Drill before never sees the intro');
   assert.equal(showsIntro(migrate(roundTrip(emptyProgress()))), true, 'a fresh save still does');
   const picked = { ...emptyProgress(), picked: ['walk', 'learn'] };

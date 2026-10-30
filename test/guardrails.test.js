@@ -4,13 +4,13 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, streakLine } from '../src/habitview.js';
 import { helpHtml } from '../src/practice/kit.js';
 import { subjects } from '../src/subjects.js';
-import { ACCURACY, BREAK_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
+import { ACCURACY, BREAK_LINES, FOCUS_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, KAEDE_LINES, KAEDE_HEADLINES, MATHS_LINES, MATHS_HEADLINES, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
 // Praise the process, never the person: no ability words. No absence, loss or guilt either.
 const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intelligen\w*|born to)\b/i;
 const LOSS = /\b(lose|losing|lost|gone|we miss you|missed you|sad|disappoint\w*|abandon\w*|forg[eo]t\w*|broke(n)?|break(ing)? your|come back (soon|to us|tomorrow)|where were you|absen\w*|guilt\w*|shame)\b/i;
 
-const lines = [LINES, HEADLINES, CALM_LINES, BREAK_LINES, REFLECT_LINES, MOVE_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
+const lines = [LINES, HEADLINES, KAEDE_LINES, KAEDE_HEADLINES, MATHS_LINES, MATHS_HEADLINES, CALM_LINES, BREAK_LINES, REFLECT_LINES, MOVE_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
 const labels = [...ACCURACY, ...PACE].map(([, label]) => label).concat(STREAK_LABEL, QUIET_DAY, REST_DAY, NO_STREAK, FIRST_SQUARE, streakLine(0, false), streakLine(0, true), streakLine(14, true));
 
 test('end-screen headlines and chip labels pass the same lint', () => {
@@ -40,12 +40,31 @@ test('every way a session ends has a headline, and chip bands cover every value'
   assert.equal(paceLabel(600), 'STEADY');
 });
 
+test("a Learn coach's own lines cover every kind the lesson runner and end screen ask for", () => {
+  for (const [kind, list] of Object.entries(LINES)) if (!['repair', 'welcome', 'lumi'].includes(kind)) assert.ok(KAEDE_LINES[kind]?.length, `Kaede: ${kind}`);
+  for (const kind of Object.keys(HEADLINES)) assert.ok(KAEDE_HEADLINES[kind]?.length, `Kaede headline: ${kind}`);
+  for (const s of subjects.filter((x) => x.kind === 'learn' && x.coach.lines))
+    for (const kind of [...CELEBRATIONS, 'correct', 'wrong', 'tapped']) assert.ok(s.coach.lines[kind]?.length, `${s.id}: ${kind}`);
+});
+
 test('no character line praises ability', () => {
   for (const [kind, text] of lines) assert.doesNotMatch(text, ABILITY, `${kind}: ${text}`);
 });
 
 test('no character line mentions absence, loss or guilt', () => {
   for (const [kind, text] of lines) assert.doesNotMatch(text, LOSS, `${kind}: ${text}`);
+});
+
+test("Ada's lines cover every kind the runner asks for, and the maths course passes the lint", () => {
+  for (const kind of Object.keys(LINES).filter((k) => !['repair', 'welcome', 'lumi'].includes(k))) assert.ok(MATHS_LINES[kind]?.length, kind);
+  for (const kind of Object.keys(HEADLINES)) assert.ok(MATHS_HEADLINES[kind]?.length, kind);
+  const all = (v) => (typeof v === 'string' ? [v] : v && typeof v === 'object' ? Object.values(v).flatMap(all) : []);
+  const maths = all(JSON.parse(readFileSync('src/data/maths.json', 'utf8'))).filter((t) => /\s/.test(t));
+  assert.ok(maths.length > 50);
+  for (const text of maths) {
+    assert.doesNotMatch(text, ABILITY, text);
+    assert.doesNotMatch(text, LOSS, text);
+  }
 });
 
 test('what Rosa says mid-puzzle passes the same lint', () => {
@@ -143,9 +162,9 @@ const sources = (dir) => readdirSync(dir, { withFileTypes: true, recursive: true
 
 test('journal text is read only by the habit view and the file export, and nothing is sent anywhere', () => {
   const touch = sources('src').filter((f) => /journal/.test(readFileSync(f, 'utf8'))).sort();
-  // progress.js keeps the shape (migrate, writeJournal); reflect/practice.js writes it and is the
+  // progress.js keeps the shape (migrate, writeJournal); reflect/ and focus/practice.js write it and are the
   // habit view's dayDetail; app.js only hands it from the routine to writeJournal.
-  assert.deepEqual(touch, ['src/app.js', 'src/progress.js', 'src/reflect/practice.js']);
+  assert.deepEqual(touch, ['src/app.js', 'src/focus/practice.js', 'src/progress.js', 'src/reflect/practice.js']);
   assert.doesNotMatch(readFileSync('src/app.js', 'utf8'), /progress\.journal|\.journal\b/, 'app.js never reads the journal itself');
   // The export is the whole progress object, journal included, saved to the learner's own file.
   assert.match(readFileSync('src/app.js', 'utf8'), /new Blob\(\[JSON\.stringify\(progress\)\]/);
@@ -277,6 +296,49 @@ test('the timings screen makes no claims, never hurries and never pushes', () =>
   assert.ok(words.length > 10);
   for (const text of words) for (const bad of [CLAIMS, URGENCY, PUSHING, BODY, ABILITY, LOSS]) assert.doesNotMatch(text, bad, text);
   assert.match(TIMING_WORDS.intro, /^If someone has given you timings, set them here\./);
+});
+
+// Focus: a calm timer, never a productivity tool. No hurry, no claims, no guilt, and nothing that
+// counts distraction or calls time wasted. Stopping early is fine, so nothing hints otherwise.
+const focusCourse = JSON.parse(readFileSync('src/data/focus.json', 'utf8'));
+const GRIND = /\b(distract\w*|productiv\w*|wast\w*|lazy|procrastinat\w*|fail\w*|unfocused|lost focus|give up|quit\w*|didn'?t finish|only|just \d+|should|must|better|best|score\w*)\b/i;
+const focusText = [
+  ...Object.entries(FOCUS_LINES).flatMap(([kind, list]) => list.map((text) => [kind, text])),
+  ...strings(focusCourse).filter((t) => /\s/.test(t)).map((text) => ['focus.json', text]),
+  ...feelsFor(subjects.find((x) => x.habit === 'focus').coach.feel).map(([, label]) => ['feel', label]),
+  ['ask', subjects.find((x) => x.habit === 'focus').coach.ask],
+];
+
+test('Focus never hurries, claims, shames or keeps count', () => {
+  assert.ok(focusText.length > 20);
+  for (const [kind, text] of focusText) {
+    for (const rule of [CLAIMS, URGENCY, ABILITY, LOSS, GRIND]) assert.doesNotMatch(text, rule, `${kind}: ${text}`);
+  }
+  for (const bad of ['You got distracted 3 times', 'Be more productive', 'Time wasted', 'You only did 4 minutes']) assert.match(bad, GRIND, bad);
+  for (const kind of Object.keys(FOCUS_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
+});
+
+// Wind down: Calm's lint, plus no sleep claims or sleep numbers, no screen-time shaming, and the
+// help line on the first lesson.
+import { WINDDOWN_LINES, INTRO_WORDS as INTRO } from '../src/cast/lines.js';
+const SLEEP = /\b(sleep\w*|asleep|insomnia|melatonin|blue light|hours?|\d+ ?(h|hrs?|min(ute)?s?)|deep(er)? rest|better nights?|wake (up )?refreshed|tracked?|tracking)\b/i;
+const windCourse = JSON.parse(readFileSync('src/data/winddown.json', 'utf8'));
+const windText = [
+  ...Object.entries(WINDDOWN_LINES).flatMap(([kind, list]) => list.map((text) => [kind, text])),
+  ...strings(windCourse).filter((t) => /\s/.test(t)).map((text) => ['winddown.json', text]),
+  ['intro', INTRO.does.winddown],
+];
+
+test('Wind down makes no sleep or health claims, never hurries and never shames screen time', () => {
+  assert.ok(windText.length > 20);
+  for (const [kind, text] of windText) {
+    for (const lint of [CLAIMS, SLEEP, URGENCY, SHAMING, ABILITY, LOSS]) assert.doesNotMatch(text, lint, `${kind}: ${text}`);
+  }
+  for (const bad of ['Sleep better tonight', 'Fall asleep in 10 minutes', 'Helps with insomnia', 'Get 8 hours', 'No blue light']) assert.match(bad, SLEEP, bad);
+  assert.equal(windCourse.units[0].lessons[0].items[0].help, true, 'the help line is on the first lesson');
+  const subject = subjects.find((x) => x.habit === 'winddown');
+  assert.equal(subject.coach.help.text, HELP_LINE, 'and after "Not really"');
+  for (const kind of Object.keys(WINDDOWN_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
 });
 
 // The Android widget and its once-a-day note: no nagging, no hurry, nothing about a day off.

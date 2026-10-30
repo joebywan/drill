@@ -70,14 +70,14 @@ test('migrate brings every older shape up to the current one', () => {
   assert.deepEqual(p.cards, roundTrip(first.cards));
   // Today's unversioned shape, without xp, keeps its placement.
   const v0 = { streak: { count: 0, last: null, forgiven: [] }, done: {}, cards: {}, start: 'Forks' };
-  assert.deepEqual(migrate(v0), { version: VERSION, habits: { learn: { ...v0.streak, days: 0 } }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, tracked: [], picked: [], timings: {}, start: { chess: 'Forks' } });
+  assert.deepEqual(migrate(v0), { version: VERSION, habits: { learn: { ...v0.streak, days: 0 } }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, tracked: [], picked: [], timings: {}, left: [], start: { chess: 'Forks' } });
   // Version 1: the one streak becomes Learning's, and there is no log yet.
   const v1 = { ...v0, version: 1, streak: { count: 4, last: '2026-10-29', forgiven: [] } };
   assert.deepEqual(migrate(v1).habits, { learn: { ...v1.streak, days: 4 } });
   // Version 2: habits and a log, but no journal yet; it gains an empty one and keeps the rest.
   const v2 = { version: 2, habits: { learn: v1.streak, calm: { count: 1, last: '2026-10-29', forgiven: [] } },
     log: [{ date: '2026-10-29', habit: 'calm', title: 'Breathing', mins: 2 }], done: { 'calm:breathe1': true }, cards: {} };
-  assert.deepEqual(migrate(roundTrip(v2)), { ...v2, version: VERSION, journal: {}, garden: { earned: {} }, tracked: [], picked: [], timings: {},
+  assert.deepEqual(migrate(roundTrip(v2)), { ...v2, version: VERSION, journal: {}, garden: { earned: {} }, tracked: [], picked: [], timings: {}, left: [],
     habits: { learn: { ...v1.streak, days: 4 }, calm: { ...v2.habits.calm, days: 1 } } });
   // The current shape passes through unchanged, and so does one from a newer build.
   assert.deepEqual(migrate(roundTrip(p)), p);
@@ -154,8 +154,8 @@ test('the log records what was done, and keeps a year', () => {
   p = finishPractice(p, 'calm', null, day(1), { title: 'Breathing', mins: 2 });
   p = noteFeel(p, 'calm', 'calmer');
   assert.deepEqual(p.log, [
-    { date: '2026-10-01', habit: 'learn', title: 'Forks', mins: 6, right: 1, of: 2 },
-    { date: '2026-10-01', habit: 'calm', title: 'Breathing', mins: 2, feel: 'calmer' },
+    { date: '2026-10-01', hour: 12, habit: 'learn', title: 'Forks', mins: 6, right: 1, of: 2 },
+    { date: '2026-10-01', hour: 12, habit: 'calm', title: 'Breathing', mins: 2, feel: 'calmer' },
   ]);
   const later = finishPractice(p, 'calm', null, new Date(2027, 9, 2, 9));
   assert.deepEqual(later.log.map((e) => e.date), ['2027-10-02'], 'sessions over a year old are dropped');
@@ -182,7 +182,7 @@ test('Reflect lines are kept by day, blanks left out, and a second visit adds to
   assert.equal(writeJournal(q, {}, now), q);
   assert.equal(writeJournal(q, null, now), q);
   const done = writeJournal(finishPractice(q, 'reflect', 'reflect:reflect1', now, { title: 'Reflect', mins: 1 }), { good: 'A walk' }, now);
-  assert.deepEqual(done.log, [{ date: '2026-10-30', habit: 'reflect', title: 'Reflect', mins: 1 }]);
+  assert.deepEqual(done.log, [{ date: '2026-10-30', hour: 20, habit: 'reflect', title: 'Reflect', mins: 1 }]);
   assert.equal(done.habits.reflect.count, 1);
   assert.deepEqual(migrate(roundTrip(done)), done);
 });

@@ -39,6 +39,8 @@ object Daily {
     const val SUMMARY = "summary"
     const val REMIND_ON = "remindOn"
     private const val REMINDED_ON = "remindedOn"
+    private const val NOTES = "notes"
+    const val OPENED = "opened"
     private const val CHANNEL = "daily"
     private const val TAG = "DrillDaily"
     val POSES = setOf("teach", "sleepy", "complete")
@@ -116,7 +118,7 @@ object Daily {
 
     /**
      * The note checks before it speaks: nothing if it is off, if anything was done today, or if it
-     * already spoke today. One quiet line, low importance (no sound, no pop-up), never repeated.
+     * already spoke today, or if the page's reminder brain said not today. One quiet line, low importance (no sound, no pop-up), never repeated.
      * `force` (debug builds, from adb) skips only the once-a-day guard, for testing.
      */
     fun remind(ctx: Context, force: Boolean) {
@@ -127,6 +129,7 @@ object Daily {
             !p.getBoolean(REMIND_ON, false) -> "off"
             s == null -> "app never opened"
             s.optString("doneOn") == today -> "today is done"
+            !s.optBoolean("wanted", true) -> "the reminder brain says not today"
             p.getString(REMINDED_ON, null) == today && !force -> "already sent today"
             !NotificationManagerCompat.from(ctx).areNotificationsEnabled() -> "notifications blocked"
             else -> null
@@ -142,7 +145,11 @@ object Daily {
             .setSmallIcon(R.drawable.flame)
             .setContentTitle(ctx.getString(R.string.app_name))
             .setContentText(text)
-            .setContentIntent(openApp(ctx))
+            .setContentIntent(PendingIntent.getActivity(
+                ctx, 1, Intent(ctx, MainActivity::class.java).putExtra(OPENED, true),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            ))
+            .setDeleteIntent(tick(ctx, Ticker.CLEARED))
             .setAutoCancel(true)
             .build()
         try {
@@ -153,6 +160,22 @@ object Daily {
         }
         p.edit().putString(REMINDED_ON, today).apply()
         Log.i(TAG, "note: posted \"$text\"")
+    }
+
+    /** Queue what became of a note ('opened' or 'cleared') for the page's reminder brain. */
+    fun note(ctx: Context, what: String) {
+        val p = prefs(ctx)
+        val queue = org.json.JSONArray(p.getString(NOTES, "[]")).put(what)
+        p.edit().putString(NOTES, queue.toString()).apply()
+        Log.i(TAG, "note: $what")
+    }
+
+    /** The queued notes, emptied as they are handed over. */
+    fun takeNotes(ctx: Context): String {
+        val p = prefs(ctx)
+        val queue = p.getString(NOTES, "[]")!!
+        p.edit().remove(NOTES).apply()
+        return queue
     }
 }
 
@@ -165,6 +188,7 @@ class Ticker : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
         when (intent.action) {
             REMIND -> Daily.remind(ctx, BuildConfig.DEBUG && intent.getBooleanExtra("force", false))
+            CLEARED -> { Daily.note(ctx, "cleared"); return }
             TICK, Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED -> {}
             else -> return
         }
@@ -174,6 +198,7 @@ class Ticker : BroadcastReceiver() {
     companion object {
         const val TICK = "com.joebywan.drill.TICK"
         const val REMIND = "com.joebywan.drill.REMIND"
+        const val CLEARED = "com.joebywan.drill.CLEARED"
     }
 }
 

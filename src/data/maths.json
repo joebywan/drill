@@ -1,0 +1,641 @@
+{
+  "id": "maths",
+  "title": "Maths",
+  "units": [
+    {
+      "title": "Mental maths",
+      "lessons": [
+        {
+          "id": "ten-0",
+          "title": "Make ten",
+          "items": [
+            {
+              "id": "ten-0-teach",
+              "type": "teach",
+              "picture": {
+                "frame": 7
+              },
+              "text": "Tens are the easiest numbers to add, so spot the pairs that make 10: 1 and 9, 2 and 8, 3 and 7, 4 and 6, 5 and 5. Here, 7 dots and 3 gaps make 10."
+            },
+            {
+              "id": "ten-0-gaps",
+              "type": "pick",
+              "picture": {
+                "frame": 6
+              },
+              "sum": "10 - 6",
+              "prompt": "How many more dots would fill the frame?",
+              "options": [
+                "3",
+                "4",
+                "5"
+              ],
+              "explain": "6 dots and 4 gaps: 6 and 4 make 10."
+            },
+            {
+              "id": "ten-0-pairs",
+              "type": "pairs",
+              "make": 10,
+              "tiles": [
+                "3",
+                "8",
+                "6",
+                "7",
+                "2",
+                "4"
+              ],
+              "prompt": "Tap two numbers that make 10. Clear the lot.",
+              "explain": "3 and 7, 8 and 2, 6 and 4. Ten every time."
+            },
+            {
+              "id": "ten-0-8p7",
+              "type": "build",
+              "show": "8 + 7",
+              "prompt": "Give 2 of the 7 to the 8 to make 10. Then add what is left.",
+              "explain": "8 + 2 is 10, with 5 left over: 15."
+            },
+            {
+              "id": "ten-0-9p6",
+              "type": "build",
+              "show": "9 + 6",
+              "prompt": "Make 10 first, then add the rest.",
+              "explain": "9 + 1 is 10, with 5 left over: 15."
+            },
+            {
+              "id": "ten-0-line",
+              "type": "line",
+              "show": "7 + 5",
+              "min": 0,
+              "max": 20,
+              "ticks": 10,
+              "prompt": "Where does it land? Drag the marker and let go.",
+              "explain": "7 + 3 makes 10, and 2 more is 12."
+            }
+          ]
+        },
+        {
+          "id": "ten-1",
+          "title": "Hop through ten",
+          "items": [
+            {
+              "id": "ten-1-teach",
+              "type": "teach",
+              "show": "38 + 5",
+              "text": "Bigger numbers work the same way. 38 needs 2 to reach 40, so split the 5 into 2 and 3. 40 and 3 is 43."
+            },
+            {
+              "id": "ten-1-38p5",
+              "type": "build",
+              "show": "38 + 5",
+              "prompt": "Hop to 40 first, then the rest.",
+              "explain": "38 + 2 is 40, then 3 more: 43."
+            },
+            {
+              "id": "ten-1-47p6",
+              "type": "build",
+              "show": "47 + 6",
+              "prompt": "Hop to 50 first.",
+              "explain": "47 + 3 is 50, then 3 more: 53."
+            },
+            {
+              "id": "ten-1-pairs",
+              "type": "pairs",
+              "make": 100,
+              "tiles": [
+                "30",
+                "45",
+                "80",
+                "70",
+                "55",
+                "20"
+              ],
+              "prompt": "Now pairs that make 100.",
+              "explain": "30 and 70, 45 and 55, 80 and 20."
+            },
+            {
+              "id": "ten-1-56p8",
+              "type": "pick",
+              "show": "56 + 8",
+              "prompt": "Tap the answer.",
+              "options": [
+                "62",
+                "64",
+                "66"
+              ],
+              "explain": "56 + 4 is 60, then 4 more: 64."
+            },
+            {
+              "id": "ten-1-65m7",
+              "type": "build",
+              "show": "65 - 7",
+              "prompt": "Taking away works too: hop down to 60 first.",
+              "explain": "65 - 5 is 60, then 2 more down: 58."
+            }
+          ]
+        },
+        {
+          "id": "ten-2",
+          "title": "Doubling and halving",
+          "items": [
+            {
+              "id": "ten-2-teach",
+              "type": "teach",
+              "show": "25 × 4",
+              "text": "To times by 4, double twice. 25 doubled is 50, and doubled again is 100. Halving goes the other way."
+            },
+            {
+              "id": "ten-2-35x2",
+              "type": "build",
+              "show": "35 × 2",
+              "prompt": "Double it: the tens, then the ones.",
+              "explain": "30 doubled is 60 and 5 doubled is 10: 70."
+            },
+            {
+              "id": "ten-2-64h2",
+              "type": "build",
+              "show": "64 ÷ 2",
+              "prompt": "Halve it: the tens, then the ones.",
+              "explain": "Half of 60 is 30 and half of 4 is 2: 32."
+            },
+            {
+              "id": "ten-2-15x4",
+              "type": "build",
+              "show": "15 × 4",
+              "prompt": "Double, then double again.",
+              "explain": "15, 30, 60."
+            },
+            {
+              "id": "ten-2-16x5",
+              "type": "pick",
+              "show": "16 × 5",
+              "prompt": "Halve one number, double the other. Which is the same?",
+              "options": [
+                "8 × 10",
+                "32 × 10",
+                "8 × 5"
+              ],
+              "explain": "Half of 16 is 8 and double 5 is 10. 8 × 10 is 80, an easy one."
+            },
+            {
+              "id": "ten-2-25x8",
+              "type": "build",
+              "show": "25 × 8",
+              "prompt": "Double three times.",
+              "explain": "25, 50, 100, 200."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Percentages",
+      "lessons": [
+        {
+          "id": "pct-0",
+          "title": "Out of 100",
+          "items": [
+            {
+              "id": "pct-0-teach",
+              "type": "teach",
+              "picture": {
+                "grid": 25
+              },
+              "text": "Per cent means out of 100. This grid has 100 squares and 25 are shaded: that is 25%."
+            },
+            {
+              "id": "pct-0-grid",
+              "type": "pick",
+              "picture": {
+                "grid": 40
+              },
+              "prompt": "What percent is shaded?",
+              "options": [
+                "4%",
+                "40%",
+                "60%"
+              ],
+              "explain": "4 full rows of 10 is 40 squares out of 100: 40%."
+            },
+            {
+              "id": "pct-0-line50",
+              "type": "line",
+              "sum": "50",
+              "min": 0,
+              "max": 100,
+              "ticks": 10,
+              "unit": "%",
+              "prompt": "Drag the marker to 50% and let go.",
+              "explain": "50% is halfway: 50 out of 100."
+            },
+            {
+              "id": "pct-0-half",
+              "type": "pick",
+              "show": "50%",
+              "prompt": "Which is the same as 50%?",
+              "options": [
+                "1/2",
+                "1/5",
+                "1/50"
+              ],
+              "explain": "50 out of 100 is a half."
+            },
+            {
+              "id": "pct-0-quarter",
+              "type": "pick",
+              "show": "25%",
+              "prompt": "And 25%?",
+              "options": [
+                "1/25",
+                "1/4",
+                "1/2"
+              ],
+              "explain": "Four 25s make 100, so 25% is a quarter."
+            },
+            {
+              "id": "pct-0-line75",
+              "type": "line",
+              "sum": "75",
+              "min": 0,
+              "max": 100,
+              "ticks": 4,
+              "unit": "%",
+              "prompt": "Drag to 75%.",
+              "explain": "75% is three quarters of the way along."
+            }
+          ]
+        },
+        {
+          "id": "pct-1",
+          "title": "10% and 50%",
+          "items": [
+            {
+              "id": "pct-1-teach",
+              "type": "teach",
+              "show": "10% of 80",
+              "text": "10% is a tenth: take a 0 off. 10% of 80 is 8. And 50% is a half."
+            },
+            {
+              "id": "pct-1-10of60",
+              "type": "build",
+              "show": "10% of 60",
+              "prompt": "Build the answer.",
+              "explain": "A tenth of 60 is 6."
+            },
+            {
+              "id": "pct-1-10of250",
+              "type": "build",
+              "show": "10% of 250",
+              "prompt": "A tenth again.",
+              "explain": "A tenth of 250 is 25."
+            },
+            {
+              "id": "pct-1-50of46",
+              "type": "build",
+              "show": "50% of 46",
+              "prompt": "Half of it.",
+              "explain": "Half of 46 is 23."
+            },
+            {
+              "id": "pct-1-20of30",
+              "type": "build",
+              "show": "20% of 30",
+              "prompt": "20% is 10%, doubled.",
+              "explain": "10% of 30 is 3, and double that is 6."
+            },
+            {
+              "id": "pct-1-5of200",
+              "type": "pick",
+              "show": "5% of 200",
+              "prompt": "5% is half of 10%.",
+              "options": [
+                "5",
+                "10",
+                "20"
+              ],
+              "explain": "10% of 200 is 20, and half of that is 10."
+            }
+          ]
+        },
+        {
+          "id": "pct-2",
+          "title": "Tips and sales",
+          "items": [
+            {
+              "id": "pct-2-teach",
+              "type": "teach",
+              "show": "15% of $40",
+              "text": "A 15% tip is 10%, plus half of that again. On a $40 bill: 4, plus 2, is $6."
+            },
+            {
+              "id": "pct-2-tip60",
+              "type": "build",
+              "show": "15% of $60",
+              "prompt": "What is the tip? 10%, plus half of that.",
+              "explain": "10% is 6 and half of that is 3: $9."
+            },
+            {
+              "id": "pct-2-off80",
+              "type": "build",
+              "show": "25% off $80",
+              "sum": "80 - 25% of 80",
+              "prompt": "What do you pay? 25% is a quarter.",
+              "explain": "A quarter of 80 is 20 off, so you pay $60."
+            },
+            {
+              "id": "pct-2-pairs",
+              "type": "pairs",
+              "tiles": [
+                "50%",
+                "1/4",
+                "10%",
+                "1/2",
+                "25%",
+                "1/10"
+              ],
+              "prompt": "Match each percent to its fraction.",
+              "explain": "50% is a half, 25% a quarter, 10% a tenth."
+            },
+            {
+              "id": "pct-2-off50",
+              "type": "pick",
+              "show": "20% off $50",
+              "sum": "50 - 20% of 50",
+              "prompt": "What do you pay?",
+              "options": [
+                "$30",
+                "$40",
+                "$45"
+              ],
+              "explain": "10% of 50 is 5, so 20% is 10 off: $40."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Fractions you can see",
+      "lessons": [
+        {
+          "id": "frac-0",
+          "title": "Parts of a whole",
+          "items": [
+            {
+              "id": "frac-0-teach",
+              "type": "teach",
+              "picture": {
+                "bar": [
+                  1,
+                  4
+                ]
+              },
+              "text": "A fraction is part of a whole. The bottom number is how many equal parts; the top is how many you have. One of four parts is 1/4."
+            },
+            {
+              "id": "frac-0-3of4",
+              "type": "pick",
+              "picture": {
+                "bar": [
+                  3,
+                  4
+                ]
+              },
+              "prompt": "How much is shaded?",
+              "options": [
+                "1/4",
+                "3/4",
+                "4/3"
+              ],
+              "explain": "3 of 4 equal parts: 3/4."
+            },
+            {
+              "id": "frac-0-2of5",
+              "type": "build",
+              "picture": {
+                "bar": [
+                  2,
+                  5
+                ]
+              },
+              "extra": "3",
+              "prompt": "Build the fraction that is shaded.",
+              "explain": "2 of 5 equal parts: 2/5."
+            },
+            {
+              "id": "frac-0-5of8",
+              "type": "build",
+              "picture": {
+                "bar": [
+                  5,
+                  8
+                ]
+              },
+              "extra": "3",
+              "prompt": "And this one.",
+              "explain": "5 of 8 equal parts: 5/8."
+            },
+            {
+              "id": "frac-0-1of3",
+              "type": "pick",
+              "picture": {
+                "bar": [
+                  1,
+                  3
+                ]
+              },
+              "prompt": "How much is shaded?",
+              "options": [
+                "1/2",
+                "1/3",
+                "3/1"
+              ],
+              "explain": "1 of 3 equal parts: 1/3."
+            }
+          ]
+        },
+        {
+          "id": "frac-1",
+          "title": "Same amount, new name",
+          "items": [
+            {
+              "id": "frac-1-teach",
+              "type": "teach",
+              "picture": {
+                "bars": [
+                  [
+                    1,
+                    2
+                  ],
+                  [
+                    2,
+                    4
+                  ],
+                  [
+                    4,
+                    8
+                  ]
+                ]
+              },
+              "text": "These bars are shaded the same amount. 1/2, 2/4 and 4/8 are one amount with three names."
+            },
+            {
+              "id": "frac-1-2of4",
+              "type": "pick",
+              "picture": {
+                "bar": [
+                  2,
+                  4
+                ]
+              },
+              "prompt": "Which is the same amount?",
+              "options": [
+                "1/4",
+                "1/2",
+                "2/8"
+              ],
+              "explain": "2 of 4 parts is half the bar: 1/2."
+            },
+            {
+              "id": "frac-1-pairs",
+              "type": "pairs",
+              "tiles": [
+                "1/2",
+                "2/6",
+                "3/4",
+                "3/6",
+                "1/3",
+                "6/8"
+              ],
+              "prompt": "Match the fractions that are the same amount.",
+              "explain": "1/2 is 3/6, 1/3 is 2/6, and 3/4 is 6/8."
+            },
+            {
+              "id": "frac-1-biggest",
+              "type": "pick",
+              "goal": "biggest",
+              "picture": {
+                "bars": [
+                  [
+                    1,
+                    3
+                  ],
+                  [
+                    1,
+                    4
+                  ],
+                  [
+                    1,
+                    5
+                  ]
+                ]
+              },
+              "prompt": "Which piece is biggest?",
+              "options": [
+                "1/3",
+                "1/4",
+                "1/5"
+              ],
+              "explain": "Fewer parts means bigger parts: a third beats a quarter or a fifth."
+            },
+            {
+              "id": "frac-1-biggest2",
+              "type": "pick",
+              "goal": "biggest",
+              "picture": {
+                "bars": [
+                  [
+                    1,
+                    2
+                  ],
+                  [
+                    2,
+                    3
+                  ],
+                  [
+                    3,
+                    5
+                  ]
+                ]
+              },
+              "prompt": "Which is biggest? Look at the bars.",
+              "options": [
+                "1/2",
+                "2/3",
+                "3/5"
+              ],
+              "explain": "2/3 reaches furthest along its bar."
+            }
+          ]
+        },
+        {
+          "id": "frac-2",
+          "title": "Fractions on a line",
+          "items": [
+            {
+              "id": "frac-2-teach",
+              "type": "teach",
+              "picture": {
+                "bar": [
+                  1,
+                  4
+                ]
+              },
+              "text": "Fractions sit between whole numbers. Cut the gap from 0 to 1 into 4 equal hops, and each hop is 1/4."
+            },
+            {
+              "id": "frac-2-half",
+              "type": "line",
+              "show": "1/2",
+              "min": 0,
+              "max": 1,
+              "ticks": 4,
+              "prompt": "Drag the marker to 1/2.",
+              "explain": "Two hops of four: halfway."
+            },
+            {
+              "id": "frac-2-3q",
+              "type": "line",
+              "show": "3/4",
+              "min": 0,
+              "max": 1,
+              "ticks": 4,
+              "prompt": "Now 3/4.",
+              "explain": "Three hops of four."
+            },
+            {
+              "id": "frac-2-2thirds",
+              "type": "line",
+              "show": "2/3",
+              "min": 0,
+              "max": 1,
+              "ticks": 3,
+              "prompt": "This line is cut in thirds. Drag to 2/3.",
+              "explain": "Two hops of three."
+            },
+            {
+              "id": "frac-2-3halves",
+              "type": "line",
+              "show": "3/2",
+              "min": 0,
+              "max": 2,
+              "ticks": 4,
+              "prompt": "Past 1 now: drag to 3/2.",
+              "explain": "Three halves is one whole and a half more."
+            },
+            {
+              "id": "frac-2-4q",
+              "type": "pick",
+              "show": "4/4",
+              "prompt": "What is 4/4?",
+              "options": [
+                "0",
+                "1/4",
+                "1"
+              ],
+              "explain": "Four quarters make a whole: 4/4 is 1."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

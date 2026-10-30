@@ -69,6 +69,7 @@ class MainActivity : ComponentActivity() {
                 if (web.canGoBack()) web.goBack() else { isEnabled = false; onBackPressedDispatcher.onBackPressed() }
             }
         })
+        noteOpened(intent)
         if (savedInstanceState == null) web.loadUrl("https://$HOST/index.html") else web.restoreState(savedInstanceState)
     }
 
@@ -93,6 +94,10 @@ class MainActivity : ComponentActivity() {
             Daily.render(this@MainActivity)
         }
 
+        /** What became of the notes since last asked, as a JSON array, for `window.drill.noteReminder`. */
+        @JavascriptInterface
+        fun notes(): String = Daily.takeNotes(this@MainActivity)
+
         @JavascriptInterface
         fun remindersOn(): Boolean = Daily.prefs(this@MainActivity).getBoolean(Daily.REMIND_ON, false)
 
@@ -105,6 +110,18 @@ class MainActivity : ComponentActivity() {
             ) runOnUiThread { requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1) }
             Daily.refresh(this@MainActivity)
         }
+    }
+
+    // A tapped note; the page hands it to its reminder brain on load or when it comes back into view.
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        noteOpened(intent)
+    }
+
+    private fun noteOpened(intent: Intent?) {
+        if (intent?.getBooleanExtra(Daily.OPENED, false) != true) return
+        intent.removeExtra(Daily.OPENED)
+        Daily.note(this, "opened")
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
