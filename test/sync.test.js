@@ -5,6 +5,9 @@ import { derive, newPairCode, newRecovery, open, readRecovery, seal, unwrap, wra
 import { merge } from '../src/sync/merge.js';
 import { card, lookOf, withLook } from '../src/sync/sync.js';
 import { checkCard } from '../src/sync/presets.js';
+import { createHash } from 'node:crypto';
+import { qr, qrSvg } from '../src/sync/qr.js';
+import { matrixOf, readQr } from './qr-read.js';
 
 const json = (p) => JSON.parse(JSON.stringify(p)); // as stored: dates are strings
 const at = (date, hour = 9) => new Date(`${date}T${String(hour).padStart(2, '0')}:00:00`);
@@ -218,4 +221,26 @@ test('the card\'s name and animal live in progress and sync: the latest pick win
   assert.deepEqual(merge(a, base).look, merge(base, a).look);
   // Anything outside the presets reads as the default, never as free text.
   assert.deepEqual(lookOf({ look: { word: 'Rude words', animal: 'owl' } }), { word: 'Sunny', animal: 'fox' });
+});
+
+const LONG = 'https://joebywan.github.io/drill/some/longer/path/here/too/so/it/needs/more/room/#pair=123456';
+
+test('the QR encoder matches a reference encoder bit for bit, across versions and masks', () => {
+  // SHA-256 of each matrix from python-qrcode (level M, byte mode, mask forced), computed once.
+  const reference = {
+    hi: ['043e4c6b95be7301', '38bf539942cd0442', 'add69b2b9199b2da', '80a9f3b98d70bedc'],
+    'https://example.test/#pair=012345': ['d22a6a2ca4e18fed', 'dac449892116b43c', 'd7190a11b0f53140', '983905e29c7384ce'],
+    'https://www.knowhowit.com.au/drill/index.html#pair=987654': ['a5ca318ab8587224', '4450ee665a7e86e8', '19924c95e9ff1aca', 'a1ba20d0deffaba1'],
+    [LONG]: ['2274fb79a26e3f52', 'eac8b433dabd491f', 'cfdd27ea61c5bb43', 'e23f4f6fc22cf23b'],
+  };
+  for (const [text, hashes] of Object.entries(reference)) [0, 3, 5, 7].forEach((mask, i) => {
+    const rows = qr(text, mask).map((r) => r.map(Number).join('')).join('\n');
+    assert.equal(createHash('sha256').update(rows).digest('hex').slice(0, 16), hashes[i], `${text} mask ${mask}`);
+  });
+});
+
+test('a pairing link reads back from the drawn svg, and text too long says so', () => {
+  for (const text of ['https://example.test/#pair=012345', LONG]) assert.equal(readQr(matrixOf(qrSvg(text, 'x'))).text, text);
+  assert.throws(() => qr('x'.repeat(107)), /too long/);
+  assert.equal(readQr(qr('x'.repeat(106))).text, 'x'.repeat(106));
 });

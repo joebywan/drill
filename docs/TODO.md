@@ -5,7 +5,7 @@ under **Still open** at the end.
 
 ## Cross-device profiles and friends
 
-**Done** (#73, #81): src/sync/, server/, privacy.html; see CLAUDE.md. Deploying it, the QR code and
+**Done** (#73, #81): src/sync/, server/, privacy.html; see CLAUDE.md. Deploying it and
 sync inside the Android wrapper are under Still open.
 
 Decided 2026-10-29 as the shape to build, when it's time:
@@ -130,7 +130,6 @@ permission, and the pool stays the fallback even then.
   track; today the **Android release** workflow only builds and verifies it.
 - **Sync on Android.** The wrapper has no internet permission, so sync is hidden there. Adding it
   is a decision (and a CI check to change).
-- **QR pairing.** A QR code beside the 6-digit pairing code.
 - **On-device model** for coach lines (Coach voice above). The pool stays the fallback.
 - **Renaming "Drill"** (HABITS.md, the garden): the app has moved from drilling to growing.
 - **Garden seasonal events** that change the whole garden (HABITS.md).

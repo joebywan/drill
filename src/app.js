@@ -19,7 +19,7 @@ import { bridge, passNotes, sendArt, tellAndroid } from './widget.js';
 import { profile as syncProfile, sync } from './sync/sync.js';
 import { merge } from './sync/merge.js';
 import { navigation } from './nav.js';
-import { currentUnit, openSync, syncMenuHtml } from './sync/ui.js';
+import { currentUnit, openPairLink, openSync, syncMenuHtml } from './sync/ui.js';
 
 const STORE = 'drill.progress';
 const REVIEW_SIZE = 8;
@@ -1300,5 +1300,6 @@ sendArt().catch(console.warn);
 passNotes();
 addEventListener('visibilitychange', () => document.hidden || passNotes()); // a note tapped while the app was open
 navigation(app);
-if (showsIntro(progress)) intro(); else home();
+const start = () => { if (showsIntro(progress)) intro(); else home(); };
+if (!openPairLink({ app, progress: () => progress, adopt, back: start, focusOn })) start();
 syncSoon(0);
