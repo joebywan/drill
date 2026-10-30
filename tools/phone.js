@@ -193,7 +193,11 @@ try {
     const out = `${ROOT}test-results/phone/${name}`;
     rmSync(out, { recursive: true, force: true }); mkdirSync(out, { recursive: true });
     let n = 0;
-    const shot = (label) => device.screenshot({ path: `${out}/${String(n++).padStart(2, '0')}-${label}.png` });
+    // Lumi's hop after a lesson (walkTo) runs on real time, 1.65 s: let it land before the shot.
+    const shot = async (label) => {
+      await page.evaluate(() => Promise.all(document.querySelector('.guide')?.getAnimations().map((a) => a.finished.catch(() => {})) ?? [])).catch(() => {});
+      return device.screenshot({ path: `${out}/${String(n++).padStart(2, '0')}-${label}.png` });
+    };
     const before = { errors: errors.length, requests: requests.length, results: results.length };
     await page.goto(base, { waitUntil: 'networkidle' });
     await page.evaluate(() => localStorage.clear());

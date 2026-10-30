@@ -1,0 +1,84 @@
+{
+  "name": "Moss",
+  "voice": {
+    "personality": "Moss at bedtime: the same capybara, quieter. Warm water, low light, a long sigh. Fewer words than in the day, and gentle ones.",
+    "encourages": "By making the evening smaller: set the day down, a few quiet minutes, nothing else to do. Never a word about screens, the time, or how anyone rests.",
+    "dares": "A sleepy, deadpan bet: one long sigh, dimming one light, a sillier stretch than his.",
+    "never": ["!", "late", "screen", "phone", "bedtime routine"]
+  },
+  "lines": [
+    { "when": {}, "lines": [
+      "Hello. The water's warm. The day can be set down.",
+      "A few quiet minutes, whenever suits.",
+      "Evenings are a capybara speciality. Join me.",
+      "Nothing else to do here. I checked."
+    ] },
+    { "when": { "first": true }, "lines": [
+      "Hello, I'm Moss. In the evenings I mostly sigh. Nicely.",
+      "First wind down? There's nothing to get right. Just slow.",
+      "Pull up a cushion. We'll start with one long breath out."
+    ] },
+    { "when": { "comeback": true }, "lines": [
+      "Hello again. The cushion is just as you left it.",
+      "Ah, there you are. The water's still warm.",
+      "Welcome. A small one tonight, as small as you like."
+    ] },
+    { "when": { "light": "done" }, "lines": [
+      "That's the day set down. Goodnight from the pond.",
+      "Done. The frogs and I are very quiet now.",
+      "All wound down. The rest of the evening can be as it is."
+    ] },
+    { "when": { "light": "done", "streak": "week" }, "lines": [
+      "Another quiet evening. The pond approves."
+    ] },
+    { "when": { "light": "done", "streak": "month" }, "lines": [
+      "A month of quiet evenings. I'm very relaxed about it.",
+      "{days} evenings of winding down. That's a lot of sighing."
+    ] },
+    { "when": { "light": "resting" }, "lines": [
+      "A rest evening. I approve. I'm an expert.",
+      "Nothing tonight is fine. I'll float for both of us."
+    ] },
+    { "when": { "light": "not yet" }, "lines": [
+      "A few quiet minutes are here when you want them.",
+      "One long sigh, whenever you're ready.",
+      "Your usual {usualHour} wind down, whenever you like."
+    ] },
+    { "when": { "light": "not yet", "hour": "morning" }, "lines": [
+      "Morning. This one's for later, when the day is done.",
+      "Good morning. I'll keep the cushion warm for this evening."
+    ] },
+    { "when": { "light": "not yet", "hour": "afternoon" }, "lines": [
+      "Afternoon. The evening will come along by itself.",
+      "Still the afternoon. I'm practising my evening face."
+    ] },
+    { "when": { "light": "not yet", "hour": "evening" }, "lines": [
+      "Evening. The sky's going soft. So can you.",
+      "The light's getting low. A good time for a long sigh."
+    ] },
+    { "when": { "light": "not yet", "hour": "night" }, "lines": [
+      "Night. The frogs are winding down. We could too.",
+      "The moon's on the water. A few slow breaths, perhaps."
+    ] },
+    { "when": { "light": "not yet", "streak": "week" }, "lines": [
+      "{count} quiet evenings in a row. Very steady of you.",
+      "A week of winding down. The ducks have noticed."
+    ] },
+    { "when": { "light": "not yet", "streak": "month" }, "lines": [
+      "A month of quiet evenings. I've told the frogs.",
+      "{count} evenings in a row. I'd clap, but I'm comfortable."
+    ] }
+  ],
+  "dares": [
+    { "when": {}, "lines": [
+      "I bet you can't sigh out longer than I do. I'm very good at it.",
+      "Dare you to dim one light and sit with it for a breath."
+    ] },
+    { "when": { "hour": "evening" }, "lines": [
+      "Bet you can't do one long sigh before your tea. A proper one."
+    ] },
+    { "when": { "hour": "night" }, "lines": [
+      "I dare you to stretch like a capybara on a warm rock. Slowly."
+    ] }
+  ]
+}

@@ -56,7 +56,7 @@ async function pickMaths(page) {
 test('picking Maths in the intro opens its path on Learning; a whole lesson plays with Ada, right first time', async ({ page }) => {
   await pickMaths(page);
   await expect(page.locator('.path-tab[aria-pressed="true"]')).toHaveAttribute('data-path', 'learn');
-  await expect(page.getByText('Learning is first. Start with the button below.')).toBeVisible();
+  await expect(page.getByText('Maths is first. Start with the button below.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Maths', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
   await expect(page.locator('.who svg.cast-ada')).toBeVisible();

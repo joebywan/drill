@@ -1,0 +1,88 @@
+{
+  "name": "Ada",
+  "voice": {
+    "personality": "An octopus who counts on all eight arms and is very pleased about it. Quick, a bit of a show-off, a yellow pencil behind her eye, and she always checks her working.",
+    "encourages": "By praising the method: making ten, doubling, checking, going one step at a time. She teases the sum, never the person.",
+    "dares": "A cheeky numbers bet: a sum before her pencil is sharp, doubling something on the way to the kettle, beating one of her arms.",
+    "never": ["lazy", "stupid", "obviously", "easy", "maths person"]
+  },
+  "lines": [
+    { "when": {}, "lines": [
+      "Pencil sharpened. All eight arms ready.",
+      "A few sums? I've been counting the minutes. Well, the seconds.",
+      "Numbers are waiting. They behave better when we're both here.",
+      "One lesson, one step at a time. My favourite kind of plan."
+    ] },
+    { "when": { "first": true }, "lines": [
+      "Hi, I'm Ada. I count on eight arms, so I never run out.",
+      "New to this? Lovely. We start small and I show my working.",
+      "Hello. First lesson. I'll do the showing off, you do the sums."
+    ] },
+    { "when": { "comeback": true }, "lines": [
+      "Oh, hello. I kept your pencil sharp.",
+      "There you are. The numbers stayed exactly where they were. They're like that.",
+      "Welcome. We'll start with one you know, to get the arms moving."
+    ] },
+    { "when": { "light": "done" }, "lines": [
+      "Maths done today. I'm writing that down. In ink.",
+      "That's today's numbers. Eight arms up.",
+      "Done. Tidy working, tidy day."
+    ] },
+    { "when": { "light": "done", "hour": "night" }, "lines": [
+      "Done, and it's late. I'll count the stars for you."
+    ] },
+    { "when": { "light": "done", "streak": "week" }, "lines": [
+      "Another day of sums. I'm running out of arms to count them on."
+    ] },
+    { "when": { "light": "done", "streak": "month" }, "lines": [
+      "Done again. A month of this. I've checked it twice. It adds up.",
+      "{days} days of maths so far. That's a lot of tidy working."
+    ] },
+    { "when": { "light": "resting" }, "lines": [
+      "A rest day. Even a pencil needs a break from sharpening.",
+      "The numbers can wait a day. I'll tidy my arms."
+    ] },
+    { "when": { "light": "not yet" }, "lines": [
+      "A lesson is here when you want it. Pencil's ready.",
+      "Fancy a sum? I picked a nice round one.",
+      "Your usual {usualHour} sums? I've done my warm-up wiggle."
+    ] },
+    { "when": { "light": "not yet", "hour": "morning" }, "lines": [
+      "Morning. Coffee plus maths equals a good start.",
+      "Good morning. Shall we wake the numbers up?"
+    ] },
+    { "when": { "light": "not yet", "hour": "afternoon" }, "lines": [
+      "Afternoon. A fine time to make ten.",
+      "Lunch settled? Let's double something."
+    ] },
+    { "when": { "light": "not yet", "hour": "evening" }, "lines": [
+      "Evening. A few sums before dinner, very tidy.",
+      "An evening lesson. The numbers are calmer at this hour."
+    ] },
+    { "when": { "light": "not yet", "hour": "night" }, "lines": [
+      "A late one? One small lesson, then bed. Counted and done.",
+      "Midnight maths. Very mysterious of you."
+    ] },
+    { "when": { "light": "not yet", "streak": "week" }, "lines": [
+      "{count} days of sums in a row. I counted. Twice.",
+      "A week of maths. My pencil has never been so proud."
+    ] },
+    { "when": { "light": "not yet", "streak": "month" }, "lines": [
+      "A month of maths. That's about thirty. I checked.",
+      "{count} days in a row. That number looks good on you."
+    ] }
+  ],
+  "dares": [
+    { "when": {}, "lines": [
+      "I bet you can't finish a lesson before I sharpen this pencil.",
+      "Dare you to make ten in your head before I count to eight.",
+      "Bet you can't spot a double in today's first sum."
+    ] },
+    { "when": { "hour": "morning" }, "lines": [
+      "Bet you can't do a lesson before your second cup of tea."
+    ] },
+    { "when": { "hour": "evening" }, "lines": [
+      "I dare you to add up something on your dinner plate. Peas count."
+    ] }
+  ]
+}

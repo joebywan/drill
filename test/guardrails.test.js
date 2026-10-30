@@ -148,12 +148,14 @@ const reflectText = [
   ...strings(reflectCourse).filter((t) => /\s/.test(t)).map((text) => ['reflect.json', text]),
 ];
 
+const JUDGE = /\b(should|must|wrong|bad|better|best|score\w*|grade\w*|rate|marks?)\b/i;
+
 test('Reflect makes no claims, never hurries and never judges', () => {
   assert.ok(reflectText.length > 20);
   assert.ok(reflectText.some(([, text]) => text === reflectCourse.tip), 'the mic tip is linted');
   for (const [kind, text] of reflectText) {
     for (const rule of [CLAIMS, URGENCY, ABILITY, LOSS]) assert.doesNotMatch(text, rule, `${kind}: ${text}`);
-    assert.doesNotMatch(text, /\b(should|must|wrong|bad|better|best|score\w*|grade\w*|rate|marks?)\b/i, `${kind}: ${text}`);
+    assert.doesNotMatch(text, JUDGE, `${kind}: ${text}`);
   }
 });
 
@@ -164,11 +166,33 @@ test('journal text is read only by the habit view and the file export, and nothi
   const touch = sources('src').filter((f) => /journal/.test(readFileSync(f, 'utf8'))).sort();
   // progress.js keeps the shape (migrate, writeJournal); reflect/ and focus/practice.js write it and are the
   // habit view's dayDetail; app.js only hands it from the routine to writeJournal.
-  assert.deepEqual(touch, ['src/app.js', 'src/focus/practice.js', 'src/progress.js', 'src/reflect/practice.js']);
+  // sync/merge.js merges two devices' journals; sync/sync.js seals the whole progress before it leaves.
+  assert.deepEqual(touch, ['src/app.js', 'src/focus/practice.js', 'src/progress.js', 'src/reflect/practice.js', 'src/sync/merge.js']);
   assert.doesNotMatch(readFileSync('src/app.js', 'utf8'), /progress\.journal|\.journal\b/, 'app.js never reads the journal itself');
   // The export is the whole progress object, journal included, saved to the learner's own file.
   assert.match(readFileSync('src/app.js', 'utf8'), /new Blob\(\[JSON\.stringify\(progress\)\]/);
-  for (const f of sources('src')) assert.doesNotMatch(readFileSync(f, 'utf8'), /\bfetch\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource/, f);
+  // Only opt-in sync talks to a server, and it sends progress sealed (AES-GCM) and a card of presets and numbers.
+  for (const f of sources('src').filter((f) => f !== 'src/sync/sync.js')) assert.doesNotMatch(readFileSync(f, 'utf8'), /\bfetch\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource/, f);
+  const sync = readFileSync('src/sync/sync.js', 'utf8');
+  assert.equal(sync.match(/\bfetch\(/g).length, 1, 'one fetch, in call()');
+  assert.match(sync, /blob: await seal\(key, merged\)/, 'progress leaves sealed');
+});
+
+// Sync and friends: preset names, animals and cheers only, linted like the cast; the screens' words too.
+import { CHEERS, WORDS, ANIMALS } from '../src/sync/presets.js';
+test('friends see presets only, and the sync screens never nag, hurry or judge', () => {
+  const ui = readFileSync('src/sync/ui.js', 'utf8');
+  // Every string and template in the screens, with tags and ${…} taken out: what the learner reads.
+  const said = [...ui.matchAll(/`([^`]*)`|'([^'\n]*)'|"([^"\n]*)"/g)]
+    .map((m) => (m[1] ?? m[2] ?? m[3]).replace(/\$\{[^}]*\}?/g, ' ').replace(/<[^>]*>/g, ' ').trim()).filter((t) => /[a-z] [a-z]/i.test(t));
+  assert.ok(said.length > 10);
+  for (const text of [...Object.values(CHEERS), ...WORDS, ...Object.values(ANIMALS).map(([, n]) => n), ...said]) {
+    assert.doesNotMatch(text, ABILITY, text);
+    assert.doesNotMatch(text, LOSS, text);
+    assert.doesNotMatch(text, /\b(hurry|now or never|don'?t miss|last chance|before it'?s too late)\b/i, text);
+  }
+  assert.doesNotMatch(ui, /<textarea|contenteditable/, 'no free text goes to friends');
+  assert.ok(!Object.values(ANIMALS).some(([, n]) => /owl/i.test(n)), 'no owls');
 });
 
 // The screen break: no health claims, no urgency, no guilt, and no screen-time shaming.
@@ -298,6 +322,25 @@ test('the timings screen makes no claims, never hurries and never pushes', () =>
   assert.match(TIMING_WORDS.intro, /^If someone has given you timings, set them here\./);
 });
 
+// Coding: Fennel's lines and the course's words get the same lint as Rosa's, and his lines cover
+// every kind a learn session and its end screen ask for.
+import { CODING_HEADLINES, CODING_LINES } from '../src/cast/lines.js';
+import codingCourse from '../src/data/coding.json' with { type: 'json' };
+
+test("Fennel's lines and the Coding course pass the lint, and cover every kind a lesson uses", () => {
+  const text = [
+    ...[CODING_LINES, CODING_HEADLINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((t) => [kind, t]))),
+    ...strings(codingCourse).filter((t) => /\s/.test(t)).map((t) => ['coding.json', t]),
+  ];
+  assert.ok(text.some(([k]) => k === 'coding.json'));
+  for (const [kind, t] of text) for (const rule of [ABILITY, LOSS]) assert.doesNotMatch(t, rule, `${kind}: ${t}`);
+  for (const kind of ['correct', 'wrong', 'run3', 'run5', 'tapped', ...Object.keys(HEADLINES)]) assert.ok(CODING_LINES[kind]?.length, kind);
+  for (const kind of Object.keys(HEADLINES)) assert.ok(CODING_HEADLINES[kind]?.length, kind);
+  const coach = subjects.find((s) => s.id === 'coding').coach;
+  assert.equal(coach.lines, CODING_LINES);
+  assert.equal(coach.headlines, CODING_HEADLINES);
+});
+
 // Focus: a calm timer, never a productivity tool. No hurry, no claims, no guilt, and nothing that
 // counts distraction or calls time wasted. Stopping early is fine, so nothing hints otherwise.
 const focusCourse = JSON.parse(readFileSync('src/data/focus.json', 'utf8'));
@@ -359,4 +402,60 @@ test('the widget and the daily note never nag, hurry or judge', () => {
   const texts = [...Object.values(WIDGET_LINES).flat(), ...Object.values(REMINDER_WORDS)];
   assert.ok(texts.length > 15);
   for (const text of texts) for (const lint of [NAGGING, LOSS, ABILITY, URGENCY]) assert.doesNotMatch(text, lint, text);
+});
+
+// Coach voice (src/cast/voice/*.json): every pool line and dare gets the lint for the habits its
+// coach runs, plus the words its own voice sheet says it never uses. Lines are linted with their
+// slots filled. Comebacks welcome without counting the time away; dares are a playful bet in
+// character, never about streaks, loss or what wasn't done.
+import { VOICES } from '../src/cast/lines.js';
+const PRESSURE = /\b(hurry|don'?t miss|last chance|too late|right now|you haven'?t|still haven'?t|remember to|lazy|excuses?)\b/i;
+const AWAY = /\b(while|ages|away|finally|at last|long time|gap|skipp\w*|missed|where (have|were) you)\b/i;
+const DARE_BAD = /\b(streak\w*|lazy|excuses?|chicken|scared|coward\w*|regret\w*|or else|too late|last chance|disappoint\w*|let (me|us|yourself) down|fail\w*|quit\w*|give up|weak\w*|you haven'?t|still haven'?t|not yet|skipp\w*|prove yourself)\b/i;
+const DARE_WORD = /\b(bets?|dare)\b/i;
+// Lumi also coaches the one-tap habits, so she gets their lint too.
+const VOICE_LINTS = {
+  rosa: [],
+  moss: [CLAIMS, URGENCY],
+  mira: [CLAIMS, BREAK_CLAIMS, URGENCY, SHAMING],
+  clover: [PUSHING, BODY, CALORIE_NUMBERS],
+  lumi: [CLAIMS, URGENCY, JUDGE, NAGGING],
+  kaede: [],
+  ada: [],
+  fennel: [],
+  hazel: [CLAIMS, URGENCY, GRIND],
+  winddown: [CLAIMS, SLEEP, URGENCY, SHAMING],
+};
+const FACTS = { habit: 'Screen break', usualHour: 'evening', count: 12, days: 40 };
+const filled = (text) => text.replace(/\{(\w+)\}/g, (_, k) => FACTS[k]);
+const never = (word) => new RegExp(/^\w/.test(word) ? `\\b${word}\\b` : word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+
+test('every coach voice line passes its coach\'s lint and its own never-list', () => {
+  assert.deepEqual(Object.keys(VOICE_LINTS).sort(), Object.keys(VOICES).sort(), 'every coach has a lint');
+  let n = 0;
+  for (const [id, v] of Object.entries(VOICES)) {
+    const lints = [ABILITY, LOSS, PRESSURE, ...VOICE_LINTS[id], ...v.voice.never.map(never)];
+    for (const { when, lines } of [...v.lines, ...v.dares]) for (const text of lines) {
+      n++;
+      for (const lint of lints) assert.doesNotMatch(filled(text), lint, `${id}: ${text}`);
+      if (when.comeback) assert.doesNotMatch(text, AWAY, `${id} comeback: ${text}`);
+    }
+  }
+  assert.ok(n > 150, `${n} lines`);
+  for (const bad of ['Hurry, the day is nearly done', "You haven't breathed today", 'Remember to stretch']) assert.match(bad, PRESSURE, bad);
+  for (const bad of ["It's been a while", 'Finally, you came back', 'Where were you?', 'You missed three days']) assert.match(bad, AWAY, bad);
+  assert.match('Hello!', never('!'));
+  assert.match('Do it harder', never('harder'));
+});
+
+test('dares are a bet in character, never guilt, loss or pressure', () => {
+  const dares = Object.entries(VOICES).flatMap(([id, v]) => v.dares.flatMap((p) => p.lines.map((text) => [id, text])));
+  assert.ok(dares.length >= 15);
+  for (const [id, text] of dares) {
+    assert.match(text, DARE_WORD, `${id} dare: ${text}`);
+    for (const lint of [DARE_BAD, LOSS, ABILITY, PRESSURE]) assert.doesNotMatch(filled(text), lint, `${id} dare: ${text}`);
+  }
+  for (const bad of ["Bet you can't keep your streak", "I dare you to stop being lazy", "You haven't done it, I bet you won't", "Bet you'll give up", 'Dare you, or else', "Don't let me down"])
+    assert.ok([DARE_BAD, LOSS, PRESSURE].some((lint) => lint.test(bad)), bad);
+  assert.match("Moss bets you can't do three slow breaths before lunch.", DARE_WORD);
 });

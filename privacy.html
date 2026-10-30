@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Drill privacy</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .policy { padding: 32px 16px 64px; }
+  .policy h1 { margin-top: 0; }
+  .policy h2 { font-size: 1.1rem; margin: 28px 0 8px; }
+  .policy p, .policy li { line-height: 1.5; }
+  .policy a { color: inherit; }
+</style>
+</head>
+<body>
+<div id="app">
+<main class="policy sync">
+  <h1>Drill and your data</h1>
+  <p class="said">Last changed 30 October 2026.</p>
+
+  <h2>The short version</h2>
+  <p>Drill keeps your progress on your device. Nothing is sent anywhere<span class="sync-only" hidden> unless you turn on sync</span>.
+    There are no accounts, emails, passwords, ads or trackers.</p>
+
+  <div class="sync-only" hidden>
+  <h2>If you turn on sync</h2>
+  <p>Sync lets you use Drill on more than one device and swap cards with friends. When it's on, Drill sends two things to its own server at api.knowhowit.com.au:</p>
+  <ul>
+    <li><b>Your progress, locked.</b> Your device locks it (AES-GCM encryption) with a key made from your recovery code before it leaves. The server stores it but can't read it. That includes anything you write in Reflect.</li>
+    <li><b>A small card</b> for friends: a name and animal picked from a list, your streak, how many lessons you've done and which unit you're on. Only friends you've accepted can see it.</li>
+  </ul>
+  <p>The server also keeps your friend code, who your friends are, any cheers from the last month (picked from a fixed list), and, for a few minutes, a pairing code you asked for.
+    To stop misuse it counts requests per network address for a short time; it doesn't keep a log of them.</p>
+  <p>The server runs on Cloudflare (Workers and D1). Nothing is sold or shared with anyone else, and nothing is used for advertising.</p>
+
+  <h2>Your recovery code</h2>
+  <p>Your recovery code is the key to your synced progress. It stays on your devices; Drill's server never sees it. Anyone who has it can see your progress, so keep it to yourself. If no device has it, nobody (including us) can unlock your synced progress.</p>
+  </div>
+
+  <h2>Children</h2>
+  <p>Drill doesn't ask for a name, email, age or location, so it's suitable for people of any age.</p>
+
+  <h2>Your choices</h2>
+  <ul>
+    <li><b>See or keep a copy:</b> in Drill, ⋯ then "Save to a file". That file is everything Drill holds about you.</li>
+    <li class="sync-only" hidden><b>Delete:</b> in Drill, ⋯ then "Delete my data". It removes everything on the server straight away. Progress on your device stays until you clear it.</li>
+    <li class="sync-only" hidden><b>Delete without the app:</b> use your recovery code below.</li>
+  </ul>
+
+  <div class="sync-only" hidden>
+  <h2 id="delete">Delete with a recovery code</h2>
+  <p class="said">This deletes everything Drill's server keeps for that recovery code. It can't be undone.</p>
+  <input class="code-input" id="recovery" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="29" aria-label="Recovery code">
+  <button class="next danger" id="delete" disabled>Delete my data</button>
+  <p class="said" role="status" id="status"></p>
+  </div>
+
+  <h2>Questions</h2>
+  <p>Open an issue at <a href="https://github.com/joebywan/drill/issues">github.com/joebywan/drill</a>.</p>
+  <p><a href="./">Back to Drill</a></p>
+</main>
+</div>
+<script type="module">
+  import { API, SYNC } from './src/sync/config.js';
+  import { derive, readRecovery } from './src/sync/keys.js';
+  // Sync is off until its API is deployed (config.js); until then the policy says only what's true now.
+  if (SYNC) for (const e of document.querySelectorAll('.sync-only')) e.hidden = false;
+  const input = document.getElementById('recovery');
+  const button = document.getElementById('delete');
+  const status = document.getElementById('status');
+  input.addEventListener('input', () => { button.disabled = !readRecovery(input.value); });
+  button.addEventListener('click', async () => {
+    button.disabled = true;
+    try {
+      const { token } = await derive(readRecovery(input.value));
+      const res = await fetch(`${API}/v1/profile`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      status.textContent = res.ok || res.status === 404 ? 'Done. The server keeps nothing for that code.' : 'The server said no just now. Try again later.';
+    } catch {
+      status.textContent = "Drill's server can't be reached just now. Try again later.";
+    }
+    button.disabled = false;
+  });
+</script>
+</body>
+</html>

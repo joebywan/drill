@@ -1,3 +1,14 @@
+import ada from './voice/ada.json' with { type: 'json' };
+import clover from './voice/clover.json' with { type: 'json' };
+import fennel from './voice/fennel.json' with { type: 'json' };
+import hazel from './voice/hazel.json' with { type: 'json' };
+import kaede from './voice/kaede.json' with { type: 'json' };
+import lumi from './voice/lumi.json' with { type: 'json' };
+import mira from './voice/mira.json' with { type: 'json' };
+import moss from './voice/moss.json' with { type: 'json' };
+import rosa from './voice/rosa.json' with { type: 'json' };
+import winddown from './voice/winddown.json' with { type: 'json' };
+
 /**
  * Everything the cast says, in one place so the guardrail tests can lint it. Lines praise the
  * process, never ability, and never mention absence or loss.
@@ -113,8 +124,12 @@ export const HEADLINES = {
   relit: ['Streak relit! Somebody put the kettle on.', 'There it is, the streak is glowing again.'],
 };
 
-/** A line of the given kind; `pick` in [0, 1) chooses which. */
-export const line = (kind, pick = Math.random(), from = LINES) => from[kind][Math.floor(pick * from[kind].length)];
+/** A line of the given kind; `pick` in [0, 1) chooses which, from those not in `recent` while any are left. */
+export const line = (kind, pick = Math.random(), from = LINES, recent = []) => {
+  const fresh = from[kind].filter((text) => !recent.includes(text));
+  const list = fresh.length ? fresh : from[kind];
+  return list[Math.floor(pick * list.length)];
+};
 export const headline = (kind, pick) => line(kind, pick, HEADLINES);
 
 /**
@@ -340,7 +355,7 @@ export const INTRO_WORDS = {
   courses: 'Courses',
   habitList: 'Habits',
   soon: 'coming soon',
-  soonCourses: ['Coding'],
+  soonCourses: [],
   done: 'Show my home',
   first: '{name} is first. Start with the button below.',
   change: 'Change what you see',
@@ -528,3 +543,103 @@ export const REMINDER_WORDS = {
   title: 'Daily note',
   toggle: 'One quiet note in the evening, only on days with nothing done',
 };
+
+/**
+ * Fennel, the Coding coach: a fennec fox who loves a plan and follows one to the letter, ears
+ * first. Earnest, a little proud of his ears, fond of digging. The same kinds as LINES, so the
+ * lesson and its end screen read his lines in place of Rosa's (subject `coach.lines`/`headlines`).
+ */
+export const CODING_LINES = {
+  correct: [
+    'Exactly right. I did just what the blocks said.',
+    'Every step in the right order. Lovely plan.',
+    'That works. I can feel it in my ears.',
+    "Yes! You read the grid first. That's the trick.",
+    'Spot on. You followed every block through.',
+  ],
+  wrong: [
+    'Not quite. I only do what the blocks say, so follow along with me.',
+    "Close. Read why, then you'll have it.",
+    'Bump! Steps are fussy about order. Look at where I stopped.',
+    "That's a useful one to try. Now you can see what the blocks did.",
+  ],
+  run3: ['Three plans in a row! My ears are tingling.', 'Three in a row. Neat, tidy plans.'],
+  run5: ['Five in a row! You think like a programmer: one step at a time.', 'Five! Those plans run like clockwork.'],
+  tapped: [
+    'Computers are like me: they do the steps exactly, in order. No guessing.',
+    'My ears hear sand move. They do not hear what you meant, only what you built.',
+    'A loop saves taps. Lazy is good, when it is careful.',
+    'I dig for fun. Then I fill the hole back in. Same steps, other way round.',
+    'Read a program like a recipe: top to bottom, one line at a time.',
+    'Lumi tried to repeat lunch forever. That is called an infinite loop.',
+  ],
+  complete: ['Lesson done. These come back in review, so they stick.', 'That is the lesson. Plan made, plan run.'],
+  perfect: ['Every plan right first time. You followed each step through.', 'Not one bump. You checked every square.'],
+  fast: ['Quick and right, every one. You read the grid first.', 'Fast, and every plan reached the flower.'],
+  struggled: [
+    'Every bump you fixed is a bug you will spot next time.',
+    'Finding where a plan goes wrong is most of coding. You did lots of it.',
+    'The tricky ones come back in review. That is the plan, not a penalty.',
+  ],
+  review: ['Review done. Those ideas are sticking.', 'Recall like that is how the ideas settle in.'],
+  relit: ['That review relit your streak. Welcome back to the grid.'],
+};
+export const CODING_HEADLINES = {
+  complete: ['Lesson done. The flower thanks you.', 'And that is a lesson. My ears approve.'],
+  perfect: ['Flawless! Not a single bump.', 'Every plan perfect. I may frame them.'],
+  fast: ['Done already? I had barely started trotting.', 'Zoom! That was a quick little program.'],
+  struggled: ['Some bumps, then the flower. That is real coding.', 'You debugged your way through. Proper programmer stuff.'],
+  review: ['Look at that recall. The plans are in there.', 'Review done. Steps, loops, ifs: all at home.'],
+  relit: ['Streak relit! Ears up.', 'There it is, the streak is glowing again.'],
+};
+
+/**
+ * Coach voice: each coach's voice sheet (personality, how they encourage and dare, words they never
+ * use) and line pools, one file each in src/cast/voice/, keyed by the coach's name in lower case, or by
+ * a habit id when a coach has a second voice for it (Moss at bedtime is `winddown`).
+ * Pools are { when, lines }: `when` names the state it is for (habit, streak 'none'|'short'|'week'|
+ * 'month', hour 'morning'|'afternoon'|'evening'|'night', light 'done'|'not yet'|'resting', and the
+ * moments `first` and `comeback`). Drafted with tools/voice-draft.js, reviewed, then written here.
+ */
+export const VOICES = { ada, clover, fennel, hazel, kaede, lumi, mira, moss, rosa, winddown };
+
+// A moment must match exactly (a pool without `first` is never said on a first session), so first
+// sessions and comebacks get their own lines; any other key a pool leaves out matches anything.
+const MOMENTS = ['first', 'comeback'];
+const fits = (when, state) => MOMENTS.every((k) => !!when[k] === !!state[k])
+  && Object.entries(when).every(([k, v]) => MOMENTS.includes(k) || state[k] === v);
+
+/** How often a coach dares, when it may. */
+export const DARE_ODDS = 0.25;
+/** At most one dare a day, only while the habit isn't done today, never on a first session or after a gap. */
+export const mayDare = (state) => !state.daredToday && state.light === 'not yet' && !state.first && !state.comeback;
+
+const slots = (text) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]);
+
+/**
+ * What `coach` says in `state`: the most specific lines of the pools that match (most `when` keys,
+ * plus one for each slot filled; ties pooled), falling back to less specific ones and the general
+ * pool. A line with a slot ("{usualHour}") is used only when `facts` knows it, and then counts as
+ * more specific, being about the person. `{habit}` is always known and says nothing about them, so it
+ * doesn't count: a general "{habit} is here whenever you are" never joins the done-today pool; none of the `recent` lines is said again
+ * while another is left. Sometimes a dare (see mayDare). Returns { text, line, dare }: `line` is
+ * the unfilled line, for the caller's `recent`.
+ */
+export function say(coach, state, facts = {}, rng = Math.random, recent = []) {
+  const voice = VOICES[coach];
+  const dare = mayDare(state) && rng() < DARE_ODDS;
+  const known = (text) => slots(text).every((k) => facts[k] != null && facts[k] !== '');
+  const levels = new Map();
+  for (const { when, lines } of dare ? voice.dares : voice.lines) {
+    if (!fits(when, state)) continue;
+    for (const text of lines.filter(known)) {
+      const n = Object.keys(when).length + slots(text).filter((k) => k !== 'habit').length;
+      levels.set(n, [...(levels.get(n) || []), text]);
+    }
+  }
+  const ranked = [...levels].sort(([a], [b]) => b - a).map(([, lines]) => lines).filter((lines) => lines.length);
+  if (!ranked.length) return dare ? say(coach, { ...state, daredToday: true }, facts, rng, recent) : null;
+  const fresh = ranked.find((lines) => lines.some((text) => !recent.includes(text)));
+  const said = line('pool', rng(), { pool: fresh || ranked[0] }, fresh ? recent : recent.slice(-1));
+  return { text: said.replace(/\{(\w+)\}/g, (_, k) => facts[k]), line: said, dare };
+}

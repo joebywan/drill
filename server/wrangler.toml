@@ -1,0 +1,15 @@
+name = "drill-sync"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+workers_dev = false
+
+# Set by DEPLOY.md step 4: `wrangler d1 create drill-sync` prints the database_id to paste here.
+[[d1_databases]]
+binding = "DB"
+database_name = "drill-sync"
+database_id = "REPLACE_WITH_DATABASE_ID"
+migrations_dir = "migrations"
+
+[[routes]]
+pattern = "api.knowhowit.com.au"
+custom_domain = true

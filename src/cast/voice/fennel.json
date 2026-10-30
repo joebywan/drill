@@ -1,0 +1,88 @@
+{
+  "name": "Fennel",
+  "voice": {
+    "personality": "A fennec fox, the desert's tinkerer: earnest, loves a plan and follows one to the letter, ears first. A little proud of his enormous ears, fond of digging.",
+    "encourages": "By praising the plan and the order of the steps: reading the grid first, following every block through, trying it and seeing.",
+    "dares": "A tinkerer's bet: plan a route before he digs a hole, read a whole program before running it, find the bug before his ears twitch.",
+    "never": ["lazy", "stupid", "obviously", "easy", "real programmer"]
+  },
+  "lines": [
+    { "when": {}, "lines": [
+      "Ears up. Shall we build a plan?",
+      "The blocks are lined up. I lined them up twice.",
+      "One step, then the next. That's all a program is.",
+      "Fancy some coding? I've cleared the sand off the grid."
+    ] },
+    { "when": { "first": true }, "lines": [
+      "Hi, I'm Fennel. I follow plans to the letter. Want to write me one?",
+      "New to coding? Lovely. We start with one block and see what it does.",
+      "Hello. First lesson. You write the steps, I walk them."
+    ] },
+    { "when": { "comeback": true }, "lines": [
+      "Oh, hello. The grid is just as you left it.",
+      "There you are. My ears went straight up.",
+      "Welcome. We'll start with a plan you know."
+    ] },
+    { "when": { "light": "done" }, "lines": [
+      "Coding done today. Every step in order.",
+      "That's today's plan, run and done. I'm off to dig.",
+      "Done. My ears are doing a little victory twitch."
+    ] },
+    { "when": { "light": "done", "hour": "night" }, "lines": [
+      "Done, and it's late. Desert foxes love the night. You go to bed."
+    ] },
+    { "when": { "light": "done", "streak": "week" }, "lines": [
+      "Another day of plans. The grid knows your footsteps."
+    ] },
+    { "when": { "light": "done", "streak": "month" }, "lines": [
+      "Done again. A month of this. I'm proud right to the tips of my ears.",
+      "{days} days of coding so far. That's a lot of tidy steps."
+    ] },
+    { "when": { "light": "resting" }, "lines": [
+      "A rest day. Foxes nap in the shade at midday. Very sensible.",
+      "The grid can wait a day. I'll dig a little hole."
+    ] },
+    { "when": { "light": "not yet" }, "lines": [
+      "A lesson is here when you want it. Plan first, then go.",
+      "Fancy a puzzle? I've got one with a nice twist.",
+      "Your usual {usualHour} coding? I've stretched my ears."
+    ] },
+    { "when": { "light": "not yet", "hour": "morning" }, "lines": [
+      "Morning. The sand's cool. Good time for a plan.",
+      "Good morning. Shall we write the first step of the day?"
+    ] },
+    { "when": { "light": "not yet", "hour": "afternoon" }, "lines": [
+      "Afternoon. It's hot out. Let's code in the shade.",
+      "A mid-afternoon puzzle? I've dug us a cool spot."
+    ] },
+    { "when": { "light": "not yet", "hour": "evening" }, "lines": [
+      "Evening. The desert's turning pink. Plan time.",
+      "An evening lesson. My ears hear the bugs better at this hour."
+    ] },
+    { "when": { "light": "not yet", "hour": "night" }, "lines": [
+      "Night is fox time. One small puzzle, then bed for you.",
+      "Late-night coding. Very fennec of you."
+    ] },
+    { "when": { "light": "not yet", "streak": "week" }, "lines": [
+      "{count} days of coding in a row. My ears are proud.",
+      "A week of plans. You and the grid get on well."
+    ] },
+    { "when": { "light": "not yet", "streak": "month" }, "lines": [
+      "A month of coding. I've dug you a trophy. It's a hole.",
+      "{count} days in a row. That's a long, tidy program."
+    ] }
+  ],
+  "dares": [
+    { "when": {}, "lines": [
+      "I bet you can't plan the whole route before I finish digging.",
+      "Dare you to read the whole program before you run it. Every block.",
+      "Bet you can't find the bug before my ears twitch."
+    ] },
+    { "when": { "hour": "morning" }, "lines": [
+      "Bet you can't solve one puzzle before the sand warms up."
+    ] },
+    { "when": { "hour": "evening" }, "lines": [
+      "I dare you to plan tomorrow's breakfast as a program. Step one: toast."
+    ] }
+  ]
+}

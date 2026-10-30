@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { answer, kind, starPath } from '../../src/chess/items.js';
 import { emptyProgress, finishPractice, finishSession, leavePractice } from '../../src/progress.js';
 import { award } from '../../src/garden/model.js';
+import { answer as stopsAt, solve as oneWay } from '../../src/coding/program.js';
 
 // The first lesson on the path. Its answers are worked out from the course data with the same
 // item logic the app uses, so the test follows the content when it changes.
@@ -77,16 +78,16 @@ test('intro, learn only: Learn something lists the live courses, the others are 
   await expect(pick(page, 'Chess')).toBeHidden();
   await pick(page, 'Learn something').click();
   await expect(pick(page, 'Learn something')).toHaveAttribute('aria-pressed', 'true');
-  await expect(pick(page, 'Japanese')).toBeEnabled(); // live
+  for (const name of ['Japanese', 'Coding']) await expect(pick(page, name)).toBeEnabled(); // live
   await pick(page, 'Chess').click();
   await expect(pick(page, 'Chess')).toHaveAttribute('aria-pressed', 'true');
-  await expect(pick(page, 'Maths')).toBeEnabled(); // live
-  for (const name of ['Coding']) await expect(page.getByRole('button', { name: `${name} · coming soon` })).toBeDisabled();
+  for (const name of ['Japanese', 'Maths', 'Coding']) await expect(pick(page, name)).toBeEnabled(); // live
+  await expect(page.getByText('coming soon')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Have you played chess before?' })).toHaveCount(0); // no placement questions
   await page.getByRole('button', { name: 'Show my home' }).click();
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
   expect((await tabOrder(page))[0]).toBe('learn');
-  await expect(page.getByText('Learning is first. Start with the button below.')).toBeVisible();
+  await expect(page.getByText('Chess is first. Start with the button below.')).toBeVisible();
   await expect(offer(page)).toBeVisible(); // the placement offer is still there, as it was
   await expect(page.locator('.cta .next')).toBeFocused();
   await page.reload();
@@ -109,6 +110,22 @@ test('intro, habits only: the picks come first in the order tapped, and a tracke
   await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
   await page.reload();
   expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'winddown', 'focus']);
+});
+
+test('once Walk is logged today, Lumi greets from her done-today lines, not an invite', async ({ page }) => {
+  // The first line of the matching pool: "{habit} is here whenever you are" used to tie with "done".
+  await page.addInitScript(() => { Math.random = () => 0; });
+  const lumi = JSON.parse(readFileSync(new URL('../../src/cast/voice/lumi.json', import.meta.url)));
+  const doneLines = lumi.lines.filter(({ when }) => when.light === 'done').flatMap((p) => p.lines);
+  await toStepTwo(page);
+  await pick(page, 'Build habits').click();
+  await pick(page, 'Walk').click();
+  await page.getByRole('button', { name: 'Show my home' }).click();
+  await page.getByRole('button', { name: 'I walked today' }).click();
+  const said = (await page.locator('.greeting').textContent()).replace(/^Lumi\s*/, '');
+  expect(doneLines).toContain(said);
+  await page.reload();
+  expect(doneLines).toContain((await page.locator('.greeting').textContent()).replace(/^Lumi\s*/, ''));
 });
 
 test("intro, skipped at either step: today's default home, and the intro never comes back", async ({ page }) => {
@@ -157,14 +174,14 @@ test('"Change what you see" in the ⋯ menu reopens step 2 with the picks, and B
   await pick(page, 'Build habits').click();
   await pick(page, 'Calm').click();
   await page.getByRole('button', { name: 'Show my home' }).click();
-  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('button', { name: 'Change what you see' }).click();
   await expect(page.getByRole('heading', { name: 'What would you like out of Drill?' })).toBeFocused();
   await expect(pick(page, 'Calm')).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Back' }).click();
   expect((await tabOrder(page))[0]).toBe('calm');
 
-  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('button', { name: 'Change what you see' }).click();
   await pick(page, 'Calm').click();
   await pick(page, 'Screen break').click();
@@ -966,7 +983,7 @@ test('progress saved to a file loads back', async ({ page }) => {
   await finishFirstLesson(page);
   await continueButton(page).click();
 
-  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save to a file' }).click();
   const file = await (await download).path();
@@ -975,7 +992,7 @@ test('progress saved to a file loads back', async ({ page }) => {
   await page.evaluate(() => localStorage.clear());
   await firstVisit(page);
   await expect(tab(page, 'Learning')).toHaveAccessibleName('Learning');
-  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
   const chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Load from a file' }).click();
   await (await chooser).setFiles(file);
@@ -1062,7 +1079,7 @@ test('with all five habits started, the bar fits at 360px and the tabs are one r
   await page.setViewportSize({ width: 360, height: 800 });
   await grown(page, ['learn', 'calm', 'move', 'reflect', 'break'], 14);
   await firstVisit(page);
-  for (const name of ['Sound', 'Your progress']) {
+  for (const name of ['Sound', 'Settings']) {
     const box = await page.getByRole('button', { name }).boundingBox();
     expect(box.x >= 0 && box.x + box.width <= 360, name).toBe(true);
   }
@@ -1369,7 +1386,7 @@ test('the habit view shows the usual hour, and the bridge for the Android wrappe
   for (let i = 0; i < 8; i++) expect(await page.evaluate(() => window.drill.noteReminder('cleared'))).toBe(true);
   expect(await page.evaluate(() => window.drill.shouldRemind())).toBe(false);
   await page.getByRole('button', { name: 'Back' }).click();
-  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
   await expect(page.getByText("Reminders are paused because they weren't helping.")).toBeVisible();
   await page.getByRole('button', { name: 'Turn back on' }).click();
   await expect(page.getByText('Reminders are on again.')).toBeVisible();
@@ -1445,6 +1462,19 @@ for (const colorScheme of ['light', 'dark']) {
         await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
         await expect(page.locator('.board svg')).toBeVisible();
         expect(await overflow(page)).toBe(0);
+      });
+
+      test('a Coding if-block and its tiles have no sideways scroll, and the program clears the tiles', async ({ page }) => {
+        await page.addInitScript((p) => { localStorage.setItem('drill.progress', p); localStorage.setItem('drill.course', 'coding'); },
+          JSON.stringify({ ...emptyProgress(), picked: [], start: { coding: 'If and else' } }));
+        await page.goto('/');
+        await page.getByRole('button', { name: 'Continue · If there\'s a rock' }).click();
+        await continueButton(page).click(); // the teach card
+        await expect(page.locator('.block.if')).toBeVisible();
+        expect(await overflow(page)).toBe(0);
+        const program = await page.locator('.program').boundingBox();
+        const tiles = await page.locator('.tiles').boundingBox();
+        expect(program.y + program.height).toBeLessThanOrEqual(tiles.y);
       });
     });
   }
@@ -1524,7 +1554,7 @@ test('Calm sounds: both are off until turned on, the bell then rings at the star
   await calmDone(page, ['breathe1']);
   await page.clock.install();
   await page.goto('/');
-  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
   const bell = page.getByRole('button', { name: 'A soft bell at the start and end' });
   const rainButton = page.getByRole('button', { name: 'Soft rain while you practise' });
   await expect(bell).toHaveAttribute('aria-pressed', 'false');
@@ -1565,6 +1595,112 @@ test('under reduced motion Calm stays quiet: no bell, no rain', async ({ page })
   expect(await page.evaluate(() => [window.heard.tones.includes(528), window.heard.noise])).toEqual([false, 0]);
 });
 
+// Coach voice: the shown habit's coach greets home from its line pools (say() in lines.js). A dare
+// comes at most once a day, only while the habit isn't done today, and never after a gap.
+test('the coach greets home in its own voice, dares once a day, and welcomes a comeback', async ({ page }) => {
+  await page.clock.setFixedTime(new Date(2026, 9, 30, 9));
+  await page.addInitScript(() => { Math.random = () => 0; });
+  let p = emptyProgress();
+  for (const d of [27, 28, 29]) p = finishPractice(p, 'calm', null, new Date(2026, 9, d, 8), { title: 'Breathing', mins: 2 });
+  await page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
+  await page.goto('/');
+  await tab(page, 'Calm').click();
+  const greeting = page.locator('.greeting');
+  await expect(greeting).toHaveText("Moss I bet you can't do three slow breaths before lunch.");
+  await expect(greeting).toHaveClass(/dare/);
+  // The same day, no second dare: a line about the person instead, filled from their own sessions.
+  await page.reload();
+  await tab(page, 'Calm').click();
+  await expect(greeting).toHaveText('Moss Your usual morning breathing, whenever you like.');
+  await expect(greeting).not.toHaveClass(/dare/);
+  // After a gap: a welcome, never a dare, even on a new day.
+  const back = finishPractice(emptyProgress(), 'calm', null, new Date(2026, 9, 20, 8), { title: 'Breathing', mins: 2 });
+  await page.evaluate((saved) => { localStorage.setItem('drill.progress', saved); localStorage.removeItem('drill.said'); }, JSON.stringify(back));
+  await page.reload();
+  await tab(page, 'Calm').click();
+  await expect(greeting).toHaveText('Moss Hello again. The pond is just as you left it.');
+  await expect(greeting).not.toHaveClass(/dare/);
+});
+
+// Coding: tap-to-build programs Fennel runs on a grid. Answers come from the same runner the app uses.
+const codingCourse = JSON.parse(readFileSync(new URL('../../src/data/coding.json', import.meta.url)));
+const firstCoding = codingCourse.units[0].lessons[0];
+
+/** Plays one Coding item right: a build's tiles in a working order, or a predict's square. */
+async function solveCoding(page, item) {
+  if (item.type === 'build') {
+    for (const t of oneWay(item)) await page.locator('.tiles').getByRole('button', { name: typeof t === 'number' ? `${t} times` : `Step ${t}`, exact: true }).click();
+  }
+  if (item.type === 'predict') {
+    const [x, y] = stopsAt(item);
+    await page.getByRole('button', { name: `Column ${x + 1}, row ${y + 1}` }).click();
+  }
+  await expect(continueButton(page), item.id).toBeInViewport();
+}
+
+test('intro: Coding is a live course; picking it puts Learning first, showing Coding', async ({ page }) => {
+  await toStepTwo(page);
+  await pick(page, 'Learn something').click();
+  await expect(page.getByRole('button', { name: 'Coding · coming soon' })).toHaveCount(0);
+  await pick(page, 'Coding').click();
+  await expect(pick(page, 'Coding')).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Show my home' }).click();
+  await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
+  await expect(page.getByText('Coding is first. Start with the button below.')).toBeVisible();
+  await expect(page.locator('[data-course="coding"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: `Continue · ${firstCoding.title}` })).toBeVisible();
+  await page.locator('[data-course="chess"]').click();
+  await expect(page.getByRole('button', { name: `Continue · ${first.title}` })).toBeVisible();
+  await page.reload();
+  await expect(page.locator('[data-course="chess"]')).toHaveAttribute('aria-pressed', 'true'); // remembered
+});
+
+test('Coding: a full first lesson with Fennel, a wrong run shown and replayed, then a review', async ({ page }) => {
+  await firstVisit(page);
+  await page.getByRole('button', { name: 'Coding', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Done some coding already? Skip ahead' })).toBeVisible();
+  await page.getByRole('button', { name: `Continue · ${firstCoding.title}` }).click();
+  await expect(page.locator('.who svg.cast-fennel')).toBeVisible();
+  const [teach, one, ...rest] = firstCoding.items;
+  await solveCoding(page, teach);
+  await continueButton(page).click();
+  // The first build, wrong on purpose: it runs the moment the hole is filled, and one way is shown.
+  await page.locator('.tiles').getByRole('button', { name: 'Step left', exact: true }).click();
+  await expect(page.locator('.foot.wrong')).toBeVisible();
+  await expect(page.locator('.program.shown')).toBeVisible();
+  await expect(page.locator('.tiles button:not(:disabled)')).toHaveCount(0);
+  await continueButton(page).click();
+  for (const item of rest) {
+    await solveCoding(page, item);
+    await continueButton(page).click();
+  }
+  await solveCoding(page, one); // the missed one comes back once, at the end
+  await continueButton(page).click();
+  const marked = firstCoding.items.filter((i) => i.type !== 'teach').length;
+  await expect(page.getByText(`${marked - 1} of ${marked} right first try`)).toBeVisible();
+  await expect(page.locator('.summary svg.cast-fennel')).toBeVisible();
+  await continueButton(page).click();
+  await expect(tab(page, 'Learning')).toHaveAccessibleName('Learning, 1-day streak');
+  await expect(page.getByRole('button', { name: `${firstCoding.title}, done` })).toBeVisible();
+
+  // Ten days on, the lesson's cards are due: a review plays them with the same runner.
+  await page.clock.install({ time: new Date(Date.now() + 10 * 86400e3) });
+  await page.reload();
+  await page.getByRole('button', { name: /to review/ }).click();
+  const keys = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('drill.progress')).cards));
+  expect(keys.length).toBe(marked);
+  expect(keys.every((k) => k.startsWith('coding:'))).toBe(true);
+  for (let i = 0; i < marked; i++) {
+    await expect(page.locator('.topic')).toHaveText(codingCourse.units[0].title);
+    // Which item is on screen: its prompt is in Fennel's bubble.
+    const said = await page.locator('.bubble').textContent();
+    await solveCoding(page, firstCoding.items.find((x) => x.prompt === said));
+    await continueButton(page).click();
+  }
+  await expect(page.locator('.kicker')).toHaveText('Review done');
+  await expect(page.getByText(`${marked} of ${marked} recalled`)).toBeVisible();
+});
+
 // Garden seasons: the real calendar, by the device's hemisphere. Australia/* is south.
 test.describe('garden seasons in Sydney', () => {
   test.use({ timezoneId: 'Australia/Sydney' });
@@ -1575,7 +1711,7 @@ test.describe('garden seasons in Sydney', () => {
     await expect(strip).toHaveClass(/season-winter/);
     await expect(strip.locator('svg.pond svg.cast-lumi')).toHaveCount(1);
     await expect(strip.locator('[data-part="lantern"]').first()).toBeAttached();
-    await page.getByRole('button', { name: 'Your progress' }).click();
+    await page.getByRole('button', { name: 'Settings' }).click();
     const toggle = page.getByRole('button', { name: 'Southern hemisphere seasons' });
     await expect(toggle).toHaveAttribute('aria-pressed', 'true');
     await toggle.click();
@@ -1794,7 +1930,7 @@ test('with the Android bridge, a finished lesson sends a summary and the ⋯ scr
   expect(last.looks[0]).toMatchObject({ light: 'bright', streak: 1, pose: 'complete' });
   expect(last.doneOn).toMatch(/^\d{4}-\d\d-\d\d$/);
   await continueButton(page).click();
-  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
   const note = page.getByRole('button', { name: /One quiet note/ });
   await expect(note).toHaveAttribute('aria-pressed', 'false');
   await note.click();
@@ -1804,7 +1940,7 @@ test('with the Android bridge, a finished lesson sends a summary and the ⋯ scr
 
 test('without the bridge, the ⋯ screen has no note toggle', async ({ page }) => {
   await firstVisit(page);
-  await page.getByRole('button', { name: 'Your progress' }).click();
-  await expect(page.getByRole('heading', { name: 'Your progress' })).toBeVisible();
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
   await expect(page.getByRole('button', { name: /One quiet note/ })).toHaveCount(0);
 });

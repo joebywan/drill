@@ -1,0 +1,88 @@
+{
+  "name": "Hazel",
+  "voice": {
+    "personality": "A beaver who builds steadily, one stick at a time. Calm, practical and quietly proud of her dam. Talks about sticks, water and tidy piles.",
+    "encourages": "By making it one stick: one stretch of attention, whatever size. Stopping early is fine. A timer is a calm companion, never a scoreboard.",
+    "dares": "A builder's bet: one stick's worth of focus before tea, one tidy pile, one thing finished before she finishes her log.",
+    "never": ["!", "productive", "distracted", "wasted", "hustle"]
+  },
+  "lines": [
+    { "when": {}, "lines": [
+      "One stick at a time. That's how a dam gets built.",
+      "I'm by the river with a stick. Join me for a bit of focus?",
+      "Pick one thing. I'll hold the timer.",
+      "A quiet stretch of work, whenever suits."
+    ] },
+    { "when": { "first": true }, "lines": [
+      "Hi, I'm Hazel. I build things one stick at a time.",
+      "New here? Pick one thing, and I'll keep the time.",
+      "Hello. Stopping early is fine. Starting is the whole trick."
+    ] },
+    { "when": { "comeback": true }, "lines": [
+      "Oh, hello. The river's still here, and so am I.",
+      "There you are. I saved you a good stick.",
+      "Welcome. We'll start small, one stick."
+    ] },
+    { "when": { "light": "done" }, "lines": [
+      "Focus done today. Another stick on the dam.",
+      "That's today's stretch. I'm off for a paddle.",
+      "Done. The pile is a bit taller."
+    ] },
+    { "when": { "light": "done", "hour": "night" }, "lines": [
+      "Done, and the river's dark. I'm off to my lodge. Goodnight."
+    ] },
+    { "when": { "light": "done", "streak": "week" }, "lines": [
+      "Another day, another stick. The dam is looking solid."
+    ] },
+    { "when": { "light": "done", "streak": "month" }, "lines": [
+      "Done again. A month of sticks. The ducks are using it as a bridge.",
+      "{days} days of focus so far. That's a proper dam."
+    ] },
+    { "when": { "light": "resting" }, "lines": [
+      "A rest day. Beavers float too, you know.",
+      "The dam holds by itself today. I'm sunbathing."
+    ] },
+    { "when": { "light": "not yet" }, "lines": [
+      "A stretch of focus is here when you want one.",
+      "One thing, one timer, whenever you're ready.",
+      "Your usual {usualHour} focus? I've got my stick."
+    ] },
+    { "when": { "light": "not yet", "hour": "morning" }, "lines": [
+      "Morning. The river's quiet. A good time to start a stick.",
+      "Good morning. Pick one thing for the day?"
+    ] },
+    { "when": { "light": "not yet", "hour": "afternoon" }, "lines": [
+      "Afternoon. A steady stretch might fit in nicely.",
+      "The sun's on the water. One thing at a time?"
+    ] },
+    { "when": { "light": "not yet", "hour": "evening" }, "lines": [
+      "Evening. One small thing, then the day can rest.",
+      "A calm evening stretch. The river's going gold."
+    ] },
+    { "when": { "light": "not yet", "hour": "night" }, "lines": [
+      "Night. A small, quiet stretch, if you like.",
+      "The stars are out. Beavers work by starlight sometimes."
+    ] },
+    { "when": { "light": "not yet", "streak": "week" }, "lines": [
+      "{count} days of focus in a row. That's a lot of sticks.",
+      "A week of steady building. The dam is noticing."
+    ] },
+    { "when": { "light": "not yet", "streak": "month" }, "lines": [
+      "A month of focus. I'm naming a log after you.",
+      "{count} days in a row. Steady as a dam."
+    ] }
+  ],
+  "dares": [
+    { "when": {}, "lines": [
+      "I bet you can't pick one thing and stay with it until my timer chimes.",
+      "Dare you to clear one small pile. I'll do mine. Sticks.",
+      "Bet you can't finish one tiny task before I finish this log."
+    ] },
+    { "when": { "hour": "morning" }, "lines": [
+      "Bet you can't do one stretch of focus before your tea."
+    ] },
+    { "when": { "hour": "afternoon" }, "lines": [
+      "I dare you to put one stick on your own dam this afternoon."
+    ] }
+  ]
+}

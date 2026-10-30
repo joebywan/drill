@@ -1,0 +1,88 @@
+{
+  "name": "Clover",
+  "voice": {
+    "personality": "A garden rabbit, all spring and stretch: bouncy, friendly and a bit silly, in raspberry wristbands. Big feet, long ears, loves a good flop after moving.",
+    "encourages": "Small and comfy: copy me, your pace is the right pace, stiff is normal. Moving is play, never a workout, and nothing is ever about how a body looks.",
+    "dares": "A silly physical bet: a reach-up taller than her ears, marching for one song, wiggling toes and fingers together.",
+    "never": ["harder", "burn", "no pain", "workout", "beast"]
+  },
+  "lines": [
+    { "when": {}, "lines": [
+      "Ears up. Fancy a little move?",
+      "A few gentle moves and a hop. That's my plan.",
+      "Wiggle your toes. That counts as a warm-up in my book.",
+      "Stretchy o'clock, whenever you like."
+    ] },
+    { "when": { "first": true }, "lines": [
+      "Hi, I'm Clover. I hop, I stretch, I wear wristbands.",
+      "First go? We start small and comfy. Copy me.",
+      "Hello! No kit needed. Just you and a bit of floor."
+    ] },
+    { "when": { "comeback": true }, "lines": [
+      "Hello again! Let's start with a nice easy stretch.",
+      "Hi! My ears went straight up when I saw you.",
+      "Welcome. Small and comfy today, like always."
+    ] },
+    { "when": { "light": "done" }, "lines": [
+      "Moved today. My ears are doing a little dance.",
+      "Done! Have a sip of water and a sit.",
+      "That's today's moving. I'm off to nibble something."
+    ] },
+    { "when": { "light": "done", "hour": "night" }, "lines": [
+      "Done, and it's late. Flop time. Goodnight!"
+    ] },
+    { "when": { "light": "done", "streak": "week" }, "lines": [
+      "Another day moved. The garden path knows your feet now."
+    ] },
+    { "when": { "light": "done", "streak": "month" }, "lines": [
+      "Done again. A month of this! Time for a flop of honour.",
+      "{days} days of moving with me. Lovely."
+    ] },
+    { "when": { "light": "resting" }, "lines": [
+      "A rest day. Rabbits love a good flop.",
+      "Resting is part of moving. I'm flopped in solidarity."
+    ] },
+    { "when": { "light": "not yet" }, "lines": [
+      "A little move is here when you want one.",
+      "Your pace is the right pace. Want to start?",
+      "Your usual {usualHour} stretch? I'm limbered up."
+    ] },
+    { "when": { "light": "not yet", "hour": "morning" }, "lines": [
+      "Morning! A reach-up to say hello to the ceiling?",
+      "Good morning. Stiff is normal. Let's wake up gently."
+    ] },
+    { "when": { "light": "not yet", "hour": "afternoon" }, "lines": [
+      "Afternoon wiggle? It's my favourite kind.",
+      "A stretch would fit nicely into this afternoon."
+    ] },
+    { "when": { "light": "not yet", "hour": "evening" }, "lines": [
+      "Evening. A slow stretch to wind down?",
+      "The garden's going quiet. Gentle moves, then supper."
+    ] },
+    { "when": { "light": "not yet", "hour": "night" }, "lines": [
+      "A late one. Something slow and stretchy, then bed.",
+      "Night stretch? Soft and easy, like a bunny in a burrow."
+    ] },
+    { "when": { "light": "not yet", "streak": "week" }, "lines": [
+      "{count} days of moving in a row. My ears are proud.",
+      "A week of moving together. Hop hop."
+    ] },
+    { "when": { "light": "not yet", "streak": "month" }, "lines": [
+      "A month of moving! I made you a carrot medal. It's a carrot.",
+      "{count} days in a row. My big feet are tapping."
+    ] }
+  ],
+  "dares": [
+    { "when": {}, "lines": [
+      "I bet you can't do one reach-up taller than my ears.",
+      "Dare you to march on the spot for one whole song.",
+      "Bet you can't wiggle your toes and your fingers at the same time. I can't."
+    ] },
+    { "when": { "hour": "morning" }, "lines": [
+      "Bet you can't do three gentle squats before breakfast."
+    ] },
+    { "when": { "hour": "evening" }, "lines": [
+      "I dare you to do one slow stretch while the kettle boils."
+    ] }
+  ]
+}

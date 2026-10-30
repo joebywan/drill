@@ -1,0 +1,95 @@
+{
+  "name": "Lumi",
+  "voice": {
+    "personality": "A baby seal and the guide: short, warm and a little silly. Floats a lot, thinks about fish, says arf. Quiet and gentle with what people write.",
+    "encourages": "In as few words as possible: small things count, whenever suits, any size is fine. Never judges what was written or how much.",
+    "dares": "A tiny, sleepy bet: before she finishes her fish, before her nap, one small thing to write about.",
+    "never": ["!", "should", "goal", "productive", "streak"]
+  },
+  "lines": [
+    { "when": {}, "lines": [
+      "Hi. I'm floating. You?",
+      "{habit} is here whenever you are.",
+      "Small things count. Fish are small.",
+      "Arf. That means hello."
+    ] },
+    { "when": { "first": true }, "lines": [
+      "Hi, I'm Lumi. Let's start small.",
+      "New here? Me too, sort of. I'm a baby seal.",
+      "Hello. {habit} is a nice one to start with."
+    ] },
+    { "when": { "first": true, "habit": "reflect" }, "lines": [
+      "Three short lines about your day. Nobody reads them. I can't read."
+    ] },
+    { "when": { "comeback": true }, "lines": [
+      "Hi. The tide came in, the tide went out. Here we are.",
+      "Arf. Hello again.",
+      "Welcome. Start wherever you like."
+    ] },
+    { "when": { "light": "done" }, "lines": [
+      "All done today. I'm doing a happy float.",
+      "That's today. Arf.",
+      "Noted. I clapped my flippers. Quietly."
+    ] },
+    { "when": { "light": "done", "hour": "night" }, "lines": [
+      "Done, and it's late. Night night."
+    ] },
+    { "when": { "light": "done", "streak": "week" }, "lines": [
+      "Another day. My flippers are warm."
+    ] },
+    { "when": { "light": "done", "streak": "month" }, "lines": [
+      "Done again. A month of days. Arf.",
+      "{days} days so far. That's a lot of fish."
+    ] },
+    { "when": { "light": "resting" }, "lines": [
+      "A rest day. Seals are very good at those.",
+      "Resting is fine. I do it on rocks."
+    ] },
+    { "when": { "light": "not yet" }, "lines": [
+      "{habit} today, if it happens.",
+      "Whenever it suits. I'll be on my rock.",
+      "Your usual {usualHour} {habit}? Whenever suits."
+    ] },
+    { "when": { "light": "not yet", "habit": "reflect" }, "lines": [
+      "Three lines about today, any size.",
+      "What was good today? One thing is plenty."
+    ] },
+    { "when": { "light": "not yet", "hour": "morning" }, "lines": [
+      "Morning. The sea is all sparkly.",
+      "Good morning. Fish for breakfast, anyone?"
+    ] },
+    { "when": { "light": "not yet", "hour": "afternoon" }, "lines": [
+      "Afternoon. Nap, float, repeat.",
+      "Hello. Sunny rock, sunny afternoon."
+    ] },
+    { "when": { "light": "not yet", "hour": "evening" }, "lines": [
+      "Evening. The water's turned pink.",
+      "Hi. A nice time for a few words, maybe."
+    ] },
+    { "when": { "light": "not yet", "hour": "night" }, "lines": [
+      "Late now. Sleepy flippers.",
+      "Night. The moon is on the water."
+    ] },
+    { "when": { "light": "not yet", "streak": "week" }, "lines": [
+      "{count} days in a row. I made a sandcastle for it.",
+      "A week of this. I'm doing a slow clap."
+    ] },
+    { "when": { "light": "not yet", "streak": "month" }, "lines": [
+      "A whole month. The fish are talking about it.",
+      "{count} days in a row. Arf, arf."
+    ] }
+  ],
+  "dares": [
+    { "when": {}, "lines": [
+      "Bet you can't do {habit} before I finish this fish.",
+      "I dare you to do {habit} and tell me about it. I'll arf."
+    ] },
+    { "when": { "habit": "reflect" }, "lines": [
+      "I bet you can't write one line about something small.",
+      "Dare you to name one thing that made you smile today."
+    ] },
+    { "when": { "hour": "morning" }, "lines": [
+      "Bet you can't do {habit} before my morning nap."
+    ] }
+  ]
+}

@@ -30,6 +30,10 @@ import { KAEDE_HEADLINES, KAEDE_LINES } from './cast/lines.js';
 import focusCourse from './data/focus.json' with { type: 'json' };
 import * as focus from './focus/practice.js';
 import { hazel, NAME as HAZEL } from './cast/hazel.js';
+import codingCourse from './data/coding.json' with { type: 'json' };
+import * as coding from './coding/exercise.js';
+import { fennel, NAME as FENNEL } from './cast/fennel.js';
+import { CODING_HEADLINES, CODING_LINES } from './cast/lines.js';
 
 /**
  * The contract. A subject is a course plus one `mount(el, item, { say, done })` that plays a
@@ -173,6 +177,21 @@ export const subjects = [{
       ['Not a single one', 'Vowels'],
       ['I know あいうえお', 'K and S'],
       ['I can read the k and s rows', 'First words'],
+    ],
+  },
+}, {
+  ...codingCourse,
+  mount: coding.mount,
+  habit: 'learn',
+  kind: 'learn',
+  coach: { draw: fennel, name: FENNEL, start: 'think', lines: CODING_LINES, headlines: CODING_HEADLINES },
+  placement: {
+    offer: 'Done some coding already? Skip ahead',
+    question: 'Have you made a program before?',
+    options: [
+      ["I've never coded", 'Step by step'],
+      ['I know steps run in order', 'Loops'],
+      ['I know loops too', 'If and else'],
     ],
   },
 }, {

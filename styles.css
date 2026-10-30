@@ -521,6 +521,40 @@ html { scroll-padding-bottom: 160px; }
 .timings-reset { display: block; width: 100%; padding: 14px; }
 .timings-reset:disabled { color: var(--muted); border-style: dashed; }
 
+/* ---- Coding (src/coding/exercise.js): the grid Fennel walks, the block program, the tiles ---- */
+:root { --grass: #E6F1DA; --grass-line: #D2E4C2; --rock: #858A96; --rock-shine: #B7BBC4; --code: #6A4FCF; --code-text: #ffffff; }
+@media (prefers-color-scheme: dark) {
+  :root { --grass: #22301F; --grass-line: #2D3E29; --rock: #7C8190; --rock-shine: #A9AEBA; --code: #B4A3F4; --code-text: #19122E; }
+}
+.grid-world {
+  position: relative; display: grid; grid-template-columns: repeat(var(--w), 1fr);
+  width: min(100%, calc(var(--w) * 64px), calc(var(--w) * 30vh / var(--h))); margin: 0 auto 14px; border-radius: 12px; overflow: hidden; background: var(--grass);
+}
+.grid-world .cell { position: relative; aspect-ratio: 1; display: grid; place-items: center; box-shadow: inset 0 0 0 1px var(--grass-line); }
+.grid-world .cell > svg { width: 68%; }
+.grid-world .cell.right { box-shadow: inset 0 0 0 4px var(--accent); }
+.grid-world .cell.wrong { box-shadow: inset 0 0 0 4px var(--wrong); }
+.cell-pick { position: absolute; inset: 0; border: 0; background: none; cursor: pointer; }
+.walker { position: absolute; left: 0; top: 0; width: calc(100% / var(--w)); aspect-ratio: 1; pointer-events: none; }
+.walker svg { display: block; width: 100%; height: 100%; }
+.program { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 6px; }
+.block {
+  display: inline-grid; place-items: center; min-width: 44px; height: 44px; padding: 0 8px; border-radius: 10px;
+  border: 2px solid var(--code); background: var(--code); color: var(--code-text); font: inherit; font-size: 1.3rem; font-weight: 800;
+}
+.block.hole { border-style: dashed; border-color: var(--line); background: transparent; }
+.block.hole.fill-next { border-color: var(--code); }
+.block.loop, .block.if { display: flex; flex-direction: column; align-items: flex-start; height: auto; padding: 6px 10px; background: var(--card); color: var(--text); font-size: 1rem; }
+.block .head { display: flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 700; }
+.block .head b { display: inline-grid; place-items: center; min-width: 36px; height: 36px; border-radius: 8px; background: var(--code); color: var(--code-text); }
+.block .inner { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 4px 4px; padding-left: 12px; border-left: 3px solid var(--code); }
+/* If and else sit as two short rows, each condition beside its block, so the program stays above the tiles. */
+.block.if { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: 8px; }
+.block.if .inner { margin: 2px 0; padding-left: 0; border-left: 0; }
+.program.shown .block.filled { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
+.tiles .tile { font-size: 1.5rem; padding: 10px 4px; color: var(--text); }
+.tiles .tile:disabled { opacity: .4; }
+
 /* ---- Focus: what it's for, then a calm timer that fills a ring ---- */
 :root { --chip-focus: #7A5230; --focus-ring: #9A6038; --focus-soft: #F1E4D3; }
 @media (prefers-color-scheme: dark) { :root { --chip-focus: #DDB088; --focus-ring: #DDB088; --focus-soft: #33271C; } }
@@ -611,7 +645,7 @@ body:has(main.night) {
 .chip.winddown { --c: var(--chip-winddown); flex: 0 1 180px; margin: 0 auto; }
 
 /* --- Courses on the Learning tab, and the tap-and-match quiz items (src/quiz/) --- */
-.courses { display: flex; gap: 8px; justify-content: center; margin: 4px 0 8px; }
+.courses { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 4px 0 8px; }
 .course { padding: 6px 14px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); font-weight: 600; font-size: .9rem; }
 .course[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 /* Japanese uses the system's own font for it (Noto Sans JP on Android): nothing is downloaded. */
@@ -681,3 +715,33 @@ body:has(main.night) {
 .habit .usual { margin: 4px 0 0; color: var(--muted); }
 .paused { margin-top: 16px; }
 .home:has(~ .cta .short) { padding-bottom: 170px; } /* room for the offer under Continue */
+
+/* ---- Sync and friends (src/sync/ui.js): pairing and recovery codes, the friend list. ---- */
+.survey.sync { text-align: left; }
+.sync h1, .sync .code { text-align: center; }
+.sync h2 { font-size: 1.05rem; margin: 24px 0 8px; }
+.sync .said a { color: inherit; }
+.sync .code { font: 700 2.4rem/1.2 ui-monospace, monospace; letter-spacing: .08em; margin: 16px 0 4px; }
+.sync .code.recovery { font-size: 1.15rem; letter-spacing: .04em; padding: 14px 8px; border-radius: 12px; background: var(--card); border: 2px solid var(--line); overflow-wrap: anywhere; }
+.sync .code-input {
+  display: block; width: 100%; margin: 8px 0; padding: 14px 16px; border-radius: 12px; border: 2px solid var(--line);
+  background: var(--card); color: var(--text); font: 600 1.3rem ui-monospace, monospace; letter-spacing: .12em; text-align: center; text-transform: uppercase;
+}
+.sync .code-input:focus { outline: none; border-color: var(--accent); }
+.sync .me { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.15rem; margin: 8px 0; }
+.sync .avatar { font-size: 2rem; line-height: 1; flex: none; }
+.sync .look { margin: 0 0 16px; }
+.sync .look summary { text-align: center; color: var(--muted); cursor: pointer; padding: 6px; }
+.sync .opts { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.sync .opt { min-height: 44px; padding: 8px 12px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); }
+.sync .opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
+.sync .friend-code { font-family: ui-monospace, monospace; letter-spacing: .08em; color: var(--text); user-select: all; }
+.sync .friend { padding: 12px; margin: 10px 0; border-radius: 14px; background: var(--card); border: 2px solid var(--line); }
+.sync .friend > p, .sync .cheers li { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }
+.sync .friend small { color: var(--muted); }
+.sync .friend .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sync .friend .row .next, .sync .friend .row .choice { flex: 1; margin: 0; width: auto; text-align: center; }
+.sync .friend .row .link { margin: 0; }
+.sync .cheers { list-style: none; padding: 0; margin: 0; }
+.sync .danger { background: var(--wrong); color: var(--bg); }
+/* ---- end sync and friends ---- */

@@ -1,7 +1,7 @@
 # Drill — working notes for Claude
 
 A Duolingo-style learning app: lessons that teach, a cast of characters, a streak, review.
-Static page, vanilla ES modules, no build step, no server. Chess, maths and Japanese are live;
+Static page, vanilla ES modules, no build step, no server. Chess, maths, Japanese and coding are live;
 JavaScript, TypeScript and TS test-writing are planned.
 
 **Read the cast brief before building anything:** https://claude.ai/artifact/Td5spDrFgAah2w4PtBc2pn
@@ -25,7 +25,7 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>] [--avd <name>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, focus, scan, garden, log, winddown, left, fitting); a new one is
+No scenario runs all of `test/phone/*.js` (one per habit and course, plus onboarding, first-visit, walkthrough, garden, timings, fitting, voice, sync, scan, left); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
@@ -90,8 +90,26 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - `src/cast/` — the characters (`kit.js`, `rosa.js`, `lumi.js`), `coach.js` (a character that
   reacts in place) and `lines.js` (everything the cast says; the guardrail tests lint it).
   `tools/cast.html` renders every mood at 200/96/48 px, light and dark.
+- **Coach voice:** each coach's voice sheet and line pools are data, one file each in
+  `src/cast/voice/<coach>.json` (`voice`: personality, how they encourage and dare, `never` words;
+  `lines` and `dares`: `{ when, lines }` pools keyed by habit, streak band, hour band, light, and the
+  moments `first`/`comeback`). `say(coach, state, facts, rng, recent)` in lines.js picks the most
+  specific line (filled slots like `{usualHour}` count as more specific; a line with an unknown fact
+  is skipped), never one of `recent`, and sometimes a dare: once a day, only while the habit isn't
+  done today, never first or after a gap. `moment()` in `src/cast/voice.js` reads state and facts
+  from progress (log entries carry `hour`). Home's greeting uses it. New lines are drafted by hand
+  with `tools/voice-draft.js` (Claude API, `ANTHROPIC_API_KEY`) into `drafts/voice/` for review,
+  never into the pool; the guardrail tests lint every pool line and dare.
 - `src/habitview.js` — pure helpers and the wording for the habit view (`habitView()` in app.js),
   opened from the "N-day streak · See your week" line over home's path (or a plant). Days without a session are plain, never missed.
+- `src/coding/` — the Coding learn subject, beside chess on the Learning habit. `program.js` is pure: a
+  level is rows of text ('S' Fennel, '*' the flower, '#' a rock), a program is blocks (steps,
+  `{ repeat, do }`, `{ if: 'rock-right', then, else }`), `run()` walks it, and `problem()` proves each
+  item answerable. Items: teach, build (tap tiles into the holes; it runs when the last is filled, and
+  any program that reaches the flower is right), predict (tap where Fennel stops). `exercise.js` draws
+  the grid, the blocks and the tiles, and Fennel (`src/cast/fennel.js`, a fennec fox posed with
+  `rig()`) walks it. His lines are `CODING_LINES`/`CODING_HEADLINES`, read through the subject's
+  `coach.lines`/`coach.headlines`. Home's course switcher (shared with Japanese) shows it.
 - `src/calm/` — the Calm practice subject. `routines.js` is pure: each routine is a list of timed
   phases (breathing 4 in, 8 out; the sigh 3 in, 1 top-up, 6 out; the butterfly hug's taps; the body scan feet to head), and `timeline()` plays one on a
   pausable clock. `practice.js` mounts teach cards and the routines with Moss (`src/cast/moss.js`)
@@ -197,6 +215,23 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `shouldRemind()` → boolean, false after a session today or while reminders are thinned or paused;
   `noteReminder(outcome)` with `'opened'` (tapped) or `'cleared'` (swiped away) for every note shown
   → true, or false for any other value (nothing recorded). Nothing leaves the device.
+- **Sync and friends** (`src/sync/`, `server/`), opt-in and off by default: with it off nothing is sent
+  and Drill works with no backend. **Feature-flagged off** until the API is deployed: `SYNC` in
+  `config.js` gates `available()` (the ⋯ section, every call) and the sync parts of `privacy.html`;
+  tests set `window.DRILL_SYNC = true` before load. `keys.js`: the recovery code is the profile's secret, kept on the
+  device (`drill.sync`); HKDF gives the AES-GCM key progress is sealed with and the bearer token the
+  server knows the profile by (it stores the token's hash). A 6-digit pairing code carries the
+  recovery code to a new device, wrapped with PBKDF2. `merge.js` is pure: cards per card (latest
+  review wins), log/done/journal/garden as unions, streaks replayed from the merged log with
+  `nextStreak`. `sync.js` is the only file in src/ that calls fetch (a guardrails test holds it);
+  `config.js` holds the one API constant. `ui.js` is the four ⋯ screens; friends see a card of presets
+  and numbers only (`presets.js`, which the worker also imports to check them). `server/` is the
+  Cloudflare Worker + D1 (`worker.js`, `migrations/`), tested with Miniflare (`npm test --prefix
+  server`); e2e routes the API host to a local worker. Deploying is `server/DEPLOY.md`. `privacy.html`
+  is the policy, with delete-by-recovery-code for Play. Inside the Android wrapper
+  (`DrillBridge`), which has no internet permission, the ⋯ section is hidden and sync never runs
+  (`available()`). The card's name and animal are `progress.look` ({ word, animal, at }), synced, the
+  latest pick winning.
 - `src/feel.js` — synthesised sounds (mute on the home bar), haptics, and `move()`, which skips
   animation under reduced motion. Lesson moments go through it: `cue(name)` (sound and buzz; the
   sound follows the Sound toggle only, reduced motion skips just the animations) for right, run, wrong, done and unlock;
@@ -288,7 +323,7 @@ after `npm ci` at the root. App id `com.joebywan.drill`, locked.
 
 ## Open
 
-Promotion picker; accessibility. Backlog (sync, friends, Android): `docs/TODO.md`.
+What is still open: `docs/TODO.md` ("Still open") and `docs/HABITS.md`.
 
 - **Beginners play, they don't pick notation.** Answers are moves on the board or taps on squares;
   text says "Knight to c7", never "Nc7+" (`words()` turns SAN into words). Boards show coordinates.

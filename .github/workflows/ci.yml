@@ -18,8 +18,14 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
 
       - run: npm ci
       - run: npm test
+      # The sync worker (server/), whose dependencies the root npm ci installs (postinstall): its API tests,
+      # and the local worker sync.spec.js runs against.
+      - run: npm test --prefix server
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e

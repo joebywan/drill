@@ -2,6 +2,8 @@
 
 Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the backlog.
 
+**All tasks below are done** (PR numbers beside each). What is left is under **Still open**.
+
 ## The model
 
 - **Everything in Drill is a habit, and each habit has its own streak.** Learning is one habit
@@ -21,29 +23,29 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
 
 ## Tasks, in order
 
-1. [x] **Habits model.** Progress v2: streaks keyed by habit, a session log, `migrate()` from v1
+1. [x] **Habits model.** (#30) Progress v2: streaks keyed by habit, a session log, `migrate()` from v1
    (the old streak becomes Learning's; old sessions have no log). Subjects declare their habit
    and kind. Pure, tested with fixed dates.
-2. [x] **Habit chips and the habit view.** One chip per started habit on the home bar, each
+2. [x] **Habit chips and the habit view.** (#32, #34) One chip per started habit on the home bar, each
    with its own light; the habit view described above.
-3. [x] **Practice engine.** A Practice subject's `mount()` runs a timed routine with a coach and
+3. [x] **Practice engine.** (#33) A Practice subject's `mount()` runs a timed routine with a coach and
    calls `done()` when finished; the end screen asks "how do you feel?" as one optional tap.
-4. [x] **Calm.** Its own coach character; 4-in-8-out breathing, 5-4-3-2-1 grounding and the
+4. [x] **Calm.** (#31, #33, #56) Its own coach character; 4-in-8-out breathing, 5-4-3-2-1 grounding and the
    bottom-to-top body scan, each taught once then practised, with cycles growing along the
    path. Guardrail tests: no claims to be therapy, no urgency, and a line pointing to real
    help (Lifeline 13 11 14). Later, from Fizz: the double-inhale sigh, the butterfly hug,
    and an optional bell and soft rain (⋯ screen). Fizz's "already practised today" quick
    log waits for task 8's one-tap logging.
-5. [x] **Move.** Stretching, mobility and bodyweight sets with reps growing along the path.
+5. [x] **Move.** (#37, #39, #41) Stretching, mobility and bodyweight sets with reps growing along the path.
    Needs a character who demonstrates moves. Guardrails: stop if anything hurts, check with a
    doctor for injuries, never push to do more. Clover demonstrates each move.
-6. [x] **Reflect.** Three lines a day (one good thing, one thing learned, one for tomorrow),
+6. [x] **Reflect.** (#40) Three lines a day (one good thing, one thing learned, one for tomorrow),
    kept on the device, never read or scored. Lumi coaches; the lines live in progress v3's
    `journal`, never in the log, and only the habit view (the subject's `dayDetail`) and the file
    export read them.
-7. [x] **Eyes and posture break.** A two-minute screen break: look far away, roll the
+7. [x] **Eyes and posture break.** (#38, #53, #57) A two-minute screen break: look far away, roll the
    shoulders, stand up.
-8. [x] **Self-reported habits.** One tap to log things Drill can't guide (walked, read, drank
+8. [x] **Self-reported habits.** (#52) One tap to log things Drill can't guide (walked, read, drank
    water, went outside), then "add your own habit".
    Done: a third kind, 'log', with no path. `habitsFor(progress)` (subjects.js) is the habit list
    everywhere: the built-in HABITS, then the presets and the learner's own from progress v5's
@@ -52,7 +54,7 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
    opens the presets and "Make your own" (name, icon, plant: tulip, fern, cactus, rose, mushroom).
    Hiding takes a habit off the tabs and keeps its days and its plant.
 
-- [x] **Wind down** (a bedtime sequence built from Calm's pieces). Done: `src/data/winddown.json`
+- [x] **Wind down** (#69) (a bedtime sequence built from Calm's pieces). Done: `src/data/winddown.json`
   and `src/winddown/practice.js`. A 'sequence' item plays settle in (lights low, get comfortable),
   Calm's breathing, body scan and sigh, then goodnight, through kit.js `sequence()`, with Calm's
   bell and rain once around it. Plays the learner's Calm timings (`timings: 'calm'`); the path
@@ -60,7 +62,7 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
   session and its end screen are in a warm dark palette in either theme (`night: true`). Its plant
   is an evening primrose. Guardrails add no sleep claims or numbers and no screen-time shaming.
 
-- [x] **Focus.** Hazel the beaver (`src/cast/hazel.js`) and bamboo in the garden. One optional tap
+- [x] **Focus.** (#70) Hazel the beaver (`src/cast/hazel.js`) and bamboo in the garden. One optional tap
   for what it's for (presets or your own words, kept in the journal's `focus`, never the log), a
   calm timer of 10, 15 then 25 minutes (`timed()` overrides apply), Pause and "I'm done" with no
   penalty, the screen kept on with the Wake Lock API, and "How did it go?" on `finishRoutine()`.
@@ -86,37 +88,43 @@ The app's vibe moves from "build knowledge" to "grow yourself", shown as a garde
   numbers are the detail.
 - **Characters are recognisable animals** (Moss the capybara, Clover the rabbit, Mira the
   ring-tailed lemur, Lumi the seal). Insects and birds are garden life, not coaches. No owls.
-- Done: the garden follows the real season for the device's hemisphere (`src/garden/season.js`;
+- Done (#72): the garden follows the real season for the device's hemisphere (`src/garden/season.js`;
   spring blossom, summer wildflowers, autumn leaves, winter frost and lanterns), and Lumi lounges by a pond.
-- Later: seasonal events that change the whole garden,
-  and reconsidering the name "Drill".
+- Later: seasonal events and the name "Drill" (Still open below).
 
-9. [x] **Garden model.** Pure: days practised per habit (kept permanently, not from the
+9. [x] **Garden model.** (#43) Pure: days practised per habit (kept permanently, not from the
    year-long log), growth stage, achievement rules and an `earned` record, and the garden's
    mood. Progress v4 with `migrate()`.
    Done in `src/garden/model.js`: stages at 0/1/5/14/30 days, the `RULES` table, `award()`
    after each finish in app.js, and `garden()`, the one read model for the screen.
-10. [x] **Garden art.** SVG plants per habit across five stages, flowers, visitors and the
+10. [x] **Garden art.** (#44, #47, #50) SVG plants per habit across five stages, flowers, visitors and the
     three moods, with a harness like tools/cast.html.
-11. [x] **Garden screen.** A garden strip on home and a full garden view. Tapping a plant
+11. [x] **Garden screen.** (#46, #59, #64) A garden strip on home and a full garden view. Tapping a plant
     opens its habit view. A quiet "a butterfly arrived" moment on the end screen when
     something is earned.
     Done: `drawGarden()` and `perches()` in art.js draw the whole garden once per render;
     `gardenView()` in app.js; both end screens show `award()`'s `newly` (three lines, then
     "and N more"). Wording (`plantWords`, `moreArrived`) is in model.js and linted.
-12. [x] **Your own timings.** Agreed 2026-10-30. Each practice's timings can be changed (breath
+12. [x] **Your own timings.** (#60, #65) Agreed 2026-10-30. Each practice's timings can be changed (breath
     in and out seconds, cycles, seconds per grounding step or scan zone, reps), for example to
     match what a therapist prescribed. Kept in progress (a new version with `migrate()`), reset
     to the path's defaults with one tap. Calm's `breaths()` already takes `inhale` and `exhale`.
     Fizz has setters for this but never wired them to its "Therapist Exercise Settings" card;
     do it properly here.
-13. [x] **Log when and how far.** Groundwork for "Fitting the person" in `TODO.md`: each logged
+13. [x] **Log when and how far.** (#62) Groundwork for "Fitting the person" in `TODO.md`: each logged
     session also records its local hour, and a practice left part-way is logged as left, with
     the step it reached. Stays on the device like the rest of the log.
     Done: `logged()` in progress.js adds `hour` to every log entry; `leavePractice()` keeps a
     practice closed part-way in `left` (version 9), never the log, pruned to the log's year.
     `routine()` in kit.js reports each phase through `ctx.reached` (grounding and Reflect each
     step), which `run()` in app.js records on ✕. A close on the teach card is step 0, `of` null.
+
+## Still open
+
+- **Seasonal events** that change the whole garden, beyond the season's tint.
+- **Renaming "Drill"**: the app has moved from "build knowledge" to "grow yourself".
+- **"Already practised today"** for Calm (from Fizz, task 4): a one-tap log for a session done
+  away from the app. Task 8's one-tap logging covers tracked habits, not guided ones.
 
 ## Kept out
 
