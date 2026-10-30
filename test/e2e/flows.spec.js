@@ -364,7 +364,7 @@ test('a Japanese review: due kana come back on the Japanese path, with Kaede', a
     await solveQuiz(page, item);
     await continueButton(page).click();
   }
-  await expect(page.getByText('Review done')).toBeVisible();
+  await expect(page.locator('.kicker')).toHaveText('Review done');
   await expect(page.getByText(`${results.length} of ${results.length} recalled`)).toBeVisible();
 });
 
