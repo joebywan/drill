@@ -179,6 +179,34 @@ test('a screen break is taught once, plays its six steps on the clock, and keeps
   await expect(page.locator('.day').first().getByRole('listitem')).toHaveText(/^Screen break · \d+ min · felt about the same$/);
 });
 
+test('Clover demonstrates the screen break, and "How?" pauses it for the guidance', async ({ page }) => {
+  await page.clock.install();
+  await placeAtStart(page);
+  await tab(page, 'Screen break').click();
+  await page.getByRole('button', { name: 'Continue · Why breaks help' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await expect(page.locator('.coach.demonstrates .who')).toHaveAccessibleName('Clover');
+  await expect(page.locator('.who svg.cast-clover')).toBeVisible();
+  const now = page.locator('.steps li[aria-current="step"]');
+  await page.clock.runFor(21_000);
+  await expect(now).toHaveText('Slow blinks');
+  await page.getByRole('button', { name: 'How?' }).click();
+  const how = page.getByRole('dialog', { name: 'Slow blinks' });
+  await expect(how).toContainText('Hold them closed for a slow count of two');
+  const left = await page.locator('.scan-left .count').textContent();
+  expect(Number(left)).toBeGreaterThan(10); // seconds left in the 15 s step
+  await page.clock.runFor(30_000); // the clock waits while the guidance is open
+  await expect(now).toHaveText('Slow blinks');
+  await expect(page.locator('.scan-left .count')).toHaveText(left);
+  await how.getByRole('button', { name: 'Got it' }).click();
+  await expect(how).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Pause' })).toHaveAttribute('aria-pressed', 'false');
+  await page.clock.runFor(15_000);
+  await expect(now).toHaveText('Shoulder rolls');
+  await page.clock.runFor(86_000);
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+});
+
 test('grounding is tap-to-count, and stopping is one tap with no questions', async ({ page }) => {
   await firstBreathing(page); // grounding opens once breathing has been started
   await continueButton(page).click();

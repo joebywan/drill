@@ -351,6 +351,14 @@ html { scroll-padding-bottom: 160px; }
 }
 .scan.break { --calm: var(--break); --calm-soft: var(--break-soft); }
 .chip.break { --c: var(--chip-break); flex: 0 1 180px; margin: 0 auto; }
+/* "How?": a step's guidance, a sheet over the thumb zone while the routine waits. */
+.how {
+  width: calc(100% - 32px); max-width: 488px; margin: auto auto 16px; padding: 16px 16px 4px;
+  border: 2px solid var(--break); border-radius: 16px; background: var(--card); color: var(--text);
+}
+.how::backdrop { background: rgb(0 0 0 / .45); }
+.how h2 { font-size: 1.15rem; margin: 0 0 8px; }
+.how p { margin: 0 0 8px; }
 .feel h2 { font-size: 1.05rem; margin: 16px 0 8px; }
 .feels { display: flex; flex-direction: column; gap: 8px; }
 .feel .said { margin: 8px 0; }

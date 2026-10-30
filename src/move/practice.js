@@ -1,22 +1,10 @@
 import course from '../data/move.json' with { type: 'json' };
-import { clover, demo as cloverDemo } from '../cast/clover.js';
 import { MOVE_LINES, line } from '../cast/lines.js';
 import { phases, summary } from './routines.js';
-import { pauseBar, routine, teach } from '../practice/kit.js';
+import { demo, pauseBar, routine, teach } from '../practice/kit.js';
 import { buzz, play } from '../feel.js';
 
 const say = (kind) => line(kind, Math.random(), MOVE_LINES);
-
-/**
- * Clover acts out a pose, after the mood is set (coach.set redraws). Under reduced motion `demo`
- * gives null, so Clover holds the pose instead and the move still reads.
- */
-function demo(el, pose, seconds, reps) {
-  const anims = cloverDemo(el, pose, seconds, reps);
-  if (!anims) el.innerHTML = clover('guide', pose); // the next mood change redraws over it
-  return anims ?? [];
-}
-
 
 /**
  * Mounts one Move item in `el`: a teach card, or a routine of timed exercises with rests between.

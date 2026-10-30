@@ -80,7 +80,9 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - `src/move/` — the Move practice subject, built like Calm. `routines.js` is pure: a set of
   exercises becomes timed phases with rests between; a rep exercise counts its reps (`countOf()` in
   `src/practice/timeline.js`). `practice.js` mounts it; the coach demonstrates each pose through one
-  `demo()` adapter (Clover, `src/cast/clover.js`). Course in `src/data/move.json`:
+  `demo()` adapter in `src/practice/kit.js` (Clover, `src/cast/clover.js`), which the screen break
+  shares: Clover demonstrates each of its steps, and "How?" opens the step's guidance (`how` in
+  `src/break/routines.js`) with the routine paused. Course in `src/data/move.json`:
   Wake up, Strength (reps grow 5, 8, 10), Stretch. Guardrails bar pushing and body or weight
   words, and check the safety line is on the first lesson and after "Not really".
 - **Calm is not therapy.** `test/guardrails.test.js` bars health claims, diagnosis words and urgency

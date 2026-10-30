@@ -1,6 +1,7 @@
 import { esc } from '../html.js';
 import { countOf, timeline } from './timeline.js';
 import { move, play } from '../feel.js';
+import { clover, demo as act } from '../cast/clover.js';
 
 /**
  * The parts every practice habit's mount reuses, so Calm, Move, Eyes and the rest share one
@@ -22,6 +23,17 @@ export function teach(el, item, { say, done, help }) {
   say(item.say, 'guide');
   el.querySelector('.practice-go').addEventListener('click', () => done(null, ''));
   return () => {};
+}
+
+/**
+ * The demonstrating coach (Clover) acts out `pose` in `el`, after the mood is set (coach.set
+ * redraws), looping `reps` times over `seconds`. Under reduced motion it holds the pose still, so
+ * the move still reads. Returns the animations for the routine to pause, or [].
+ */
+export function demo(el, pose, seconds, reps) {
+  const anims = act(el, pose, seconds, reps);
+  if (!anims) el.innerHTML = clover('guide', pose); // the next mood change redraws over it
+  return anims ?? [];
 }
 
 /** The Pause button a timed routine sits above, in the thumb zone. Put it after the routine's own markup. */
@@ -73,9 +85,10 @@ export function routine(el, phases, ctx, draw, summary, paused) {
  * step fills slowly as the calm progress cue, with a `.count` of seconds left under the list.
  * `label` names the list for screen readers, `mood` is the coach's while it reads each line,
  * `rising` lists the steps bottom to top (the body scan), and `tone` is a class for the
- * habit's colours. Calm's body scan and the screen break both use it.
+ * habit's colours. `act(phase, index)` adds the step's own animations (the screen break's demos).
+ * Calm's body scan and the screen break both use it.
  */
-export function steps(el, phases, ctx, { label, summary, paused, mood, rising = false, tone = '' }) {
+export function steps(el, phases, ctx, { label, summary, paused, mood, rising = false, tone = '', act = () => [] }) {
   el.innerHTML = `<div class="scan ${tone}">
       <ol class="steps${rising ? ' rising' : ''}" aria-label="${esc(label)}">${phases.map((p) => `<li>${esc(p.name)}</li>`).join('')}</ol>
       <p class="scan-left" aria-hidden="true"><span class="count"></span> s</p>
@@ -88,6 +101,6 @@ export function steps(el, phases, ctx, { label, summary, paused, mood, rising = 
     });
     say(p.line, mood);
     play('exhale');
-    return [move(rows[i], [{ '--fill': '0%' }, { '--fill': '100%' }], { duration: p.seconds * 1000, fill: 'forwards' })];
+    return [move(rows[i], [{ '--fill': '0%' }, { '--fill': '100%' }], { duration: p.seconds * 1000, fill: 'forwards' }), ...act(p, i)];
   }, summary, paused);
 }

@@ -58,6 +58,16 @@ test('a Clover pose moves the same parts, never redraws them', () => {
   }
 });
 
+test('every Clover pose changes the 48 px silhouette, not just the face', () => {
+  const outline = (s) => s.replace(/data-part="eyes" style="[^"]*"/, '');
+  for (const p of POSES) assert.notEqual(outline(clover('idle', p)), outline(clover('idle')), p);
+});
+
+test('the slow blink closes the eyes through the lids, held still under reduced motion', () => {
+  assert.match(clover('guide', 'blink'), /data-part="eyes" style="[^"]*scale\(1, 0\.1\)/);
+  assert.match(clover('guide'), /data-part="eyes" style="[^"]*scale\(1, 1\)/);
+});
+
 test('demo runs every pose for exactly seconds over reps, and stays still under reduced motion', () => {
   const calls = [];
   const part = { animate: (frames, opts) => (calls.push([frames, opts]), 'anim') };
@@ -65,7 +75,7 @@ test('demo runs every pose for exactly seconds over reps, and stays still under 
   for (const p of POSES) {
     calls.length = 0;
     const anims = demo(el, p, 6, 3);
-    assert.equal(anims.length, 7, p);
+    assert.equal(anims.length, 8, p);
     for (const [frames, opts] of calls) {
       assert.equal(opts.duration, 2000, p);
       assert.equal(opts.iterations, 3, p);
@@ -73,7 +83,7 @@ test('demo runs every pose for exactly seconds over reps, and stays still under 
     }
     assert.ok(calls.some(([f]) => f[0].transform !== f[1].transform), `${p} moves something`);
   }
-  assert.equal(demo(el, 'squat', 4).length, 7);
+  assert.equal(demo(el, 'squat', 4).length, 8);
   assert.equal(calls.at(-1)[1].duration, 4000);
   assert.equal(demo(el, 'cartwheel', 4, 1), null);
   calls.length = 0;
