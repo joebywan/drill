@@ -19,6 +19,10 @@ import moveCourse from './data/move.json' with { type: 'json' };
 import * as move from './move/practice.js';
 import { clover, demo as cloverDemo, NAME as CLOVER } from './cast/clover.js';
 import { mira, demo as miraDemo, NAME as MIRA } from './cast/mira.js';
+import japaneseCourse from './data/japanese.json' with { type: 'json' };
+import * as quiz from './quiz/exercise.js';
+import { kaede, NAME as KAEDE } from './cast/kaede.js';
+import { KAEDE_HEADLINES, KAEDE_LINES } from './cast/lines.js';
 import codingCourse from './data/coding.json' with { type: 'json' };
 import * as coding from './coding/exercise.js';
 import { fennel, NAME as FENNEL } from './cast/fennel.js';
@@ -40,7 +44,8 @@ import { CODING_HEADLINES, CODING_LINES } from './cast/lines.js';
  * shown on a teach card that asks for it and after "Not really" (rendered by practice/kit.js helpHtml),
  * `feel`, the good answer to "How do you feel?" (default 'calmer'; its reply is a key in `lines`),
  * and `demonstrates`, for a coach the learner copies, which is drawn large above their line.
- * Sessions and the practice end screen read everything subject-specific from here.
+ * A Learn coach's `lines` and `headlines` stand in for Rosa's LINES and HEADLINES (same kinds).
+ * Sessions and both end screens read everything subject-specific from here.
  *
  * Optional: `again`, { label, lesson }: once the path is done, home keeps a button with that label
  * which runs that lesson again ("Reflect today", "Breathe"); `dayDetail(progress, date)`, extra html under a day's sessions
@@ -50,10 +55,9 @@ import { CODING_HEADLINES, CODING_LINES } from './cast/lines.js';
  * It never stands in the way: answering opens the path at that unit, dismissing it hides the offer.
  * `timings`, another habit's id whose own timings this subject plays by (Wind down plays Calm's);
  * `night`, the session and its end screen in the dim night palette whatever the theme.
- * A learn subject's coach may bring its own `headlines` for the end screen (default: Rosa's HEADLINES).
  *
- * Several subjects can feed one habit (Learning has chess and coding): home shows one of them at a
- * time, with a row to switch, and the intro picks courses by subject id (see `ordered`).
+ * Several Learn subjects (courses) share the Learning habit: home shows one course's path at a
+ * time, with a switcher between them (app.js).
  */
 /** The built-in habits, in the order the home bar shows them. `habitsFor(progress)` adds the learner's own. */
 export const HABITS = [
@@ -104,12 +108,10 @@ export function habitsFor(progress) {
  * `list` (habitsFor's) with the ids the learner picked in the intro first, in the order picked, then
  * the rest as they were. An id no longer in the list is passed over. The one place home is ordered.
  */
-export function ordered(list, picked = []) {
-  const ids = [...new Set(picked.map(habitOfPick))];
-  return [...ids.map((id) => list.find((h) => h.id === id)).filter(Boolean), ...list.filter((h) => !ids.includes(h.id))];
-}
-/** A pick is a habit id, or a course's subject id ('coding'), which stands for that course's habit. */
-export const habitOfPick = (id) => subjects.find((s) => s.id === id && s.kind === 'learn')?.habit ?? id;
+export const ordered = (list, picked = []) => [
+  ...picked.map((id) => list.find((h) => h.id === id)).filter(Boolean),
+  ...list.filter((h) => !picked.includes(h.id)),
+];
 
 // Chess from zero comes first (the board, how pieces move, capturing, check and mate), then the
 // hand-written Forks unit, whose Lichess puzzles join it as its last lessons; the other Lichess
@@ -134,6 +136,22 @@ export const subjects = [{
       ['I know how the pieces move', 'Capturing'],
       ['I play now and then', 'Forks'],
       ['I play often and know some tactics', 'Mate in one'],
+    ],
+  },
+}, {
+  // Hiragana from zero, played with the generic tap-and-match items in src/quiz/.
+  ...japaneseCourse,
+  mount: (el, item, ctx) => quiz.mount(el, item, { ...ctx, lang: japaneseCourse.lang }),
+  habit: 'learn',
+  kind: 'learn',
+  coach: { draw: kaede, name: KAEDE, start: 'think', lines: KAEDE_LINES, headlines: KAEDE_HEADLINES },
+  placement: {
+    offer: 'Read some kana already? Skip ahead',
+    question: 'Can you read hiragana?',
+    options: [
+      ['Not a single one', 'Vowels'],
+      ['I know あいうえお', 'K and S'],
+      ['I can read the k and s rows', 'First words'],
     ],
   },
 }, {

@@ -1,7 +1,7 @@
 # Drill — working notes for Claude
 
 A Duolingo-style learning app: lessons that teach, a cast of characters, a streak, review.
-Static page, vanilla ES modules, no build step, no server. Chess is live; maths, Japanese,
+Static page, vanilla ES modules, no build step, no server. Chess and Japanese are live; maths,
 JavaScript, TypeScript and TS test-writing are planned.
 
 **Read the cast brief before building anything:** https://claude.ai/artifact/Td5spDrFgAah2w4PtBc2pn
@@ -25,7 +25,7 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>] [--avd <name>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (learn, calm, move, break, reflect, scan, garden, log, winddown); a new one is
+No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, scan, garden, log, winddown); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
@@ -61,6 +61,18 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   other side never moves, and kings are optional (chess.js `skipValidation`). A piece's first
   puzzle (`new`, `demo`, `intro`) slides it along a path before input opens. `problem()` proves
   each one solvable in its budget by breadth-first search. Picked-up pieces show legal-move dots.
+- **Courses.** Several Learn subjects share the Learning habit; home shows one course's path at a
+  time (`courseShown`, the switcher under the tabs, remembered in `drill.course`), and reviews that
+  course's cards so its coach runs them. The intro picks courses by course id; `choose()` turns them
+  into the Learning tab. A Learn coach's `lines`/`headlines` replace Rosa's in the runner and end screen.
+- `src/quiz/` — course-free tap-and-match items any course can use: `teach` (a big glyph or word),
+  `pick` (one tap; `listen` plays the sound instead of showing it when there is a voice), `pairs`
+  (match two columns), `build` (tap tiles in order). `items.js` is pure (`problem()`), `exercise.js`
+  mounts them; `ctx.lang` marks text for the system font and picks the voice (`speak()` in feel.js:
+  `speechSynthesis`, and with no voice or Sound muted the reading is shown instead).
+- Japanese: `src/data/japanese.json` (hiragana: vowels, k and s rows, first words), coached by Kaede, a red
+  panda (`src/cast/kaede.js`, rig-posed). `test/quiz.test.js` checks every answer against its own kana
+  table and that no kana is asked before a teach card shows it.
 - `src/cast/` — the characters (`kit.js`, `rosa.js`, `lumi.js`), `coach.js` (a character that
   reacts in place) and `lines.js` (everything the cast says; the guardrail tests lint it).
   `tools/cast.html` renders every mood at 200/96/48 px, light and dark.
@@ -73,8 +85,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   any program that reaches the flower is right), predict (tap where Fennel stops). `exercise.js` draws
   the grid, the blocks and the tiles, and Fennel (`src/cast/fennel.js`, a fennec fox posed with
   `rig()`) walks it. His lines are `CODING_LINES`/`CODING_HEADLINES`, read through the subject's
-  `coach.lines`/`coach.headlines`. With several learn courses, home shows one at a time (a Chess /
-  Coding row, remembered in `drill.course`), and the intro picks courses by subject id (`habitOfPick`).
+  `coach.lines`/`coach.headlines`. Home's course switcher (shared with Japanese) shows it.
 - `src/calm/` — the Calm practice subject. `routines.js` is pure: each routine is a list of timed
   phases (breathing 4 in, 8 out; the sigh 3 in, 1 top-up, 6 out; the butterfly hug's taps; the body scan feet to head), and `timeline()` plays one on a
   pausable clock. `practice.js` mounts teach cards and the routines with Moss (`src/cast/moss.js`)
