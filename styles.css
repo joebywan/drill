@@ -801,11 +801,6 @@ body:has(main.night) {
 .play:has(.practice-pause) .coach:not(.demonstrates) .bubble { min-height: 5.8em; }
 .play:has(.practice-pause) .coach.demonstrates .bubble { min-height: 4.4em; } /* a longer line must not move what's under it */
 .room { margin: 4px 0 0; color: var(--muted); font-size: .9rem; }
-/* Its pause is a small round button level with the X, on the other side of the coach. */
-.practice-pause.icon {
-  position: absolute; top: max(12px, env(safe-area-inset-top)); right: 16px; z-index: 1; width: 44px; height: 44px; margin: 0; padding: 0; border-radius: 50%; font-size: 1rem;
-}
-.choices:has(> .practice-pause.icon) { position: static; padding: 0; border: 0; background: none; }
 
 /* Chess games (chess/games.js): a small row on chess's home, then the session frame. */
 .games { align-items: center; }

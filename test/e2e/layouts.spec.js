@@ -16,7 +16,7 @@ test.describe('at 360x640', () => {
     expect(node.y + node.height).toBeLessThan(cta.y);
     expect(strip.height).toBeGreaterThan(60);
     // The course switcher stays on one row.
-    const ys = await page.locator('.course').evaluateAll((all) => all.map((c) => c.getBoundingClientRect().y));
+    const ys = await page.locator('.courses:not(.games) .course').evaluateAll((all) => all.map((c) => c.getBoundingClientRect().y));
     expect(new Set(ys).size).toBe(1);
   });
 
