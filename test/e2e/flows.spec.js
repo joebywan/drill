@@ -796,7 +796,7 @@ test('a Move session plays timed exercises with rests, and keeps its own streak'
 const fakeWakeLock = (page) => page.addInitScript(() => {
   window.locks = [];
   Object.defineProperty(navigator, 'wakeLock', { value: { request: async (type) => {
-    const lock = { type, released: false, release: async () => { lock.released = true; } };
+    const lock = { type, released: false, release: async () => { lock.released = true; }, addEventListener() {} };
     window.locks.push(lock);
     return lock;
   } } });
@@ -861,6 +861,56 @@ test("Focus: your own words, then \"I'm done\" early ends it like any other, wit
   await expect(page.getByRole('button', { name: 'Continue · Fifteen minutes' })).toBeVisible();
   await week(page, 1).click();
   await expect(page.locator('.day').first().getByRole('list', { name: 'What you focused on' })).toHaveText(/Tax <forms>/);
+});
+
+/** Hides or shows the page as switching apps would: document.hidden, then visibilitychange. */
+const setHidden = (page, hidden) => page.evaluate((h) => {
+  Object.defineProperty(document, 'hidden', { configurable: true, get: () => h });
+  Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (h ? 'hidden' : 'visible') });
+  document.dispatchEvent(new Event('visibilitychange'));
+}, hidden);
+
+test('Focus keeps time while you are in another app, ends there if it runs out, and keeps every line of the day', async ({ page }) => {
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Focus').click();
+  await page.getByRole('button', { name: 'Continue · Ten minutes, one thing' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('button', { name: 'Reading', exact: true }).click();
+  const left = page.getByRole('timer');
+  await expect(left).toHaveText('10:00');
+  // Three minutes in another app: the timer moved on, and it never paused.
+  await setHidden(page, true);
+  await page.clock.runFor(180_000);
+  await setHidden(page, false);
+  await expect(left).toHaveText('7:00');
+  await expect(page.getByRole('button', { name: 'Pause' })).toHaveAttribute('aria-pressed', 'false');
+  // Away past the end: coming back shows the end screen.
+  await setHidden(page, true);
+  await page.clock.runFor(480_000);
+  await setHidden(page, false);
+  await expect(page.getByRole('heading', { name: 'How did it go?' })).toBeVisible();
+  await continueButton(page).click();
+  // A second session the same day: both lines are kept.
+  await page.getByRole('button', { name: 'Continue · Fifteen minutes' }).click();
+  await page.getByRole('button', { name: 'Study', exact: true }).click();
+  await page.getByRole('button', { name: "I'm done" }).click();
+  await continueButton(page).click();
+  await week(page, 1).click();
+  await expect(page.getByRole('list', { name: 'What you focused on' }).getByRole('listitem')).toHaveText([/Reading/, /Study/]);
+});
+
+test('every other habit still pauses when the page is hidden', async ({ page }) => {
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Screen break').click();
+  await page.getByRole('button', { name: 'Continue · Why breaks help' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await setHidden(page, true);
+  await page.clock.runFor(60_000);
+  await setHidden(page, false);
+  await expect(page.getByRole('button', { name: 'Carry on' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.steps li[aria-current="step"]')).toHaveText(/^Look far away/);
 });
 
 test('Focus with nothing picked, on your own time from the timings', async ({ page }) => {

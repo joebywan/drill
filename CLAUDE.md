@@ -29,7 +29,8 @@ No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, r
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
-- With no `--url` it serves this checkout on a free port; Chrome opens `http://10.0.2.2:<port>/`.
+- With no `--url` it serves this checkout on a free port forwarded with `adb reverse`; Chrome opens
+  `http://localhost:<port>/`, a secure context, so Wake Lock and the like work as on the real site.
 - It boots the AVD (`--avd`, else `PHONE_AVD`, default `splendor36`; `--avd daybook_tablet` for a tablet) `-read-only` if no emulator is running and
   shuts down only one it started. SDK from `ANDROID_HOME` or `~/Android/Sdk`.
 - Screenshots of the whole screen (keyboard included) go to `test-results/phone/<scenario>/NN-name.png`.

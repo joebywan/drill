@@ -51,7 +51,11 @@ export function stayAwake() {
     if (!on || document.hidden || !navigator.wakeLock) return;
     try {
       const l = await navigator.wakeLock.request('screen');
-      if (on) lock = l; else l.release();
+      if (!on) return l.release();
+      lock = l;
+      // `data-awake` on <html> says a lock is held (phone tests read it); the system can let go too.
+      document.documentElement.dataset.awake = '';
+      l.addEventListener('release', () => { if (lock === l) delete document.documentElement.dataset.awake; });
     } catch { /* refused: the screen sleeps as usual */ }
   };
   document.addEventListener('visibilitychange', ask);
@@ -61,6 +65,7 @@ export function stayAwake() {
     document.removeEventListener('visibilitychange', ask);
     lock?.release().catch(() => {});
     lock = null;
+    delete document.documentElement.dataset.awake;
   };
 }
 
@@ -69,13 +74,15 @@ export const pauseBar = '<div class="choices"><button class="choice practice-pau
 
 /**
  * Runs a timed routine in `el` (which already holds the routine's markup and `pauseBar`). Leaving
- * the page pauses it too, so it never finishes unattended. `draw(phase, index, say)` shows each
+ * the page pauses it too, so it never finishes unattended, unless `hidden: 'run'` (Focus, whose
+ * learner is off in the app they're focusing in): then it keeps wall-clock time while hidden, and
+ * coming back shows where it is now, or the end screen if it finished meanwhile. `draw(phase, index, say)` shows each
  * phase and returns its animations, which pause and play with the clock. `paused` is the coach's
  * line while paused. Any `.count` in `el` shows the seconds left in the phase, or for a phase with
  * `reps`, which rep it is on (see countOf). Ends with
  * `ctx.done(null, summary)`. Returns the cleanup function.
  */
-export function routine(el, phases, ctx, draw, summary, paused) {
+export function routine(el, phases, ctx, draw, summary, paused, { hidden: away = 'pause' } = {}) {
   let anims = [];
   let said = '';
   let now = null; // the phase playing
@@ -102,7 +109,10 @@ export function routine(el, phases, ctx, draw, summary, paused) {
     clock.resume();
   };
   pause.addEventListener('click', () => (clock.paused ? carryOn() : hold()));
-  const hidden = () => { if (document.hidden && !clock.paused) hold(); };
+  const hidden = () => {
+    if (away === 'run') { if (!document.hidden && !clock.paused) { clock.pause(); clock.resume(); } } // catch up at once
+    else if (document.hidden && !clock.paused) hold();
+  };
   document.addEventListener('visibilitychange', hidden);
   const cleanup = () => { clock.stop(); document.removeEventListener('visibilitychange', hidden); };
   return cleanup;

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dayDetail, session } from '../src/focus/practice.js';
 import { countOf, total } from '../src/practice/timeline.js';
-import { emptyProgress, migrate, writeJournal } from '../src/progress.js';
+import { emptyProgress, focusLines, migrate, writeJournal } from '../src/progress.js';
 import { subjects } from '../src/subjects.js';
 
 const course = JSON.parse(readFileSync('src/data/focus.json', 'utf8'));
@@ -26,16 +26,31 @@ test('the timer reads in minutes and seconds', () => {
   assert.equal(countOf({ seconds: 8 }, 3), 3, 'other phases still count seconds');
 });
 
-test('what it was for stays in the journal, shown back safely, never in the log', () => {
-  const p = writeJournal(emptyProgress(), { focus: '  <b>Essay</b> ' }, new Date(2026, 9, 30));
-  assert.deepEqual(p.journal, { '2026-10-30': { focus: '<b>Essay</b>' } });
+test('every focus line of the day stays in the journal, shown back safely, never in the log', () => {
+  const day = new Date(2026, 9, 30);
+  let p = writeJournal(emptyProgress(), { focus: ['  <b>Essay</b> '] }, day);
+  p = writeJournal(p, { focus: ['Reading'] }, day);
+  p = writeJournal(p, { good: 'Tea' }, day); // Reflect's lines sit beside them
+  assert.deepEqual(p.journal, { '2026-10-30': { focus: ['<b>Essay</b>', 'Reading'], good: 'Tea' } });
   assert.deepEqual(p.log, []);
-  assert.ok(migrate(JSON.parse(JSON.stringify(p))), 'the shape loads back without a new version');
-  assert.match(dayDetail(p, '2026-10-30'), /Focused on<\/span> &#60;b&#62;Essay&#60;\/b&#62;/);
+  assert.ok(migrate(JSON.parse(JSON.stringify(p))), 'the list loads back without a new version');
+  const html = dayDetail(p, '2026-10-30');
+  assert.match(html, /Focused on<\/span> &#60;b&#62;Essay&#60;\/b&#62;<\/li><li><span>Focused on<\/span> Reading/);
   assert.equal(dayDetail(p, '2026-10-29'), '');
   assert.equal(dayDetail({}, '2026-10-30'), '');
+  assert.equal(writeJournal(p, { focus: ['  '] }, day), p, 'a blank line keeps nothing');
   const s = subjects.find((x) => x.habit === 'focus');
   assert.equal(s.dayDetail, dayDetail);
   assert.equal(s.kind, 'practice');
   assert.equal(s.again.lesson, 'focus3');
+});
+
+test('a single focus string saved before lists reads as a list of one, and the next session adds to it', () => {
+  const old = { ...emptyProgress(), journal: { '2026-10-30': { focus: 'Tax forms' } } };
+  assert.ok(migrate(JSON.parse(JSON.stringify(old))));
+  assert.deepEqual(focusLines(old.journal['2026-10-30']), ['Tax forms']);
+  assert.match(dayDetail(old, '2026-10-30'), /Focused on<\/span> Tax forms/);
+  const p = writeJournal(old, { focus: ['Study'] }, new Date(2026, 9, 30));
+  assert.deepEqual(p.journal['2026-10-30'].focus, ['Tax forms', 'Study']);
+  assert.equal(migrate({ ...old, journal: { '2026-10-30': { focus: [3] } } }), null, 'anything but text is refused');
 });
