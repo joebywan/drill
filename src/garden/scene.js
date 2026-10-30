@@ -66,7 +66,9 @@ const css = (mood, season) => {
   const scope = `.garden-${mood}.season-${season}`;
   const rules = (p) => Object.entries(p).map(([k, v]) => `${scope} .g-${k}{fill:${v}}`).join('');
   const theme = (t) => rules({ ...PALETTE[mood][t], ...SEASON[season][t], rim: RIM[t] });
-  return `<style>${theme('light')}@media (prefers-color-scheme: dark){${theme('dark')}}</style>`;
+  // The frost line is a stroke: white in the light, a dim blue-grey haze in the dark.
+  const frost = (t) => `${scope} .g-frost{stroke:${t === 'dark' ? '#9FB4C6' : '#FFFFFF'};opacity:${t === 'dark' ? 0.35 : 0.7}}`;
+  return `<style>${theme('light')}${frost('light')}@media (prefers-color-scheme: dark){${theme('dark')}${frost('dark')}}</style>`;
 };
 
 /** The season's own touches over the land, all tagged for animateScene(). */
@@ -94,7 +96,7 @@ const touches = (season, W, H, hy, k, rand, tall) => {
   }
   // Winter: frost on the hilltops and grass, and paper lanterns glowing on their posts.
   const frost = any(() => { const [x, y] = onGrass(); return `<path fill="#FFFFFF" opacity=".8" d="M${x - 3} ${y} L${x} ${f(y - 4)} L${x + 3} ${y}Z"/>`; }, n(10, 22))
-    + `<path d="M0 ${f(hy - 26 * k)} Q${W / 2} ${f(hy - 36 * k)} ${W} ${f(hy - 24 * k)}" stroke="#FFFFFF" stroke-width="${f(2 * k)}" fill="none" opacity=".7" stroke-linecap="round"/>`;
+    + `<path d="M0 ${f(hy - 26 * k)} Q${W / 2} ${f(hy - 36 * k)} ${W} ${f(hy - 24 * k)}" class="g-frost" stroke-width="${f(2 * k)}" fill="none" stroke-linecap="round"/>`;
   const lantern = (x, y) => `<path d="M${x} ${y} L${x} ${f(y + 22 * k)}" stroke="#6B4C33" stroke-width="${f(1.4 * k)}"/>`
     + `<circle data-part="lantern" fill="#FFD978" opacity=".35" cx="${x}" cy="${f(y + 2 * k)}" r="${f(7 * k)}"/>`
     + `<rect fill="#E8743B" x="${f(x - 3.4 * k)}" y="${f(y - 3 * k)}" width="${f(6.8 * k)}" height="${f(9 * k)}" rx="${f(2.6 * k)}"/>`
