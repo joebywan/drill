@@ -141,3 +141,47 @@ export function problem(item) {
   return all ? 'every filling works: nothing to think about' : null;
 }
 
+
+const OPPOSITE = { x: { right: 'left', left: 'right' }, y: { up: 'down', down: 'up', above: 'below', below: 'above', under: 'over', over: 'under', top: 'bottom', bottom: 'top' } };
+
+/** `text` with its directions swapped, keeping capitals: "Right, then up" flipped sideways is "Left, then up". */
+function swapWords(text, ...maps) {
+  const all = Object.assign({}, ...maps);
+  return text?.replace(/\b[A-Za-z]+\b/g, (w) => {
+    const to = all[w.toLowerCase()];
+    return !to ? w : w[0] === w[0].toUpperCase() ? to[0].toUpperCase() + to.slice(1) : to;
+  });
+}
+
+/**
+ * The same level flipped (`x` left to right, `y` top to bottom), with its program, tiles and words
+ * turned to match: the same idea on a new-looking map, with new answers.
+ */
+export function mirrored(item, { x = false, y = false }) {
+  const maps = [x && OPPOSITE.x, y && OPPOSITE.y].filter(Boolean);
+  const turn = (step) => (x && OPPOSITE.x[step]) || (y && OPPOSITE.y[step]) || step;
+  const walk = (list) => list?.map((b) => {
+    if (typeof b === 'string') return turn(b);
+    if (b === null) return null;
+    if ('repeat' in b) return { repeat: b.repeat, do: walk(b.do) };
+    return { if: `rock-${turn(b.if.replace('rock-', ''))}`, then: walk(b.then), else: walk(b.else) };
+  });
+  const rows = (y ? [...item.level].reverse() : item.level).map((r) => (x ? [...r].reverse().join('') : r));
+  return {
+    ...item,
+    level: rows,
+    ...(item.program && { program: walk(item.program) }),
+    ...(item.tiles && { tiles: item.tiles.map((t) => (typeof t === 'number' ? t : turn(t))) }),
+    prompt: swapWords(item.prompt, ...maps),
+    explain: swapWords(item.explain, ...maps),
+  };
+}
+
+const FLIPS = [{ x: true }, { y: true }, { x: true, y: true }];
+
+/** The Coding subject's `vary` (repeat.js): a random flip of a build or predict item's level. */
+export function vary(item, random = Math.random) {
+  if (!['build', 'predict'].includes(item.type)) return null;
+  const flipped = mirrored(item, FLIPS[Math.floor(random() * FLIPS.length)]);
+  return problem(flipped) ? item : flipped;
+}
