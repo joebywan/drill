@@ -848,3 +848,45 @@ body:has(main.night) {
 .game-actions.game-levels { flex-wrap: wrap; }
 .game-actions.game-levels .choice { flex: 1 1 40%; }
 .game-note { margin: 10px 0 0; min-height: 4.2em; font-size: .95rem; }
+
+/* ---- The code courses (src/code/exercise.js): word chips laid out as lines of code ---- */
+:root { --mono: ui-monospace, Menlo, Consolas, "DejaVu Sans Mono", monospace; }
+.play:has(.code-item) .bubble { min-height: 5.9em; margin-bottom: 8px; font-size: .95rem; }
+.code-item .grid-world { width: min(100%, calc(var(--w) * 40px), calc(var(--w) * 16vh / var(--h))); margin-bottom: 6px; }
+.code-goal { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin: 0 0 6px; font-size: .85rem; color: var(--muted); }
+.code-goal code { flex: 1 1 auto; max-height: 4.6em; overflow-y: auto; padding: 2px 8px; border-radius: 6px; background: var(--card); border: 1px solid var(--line); color: var(--text); font: 600 .85rem/1.4 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.code-given { max-height: 22vh; overflow: auto; margin-bottom: 6px; font-size: .78rem; }
+.code-program { display: block; overflow-y: auto; }
+.code-program .code { overflow: auto; max-height: 100%; font-size: .8rem; }
+.code-program.shown .code { border-color: var(--accent); }
+.code-answer { align-items: center; gap: 4px; padding: 6px; min-height: 52px; border-radius: 10px; border: 2px solid var(--line); background: var(--card); }
+.line-break { flex: 0 0 100%; height: 0; }
+.line-indent { flex: none; width: calc(var(--indent) * 14px); margin-right: -4px; }
+.block.token { min-width: 26px; height: 32px; padding: 0 6px; border-radius: 7px; font: 700 .85rem var(--mono); max-width: 100%; overflow-wrap: anywhere; }
+.code-answer .block.hole { min-width: 44px; height: 32px; }
+.code-answer .block.slot { height: 32px; }
+.code-answer .caret { min-height: 28px; }
+.fixed-word { font: 600 .85rem/32px var(--mono); }
+/* The reserved line for what it printed sits just over the tray, so a run moves nothing. */
+.code-out { position: fixed; left: 16px; right: 16px; max-width: 488px; margin: 0 auto; height: 3.4em; overflow-y: auto; padding: 4px 8px; border-radius: 8px; background: var(--card); border: 1px dashed var(--line); font: 600 .78rem/1.5 var(--mono); white-space: pre-wrap; }
+.code-out:empty::before { content: 'What it prints shows here'; color: var(--muted); font-weight: 400; }
+.code-tray { display: block; padding-top: 6px; }
+.code-tray .chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: min(32vh, 208px); overflow-y: auto; }
+.code-tray .chips:empty { display: none; }
+.tray .tile.code-chip { flex: 1 1 auto; min-width: 44px; min-height: 44px; max-width: 100%; padding: 2px 8px; font: 700 .95rem var(--mono); white-space: normal; overflow-wrap: anywhere; }
+.code-tray .run { margin: 8px 0 0; padding: 12px; }
+.code-tray .run:disabled { opacity: .45; }
+.quiz.code-look .card { min-height: 0; align-items: stretch; padding: 10px; }
+.quiz.code-look .card:not(:has(*)) { display: none; }
+.quiz.code-look .glyph { font: 600 .9rem/1.5 var(--mono); text-align: left; white-space: pre; overflow-x: auto; max-height: 38vh; overflow-y: auto; }
+.quiz.code-look .reading { font: 600 .85rem/1.4 var(--mono); text-align: left; white-space: pre-wrap; }
+.quiz.code-look .choices { flex-wrap: wrap; }
+.quiz.code-look .choices .choice { flex: 1 1 40%; min-height: 48px; padding: 8px; font: 700 .95rem/1.3 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.quiz.code-look .choices { max-height: 46vh; overflow-y: auto; }
+.quiz.code-check .choices .choice { flex: 1 1 28%; min-height: 44px; padding: 6px; font-size: .85rem; }
+.play:has(.code-look) .bubble { min-height: 4.4em; }
+@media (max-height: 700px) {
+  .code-given { max-height: 14vh; }
+  .code-tray .chips { max-height: 24vh; }
+  .quiz.code-look .glyph { max-height: 28vh; }
+}

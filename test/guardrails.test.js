@@ -353,7 +353,7 @@ test('the timings screen makes no claims, never hurries and never pushes', () =>
 
 // Coding: Fennel's lines and the course's words get the same lint as Rosa's, and his lines cover
 // every kind a learn session and its end screen ask for.
-import { CODING_HEADLINES, CODING_LINES } from '../src/cast/lines.js';
+import { CODE_HEADLINES, CODE_LINES, CODING_HEADLINES, CODING_LINES } from '../src/cast/lines.js';
 import codingCourse from '../src/data/coding.json' with { type: 'json' };
 
 test("Fennel's lines and the Coding course pass the lint, and cover every kind a lesson uses", () => {
@@ -370,6 +370,19 @@ test("Fennel's lines and the Coding course pass the lint, and cover every kind a
   const coach = subjects.find((s) => s.id === 'coding').coach;
   assert.equal(coach.lines, CODING_LINES);
   assert.equal(coach.headlines, CODING_HEADLINES);
+});
+
+test('the code courses and their lines pass the lint, and cover every kind a lesson uses', () => {
+  const courses = subjects.filter((s) => s.mount === subjects.find((x) => x.id === 'javascript').mount);
+  assert.equal(courses.length, 3);
+  const lineText = [CODE_LINES, CODE_HEADLINES].flatMap((all) => Object.values(all).flat());
+  // Code in the items is not prose: `is` the words a person reads.
+  const words = (item) => [item.text, item.prompt, item.explain, ...(item.mutants ?? []).map((m) => m.says)].filter(Boolean);
+  const text = [...lineText, ...courses.flatMap((c) => c.units.flatMap((u) => u.lessons.flatMap((l) => l.items.flatMap(words))))];
+  assert.ok(text.length > 300);
+  for (const t of text) for (const rule of [ABILITY, LOSS]) assert.doesNotMatch(t, rule, t);
+  for (const kind of ['correct', 'wrong', 'run3', 'run5', 'tapped', ...Object.keys(HEADLINES)]) assert.ok(CODE_LINES[kind]?.length, kind);
+  for (const kind of Object.keys(HEADLINES)) assert.ok(CODE_HEADLINES[kind]?.length, kind);
 });
 
 // Focus: a calm timer, never a productivity tool. No hurry, no claims, no guilt, and nothing that
