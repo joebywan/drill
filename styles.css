@@ -528,11 +528,20 @@ html { scroll-padding-bottom: 160px; }
   /* Home: the garden and the habit tabs in a rail, the path or panel beside it. */
   #app:has(> .home) { --wide: 1040px; }
   .home { display: flex; gap: 32px; align-items: flex-start; }
-  .rail { display: block; flex: none; width: var(--rail); position: sticky; top: 16px; }
+  /* Capped at the screen's height and scrolling inside itself, so + Habit is always in reach. The
+     6px inset keeps the focus ring clear of the scroll clip. */
+  .rail {
+    display: block; flex: none; width: calc(var(--rail) + 12px); margin: -6px; padding: 6px;
+    position: sticky; top: 10px; max-height: calc(100dvh - 76px); overflow-y: auto; /* 76px: the bar above it */
+  }
   .pane { display: block; flex: 1; min-width: 0; }
   .rail .paths { flex-direction: column; margin: 0; padding: 0; overflow: visible; mask-image: none; }
   .rail .path-tab { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 16px; }
-  .home + .cta { padding-left: calc(16px + var(--rail) + 32px); }
+  /* Home's Continue bar spans the pane only, so its fade never covers the rail. */
+  .home + .cta {
+    left: calc(max(0px, 50% - var(--wide) / 2) + 16px + var(--rail) + 32px); right: max(0px, 50% - var(--wide) / 2);
+    max-width: none; margin: 0; padding-left: 0;
+  }
   /* A lesson: a bigger board and coach, the board kept clear of the buttons at the bottom. */
   div.board { width: min(100%, max(240px, 100dvh - 260px)); margin-inline: auto; }
   .who { width: 84px; }
@@ -545,6 +554,14 @@ html { scroll-padding-bottom: 160px; }
   .garden-page h1 { grid-column: 1 / -1; }
   .garden-view { position: sticky; top: 16px; }
   .garden-page .plant-cards { margin: 0; }
+}
+/* A landscape desktop has no thumb zone: an end screen's Continue and a practice's buttons follow
+   the content instead of sitting far below it. A lesson's answer buttons and banner stay put. */
+@media (min-width: 1024px) and (orientation: landscape) {
+  .summary { padding-bottom: 0; }
+  .summary + .cta { position: static; padding: 8px 16px 32px; background: none; }
+  .play:not(:has(div.board)) { padding-bottom: 32px; }
+  .play:not(:has(div.board)) .choices { position: static; padding: 24px 0 0; background: none; }
 }
 @media (min-width: 1200px) {
   #app:has(> .home), #app:has(> .garden-page) { --wide: 1200px; --rail: 400px; }

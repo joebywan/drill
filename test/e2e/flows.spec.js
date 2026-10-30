@@ -1166,3 +1166,31 @@ test.describe('a keyboard on a desktop', () => {
     await expect(page.getByRole('button', { name: 'Start' })).toBeVisible();
   });
 });
+
+test('on a short landscape screen the rail scrolls inside itself, so + Habit is always in reach', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 600 });
+  const tracked = [{ id: 'walk' }, { id: 'water' }, { id: 'own-1', name: 'Stretch', plant: 'rose' }];
+  await grown(page, ['learn', 'calm', 'walk', 'water', 'own-1'], 3, true, { tracked });
+  await firstVisit(page);
+  const rail = page.locator('.rail');
+  const box = await rail.boundingBox();
+  expect(box.y + box.height).toBeLessThanOrEqual(600);
+  const add = page.getByRole('button', { name: 'Add a habit' });
+  await rail.evaluate((el) => { el.scrollTop = el.scrollHeight; }); // the rail scrolls, not the page
+  await expect(add).toBeInViewport();
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+});
+
+test('on a landscape desktop, end-screen and practice buttons follow the content', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Calm').click();
+  await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  const gap = async (above, button) => { const [a, b] = [await above.boundingBox(), await button.boundingBox()]; return b.y - a.y - a.height; };
+  expect(await gap(page.locator('.breath'), page.getByRole('button', { name: 'Pause' }))).toBeLessThan(80);
+  await page.clock.runFor(60_000);
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+  expect(await gap(page.locator('.feel'), continueButton(page))).toBeLessThan(80);
+});
