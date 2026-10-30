@@ -99,20 +99,20 @@ test('intro, habits only: the picks come first in the order tapped, and a tracke
   await pick(page, 'Read').click(); // changed my mind
   await expect(pick(page, 'Read')).toHaveAttribute('aria-pressed', 'false');
   await page.getByRole('button', { name: 'Show my home' }).click();
-  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move']);
+  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'winddown']);
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'walk');
   await expect(page.getByText('Walk is first. Start with the button below.')).toBeVisible();
   await page.getByRole('button', { name: 'I walked today' }).click();
   await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
   await page.reload();
-  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move']);
+  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'winddown']);
 });
 
 test("intro, skipped at either step: today's default home, and the intro never comes back", async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Skip' }).click();
   await expect(page.getByText("Hi, I'm Lumi. Pick something to grow")).toBeVisible();
-  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move']);
+  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move', 'winddown']);
   await page.reload();
   await expect(page.getByText("Hi, I'm Lumi. Pick something to grow")).toBeVisible();
 
@@ -121,7 +121,7 @@ test("intro, skipped at either step: today's default home, and the intro never c
   await pick(page, 'Build habits').click();
   await pick(page, 'Move').click();
   await page.getByRole('button', { name: 'Skip' }).click(); // a skip drops what was tapped
-  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move']);
+  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move', 'winddown']);
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
 });
 
@@ -167,7 +167,7 @@ test('"Change what you see" in the ⋯ menu reopens step 2 with the picks, and B
   await pick(page, 'Screen break').click();
   await pick(page, 'Learn something').click();
   await page.getByRole('button', { name: 'Show my home' }).click();
-  expect(await tabOrder(page)).toEqual(['break', 'learn', 'calm', 'reflect', 'move']);
+  expect(await tabOrder(page)).toEqual(['break', 'learn', 'calm', 'reflect', 'move', 'winddown']);
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'break');
 });
 
@@ -908,7 +908,7 @@ test('with many habits, the tab row stays one row that scrolls inside itself, an
   await grown(page, ['learn', 'calm', 'move', 'reflect', 'break', ...tracked.map((t) => t.id)], 9, true, { tracked });
   await firstVisit(page);
   const tabs = page.getByRole('navigation', { name: 'Show the path for' });
-  await expect(tabs.getByRole('button')).toHaveCount(13);
+  await expect(tabs.getByRole('button')).toHaveCount(14);
   expect(await tabs.getByRole('button').evaluateAll((els) => new Set(els.map((e) => e.offsetTop)).size)).toBe(1);
   await expect(tabs.getByRole('button').last()).toHaveAccessibleName('Add a habit');
   expect(await overflow(page)).toBe(0);
@@ -1221,4 +1221,48 @@ test('on a landscape desktop, end-screen and practice buttons follow the content
   await page.clock.runFor(60_000);
   await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
   expect(await gap(page.locator('.feel'), continueButton(page))).toBeLessThan(80);
+});
+
+test('Wind down: settle in, Calm breathing on your own timings, a sigh, goodnight, all in the night palette', async ({ page }) => {
+  const p = { ...emptyProgress(), picked: [], timings: { calm: { inhale: 6 } } };
+  await page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
+  await page.clock.install();
+  await page.goto('/');
+  const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  const day = await bg();
+  await tab(page, 'Wind down').click();
+  await expect(page.getByRole('heading', { name: 'Bedtime' })).toBeVisible();
+  // Wind down plays Calm's timings, so its timings link opens Calm's.
+  await expect(page.getByRole('button', { name: 'Your timings' })).toBeVisible();
+  await page.getByRole('button', { name: 'Continue · Lights low' }).click();
+  // Dim and warm even in the light theme.
+  await expect(page.locator('main.play.night')).toBeVisible();
+  expect(await bg()).toBe('rgb(24, 20, 15)');
+  await expect(page.locator('.cast-moss.mood-sleepy')).toBeVisible();
+  await expect(page.getByText('Lifeline is 13 11 14')).toBeVisible();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await expect(page.locator('.steps li.now')).toHaveText('Lights low');
+  await expect(page.locator('#said')).toHaveText('Dim the lights, or switch one off.');
+  await page.clock.runFor(20_000);
+  // Calm's breathing, with the breath in at the learner's own 6 s.
+  await expect(page.getByText('Breath 1 of 3')).toBeVisible();
+  await expect(page.locator('.orb .count')).toHaveText('6');
+  await page.getByRole('button', { name: 'Pause' }).click();
+  await page.clock.runFor(60_000);
+  await expect(page.getByText('Breath 1 of 3')).toBeVisible();
+  await page.getByRole('button', { name: 'Carry on' }).click();
+  await page.clock.runFor(3 * 14_000);
+  await expect(page.getByText('Sigh 1 of 1')).toBeVisible();
+  await page.clock.runFor(10_000);
+  await expect(page.getByText('Put your phone face down')).toBeVisible();
+  await page.getByRole('button', { name: 'Goodnight' }).click();
+  // The one practice end screen, still at night.
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+  await expect(page.locator('main.practice-end.night')).toBeVisible();
+  await expect(page.getByText(/^3 breaths · 1 sigh · \d+ min$/)).toBeVisible();
+  await expect(page.locator('.chip.winddown')).toContainText('🌙 1');
+  await page.getByRole('button', { name: 'Settled' }).click();
+  await continueButton(page).click();
+  await expect(page.getByRole('button', { name: 'Lights low, done' })).toBeVisible();
+  expect(await bg()).toBe(day);
 });

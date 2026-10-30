@@ -8,7 +8,8 @@ import { move } from '../feel.js';
  *
  * API (for the Calm practice engine):
  *   NAME                       the display name; renaming the character is this one line
- *   MOODS                      ['guide', 'inhale', 'hold', 'exhale', 'notice', 'done', 'idle', 'tapped', 'hug']
+ *   MOODS                      ['guide', 'inhale', 'hold', 'exhale', 'notice', 'done', 'idle', 'tapped', 'hug', 'sleepy']
+ *                              ('sleepy' is Wind down's: lids low, paws folded, a small moon by its leaf)
  *   moss(mood) -> svg string   draw a mood; works with coach(el, moss) like Rosa and Lumi
  *   breathe(el, phase, seconds) -> Animation | null
  *       phase 'in' | 'hold' | 'out' | 'top' | 'sigh'. Swells ('in'), holds full ('hold') or settles ('out') the
@@ -23,7 +24,7 @@ import { move } from '../feel.js';
  *       second). Null under reduced motion; the words say which side.
  */
 export const NAME = 'Moss';
-export const MOODS = ['guide', 'inhale', 'hold', 'exhale', 'notice', 'done', 'idle', 'tapped', 'hug'];
+export const MOODS = ['guide', 'inhale', 'hold', 'exhale', 'notice', 'done', 'idle', 'tapped', 'hug', 'sleepy'];
 
 const FUR = '#9C6B48';
 const FUR_SHADE = '#835736';
@@ -43,6 +44,7 @@ const FACES = {
   idle:   { eyes: 'open',  lid: 0.4,  brows: [0, 0],     mouth: 'smile', dx: -1 },
   tapped: { eyes: 'happy',            brows: [3, 0],     mouth: 'open', blush: true },
   hug:    { eyes: 'open',  lid: 0.55, brows: [0, 0],     mouth: 'smile' },
+  sleepy: { eyes: 'open',  lid: 0.82, brows: [-1, 0],    mouth: 'soft', dy: 1 },
 };
 
 // Paw tips per mood: [left, right]. Short arms; they rise with the breath and fall with it.
@@ -57,12 +59,15 @@ const ARMS = {
   idle:   [[21, 90], [79, 90]],
   tapped: [[14, 58], [86, 58]],
   hug:    [[67, 78], [33, 78]],   // arms crossed over the chest: the butterfly hug
+  sleepy: [[40, 88], [60, 88]],   // paws tucked in, settled for the night
 };
 
 // The breath: a swell from the feet. FULL as an svg attribute (static drawings) and as CSS (breathe).
 const FULL_ATTR = 'translate(50 110) scale(1.06 1.05) translate(-50 -110)';
 const REST = 'scale(1, 1)', FULL = 'scale(1.06, 1.05)', TOP = 'scale(1.09, 1.07)';
 const SWELLED = new Set(['inhale', 'hold']);
+// Wind down's small crescent moon, resting by the leaf: night, without a word.
+const MOON = '<path data-part="moon" d="M78 2 A9 9 0 1 0 88 15 A7 7 0 1 1 78 2 Z" fill="#F2D98A"/>';
 
 export function moss(mood = 'guide') {
   const f = FACES[mood] ? mood : 'guide';
@@ -81,6 +86,7 @@ export function moss(mood = 'guide') {
         <rect x="29" y="43" width="42" height="24" rx="11" fill="${MUZZLE}"/>
         <ellipse cx="43" cy="49" rx="2.6" ry="1.8" fill="${INK}"/><ellipse cx="57" cy="49" rx="2.6" ry="1.8" fill="${INK}"/>
         ${face(FACES[f], { cx: 50, cy: 33, skin: FUR, mouthY: 25 })}
+        ${f === 'sleepy' ? MOON : ''}
       </g>
       <g data-part="arms"><g data-arm="left">${limb(L, lh, arm, arm, 11)}</g><g data-arm="right">${limb(R, rh, arm, arm, 11)}</g></g>
     </g>`);

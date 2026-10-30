@@ -169,6 +169,25 @@ export const CALM_LINES = {
   'no different': ["That's alright. Thanks for telling me. Some days are heavy, and that's not on you."],
 };
 
+/**
+ * Moss at bedtime, for Wind down: the same capybara, quieter. No exclamation marks, no hurry, no
+ * claims about sleep, and nothing about screens or how late it is (the guardrail tests check).
+ */
+export const WINDDOWN_LINES = {
+  paused: ['Paused. Take as long as you like.'],
+  tapped: [
+    'Capybaras are very good at evenings. We practise a lot.',
+    'Warm water, low light, a long sigh. That is my whole evening.',
+    'The day is done. You can set it down now.',
+    'Nothing else to do tonight. I checked.',
+  ],
+  // The end screen: settled, not a party.
+  done: ['All wound down. Goodnight.', 'Quiet now. Goodnight.', 'That was a soft end to the day.'],
+  'settled': ['Good. Take that with you.', 'Lovely. Rest easy.'],
+  'about the same': ["That's fine. A quiet few minutes still counts.", 'Fair enough. Thanks for winding down with me.'],
+  'no different': ["That's alright. Thanks for telling me. Some nights are heavy, and that's not on you."],
+};
+
 /** Calm's optional sounds, set from the ⋯ screen: [preference, label]. */
 export const CALM_SOUNDS = [['bell', 'A soft bell at the start and end'], ['rain', 'Soft rain while you practise']];
 
@@ -282,6 +301,7 @@ export const INTRO_WORDS = {
     move: 'Move: gentle exercises, a few minutes long.',
     reflect: 'Reflect: three lines about your day.',
     break: 'Screen break: rest your eyes and stretch.',
+    winddown: 'Wind down: a few quiet minutes before bed.',
     track: 'Track: one tap for a walk, a book, water or time outside.',
   },
   garden: 'Your habits grow plants in a garden, and nothing ever wilts.',

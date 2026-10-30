@@ -567,3 +567,19 @@ html { scroll-padding-bottom: 160px; }
   #app:has(> .home), #app:has(> .garden-page) { --wide: 1200px; --rail: 400px; }
 }
 /* ---- end wide screens ---- */
+
+/* ---- Wind down: the night palette ----
+   A Wind down session and its end screen (main.night) are dim and warm in either theme: low amber
+   light on a brown-black, no bright white. :has() puts the tokens on body, so the bar, the page and
+   the fixed button bar follow too. */
+:root { --chip-winddown: #8A5A1E; }
+@media (prefers-color-scheme: dark) { :root { --chip-winddown: #E0B070; } }
+body:has(main.night) {
+  --bg: #18140f; --card: #241e17; --text: #e8dcc8; --muted: #b5a58c; --line: #3a3127;
+  --accent: #d9a35b; --accent-text: #18140f; --calm: #d9a35b; --calm-soft: #3d2e1c;
+  --chip-ink: #18140f; --chip-winddown: #e0b070;
+  color-scheme: dark;
+}
+.night .orb { background: radial-gradient(circle at 40% 35%, #f2d9a6, #a8733f); }
+.night .orb .count { color: #2a1d10; }
+.chip.winddown { --c: var(--chip-winddown); flex: 0 1 180px; margin: 0 auto; }
