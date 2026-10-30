@@ -33,7 +33,7 @@ export const TIMINGS = {
     seconds: { label: 'Each step', unit: 's', min: 5, max: 60, step: 5, from: 20, varies: true },
   },
   focus: {
-    minutes: { label: 'Focus time', unit: 'min', min: 5, max: 90, step: 5, from: 10 },
+    minutes: { label: 'Focus time', unit: 'min', min: 5, max: 90, step: 5, from: 10, at: { type: 'session', field: 'minutes' } },
   },
 };
 
