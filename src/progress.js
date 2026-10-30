@@ -317,3 +317,25 @@ export function light(progress, now = new Date(), habit = LEARN) {
   if (s.last === date) return 'bright';
   return gap(s, date) === 'kept' ? 'soft' : 'ember';
 }
+
+/**
+ * One subject's units, each lesson marked done, open or locked. A unit opens when the previous
+ * unit's first lesson is done, so a beginner can move across topics without first clearing every
+ * hard tier; within a unit, lessons open in order. Units before the placement question's starting
+ * point are open all through, to go back to.
+ */
+export function unitsOf(progress, subject) {
+  const start = subject.units.findIndex((u) => u.title === progress.start?.[subject.id]);
+  let unitOpen = true;
+  return subject.units.map((unit, i) => {
+    let open = unitOpen || i <= start;
+    unitOpen = !!progress.done[`${subject.id}:${unit.lessons[0].id}`];
+    const nodes = unit.lessons.map((lesson) => {
+      const id = `${subject.id}:${lesson.id}`;
+      const state = progress.done[id] ? 'done' : open ? 'open' : 'locked';
+      if (state !== 'done' && i >= start) open = false;
+      return { id, subject, lesson, state };
+    });
+    return { title: unit.title, nodes, placed: i === start };
+  });
+}

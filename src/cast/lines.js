@@ -147,6 +147,12 @@ export const STREAK_LABEL = 'DAY STREAK';
 export const CALM_LINES = {
   breatheIn: ['Breathe in…'],
   breatheOut: ['and slowly out'],
+  // The double-inhale sigh: in through the nose, a little more, then a long sigh out.
+  sighIn: ['In through your nose…'],
+  sighTop: ['and a little more'],
+  sighOut: ['and one long sigh out'],
+  // The butterfly hug, said once as it starts.
+  hug: ['Left, then right. Nice and slow.', 'Tap, tap. Breathe slowly while you go.'],
   paused: ['Paused. Take as long as you like. I have nowhere to be.'],
   ground: ['Look around. No rush.', 'Whatever you notice counts.', "Take your time. I'll wait. I'm good at waiting."],
   tapped: [
@@ -162,6 +168,9 @@ export const CALM_LINES = {
   'about the same': ["That's fine. Some days it's just a pause, and a pause still counts.", 'Fair enough. Thanks for taking the time anyway.'],
   'no different': ["That's alright. Thanks for telling me. Some days are heavy, and that's not on you."],
 };
+
+/** Calm's optional sounds, set from the ⋯ screen: [preference, label]. */
+export const CALM_SOUNDS = [['bell', 'A soft bell at the start and end'], ['rain', 'Soft rain while you practise']];
 
 /** Real help, shown as plain text on the first Calm lesson and after "Not really". */
 export const HELP_LINE = "If you're struggling, talk to someone. In Australia, Lifeline is 13 11 14, any time.";
