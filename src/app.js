@@ -704,7 +704,7 @@ function run(lessonId, queue, title) {
       },
     });
     // A question starts on its board (or its answers), not back at the top of the page.
-    if (!foot.classList.contains('show')) stage.querySelector('[autofocus], svg[tabindex], .choice, .practice-go')?.focus();
+    if (!foot.classList.contains('show')) stage.querySelector('[autofocus], svg[tabindex], .choice, .numline, .practice-go')?.focus();
   };
   next.addEventListener('click', step);
 

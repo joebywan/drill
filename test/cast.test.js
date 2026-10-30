@@ -6,6 +6,7 @@ import { lumi } from '../src/cast/lumi.js';
 import { MOODS as CALM, moss, breathe } from '../src/cast/moss.js';
 import * as Clover from '../src/cast/clover.js';
 import * as Mira from '../src/cast/mira.js';
+import { ada } from '../src/cast/ada.js';
 import * as Hazel from '../src/cast/hazel.js';
 
 // The posable characters, each drawn with kit.js rig(): [module, draw].
@@ -14,6 +15,7 @@ const posed = [[Clover, Clover.clover], [Mira, Mira.mira], [Hazel, Hazel.hazel]]
 const drawings = [
   ...MOODS.map((m) => [`rosa ${m}`, rosa(m)]),
   ...MOODS.map((m) => [`lumi ${m}`, lumi(m)]),
+  ...MOODS.map((m) => [`ada ${m}`, ada(m)]),
   ...CALM.map((m) => [`moss ${m}`, moss(m)]),
   ...posed.flatMap(([c, draw]) => [...c.MOODS.map((m) => [`${c.NAME} ${m}`, draw(m)]), ...c.POSES.map((p) => [`${c.NAME} ${p}`, draw('guide', p)])]),
 ];
@@ -30,6 +32,7 @@ test('moods look different from each other', () => {
   const faces = (draw) => new Set(MOODS.map((m) => draw(m)));
   assert.equal(faces(rosa).size, MOODS.length);
   assert.equal(faces(lumi).size, MOODS.length);
+  assert.equal(faces(ada).size, MOODS.length);
   assert.equal(new Set(CALM.map(moss)).size, CALM.length);
   for (const [c, draw] of posed) {
     assert.equal(new Set(c.MOODS.map((m) => draw(m))).size, c.MOODS.length, c.NAME);

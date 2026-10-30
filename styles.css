@@ -640,3 +640,31 @@ body:has(main.night) {
 .quiz .choice[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
 .quiz .choice.used { visibility: hidden; }
 .quiz-star { position: absolute; top: 12px; left: calc(50% - 12px); font-size: 28px; font-style: normal; color: #F5A524; pointer-events: none; }
+
+/* --- Maths (src/maths/): its pictures and sums on the quiz card, and the quiz number line ---
+   Ada's violet marks what is shaded. */
+:root { --maths: #6f4fc4; }
+@media (prefers-color-scheme: dark) {
+  :root { --maths: #b49cf5; }
+}
+.quiz.maths .glyph, .quiz.maths .meaning { font-size: 2.4rem; font-weight: 800; }
+.quiz.maths .slots { font-size: 2rem; font-weight: 800; }
+.pic { display: block; width: 100%; max-width: 300px; }
+.pic + .pic { margin-top: 6px; }
+.pic.grid { max-width: 200px; }
+.pic .cell { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
+.pic .cell.on { fill: var(--maths); }
+.pic .dot { fill: var(--maths); }
+.numline { align-self: stretch; position: relative; min-height: 96px; margin-top: 16px; padding: 30px 16px 0; touch-action: none; cursor: pointer; }
+.numline:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 12px; }
+.track { position: relative; height: 6px; border-radius: 3px; background: var(--line); }
+.track i { position: absolute; top: -9px; width: 3px; height: 24px; margin-left: -1.5px; border-radius: 2px; background: var(--muted); }
+.marker {
+  position: absolute; top: -13px; width: 32px; height: 32px; margin-left: -16px; border-radius: 50%; background: var(--maths);
+  border: 3px solid var(--card); box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
+}
+.marker.right, .marker.answer { background: var(--accent); }
+.marker.wrong { background: var(--wrong); }
+.numline .end { position: absolute; bottom: 8px; font-weight: 700; color: var(--muted); }
+.numline .end:first-of-type { left: 6px; }
+.numline .end:last-of-type { right: 6px; }

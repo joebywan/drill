@@ -340,7 +340,7 @@ export const INTRO_WORDS = {
   courses: 'Courses',
   habitList: 'Habits',
   soon: 'coming soon',
-  soonCourses: ['Maths', 'Coding'],
+  soonCourses: ['Coding'],
   done: 'Show my home',
   first: '{name} is first. Start with the button below.',
   change: 'Change what you see',
@@ -414,4 +414,99 @@ export const KAEDE_HEADLINES = {
   struggled: ['That took some wrestling, and you won.', 'Messy in the middle, tidy at the end.'],
   review: ['Look at that recall!', 'Remembered! The kana are settling in.'],
   relit: ['Streak relit! Ears up!'],
+};
+
+// --- Maths ----------------------------------------------------------------------------------
+
+/**
+ * Ada, the maths coach: an octopus who counts on all eight arms and is very pleased about it.
+ * Quick, a show-off, fond of a dare; she teases the sum, never the person, and praises the method
+ * (making ten, doubling, checking) rather than the learner. Same kinds as LINES, for the runner.
+ */
+export const MATHS_LINES = {
+  correct: [
+    'Yes. Eight arms and I could not have done it neater.',
+    'Spot on. I would have shown off doing it, but fine.',
+    'Correct. I am writing that down. In ink.',
+    'That is the one. Tidy working.',
+    'Right! One step at a time. Lovely.',
+    'Mm. Numbers behaving themselves for once.',
+    'Got it. I counted on four arms to check.',
+  ],
+  wrong: [
+    'Not quite. Read the working, then it is yours.',
+    'Close. Take it in smaller steps and look again.',
+    'Nope, but that is the slip worth making today.',
+    'Not this one. I got that wrong for years. Well, minutes.',
+    'Hm. The numbers fibbed to you there. Check why.',
+    'Not quite. That one comes back at the end, so you get a rematch.',
+  ],
+  run3: [
+    'Three in a row. I may need another arm to keep count.',
+    'Three! Bet you can not make it five.',
+    'Three in a row. Now you are doing it in your head.',
+  ],
+  run5: [
+    'Five in a row! I am running out of fingers. Which is saying something.',
+    'Five! That is steady, careful working.',
+    'Five in a row. Fine, I will admit it: that was tidy.',
+  ],
+  tapped: [
+    'Eight arms. Yes, I count on them. No, you may not borrow one.',
+    'Tens first. Everything is easier from a ten.',
+    'Double, then double again. That is times four, sorted.',
+    'Per cent means out of 100. That is all it ever means.',
+    'A fraction is just a bar, cut fair and shaded.',
+    'I keep a pencil behind my eye. Where else would it go?',
+    'Rosa says chess is harder. Rosa is wrong, and has two arms.',
+    'Take your time. The numbers are not going anywhere.',
+  ],
+  complete: [
+    'Lesson done. These come back in review, so they stick.',
+    'That is the lesson. Short, tidy, done.',
+  ],
+  perfect: [
+    'Every one right first time. Careful working.',
+    'Not a single slip. I checked with all eight arms.',
+  ],
+  fast: [
+    'Quick and right, every one. That is mental maths.',
+    'Fast, and not a guess among them.',
+  ],
+  struggled: [
+    'Every slip you fixed is one you will spot next time.',
+    'You worked those out. That is where the learning happens.',
+    'The tricky ones come back in review. That is the plan, not a penalty.',
+  ],
+  review: [
+    'Review done. Those tricks are sticking.',
+    'Recall like that is how sums get easy.',
+  ],
+  relit: ['That review relit your streak. Welcome back to the numbers.'],
+};
+
+/** Ada's end-screen headlines, the same kinds as HEADLINES. */
+export const MATHS_HEADLINES = {
+  complete: [
+    'Lesson done. Eight arms up!',
+    'And that is a lesson. I would clap, but it takes a while.',
+  ],
+  perfect: [
+    'Flawless. I counted twice to be sure.',
+    'Not one slip! I am putting this on the fridge.',
+    'Perfect. Even my pencil is impressed.',
+  ],
+  fast: [
+    'Done already? I was still sharpening my pencil.',
+    'That was quick. I needed all eight arms to keep up.',
+  ],
+  struggled: [
+    'That took some wrestling, and you came out on top.',
+    'Messy in the middle, tidy at the end. That is real working.',
+  ],
+  review: [
+    'Look at that recall. Somebody has been practising.',
+    'Remembered! The tricks are moving in to stay.',
+  ],
+  relit: ['Streak relit! Ink all round.', 'There it is, the streak is glowing again.'],
 };

@@ -80,7 +80,8 @@ test('intro, learn only: Learn something lists the live courses, the others are 
   await expect(pick(page, 'Japanese')).toBeEnabled(); // live
   await pick(page, 'Chess').click();
   await expect(pick(page, 'Chess')).toHaveAttribute('aria-pressed', 'true');
-  for (const name of ['Maths', 'Coding']) await expect(page.getByRole('button', { name: `${name} · coming soon` })).toBeDisabled();
+  await expect(pick(page, 'Maths')).toBeEnabled(); // live
+  for (const name of ['Coding']) await expect(page.getByRole('button', { name: `${name} · coming soon` })).toBeDisabled();
   await expect(page.getByRole('heading', { name: 'Have you played chess before?' })).toHaveCount(0); // no placement questions
   await page.getByRole('button', { name: 'Show my home' }).click();
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');

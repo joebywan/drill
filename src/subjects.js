@@ -21,6 +21,10 @@ import { clover, demo as cloverDemo, NAME as CLOVER } from './cast/clover.js';
 import { mira, demo as miraDemo, NAME as MIRA } from './cast/mira.js';
 import japaneseCourse from './data/japanese.json' with { type: 'json' };
 import * as quiz from './quiz/exercise.js';
+import mathsCourse from './data/maths.json' with { type: 'json' };
+import * as maths from './maths/exercise.js';
+import { ada, NAME as ADA } from './cast/ada.js';
+import { MATHS_HEADLINES, MATHS_LINES } from './cast/lines.js';
 import { kaede, NAME as KAEDE } from './cast/kaede.js';
 import { KAEDE_HEADLINES, KAEDE_LINES } from './cast/lines.js';
 import focusCourse from './data/focus.json' with { type: 'json' };
@@ -137,6 +141,22 @@ export const subjects = [{
       ['I know how the pieces move', 'Capturing'],
       ['I play now and then', 'Forks'],
       ['I play often and know some tactics', 'Mate in one'],
+    ],
+  },
+}, {
+  // Maths for adults rusty at it: sums and pictures, answers worked out, played as src/quiz/ items.
+  ...mathsCourse,
+  mount: maths.mount,
+  habit: 'learn',
+  kind: 'learn',
+  coach: { draw: ada, name: ADA, start: 'think', lines: MATHS_LINES, headlines: MATHS_HEADLINES },
+  placement: {
+    offer: 'Done some maths already? Skip ahead',
+    question: 'How is your maths?',
+    options: [
+      ['Rusty. Start me at the start', 'Mental maths'],
+      ['Adding in my head is fine', 'Percentages'],
+      ['Percentages are fine too', 'Fractions you can see'],
     ],
   },
 }, {

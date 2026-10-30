@@ -1,7 +1,7 @@
 # Drill — working notes for Claude
 
 A Duolingo-style learning app: lessons that teach, a cast of characters, a streak, review.
-Static page, vanilla ES modules, no build step, no server. Chess and Japanese are live; maths,
+Static page, vanilla ES modules, no build step, no server. Chess, maths and Japanese are live;
 JavaScript, TypeScript and TS test-writing are planned.
 
 **Read the cast brief before building anything:** https://claude.ai/artifact/Td5spDrFgAah2w4PtBc2pn
@@ -74,6 +74,14 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - Japanese: `src/data/japanese.json` (hiragana: vowels, k and s rows, first words), coached by Kaede, a red
   panda (`src/cast/kaede.js`, rig-posed). `test/quiz.test.js` checks every answer against its own kana
   table and that no kana is asked before a teach card shows it.
+- `src/quiz/` also has `line` (drag a marker on a number line, snapped to its ticks, answered on
+  release) and takes a `picture` the course draws through the mount's `ctx.art`, plus `ctx.look`
+  for a course's own styling.
+- `src/maths/` — the Maths course (`src/data/maths.json`: mental maths, percentages, fractions you
+  can see, for adults rusty at maths). Items are written as sums and pictures; `items.js` works every
+  answer out (`value()` reads "15% of $60", so 2/4 is right for 1/2) and `toQuiz()` turns each into a
+  src/quiz item; `problem()` checks both. `exercise.js` draws the ten frame, bars and 100 grid. Coach:
+  Ada, an octopus (`src/cast/ada.js`, posed with `rig()`), with `MATHS_LINES` and `MATHS_HEADLINES`.
 - `src/cast/` — the characters (`kit.js`, `rosa.js`, `lumi.js`), `coach.js` (a character that
   reacts in place) and `lines.js` (everything the cast says; the guardrail tests lint it).
   `tools/cast.html` renders every mood at 200/96/48 px, light and dark.
