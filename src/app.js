@@ -1,4 +1,5 @@
 import { HABITS, subjects } from './subjects.js';
+import { award } from './garden/model.js';
 import { LEARN, emptyProgress, finishPractice, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, soonestKeys, startedHabits, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
@@ -395,6 +396,7 @@ function run(lessonId, queue, title) {
     const firstTime = lessonId && !progress.done[lessonId];
     const mins = Math.max(1, Math.round((Date.now() - started) / 60000));
     progress = writeJournal(finishPractice(progress, subject.habit, lessonId, new Date(), { title: technique, mins }), journal);
+    ({ progress } = award(progress)); // returns `newly` too: the garden screen shows it here
     save();
     const h = HABITS.find((x) => x.id === subject.habit);
     const n = currentStreak(progress, new Date(), h.id);
@@ -443,6 +445,7 @@ function run(lessonId, queue, title) {
     const firstTime = lessonId && !progress.done[lessonId];
     const seconds = Math.round((Date.now() - started) / 1000);
     progress = finishSession(progress, lessonId, results, new Date(), { title: title || 'Review', mins: Math.max(1, Math.round(seconds / 60)) });
+    ({ progress } = award(progress)); // returns `newly` too: the garden screen shows it here
     save();
     const right = results.filter((r) => r.correct).length;
     const perfect = perfectRun();

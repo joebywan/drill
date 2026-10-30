@@ -1,0 +1,100 @@
+import { LEARN, light, startedHabits, today } from '../progress.js';
+import { HABITS, subjects } from '../subjects.js';
+
+/**
+ * The garden, read from progress. Pure. Plants grow from days practised (`habits[h].days`), never
+ * from the streak, so a plant never shrinks. Achievements are kept in `progress.garden.earned` and
+ * are never taken back. The UI needs only `garden()`, and `award()` after a session.
+ */
+
+/** Growth stages: the days practised each one starts at. Later stages take longer, so one is always coming. */
+export const STAGES = [
+  { name: 'seed', at: 0 },
+  { name: 'sprout', at: 1 },
+  { name: 'sapling', at: 5 },
+  { name: 'young', at: 14 },
+  { name: 'full grown', at: 30 },
+];
+
+/**
+ * The stage for `days` practised: { stage 0–4, name, next }, where `next` is { name, in, progress }
+ * (days still to go, and 0–1 of the way there) for the gentle "next stage" hint, or null when full grown.
+ * More days never means a lower stage.
+ */
+export function stage(days) {
+  const n = STAGES.findLastIndex((s) => days >= s.at);
+  const here = STAGES[n];
+  const up = STAGES[n + 1];
+  const next = up && { name: up.name, in: up.at - days, progress: (days - here.at) / (up.at - here.at) };
+  return { stage: n, name: here.name, next: next || null };
+}
+
+const streak = (p, h) => p.habits[h] || { count: 0, days: 0 };
+const nameOf = (h) => HABITS.find((x) => x.id === h).name;
+
+/**
+ * Achievements: { id, habit, gift, text, test(progress) }. `gift` is what arrives: a 'flower'
+ * grows on the plant, anything else is a visitor. `text` is the quiet line for the end screen.
+ * Adding one is a line of data here.
+ */
+export const RULES = [
+  // A flower for every finished unit of a habit's course.
+  ...subjects.flatMap((s) => s.units.map((u) => ({
+    id: `flower:${s.id}:${u.title}`, habit: s.habit, gift: 'flower', text: `A flower opened for ${u.title}`,
+    test: (p) => u.lessons.every((l) => p.done[`${s.id}:${l.id}`]),
+  }))),
+  ...HABITS.flatMap(({ id: h }) => [
+    { id: `butterfly:${h}`, habit: h, gift: 'butterfly', text: 'A butterfly arrived', test: (p) => streak(p, h).count >= 7 },
+    { id: `birds:${h}`, habit: h, gift: 'birds', text: 'Birds came to stay', test: (p) => streak(p, h).days >= 30 },
+  ]),
+  // A bee for trying something new: the first session of any habit but Learning.
+  ...HABITS.filter((h) => h.id !== LEARN).map(({ id: h }) => (
+    { id: `bee:${h}`, habit: h, gift: 'bee', text: `A bee found ${nameOf(h)}`, test: (p) => streak(p, h).days >= 1 })),
+];
+
+/**
+ * Adds every achievement now earned to `progress.garden.earned`, dated today, and returns
+ * { progress, newly: [rule…] }. Never removes one: a streak starting again or the log trimming
+ * changes nothing already given.
+ */
+export function award(progress, now = new Date()) {
+  const earned = progress.garden?.earned || {};
+  const newly = RULES.filter((r) => !earned[r.id] && r.test(progress));
+  if (!newly.length) return { progress, newly };
+  const date = today(now);
+  const more = Object.fromEntries(newly.map((r) => [r.id, date]));
+  return { progress: { ...progress, garden: { ...progress.garden, earned: { ...earned, ...more } } }, newly };
+}
+
+/**
+ * The garden's mood, from each habit's light(): 'sunlit' once any habit is done today; 'resting'
+ * (evening, buds closed, never sad) only when every habit that has had a session is ember;
+ * 'morning' otherwise, including before the first session.
+ */
+export function mood(progress, now = new Date()) {
+  const lit = startedHabits(progress, HABITS.map((h) => h.id))
+    .filter((h) => progress.habits[h]?.last)
+    .map((h) => light(progress, now, h));
+  if (lit.includes('bright')) return 'sunlit';
+  return lit.length && lit.every((l) => l === 'ember') ? 'resting' : 'morning';
+}
+
+/**
+ * Everything the garden screen draws: { mood, plants }, a plant per started habit in HABITS order:
+ * { habit, days, stage, name, next, flowers, visitors }. Flowers and visitors are
+ * [{ id, gift, text, on }], `on` the date it arrived.
+ */
+export function garden(progress, now = new Date()) {
+  const earned = progress.garden?.earned || {};
+  const plants = startedHabits(progress, HABITS.map((h) => h.id)).map((habit) => {
+    const days = streak(progress, habit).days || 0;
+    const got = RULES.filter((r) => r.habit === habit && earned[r.id])
+      .map(({ id, gift, text }) => ({ id, gift, text, on: earned[id] }));
+    return {
+      habit, days, ...stage(days),
+      flowers: got.filter((g) => g.gift === 'flower'),
+      visitors: got.filter((g) => g.gift !== 'flower'),
+    };
+  });
+  return { mood: mood(progress, now), plants };
+}

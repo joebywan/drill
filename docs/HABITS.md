@@ -71,9 +71,11 @@ The app's vibe moves from "build knowledge" to "grow yourself", shown as a garde
 - Later: seasonal events that change the whole garden (blossom, lanterns), Lumi by a pond,
   and reconsidering the name "Drill".
 
-9. [ ] **Garden model.** Pure: days practised per habit (kept permanently, not from the
+9. [x] **Garden model.** Pure: days practised per habit (kept permanently, not from the
    year-long log), growth stage, achievement rules and an `earned` record, and the garden's
    mood. Progress v4 with `migrate()`.
+   Done in `src/garden/model.js`: stages at 0/1/5/14/30 days, the `RULES` table, `award()`
+   after each finish in app.js, and `garden()`, the one read model for the screen.
 10. [ ] **Garden art.** SVG plants per habit across five stages, flowers, visitors and the
     three moods, with a harness like tools/cast.html.
 11. [ ] **Garden screen.** A garden strip on home and a full garden view. Tapping a plant

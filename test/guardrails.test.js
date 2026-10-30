@@ -220,3 +220,12 @@ test('every practice habit answers each "How do you feel?" reply in its own coac
   for (const s of subjects.filter((x) => x.kind === 'practice'))
     for (const [value] of feelsFor(s.coach.feel)) assert.ok(s.coach.lines[value]?.length, `${s.habit}: ${value}`);
 });
+
+// The garden: every achievement line and stage name is gentle. Nothing is lost, nothing is owed.
+import { RULES as GARDEN_RULES, STAGES as GARDEN_STAGES } from '../src/garden/model.js';
+
+test('garden text has no loss, guilt, urgency or ability words', () => {
+  const texts = [...GARDEN_RULES.map((r) => r.text), ...GARDEN_STAGES.map((s) => s.name)];
+  assert.ok(texts.length > 10);
+  for (const text of texts) for (const lint of [LOSS, URGENCY, ABILITY]) assert.doesNotMatch(text, lint, text);
+});
