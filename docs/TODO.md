@@ -172,28 +172,54 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 **Coding: bigger improvements**
 
 - **Let the learner lay out the structure.** "Build" means filling holes in a given shape; nobody
-  ever places a whole loop or if themselves. This is the biggest gap against real programming.
-- **Fresh numbers, not only flips.** A mirrored "how many times?" still has the same count, so it can
-  be remembered. Generate levels from templates (a line of n, stairs of k), with the explanation
-  worked out and `problem()` run over many seeds.
+  ever places a whole loop or if themselves. This is the biggest gap against real programming; see
+  free block-building below.
+- **Fresh numbers.** Done for Coding and Maths (#99, `tools/variants.js`). Still only flipped: all 28
+  find-the-bug items, and one-offs such as `if-3-two`, `nest-2-zig`, `var-2-order`, `logic-2-*`,
+  `param-2-pass2`, `until-2-ok`. Thin pools (2 fresh versions for some items): `var-by`, `draw-ring-list`,
+  `draw-spiral`, `read-spiral`, `nest-times`, `nest-sizes`, `rock-round`. `frac-2-4q` stays as written.
+- **The biggest tile always wins on counting items.** Fennel stops at the flower, so any big enough
+  count is right, and a learner can just tap the largest. Needs "exactly enough" or a rule change.
+- **Free block-building with a Run button** (agreed): unscramble, then a palette with a block limit,
+  then free build. Run is the one allowed Check, because pressing it is part of programming.
 - **Events** ("when Fennel reaches a rock") were left out; they fit the JavaScript course better.
-- **A JavaScript course where you type code,** graded by running it, with Fennel walking the result.
+- **A JavaScript course like a language course** (agreed: no typing). Choose word chips and place them,
+  as Duolingo does. Graded by running it through a small interpreter for a JavaScript subset, any valid
+  arrangement right, Fennel walking the result. One builder for this and the unscramble stage; TypeScript,
+  test-writing and Japanese sentences could reuse it.
 
 **Repetition engine**
 
-- **Maths repeats as written.** Give it fresh numbers on repeats. Its prompts and explanations quote
-  numbers, so they need working out from the sum.
 - **Japanese repeats as written.** Consider asking the other way round on a repeat (sound to kana).
 - **Chess only varies star puzzles.** Move items and real-game puzzles don't repeat in a session.
   Mirroring move items is possible; castling and text naming squares need care.
-- **Tune the numbers** in `src/repeat.js` (2 warm-ups, 3 echoes, 8 in a checkpoint) from play. An echo
-  is picked at random, so it can't yet favour what was hard.
-- **Warm-ups pick closest-to-slipping cards** and can repeat across lessons; check they stay varied.
+- **Tune the numbers** from play: `src/repeat.js` (2 warm-ups, 3 echoes, 8 in a checkpoint) and `src/adapt.js`
+  (3 goes, 2 misses in 4, 8 right to cut repeats). Warm-ups can repeat across lessons; check they stay varied.
+- **Adapting further.** The answer log (#97) doesn't record hints yet. A lesson could finish on evidence (two
+  fresh right in a row) rather than a fixed list. Explanations are per unit; go per concept where one doesn't help.
+- **Not played yet:** the "One step back" flow has only run in tests.
+
+**Chess modes** (order to decide; Mate suggested first, as it exists)
+
+- **Mate:** port Daybook's game (`puzzles/Chess*.kt`, on its origin/main) to JS: mate in 2, 3 or 4 against a best
+  defender, with its proven Lichess positions.
+- **Capture game:** our own design. Reports of Duolingo's, unconfirmed: 90 seconds, one or two pieces, no king,
+  Black hunts your best piece, new pieces can appear. Check in the app before settling on the rules.
+- **Play Rosa:** full games at a few levels, with a small engine on chess.js. Not Stockfish (GPL), not Oscar.
 
 **Characters**
 
-- **Practice habits have no "Meet" screen.** Calm, Move, Focus and the rest only got their coach on
-  the path. Add `hello` to them if the first session feels abrupt.
+- **Practice coaches' first card should name them.** Not a whole "Meet" screen, as a tap before a breathing
+  exercise is the wrong friction: one line ("I'm Moss. Breathe in for 4...").
+
+**Layouts from phone testing**
+
+- **Move** got the Screen break's X and header change, but keeps its full-width Pause and has no on-screen how.
+  Check whether it should match. Other timed practices too.
+- **Screen break on a phone:** check the new layout there. Later sessions have no room-check card, only
+  "Next: Stand and stretch".
+- **Dark board's ledge shadow** is faint, and a very fast second tap as a piece lands can be dropped.
+- **Cast brief** (the Claude Doc) still describes lamps and predates quest markers, the garden and no XP.
 
 **Phone back button**
 

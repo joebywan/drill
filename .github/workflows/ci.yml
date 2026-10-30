@@ -24,8 +24,11 @@ jobs:
 
       - run: npm ci
       - run: npm test
-      # The sync worker (server/), whose dependencies the root npm ci installs (postinstall): its API tests,
-      # and the local worker sync.spec.js runs against.
-      - run: npm test --prefix server
+      # The sync worker (server/) is only tested while sync is on (SYNC in src/sync/config.js); sync.spec.js
+      # skips the same way. Its dependencies come from the root npm ci (postinstall).
+      - id: flag
+        run: node --input-type=module -e "import { SYNC } from './src/sync/config.js'; console.log('sync=' + SYNC)" >> "$GITHUB_OUTPUT"
+      - if: steps.flag.outputs.sync == 'true'
+        run: npm test --prefix server
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
