@@ -446,7 +446,7 @@
                 "h2"
               ],
               "moves": 3,
-              "prompt": "A pawn reaching the far side becomes any piece but a king. Here, a queen. 3 moves.",
+              "prompt": "A pawn reaching the far side becomes any piece but a king: you pick. Here, take the queen. 3 moves.",
               "explain": "b7, b8 makes a queen, and the queen runs down the diagonal to h2."
             }
           ]

@@ -9,11 +9,11 @@ import { SEASONS } from './season.js';
  *   MOODS                   ['sunlit', 'morning', 'resting'], as model.js `mood()` returns them
  *   SIZE                    { strip: [360, 124], tall: [360, 390] }, the viewBox of each shape: little
  *                           sky, so the plants fill the view
- *   scene(mood, shape = 'tall', season = 'summer') -> svg string
+ *   scene(mood, shape = 'tall', season = 'summer', event) -> svg string
  *       sky, sun or moon, two rows of hills and the ground. Resting
  *       is a warm evening with a moon and fireflies. The season (season.js) tints the land and adds
  *       its decoration: spring blossom, summer wildflowers, autumn falling leaves, winter frost and
- *       lanterns. Plants are never touched by it. Colours come from palette constants written into the svg as CSS, with a
+ *       lanterns. A seasonal event's id (events.js) repaints the sky and the land and dresses the whole scene on top of that. Plants are never touched by either. Colours come from palette constants written into the svg as CSS, with a
  *       `prefers-color-scheme: dark` set, so one string works in both themes.
  *   slots(shape, n = 6) -> [{ x, y, w }]   up to MAX_PLANTS
  *       Where n plants go (1–12), in the scene's viewBox: (x, y) is the base of the plant and w its
@@ -60,12 +60,19 @@ const SEASON = {
   autumn: { light: { far: '#D8BC7E', near: '#CDA562', ground: '#A9B565', shade: '#94984E', pond: '#86B6CC' }, dark: { far: '#4F4930', near: '#5A4E2D', ground: '#46512F', shade: '#3A4327', pond: '#2A4A60' } },
   winter: { light: { far: '#D9E6EE', near: '#C6D9E2', ground: '#ADC8B9', shade: '#97B3A4', pond: '#CFE6F2' }, dark: { far: '#344452', near: '#2F414B', ground: '#2C4541', shade: '#243934', pond: '#4A6578' } },
 };
+// A seasonal event repaints more than a season does, the sky included.
+const EVENT = {
+  'spring-market': { light: { sky: '#FFE0EA', band: '#FFF1C4', far: '#BFE3A6', near: '#A5DA8A', ground: '#93D277' }, dark: { sky: '#2B2244', band: '#50335C', far: '#31604A', near: '#35704C', ground: '#336A40' } },
+  'summer-tournament': { light: { sky: '#86D0F5', band: '#FFF0B0', far: '#8ED07C', near: '#78C766', ground: '#6CC058', shade: '#57A848' }, dark: { sky: '#12294C', band: '#2B4C60', far: '#25593F', near: '#286A3F', ground: '#2A6E3A', shade: '#215A2E' } },
+  'autumn-harvest': { light: { sky: '#F5C088', band: '#FCE2AE', far: '#CB8C47', near: '#BC7631', ground: '#AE8C3E', shade: '#94752F' }, dark: { sky: '#2A1B2C', band: '#58331F', far: '#5C3B20', near: '#50301A', ground: '#493C1D', shade: '#3A2F16' } },
+  'winter-festival': { light: { sky: '#B5C6E3', band: '#E9DDEB', far: '#EEF3F8', near: '#E2EBF3', ground: '#F4F8FB', shade: '#C7D7E2', pond: '#D4E7F2' }, dark: { sky: '#131A36', band: '#2C3359', far: '#56677F', near: '#4B5D73', ground: '#5B6E83', shade: '#43556B', pond: '#6C8BA1' } },
+};
 const RIM = { light: '#A7A39A', dark: '#5D5A55' };
 
-const css = (mood, season) => {
+const css = (mood, season, event) => {
   const scope = `.garden-${mood}.season-${season}`;
   const rules = (p) => Object.entries(p).map(([k, v]) => `${scope} .g-${k}{fill:${v}}`).join('');
-  const theme = (t) => rules({ ...PALETTE[mood][t], ...SEASON[season][t], rim: RIM[t] });
+  const theme = (t) => rules({ ...PALETTE[mood][t], ...SEASON[season][t], ...EVENT[event]?.[t], rim: RIM[t] });
   // The frost line is a stroke: white in the light, a dim blue-grey haze in the dark.
   const frost = (t) => `${scope} .g-frost{stroke:${t === 'dark' ? '#9FB4C6' : '#FFFFFF'};opacity:${t === 'dark' ? 0.35 : 0.7}}`;
   return `<style>${theme('light')}${frost('light')}@media (prefers-color-scheme: dark){${theme('dark')}${frost('dark')}}</style>`;
@@ -104,6 +111,55 @@ const touches = (season, W, H, hy, k, rand, tall) => {
   return frost + [0.18, 0.5, 0.82].map((t) => lantern(f(W * t), f(hy - 8 * k))).join('');
 };
 
+/** A line of little flags sagging across the scene, at height y. */
+const bunting = (W, y, k, colours, count) => {
+  const at = (t) => [W * t, y + 14 * k * 4 * t * (1 - t)];
+  const flags = Array.from({ length: count }, (_, i) => {
+    const [x, fy] = at((i + 0.5) / count);
+    return `<path fill="${colours[i % colours.length]}" d="M${f(x - 4 * k)} ${f(fy)} L${f(x + 4 * k)} ${f(fy)} L${f(x)} ${f(fy + 9 * k)}Z"/>`;
+  }).join('');
+  return `<path d="M0 ${f(y)} Q${W / 2} ${f(y + 28 * k)} ${W} ${f(y)}" stroke="#7E5432" stroke-width="${f(0.8 * k)}" fill="none"/>${flags}`;
+};
+
+/** What an event lays over the whole scene, under the plants. */
+const dressing = (event, W, H, hy, k, rand, tall) => {
+  const count = (strip, full) => (tall ? full : strip);
+  const many = (fn, n) => Array.from({ length: n }, (_, i) => fn(i)).join('');
+  const onGrass = () => [f(rand() * W), f(hy + 8 + rand() * (H - hy - 14))];
+  if (event === 'spring-market') {
+    const awning = (x) => `<rect fill="#FFF8E8" x="${f(x)}" y="${f(hy - 14 * k)}" width="${f(26 * k)}" height="${f(12 * k)}"/>`
+      + many((i) => `<rect fill="${i % 2 ? '#FFFFFF' : '#E8743B'}" x="${f(x - 2 * k + i * 6 * k)}" y="${f(hy - 20 * k)}" width="${f(6 * k)}" height="${f(7 * k)}"/>`, 5);
+    return bunting(W, 8 * k, k, ['#F28CB1', '#F5C230', '#7CC0E3', '#FFFFFF'], count(14, 16)) + [0.08, 0.42, 0.78].map((t) => awning(W * t)).join('')
+      + many(() => `<ellipse data-part="petal" fill="#F7B6CE" cx="${f(rand() * W)}" cy="${f(rand() * hy)}" rx="2.4" ry="1.5"/>`, count(8, 16));
+  }
+  if (event === 'summer-tournament') {
+    // Mown stripes, a giant board on the lawn and pennants along the hill.
+    const stripes = many((i) => `<rect fill="#FFFFFF" opacity=".1" x="${f((i * 2 * W) / 10)}" y="${f(hy + 6)}" width="${f(W / 10)}" height="${f(H - hy - 6)}"/>`, 5);
+    const s = 9 * k, x0 = W * 0.04, y0 = H - 6 * s;
+    const squares = many((i) => {
+      const c = i % 6, r = Math.floor(i / 6);
+      return `<rect fill="${(c + r) % 2 ? '#FFF8E8' : '#3D5A45'}" opacity=".75" x="${f(x0 + c * s)}" y="${f(y0 + r * s * 0.7)}" width="${f(s)}" height="${f(s * 0.7)}"/>`;
+    }, tall ? 36 : 0);
+    const flag = (x, c) => `<path d="M${f(x)} ${f(hy - 2 * k)} V${f(hy - 28 * k)}" stroke="#7E5432" stroke-width="${f(k)}"/><path fill="${c}" d="M${f(x)} ${f(hy - 28 * k)} L${f(x + 12 * k)} ${f(hy - 24 * k)} L${f(x)} ${f(hy - 20 * k)}Z"/>`;
+    return stripes + squares + many((i) => flag(W * (0.06 + i * 0.125), ['#E8743B', '#F5C230', '#4C8FD6', '#D9532F'][i % 4]), 8);
+  }
+  if (event === 'autumn-harvest') {
+    const pumpkin = (x, y, z) => `<ellipse fill="#E8743B" cx="${x}" cy="${y}" rx="${f(6 * z)}" ry="${f(4.6 * z)}"/><ellipse fill="#F08C4A" cx="${x}" cy="${y}" rx="${f(2.6 * z)}" ry="${f(4.6 * z)}"/><rect fill="#5F7A3A" x="${f(x - 0.8 * z)}" y="${f(y - 6 * z)}" width="${f(1.6 * z)}" height="${f(2.2 * z)}"/>`;
+    const bale = (x) => `<rect fill="#E2B85C" x="${f(x)}" y="${f(hy - 15 * k)}" width="${f(18 * k)}" height="${f(11 * k)}" rx="${f(2 * k)}"/><path d="M${f(x + 6 * k)} ${f(hy - 15 * k)} v${f(11 * k)} M${f(x + 12 * k)} ${f(hy - 15 * k)} v${f(11 * k)}" stroke="#B98F3E" stroke-width="${f(0.8 * k)}"/>`;
+    return [0.12, 0.5, 0.86].map((t) => bale(W * t)).join('') + many(() => { const [x, y] = onGrass(); return pumpkin(x, y, tall ? 1.3 : 0.9); }, count(7, 12))
+      + many(() => `<path data-part="leaf" fill="#D9532F" d="M0 -3 Q3 0 0 3 Q-3 0 0 -3Z" transform="translate(${f(rand() * W)} ${f(rand() * hy)})"/>`, count(6, 12));
+  }
+  if (event === 'winter-festival') {
+    const lights = many((i) => {
+      const t = (i + 0.5) / count(14, 18);
+      return `<circle data-part="lantern" fill="${['#FFD978', '#F28C8C', '#8FD3F5'][i % 3]}" cx="${f(W * t)}" cy="${f(10 * k + 14 * k * 4 * t * (1 - t) + 1.5 * k)}" r="${f(2 * k)}"/>`;
+    }, count(14, 18));
+    return `<path d="M0 ${f(10 * k)} Q${W / 2} ${f(38 * k)} ${W} ${f(10 * k)}" stroke="#5B4A3A" stroke-width="${f(0.8 * k)}" fill="none"/>${lights}`
+      + many(() => `<circle data-part="petal" fill="#FFFFFF" cx="${f(rand() * W)}" cy="${f(rand() * (hy + 30))}" r="${f(1 + rand() * 1.4)}"/>`, count(16, 36));
+  }
+  return '';
+};
+
 // A small seeded random, so a scene draws the same every time.
 const seeded = (seed) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 const f = (v) => Math.round(v * 10) / 10;
@@ -134,7 +190,8 @@ export const pond = () => `<svg class="pond" viewBox="0 0 80 50" overflow="visib
   + `<ellipse class="g-pond" cx="53" cy="41.4" rx="14" ry="3.6"/></g>`
   + `<path d="M28 42 q4 -1.4 8 0" stroke="#FFFFFF" stroke-width="1" fill="none" opacity=".6" stroke-linecap="round"/></svg>`;
 
-export function scene(mood = 'morning', shape = 'tall', season = 'summer') {
+export function scene(mood = 'morning', shape = 'tall', season = 'summer', event = null) {
+  const e = EVENT[event] ? event : null;
   const m = PALETTE[mood] ? mood : 'morning';
   const s = SEASONS.includes(season) ? season : 'summer';
   const [W, H] = SIZE[shape] || SIZE.tall;
@@ -172,9 +229,9 @@ export function scene(mood = 'morning', shape = 'tall', season = 'summer') {
         return `<g data-part="firefly"><circle class="g-dot" cx="${x}" cy="${y}" r="5" opacity=".28"/><circle class="g-dot" cx="${x}" cy="${y}" r="1.8"/></g>`;
       }).join('')
       : '';
-  const decor = touches(s, W, H, hy, k, seeded(tall ? 11 : 5), tall);
-  return `<svg class="garden-scene garden-${m} season-${s} garden-${tall ? 'tall' : 'strip'}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">`
-    + `${css(m, s)}${sky}${land}${decor}${life}</svg>`;
+  const decor = touches(s, W, H, hy, k, seeded(tall ? 11 : 5), tall) + (e ? dressing(e, W, H, hy, k, seeded(tall ? 13 : 17), tall) : '');
+  return `<svg class="garden-scene garden-${m} season-${s}${e ? ` event-${e}` : ''} garden-${tall ? 'tall' : 'strip'}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">`
+    + `${css(m, s, e)}${sky}${land}${decor}${life}</svg>`;
 }
 
 export function slots(shape = 'tall', n = 6) {
