@@ -644,7 +644,7 @@ body:has(main.night) {
 .chip.winddown { --c: var(--chip-winddown); flex: 0 1 180px; margin: 0 auto; }
 
 /* --- Courses on the Learning tab, and the tap-and-match quiz items (src/quiz/) --- */
-.courses { display: flex; gap: 8px; justify-content: center; margin: 4px 0 8px; }
+.courses { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 4px 0 8px; }
 .course { padding: 6px 14px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); font-weight: 600; font-size: .9rem; }
 .course[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 /* Japanese uses the system's own font for it (Noto Sans JP on Android): nothing is downloaded. */
