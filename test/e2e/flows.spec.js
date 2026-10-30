@@ -230,7 +230,12 @@ test('a screen break is taught once, plays its six steps on the clock, and keeps
 });
 
 test('grounding is tap-to-count, and stopping is one tap with no questions', async ({ page }) => {
-  await firstBreathing(page); // grounding opens once breathing has been started
+  await firstBreathing(page);
+  await continueButton(page).click();
+  // Grounding opens once the sigh, the unit before it, has been started.
+  await page.getByRole('button', { name: 'Two breaths in, one long out', exact: true }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.clock.runFor(31_000);
   await continueButton(page).click();
   await page.getByRole('button', { name: 'Five senses' }).click();
   await page.getByRole('button', { name: 'Start' }).click();
@@ -241,9 +246,9 @@ test('grounding is tap-to-count, and stopping is one tap with no questions', asy
   await expect(page.getByRole('heading', { name: '3 things you can touch' })).toBeVisible();
   await page.getByRole('button', { name: 'Stop' }).click();
   await expect(tab(page, 'Calm')).toHaveAttribute('aria-pressed', 'true');
-  // Stopping logs nothing: today still shows just the breathing.
+  // Stopping logs nothing: today still shows just the breathing and the sigh.
   await week(page, 1).click();
-  await expect(page.locator('.day').first().getByRole('listitem')).toHaveCount(1);
+  await expect(page.locator('.day').first().getByRole('listitem')).toHaveCount(2);
 });
 
 test('Reflect keeps two lines and a skip, on its own streak, and shows them back in the habit view', async ({ page }) => {
@@ -581,3 +586,116 @@ for (const colorScheme of ['light', 'dark']) {
     });
   }
 }
+
+/** Calm with `lessons` done (ids like 'breathe1'), so later units are open, loaded before the page. */
+async function calmDone(page, lessons) {
+  let p = { ...emptyProgress(), start: { chess: basics.units[0].title } };
+  for (const id of lessons) p = finishPractice(p, 'calm', `calm:${id}`, new Date());
+  await page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
+}
+
+/** Records every synthesised tone's frequency and every noise loop started, in window.heard. */
+async function listen(page) {
+  await page.addInitScript(() => {
+    window.heard = { tones: [], noise: 0 };
+    const tone = OscillatorNode.prototype.start;
+    OscillatorNode.prototype.start = function (...a) { window.heard.tones.push(this.frequency.value); return tone.apply(this, a); };
+    const loop = AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start = function (...a) { window.heard.noise++; return loop.apply(this, a); };
+  });
+}
+
+test('the sigh is taught once, then two breaths in and one long sigh out, with Moss along', async ({ page }) => {
+  await calmDone(page, ['breathe1']);
+  await page.clock.install();
+  await page.goto('/');
+  await tab(page, 'Calm').click();
+  await expect(page.getByRole('heading', { name: 'Sighing' })).toBeVisible();
+  await page.getByRole('button', { name: 'Two breaths in, one long out', exact: true }).click();
+  await expect(page.getByText('take a short extra sniff on top')).toBeVisible();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await expect(page.getByText('Sigh 1 of 3')).toBeVisible();
+  await expect(page.locator('#said')).toHaveText('In through your nose…');
+  await page.clock.runFor(3_000);
+  await expect(page.locator('#said')).toHaveText('and a little more');
+  await page.clock.runFor(1_000);
+  await expect(page.locator('#said')).toHaveText('and one long sigh out');
+  await expect(page.locator('.cast-moss.mood-exhale')).toBeVisible();
+  await page.clock.runFor(6_000);
+  await expect(page.getByText('Sigh 2 of 3')).toBeVisible();
+  await page.clock.runFor(20_000);
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+  await expect(page.getByText(/^3 sighs · \d+ min$/)).toBeVisible();
+  await continueButton(page).click();
+  await expect(page.getByRole('button', { name: 'Two breaths in, one long out, done' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Five long sighs', exact: true })).toBeEnabled();
+});
+
+test('the butterfly hug: Moss crosses its arms, and left and right light in turn, a second each', async ({ page }) => {
+  await calmDone(page, ['breathe1', 'ground1']);
+  await page.clock.install();
+  await page.goto('/');
+  await tab(page, 'Calm').click();
+  await page.getByRole('button', { name: 'Cross your arms', exact: true }).click();
+  await expect(page.getByText('Cross your arms over your chest')).toBeVisible();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await expect(page.locator('.cast-moss.mood-hug')).toBeVisible();
+  await expect(page.getByText('Tap 1 of 40')).toBeVisible();
+  await expect(page.locator('.sides .on')).toHaveText('Left');
+  await page.clock.runFor(1_000);
+  await expect(page.getByText('Tap 2 of 40')).toBeVisible();
+  await expect(page.locator('.sides .on')).toHaveText('Right');
+  // Pausing holds the taps too.
+  await page.getByRole('button', { name: 'Pause' }).click();
+  await page.clock.runFor(30_000);
+  await expect(page.getByText('Tap 2 of 40')).toBeVisible();
+  await page.getByRole('button', { name: 'Carry on' }).click();
+  await page.clock.runFor(39_000);
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+  await expect(page.getByText(/^40 slow taps · \d+ min$/)).toBeVisible();
+});
+
+test('Calm sounds: the bell rings at the start and end, rain is off until turned on, and mute silences both', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await listen(page);
+  await calmDone(page, ['breathe1']);
+  await page.clock.install();
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Your progress' }).click();
+  const bell = page.getByRole('button', { name: 'A soft bell at the start and end' });
+  const rainButton = page.getByRole('button', { name: 'Soft rain while you practise' });
+  await expect(bell).toHaveAttribute('aria-pressed', 'true');
+  await expect(rainButton).toHaveAttribute('aria-pressed', 'false');
+  await rainButton.click();
+  await expect(rainButton).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Back' }).click();
+
+  const bells = () => page.evaluate(() => window.heard.tones.filter((f) => f === 528).length);
+  await tab(page, 'Calm').click();
+  await page.getByRole('button', { name: 'Continue · Five slow breaths' }).click();
+  await expect(page.getByText('Breath 1 of 5')).toBeVisible();
+  expect(await bells()).toBe(1);
+  expect(await page.evaluate(() => window.heard.noise)).toBe(1);
+  await page.clock.runFor(60_000);
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+  expect(await bells()).toBe(2);
+
+  // Muted on the home bar: no bell and no rain.
+  await continueButton(page).click();
+  await page.getByRole('button', { name: 'Sound' }).click();
+  await page.getByRole('button', { name: 'Continue · Six slow breaths' }).click();
+  await expect(page.getByText('Breath 1 of 6')).toBeVisible();
+  expect(await bells()).toBe(2);
+  expect(await page.evaluate(() => window.heard.noise)).toBe(1);
+});
+
+test('under reduced motion Calm stays quiet: no bell, no rain', async ({ page }) => {
+  await listen(page);
+  await page.addInitScript(() => localStorage.setItem('drill.rain', 'on'));
+  await calmDone(page, ['breathe1']);
+  await page.goto('/');
+  await tab(page, 'Calm').click();
+  await page.getByRole('button', { name: 'Continue · Five slow breaths' }).click();
+  await expect(page.getByText('Breath 1 of 5')).toBeVisible();
+  expect(await page.evaluate(() => [window.heard.tones.includes(528), window.heard.noise])).toEqual([false, 0]);
+});

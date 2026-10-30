@@ -7,8 +7,8 @@ import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
 import { reducedMotion } from './cast/kit.js';
-import { feelsFor, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
-import { buzz, move, play, setSound, soundOn } from './feel.js';
+import { CALM_SOUNDS, feelsFor, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
+import { buzz, calmPref, move, play, setPref, setSound, soundOn } from './feel.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
 
@@ -706,8 +706,18 @@ function keep(note = '') {
       <button class="choice" data-load>Load from a file</button>
       <input type="file" accept=".json,application/json" hidden>
       <p class="said" role="status">${esc(note)}</p>
+      <h2>Calm sounds</h2>
+      ${CALM_SOUNDS.map(([name, label]) => `<button class="choice" data-pref="${name}" aria-pressed="${calmPref(name)}">${esc(label)}</button>`).join('')}
       <button class="choice" data-back>Back</button>
     </main>`;
+  for (const b of app.querySelectorAll('[data-pref]')) {
+    b.addEventListener('click', () => {
+      const on = b.getAttribute('aria-pressed') !== 'true';
+      setPref(b.dataset.pref, on);
+      b.setAttribute('aria-pressed', on);
+      if (on && b.dataset.pref === 'bell') play('bell');
+    });
+  }
   const status = app.querySelector('[role="status"]');
   const input = app.querySelector('input');
   focusOn('h1');

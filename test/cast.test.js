@@ -42,10 +42,16 @@ test('breathe animates the body for exactly the phase, and stays still under red
   breathe(el, 'out', 8);
   assert.equal(calls[1][1].duration, 8000);
   assert.equal(calls[1][0][0].transform, calls[0][0][1].transform); // out starts where in ended
-  assert.equal(breathe(el, 'sigh', 1), null);
+  // The double-inhale sigh: in, a top-up past full, then a sigh out from there to rest.
+  breathe(el, 'top', 1);
+  breathe(el, 'sigh', 6);
+  assert.equal(calls[2][0][0].transform, calls[0][0][1].transform, 'the top-up starts where in ended');
+  assert.equal(calls[3][0][0].transform, calls[2][0][1].transform, 'the sigh starts where the top-up ended');
+  assert.equal(calls[3][0][1].transform, calls[0][0][0].transform, 'and settles to rest');
+  assert.equal(breathe(el, 'gasp', 1), null);
   globalThis.matchMedia = () => ({ matches: true });
   try { assert.equal(breathe(el, 'hold', 4), null); } finally { delete globalThis.matchMedia; }
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 4);
 });
 
 test('a Clover pose moves the same parts, never redraws them', () => {

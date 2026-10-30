@@ -8,18 +8,22 @@ import { move } from '../feel.js';
  *
  * API (for the Calm practice engine):
  *   NAME                       the display name; renaming the character is this one line
- *   MOODS                      ['guide', 'inhale', 'hold', 'exhale', 'notice', 'done', 'idle', 'tapped']
+ *   MOODS                      ['guide', 'inhale', 'hold', 'exhale', 'notice', 'done', 'idle', 'tapped', 'hug']
  *   moss(mood) -> svg string   draw a mood; works with coach(el, moss) like Rosa and Lumi
  *   breathe(el, phase, seconds) -> Animation | null
- *       phase 'in' | 'hold' | 'out'. Swells ('in'), holds full ('hold') or settles ('out') the
+ *       phase 'in' | 'hold' | 'out' | 'top' | 'sigh'. Swells ('in'), holds full ('hold') or settles ('out') the
+ *       body; for the double-inhale sigh, 'top' swells a little past full and 'sigh' settles from there. The
  *       body of the character inside `el` (the svg or its container) over exactly `seconds`.
  *       Keyframes are absolute, so it is safe to call right after a redraw. Returns null under
  *       reduced motion; the inhale and hold drawings are already swelled, so set the matching
  *       mood each phase and the breath still reads. Keep your own clock: don't time phases by
  *       the returned animation, which is null when motion is off.
+ *   tap(el, side) -> Animation | null
+ *       side 'left' | 'right'. In the 'hug' pose, that paw pats its shoulder once (about half a
+ *       second). Null under reduced motion; the words say which side.
  */
 export const NAME = 'Moss';
-export const MOODS = ['guide', 'inhale', 'hold', 'exhale', 'notice', 'done', 'idle', 'tapped'];
+export const MOODS = ['guide', 'inhale', 'hold', 'exhale', 'notice', 'done', 'idle', 'tapped', 'hug'];
 
 const FUR = '#9C6B48';
 const FUR_SHADE = '#835736';
@@ -38,6 +42,7 @@ const FACES = {
   done:   { eyes: 'proud',            brows: [0, 0],     mouth: 'smile', blush: true },
   idle:   { eyes: 'open',  lid: 0.4,  brows: [0, 0],     mouth: 'smile', dx: -1 },
   tapped: { eyes: 'happy',            brows: [3, 0],     mouth: 'open', blush: true },
+  hug:    { eyes: 'open',  lid: 0.55, brows: [0, 0],     mouth: 'smile' },
 };
 
 // Paw tips per mood: [left, right]. Short arms; they rise with the breath and fall with it.
@@ -51,16 +56,18 @@ const ARMS = {
   done:   [[42, 84], [58, 84]],   // paws folded on the belly
   idle:   [[21, 90], [79, 90]],
   tapped: [[14, 58], [86, 58]],
+  hug:    [[67, 78], [33, 78]],   // arms crossed over the chest: the butterfly hug
 };
 
 // The breath: a swell from the feet. FULL as an svg attribute (static drawings) and as CSS (breathe).
 const FULL_ATTR = 'translate(50 110) scale(1.06 1.05) translate(-50 -110)';
-const REST = 'scale(1, 1)', FULL = 'scale(1.06, 1.05)';
+const REST = 'scale(1, 1)', FULL = 'scale(1.06, 1.05)', TOP = 'scale(1.09, 1.07)';
 const SWELLED = new Set(['inhale', 'hold']);
 
 export function moss(mood = 'guide') {
   const f = FACES[mood] ? mood : 'guide';
   const [lh, rh] = ARMS[f];
+  const arm = f === 'hug' ? FUR_SHADE : FUR; // crossed arms in shade, so they read against the chest
   return svg(NAME.toLowerCase(), f, `
     ${shadow(28)}
     <g data-part="body"${SWELLED.has(f) ? ` transform="${FULL_ATTR}"` : ''}>
@@ -75,11 +82,11 @@ export function moss(mood = 'guide') {
         <ellipse cx="43" cy="49" rx="2.6" ry="1.8" fill="${INK}"/><ellipse cx="57" cy="49" rx="2.6" ry="1.8" fill="${INK}"/>
         ${face(FACES[f], { cx: 50, cy: 33, skin: FUR, mouthY: 25 })}
       </g>
-      <g data-part="arms">${limb(L, lh, FUR, FUR, 11)}${limb(R, rh, FUR, FUR, 11)}</g>
+      <g data-part="arms"><g data-arm="left">${limb(L, lh, arm, arm, 11)}</g><g data-arm="right">${limb(R, rh, arm, arm, 11)}</g></g>
     </g>`);
 }
 
-const PHASES = { in: [REST, FULL], hold: [FULL, FULL], out: [FULL, REST] };
+const PHASES = { in: [REST, FULL], hold: [FULL, FULL], out: [FULL, REST], top: [FULL, TOP], sigh: [TOP, REST] };
 
 export function breathe(el, phase, seconds) {
   const body = el?.querySelector('[data-part="body"]');
@@ -88,4 +95,10 @@ export function breathe(el, phase, seconds) {
   const [from, to] = PHASES[phase];
   return move(body, [{ transform: from }, { transform: to }],
     { duration: seconds * 1000, easing: 'ease-in-out', fill: 'forwards' });
+}
+
+export function tap(el, side) {
+  return move(el?.querySelector(`[data-arm="${side}"]`), [
+    { transform: 'translate(0, 0)' }, { transform: 'translate(0, 3px)' }, { transform: 'translate(0, 0)' },
+  ], { duration: 450, easing: 'ease-in-out' });
 }

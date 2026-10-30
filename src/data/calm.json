@@ -28,6 +28,29 @@
       ]
     },
     {
+      "title": "Sighing",
+      "lessons": [
+        {
+          "id": "sigh1",
+          "title": "Two breaths in, one long out",
+          "items": [
+            {
+              "id": "sigh-teach",
+              "type": "teach",
+              "say": "This one is a sigh, done on purpose. Capybaras sigh a lot. It's one of our best things.",
+              "text": [
+                "Breathe in through your nose. Then, before breathing out, take a short extra sniff on top.",
+                "Then let it all go in one long, slow sigh through your mouth.",
+                "It's the same sigh you'd do without thinking. If the top-up feels odd, a small one is plenty."
+              ]
+            },
+            { "id": "sigh-3", "type": "sigh", "cycles": 3 }
+          ]
+        },
+        { "id": "sigh2", "title": "Five long sighs", "items": [{ "id": "sigh-5", "type": "sigh", "cycles": 5 }] }
+      ]
+    },
+    {
       "title": "Grounding",
       "lessons": [
         {
@@ -48,6 +71,29 @@
           ]
         },
         { "id": "ground2", "title": "Back to the room", "items": [{ "id": "ground-b", "type": "ground" }] }
+      ]
+    },
+    {
+      "title": "Butterfly hug",
+      "lessons": [
+        {
+          "id": "hug1",
+          "title": "Cross your arms",
+          "items": [
+            {
+              "id": "hug-teach",
+              "type": "teach",
+              "say": "The butterfly hug. You give yourself a hug, then tap. I'll do it too, arms permitting.",
+              "text": [
+                "Cross your arms over your chest, so each hand rests near the opposite shoulder.",
+                "Tap gently with one hand, then the other: left, right, left, right, about one tap a second.",
+                "Breathe slowly while you tap. Eyes open or closed, whichever you like."
+              ]
+            },
+            { "id": "hug-40", "type": "hug", "taps": 40 }
+          ]
+        },
+        { "id": "hug2", "title": "A longer hug", "items": [{ "id": "hug-60", "type": "hug", "taps": 60 }] }
       ]
     },
     {
