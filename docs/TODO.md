@@ -110,3 +110,7 @@ internet permission:
 Shipped: the line pool (`src/cast/voice/*.json`, `say()` in lines.js, `tools/voice-draft.js` for
 drafting with Claude at authoring time). The on-device model is still later: Drill has no internet
 permission, and the pool stays the fallback even then.
+
+## Ideas from the Duo council
+
+- Ranked suggestions from the 2026-10-30 Duolingo research council, checked against the code: `docs/DUO.md`.
