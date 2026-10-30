@@ -90,8 +90,8 @@ test('sway and visitors move, and stay still under reduced motion', () => {
   const el = { querySelector: () => part(), querySelectorAll: () => [part(), part()] };
   assert.equal(sway(el), 'anim');
   assert.equal(calls[0][1].iterations, Infinity);
-  // Two parts each; the butterfly and bee also wander; a fresh one also flies in, on top.
-  const wander = { butterfly: 1, bee: 1, birds: 0 };
+  // Two parts each; the butterfly, bee and ladybird also wander; a fresh one also flies in, on top.
+  const wander = { butterfly: 1, bee: 1, birds: 0, ladybird: 1 };
   for (const k of VISITORS) assert.equal(animateVisitor(el, k).length, 2 + wander[k], k);
   calls.length = 0;
   for (const k of VISITORS) assert.equal(animateVisitor(el, k, true).length, 3 + wander[k], k);

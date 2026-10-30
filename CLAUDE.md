@@ -25,7 +25,7 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>] [--avd <name>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, focus, scan, garden, log, winddown, left); a new one is
+No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, focus, scan, garden, log, winddown, left, fitting); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
@@ -169,6 +169,24 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `editHabit`). Learners' habit names are never linted and always escaped.
 - Home lists each habit once: one row of tabs (icon, name, streak coloured by `light()`) that
   scrolls inside itself. The bar is just the title, Sound and ⋯, and fits at 360px with every habit.
+- `src/fitting.js` — pure: fitting the person from the on-device log (docs/TODO.md "Fitting the
+  person"). `usualHours`/`reminderHour` (the log's `hour`s; nothing under five sessions);
+  `shouldRemind` thins reminders that are only ever cleared (every other day after 3, every third
+  after 5, none after 8; ⋯ then shows one passive "Reminders are paused" line with "Turn back on");
+  `dropOff` (this week well under their own usual week) starts a comeback (`progress.comeback`): a
+  card on home for a week offering their favourite practice at their usual hour, answered by one
+  session of it, which earns the ladybird (`ladybird:<habit>` in garden RULES); `shorter` offers a
+  shorter one ("Try a shorter one: 3 breaths") for a lesson left at the same step three times,
+  through `timed()` overrides for that session only; `preferred` puts the habits finished most after
+  the intro picks, through `ordered()`. `progress.reminders` and `progress.comeback` are optional
+  (no version of their own), kept by `migrate()` and so in the file export. The habit view shows
+  "You usually practise around 7 pm".
+- **Android bridge** (`window.drill`, set in app.js, over the live progress): plain functions the
+  wrapper calls with `evaluateJavascript`. `reminderHour()` → 0–23, or null with too little data
+  (the wrapper picks its own default then); `shouldRemind()` → boolean, asked at that hour before
+  showing today's reminder (false after a session today, or while reminders are thinned or paused);
+  `noteReminder(outcome)` with `'opened'` (tapped) or `'cleared'` (swiped away) for every reminder
+  shown → true, or false for any other value (nothing recorded). Nothing leaves the device.
 - `src/feel.js` — synthesised sounds (mute on the home bar), haptics, and `move()`, which skips
   animation under reduced motion. Lesson moments go through it: `cue(name)` (sound and buzz; the
   sound follows the Sound toggle only, reduced motion skips just the animations) for right, run, wrong, done and unlock;

@@ -79,6 +79,9 @@ the Android wrapper for anything about notifications.
   offered; the ones they finish most come first on the path.
 - Everything stays on the device, can be seen in the habit view, and goes in the file export.
 
+Built in `src/fitting.js` (see CLAUDE.md): the reminders themselves are the Android wrapper's,
+which calls `window.drill.reminderHour()`, `shouldRemind()` and `noteReminder(outcome)`.
+
 ## Coach voice
 
 Agreed 2026-10-30: like Duolingo's characters, each coach has lines that encourage and,

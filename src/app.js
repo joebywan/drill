@@ -1,6 +1,7 @@
 import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
 import { award, garden, moreArrived, plantWords } from './garden/model.js';
 import { PLANTS, animateScene, animateVisitor, drawGarden, flower, plant, sway, visitor } from './garden/art.js';
+import { COMEBACK_WORDS, PAUSED_WORDS, activeComeback, answerComeback, noteReminder, preferred, reminderHour, remindersPaused, shorter, shouldRemind, startComeback, usualHours, usualLine } from './fitting.js';
 import { emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
@@ -18,7 +19,7 @@ const app = document.getElementById('app');
 
 let progress = load();
 /** Every habit this learner has (built in, then their own; what the intro picked first), and one of them by id. */
-const habits = () => ordered(habitsFor(progress), progress.picked);
+const habits = () => ordered(habitsFor(progress), preferred(progress)); // picks first, then the ones finished most
 const habitOf = (id) => habits().find((h) => h.id === id);
 /** Whose timings a habit plays by: its subject's `timings` (Wind down plays Calm's), or its own. */
 const timingsOf = (id) => subjects.find((s) => s.habit === id)?.timings ?? id;
@@ -99,6 +100,8 @@ const SWAY = 70; // px a node sits off centre at most
 function home(arrived = null, newly = []) {
   stopHome();
   if (!habitOf(habitShown) || habitOf(habitShown).hidden) showHabit(HABITS[0].id);
+  const fitted = startComeback(progress);
+  if (fitted !== progress) { progress = fitted; save(); }
   const shownHabit = habitOf(habitShown);
   // A self-reported habit has no path: one big button instead (logPanel).
   const logged = shownHabit.kind === 'log' && light(progress, new Date(), habitShown) === 'bright';
@@ -119,6 +122,10 @@ function home(arrived = null, newly = []) {
   // The next lesson; a finished path whose subject has `again` ("Reflect today") keeps one of its lessons one tap away.
   const again = shownSubjects[0]?.again;
   const { current, repeat } = nextUp(units, again);
+  // A practice often left at the same step offers a shorter one, for this session (fitting.js).
+  const upNext = current ?? repeat;
+  const short = upNext?.subject.kind === 'practice' && shorter(progress, habitShown, upNext.lesson, upNext.id, progress.timings?.[timingsOf(habitShown)]);
+  const invite = activeComeback(progress);
   const minutes = `about ${Math.max(1, Math.round(reviewKeys.length * 0.4))} min`;
   const dueChip = !reviewKeys.length ? ''
     : repair ? `<button class="due" data-review>${esc(line('repair'))} · ${minutes}</button>`
@@ -176,6 +183,7 @@ function home(arrived = null, newly = []) {
       ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick.name) : line('welcome'))}</p>` : ''}
       ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
         : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
+      ${invite ? comebackCard(invite) : ''}
       ${offer ? `<p class="offer"><button data-place>${esc(offer.placement.offer)}</button><button class="dismiss" data-dismiss aria-label="Dismiss">×</button></p>` : ''}
       ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly) : ''}
       ${units.map((u) => `
@@ -190,6 +198,7 @@ function home(arrived = null, newly = []) {
       ${shownHabit.kind === 'log' ? (logged ? '' : `<button class="next" data-log>${esc(shownHabit.did)}</button>`)
         : current ? `<button class="next" data-lesson="${current.id}">Continue · ${esc(current.lesson.title)}</button>`
         : repeat ? `<button class="next" data-lesson="${repeat.id}">${esc(again.label)}</button>` : ''}
+      ${short ? `<button class="link short" data-short>${esc(short.words)}</button>` : ''}
     </footer>`;
 
   const stopGarden = liven(app.querySelector('.garden-link'));
@@ -269,11 +278,36 @@ function home(arrived = null, newly = []) {
   app.querySelector('[data-review]')?.addEventListener('click', () =>
     run(null, reviewKeys.map((k) => ({ key: k, ...items.get(k) })), 'Review'));
   for (const btn of app.querySelectorAll('[data-lesson]')) {
-    btn.addEventListener('click', () => {
-      const n = units.flatMap((u) => u.nodes).find((x) => x.id === btn.dataset.lesson);
-      run(n.id, n.lesson.items.map((item) => ({ key: `${n.subject.id}:${item.id}`, ...items.get(`${n.subject.id}:${item.id}`) })), n.lesson.title);
-    });
+    btn.addEventListener('click', () => lesson(units.flatMap((u) => u.nodes).find((x) => x.id === btn.dataset.lesson)));
   }
+  app.querySelector('[data-short]')?.addEventListener('click', () => lesson(upNext, short.timings));
+  app.querySelector('[data-comeback]')?.addEventListener('click', () => lesson(comebackLesson(invite)));
+  app.querySelector('[data-comeback-dismiss]')?.addEventListener('click', () => {
+    progress = { ...progress, comeback: { ...invite, dismissed: true } };
+    save();
+    home();
+    focusOn('.cta .next');
+  });
+}
+
+/** Runs a path node's lesson; `timings` goes over the learner's own for this session only. */
+const lesson = (n, timings) =>
+  run(n.id, n.lesson.items.map((item) => ({ key: `${n.subject.id}:${item.id}`, ...items.get(`${n.subject.id}:${item.id}`) })), n.lesson.title, timings);
+
+/** The comeback card on home (fitting.js): their favourite practice at their usual hour, a ladybird to come. */
+const comebackCard = (c) => `<section class="comeback" aria-labelledby="comeback-text">
+  ${visitor('ladybird')}
+  <p class="kicker">${esc(COMEBACK_WORDS.kicker)}</p>
+  <p id="comeback-text">${esc(COMEBACK_WORDS.text(c))}</p>
+  <button class="choice" data-comeback>${esc(COMEBACK_WORDS.go(c))}</button>
+  <button class="link" data-comeback-dismiss>${esc(COMEBACK_WORDS.dismiss)}</button>
+</section>`;
+
+/** The comeback's lesson: the first open one in its unit, else one done there, else the habit's next. */
+function comebackLesson(c) {
+  const units = subjects.filter((s) => s.habit === c.habit).flatMap((s) => unitsOf(progress, s));
+  const unit = units.find((u) => u.title === c.title);
+  return unit?.nodes.find((n) => n.state === 'open') ?? unit?.nodes.find((n) => n.state === 'done') ?? nextUp(units).current ?? units[0].nodes[0];
 }
 
 /**
@@ -302,6 +336,7 @@ function habitView(id, back = () => { home(); focusOn('.streak-line'); }) {
   const month = habitDays(progress, id, 28, now);
   const week = month.slice(-7);
   const active = month.slice(-14).filter((d) => d.sessions.length).length;
+  const usual = usualLine(usualHours(progress, id));
   const cell = ({ date, sessions }) => `<li class="${sessions.length ? 'on' : rest.has(date) ? 'rest' : ''}">
     <span>${dateOf(date).toLocaleDateString('en', { weekday: 'narrow' })}</span><b>${dateOf(date).getDate()}</b></li>`;
   const day = ({ date, sessions }) => `<section class="day"><h3>${dayName(date, now)}</h3>${sessions.length
@@ -312,6 +347,7 @@ function habitView(id, back = () => { home(); focusOn('.streak-line'); }) {
     <main class="habit">
       <h1><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}</h1>
       <p class="said">${n ? `${n}-day streak` : NO_STREAK}</p>
+      ${usual ? `<p class="usual">${esc(usual)}</p>` : ''}
       ${TIMINGS[timingsOf(id)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
       <h2>This week</h2>
       <ol class="week" aria-hidden="true">${week.map(cell).join('')}</ol>
@@ -582,7 +618,7 @@ function walkTo(guide, fromNode, toNode) {
  * Plays a session: a lesson (lessonId set) or a review (null). An item missed the first time
  * comes back once at the end; only the first try counts toward review scheduling.
  */
-function run(lessonId, queue, title) {
+function run(lessonId, queue, title, extra = null) {
   stopHome();
   // A practice routine (Calm) has no right or wrong: no meter heat, no runs, no review cards.
   const practice = queue[0]?.subject.kind === 'practice';
@@ -672,7 +708,7 @@ function run(lessonId, queue, title) {
       coachEl: $('.who'),
       coach: who,
       help: who.help,
-      timings: progress.timings?.[timingsOf(entry.subject.habit)],
+      timings: extra ? { ...progress.timings?.[timingsOf(entry.subject.habit)], ...extra } : progress.timings?.[timingsOf(entry.subject.habit)],
       reached: (step, of) => { reached = { step, of }; },
       done: (correct, text = '', kept = null) => {
         // A practice item goes straight on: its own buttons were the Continue.
@@ -723,7 +759,7 @@ function run(lessonId, queue, title) {
     const { subject, topic: technique } = queue[0];
     const firstTime = lessonId && !progress.done[lessonId];
     const mins = Math.max(1, Math.round((Date.now() - started) / 60000));
-    progress = writeJournal(finishPractice(progress, subject.habit, lessonId, new Date(), { title: technique, mins }), journal);
+    progress = answerComeback(writeJournal(finishPractice(progress, subject.habit, lessonId, new Date(), { title: technique, mins }), journal), subject.habit);
     let newly;
     ({ progress, newly } = award(progress));
     save();
@@ -920,6 +956,7 @@ function keep(note = '') {
       ${CALM_SOUNDS.map(([name, label]) => `<button class="choice" data-pref="${name}" aria-pressed="${calmPref(name)}">${esc(label)}</button>`).join('')}
       <h2>Garden</h2>
       <button class="choice" data-pref="south" aria-pressed="${south()}">${esc(SOUTH_LABEL)}</button>
+      ${remindersPaused(progress) ? `<p class="said paused">${esc(PAUSED_WORDS.line)} <button class="link" data-remind>${esc(PAUSED_WORDS.on)}</button></p>` : ''}
       <button class="choice" data-back>Back</button>
     </main>`;
   for (const b of app.querySelectorAll('[data-pref]')) {
@@ -935,6 +972,7 @@ function keep(note = '') {
   focusOn('h1');
   app.querySelector('[data-back]').addEventListener('click', () => { home(); focusOn('.menu'); });
   app.querySelector('[data-change]').addEventListener('click', () => want(true));
+  app.querySelector('[data-remind]')?.addEventListener('click', () => { progress = noteReminder(progress, 'on'); save(); keep(PAUSED_WORDS.back); });
   app.querySelector('[data-save]').addEventListener('click', () => {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([JSON.stringify(progress)], { type: 'application/json' }));
@@ -1073,5 +1111,21 @@ function choose(picked) {
   home();
   focusOn(picked.length ? '.cta .next' : 'h1');
 }
+
+/**
+ * The Android wrapper's bridge (CLAUDE.md): plain functions on one small global, over the live
+ * progress. `noteReminder` returns false for an outcome it doesn't know, which changes nothing.
+ */
+window.drill = {
+  reminderHour: () => reminderHour(progress),
+  shouldRemind: () => shouldRemind(progress),
+  noteReminder: (outcome) => {
+    const p = noteReminder(progress, outcome);
+    if (p === progress) return false;
+    progress = p;
+    save();
+    return true;
+  },
+};
 
 if (showsIntro(progress)) intro(); else home();

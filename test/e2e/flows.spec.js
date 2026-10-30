@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { answer, kind, starPath } from '../../src/chess/items.js';
-import { emptyProgress, finishPractice, finishSession } from '../../src/progress.js';
+import { emptyProgress, finishPractice, finishSession, leavePractice } from '../../src/progress.js';
 import { award } from '../../src/garden/model.js';
 
 // The first lesson on the path. Its answers are worked out from the course data with the same
@@ -1293,12 +1293,106 @@ test('the tab row fades only an edge with more tabs past it, and never fades the
   }
 });
 
+// Fitting the person (src/fitting.js), from seeded progress: dates are counted back from today.
+const daysAgo = (n, h = 19) => { const d = new Date(); d.setDate(d.getDate() - n); d.setHours(h, 0, 0, 0); return d; };
+/** Six weeks of Calm "Breathing" most evenings at 7 pm, then a quiet week and more. */
+function droppedOff() {
+  let p = emptyProgress();
+  for (let n = 49; n >= 9; n--) if (n % 7 !== 3) p = finishPractice(p, 'calm', null, daysAgo(n), { title: 'Breathing', mins: 2 });
+  return p;
+}
+/** The first breathing lesson done, then the second (five breaths) left at the sixth or seventh of ten steps, three times. */
+function leftAtTheSameStep() {
+  let p = finishPractice(emptyProgress(), 'calm', 'calm:breathe1', daysAgo(5), { title: 'Breathing', mins: 2 });
+  for (const [n, step] of [[4, 6], [3, 7], [2, 6]]) p = leavePractice(p, 'calm', 'calm:breathe2', step, 10, daysAgo(n), { title: 'Breathing' });
+  return p;
+}
+const seeded = (page, p) => page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
+const comebackCard = (page) => page.locator('.comeback');
+
+test('after a drop-off, home offers a gentle comeback: their usual practice at their usual hour, and one session brings a ladybird', async ({ page }) => {
+  await seeded(page, droppedOff());
+  await page.clock.install();
+  await firstVisit(page);
+  await expect(comebackCard(page)).toContainText('Some Breathing around 7 pm, the way you like it? A ladybird would love to visit your garden.');
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
+  expect(saved.comeback).toEqual({ date: expect.any(String), habit: 'calm', title: 'Breathing', hour: 19 });
+  await page.getByRole('button', { name: 'Start Breathing' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.clock.runFor(40_000);
+  await expect(page.getByText('A ladybird came to visit')).toBeVisible();
+  await continueButton(page).click();
+  await expect(comebackCard(page)).toHaveCount(0); // it ends after one session
+  await expect(page.locator('.garden-link svg[data-kind="ladybird"]')).toHaveCount(1);
+  const after = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
+  expect(after.comeback.done).toEqual(expect.any(String));
+  expect(Object.keys(after.garden.earned)).toContain('ladybird:calm');
+});
+
+test('the comeback can be set aside, and steady practice never shows one', async ({ page }) => {
+  await seeded(page, droppedOff());
+  await firstVisit(page);
+  await page.getByRole('button', { name: 'Not this time' }).click();
+  await expect(comebackCard(page)).toHaveCount(0);
+  await page.reload();
+  await expect(comebackCard(page)).toHaveCount(0);
+});
+
+test('a practice left at the same step offers a shorter one, for that session only', async ({ page }) => {
+  await seeded(page, leftAtTheSameStep());
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Calm').click();
+  await expect(page.getByRole('button', { name: 'Continue · Five slow breaths' })).toBeVisible();
+  await page.getByRole('button', { name: 'Try a shorter one: 3 breaths' }).click();
+  const start = page.getByRole('button', { name: 'Start' });
+  if (await start.count()) await start.click();
+  await expect(page.getByText('Breath 1 of 3')).toBeVisible();
+  await page.clock.runFor(40_000);
+  await expect(page.getByText('3 breaths', { exact: false }).first()).toBeVisible();
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
+  expect(saved.timings).toEqual({}); // never saved as their timings
+  await continueButton(page).click();
+  // Finished since: no more offer, and the path has moved on.
+  await expect(page.getByRole('button', { name: /^Try a shorter one/ })).toHaveCount(0);
+});
+
+test('the habit view shows the usual hour, and the bridge for the Android wrapper reads and records', async ({ page }) => {
+  await seeded(page, droppedOff());
+  await firstVisit(page);
+  await tab(page, 'Calm').click();
+  await page.getByRole('button', { name: /See your week$/ }).click();
+  await expect(page.getByText('You usually practise around 7 pm')).toBeVisible();
+  expect(await page.evaluate(() => window.drill.reminderHour())).toBe(19);
+  expect(await page.evaluate(() => window.drill.shouldRemind())).toBe(true);
+  expect(await page.evaluate(() => window.drill.noteReminder('snoozed'))).toBe(false);
+  for (let i = 0; i < 8; i++) expect(await page.evaluate(() => window.drill.noteReminder('cleared'))).toBe(true);
+  expect(await page.evaluate(() => window.drill.shouldRemind())).toBe(false);
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.getByRole('button', { name: 'Your progress' }).click();
+  await expect(page.getByText("Reminders are paused because they weren't helping.")).toBeVisible();
+  await page.getByRole('button', { name: 'Turn back on' }).click();
+  await expect(page.getByText('Reminders are on again.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Turn back on' })).toHaveCount(0);
+  expect(await page.evaluate(() => window.drill.shouldRemind())).toBe(true);
+});
+
 const overflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
 for (const colorScheme of ['light', 'dark']) {
   for (const width of [360, 412]) {
     test.describe(`${width}px, ${colorScheme}`, () => {
       test.use({ colorScheme, viewport: { width, height: 800 } });
+
+      test('the comeback card and the shorter-one offer have no sideways scroll', async ({ page }) => {
+        await seeded(page, { ...droppedOff(), left: leftAtTheSameStep().left, done: { 'calm:breathe1': true } });
+        await firstVisit(page);
+        await expect(comebackCard(page)).toBeVisible();
+        expect(await overflow(page)).toBe(0);
+        await tab(page, 'Calm').click();
+        await expect(page.getByRole('button', { name: /^Try a shorter one/ })).toBeVisible();
+        expect(await overflow(page)).toBe(0);
+      });
 
       test('home has no sideways scroll', async ({ page }) => {
         await firstVisit(page);
