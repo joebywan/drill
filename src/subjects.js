@@ -15,6 +15,10 @@ import * as reflect from './reflect/practice.js';
 import moveCourse from './data/move.json' with { type: 'json' };
 import * as move from './move/practice.js';
 import { clover, demo as cloverDemo, NAME as CLOVER } from './cast/clover.js';
+import mathsCourse from './data/maths.json' with { type: 'json' };
+import * as maths from './maths/exercise.js';
+import { ada, NAME as ADA } from './cast/ada.js';
+import { MATHS_HEADLINES, MATHS_LINES } from './cast/lines.js';
 import { mira, demo as miraDemo, NAME as MIRA } from './cast/mira.js';
 
 /**
@@ -27,9 +31,9 @@ import { mira, demo as miraDemo, NAME as MIRA } from './cast/mira.js';
  * (teach then test, right or wrong, spaced review) or 'practice' (a guided routine with no right
  * or wrong and no review; finishing it is the point). See docs/HABITS.md.
  *
- * `coach` is who runs the subject's sessions: { draw, name, start, lines?, help? } — the
+ * `coach` is who runs the subject's sessions: { draw, name, start, lines?, headlines?, help? } — the
  * character (rosa, moss…), its name for screen readers, the mood an item starts in, its own
- * lines (default: Rosa's LINES) and, for a practice habit, its help line { text, tel?, call? },
+ * lines (default: Rosa's LINES) and end-screen headlines (default: Rosa's HEADLINES) and, for a practice habit, its help line { text, tel?, call? },
  * shown on a teach card that asks for it and after "Not really" (rendered by practice/kit.js helpHtml),
  * `feel`, the good answer to "How do you feel?" (default 'calmer'; its reply is a key in `lines`),
  * and `demonstrates`, for a coach the learner copies, which is drawn large above their line.
@@ -40,6 +44,9 @@ import { mira, demo as miraDemo, NAME as MIRA } from './cast/mira.js';
  * in the habit view (Reflect's own lines); `placement`, { offer, question, options: [[label, unitTitle]] }:
  * an optional question home offers by the subject's path (`offer` is the link) to start further on.
  * It never stands in the way: answering opens the path at that unit, dismissing it hides the offer.
+ *
+ * Several 'learn' subjects share the Learning habit (one streak, one plant, one review pile); home
+ * shows one course's path at a time, with a switcher when there is more than one.
  */
 /** The built-in habits, in the order the home bar shows them. `habitsFor(progress)` adds the learner's own. */
 export const HABITS = [
@@ -87,12 +94,13 @@ export function habitsFor(progress) {
 
 /**
  * `list` (habitsFor's) with the ids the learner picked in the intro first, in the order picked, then
- * the rest as they were. An id no longer in the list is passed over. The one place home is ordered.
+ * the rest as they were. A picked course ('maths') stands for its habit ('learn'). An id no longer
+ * in the list is passed over. The one place home is ordered.
  */
-export const ordered = (list, picked = []) => [
-  ...picked.map((id) => list.find((h) => h.id === id)).filter(Boolean),
-  ...list.filter((h) => !picked.includes(h.id)),
-];
+export const ordered = (list, picked = []) => {
+  const ids = [...new Set(picked.map((id) => subjects.find((s) => s.id === id)?.habit ?? id))];
+  return [...ids.map((id) => list.find((h) => h.id === id)).filter(Boolean), ...list.filter((h) => !ids.includes(h.id))];
+};
 
 // Chess from zero comes first (the board, how pieces move, capturing, check and mate), then the
 // hand-written Forks unit, whose Lichess puzzles join it as its last lessons; the other Lichess
@@ -117,6 +125,21 @@ export const subjects = [{
       ['I know how the pieces move', 'Capturing'],
       ['I play now and then', 'Forks'],
       ['I play often and know some tactics', 'Mate in one'],
+    ],
+  },
+}, {
+  ...mathsCourse,
+  mount: maths.mount,
+  habit: 'learn',
+  kind: 'learn',
+  coach: { draw: ada, name: ADA, start: 'think', lines: MATHS_LINES, headlines: MATHS_HEADLINES },
+  placement: {
+    offer: 'Done some maths already? Skip ahead',
+    question: 'How is your maths?',
+    options: [
+      ['Rusty. Start me at the start', 'Mental maths'],
+      ['Adding in my head is fine', 'Percentages'],
+      ['Percentages are fine too', 'Fractions you can see'],
     ],
   },
 }, {

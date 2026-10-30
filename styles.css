@@ -517,3 +517,53 @@ html { scroll-padding-bottom: 160px; }
 .step:disabled { opacity: .4; cursor: default; }
 .timings-reset { display: block; width: 100%; padding: 14px; }
 .timings-reset:disabled { color: var(--muted); border-style: dashed; }
+
+/* Maths and the general play items (src/play/mount.js): a picture and the sum on stage, the answer
+   (choices, tiles, a number line, pairs) in the thumb zone. Ada's violet marks what is shaded. */
+:root { --maths: #6f4fc4; --maths-soft: #ece6fb; }
+@media (prefers-color-scheme: dark) {
+  :root { --maths: #b49cf5; --maths-soft: #2b2342; }
+}
+.courses { display: flex; justify-content: center; gap: 8px; margin: 10px 0 0; }
+.course {
+  min-height: 40px; padding: 6px 16px; border-radius: 999px; border: 2px solid var(--line); background: none;
+  color: var(--muted); font-weight: 600;
+}
+.course[aria-pressed="true"] { border-color: var(--accent); color: var(--text); }
+.sum { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 8px; }
+.pic { display: block; width: 100%; max-width: 320px; }
+.pic.grid { max-width: 210px; }
+.pic .cell { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
+.pic .cell.on { fill: var(--maths); }
+.pic .dot { fill: var(--maths); }
+.sum-text { margin: 0; font-size: 2.4rem; font-weight: 800; letter-spacing: .02em; text-align: center; }
+.built { display: flex; gap: 6px; margin: 0; font-size: 2.4rem; font-weight: 800; }
+.sum-text + .built::before { content: '='; margin-right: 6px; color: var(--muted); }
+.built i {
+  display: inline-block; min-width: 1.1em; border-bottom: 4px solid var(--line); font-style: normal; text-align: center;
+}
+.built i.shown { color: var(--muted); }
+.built.right i { color: var(--accent); border-color: var(--accent); }
+.choices.tiles, .choices.pairs { flex-wrap: wrap; justify-content: center; }
+.tile {
+  flex: 0 0 calc(25% - 6px); min-height: 56px; border-radius: 12px; border: 2px solid var(--line); background: var(--card);
+  box-shadow: 0 4px 0 var(--line); font-size: 1.4rem; font-weight: 800; color: var(--text);
+}
+.pairs .tile { flex-basis: calc(33.3% - 6px); }
+.tile[aria-pressed="true"] { border-color: var(--maths); background: var(--maths-soft); transform: translateY(2px); box-shadow: 0 2px 0 var(--maths); }
+.tile.used, .tile.gone { opacity: .3; box-shadow: none; }
+.tile.gone { border-color: var(--accent); }
+.tile.wrong { border-color: var(--wrong); color: var(--wrong); }
+.numline { align-self: stretch; position: relative; min-height: 96px; margin-top: 24px; padding: 30px 16px 0; touch-action: none; cursor: pointer; }
+.numline:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 12px; }
+.track { position: relative; height: 6px; border-radius: 3px; background: var(--line); }
+.track i { position: absolute; top: -9px; width: 3px; height: 24px; border-radius: 2px; background: var(--muted); transform: translateX(-50%); }
+.marker {
+  position: absolute; top: 3px; width: 32px; height: 32px; border-radius: 50%; background: var(--maths);
+  border: 3px solid var(--card); box-shadow: 0 2px 6px rgba(0, 0, 0, .3); transform: translate(-50%, -50%);
+}
+.marker.right, .marker.answer { background: var(--accent); }
+.marker.wrong { background: var(--wrong); }
+.numline .end { position: absolute; bottom: 8px; font-weight: 700; color: var(--muted); }
+.numline .end:first-of-type { left: 6px; }
+.numline .end:last-of-type { right: 6px; }

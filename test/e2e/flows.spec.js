@@ -71,18 +71,20 @@ async function toStepTwo(page) {
   await expect(page.getByRole('heading', { name: 'What would you like out of Drill?' })).toBeFocused();
 }
 
-test('intro, learn only: Learn something picks chess, the others are coming soon, and home starts on Learning', async ({ page }) => {
+test('intro, learn only: Learn something lists the courses, the others are coming soon, and home starts on Learning', async ({ page }) => {
   await toStepTwo(page);
   await expect(pick(page, 'Chess')).toBeHidden();
   await pick(page, 'Learn something').click();
   await expect(pick(page, 'Learn something')).toHaveAttribute('aria-pressed', 'true');
-  await expect(pick(page, 'Chess')).toHaveAttribute('aria-pressed', 'true'); // the one live course
-  for (const name of ['Maths', 'Japanese', 'Coding']) await expect(page.getByRole('button', { name: `${name} · coming soon` })).toBeDisabled();
+  await expect(pick(page, 'Chess')).toHaveAttribute('aria-pressed', 'false'); // two live courses: nothing picked for you
+  await expect(pick(page, 'Maths')).toHaveAttribute('aria-pressed', 'false');
+  await pick(page, 'Chess').click();
+  for (const name of ['Japanese', 'Coding']) await expect(page.getByRole('button', { name: `${name} · coming soon` })).toBeDisabled();
   await expect(page.getByRole('heading', { name: 'Have you played chess before?' })).toHaveCount(0); // no placement questions
   await page.getByRole('button', { name: 'Show my home' }).click();
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
   expect((await tabOrder(page))[0]).toBe('learn');
-  await expect(page.getByText('Learning is first. Start with the button below.')).toBeVisible();
+  await expect(page.getByText('Chess is first. Start with the button below.')).toBeVisible();
   await expect(offer(page)).toBeVisible(); // the placement offer is still there, as it was
   await expect(page.locator('.cta .next')).toBeFocused();
   await page.reload();

@@ -1,7 +1,7 @@
 # Drill — working notes for Claude
 
 A Duolingo-style learning app: lessons that teach, a cast of characters, a streak, review.
-Static page, vanilla ES modules, no build step, no server. Chess is live; maths, Japanese,
+Static page, vanilla ES modules, no build step, no server. Chess and maths are live; Japanese,
 JavaScript, TypeScript and TS test-writing are planned.
 
 **Read the cast brief before building anything:** https://claude.ai/artifact/Td5spDrFgAah2w4PtBc2pn
@@ -25,7 +25,7 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (learn, calm, move, break, reflect, scan, garden, log); a new one is
+No scenario runs all of `test/phone/*.js` (learn, maths, calm, move, break, reflect, scan, garden, log); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
@@ -61,6 +61,19 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   other side never moves, and kings are optional (chess.js `skipValidation`). A piece's first
   puzzle (`new`, `demo`, `intro`) slides it along a path before input opens. `problem()` proves
   each one solvable in its budget by breadth-first search. Picked-up pieces show legal-move dots.
+- `src/play/` — item types any subject can play without a board, judged on every tap: teach, pick
+  (one of a few), tiles (build the answer a tile at a time), line (drag a marker on a number line,
+  snapped to its ticks) and pairs (tap two that go together until none are left). `items.js` is pure;
+  `mount.js` plays one with the subject's `rules` (answer, right, together, show, explain), and its
+  `choices()` is also chess's true/false buttons. A new subject's answer type goes here, not in a fork.
+- `src/maths/` — the Maths course (`src/data/maths.json`, three units for adults rusty at maths:
+  mental maths, percentages, fractions you can see). `items.js` works every answer out from the
+  sum or the picture (`value()` reads "15% of $60"), so 2/4 is right for 1/2; `problem()` checks every
+  shipped item. `exercise.js` draws the pictures (ten frame, bar, 100 grid) and mounts src/play items.
+  Its coach is Ada, an octopus (`src/cast/ada.js`, posed with `rig()`), with her own `MATHS_LINES`
+  and `MATHS_HEADLINES`. Maths shares the Learning habit with chess (one streak, plant and review
+  pile); home shows one course's path at a time with a Chess / Maths switcher (`drill.course`), and
+  the intro picks courses by subject id (`ordered()` maps a course to its habit).
 - `src/cast/` — the characters (`kit.js`, `rosa.js`, `lumi.js`), `coach.js` (a character that
   reacts in place) and `lines.js` (everything the cast says; the guardrail tests lint it).
   `tools/cast.html` renders every mood at 200/96/48 px, light and dark.

@@ -7,6 +7,7 @@ import { startPuzzle, playerColor, tryMove, hint } from './puzzle.js';
 import { answer, explanation, grade, hop, kind, meets, solutions, starPath, starsPrompt, targets } from './items.js';
 import { move as animate, play } from '../feel.js';
 import { reducedMotion } from '../cast/kit.js';
+import { choices as buttons } from '../play/mount.js';
 
 const ASSETS = new URL('../../node_modules/cm-chessboard/assets/', import.meta.url).href;
 const REPLY_DELAY = 450;
@@ -98,21 +99,6 @@ function board(el, fen, color = fen.split(' ')[1]) {  // seen from `color`, else
 
 /** The square the keyboard cursor is on, from the Accessibility extension. */
 const cursorSquare = (b) => b.getExtension(Accessibility).components.find((c) => c.getCurrentSquare)?.getCurrentSquare();
-
-/**
- * Choice buttons as [label, value]. The first tap is final: it is marked right or wrong, the
- * right one is shown either way, and `then(correct)` runs.
- */
-function buttons(el, item, options, then) {
-  el.innerHTML = options.map(([label]) => `<button class="choice">${label}</button>`).join('');
-  [...el.children].forEach((b, i) => b.addEventListener('click', () => {
-    for (const other of el.children) other.disabled = true;
-    const correct = grade(item, options[i][1]);
-    b.classList.add(correct ? 'right' : 'wrong');
-    el.children[options.findIndex(([, v]) => grade(item, v))].classList.add('right');
-    then(correct);
-  }));
-}
 
 /** Plays `san` on the board and marks the squares it moved between. */
 function playMove(b, fen, san) {
@@ -299,7 +285,7 @@ const MOUNTS = {
 
   truefalse(boardEl, choices, item, { say, done }) {
     const b = board(boardEl, item.fen, item.side);
-    buttons(choices, item, [['True', true], ['False', false]], (correct) => {
+    buttons(choices, [['True', true], ['False', false]].map(([label, v]) => [label, grade(item, v)]), (correct) => {
       if (item.move) playMove(b, item.fen, item.move);
       for (const sq of item.targets || []) b.addMarker(MARKER_TYPE.framePrimary, sq);
       done(correct, feedback(item));
