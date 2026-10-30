@@ -449,6 +449,30 @@ test('Reflect keeps two lines and a skip, on its own streak, and shows them back
   await expect(todayLines.getByRole('list', { name: 'Your lines' }).getByRole('listitem')).toHaveText(['Good Tea in the sun', 'Tomorrow Call Sam']);
 });
 
+test('a Reflect box grows with what is written, up to a cap, and the mic tip shows once', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await firstVisit(page);
+  await tab(page, 'Reflect').click();
+  await page.getByRole('button', { name: 'Continue · Three small lines' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  const tip = page.getByText('Rather talk? Tap the mic on your keyboard.');
+  await expect(tip).toBeVisible();
+  const box = page.getByRole('textbox', { name: 'One good thing' });
+  const height = async () => (await box.boundingBox()).height;
+  const one = await height();
+  await box.fill('A long walk by the river with a friend, and the sun came out just as we reached the bridge.');
+  const grown = await height();
+  expect(grown).toBeGreaterThan(one * 1.5);
+  await box.fill('word '.repeat(200));
+  const capped = await height();
+  expect(capped).toBeGreaterThan(grown);
+  expect(capped).toBeLessThan(300);
+  expect(await box.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true); // then it scrolls
+  await box.press('Enter'); // Enter still moves on
+  await expect(page.getByRole('heading', { name: 'One thing you learned' })).toBeVisible();
+  await expect(tip).toBeHidden();
+});
+
 test('once the short Reflect path is done, "Reflect today" stays on home', async ({ page }) => {
   await firstVisit(page);
   await tab(page, 'Reflect').click();

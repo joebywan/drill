@@ -396,12 +396,14 @@ html { scroll-padding-bottom: 160px; }
 }
 .chip.reflect { --c: var(--chip-reflect); flex: 0 1 180px; margin: 0 auto; }
 .reflect h2 { margin: 8px 0 12px; font-size: 1.3rem; }
-.reflect input {
-  width: 100%; padding: 14px 12px; font: inherit; color: var(--text); background: var(--card);
-  border: 2px solid var(--line); border-radius: 12px;
+.reflect textarea {
+  display: block; width: 100%; padding: 14px 12px; font: inherit; color: var(--text); background: var(--card);
+  border: 2px solid var(--line); border-radius: 12px; resize: none; line-height: 1.5;
+  field-sizing: content; min-height: calc(1.5em + 32px); max-height: calc(6 * 1.5em + 32px); overflow-y: auto; /* then it scrolls */
 }
-.reflect input:focus { outline: none; border-color: var(--chip-reflect); }
-.reflect input::placeholder { color: var(--muted); }
+.reflect textarea:focus { outline: none; border-color: var(--chip-reflect); }
+.reflect textarea::placeholder { color: var(--muted); }
+.reflect-tip { margin: 8px 2px 0; font-size: .85rem; color: var(--muted); }
 .reflect .choices .choice { flex: 0 0 34%; }
 .journal { margin-top: 6px; }
 .day .journal li { background: none; }

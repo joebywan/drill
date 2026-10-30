@@ -131,6 +131,7 @@ const reflectText = [
 
 test('Reflect makes no claims, never hurries and never judges', () => {
   assert.ok(reflectText.length > 20);
+  assert.ok(reflectText.some(([, text]) => text === reflectCourse.tip), 'the mic tip is linted');
   for (const [kind, text] of reflectText) {
     for (const rule of [CLAIMS, URGENCY, ABILITY, LOSS]) assert.doesNotMatch(text, rule, `${kind}: ${text}`);
     assert.doesNotMatch(text, /\b(should|must|wrong|bad|better|best|score\w*|grade\w*|rate|marks?)\b/i, `${kind}: ${text}`);
