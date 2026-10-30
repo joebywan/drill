@@ -30,7 +30,7 @@ test('migrate v6 to v7: an existing save is marked as past the intro; v7 keeps i
   const v6 = { version: 6, habits: { learn: { count: 0, last: null, forgiven: [], days: 0 } }, log: [], done: {}, cards: {},
     journal: {}, garden: { earned: {} }, tracked: [] };
   const p = migrate(roundTrip(v6));
-  assert.deepEqual(p, { ...v6, version: VERSION, picked: [], timings: {} });
+  assert.deepEqual(p, { ...v6, version: VERSION, picked: [], timings: {}, left: [] });
   assert.equal(showsIntro(p), false, 'someone who used Drill before never sees the intro');
   assert.equal(showsIntro(migrate(roundTrip(emptyProgress()))), true, 'a fresh save still does');
   const picked = { ...emptyProgress(), picked: ['walk', 'learn'] };

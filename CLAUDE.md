@@ -25,7 +25,7 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>] [--avd <name>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, focus, scan, garden, log, winddown); a new one is
+No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, focus, scan, garden, log, winddown, left); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
@@ -55,7 +55,9 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   bright/soft/ember habit display on each habit's tab. `app.js` owns storage
   (one `localStorage` key, every access in try/catch). Each habit has its own streak
   (`habits.learn`, `habits.calm`, …) and every session goes in `log`, which the habit view
-  reads. `finishSession` records Learning, `finishPractice` a practice routine. The object carries `version`; `migrate()`
+  reads, each with its local `hour`. `finishSession` records Learning, `finishPractice` a practice routine.
+  A practice closed part-way goes in `left` instead (`leavePractice`, with the step `ctx.reached`
+  last reported), so nothing that reads the log sees it. The object carries `version`; `migrate()`
   validates and upgrades every older shape, on load and on import (the home bar's ⋯ saves and
   loads a file). Bump `VERSION` and extend `migrate()` whenever the shape changes.
 - `src/chess/puzzle.js` — pure puzzle rules on chess.js. `src/chess/items.js` — the item types

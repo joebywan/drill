@@ -110,9 +110,13 @@ The app's vibe moves from "build knowledge" to "grow yourself", shown as a garde
     to the path's defaults with one tap. Calm's `breaths()` already takes `inhale` and `exhale`.
     Fizz has setters for this but never wired them to its "Therapist Exercise Settings" card;
     do it properly here.
-13. [ ] **Log when and how far.** Groundwork for "Fitting the person" in `TODO.md`: each logged
+13. [x] **Log when and how far.** Groundwork for "Fitting the person" in `TODO.md`: each logged
     session also records its local hour, and a practice left part-way is logged as left, with
     the step it reached. Stays on the device like the rest of the log.
+    Done: `logged()` in progress.js adds `hour` to every log entry; `leavePractice()` keeps a
+    practice closed part-way in `left` (version 9), never the log, pruned to the log's year.
+    `routine()` in kit.js reports each phase through `ctx.reached` (grounding and Reflect each
+    step), which `run()` in app.js records on ✕. A close on the teach card is step 0, `of` null.
 
 ## Kept out
 
