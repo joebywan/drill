@@ -14,8 +14,9 @@ const PIECE = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: '
 
 /**
  * Mounts one item in `el`. `say(text, mood?)` sets what the coach says, and how she looks;
- * `done(correct, text)` is called once, when the item is over: true or false for a marked item
- * (false if any mistake was made), null for a teach card, with the explanation to show.
+ * `done(correct, text, { hinted })` is called once, when the item is over: true or false for a marked
+ * item (false if any mistake was made; true with `hinted` if it was solved after being shown the
+ * hint), null for a teach card, with the explanation to show.
  * Returns a cleanup function.
  */
 export function mount(el, item, ctx) {
@@ -346,7 +347,9 @@ const MOUNTS = {
       timer = setTimeout(() => {
         show();
         if (result === 'solved') {
-          done(mistakes === 0, explanation(item));
+          // Solved after the hint: right, and it says so (see `done` in app.js).
+          if (mistakes >= 2) done(true, explanation(item), { hinted: true });
+          else done(mistakes === 0, explanation(item));
         } else {
           say(`Good. Keep going — ${side} to play.`, 'think');
           b.enableMoveInput(input, b.getOrientation());

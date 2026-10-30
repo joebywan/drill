@@ -667,3 +667,6 @@ export function say(coach, state, facts = {}, rng = Math.random, recent = []) {
   const said = line('pool', rng(), { pool: fresh || ranked[0] }, fresh ? recent : recent.slice(-1));
   return { text: said.replace(/\{(\w+)\}/g, (_, k) => facts[k]), line: said, dare };
 }
+
+/** Said once a missed item has had its goes in a session: it moves on and review brings it back. */
+export const MOVE_ON = "Let's leave this one for a review and move on.";

@@ -6,10 +6,9 @@ import { emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { lumi } from './cast/lumi.js';
-import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, echoes, fresh, warmUps } from './repeat.js';
-import { GOES, easier, flying, misses, noteAnswer, struggling } from './adapt.js';
-import unitHelp from './data/help.json' with { type: 'json' };
-import { CALM_SOUNDS, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
+import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, comeBack, dropEchoes, echoes, fresh, warmUps } from './repeat.js';
+import { GOES, easier, flying, helpFor, misses, noteAnswer, struggling, warmedLast } from './adapt.js';
+import { CALM_SOUNDS, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, setSound, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
 import { moment } from './cast/voice.js';
@@ -82,8 +81,8 @@ function adopt(synced) {
 const items = new Map();
 for (const s of subjects)
   for (const u of s.units)
-    for (const l of u.lessons)
-      for (const item of l.items) items.set(`${s.id}:${item.id}`, { subject: s, item, topic: u.title });
+    for (const l of u.lessons.filter((x) => !x.mix)) // a checkpoint only repeats its unit's items
+      for (const item of l.items) items.set(`${s.id}:${item.id}`, { subject: s, item, topic: u.title, lesson: l.id });
 
 /**
  * A new screen replaces the page, so focus would fall back to the top of the document. This puts
@@ -364,8 +363,8 @@ function lessonQueue({ subject, lesson: l }) {
   const missed = misses(progress.answers);
   const weight = (item) => missed[`${subject.id}:${item.id}`] ?? 0;
   const inCourse = (k) => items.get(k)?.subject === subject;
-  const warm = warmUps(progress.cards, inCourse, keys, WARM_UPS, missed)
-    .map((k) => ({ ...items.get(k), key: k, item: fresh(subject, items.get(k).item), topic: 'Warm up' }));
+  const warm = warmUps(progress.cards, inCourse, keys, WARM_UPS, missed, warmedLast(progress.answers, inCourse, WARM_UPS))
+    .map((k) => ({ ...items.get(k), key: k, item: fresh(subject, items.get(k).item), topic: 'Warm up', warm: true }));
   return [...warm, ...own, ...echoes(subject, l.items, Math.random, flying(progress.answers, inCourse) ? 1 : ECHOES, weight).map(({ item, source }) => ({ ...entry(item, source), topic: 'Once more', echo: true }))];
 }
 
@@ -829,19 +828,20 @@ function run(lessonId, queue, title, extra = null) {
       help: who.help,
       timings: extra ? { ...progress.timings?.[timingsOf(entry.subject.habit)], ...extra } : progress.timings?.[timingsOf(entry.subject.habit)],
       reached: (step, of) => { reached = { step, of }; },
-      done: (correct, text = '', kept = null) => {
+      done: (answered, text = '', kept = null) => {
         // A practice item goes straight on: its own buttons were the Continue.
         if (practice) { if (text) did.push(text); if (kept) journal = kept; at++; return step(); }
+        // Right after a hint is logged as that, but plays as a miss: it doesn't schedule or land.
+        const hinted = !!kept?.hinted;
+        const correct = hinted ? false : answered;
         // Only the first try schedules a card, and an echo is a second go at something just learned.
         if (correct !== null && !entry.retry && !entry.echo) results.push({ key: entry.key, correct });
-        const goes = entry.goes ?? 1;
         const plain = window.DRILL_PLAIN;
         // A miss comes back at the end, fresh where it can be, until it lands or runs out of goes.
-        if (correct === false && !entry.echo && goes < (plain ? 2 : GOES)) {
-          queue.push({ ...entry, retry: true, goes: goes + 1, item: plain ? entry.item : fresh(entry.subject, items.get(entry.key)?.item ?? entry.item) });
-        }
+        const leftForReview = comeBack(queue, at, entry, correct,
+          () => (plain ? entry.item : fresh(entry.subject, items.get(entry.key)?.item ?? entry.item)), plain ? 2 : GOES);
         if (correct !== null && entry.key) {
-          progress = noteAnswer(progress, { key: entry.key, right: correct, ms: Date.now() - shownAt });
+          progress = noteAnswer(progress, { key: entry.key, right: answered, ms: Date.now() - shownAt, hinted, warm: entry.warm && !entry.retry });
           save();
         }
         at++;
@@ -865,7 +865,7 @@ function run(lessonId, queue, title, extra = null) {
         shine();
         foot.className = `foot show ${correct === null ? 'plain' : correct ? 'right' : 'wrong'}`;
         foot.querySelector('strong').textContent = kind === 'plain' ? '' : line(kind, Math.random(), who.lines);
-        foot.querySelector('p').textContent = text;
+        foot.querySelector('p').textContent = leftForReview ? `${text} ${MOVE_ON}` : text;
         // The answer tapped (or, on a board, the verdict) pops when right and gives a small shake when
         // not, unless the item already gave it its own (a quiz's cheer).
         const hit = correct === null ? null : stage.querySelector(correct ? '.choice.right' : '.choice.wrong') || foot.querySelector('strong');
@@ -945,10 +945,11 @@ function run(lessonId, queue, title, extra = null) {
     eased.add(known.topic);
     const list = subject.units.find((u) => u.title === known.topic).lessons.filter((l) => !l.mix).flatMap((l) => l.items);
     const smaller = easier(list, known.item);
-    const text = unitHelp[subject.id]?.[known.topic];
+    const text = helpFor(subject.id, known.topic, known.lesson);
+    dropEchoes(queue, at); // the step back and the repeats are plenty
     queue.splice(at, 0, ...[
       text && { subject, topic: 'One step back', item: { id: 'help', type: 'teach', text } },
-      smaller && { subject, key: `${subject.id}:${smaller.id}`, topic: 'One step back', item: smaller, echo: true },
+      smaller && { subject, key: `${subject.id}:${smaller.id}`, topic: 'One step back', item: smaller, echo: true, once: true },
     ].filter(Boolean));
   };
 
