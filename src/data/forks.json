@@ -45,6 +45,13 @@
           "explain": "From f7 the knight checks the king on h8 and attacks the queen on d8."
         },
         {
+          "id": "fork-0-how",
+          "type": "teach",
+          "side": "w",
+          "fen": "r3k3/7p/8/1N6/8/8/8/4K3 b - - 0 1",
+          "text": "A puzzle starts with the other side's move. Shaded squares show where it went from and to. Then it's your turn."
+        },
+        {
           "id": "fork-0-find",
           "fen": "r3k3/7p/8/1N6/8/8/8/4K3 b - - 0 1",
           "moves": [
@@ -151,13 +158,13 @@
           "fen": "6k1/8/1pn1r3/3P4/8/8/8/6K1 w - - 0 1",
           "square": "d5",
           "prompt": "Tap every black piece the pawn attacks.",
-          "explain": "A pawn attacks one square diagonally forward on each side: c6 and e6. The pawn on b6 is in front of nothing, so it's safe."
+          "explain": "A pawn attacks one square diagonally forward on each side: c6 and e6. The pawn on b6 is on neither, so it's safe."
         },
         {
           "id": "fork-2-pick",
           "type": "move",
           "fen": "6k1/8/8/2n1n3/8/1P1P4/7P/6K1 w - - 0 1",
-          "prompt": "Push a pawn so it attacks both knights.",
+          "prompt": "Move a pawn forward so it attacks both knights.",
           "targets": [
             "c5",
             "e5"
