@@ -36,7 +36,9 @@ import { clover, NAME as CLOVER } from './cast/clover.js';
  *
  * Optional: `again`, { label, lesson }: once the path is done, home keeps a button with that label
  * which runs that lesson again ("Reflect today", "Breathe"); `dayDetail(progress, date)`, extra html under a day's sessions
- * in the habit view (Reflect's own lines).
+ * in the habit view (Reflect's own lines); `placement`, { offer, question, options: [[label, unitTitle]] }:
+ * an optional question home offers by the subject's path (`offer` is the link) to start further on.
+ * It never stands in the way: answering opens the path at that unit, dismissing it hides the offer.
  */
 /** Every habit, in the order the home bar shows them. A habit appears once it has a session (Learning always). */
 export const HABITS = [
@@ -62,6 +64,16 @@ export const subjects = [{
   habit: 'learn',
   kind: 'learn',
   coach: { draw: rosa, name: 'Rosa', start: 'think' },
+  placement: {
+    offer: 'Know some chess already? Skip ahead',
+    question: 'Have you played chess before?',
+    options: [
+      ["I've never played", 'The board'],
+      ['I know how the pieces move', 'Capturing'],
+      ['I play now and then', 'Forks'],
+      ['I play often and know some tactics', 'Mate in one'],
+    ],
+  },
 }, {
   ...calmCourse,
   mount: calm.mount,

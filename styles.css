@@ -191,6 +191,9 @@ html { scroll-padding-bottom: 160px; }
 /* The keyboard cursor: dark ink reads on every square of both palettes. */
 .cm-chessboard .keyboard-focus-indicator .keyboard-focus { stroke: #101820; stroke-width: 4px; }
 .cm-chessboard .keyboard-focus-indicator .keyboard-from-square { fill: rgba(16, 24, 32, .25); stroke: #101820; }
+/* The extension draws the cursor on any focus, and the lesson focuses the board when a question
+   starts. Show it only to keyboard players (:focus-visible), never after a tap. */
+.cm-chessboard:not(:focus-visible) .keyboard-focus-indicator { display: none; }
 .cm-chessboard:focus { outline: none; }
 .cm-chessboard:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
 /* ---- end board skin ---- */
@@ -292,6 +295,8 @@ html { scroll-padding-bottom: 160px; }
   overflow-x: auto; scrollbar-width: none; position: relative; /* offsetLeft is measured from here */
   /* A swipe settles with a tab on the page's 16px gutter, never cut at the screen edge. */
   scroll-snap-type: x mandatory; scroll-padding-inline: 16px;
+  /* The gutters fade out, so a tab cut at the edge reads as "more this way", not a stray line. */
+  mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
 }
 .path-tab { flex: none; scroll-snap-align: start; }
 .paths::-webkit-scrollbar { display: none; }
@@ -299,7 +304,7 @@ html { scroll-padding-bottom: 160px; }
 /* One pill on every tab, pressed or not. */
 .path-tab b { display: inline-block; min-width: 1.6em; padding: 0 7px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: .9em; }
 .path-tab b.streak-bright { color: var(--streak); }
-.streak-line {
+.streak-line, .link {
   display: block; margin: 10px auto 0; padding: 6px 12px; border: 0; border-radius: 999px; background: none;
   color: var(--muted); font-size: .9rem; text-decoration: underline; text-underline-offset: 3px;
 }
@@ -418,3 +423,11 @@ html { scroll-padding-bottom: 160px; }
 .arrival { display: flex; align-items: center; gap: 8px; }
 .arrival svg { height: 22px; width: auto; flex: none; }
 .arrivals { list-style: none; margin: 14px auto 0; padding: 0; display: grid; gap: 6px; justify-content: center; color: var(--muted); font-size: .95rem; }
+.welcome { margin: 12px 0 0; text-align: center; }
+.offer {
+  display: flex; width: fit-content; max-width: 100%; align-items: center; margin: 10px auto 0; padding-left: 14px;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--card);
+}
+.offer button { min-height: 40px; padding: 0; border: 0; background: none; color: var(--muted); font-size: .9rem; }
+.offer .dismiss { width: 44px; min-height: 44px; margin: -2px 0; font-size: 1.2rem; } /* a 44px target in a 40px pill */
+.survey .link { display: block; margin: 16px auto 0; }

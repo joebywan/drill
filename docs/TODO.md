@@ -59,3 +59,34 @@ Widget and reminder mechanics, from a friend's Android habit app (Fizz) reviewed
 - **Not copied:** Fizz's escalating 19:30 / 21:45 / 23:00 "code red" nudges and panicking
   mascot (guilt, against the guardrails), and `USE_EXACT_ALARM`, which Play reserves for
   alarm and calendar apps. Inexact alarms are fine for a once-a-day reminder.
+
+## Fitting the person
+
+Agreed 2026-10-30: Drill learns from its own on-device log how to fit the person, so it reacts
+in a way that suits them. It isn't there to guess their feelings. Fizz logs similar events to a
+JSON Lines file but never reads them back; Drill should use them. Needs HABITS.md task 13, and
+the Android wrapper for anything about notifications.
+
+- **Remind when they actually practise.** Learn the hours sessions usually happen and send the
+  reminder then. Don't remind early in the day if they never play then.
+- **Back off from ignored reminders.** Log each reminder as opened or cleared. If they only ever
+  clear them, remind less, or not at all, and say so once as a passive line in settings.
+- **Notice a drop-off and offer a comeback.** When sessions per week fall well below their own
+  usual, start a personalised comeback event built from what they did most (their favourite
+  practice, at their usual hour, with a garden visitor as the reward). Inviting, never guilt.
+- **Adjust what's offered.** A practice often left at the same step gets a shorter version
+  offered; the ones they finish most come first on the path.
+- Everything stays on the device, can be seen in the habit view, and goes in the file export.
+
+## Coach voice
+
+Open question, not decided. Fizz writes its mascot's lines with Bedrock (a cloud model,
+with built-in lines as the fallback). For Drill, which has no internet permission:
+
+- **Line pool:** many hand-reviewed lines per state (habit, streak, hour, light, comeback),
+  drafted with an LLM at authoring time and shipped in the app, with slots for the person's own
+  facts ("your usual evening breathing"). No download, same on web and Android.
+- **On-device model:** Gemma 3 (270M or 1B) via Google's LiteRT / MediaPipe LLM runtime runs on
+  most phones and on the web with WebGPU, but is a download of several hundred MB; Gemini Nano
+  via ML Kit needs a recent flagship. Small models drift off a character's voice, so the pool
+  stays as the fallback either way. Check the current options before choosing.
