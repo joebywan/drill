@@ -36,8 +36,9 @@ const SIGH_WORDS = { in: 'sighIn', top: 'sighTop', sigh: 'sighOut' };
 
 /** Breathing (4 in, 8 out) and the sigh (in, a little more, a long sigh out), with Moss along. */
 function breathing(el, item, ctx) {
-  const n = item.cycles;
   const sigh = item.type === 'sigh';
+  const phases = (sigh ? sighs : breaths)(item.cycles, ctx.timings);
+  const n = phases.at(-1).cycle + 1;
   const name = sigh ? 'Sigh' : 'Breath';
   let size = SIZE.out;
   el.innerHTML = `<div class="breath">
@@ -46,7 +47,7 @@ function breathing(el, item, ctx) {
     </div>${pauseBar}`;
   const orb = el.querySelector('.orb');
   const which = el.querySelector('.which');
-  return routine(el, sigh ? sighs(n) : breaths(n), ctx, (p, i, say) => {
+  return routine(el, phases, ctx, (p, i, say) => {
     const inhale = p.phase === 'in' || p.phase === 'top';
     orb.dataset.phase = inhale ? 'in' : 'out';
     if (p.phase === 'in') which.textContent = `${name} ${p.cycle + 1} of ${n}`;
@@ -65,14 +66,15 @@ function breathing(el, item, ctx) {
 
 /** The butterfly hug: arms crossed, one slow tap a second, left then right, as Moss does it. */
 function hugging(el, item, ctx) {
-  const n = item.taps;
+  const taps = hugTaps(item.taps, ctx.timings);
+  const n = taps.length;
   el.innerHTML = `<div class="hug">
       <div class="sides" aria-hidden="true"><span data-side="left">Left</span><span data-side="right">Right</span></div>
       <p class="which" aria-live="off"></p>
     </div>${pauseBar}`;
   const sides = el.querySelectorAll('[data-side]');
   const which = el.querySelector('.which');
-  return routine(el, hugTaps(n), ctx, (p, i, say) => {
+  return routine(el, taps, ctx, (p, i, say) => {
     for (const s of sides) s.classList.toggle('on', s.dataset.side === p.side);
     which.textContent = `Tap ${p.tap + 1} of ${n}`;
     if (!i) say(calm('hug'), 'hug'); // one line: a new one every second would be a lot to hear
@@ -83,7 +85,7 @@ function hugging(el, item, ctx) {
 
 function scanning(el, item, ctx) {
   const zones = course.zones;
-  return steps(el, scan(zones, item.seconds), ctx, {
+  return steps(el, scan(zones, item.seconds, ctx.timings), ctx, {
     label: 'Body scan, feet to head', rising: true, mood: 'notice',
     summary: `${zones.length} places, feet to head`, paused: calm('paused'),
   });

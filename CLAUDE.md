@@ -93,6 +93,12 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - **Calm is not therapy.** `test/guardrails.test.js` bars health claims, diagnosis words and urgency
   in Calm's text, and checks the Lifeline help line (13 11 14, as plain text) is on the first Calm
   lesson and after "Not really".
+- `src/practice/timings.js` — the learner's own timings: `TIMINGS` (each practice habit's settable
+  values, ranges, fixed defaults) and `timed(habit, defaults, overrides)`, the one merge every routine
+  builder (calm, move, break `routines.js`) goes through; a value out of range falls back to the
+  default, and with nothing set the path's own values (cycles, reps rising) hold. Stored in
+  `progress.timings` (v8). `timingsView()` in app.js: − and + steppers, the default beside each,
+  "Back to defaults", saved on each tap; opened from the habit view, or from home before a first session.
 - `src/garden/model.js` — pure: the garden read from progress. Plants grow from `days` (each
   habit's permanent count of dates practised, never the streak); `RULES` is the achievement table
   (one line of data each), `award()` records what is earned in `progress.garden.earned` and never

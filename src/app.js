@@ -11,6 +11,7 @@ import { CALM_SOUNDS, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLa
 import { buzz, calmPref, move, play, setPref, setSound, soundOn } from './feel.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
+import { TIMINGS, TIMING_WORDS, setTiming, timed } from './practice/timings.js';
 
 const STORE = 'drill.progress';
 const REVIEW_SIZE = 8;
@@ -150,7 +151,8 @@ function home(arrived = null, newly = []) {
         <button class="path-tab add-tab" data-add aria-label="Add a habit">${esc(LOG_WORDS.addTab)}</button>
       </nav>
       ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick.name) : line('welcome'))}</p>` : ''}
-      ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>` : ''}
+      ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
+        : TIMINGS[habitShown] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
       ${offer ? `<p class="offer"><button data-place>${esc(offer.placement.offer)}</button><button class="dismiss" data-dismiss aria-label="Dismiss">×</button></p>` : ''}
       ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly) : ''}
       ${units.map((u) => `
@@ -196,6 +198,8 @@ function home(arrived = null, newly = []) {
   app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); focusOn('.sound'); });
   app.querySelector('.menu').addEventListener('click', () => { stopHome(); keep(); });
   app.querySelector('.streak-line')?.addEventListener('click', () => habitView(habitShown));
+  // Before a habit's first session there is no habit view yet, so its timings are offered here.
+  app.querySelector('.timings-link')?.addEventListener('click', () => { stopHome(); timingsView(habitShown, () => { home(); focusOn('.timings-link'); }); });
   // The tabs are one row that scrolls inside itself: the selected one is brought into view.
   const tabs = app.querySelector('.paths');
   const shown = tabs.querySelector('[aria-pressed="true"]');
@@ -281,6 +285,7 @@ function habitView(id, back = () => { home(); focusOn('.streak-line'); }) {
     <main class="habit">
       <h1><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}</h1>
       <p class="said">${n ? `${n}-day streak` : NO_STREAK}</p>
+      ${TIMINGS[id] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
       <h2>This week</h2>
       <ol class="week" aria-hidden="true">${week.map(cell).join('')}</ol>
       ${[...week].reverse().map(day).join('')}
@@ -290,6 +295,56 @@ function habitView(id, back = () => { home(); focusOn('.streak-line'); }) {
     </main>`;
   focusOn('h1');
   app.querySelector('.back').addEventListener('click', back);
+  app.querySelector('.timings-link')?.addEventListener('click', () => timingsView(id, () => { habitView(id, back); focusOn('.timings-link'); }));
+}
+
+/**
+ * A practice habit's own timings (practice/timings.js): a − and + stepper per value with the
+ * default beside it, and "Back to defaults". Each tap saves; nothing to confirm.
+ */
+function timingsView(id, back) {
+  const h = habitOf(id);
+  const all = TIMINGS[id];
+  const own = () => progress.timings?.[id] ?? {};
+  const fmt = (v, r) => `${v}${r.unit ? ` ${r.unit}` : ''}`;
+  app.innerHTML = `
+    <header class="bar"><button class="back" aria-label="Back">←</button></header>
+    <main class="habit timings">
+      <h1>${esc(TIMING_WORDS.link)}</h1>
+      <p class="said"><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}. ${esc(TIMING_WORDS.intro)}</p>
+      <ul class="steppers">${Object.entries(all).map(([k, r]) => `<li data-k="${k}">
+        <span id="t-${k}">${esc(r.label)}</span>
+        <div class="stepper">
+          <button class="step" data-d="-1" aria-label="Less" aria-describedby="t-${k}">−</button>
+          <output aria-live="polite"></output>
+          <button class="step" data-d="1" aria-label="More" aria-describedby="t-${k}">+</button>
+        </div></li>`).join('')}</ul>
+      <button class="choice timings-reset">${esc(TIMING_WORDS.reset)}</button>
+    </main>`;
+  const paint = () => {
+    for (const li of app.querySelectorAll('.steppers li')) {
+      const r = all[li.dataset.k];
+      const set = timed(id, { [li.dataset.k]: undefined }, own())[li.dataset.k];
+      const v = set ?? r.def;
+      li.querySelector('output').innerHTML = v == null ? `<b>${esc(TIMING_WORDS.usual)}</b> <small>(default)</small>`
+        : `<b>${esc(fmt(v, r))}</b> <small>(default ${esc(r.def == null ? TIMING_WORDS.path : String(r.def))})</small>`;
+      li.querySelector('[data-d="-1"]').disabled = (v ?? r.from) <= r.min;
+      li.querySelector('[data-d="1"]').disabled = (v ?? r.from) >= r.max;
+      li.classList.toggle('own', set != null);
+    }
+    app.querySelector('.timings-reset').disabled = !Object.keys(own()).length;
+  };
+  const keep = (mine) => { progress = { ...progress, timings: { ...progress.timings, [id]: mine } }; save(); paint(); };
+  for (const b of app.querySelectorAll('.step')) b.addEventListener('click', () => {
+    const k = b.closest('li').dataset.k;
+    const r = all[k];
+    const v = timed(id, { [k]: r.def ?? r.from }, own())[k];
+    keep(setTiming(own(), id, k, Math.min(r.max, Math.max(r.min, v + Number(b.dataset.d) * (r.step ?? 1)))));
+  });
+  app.querySelector('.timings-reset').addEventListener('click', () => { keep({}); focusOn('h1'); });
+  app.querySelector('.back').addEventListener('click', back);
+  paint();
+  focusOn('h1');
 }
 
 /**
@@ -557,6 +612,7 @@ function run(lessonId, queue, title) {
       coachEl: $('.who'),
       coach: who,
       help: who.help,
+      timings: progress.timings?.[entry.subject.habit],
       done: (correct, text = '', kept = null) => {
         // A practice item goes straight on: its own buttons were the Continue.
         if (practice) { if (text) did.push(text); if (kept) journal = kept; at++; return step(); }

@@ -23,12 +23,14 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            icon and plant. `hidden` takes it off the tabs and keeps everything else (subjects.js habitsFor)
  *   picked   [habitId]  — what the first-visit intro was asked for, in the order picked: home puts
  *            these first (subjects.js ordered). Absent until the intro is answered or skipped ([])
+ *   timings  { habitId: { key: value } }  — the learner's own practice timings (practice/timings.js),
+ *            over the path's defaults. Untrusted like the rest: `timed()` ignores a value out of range
  *   version  the shape's version; `migrate()` brings any older shape up to VERSION
  */
-export const VERSION = 7;
+export const VERSION = 8;
 export const LEARN = 'learn';
 const emptyStreak = () => ({ count: 0, last: null, forgiven: [], days: 0 });
-export const emptyProgress = () => ({ version: VERSION, habits: { [LEARN]: emptyStreak() }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, tracked: [] });
+export const emptyProgress = () => ({ version: VERSION, habits: { [LEARN]: emptyStreak() }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, tracked: [], timings: {} });
 
 const isObject = (v) => v != null && typeof v === 'object' && !Array.isArray(v);
 const isDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
@@ -66,7 +68,8 @@ const isTracked = (t) => isObject(t) && typeof t.id === 'string' && /^[a-z0-9-]{
  * less than the streak's count (the log may have started after the streak); up to version 4 `start`
  * was one string, chess's (the only subject that asked), and becomes { chess: it }; up to version 5
  * nothing was `tracked`, which starts empty; up to version 6 there was no first-visit intro, so
-`picked` becomes [] and someone who already used Drill never sees it.
+`picked` becomes [] and someone who already used Drill never sees it; up to version 7 there were
+ * no timings of the learner's own, so `timings` becomes {}.
  * Unknown fields are kept, so a file from a newer build loses nothing.
  */
 export function migrate(raw) {
@@ -104,7 +107,9 @@ export function migrate(raw) {
   // Version 7: what the intro was asked for. Older saves come from people who never saw it, and never will.
   const picked = (Number(raw.version) || 0) < 7 ? raw.picked ?? [] : raw.picked;
   if (picked != null && !(Array.isArray(picked) && picked.every((id) => typeof id === 'string' && /^[a-z0-9-]{1,40}$/.test(id)) && new Set(picked).size === picked.length)) return null;
-  return { ...kept, ...(start && { start }), ...(picked && { picked }), version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal, garden, tracked };
+  // Version 8: the learner's own timings. Not an object means none; each value is checked where it is used.
+  const timings = isObject(raw.timings) ? raw.timings : {};
+  return { ...kept, ...(start && { start }), ...(picked && { picked }), version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal, garden, tracked, timings };
 }
 
 /**

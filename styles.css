@@ -500,3 +500,20 @@ html { scroll-padding-bottom: 160px; }
 .intro .choice[aria-pressed="true"] { border-color: var(--accent); }
 .intro .choice[aria-pressed="true"]::after { content: '✓' / ''; background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
 .branch .choice:disabled { color: var(--muted); border-style: dashed; }
+
+/* Your timings (app.js timingsView): a − and + stepper per value, thumb-sized, the default beside it. */
+.habit .timings-link { margin: 8px 0 0; padding-left: 0; }
+.steppers { margin: 20px 0; padding: 0; list-style: none; }
+.steppers li { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.steppers li > span { display: block; font-weight: 600; }
+.stepper { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.stepper output { flex: 1; text-align: center; }
+.stepper output small { display: block; color: var(--muted); font-size: .8rem; }
+.steppers li.own output b { color: var(--accent); }
+.step {
+  flex: none; width: 56px; height: 48px; border-radius: 12px; border: 2px solid var(--line); background: var(--card);
+  font-size: 1.4rem; font-weight: 700; line-height: 1;
+}
+.step:disabled { opacity: .4; cursor: default; }
+.timings-reset { display: block; width: 100%; padding: 14px; }
+.timings-reset:disabled { color: var(--muted); border-style: dashed; }

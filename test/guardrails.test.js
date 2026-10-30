@@ -269,3 +269,12 @@ test('the first-visit intro never nags, hurries or judges', () => {
   assert.ok(texts.length > 20);
   for (const text of texts) for (const lint of [NAGGING, LOSS, ABILITY, URGENCY]) assert.doesNotMatch(text, lint, text);
 });
+
+// Your timings: plain words, no claims beyond "if someone has given you timings, set them here".
+import { TIMINGS, TIMING_WORDS } from '../src/practice/timings.js';
+test('the timings screen makes no claims, never hurries and never pushes', () => {
+  const words = [...Object.values(TIMING_WORDS), ...Object.values(TIMINGS).flatMap((all) => Object.values(all).map((r) => r.label))];
+  assert.ok(words.length > 10);
+  for (const text of words) for (const bad of [CLAIMS, URGENCY, PUSHING, BODY, ABILITY, LOSS]) assert.doesNotMatch(text, bad, text);
+  assert.match(TIMING_WORDS.intro, /^If someone has given you timings, set them here\./);
+});

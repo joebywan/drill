@@ -328,6 +328,51 @@ test('a Calm breathing session keeps its own streak, and asks how you feel', asy
   await expect(page.getByRole('button', { name: `Continue · ${first.title}` })).toBeVisible();
 });
 
+test('your own timings: Calm breathes in for 6 when set, saves at once, and goes back to defaults', async ({ page }) => {
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Calm').click();
+  // Before the first session there is no habit view yet, so the timings are on home.
+  await page.getByRole('button', { name: 'Your timings' }).click();
+  await expect(page.getByRole('heading', { name: 'Your timings' })).toBeFocused();
+  await expect(page.getByText('If someone has given you timings, set them here.')).toBeVisible();
+  const inhale = page.locator('.steppers li[data-k="inhale"]');
+  await expect(inhale.locator('output')).toHaveText('4 s (default 4)');
+  await expect(page.locator('.steppers li[data-k="breaths"] output')).toHaveText('As the path goes (default)');
+  await expect(page.getByRole('button', { name: 'Back to defaults' })).toBeDisabled();
+  for (let i = 0; i < 2; i++) await inhale.getByRole('button', { name: 'More' }).click();
+  await expect(inhale.locator('output')).toHaveText('6 s (default 4)');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')).timings)).toEqual({ calm: { inhale: 6 } });
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Your timings' })).toBeFocused();
+
+  // The breath in now lasts 6 s: the orb still fills at 5.9 s and turns to the out-breath at 6.
+  await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  const orb = page.locator('.orb');
+  await expect(orb).toHaveAttribute('data-phase', 'in');
+  await expect(orb.locator('.count')).toHaveText('6');
+  await page.clock.runFor(5_900);
+  await expect(orb).toHaveAttribute('data-phase', 'in');
+  await page.clock.runFor(200);
+  await expect(orb).toHaveAttribute('data-phase', 'out');
+  await expect(orb.locator('.count')).toHaveText('8'); // the out-breath keeps its default
+  await page.clock.runFor(3 * 14_000);
+  await expect(page.getByText(/^3 breaths · \d+ min$/)).toBeVisible();
+  await continueButton(page).click();
+
+  // After a session they live in the habit view; Back to defaults resets everything, at once.
+  await week(page, 1).click();
+  await page.getByRole('button', { name: 'Your timings' }).click();
+  await expect(inhale.locator('output')).toHaveText('6 s (default 4)');
+  await page.getByRole('button', { name: 'Back to defaults' }).click();
+  await expect(inhale.locator('output')).toHaveText('4 s (default 4)');
+  await expect(page.getByRole('button', { name: 'Back to defaults' })).toBeDisabled();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')).timings)).toEqual({ calm: {} });
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Calm' })).toBeVisible();
+});
+
 test('"Not really" gets a kind line and the help line', async ({ page }) => {
   await firstBreathing(page);
   await page.getByRole('button', { name: 'Not really' }).click();

@@ -1,4 +1,5 @@
 /** The screen break as a timeline (see src/practice/timeline.js, which plays it): about 2 minutes. */
+import { timed } from '../practice/timings.js';
 
 /**
  * Each step: { name, line, seconds, pose, loops, how }. `line` is the short cue Mira says; Mira
@@ -38,3 +39,6 @@ export const STEPS = [
     'Shoulders easy, chin level. Then just breathe.',
   ] },
 ];
+
+/** The steps with the learner's `own` seconds per step (progress.timings.break), if set. */
+export const breakSteps = (own) => STEPS.map((s) => ({ ...s, ...timed('break', { seconds: s.seconds }, own) }));
