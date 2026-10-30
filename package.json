@@ -6,7 +6,8 @@
     "start": "node tools/serve.js",
     "test": "node --test test/*.test.js",
     "e2e": "playwright test",
-    "puzzles": "curl -sf https://database.lichess.org/lichess_db_puzzle.csv.zst | zstd -dc | head -n 600000 | node tools/puzzles.js > src/data/chess.json"
+    "puzzles": "curl -sf https://database.lichess.org/lichess_db_puzzle.csv.zst | zstd -dc | head -n 600000 | node tools/puzzles.js > src/data/chess.json",
+    "phone": "node tools/phone.js"
   },
   "type": "module",
   "dependencies": {

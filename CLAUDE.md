@@ -21,6 +21,28 @@ npm test                   # node --test, no framework
 npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second worktree
 ```
 
+## Phone testing
+
+`npm run phone -- [scenario...] [--url <base>]` drives Chrome on an Android emulator with real
+touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
+No scenario runs all of `test/phone/*.js` (learn, calm, move, break, reflect, scan); a new one is
+a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
+`shot`, `run`, `check`).
+
+- With no `--url` it serves this checkout on a free port; Chrome opens `http://10.0.2.2:<port>/`.
+- It boots the AVD (`PHONE_AVD`, default `splendor36`) `-read-only` if no emulator is running and
+  shuts down only one it started. SDK from `ANDROID_HOME` or `~/Android/Sdk`.
+- Screenshots of the whole screen (keyboard included) go to `test-results/phone/<scenario>/NN-name.png`.
+- It prints page errors, failed requests, sideways overflow, and the device checks: during Calm,
+  Chrome's stream is `state:started` in `dumpsys audio` with an active track in
+  `dumpsys media.audio_flinger`, and `dumpsys vibrator_manager` gains Chrome vibrations. It exits
+  non-zero on a page error or a failed check.
+- Quirks: Chrome's own prompts ("No thanks", "Not now") cover the page and are declined through
+  `uiautomator dump`. Taps are real, so the page origin on screen is measured by tapping a blank
+  page, not hard-coded. Timed parts run on `page.clock`. The host's PulseAudio may fail to open
+  while Android audio still runs, so judge sound by the dumpsys checks. **Only one agent may use
+  the emulator at a time.**
+
 ## Architecture
 
 - `src/subjects.js` — the contract. A subject is a course JSON plus `mount(el, item, { say, done })`.
