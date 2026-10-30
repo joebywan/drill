@@ -4,7 +4,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, streakLine } from '../src/habitview.js';
 import { helpHtml } from '../src/practice/kit.js';
 import { subjects } from '../src/subjects.js';
-import { ACCURACY, BREAK_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, KAEDE_LINES, KAEDE_HEADLINES, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
+import { ACCURACY, BREAK_LINES, FOCUS_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, KAEDE_LINES, KAEDE_HEADLINES, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
 // Praise the process, never the person: no ability words. No absence, loss or guilt either.
 const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intelligen\w*|born to)\b/i;
@@ -150,9 +150,9 @@ const sources = (dir) => readdirSync(dir, { withFileTypes: true, recursive: true
 
 test('journal text is read only by the habit view and the file export, and nothing is sent anywhere', () => {
   const touch = sources('src').filter((f) => /journal/.test(readFileSync(f, 'utf8'))).sort();
-  // progress.js keeps the shape (migrate, writeJournal); reflect/practice.js writes it and is the
+  // progress.js keeps the shape (migrate, writeJournal); reflect/ and focus/practice.js write it and are the
   // habit view's dayDetail; app.js only hands it from the routine to writeJournal.
-  assert.deepEqual(touch, ['src/app.js', 'src/progress.js', 'src/reflect/practice.js']);
+  assert.deepEqual(touch, ['src/app.js', 'src/focus/practice.js', 'src/progress.js', 'src/reflect/practice.js']);
   assert.doesNotMatch(readFileSync('src/app.js', 'utf8'), /progress\.journal|\.journal\b/, 'app.js never reads the journal itself');
   // The export is the whole progress object, journal included, saved to the learner's own file.
   assert.match(readFileSync('src/app.js', 'utf8'), /new Blob\(\[JSON\.stringify\(progress\)\]/);
@@ -284,6 +284,26 @@ test('the timings screen makes no claims, never hurries and never pushes', () =>
   assert.ok(words.length > 10);
   for (const text of words) for (const bad of [CLAIMS, URGENCY, PUSHING, BODY, ABILITY, LOSS]) assert.doesNotMatch(text, bad, text);
   assert.match(TIMING_WORDS.intro, /^If someone has given you timings, set them here\./);
+});
+
+// Focus: a calm timer, never a productivity tool. No hurry, no claims, no guilt, and nothing that
+// counts distraction or calls time wasted. Stopping early is fine, so nothing hints otherwise.
+const focusCourse = JSON.parse(readFileSync('src/data/focus.json', 'utf8'));
+const GRIND = /\b(distract\w*|productiv\w*|wast\w*|lazy|procrastinat\w*|fail\w*|unfocused|lost focus|give up|quit\w*|didn'?t finish|only|just \d+|should|must|better|best|score\w*)\b/i;
+const focusText = [
+  ...Object.entries(FOCUS_LINES).flatMap(([kind, list]) => list.map((text) => [kind, text])),
+  ...strings(focusCourse).filter((t) => /\s/.test(t)).map((text) => ['focus.json', text]),
+  ...feelsFor(subjects.find((x) => x.habit === 'focus').coach.feel).map(([, label]) => ['feel', label]),
+  ['ask', subjects.find((x) => x.habit === 'focus').coach.ask],
+];
+
+test('Focus never hurries, claims, shames or keeps count', () => {
+  assert.ok(focusText.length > 20);
+  for (const [kind, text] of focusText) {
+    for (const rule of [CLAIMS, URGENCY, ABILITY, LOSS, GRIND]) assert.doesNotMatch(text, rule, `${kind}: ${text}`);
+  }
+  for (const bad of ['You got distracted 3 times', 'Be more productive', 'Time wasted', 'You only did 4 minutes']) assert.match(bad, GRIND, bad);
+  for (const kind of Object.keys(FOCUS_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
 });
 
 // Wind down: Calm's lint, plus no sleep claims or sleep numbers, no screen-time shaming, and the
