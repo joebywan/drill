@@ -300,7 +300,10 @@ after `npm ci` at the root. App id `com.joebywan.drill`, locked.
 - **Every shipped puzzle is replayed in a test.** If the data or `tryMove` drift, it fails.
 - **Every shipped item passes `problem()` and has an explanation.** Tap and true/false answers
   are computed from the position, never stored.
-- **A missed item comes back once, at the end of the session.** Only the first try is scheduled.
+- **Sessions adapt.** `src/adapt.js` reads `progress.answers` (each answer: key, right, ms, on the device, last 400). A miss
+  comes back up to `GOES` times, fresh; two misses in a unit's last four answers inserts that unit's second explanation
+  (`src/data/help.json`, every Learn unit has one) and a smaller earlier item, once a session; repeats favour what was
+  missed; 8 right in a row in a course cuts echoes to 1. Only the first try schedules a card.
 - **Sessions drill.** `src/repeat.js`: a lesson opens with up to 2 earlier cards (the closest to slipping), ends
   with up to 3 of its own items again ("Once more", not rescheduled), and each unit ends in a Checkpoint mixing
   it (`mix`). A subject's `vary(item, random)` makes a repeat fresh: Coding and Maths items with a `family` play a

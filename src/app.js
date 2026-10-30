@@ -6,7 +6,9 @@ import { emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { lumi } from './cast/lumi.js';
-import { checkpoint, echoes, fresh, warmUps } from './repeat.js';
+import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, echoes, fresh, warmUps } from './repeat.js';
+import { GOES, easier, flying, misses, noteAnswer, struggling } from './adapt.js';
+import unitHelp from './data/help.json' with { type: 'json' };
 import { CALM_SOUNDS, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, setSound, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
@@ -357,11 +359,14 @@ function lessonQueue({ subject, lesson: l }) {
   const entry = (item, source = item) => ({ ...items.get(`${subject.id}:${source.id}`), key: `${subject.id}:${source.id}`, item });
   const own = l.items.map((item) => entry(item));
   if (subject.kind !== 'learn' || window.DRILL_PLAIN) return own;
-  if (l.mix) return checkpoint(subject, l.items).map(({ item, source }) => entry(item, source));
+  if (l.mix) return checkpoint(subject, l.items, Math.random, CHECKPOINT, (item) => misses(progress.answers)[`${subject.id}:${item.id}`] ?? 0).map(({ item, source }) => entry(item, source));
   const keys = own.map((e) => e.key);
-  const warm = warmUps(progress.cards, (k) => items.get(k)?.subject === subject, keys)
+  const missed = misses(progress.answers);
+  const weight = (item) => missed[`${subject.id}:${item.id}`] ?? 0;
+  const inCourse = (k) => items.get(k)?.subject === subject;
+  const warm = warmUps(progress.cards, inCourse, keys, WARM_UPS, missed)
     .map((k) => ({ ...items.get(k), key: k, item: fresh(subject, items.get(k).item), topic: 'Warm up' }));
-  return [...warm, ...own, ...echoes(subject, l.items).map(({ item, source }) => ({ ...entry(item, source), topic: 'Once more', echo: true }))];
+  return [...warm, ...own, ...echoes(subject, l.items, Math.random, flying(progress.answers, inCourse) ? 1 : ECHOES, weight).map(({ item, source }) => ({ ...entry(item, source), topic: 'Once more', echo: true }))];
 }
 
 /** A coach's moods on the path: a teacher answers kit.js's, a practice coach has its own. */
@@ -811,6 +816,7 @@ function run(lessonId, queue, title, extra = null) {
     foot.className = 'foot';
     if (at === queue.length) { sessionCoach.stop(); return practice ? finishRoutine() : finish(); }
     const entry = queue[at];
+    const shownAt = Date.now();
     topic.textContent = entry.topic;
     sessionCoach.set(who.start);
     cleanup = entry.subject.mount(stage, entry.item, {
@@ -828,8 +834,18 @@ function run(lessonId, queue, title, extra = null) {
         if (practice) { if (text) did.push(text); if (kept) journal = kept; at++; return step(); }
         // Only the first try schedules a card, and an echo is a second go at something just learned.
         if (correct !== null && !entry.retry && !entry.echo) results.push({ key: entry.key, correct });
-        if (correct === false && !entry.retry && !entry.echo) queue.push({ ...entry, retry: true });
+        const goes = entry.goes ?? 1;
+        const plain = window.DRILL_PLAIN;
+        // A miss comes back at the end, fresh where it can be, until it lands or runs out of goes.
+        if (correct === false && !entry.echo && goes < (plain ? 2 : GOES)) {
+          queue.push({ ...entry, retry: true, goes: goes + 1, item: plain ? entry.item : fresh(entry.subject, items.get(entry.key)?.item ?? entry.item) });
+        }
+        if (correct !== null && entry.key) {
+          progress = noteAnswer(progress, { key: entry.key, right: correct, ms: Date.now() - shownAt });
+          save();
+        }
         at++;
+        if (correct === false && !plain) easeOff(entry);
         let kind = 'plain';
         if (correct === true) {
           streak++;
@@ -918,6 +934,22 @@ function run(lessonId, queue, title, extra = null) {
       home(firstTime ? lessonId : null);
       focusOn('.cta .next');
     });
+  };
+
+  // Twice wrong in a unit: once a session, explain it another way and step back to something smaller.
+  const eased = new Set();
+  const easeOff = ({ key, subject }) => {
+    const known = items.get(key);
+    if (!known || eased.has(known.topic)) return;
+    if (!struggling(progress.answers, (k) => items.get(k)?.topic === known.topic && items.get(k).subject === subject)) return;
+    eased.add(known.topic);
+    const list = subject.units.find((u) => u.title === known.topic).lessons.filter((l) => !l.mix).flatMap((l) => l.items);
+    const smaller = easier(list, known.item);
+    const text = unitHelp[subject.id]?.[known.topic];
+    queue.splice(at, 0, ...[
+      text && { subject, topic: 'One step back', item: { id: 'help', type: 'teach', text } },
+      smaller && { subject, key: `${subject.id}:${smaller.id}`, topic: 'One step back', item: smaller, echo: true },
+    ].filter(Boolean));
   };
 
   const perfectRun = () => results.length > 0 && results.every((r) => r.correct);

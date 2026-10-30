@@ -792,3 +792,17 @@ body:has(main.night) {
   .block .inner { gap: 4px; margin: 0; }
   .vars { min-height: 1.3em; margin-bottom: 2px; font-size: .85rem; line-height: 1.3; }
 }
+/* A coach the learner copies: the X beside them and no header, so the words below get the room. */
+.bar:has(+ .play .coach.demonstrates) { position: absolute; top: 0; left: 0; z-index: 1; }
+.play:has(.coach.demonstrates) { padding-top: max(12px, env(safe-area-inset-top)); }
+.play:has(.coach.demonstrates) .topic { position: absolute; clip-path: inset(50%); }
+/* The screen break: the step in progress, how to do it, and what's next. */
+.scan.detailed .steps li:not(.now) { display: none; }
+.how-now { margin: 10px 0 0; padding-left: 20px; }
+.how-now li { margin-bottom: 6px; }
+.next-step { margin: 8px 0 0; color: var(--muted); }
+/* Its pause is a small round button level with the X, on the other side of the coach. */
+.practice-pause.icon {
+  position: absolute; top: max(12px, env(safe-area-inset-top)); right: 16px; z-index: 1; width: 44px; height: 44px; margin: 0; padding: 0; border-radius: 50%; font-size: 1rem;
+}
+.choices:has(> .practice-pause.icon) { position: static; padding: 0; border: 0; background: none; }

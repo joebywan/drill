@@ -98,6 +98,7 @@ export function migrate(raw) {
   const start = typeof raw.start === 'string' ? { chess: raw.start } : raw.start;
   if (start != null && !(isObject(start) && Object.values(start).every((u) => u === null || typeof u === 'string'))) return null;
   const { xp, ...kept } = raw; // points from earlier builds are dropped
+  if (!Array.isArray(kept.answers)) delete kept.answers; // optional, and only ever a hint: a bad one is dropped
   delete kept.streak; // version 1's one streak becomes Learning's, below
   let habits;
   if ((Number(raw.version) || 0) < 2) {
