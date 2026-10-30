@@ -576,13 +576,31 @@ html { scroll-padding-bottom: 160px; }
 .tiles .tile.code-tile { font: 600 .85rem ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
 .code {
   width: 100%; margin: 0; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--line); background: var(--card); color: var(--text);
-  font: 600 .875rem/1.5 ui-monospace, Menlo, Consolas, monospace; text-align: left; white-space: pre; overflow: hidden;
+  font: 600 min(.875rem, 3.6vw)/1.5 ui-monospace, Menlo, Consolas, monospace; text-align: left; white-space: pre; overflow: hidden;
 }
 .code .block { display: inline-grid; vertical-align: middle; height: 28px; min-width: 52px; padding: 0 6px; border-radius: 6px; font: inherit; line-height: 1; }
+/* The builder (src/builder.js): placed blocks wrap like a program, the tray and Run stay in the thumb zone. */
+.answer { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 6px; width: 100%; min-height: 44px; }
+.block.slot { min-width: 28px; width: 28px; border: 2px dashed var(--line); background: transparent; padding: 0; cursor: pointer; }
+.block.slot.here { min-width: 40px; width: 40px; border-color: var(--code); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--code) 35%, transparent); }
+.caret { align-self: stretch; width: 4px; min-height: 36px; border-radius: 2px; background: var(--code); }
+.block .take { border: 0; padding: 0 4px; background: none; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+/* Laying out needs the room: a smaller map, and the answer scrolls inside its own space when it is long. */
+.play:has(.answer) .grid-world { width: min(100%, calc(var(--w) * 44px), calc(var(--w) * 22vh / var(--h))); margin-bottom: 6px; }
+.program:has(.answer) { overflow-y: auto; }
+.choices.tray { flex-wrap: wrap; gap: 6px; padding-top: 8px; }
+.tray .tile { flex: 1 1 auto; min-width: 22%; min-height: 44px; padding: 4px 8px; white-space: nowrap; }
+.tray .tile.word { font-size: .95rem; }
+.tray .run { flex: 1 0 100%; margin: 2px 0 0; padding: 10px; }
+.tray .run:disabled { opacity: .45; }
+.meter-line { flex: 1 0 100%; margin: 0; text-align: center; color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
+.program.shown .block.go { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
 .tile-ghost { user-select: none; position: fixed; left: 0; top: 0; z-index: 50; margin: 0; pointer-events: none; opacity: .9; }
 
 @media (max-height: 700px) {
   .grid-world { width: min(100%, calc(var(--w) * 52px), calc(var(--w) * 23vh / var(--h))); }
+  /* A square to tap keeps a thumb-sized target, whatever the map's height. */
+  .grid-world.picking { width: min(100%, calc(var(--w) * 52px), calc(var(--w) * max(36px, 23vh / var(--h)))); }
   .play:has(.grid-world) .bubble { margin-bottom: 8px; }
 }
 
@@ -786,6 +804,11 @@ body:has(main.night) {
   .program { gap: 4px; }
   .block { min-width: 36px; height: 36px; font-size: 1.15rem; }
   .block.loop, .block.if, .block.stmt { padding: 1px 5px; font-size: .95rem; }
+  .answer { gap: 4px; min-height: 36px; }
+  .answer .head { min-height: 30px; }
+  .code { line-height: 1.35; }
+  .play:has(.answer) .grid-world { width: min(100%, calc(var(--w) * 44px), calc(var(--w) * 17vh / var(--h))); }
+  .tray .tile { min-height: 38px; }
   .block .head { min-height: 28px; gap: 4px; }
   .block .head b { min-width: 26px; height: 26px; }
   .block .head .block { min-width: 28px; height: 28px; }

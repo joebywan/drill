@@ -11,12 +11,12 @@
  */
 import { writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { STEPS, fill, holes, parse, parts, problem as codingProblem, run, solve } from '../src/coding/program.js';
+import { STEPS, blockCount, changed, fill, fixBug, holes, parse, parts, pieces, problem as codingProblem, run, solve } from '../src/coding/program.js';
 import { problem as mathsProblem } from '../src/maths/items.js';
 
 const MAX = 8; // entries in a family: past this a repeat gains little and the pool gets heavy
 
-const seeded = (name) => {
+export const seeded = (name) => {
   let s = [...name].reduce((h, c) => (h * 33 + c.charCodeAt(0)) >>> 0, 5381);
   return () => {
     s = (s + 0x6d2b79f5) >>> 0;
@@ -111,8 +111,10 @@ export function story(level, program, want) {
   return `${walked} The blocks run out there.`;
 }
 
-const upTo = (n) => [n - 2, n - 1, n].filter((v) => v >= 1);
-const near = (n) => [n - 1, n, n + 1].filter((v) => v >= 1);
+/** Three numbers around `n`, with n not always in the same spot: their size gives nothing away. */
+const around = (n) => { const lo = Math.max(1, n - n % 3); return [lo, lo + 1, lo + 2]; };
+/** The same in two tiles. */
+const pair = (n) => (n % 2 ? [n - 1, n] : [n, n + 1]).filter((v) => v >= 1);
 const HOP = (d = 'right') => ({ define: 'hop', params: ['n'], do: [{ repeat: 'n', do: [d] }] });
 const STAIRS = (a, b) => ({ define: 'stairs', params: ['n'], do: [{ repeat: 'n', do: [a, b] }] });
 const GROW = (a, b) => ({ define: 'grow', params: ['n'], do: [{ repeat: 'n', do: [a] }, { repeat: 'n', do: [b] }] });
@@ -158,6 +160,30 @@ const someWays = (r, n) => range(1, n).reduce((w) => [...w, one(r, ['right', 'ri
 
 const hop = (...args) => args.map((a) => ({ call: 'hop', args: [a] }));
 
+/** A program's blocks as chips in a wrong order: what an unscramble hands over. */
+export function scrambled(way, r) {
+  const flat = pieces(way);
+  for (let i = 0; i < 20; i++) {
+    const s = shuffled(flat, r);
+    if (JSON.stringify(s) !== JSON.stringify(flat)) return s;
+  }
+  return [...flat].reverse();
+}
+/** Laying out from nothing. `extra` chips sit beside a way's own in a palette or a free build. */
+export const unscramble = (r, level, way, prompt, explain) => ({ type: 'unscramble', level, way, chips: scrambled(way, r), prompt, ...(explain && { explain }) });
+const paletteOf = (type, level, way, extra, limit, prompt, explain) => ({
+  type, level, way, limit, prompt, ...(explain && { explain }),
+  chips: [...new Map([...pieces(way), ...extra].map((c) => [JSON.stringify(c), c])).values()].sort((a, b) => (typeof b === 'string') - (typeof a === 'string')),
+});
+export const fewer = (level, way, extra, prompt, explain, spare = 0) => paletteOf('palette', level, way, extra, blockCount(way) + spare, prompt, explain);
+export const free = (level, way, extra, prompt, explain) => paletteOf('free', level, way, extra, Math.max(blockCount(way) + 2, 8), prompt, explain);
+export const R = (repeat, ...inside) => ({ repeat, do: inside });
+export const LOOP = (repeat) => ({ repeat, do: [] });
+export const UNTIL = (until, ...inside) => ({ until, do: inside });
+const stepsOnly = (moves) => moves.flatMap((d, i) => (moves[i - 1] === d ? [] : [R(moves.slice(i).findIndex((x) => x !== d) < 0 ? moves.length - i : moves.slice(i).findIndex((x) => x !== d), d)]));
+/** A wrong version of a program, as a bug item. */
+const bug = (level, program, tiles, prompt, explain) => ({ type: 'bug', level, program, tiles, prompt, ...(explain && { explain }) });
+
 /** Every Coding template, by family name. Each gives candidates; `build` keeps the ones that pass. */
 export const CODING = {
   // Steps
@@ -180,8 +206,8 @@ export const CODING = {
     const n = int(q, 3, 6);
     return { level: field(q, { rocks: int(q, 1, 3) }), program: someWays(q, n), prompt: `${Cap(say(n))} steps, with rocks about. Tap where I stop.` };
   }, (res) => res.end !== 'flower'),
-  'rock-round': () => product(range(1, 3), [2, 3, 4]).map(([h, w]) => ({
-    level: map(segs('down', h, 'right', w, 'up', h), { rocks: range(0, h - 1).map((y) => [1, y]) }),
+  'rock-round': () => product(range(1, 3), [2, 3, 4], [[0, 0, 0, 0], [0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 1]]).map(([h, w, pad]) => ({
+    level: map(segs('down', h, 'right', w, 'up', h), { pad, rocks: range(0, h - 1).map((y) => [1, y]) }),
     program: line(null, 2 * h + w), tiles: ['right', 'up', 'down'],
     prompt: `A rock in the way. ${Cap(say(2 * h + w))} steps, all the way round it.`,
   })),
@@ -211,7 +237,7 @@ export const CODING = {
   // Loops
   'loop-count': () => product(['right', 'down', 'left'], range(2, 6)).map(([d, n]) => ({
     level: map(line(d, n), { pad: d === 'down' ? [1, 0, 0, 0] : [0, 0, 0, 0] }),
-    program: [{ repeat: null, do: [d] }], tiles: upTo(n),
+    program: [{ repeat: null, do: [d] }], tiles: around(n),
     prompt: `How many times should I step ${d}?`,
     explain: `${Cap(say(n))} squares to the flower, so ${n} rounds. Counting the gaps is the trick.`,
   })),
@@ -222,7 +248,7 @@ export const CODING = {
   })),
   'loop-whole': () => product(['right', 'up', 'down'], range(2, 6)).filter(([d, n]) => d === 'right' || n <= 4).map(([d, n]) => ({
     level: map(line(d, n), { pad: d === 'right' ? [0, 0, 0, 0] : [1, 0, 1, 0] }),
-    program: [{ repeat: null, do: [null] }], tiles: [n - 1, n, d, d === 'right' ? 'down' : 'left'],
+    program: [{ repeat: null, do: [null] }], tiles: [...pair(n), d, d === 'right' ? 'down' : 'left'],
     prompt: 'Fill in the count and the step.', explain: `${Cap(d)}, ${n} times. You chose both parts.`,
   })),
   'stairs-step': () => product(range(2, 4), STAIR_WAYS).map(([k, [a, b]]) => ({
@@ -231,17 +257,17 @@ export const CODING = {
     explain: `${Cap(a)} then ${b}, ${say(k)} rounds. ${Cap(b)} first runs into a rock.`,
   })),
   'stairs-all': () => product(range(2, 4), STAIR_WAYS).map(([k, [a, b]]) => ({
-    level: stairs(k, a, b).level, program: [{ repeat: null, do: [null, null] }], tiles: [k - 1 || 3, k, a, b],
+    level: stairs(k, a, b).level, program: [{ repeat: null, do: [null, null] }], tiles: [...pair(k), a, b],
     prompt: 'Stairs. How many rounds, and which two steps?',
     explain: `${Cap(a)} then ${b}, ${k} times. ${Cap(b)} first runs into a rock.`,
   })),
   'loop-piece': () => product([[2, 2], [2, 3], [3, 2], [1, 2], [1, 3]], [['right', 'down'], ['right', 'up']]).map(([[p, k], [a, b]]) => {
     const inside = [...line(a, p), b];
     return {
-      level: map(Array.from({ length: k }, () => inside).flat().slice(0, -1), { fill: '#' }),
+      level: map(Array.from({ length: k }, () => inside).flat(), { fill: '#' }),
       program: [{ repeat: null, do: line(null, p + 1) }], tiles: [k === 2 ? 3 : 2, k, a, b],
       prompt: 'Find the piece that comes round, then count it.',
-      explain: `${Cap(inside.join(', '))}, ${k} times. The last round ends on the flower.`,
+      explain: `${Cap(inside.join(', '))}, ${k} times, and the last step lands on the flower.`,
     };
   }),
   'corridor-counts': () => [...product(range(2, 6), range(1, 4)).map(([a, b]) => [a, b]), ...product(range(2, 5), [2, 3]).map(([a, b]) => [a, b, a])].map((c) => {
@@ -267,7 +293,7 @@ export const CODING = {
   })),
   'corridor-mix': () => product(range(2, 6), ['down', 'up']).map(([a, b]) => ({
     level: map([...line('right', a), b], { fill: '#' }),
-    program: [{ repeat: null, do: ['right'] }, null], tiles: [a - 1, a, 'down', 'up'],
+    program: [{ repeat: null, do: ['right'] }, null], tiles: [...pair(a), 'down', 'up'],
     prompt: 'A loop, then one plain step. Fill both.',
     explain: `Right ${a} times, then one step ${b}. Loops and plain steps mix freely.`,
   })),
@@ -299,12 +325,12 @@ export const CODING = {
     prompt: 'The whole if is empty. Fill all three.', explain: `If a rock is ${WHERE[m]}, step ${t}. Else, step ${m}.`,
   })),
   'if-rounds': () => SOME_CLIMBS().filter(({ moves }) => moves.length >= 3).map(({ m, t, moves, level }) => ({
-    level, program: [{ repeat: null, do: [ifRock(m, [t], [m])] }], tiles: upTo(moves.length),
+    level, program: [{ repeat: null, do: [ifRock(m, [t], [m])] }], tiles: around(moves.length),
     prompt: 'The if is ready. How many rounds reach the flower?',
     lead: `${moves.length} rounds.`,
   })),
   'if-rounds-look': () => SOME_CLIMBS().filter(({ moves }) => moves.length >= 3).map(({ m, t, moves, level }) => ({
-    level, program: [{ repeat: null, do: [{ if: null, then: [t], else: [m] }] }], tiles: [moves.length - 1, moves.length, `rock-${m}`, `rock-${t}`],
+    level, program: [{ repeat: null, do: [{ if: null, then: [t], else: [m] }] }], tiles: [...pair(moves.length), `rock-${m}`, `rock-${t}`],
     prompt: 'How many rounds, and what do I look for?', lead: `${moves.length} rounds, looking ${m}.`,
   })),
   'if-edge': () => product(range(2, 5), range(1, 3)).map(([a, b]) => ({
@@ -343,7 +369,7 @@ export const CODING = {
   })),
   'nest-outer': () => product(range(1, 3), range(2, 4)).filter(([a, k]) => a * k <= 6).map(([a, k]) => ({
     level: map(Array.from({ length: k }, () => [...line('right', a), 'down']).flat()),
-    program: [{ repeat: null, do: [{ repeat: a, do: ['right'] }, 'down'] }], tiles: upTo(k),
+    program: [{ repeat: null, do: [{ repeat: a, do: ['right'] }, 'down'] }], tiles: around(k),
     prompt: 'The inside is set. How many rounds of the outside?',
     explain: `${k} rounds: ${say(a)} right and one down, each time.`,
   })),
@@ -352,8 +378,8 @@ export const CODING = {
     program: [{ repeat: null, do: [{ repeat: null, do: ['right'] }, 'down'] }], tiles: [a, k].sort((x, y) => x - y),
     prompt: 'Set both counts, the outside first.', explain: `Outside ${k}, inside ${a}: ${say(a)} right and one down, ${k} times.`,
   })),
-  'nest-times': () => [[2, 2], [2, 3], [3, 2], [2, 1], [3, 1], [4, 1]].map(([k, a]) => ({
-    level: map(line('right', k * a)), program: [{ repeat: k, do: [{ repeat: null, do: ['right'] }] }], tiles: upTo(a).length > 1 ? upTo(a) : [1, 2, 3],
+  'nest-times': () => product([[2, 2], [2, 3], [3, 2], [2, 1], [3, 1], [1, 3], [1, 4], [4, 1], [5, 1]], [[0, 0, 0, 0], [0, 0, 0, 1]]).map(([[k, a], pad]) => ({
+    level: map(line('right', k * a), { pad }), program: [{ repeat: k, do: [{ repeat: null, do: ['right'] }] }], tiles: around(a),
     prompt: `${Cap(say(k * a))} squares to the flower, ${say(k)} rounds. How many inside?`,
     explain: `${Cap(say(k))} rounds of ${a} makes ${k * a}.`,
   })),
@@ -363,12 +389,12 @@ export const CODING = {
     prompt: 'Fill in both steps.', explain: `${Cap(say(a))} ${d}, then ${t}, ${say(k)} rounds. The flower stops me before the last ${t}.`,
   })),
   'nest-all': () => product([[2, 2], [2, 3], [3, 2], [1, 3]], CORNERS).map(([[a, k], [d, t]]) => ({
-    level: map(Array.from({ length: k }, () => [...line(d, a), t]).flat().slice(0, -1), { fill: '#' }),
+    level: map(Array.from({ length: k }, () => [...line(d, a), t]).flat(), { fill: '#' }),
     program: [{ repeat: null, do: [{ repeat: null, do: [null] }, null] }], tiles: [2, 3, d, t],
     prompt: 'All empty. Find the stretch, then how often it comes round.',
     lead: `${Cap(say(a))} ${d} and one ${t}, ${k} rounds.`,
   })),
-  'nest-sizes': () => product(range(1, 3), range(1, 2), [2, 3]).filter(([a, b, k]) => a !== b && a * k < 5 && b * k < 7).map(([a, b, k]) => ({
+  'nest-sizes': () => product(range(1, 4), range(1, 3), [2, 3]).filter(([a, b, k]) => a !== b && a * k < 5 && b * k < 7).map(([a, b, k]) => ({
     level: map(Array.from({ length: k }, () => [...line('down', a), ...line('right', b)]).flat(), { fill: '#' }),
     program: [{ repeat: k, do: [{ repeat: null, do: ['down'] }, { repeat: null, do: ['right'] }] }], tiles: [1, 2, 3],
     prompt: 'Stairs, and you set the sizes.', explain: `Down ${a}, right ${b}, ${say(k)} rounds.`,
@@ -467,7 +493,7 @@ export const CODING = {
     return { level: field(q, { w: int(q, 4, 6), h: 3 }), program: [{ define: 'hop', do: body }, ...line({ call: 'hop' }, k), ...(q() < 0.5 ? [one(q, ['down', 'right'])] : [])], prompt: `${Cap(say(k))} hop${k > 1 ? 's' : ''} and what follows. Tap where I stop.` };
   }),
   'fn-rounds': () => SOME_CLIMBS().filter(({ moves }) => moves.length >= 3).map(({ m, t, moves, level }) => ({
-    level, program: [{ define: 'go', do: [ifRock(m, [t], [m])] }, { repeat: null, do: [{ call: 'go' }] }], tiles: upTo(moves.length),
+    level, program: [{ define: 'go', do: [ifRock(m, [t], [m])] }, { repeat: null, do: [{ call: 'go' }] }], tiles: around(moves.length),
     prompt: 'Go takes one look and one step. How many times?', lead: `${moves.length} times.`,
   })),
   'fn-if-sides': () => SOME_CLIMBS().map(({ m, t, level }) => ({
@@ -477,7 +503,7 @@ export const CODING = {
 
   // Parameters
   'param-one': () => product(['right', 'left'], range(2, 6)).map(([d, n]) => ({
-    level: map(line(d, n)), program: [HOP(d), ...hop(null)], tiles: upTo(n),
+    level: map(line(d, n)), program: [HOP(d), ...hop(null)], tiles: around(n),
     prompt: 'Hand hop the number that reaches the flower.', explain: `${Cap(say(n))} squares, so hop(${n}). The block stays the same, only the number moves.`,
   })),
   'param-two': () => product(range(1, 3), range(1, 3)).filter(([a, b]) => a !== b).map(([a, b]) => ({
@@ -485,7 +511,7 @@ export const CODING = {
     prompt: 'Two uses of hop. Each gets its own number.', explain: `hop(${a}), a step down, then hop(${b}). Same block, different lengths.`,
   })),
   'param-sum': () => product(range(1, 3), range(1, 4)).map(([a, b]) => ({
-    level: map(line('right', a + b)), program: [HOP(), ...hop(a), ...hop(null)], tiles: upTo(b).length > 1 ? upTo(b) : [1, 2, 3],
+    level: map(line('right', a + b)), program: [HOP(), ...hop(a), ...hop(null)], tiles: around(b),
     prompt: 'The first hop is set. What does the second need?', explain: `${Cap(say(a + b))} squares, ${say(a)} done, so hop(${b}). Hops add up.`,
   })),
   'param-usen': () => product(range(1, 3), range(3, 5)).map(([a, b]) => ({
@@ -505,7 +531,7 @@ export const CODING = {
     return { view: 'js', level: field(q, { w: int(q, 3, 5), h: 2, start: [0, 0] }), program: [HOP(), ...hop(a), 'down', ...hop(b)], prompt: 'Two calls, one step between. Tap where I stop.' };
   }),
   'param-stairs': () => product(range(1, 4), [['right', 'down'], ['down', 'right']]).map(([k, [a, b]]) => ({
-    level: map(Array.from({ length: k }, () => [a, b]).flat()), program: [STAIRS(a, b), { call: 'stairs', args: [null] }], tiles: upTo(k).length > 1 ? upTo(k) : [1, 2, 3],
+    level: map(Array.from({ length: k }, () => [a, b]).flat()), program: [STAIRS(a, b), { call: 'stairs', args: [null] }], tiles: around(k),
     prompt: 'How many rounds reach the flower?', explain: `${Cap(say(k))} square${k > 1 ? 's' : ''} each way, so stairs(${k}).`,
   })),
   'read-stairs': (r) => reading(r, (q) => {
@@ -535,11 +561,11 @@ export const CODING = {
 
   // Variables
   'var-set': () => product(['right', 'left'], range(2, 6)).map(([d, n]) => ({
-    level: map(line(d, n)), program: [{ set: 'steps', to: null }, { repeat: 'steps', do: [d] }], tiles: upTo(n),
+    level: map(line(d, n)), program: [{ set: 'steps', to: null }, { repeat: 'steps', do: [d] }], tiles: around(n),
     prompt: 'Which number goes in steps, to reach the flower?', explain: `Set steps to ${n} and the loop reads ${n}.`,
   })),
-  'var-by': () => product([1, 2], [2, 3]).map(([s, c]) => ({
-    level: map(line('right', s + c)), program: [{ set: 'steps', to: s }, { change: 'steps', by: null }, { repeat: 'steps', do: ['right'] }], tiles: upTo(c),
+  'var-by': () => product([1, 2, 3], range(1, 4)).filter(([s, c]) => s + c <= 6).map(([s, c]) => ({
+    level: map(line('right', s + c)), program: [{ set: 'steps', to: s }, { change: 'steps', by: null }, { repeat: 'steps', do: ['right'] }], tiles: around(c),
     prompt: `It starts at ${s}. Change it by how much?`, explain: `${Cap(say(s + c))} squares away, so ${s} plus ${c}.`,
   })),
   'read-var-set': (r) => reading(r, (q) => {
@@ -551,7 +577,7 @@ export const CODING = {
     return { level: field(q, { w: int(q, 4, 6), h: int(q, 1, 3), start: [0, 0] }), program: [{ set: 'steps', to: s }, { change: 'steps', by: c }, { repeat: 'steps', do: ['right'] }], prompt: 'Change comes first, then the loop reads it. Tap where I stop.' };
   }),
   'count-end': () => range(1, 5).map((a) => ({
-    level: map(gapMoves(a), { fill: '#' }), program: [{ set: 'steps', to: 0 }, { until: { cmp: 'steps', op: '=', n: null }, do: [{ change: 'steps', by: 1 }, 'right'] }, 'down', 'right'], tiles: near(a),
+    level: map(gapMoves(a), { fill: '#' }), program: [{ set: 'steps', to: 0 }, { until: { cmp: 'steps', op: '=', n: null }, do: [{ change: 'steps', by: 1 }, 'right'] }, 'down', 'right'], tiles: around(a),
     prompt: 'When should the counting loop end?', explain: `At ${a} I stand above the gap. At ${a + 1} I walk into the rock.`,
   })),
   'count-start': () => product([3, 4, 5], range(1, 4)).filter(([e, a]) => a <= e && e - a <= 2).map(([e, a]) => ({
@@ -576,7 +602,7 @@ export const CODING = {
     const near = range(1, n - 1).filter((x) => x % 2 === (skip % 2));
     return {
       level: map(line('right', n), { flowers: [[n, 0], ...(near.length ? near : [[1]]).map((x) => [x, 0])] }),
-      program: [{ repeat: null, do: ['right'] }], tiles: upTo(n),
+      program: [{ repeat: null, do: ['right'] }], tiles: around(n),
       prompt: 'Several flowers. I only stop when the blocks stop.',
       explain: `${Cap(say(n))} steps reach the far flower, and the near ones get picked on the way.`,
     };
@@ -593,7 +619,7 @@ export const CODING = {
   // Values that steer
   'turn-count': () => product(range(1, 3), range(1, 3)).map(([a, b]) => ({
     level: map([...line('right', a), 'down', ...line('right', b)], { fill: '#' }),
-    program: [{ set: 'steps', to: 0 }, { repeat: a + 1 + b, do: [{ if: { cmp: 'steps', op: '=', n: null }, then: ['down'], else: ['right'] }, { change: 'steps', by: 1 }] }], tiles: near(a + 1).slice(0, 3),
+    program: [{ set: 'steps', to: 0 }, { repeat: a + 1 + b, do: [{ if: { cmp: 'steps', op: '=', n: null }, then: ['down'], else: ['right'] }, { change: 'steps', by: 1 }] }], tiles: around(a),
     prompt: 'On which count should I turn?', explain: `Count ${a}: ${say(a)} along, down past the rock, then along again. The count starts at 0.`,
   })),
   'read-turn-equals': (r) => reading(r, (q) => {
@@ -652,7 +678,7 @@ export const CODING = {
     };
   }),
   'js-list-read': (r) => reading(r, (q) => {
-    const way = someWays(q, 2); // three values won't fit one line of code on a phone
+    const way = someWays(q, int(q, 2, 3)); // problem() drops a list too wide for one line of code
     return { view: 'js', level: field(q), program: [{ each: 'way', in: way, do: [{ go: 'way' }] }], prompt: 'Read the array from the start. Tap where I stop.' };
   }),
   'js-list-go': () => [[1, 1], [2, 0], [0, 2]].flatMap(([a, b]) => [true, false].map((open) => {
@@ -673,7 +699,7 @@ export const CODING = {
 
   // Drawing
   'draw-line': () => product(range(2, 5), [0, 1]).map(([n, extra]) => ({
-    level: map(line('right', n), { paint: true, pad: [0, 0, extra, 0] }), program: [{ repeat: null, do: ['right'] }], tiles: near(n),
+    level: map(line('right', n), { paint: true, pad: [0, 0, extra, 0] }), program: [{ repeat: null, do: ['right'] }], tiles: around(n),
     prompt: 'Draw the whole line. How many steps?', explain: `${Cap(say(n))} steps paint ${say(n)} more squares, with nothing extra.`,
   })),
   'draw-corner': () => product(range(1, 3), range(2, 3)).map(([a, b]) => ({
@@ -691,8 +717,8 @@ export const CODING = {
     level: map(segs('right', a, 'down', b, 'left', a, 'up', b), { paint: true }), program: ['right', 'down', 'left', 'up'].map((d) => ({ repeat: null, do: [d] })), tiles: [...new Set([a, b, Math.max(a, b) - 1])].sort((x, y) => x - y),
     prompt: 'A ring to draw. How long is each side?', explain: `${a} along, ${b} down, ${a} back, ${b} up. Each side starts where the last one ended.`,
   })),
-  'draw-ring-list': () => [2, 3, 4].map((n) => ({
-    level: map(segs('right', n, 'down', n, 'left', n, 'up', n), { paint: true }), program: [{ each: 'way', in: ['right', 'down', 'left', 'up'], do: [{ repeat: null, do: [{ go: 'way' }] }] }], tiles: [2, 3, 4],
+  'draw-ring-list': () => product([2, 3, 4], [['right', 'down', 'left', 'up'], ['down', 'right', 'up', 'left']], [[0, 0, 0, 0], [0, 0, 1, 0], [1, 0, 0, 0]]).map(([n, ways, pad]) => ({
+    level: map(ways.flatMap((d) => line(d, n)), { paint: true, pad }), program: [{ each: 'way', in: ways, do: [{ repeat: null, do: [{ go: 'way' }] }] }], tiles: [2, 3, 4],
     prompt: 'A square, and the list is set. How long is a side?', explain: `${Cap(say(n))}. One number changes and the whole shape grows.`,
   })),
   'draw-ring-order': () => product(range(2, 4), range(2, 4)).map(([a, b]) => ({
@@ -704,27 +730,293 @@ export const CODING = {
     prompt: 'A staircase. Two steps inside the loop.', explain: `${Cap(a)} then ${b}, ${say(k)} rounds. Each round is one stair.`,
   })),
   'draw-param': () => product(range(2, 5), range(1, 3)).map(([n, t]) => ({
-    level: map(segs('right', n, 'down', t), { paint: true }), program: [{ define: 'line', params: ['n'], do: [{ repeat: 'n', do: ['right'] }] }, { call: 'line', args: [null] }, ...line('down', t)], tiles: near(n),
+    level: map(segs('right', n, 'down', t), { paint: true }), program: [{ define: 'line', params: ['n'], do: [{ repeat: 'n', do: ['right'] }] }, { call: 'line', args: [null] }, ...line('down', t)], tiles: around(n),
     prompt: 'A block that draws a line. How long?', explain: `line(${n}). One more would walk past the shape.`,
   })),
-  'draw-spiral': () => [2, 3, 4].map((n) => ({
-    level: map(segs('right', n, 'down', n - 1, 'left', n - 2), { paint: true }), program: [{ set: 'n', to: null }, { each: 'way', in: ['right', 'down', 'left'], do: [{ repeat: 'n', do: [{ go: 'way' }] }, { change: 'n', by: -1 }] }], tiles: [2, 3, 4],
+  'draw-spiral': () => product([2, 3, 4], [['right', 'down', 'left'], ['down', 'right', 'up']], [[0, 0, 0, 0], [0, 0, 1, 0]]).filter(([n, w]) => w[0] === 'right' || n <= 3).map(([n, ways, pad]) => ({
+    level: map(ways.flatMap((d, i) => line(d, n - i)), { paint: true, pad }), program: [{ set: 'n', to: null }, { each: 'way', in: ways, do: [{ repeat: 'n', do: [{ go: 'way' }] }, { change: 'n', by: -1 }] }], tiles: [2, 3, 4],
     prompt: 'n shrinks each side. Where does it start?', explain: `Start at ${n}: ${[n, n - 1, n - 2].join(', ')}. A shrinking value makes a spiral.`,
   })),
-  'read-spiral': () => [2, 3, 4].map((n) => ({
-    level: map(segs('right', n, 'down', n - 1, 'left', n - 2), { paint: true }), program: [{ set: 'n', to: n }, { each: 'way', in: ['right', 'down', 'left'], do: [{ repeat: 'n', do: [{ go: 'way' }] }, { change: 'n', by: -1 }] }],
+  'read-spiral': () => product([2, 3, 4], [['right', 'down', 'left'], ['down', 'right', 'up']], [[0, 0, 0, 0], [0, 0, 1, 0]]).filter(([n, w]) => w[0] === 'right' || n <= 3).map(([n, ways, pad]) => ({
+    level: map(ways.flatMap((d, i) => line(d, n - i)), { paint: true, pad }), program: [{ set: 'n', to: n }, { each: 'way', in: ways, do: [{ repeat: 'n', do: [{ go: 'way' }] }, { change: 'n', by: -1 }] }],
     prompt: 'Follow n as it shrinks. Tap where I stop.',
   })),
+
+  // Laid out from nothing: the blocks in the wrong order.
+  'un-steps': (r) => product(range(1, 3), range(1, 2), range(1, 2)).map(([a, b, c]) => {
+    const moves = segs('right', a, 'down', b, 'right', c);
+    return unscramble(r, map(moves, { fill: '#' }), moves, 'These steps are in the wrong order. Tap them in order, then Run.');
+  }),
+  'un-loop': (r) => product(range(2, 5), range(2, 3), [true, false]).map(([a, b, more]) => {
+    const moves = more ? segs('right', a, 'down', b, 'left', a) : segs('right', a, 'down', b);
+    return unscramble(r, map(moves, { fill: '#' }), stepsOnly(moves), 'Put the loops in order. Each step goes inside its loop.');
+  }),
+  'un-stairs': (r) => product(range(2, 4), STAIR_WAYS).map(([k, [a, b]]) =>
+    unscramble(r, stairs(k, a, b).level, [R(k, a, b)], 'One loop and two steps. Lay them out so I climb.', `${Cap(a)} then ${b}, inside the loop, ${say(k)} rounds.`)),
+  'un-if': (r) => SOME_CLIMBS().filter(({ moves }) => moves.length >= 3).map(({ m, t, moves, level }) =>
+    unscramble(r, level, [R(moves.length, ifRock(m, [t], [m]))], 'The loop goes round the if, and a step goes in each side.', `If a rock is ${WHERE[m]}, step ${t}. Else, step ${m}.`)),
+  'un-nest': (r) => product([[2, 2], [2, 3], [3, 2], [1, 3]], CORNERS).map(([[a, k], [d, t]]) =>
+    unscramble(r, map(Array.from({ length: k }, () => [...line(d, a), t]).flat(), { fill: '#' }), [R(k, R(a, d), t)], 'A loop in a loop. Which one goes outside?', `${Cap(say(a))} ${d} and one ${t}, ${say(k)} rounds.`)),
+  'un-until': (r) => product(range(1, 4), [['right', 'down'], ['down', 'right']]).map(([a, [d, t]]) =>
+    unscramble(r, map(gapMoves(a, d, t), { rocks: [[STEPS[d][0] * (a + 1), STEPS[d][1] * (a + 1)]] }), [UNTIL(`rock-${d}`, d), t, d], 'Until the rock, then round it. Lay it out.', `${Cap(d)} until the rock, then ${t} and ${d}.`)),
+  'un-fn': (r) => product(range(2, 3), STAIR_WAYS).map(([k, [a, b]]) =>
+    unscramble(r, stairs(k, a, b).level, [{ define: 'hop', do: [a, b] }, ...line({ call: 'hop' }, k)], 'Write hop first, then use it.', `Hop goes ${a} then ${b}, used ${say(k)} times.`)),
+  'un-param': (r) => product(range(1, 3), range(1, 3)).filter(([a, b]) => a !== b).map(([a, b]) =>
+    unscramble(r, map([...line('right', a), 'down', ...line('right', b)], { fill: '#' }), [{ define: 'hop', params: ['n'], do: [R('n', 'right')] }, ...hop(a), 'down', ...hop(b)], 'The block, then what uses it. Mind which number comes first.', `hop(${a}), a step down, then hop(${b}).`)),
+  'un-var': (r) => product(range(1, 3), range(1, 3)).map(([s, c]) =>
+    unscramble(r, map(line('right', s + c), { pad: [0, 0, 0, 1] }), [{ set: 'steps', to: s }, { change: 'steps', by: c }, R('steps', 'right')], 'Set it, change it, read it. In that order.', `steps holds ${s}, then ${s + c}, and the loop reads ${s + c}.`)),
+  'un-not': (r) => product(range(1, 3), range(1, 2)).map(([a, b]) => {
+    const moves = [...line('right', a), ...line('down', b)];
+    return unscramble(r, map([...moves, 'right'], { fill: '#' }), [UNTIL({ not: 'rock-down' }, 'right'), ...line('down', b), 'right'], 'Along the wall to the gap, then through it.', `Right until there's no rock below, then down and right.`);
+  }),
+  'un-list': (r) => product(range(1, 3), range(1, 2)).map(([a, b]) => {
+    const ways = segs('right', a, 'down', b);
+    return unscramble(r, map([...ways, 'right'], { fill: '#' }), [{ each: 'way', in: ways, do: [{ go: 'way' }] }, 'right'], 'A loop over a list, a go inside, one step after.', `Each value in turn, then one step more.`);
+  }),
+  'un-ring': (r) => product(range(2, 4), range(2, 4)).map(([a, b]) => {
+    const moves = segs('right', a, 'down', b, 'left', a, 'up', b);
+    return unscramble(r, map(moves, { paint: true }), stepsOnly(moves), 'Four sides, out of order. Draw the ring.', 'Each side starts where the last one ended.');
+  }),
+
+  // A limit on the blocks, which forces a loop.
+  'pal-line': () => product(['right', 'down'], range(3, 6)).filter(([d, n]) => d === 'right' || n <= 4).map(([d, n]) =>
+    fewer(map(line(d, n), { pad: d === 'down' ? [1, 0, 0, 0] : [0, 0, 0, 0] }), [R(n, d)], [LOOP(n - 1), LOOP(n + 1), OPP[d]], `Two blocks or fewer. Which count lands on the flower?`, `${Cap(d)}, ${n} times.`)),
+  'pal-corner': () => product(range(2, 5), range(2, 4)).filter(([a, b]) => a + b >= 5).map(([a, b]) =>
+    fewer(map(segs('right', a, 'down', b), { fill: '#' }), [R(a, 'right'), R(b, 'down')], [LOOP(a === b ? a + 1 : Math.max(a, b) + 1)], 'Four blocks or fewer.', `Two loops, two steps: ${a} right and ${b} down.`)),
+  'pal-stairs': () => product(range(2, 4), STAIR_WAYS).map(([k, [a, b]]) =>
+    fewer(stairs(k, a, b).level, [R(k, a, b)], [LOOP(k + 1), OPP[b]], 'Three blocks or fewer.', `${Cap(a)} then ${b}, ${say(k)} rounds.`)),
+  'pal-if': () => SOME_CLIMBS().filter(({ moves }) => moves.length >= 5).map(({ m, t, moves, level }) =>
+    fewer(level, [R(moves.length, ifRock(m, [t], [m]))], [LOOP(moves.length + 1), { if: `rock-${t}`, then: [], else: [] }], 'Four blocks or fewer. Let the if do the turning.', `If a rock is ${WHERE[m]}, step ${t}. Else, step ${m}. ${moves.length} rounds.`)),
+  'pal-nest': () => product([[2, 3], [3, 2], [2, 2]], CORNERS).map(([[a, k], [d, t]]) =>
+    fewer(map(Array.from({ length: k }, () => [...line(d, a), t]).flat(), { fill: '#' }), [R(k, R(a, d), t)], [LOOP(a + k), OPP[t]], 'Four blocks or fewer. A loop in a loop.', `${Cap(say(a))} ${d} and one ${t}, ${say(k)} rounds.`)),
+  'pal-until': () => product(range(3, 5), range(2, 4)).map(([a, b]) =>
+    fewer(map(segs('right', a, 'down', b), { fill: '#' }), [UNTIL('rock-right', 'right'), UNTIL('flower', 'down')], [UNTIL('rock-down'), 'left'], 'Four blocks or fewer, and no counting.', 'Right until the edge, then down until the flower.')),
+  'pal-fn': () => product(range(3, 4), STAIR_WAYS).map(([k, [a, b]]) =>
+    fewer(stairs(k, a, b).level, [{ define: 'hop', do: [a, b] }, R(k, { call: 'hop' })], [LOOP(k + 1)], `Five blocks or fewer, with hop in them.`, `Hop goes ${a} then ${b}, and a loop uses it ${say(k)} times.`)),
+  'pal-param': () => product(range(1, 3), [2, 3, 4]).filter(([a, k]) => (a + 1) * k > 6 && a * k <= 6).map(([a, k]) =>
+    fewer(map(Array.from({ length: k }, () => [...line('right', a), 'down']).flat()), [{ define: 'hop', params: ['n'], do: [R('n', 'right')] }, R(k, ...hop(a), 'down')], [LOOP(k + 1), ...hop(a + 1)], 'Six blocks or fewer.', `hop(${a}) and a step down, ${say(k)} rounds.`)),
+  'pal-list': () => product(range(2, 4), [[0, 0, 0, 0], [0, 0, 1, 0], [1, 0, 0, 0]]).map(([a, pad]) => {
+    const ways = ['right', 'down', 'left', 'up'];
+    return fewer(map(ways.flatMap((d) => line(d, a)), { paint: true, pad }), [{ each: 'way', in: ways, do: [R(a, { go: 'way' })] }], [LOOP(a + 1)], 'Three blocks or fewer. One list, one loop, one go.', `Each way in turn, ${say(a)} steps each.`);
+  }),
+  'pal-list-walk': () => product(range(2, 3), [['right', 'down', 'right'], ['down', 'right', 'down']], [[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 0, 0]]).map(([a, ways, pad]) =>
+    fewer(map(ways.flatMap((d) => line(d, a)), { fill: '#', pad }), [{ each: 'way', in: ways, do: [R(a, { go: 'way' })] }], [LOOP(a + 1)], 'Three blocks or fewer. One list, one loop, one go.', `Each way in turn, ${say(a)} steps each.`)),
+  'pal-ring': () => product(range(2, 4), range(2, 4)).map(([a, b]) => {
+    const moves = segs('right', a, 'down', b, 'left', a, 'up', b);
+    return fewer(map(moves, { paint: true }), stepsOnly(moves), [LOOP(Math.max(a, b) + 1)], 'Eight blocks or fewer: a loop for each side.', `${a} along, ${b} down, ${a} back, ${b} up.`);
+  }),
+  'pal-comb': () => product([1, 2, 3], [2, 3]).map(([w, k]) => {
+    const moves = Array.from({ length: k }, () => [...line('right', w), 'down', 'down']).flat();
+    return fewer(map(moves, { paint: true, pad: [0, 0, 0, 0] }), [R(k, R(w, 'right'), R(2, 'down'))], [LOOP(k + 2), 'up'], 'Five blocks or fewer. Find the shape that comes round.', `${Cap(say(w))} along and two down, ${say(k)} rounds.`);
+  }),
+
+  // Any program that gets there.
+  'free-walk': () => product(range(2, 4), range(1, 3)).map(([a, b]) =>
+    free(map(segs('right', a, 'down', b), { pad: [0, 0, 1, 0] }), [R(a, 'right'), R(b, 'down')], [LOOP(2), LOOP(3), 'left'], 'Any plan that lands on the flower.', 'Plain steps or loops: whatever lands there is good.')),
+  'free-maze': () => [
+    [['S#...', '.#.#.', '...#*'], [R(2, 'down'), R(2, 'right'), R(2, 'up'), R(2, 'right'), R(2, 'down')]],
+    [['S...#', '###..', '*....'], [R(3, 'right'), 'down', 'right', 'down', R(4, 'left')]],
+    [['S.#.*', '#.#.#', '#...#'], ['right', R(2, 'down'), R(2, 'right'), R(2, 'up'), 'right']],
+    [['S#..', '.#.#', '...*'], [R(2, 'down'), R(3, 'right')]],
+    [['S.#', '#..', '##*'], ['right', 'down', 'right', 'down']],
+    [['S..', '##.', '*..'], [R(2, 'right'), R(2, 'down'), R(2, 'left')]],
+  ].map(([level, way]) => free(level, way, [LOOP(3), 'left', 'down', 'right'], 'Past the rocks, any way you like.', 'Short or long, a plan that lands on the flower is good.')),
+  'free-climb': () => SOME_CLIMBS().filter(({ moves }) => moves.length >= 4).map(({ m, t, moves, level }) =>
+    free(level, [UNTIL('flower', ifRock(m, [t], [m]))], [LOOP(moves.length), `${t}`], 'Any way up. Plain steps work, and so does an if.', `One way: until the flower, if a rock is ${WHERE[m]} step ${t}, else step ${m}.`)),
+  'free-nest': () => product([[2, 2], [2, 3], [3, 2]], CORNERS).map(([[a, k], [d, t]]) =>
+    free(map(Array.from({ length: k }, () => [...line(d, a), t]).flat(), { fill: '#' }), [R(k, R(a, d), t)], [LOOP(k + a)], 'Build it your own way.', `One way: ${say(a)} ${d} and one ${t}, ${say(k)} rounds.`)),
+  'free-until': () => product(range(2, 5), range(1, 3)).map(([a, b]) =>
+    free(map([...line('right', a), ...line('down', b), 'right'], { fill: '#' }), [UNTIL('rock-right', 'right'), R(b, 'down'), UNTIL('flower', 'right')], [LOOP(a)], 'Any plan that lands on the flower. Untils are here too.', 'One way: until the rock, down, then until the flower.')),
+  'free-fn': () => product(range(2, 3), STAIR_WAYS).map(([k, [a, b]]) =>
+    free(stairs(k, a, b).level, [{ define: 'hop', do: [a, b] }, ...line({ call: 'hop' }, k)], [LOOP(k)], 'Name a plan or not, as you like.', `One way: hop goes ${a} then ${b}, used ${say(k)} times.`)),
+  'free-var': () => product(range(1, 3), range(2, 3)).map(([s, k]) => {
+    const moves = range(0, k - 1).flatMap((i) => [...line('right', s + i), 'down']);
+    return free(map(moves), [{ set: 'n', to: s }, R(k, R('n', 'right'), 'down', { change: 'n', by: 1 })], [LOOP(s + k)], 'Each row is longer. Any plan will do; n helps.', 'One way: n grows after each row, and the loop reads it.');
+  }),
+  'free-draw': () => [['Sooo', 'o..o', 'oooo'], ['Soo', 'o.o', 'ooo'], ['Soo.', '..o.', '..oo'], ['So..', '.oo.', '..oo'], ['Sooo', '...o', '...o'], ['S.o', 'o.o', 'ooo']].map((level, i) => {
+    const ways = [[R(3, 'right'), R(2, 'down'), R(3, 'left'), R(2, 'up')], [R(2, 'right'), R(2, 'down'), R(2, 'left'), R(2, 'up')], [R(2, 'right'), 'down', 'down', 'right'], [R(2, 'right', 'down'), 'right'], [R(3, 'right'), R(2, 'down')], [R(2, 'down'), R(2, 'right'), R(2, 'up')]];
+    return free(level, ways[i], [LOOP(2), LOOP(3), 'right', 'down', 'left', 'up'], 'Paint the shape, any way round.', 'All of the shape and nothing else, in whatever order.');
+  }),
+
+  // Bugs: a working program with one block broken, and tiles of more than one kind.
+  'bug-step': () => product(range(2, 3), range(1, 2), range(0, 2)).map(([a, b, at]) => {
+    const moves = segs('right', a, 'down', b, 'right', 1);
+    const broken = moves.map((d, i) => (i === at ? 'up' : d));
+    return bug(map(moves, { fill: '#' }), broken, [moves[at], 'left'], 'Watch where I stop. Tap the block to change, then its fix.');
+  }),
+  'bug-rock': () => product(range(1, 3), [2, 3, 4]).map(([h, w]) => {
+    const moves = segs('down', h, 'right', w, 'up', h);
+    return bug(map(moves, { rocks: range(0, h - 1).map((y) => [1, y]) }), moves.map((d, i) => (i === h ? 'up' : d)), ['right', 'left'], 'So close! Find the block.');
+  }),
+  'bug-count': () => product(range(2, 5), range(1, 2), [true, false]).map(([a, b, more]) => {
+    const moves = segs('right', a, 'down', b);
+    return bug(map(moves, { fill: '#' }), [R(more ? a + 1 : a - 1, 'right'), R(b, 'down')], [a, a + 2, 'up'], 'I stop in the wrong place. Find the block.', `Right ${a} times, then down ${b}.`);
+  }),
+  'bug-loop-step': () => product(range(2, 3), STAIR_WAYS).map(([k, [a, b]]) =>
+    bug(stairs(k, a, b).level, [R(k, a, OPP[b])], [b, OPP[a], k + 1], 'The same mistake every round. Which block?', `${Cap(a)} then ${b}, ${say(k)} rounds.`)),
+  'bug-nest': () => product([1, 2, 3], [2, 3]).filter(([a, k]) => a * k <= 6).map(([a, k]) =>
+    bug(map(Array.from({ length: k }, () => [...line('right', a), 'down']).flat()), [R(k, R(a === 1 ? 2 : a - 1, 'right'), 'down')], [a, a + 2, 'left'], 'A nest with one bad block.', `${Cap(say(a))} right and one down, ${say(k)} rounds.`)),
+  'bug-until': () => product(range(2, 4), STAIR_WAYS).map(([k, [a, b]]) =>
+    bug(stairs(k, a, b).level, [UNTIL('flower', a, OPP[b])], [b, OPP[a], 2], 'This until goes wrong. Find the block.', `${Cap(a)} then ${b}, until the flower.`)),
+  'bug-undo': () => product(range(1, 3), [['right', 'left'], ['down', 'up']]).map(([n, [a, o]]) =>
+    bug(map(line(a, 2 * n), { pad: a === 'down' ? [0, 0, 1, 0] : [0, 0, 0, 1] }), [UNTIL('flower', a, o)], [a, a === 'right' ? 'down' : 'right', 3], 'This loop never ends. Which block undoes the last?', `${Cap(a)} and ${a}: no step takes the last one back.`)),
+  'bug-wait': () => product(range(1, 4), range(1, 2)).map(([a, b]) => {
+    const moves = [...line('right', a), ...line('down', b), 'right'];
+    return bug(map(moves, { fill: '#' }), [UNTIL('rock-down', 'right'), ...line('down', b), 'right'], ['rock-right', 'rock-up', 3], 'This until looks the wrong way. Which block?', 'Until the rock beside me: that is where the row ends.');
+  }),
+  'bug-look': () => SOME_CLIMBS().filter(({ moves }) => moves.length >= 3).map(({ m, t, moves, level }) =>
+    bug(level, [R(moves.length, ifRock(t, [t], [m]))], [`rock-${m}`, `rock-${OPP[m]}`, OPP[t]], 'Something about this if is off. Find the block.', `Look ${m}: a rock ${WHERE[m]} is the reason to step ${t}.`)),
+  'bug-side': () => SOME_CLIMBS().filter(({ moves }) => moves.length >= 3).map(({ m, t, moves, level }) =>
+    bug(level, [R(moves.length, ifRock(m, [OPP[t]], [m]))], [t, OPP[m], moves.length + 1], 'The look is fine. One side is not.', `If a rock is ${WHERE[m]}, step ${t}. Else, step ${m}.`)),
+  'bug-else': () => SOME_CLIMBS().filter(({ moves }) => moves.length >= 3).map(({ m, t, moves, level }) =>
+    bug(level, [UNTIL('flower', ifRock(m, [t], [OPP[m]]))], [m, OPP[t], 'flower'], 'A long climb, one bad block.', `Else, step ${m}: that is the way the flower lies.`)),
+  'bug-fn': () => product(range(2, 3), STAIR_WAYS).map(([k, [a, b]]) =>
+    bug(stairs(k, a, b).level, [{ define: 'hop', do: [a, OPP[b]] }, ...line({ call: 'hop' }, k)], [b, OPP[a]], 'The bug is inside a block. Every use has it.', `Hop goes ${a} then ${b}.`)),
+  'bug-call': () => product(range(2, 3), [[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 0, 0]]).map(([a, pad]) => {
+    const moves = [...line('right', a), 'down', ...line('right', a)];
+    return bug(map(moves, { fill: '#', pad }), [{ define: 'jog', do: line('right', a) }, { call: 'jog' }, 'down', 'right'], [{ call: 'jog' }, 'up'], 'A plain step where a block should go.', `Jog, down, jog: ${say(a)} along each time.`);
+  }),
+  'bug-var': () => range(1, 5).map((a) =>
+    bug(map(gapMoves(a), { fill: '#' }), [{ set: 'steps', to: 0 }, UNTIL({ cmp: 'steps', op: '=', n: a + 1 }, { change: 'steps', by: 1 }, 'right'), 'down', 'right'], [a, 'down', '<'], 'I walk into the rock. Which block is at fault?', `At ${a} I stand above the gap.`)),
+  'bug-param': () => product(range(2, 5), range(1, 3)).filter(([n, w]) => w < n).map(([n, w]) =>
+    bug(map(line('right', n)), [{ define: 'hop', params: ['n'], do: [R(w, 'right')] }, { call: 'hop', args: [n] }], ['n', n + 1, 'up'], `I was handed a ${n}. Why do I stop short?`, 'The inside must read n, or the number handed over does nothing.')),
+  'bug-sign': () => range(2, 5).map((a) =>
+    bug(map(gapMoves(a), { fill: '#' }), [{ set: 'steps', to: 0 }, UNTIL({ cmp: 'steps', op: '<', n: a }, { change: 'steps', by: 1 }, 'right'), 'down', 'right'], ['=', '>', a + 3, 'left'], 'This loop never even starts. Tap what is off.', `Until steps = ${a}. Steps starts under ${a}, so less than holds at once.`)),
+  'bug-list': () => product(range(1, 2), range(1, 2)).map(([a, b]) => {
+    const ways = segs('right', a, 'down', b);
+    return bug(map(ways, { fill: '#' }), [{ each: 'way', in: ways.map((d, i) => (i === a ? 'up' : d)), do: [{ go: 'way' }] }], ['down', 'left', { go: 'way' }], 'One thing here works against the others.', 'Each value is one step, in order, so the turn needs its own value.');
+  }),
+  'bug-go': () => product(range(1, 3), range(1, 2)).map(([a, b]) => {
+    const ways = segs('right', a, 'down', b);
+    return bug(map(ways, { fill: '#' }), [{ each: 'way', in: ways, do: ['right'] }], [{ go: 'way' }, 'down', 3], 'The list looks fine, and I still bump. Why?', 'A plain right ignores the list. Go way follows it.');
+  }),
+  'bug-draw': () => product(range(2, 3), range(2, 3)).map(([a, b]) =>
+    bug(map(segs('right', a, 'down', b, 'left', a, 'up', b), { paint: true }), [R(a, 'right'), R(b, 'down'), R(a - 1, 'left'), R(b, 'up')], [a, a + 2, 'up'], 'Paint in the wrong place. Which block?', `${a} along and ${a} back, or the ring never closes.`)),
+  'bug-and': () => range(1, 4).map((a) =>
+    bug(map(gapMoves(a), { rocks: [[a + 1, 0], [a + 1, 2]], pad: [0, 0, 0, 0] }), [UNTIL({ and: ['rock-right', 'rock-down'] }, 'right'), 'down', 'right'], ['rock-right', 'rock-left', 2], 'This and wants two things. One never comes.', 'A rock beside me is all it takes here: below me stays open.')),
+  'bug-flower': () => product(range(1, 3), range(1, 2)).map(([a, want]) => {
+    const spots = [a, a + 1, a + 3].slice(0, want + 1);
+    return { ...bug([['S', ...range(1, 5).map((x) => (spots.includes(x) ? '*' : '.'))].join('')], [{ set: 'flowers', to: 0 }, UNTIL({ cmp: 'flowers', op: '=', n: want }, 'right', { if: 'rock-right', then: [{ change: 'flowers', by: 1 }], else: [] })], ['flower', 3, 'down'], `Pick exactly ${want}. The count stays at 0.`, 'The if must look for the flower, or nothing adds to the count.'), want };
+  }),
+
+  // One-offs given fresh versions.
+  'un-stairs-param': (r) => product(range(2, 4), STAIR_WAYS).map(([k, [a, b]]) =>
+    unscramble(r, stairs(k, a, b).level, [STAIRS(a, b), { call: 'stairs', args: [k] }], 'The block needs its loop and steps, then a use.', `Stairs goes ${a} then ${b}, n rounds, used with ${k}.`)),
+  'read-either': (r) => reading(r, (q) => {
+    const n = int(q, 2, 4);
+    return { level: field(q, { w: int(q, 4, 6), h: 2, rocks: int(q, 1, 2), start: [0, 0] }), program: [{ set: 'steps', to: 0 }, UNTIL({ or: ['rock-right', { cmp: 'steps', op: '=', n }] }, { change: 'steps', by: 1 }, 'right')], prompt: 'Whichever comes first. Tap where I stop.' };
+  }, (res) => res.path.length >= 2),
+  'read-or-if': (r) => reading(r, (q) => ({ level: field(q, { w: int(q, 3, 4), h: int(q, 3, 4), rocks: int(q, 1, 2) }), program: [R(3, { if: { or: ['rock-right', 'rock-up'] }, then: ['down'], else: ['right'] })], prompt: 'Either look sends me down. Tap where I stop.' })),
+  'read-not-or': (r) => reading(r, (q) => ({ level: field(q, { w: int(q, 3, 5), h: int(q, 2, 3), rocks: int(q, 1, 3), start: [0, 0] }), program: [UNTIL({ not: { or: ['rock-right', 'rock-down'] } }, 'right')], prompt: 'A not around an or. Tap where I stop.' }), (res) => res.end !== 'endless' && res.path.length >= 2),
+  'logic-and-not': () => CLIMBS.map((runs) => climb('down', 'right', runs)).filter(({ moves }) => moves.length >= 3).map(({ moves, level }) => ({
+    level, program: [R(moves.length, { if: { and: ['rock-down', { not: 'rock-right' }] }, then: [null], else: [null] })], tiles: ['right', 'down', 'up'],
+    prompt: 'And with a not inside. Fill both sides.', explain: 'A rock below and none beside me: step along. Else, step down.',
+  })),
+  'read-if-two': (r) => reading(r, (q) => {
+    const [a, b] = one(q, [['right', 'up'], ['right', 'down'], ['down', 'right']]);
+    return { level: field(q, { w: int(q, 3, 4), h: int(q, 3, 4), rocks: int(q, 1, 2) }), program: [{ repeat: 2, do: [ifRock(a, [b], [a]), ifRock(b, [a], [b])] }], prompt: 'Two ifs inside, one after the other. Tap where I stop.' };
+  }, (res) => res.path.length >= 3),
+  'nest-four': () => product(range(1, 4), range(1, 2)).map(([a, b]) => {
+    const round = [...line('down', a), ...line('right', b), ...line('up', a), ...line('right', b)];
+    return {
+      level: map([...round, ...round].slice(0, -b), { fill: '#' }), program: [R(2, R(a, null), R(b, null), R(a, null), R(b, null))], tiles: ['right', 'down', 'up'],
+      prompt: 'Four small repeats in one big one. Pick each step.', explain: `Down, along, up, along, and all of it again.`,
+    };
+  }),
+  'flowers-steps': () => [[1, 3], [2, 4], [1, 4], [2, 3], [1, 2], [3, 5], [2, 5], [1, 5]].map((spots) => ({
+    level: [['S', ...range(1, 5).map((x) => (spots.includes(x) ? '*' : '.'))].join('')],
+    program: [{ set: 'flowers', to: 0 }, UNTIL({ cmp: 'flowers', op: '=', n: 2 }, null, { if: 'flower', then: [null], else: [] })], tiles: ['right', { change: 'flowers', by: 1 }],
+    prompt: 'Two blocks to place. Which one counts?', explain: 'Step first, then look. The change goes inside the if.',
+  })),
+  'twice-n': () => product(range(1, 3), [[0, 0, 0, 0], [0, 0, 0, 1]]).map(([n, pad]) => ({
+    level: map(line('right', 2 * n), { pad }),
+    program: [HOP(), { define: 'twice', params: ['n'], do: hop('n', 'n') }, { call: 'twice', args: [null] }], tiles: around(n),
+    prompt: `${Cap(say(2 * n))} squares away. What does twice need?`, explain: `Twice runs hop two times, so ${say(n)} makes ${2 * n}.`,
+  })),
+  'until-progress': () => product(range(2, 4), CORNERS).map(([k, [a, b]]) => ({
+    level: stairs(k, a, b).level, program: [UNTIL('flower', a, null)], tiles: [OPP[a], b],
+    prompt: 'One gap. Which step gets me closer?', explain: `${Cap(a)} then ${b}. A step back would undo the round.`,
+  })),
+  'until-bounce': () => product(range(1, 4), [1, 2]).map(([a, b]) => ({
+    level: map([...line('right', a), ...line('down', b), 'right'], { rocks: [[a + 1, 0]] }),
+    program: [UNTIL('flower', ifRock('right', [null], ['right']))], tiles: ['down', 'left'],
+    prompt: 'A step at the rock. Which keeps me moving on?', explain: `Down at the rock. Left would send me back along the row, again and again.`,
+  })).filter((e) => run(e.level, [UNTIL('flower', ifRock('right', ['down'], ['right']))]).end === 'flower'),
+  'read-bounce': (r) => reading(r, (q) => {
+    const a = int(q, 1, 4);
+    return { level: [`S${'.'.repeat(a)}#*`, '.'.repeat(a + 3)], program: [UNTIL('flower', ifRock('right', ['left'], ['right']))], prompt: 'At the rock I turn back. Tap where I stop.' };
+  }, (res) => res.end === 'endless', 20),
+  'until-ring': () => product(range(1, 3), range(1, 3)).map(([a, b]) => ({
+    level: map([...line('right', a), ...line('down', b)], { pad: [0, 0, 1, 1] }),
+    program: [UNTIL('flower', ...line(null, 2))], tiles: ['right', 'down', 'up'],
+    prompt: 'Two steps inside. Choose them so the loop ends.', explain: 'Steps that make progress every round, and none that undo the last.',
+  })).filter((e) => solve({ ...e, type: 'build', id: 'x' })),
+  'logic-or': () => product(range(1, 3), range(1, 3)).filter(([a, b]) => a + b + 2 <= 7).map(([a, b]) => {
+    const w = a + b + 2;
+    const rows = [Array(w).fill('.'), Array(w).fill('.'), Array(w).fill('.'), Array(w).fill('.')];
+    rows[1][0] = 'S'; rows[1][a] = '#';
+    rows[3][a + b] = '*';
+    return {
+      level: rows.map((r) => r.join('')), program: [R(a + b + 2, { if: null, then: ['down'], else: ['right'] })], tiles: [{ or: ['rock-right', 'rock-up'] }, { and: ['rock-right', 'rock-up'] }, 'rock-right'],
+      prompt: 'I turn at the rock, and again under it. Which test?', explain: 'Or: a rock beside me or a rock above me. Either one turns me.',
+    };
+  }),
+  'logic-and': () => product(range(1, 3), range(0, 1)).map(([a, side]) => {
+    const rows = [['.', 'S', '.']];
+    for (let i = 0; i < a; i++) rows.push(i % 2 === side ? ['#', '.', '.'] : ['.', '.', '#']);
+    rows.push(['#', '.', '#'], ['.', '*', '.']);
+    return {
+      level: rows.map((r) => r.join('')), program: [UNTIL(null, 'down'), 'down'], tiles: [{ and: ['rock-left', 'rock-right'] }, { or: ['rock-left', 'rock-right'] }, 'rock-left'],
+      prompt: 'Stop at the narrow spot, a rock on each side. Which test?', explain: 'And: both at once. Either rock alone stops me too soon.',
+    };
+  }),
+  'read-logic': (r) => reading(r, (q) => {
+    const [x, y] = one(q, CORNERS), look = q() < 0.5 ? { or: [`rock-${x}`, `rock-${y}`] } : { and: [`rock-${x}`, `rock-${y}`] };
+    return { level: field(q, { w: int(q, 3, 5), h: int(q, 2, 3), rocks: int(q, 1, 2), start: [0, 0] }), program: [UNTIL(look, x)], prompt: look.or ? 'Either look stops me. Tap where I stop.' : 'Both looks at once. Tap where I stop.' };
+  }, (res) => res.end !== 'endless' && res.path.length >= 2),
+  'list-total': () => product(range(1, 3), range(1, 3)).filter(([a, b]) => a + b + 1 <= 6).map(([a, b]) => ({
+    level: map(line('right', a + 1 + b), { pad: [0, 0, 0, 1] }),
+    program: [{ set: 'total', to: 0 }, { each: 'n', in: [a, null, 1], do: [{ change: 'total', by: 'n' }] }, R('total', 'right')], tiles: around(b),
+    prompt: 'I add up the list, then walk that far. What is missing?', explain: `${a + 1 + b} squares: ${a}, ${b} and 1 add up to that.`,
+  })),
+  'list-pairs': () => product(range(1, 2), range(1, 2)).flatMap(([a, b]) => CORNERS.map(([x, y]) => ({
+    level: map([...line(x, 2 * a), ...line(y, 2 * b)], { fill: '#' }),
+    program: [{ each: 'way', in: [...line(null, a), ...line(null, b)], do: [{ go: 'way' }, { go: 'way' }] }], tiles: [x, y, OPP[y]],
+    prompt: 'Two gos inside, so each value walks twice. Fill the list.', explain: `Each value is two squares: ${say(2 * a)} ${x}, ${say(2 * b)} ${y}.`,
+  }))),
+  'draw-u': () => product(range(1, 4), range(1, 3)).map(([h, w]) => ({
+    level: map(segs('down', h, 'right', w, 'up', h), { paint: true }), program: [R(null, 'down'), R(w, null), R(null, 'up')], tiles: [h, h + 1, 'right', 'left'],
+    prompt: 'A U to paint. How far down, which way along, how far up?', explain: `Down ${h}, along ${w}, up ${h}.`,
+  })),
+  'draw-line-both': () => product(['right', 'down'], range(2, 5), [0, 1]).filter(([d, n]) => d === 'right' || n <= 4).map(([d, n, pad]) => ({
+    level: map(line(d, n), { paint: true, pad: d === 'right' ? [0, 0, pad, 1] : [0, 0, 1, pad] }), program: [R(null, null)], tiles: [...around(n), d, OPP[d]],
+    prompt: 'Paint exactly this line, a count and a step.', explain: `${Cap(d)}, ${n} times, and not a square further.`,
+  })),
+  'param-body-step': () => product(range(2, 5), ['right', 'down', 'up']).filter(([n, d]) => d === 'right' || n <= 4).map(([n, d]) => ({
+    level: map(line(d, n), { pad: d === 'right' ? [0, 0, 0, 1] : [1, 0, 0, 0] }), program: [{ define: 'hop', params: ['n'], do: [R('n', null)] }, { call: 'hop', args: [null] }], tiles: [d, OPP[d], ...pair(n)],
+    prompt: 'Write the inside of hop, then hand it a number.', explain: `${Cap(d)} inside, and hop(${n}) from outside.`,
+  })),
+  'js-count-by': () => [[4, 2], [6, 2], [6, 3], [3, 3], [2, 1], [3, 1]].map(([t, by]) => ({
+    view: 'js', level: map(gapMoves(t / by), { fill: '#' }), program: [{ set: 'n', to: 0 }, UNTIL({ cmp: 'n', op: '=', n: t }, { change: 'n', by: null }, 'right'), 'down', 'right'], tiles: [1, 2, 3],
+    prompt: 'How much does n add each round?', explain: `By ${by}: n reaches ${t} after ${say(t / by)} round${t / by > 1 ? 's' : ''}.`,
+  })),
+  'js-three-nums': (r) => reading(r, (q) => {
+    const list = Array.from({ length: 3 }, () => int(q, 0, 2));
+    return { view: 'js', level: field(q, { w: int(q, 4, 6), h: 3, start: [0, 0] }), program: [{ each: 'n', in: list, do: [R('n', 'right'), 'down'] }], prompt: 'An array of three numbers. Tap where I stop.' };
+  }, (res) => res.path.length >= 3),
 };
 
 /** A candidate as it ships: its explanation told from a run, checked by the course's own problem(). */
-function finishCoding({ level, program, tiles, want, prompt, explain, lead, view }) {
+function finishCoding({ type, level, program, way, chips, limit, tiles, want, prompt, explain, lead, view }) {
   if (level[0].length > 7 || level.length > 5) return null;
-  const open = holes(program).length > 0;
-  const base = { level, program, ...(tiles && { tiles }), ...(want && { want }), prompt };
-  const item = { id: 'x', type: open ? 'build' : 'predict', ...base };
+  const open = !!program && holes(program).length > 0;
+  const base = { level, ...(program && { program }), ...(way && { way, chips, ...(limit && { limit }) }), ...(tiles && { tiles }), ...(want && { want }), prompt };
+  const item = { id: 'x', type: type ?? (open ? 'build' : 'predict'), ...base };
   if (open && !solve(item)) return null;
-  const told = story(level, open ? fill(program, solve(item)) : program, want);
+  const fix = item.type === 'bug' ? fixBug(item) : null;
+  if (item.type === 'bug' && !fix) return null;
+  const shown = way ?? (fix ? changed(item, fix) : open ? fill(program, solve(item)) : program);
+  const told = story(level, shown, want);
   const entry = { ...base, explain: explain ?? (lead ? `${lead} ${told}` : told) };
   return codingProblem({ ...item, ...(view && { view }), explain: entry.explain }) ? null : entry;
 }
@@ -755,7 +1047,7 @@ function choose(name, candidates, finish, size) {
 }
 
 export const buildCoding = () => Object.fromEntries(Object.entries(CODING).map(([name, make]) =>
-  [name, choose(name, make(seeded(name)), finishCoding, (c) => `${parts(c.program).length} ${c.level.length * c.level[0].length > 10} ${c.tiles?.filter((t) => typeof t === 'number')}`)]));
+  [name, choose(name, make(seeded(name)), finishCoding, (c) => `${parts(c.program ?? c.way).length} ${c.level.length * c.level[0].length > 10} ${c.tiles?.filter((t) => typeof t === 'number')}`)]));
 
 // ---- Maths: fresh numbers. toQuiz still works out each answer from the sum ----
 

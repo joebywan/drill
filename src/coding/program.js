@@ -37,6 +37,14 @@ import pool from '../data/coding-variants.json' with { type: 'json' };
  *   build    { level, program, tiles, prompt, explain } fill the holes; it runs when the last one is filled
  *   predict  { level, program, prompt, explain }     tap the square where Fennel stops
  *   bug      { level, program, tiles, prompt, explain } a whole program that fails: tap a block, then a tile replaces it
+ * Three more are laid out from nothing with src/builder.js, and run when Run is pressed. `chips` are
+ * blocks with their insides empty, `way` is one program that works (shown after a miss, and the proof
+ * it can be done):
+ *   unscramble { level, chips, way, prompt, explain }  the right blocks in the wrong order: use them all
+ *   palette  { level, chips, way, limit, prompt, explain } reach the goal in `limit` blocks or fewer, too few for plain steps
+ *   free     { level, chips, way, limit, prompt, explain } any program that reaches the goal; `limit` is what fits the screen
+ * An item with a number to choose (a tile) or a layout to build must finish exactly: a run that gets
+ * to the flower with steps still to run ends 'spare', so the biggest number is not a free win.
  * Teach, build and predict may set `view`: 'js' shows the program as JavaScript (`toJS`), 'both' as
  * blocks and JavaScript (no holes). The code is always generated, never stored.
  * Right is decided by running the program, never by comparing to a stored answer: any filling that
@@ -53,6 +61,10 @@ export const kind = (item) => item.type;
 
 const OP_WORDS = { '<': 'is less than', '>': 'is more than', '=': 'equals' };
 const callWords = (t) => `${t.call}${t.args ? `(${t.args.join(', ')})` : ''}`;
+export const BUILT = ['unscramble', 'palette', 'free'];
+export const isBuilt = (item) => BUILT.includes(item.type);
+/** Each list a block holds, by key: what a chip's arms become. */
+export const armsOf = (b) => ('if' in b ? ['then', 'else'] : 'do' in b ? ['do'] : []);
 
 /**
  * A look written out: the one place the shape of one is read, for tile faces, spoken names, blocks
@@ -70,6 +82,12 @@ const LOOK_WORDS = { look: (l) => l.replace('rock-', 'rock '), op: (x) => x, n: 
 
 /** What a screen reader hears for a tile, a filled hole or a block. */
 export const tileName = (t) => (typeof t === 'number' ? `Number ${t}`
+  : t.define ? `New block ${t.define}`
+  : typeof t === 'object' && 'repeat' in t ? `Repeat ${t.repeat} times`
+  : t.until ? `Repeat until ${writeLook(t.until, LOOK_WORDS)}`
+  : t.if ? `If ${writeLook(t.if, LOOK_WORDS)}`
+  : t.each ? `For each ${t.each} in ${t.in.join(', ')}`
+  : t.set ? `Set ${t.set} to ${t.to}`
   : t.call ? `Block ${callWords(t)}`
   : t.go ? `Step the way ${t.go} says`
   : t.change ? `Change ${t.change} by ${t.by}`
@@ -105,12 +123,13 @@ export function parse(level) {
 /**
  * Runs `program` on `level`. Returns { path, end, values } where `path` is every square stood on,
  * start first, `values[i]` is what the variables hold while Fennel is on `path[i]`, and `end` is
- * 'flower' (the flowers were reached: the run stops there if there is only one), 'drawn' (the
+ * 'flower' (the flowers were reached: the run stops there if there is only one), 'spare' (with
+ * `exact`, the flowers were reached with steps still to run), 'drawn' (the
  * squares stood on are the shape), 'bump' (the next step hit a rock or the edge; `path` stops before
  * it, `bumped` is where it tried to go), 'short' (the blocks ran out with the goal not met) or
  * 'endless' (it would never finish, so it was stopped). `want` is how many of several flowers to pick.
  */
-export function run(level, program, want) {
+export function run(level, program, want, exact = false) {
   const g = parse(level);
   const defs = Object.fromEntries(program.filter((b) => b?.define).map((b) => [b.define, b]));
   let [x, y] = g.start;
@@ -123,6 +142,8 @@ export function run(level, program, want) {
   const value = (v) => (typeof v === 'number' ? v : vars[v] ?? 0);
   let n = 0, work = 0;
   let result = null;
+  let arrived = false; // with `exact`, the flower is reached and the rest runs only to see if it steps
+  const never = () => stop(arrived ? 'flower' : 'endless');
   const holds = (look) => {
     if (look === 'flower') return onFlower();
     if (typeof look === 'string') {
@@ -147,17 +168,21 @@ export function run(level, program, want) {
   const exec = (list, depth = 0) => {
     for (const b of list) {
       if (result) return;
-      if (++work > WORK) { result = stop('endless'); return; } // a loop of nothing but values never takes a step
+      if (++work > WORK) { result = never(); return; } // a loop of nothing but values never takes a step
       if (typeof b === 'string' || 'go' in b) {
         const way = STEPS[typeof b === 'string' ? b : vars[b.go]];
         if (!way) continue;
+        if (arrived) { result = stop('spare'); return; }
         const [dx, dy] = way;
         if (++n > LIMIT) { result = stop('endless'); return; }
         if (g.rock(x + dx, y + dy)) { result = stop('bump', { bumped: [x + dx, y + dy] }); return; }
         x += dx; y += dy;
         path.push([x, y]);
         note();
-        if (g.flowers.length === 1 && onFlower()) { result = stop('flower'); return; }
+        if (g.flowers.length === 1 && onFlower()) {
+          if (exact) arrived = true;
+          else { result = stop('flower'); return; }
+        }
       } else if ('repeat' in b) {
         const times = value(b.repeat);
         for (let i = 0; i < times && !result; i++) exec(b.do, depth);
@@ -166,14 +191,14 @@ export function run(level, program, want) {
         const seen = new Set();
         while (!result && !holds(b.until)) {
           const now = `${x},${y},${JSON.stringify(vars)}`;
-          if (seen.has(now)) { result = stop('endless'); return; }
+          if (seen.has(now)) { result = never(); return; }
           seen.add(now);
           exec(b.do, depth);
         }
       } else if ('if' in b) {
         exec(holds(b.if) ? b.then : b.else, depth);
       } else if ('call' in b) {
-        if (depth >= DEPTH) { result = stop('endless'); return; }
+        if (depth >= DEPTH) { result = never(); return; }
         const def = defs[b.call];
         const [param] = def?.params ?? [];
         if (param) withValue(param, value(b.args?.[0]), def.do, depth + 1);
@@ -194,6 +219,7 @@ export function run(level, program, want) {
   };
   exec(program);
   if (result) return result;
+  if (arrived) return stop('flower');
   if (g.shape) {
     const drawn = new Set(path.map(String));
     return stop(drawn.size === g.shape.length && g.shape.every((s) => drawn.has(String(s))) ? 'drawn' : 'short');
@@ -201,7 +227,8 @@ export function run(level, program, want) {
   if (g.flowers.length > 1) {
     const picked = new Set(path.map(String));
     const got = g.flowers.filter((f) => picked.has(String(f))).length;
-    return stop(got === (want ?? g.flowers.length) ? 'flower' : 'short');
+    if (got !== (want ?? g.flowers.length)) return stop('short');
+    return stop(exact && !onFlower() ? 'spare' : 'flower');
   }
   return stop('short');
 }
@@ -210,7 +237,10 @@ export function run(level, program, want) {
 export const reached = (result) => result.end === 'flower' || result.end === 'drawn';
 
 /** Runs an item's level with its own goal: `program` if given, else its own. */
-export const runItem = (item, program = item.program) => run(item.level, program, item.want);
+export const runItem = (item, program = item.program ?? item.way) => run(item.level, program, item.want, finishesExactly(item));
+
+/** Whether an item's run must end on the goal: anything with a number to choose or a layout to build. */
+const finishesExactly = (item) => isBuilt(item) || !!item.tiles?.some((t) => tileKind(t) === 'count');
 
 /**
  * The program with `visit(kind, value)` applied to every slot, in reading order: 'step' (a block,
@@ -376,21 +406,73 @@ export function fixBug(item) {
 /** Where a predict item's program stops: the square to tap, worked out by running it. */
 export const answer = (item) => runItem(item).path.at(-1);
 
+/** How many blocks a program is, inner ones included: what a palette's limit counts. */
+export const blockCount = (program) => program.reduce((n, b) => n + 1 + (typeof b === 'object' ? armsOf(b).reduce((m, k) => m + blockCount(b[k]), 0) : 0), 0);
+
+/** Every block of a program with its insides emptied, in reading order: the chips it is made from. */
+export const pieces = (program) => program.flatMap((b) => {
+  if (typeof b !== 'object' || !armsOf(b).length) return [b];
+  const arms = armsOf(b);
+  return [{ ...b, ...Object.fromEntries(arms.map((k) => [k, []])) }, ...arms.flatMap((k) => pieces(b[k]))];
+});
+
+/** A program from a builder's tree (src/builder.js): each node's chip, its arms filled in. */
+export const fromTree = (tree, chips) => tree.map((n) => (n.arms
+  ? { ...chips[n.chip], ...Object.fromEntries(armsOf(chips[n.chip]).map((k, i) => [k, fromTree(n.arms[i], chips)])) }
+  : chips[n.chip]));
+
+/** The fewest plain steps that could meet a level's goal: more than a limit means a loop is needed. */
+export function fewestSteps(level) {
+  const g = parse(level);
+  if (g.shape) return g.shape.length - 1;
+  if (g.flowers.length > 1) return g.flowers.length;
+  const seen = new Map([[String(g.start), 0]]);
+  const queue = [g.start];
+  for (const [x, y] of queue) {
+    for (const [dx, dy] of Object.values(STEPS)) {
+      const to = [x + dx, y + dy];
+      if (g.rock(...to) || seen.has(String(to))) continue;
+      seen.set(String(to), seen.get(String([x, y])) + 1);
+      queue.push(to);
+    }
+  }
+  return seen.get(String(g.flower)) ?? Infinity;
+}
+
+function builtProblem(item) {
+  const key = JSON.stringify;
+  if (!item.chips?.length || !item.way?.length) return 'needs chips and a way';
+  if (!reached(runItem(item))) return 'its way does not reach the goal';
+  const need = pieces(item.way).map(key);
+  if (need.some((p) => !item.chips.some((c) => key(c) === p))) return 'its way uses a block that is not a chip';
+  if (item.type === 'unscramble') {
+    if (key([...need].sort()) !== key(item.chips.map(key).sort())) return 'the chips must be the blocks of its way';
+    if (key(item.chips) === key(pieces(item.way))) return 'the chips are already in order';
+    return reached(runItem(item, item.chips)) ? 'the given order already works' : null;
+  }
+  if (!item.limit) return 'needs a limit';
+  if (blockCount(item.way) > item.limit) return 'its way is over the limit';
+  if (item.type === 'palette' && fewestSteps(item.level) <= item.limit) return 'plain steps fit the limit: nothing forces a loop';
+  return null;
+}
+
 /** Why an item can't be shipped, or null. Every shipped item passes this (test/coding.test.js). */
 export function problem(item) {
   if (!item.id) return 'no id';
   if (item.type === 'teach') return !item.text ? 'teach without text' : item.program && !item.level ? 'teach program needs a level' : null;
-  if (!['build', 'predict', 'bug'].includes(item.type)) return `unknown type ${item.type}`;
+  if (!['build', 'predict', 'bug', ...BUILT].includes(item.type)) return `unknown type ${item.type}`;
   if (!item.prompt || !item.explain) return 'needs a prompt and an explanation';
   const g = parse(item.level);
   if (!g.start || !(g.flower || g.shape)) return 'level needs S and a flower or a shape';
   if (item.want !== undefined && (g.flowers.length < 2 || item.want > g.flowers.length)) return 'want needs enough flowers';
   if (item.level.some((r) => r.length !== g.w)) return 'ragged level';
-  const defs = Object.fromEntries(item.program.filter((b) => b?.define).map((b) => [b.define, b]));
+  const program = item.program ?? item.way ?? [];
+  const defs = Object.fromEntries(program.filter((b) => b?.define).map((b) => [b.define, b]));
   const calls = [];
-  JSON.stringify([item.program, item.tiles], (_, v) => { if (v?.call) calls.push(v); return v; });
+  JSON.stringify([program, item.tiles, item.chips], (_, v) => { if (v?.call) calls.push(v); return v; });
   if (calls.some((c) => !defs[c.call])) return 'calls a block nothing defines';
   if (calls.some((c) => (c.args?.length ?? 0) !== (defs[c.call].params?.length ?? 0))) return 'a call gives the wrong number of values';
+  if (isBuilt(item)) return item.view ? 'that view cannot show this item' : builtProblem(item);
   if (item.view && (item.type === 'bug' || (item.view === 'both' && holes(item.program).length))) return 'that view cannot show this item';
   if (item.view && toJS(item.program).split('\n').some((l) => l.length > CODE_WIDTH)) return 'a line of code is too wide';
   if (item.type === 'predict') return holes(item.program).length ? 'predict has holes' : null;
@@ -437,6 +519,8 @@ export function mirrored(item, { x = false, y = false }) {
     level: rows,
     ...(item.program && { program: slots(item.program, (_, v) => turnTile(v)) }),
     ...(item.tiles && { tiles: item.tiles.map(turnTile) }),
+    ...(item.way && { way: slots(item.way, (_, v) => turnTile(v)) }),
+    ...(item.chips && { chips: slots(item.chips, (_, v) => turnTile(v)) }),
     prompt: swapWords(item.prompt, ...maps),
     explain: swapWords(item.explain, ...maps),
   };
@@ -448,6 +532,7 @@ const ALL_FLIPS = [...FLIPS, {}];
 const size = (level) => level.length * level[0].length;
 /** The numbers a count item's answer is, or null when nothing it asks for is a number. */
 const counts = (item) => {
+  if (!item.program) return null;
   if (!holes(item.program).includes('count')) return null;
   return (solve(item) ?? []).filter((v) => typeof v === 'number').join() || null;
 };
@@ -459,12 +544,13 @@ const counts = (item) => {
 export function variantsOf(item) {
   const own = counts(item);
   const plain = { id: item.id, type: item.type, family: item.family, ...(item.view && { view: item.view }) };
+  const body = (i) => i.program ?? i.way;
   const same = (e) => ALL_FLIPS.some((f) => {
     const m = mirrored(e, f);
-    return m.level.join() === item.level.join() && JSON.stringify(m.program) === JSON.stringify(item.program);
+    return m.level.join() === item.level.join() && JSON.stringify(body(m)) === JSON.stringify(body(item));
   });
   return (pool[item.family] ?? []).map((e) => ({ ...plain, ...e })).filter((e) =>
-    Math.abs(parts(e.program).length - parts(item.program).length) <= 2
+    Math.abs(parts(body(e)).length - parts(body(item)).length) <= 2
     && size(e.level) <= 2 * size(item.level) + 6
     && !same(e)
     && (own === null || counts(e) !== own));
