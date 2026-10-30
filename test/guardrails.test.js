@@ -352,3 +352,11 @@ test('the comeback card invites, never guilts, and the fitting lines are plain',
   const plain = [...Object.values(PAUSED_WORDS), usualLine([7, 19]), 'Try a shorter one: 3 breaths'];
   for (const text of plain) for (const lint of [LOSS, URGENCY, ABILITY]) assert.doesNotMatch(text, lint, text);
 });
+
+// The Android widget and its once-a-day note: no nagging, no hurry, nothing about a day off.
+import { REMINDER_WORDS, WIDGET_LINES } from '../src/cast/lines.js';
+test('the widget and the daily note never nag, hurry or judge', () => {
+  const texts = [...Object.values(WIDGET_LINES).flat(), ...Object.values(REMINDER_WORDS)];
+  assert.ok(texts.length > 15);
+  for (const text of texts) for (const lint of [NAGGING, LOSS, ABILITY, URGENCY]) assert.doesNotMatch(text, lint, text);
+});
