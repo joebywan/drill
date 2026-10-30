@@ -1,0 +1,65 @@
+<!doctype html>
+<!-- Render harness for the garden art: every plant at every stage, with flowers and shut for
+     resting; the visitors at 64, 32 and 24 px; and every scene, as a home strip and as the tall
+     view, with sample plants in its slots. Light or dark follows the system, as the app does:
+     view it in both. `npm start`, then open /tools/garden.html. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Garden</title>
+<style>
+  :root { --bg: #f6f7f9; --text: #1c2230; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #151a22; --text: #e8ebf0; } }
+  body { font: 13px system-ui, sans-serif; margin: 0; padding: 8px 16px; background: var(--bg); color: var(--text); }
+  h2 { font-size: 15px; margin: 14px 0 6px; }
+  .row { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: end; margin-bottom: 6px; }
+  figure { margin: 0; text-align: center; }
+  figcaption { opacity: .7; font-size: 11px; }
+  .plants svg { width: 64px; }
+  .v64 svg { height: 64px; } .v32 svg { height: 32px; } .v24 svg { height: 24px; }
+  .scene svg { width: 100%; display: block; border-radius: 12px; }
+</style>
+</head>
+<body>
+<div id="sheet"></div>
+<script type="module">
+  import { PLANTS, plant, sway, MOODS, scene, slots, place, VISITORS, visitor, animateVisitor } from '../src/garden/art.js';
+  // Names only: model.js and subjects.js pull in the app's dependencies. The tests check every
+  // habit in HABITS has a plant.
+  const STAGES = ['seed', 'sprout', 'sapling', 'young', 'full grown'].map((name) => ({ name }));
+  const HABITS = Object.keys(PLANTS).map((id) => ({ id, name: id }));
+
+  const fig = (label, svg) => `<figure>${svg}<figcaption>${label}</figcaption></figure>`;
+  const plants = HABITS.map((h) => `<h2>${h.name}: ${PLANTS[h.id]}</h2><div class="row plants">`
+    + STAGES.map((s, i) => fig(s.name, plant(h.id, i))).join('')
+    + [2, 3, 4].map((i) => fig(`${STAGES[i].name} +6`, plant(h.id, i, { flowers: 6 }))).join('')
+    + fig('full +3', plant(h.id, 4, { flowers: 3 })) + fig('resting', plant(h.id, 4, { flowers: 6, closed: true }))
+    + '</div>').join('');
+  const visitors = ['v64', 'v32', 'v24'].map((c) => `<div class="row ${c}">${VISITORS.map((k) => fig(k, visitor(k))).join('')}</div>`).join('');
+
+  // Sample gardens: every habit at a different stage, some with flowers, and the visitors about.
+  const sample = [[4, 3], [3, 1], [4, 6], [2, 0], [1, 2]];
+  const garden = (mood, shape) => {
+    const at = slots(shape, HABITS.length);
+    const [W, H] = shape === 'strip' ? [360, 140] : [360, 560];
+    const grown = HABITS.map((h, i) => place(plant(h.id, sample[i][0], { flowers: sample[i][1], closed: mood === 'resting' }), at[i])).join('');
+    const v = (kind, x, y, h) => visitor(kind).replace('<svg ', `<svg x="${x}" y="${y}" height="${h}" `);
+    const life = shape === 'strip'
+      ? v('butterfly', 100, 30, 22) + v('bee', 240, 40, 18)
+      : v('butterfly', 130, 190, 34) + v('bee', 240, 270, 28) + v('birds', 140, 470, 34);
+    return `<div class="scene" data-mood="${mood}">${scene(mood, shape).replace('</svg>', grown + life + '</svg>')}</div>`;
+  };
+  const slotDemo = (shape) => `<div class="scene">${scene('morning', shape).replace('</svg>',
+    slots(shape, 6).map((s) => place(plant('learn', 4), s)).join('') + '</svg>')}</div>`;
+
+  document.getElementById('sheet').innerHTML = `<h1>Garden</h1>${plants}<h2>Visitors</h2>${visitors}`
+    + MOODS.map((m) => `<h2>${m}: strip</h2><div id="strip-${m}">${garden(m, 'strip')}</div>`
+      + `<h2>${m}: tall</h2><div id="tall-${m}">${garden(m, 'tall')}</div>`).join('')
+    + `<h2>All six slots</h2><div id="slots-strip">${slotDemo('strip')}</div><div id="slots-tall" style="margin-top:8px">${slotDemo('tall')}</div>`;
+
+  document.querySelectorAll('svg.plant').forEach(sway);
+  document.querySelectorAll('svg.visitor').forEach((el) => animateVisitor(el, el.classList[1].replace('visitor-', '')));
+</script>
+</body>
+</html>

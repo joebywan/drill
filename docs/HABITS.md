@@ -76,7 +76,7 @@ The app's vibe moves from "build knowledge" to "grow yourself", shown as a garde
    mood. Progress v4 with `migrate()`.
    Done in `src/garden/model.js`: stages at 0/1/5/14/30 days, the `RULES` table, `award()`
    after each finish in app.js, and `garden()`, the one read model for the screen.
-10. [ ] **Garden art.** SVG plants per habit across five stages, flowers, visitors and the
+10. [x] **Garden art.** SVG plants per habit across five stages, flowers, visitors and the
     three moods, with a harness like tools/cast.html.
 11. [ ] **Garden screen.** A garden strip on home and a full garden view. Tapping a plant
     opens its habit view. A quiet "a butterfly arrived" moment on the end screen when
