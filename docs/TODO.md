@@ -80,8 +80,16 @@ the Android wrapper for anything about notifications.
 
 ## Coach voice
 
-Open question, not decided. Fizz writes its mascot's lines with Bedrock (a cloud model,
-with built-in lines as the fallback). For Drill, which has no internet permission:
+Agreed 2026-10-30: like Duolingo's characters, each coach has lines that encourage and,
+sometimes, antagonise or challenge the player to get them to play more ("Moss bets you can't
+do three slow breaths before lunch"). A challenge is a dare in character, sent once; it is not
+Fizz's escalating run of panicked nags. Drill needs a way to generate these lines either way:
+a tool that drafts lines per coach and state with an LLM at authoring time, for review and
+committing, with the coach's voice described once per character.
+
+Still open: whether lines are also written live on the device. Fizz writes its mascot's lines
+with Bedrock (a cloud model, with built-in lines as the fallback). For Drill, which has no
+internet permission:
 
 - **Line pool:** many hand-reviewed lines per state (habit, streak, hour, light, comeback),
   drafted with an LLM at authoring time and shipped in the app, with slots for the person's own
