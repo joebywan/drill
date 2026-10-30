@@ -20,7 +20,7 @@ export function mount(el, item, ctx) {
       <p class="tally"><span class="count"></span> <span class="unit"></span></p>
     </div>${pauseBar}`;
   const [which, name, cue, unit] = ['.which', 'h2', '.cue', '.unit'].map((s) => el.querySelector(s));
-  return routine(el, phases(item.set, course.moves), ctx, (p, i, coachSay) => {
+  return routine(el, phases(item.set, course.moves, ctx.timings), ctx, (p, i, coachSay) => {
     el.firstElementChild.dataset.kind = p.kind;
     play(p.kind === 'rest' ? 'exhale' : 'inhale');
     buzz('inhale');
@@ -38,5 +38,5 @@ export function mount(el, item, ctx) {
     unit.textContent = p.reps ? `of ${p.reps}` : 's';
     coachSay(say('go'), 'guide');
     return demo(ctx, p.pose, p.seconds, p.reps);
-  }, summary(item.set, course.moves), say('paused'));
+  }, summary(item.set, course.moves, ctx.timings), say('paused'));
 }
