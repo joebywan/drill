@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { EVENTS } from '../src/garden/events.js';
 import assert from 'node:assert/strict';
 import { emptyProgress, finishPractice, finishSession, migrate } from '../src/progress.js';
 import { LANDMARKS, RULES, STAGES, award, garden, gardenDays, mood, stage } from '../src/garden/model.js';
@@ -124,7 +125,7 @@ test('every rule has a unique id, a known gift and a pure test', () => {
   const p = emptyProgress();
   const frozen = JSON.stringify(p);
   for (const r of RULES) {
-    assert.ok(['flower', 'butterfly', 'bee', 'ladybird', ...LANDMARKS.map((l) => l.gift)].includes(r.gift), r.id);
+    assert.ok(['flower', 'butterfly', 'bee', 'ladybird', ...LANDMARKS.map((l) => l.gift), ...EVENTS.map((e) => e.gift)].includes(r.gift), r.id);
     assert.equal(r.test(p), false, r.id);
   }
   assert.equal(JSON.stringify(p), frozen);

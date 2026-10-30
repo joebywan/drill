@@ -1,0 +1,42 @@
+{
+  "spring-market": {
+    "subject": "maths",
+    "title": "Market sums",
+    "items": [
+      { "id": "market-teach", "type": "teach", "show": "$4 + $6", "text": "The spring market is on, and every stall wants paying. Add the prices up one at a time: $4 and $6 make $10." },
+      { "id": "market-plums", "type": "pick", "show": "7 + 5", "prompt": "Plums cost $7 and honey costs $5. How many dollars for both?", "options": ["11", "12", "13"], "explain": "7 and 3 make 10, and 2 more makes 12." },
+      { "id": "market-change", "type": "pick", "show": "20 - 12", "prompt": "You hand over $20 for that $12 basket. How many dollars come back?", "options": ["7", "8", "9"], "explain": "From 12 up to 20 is 8." },
+      { "id": "market-half", "type": "pick", "show": "50% of 18", "prompt": "A stall takes 50% off an $18 hat. What's 50% of 18?", "options": ["8", "9", "12"], "explain": "50% is a half, and half of 18 is 9." },
+      { "id": "market-tenth", "type": "pick", "show": "10% of 40", "prompt": "10% off a $40 rug. What's 10% of 40?", "options": ["4", "10", "14"], "explain": "10% is a tenth, and a tenth of 40 is 4." }
+    ]
+  },
+  "summer-tournament": {
+    "subject": "chess",
+    "title": "Tournament boards",
+    "items": [
+      { "id": "park-teach", "type": "teach", "side": "w", "fen": "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", "text": "The park tournament has boards out on the grass. Rosa has set three warm-ups and one last game. No chess needed: each board says how its piece moves." },
+      { "id": "park-rook", "type": "stars", "side": "w", "fen": "8/8/8/8/8/8/8/R7 w - - 0 1", "stars": ["a8", "h8"], "moves": 2, "prompt": "A rook slides straight along a row or a column. Collect both stars in 2 moves.", "explain": "Up the a column, then along the top row." },
+      { "id": "park-bishop", "type": "stars", "side": "w", "fen": "8/8/8/8/8/8/8/2B5 w - - 0 1", "stars": ["g5", "d8"], "moves": 2, "prompt": "A bishop slides on the diagonals. Collect both stars in 2 moves.", "explain": "Out along one diagonal to g5, then back up the other to d8." },
+      { "id": "park-knight", "type": "stars", "side": "w", "fen": "8/8/8/8/8/8/8/6N1 w - - 0 1", "stars": ["f3", "g5"], "moves": 2, "prompt": "A knight jumps in an L: two squares one way, one to the side. Collect both stars in 2 moves.", "explain": "An L to f3, then another L to g5." },
+      { "id": "park-final", "type": "move", "side": "w", "goal": "mate", "fen": "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", "prompt": "The last game. The black king's own pawns box him in. Slide your rook to the top row for checkmate.", "explain": "Rook to a8 attacks along the whole top row, and the king has nowhere to step." }
+    ]
+  },
+  "autumn-harvest": {
+    "subject": "coding",
+    "title": "Fennel's harvest",
+    "items": [
+      { "id": "harvest-teach", "type": "teach", "level": ["S..*"], "text": "Harvest time, and I'm gathering the last of the flowers. I follow steps, one at a time, in order. Your steps get me there." },
+      { "id": "harvest-line", "type": "build", "level": ["S..*"], "program": [null, null, null], "tiles": ["up", "right"], "prompt": "Three steps along the row. I start as soon as the last one is in.", "explain": "Right, right, right." },
+      { "id": "harvest-back", "type": "build", "level": ["*.S"], "program": [null, null], "tiles": ["left", "right", "up"], "prompt": "This flower is behind me. Two steps.", "explain": "Left, left. I walk whichever way the blocks say." },
+      { "id": "harvest-corner", "type": "build", "level": ["...*", "S..."], "program": [null, null, null, null], "tiles": ["right", "down", "up"], "prompt": "The last one is up a row. Build the steps.", "explain": "Three right and one up. Up first works too: there's more than one way." }
+    ]
+  },
+  "winter-festival": {
+    "subject": "calm",
+    "title": "Lantern breaths",
+    "items": [
+      { "id": "festival-teach", "type": "teach", "say": "Snow on the hills, lights strung up. Come and sit by the lanterns with me.", "text": ["Breathe in for 4, then out slowly for 8.", "Picture a lantern brightening as you breathe in, and softening as you breathe out.", "If 8 feels long, breathe out as slowly as is comfortable."] },
+      { "id": "festival-breaths", "type": "breathe", "cycles": 5 }
+    ]
+  }
+}

@@ -141,7 +141,6 @@ permission, and the pool stays the fallback even then.
 - **QR pairing.** A QR code beside the 6-digit pairing code.
 - **On-device model** for coach lines (Coach voice above). The pool stays the fallback.
 - **Renaming "Drill"** (HABITS.md, the garden): the app has moved from drilling to growing.
-- **Garden seasonal events** that change the whole garden (HABITS.md).
 - **More courses:** JavaScript, TypeScript and TS test-writing are planned (CLAUDE.md); the
   test-writing one must grade code independently.
 - **Chess promotion picker** (the board always makes a queen; `puzzle.js`).

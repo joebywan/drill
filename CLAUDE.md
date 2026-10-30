@@ -193,6 +193,10 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   guess. A season only retints the land and adds decoration (`scene(mood, shape, season)`): plants
   never change with it. Lumi lounges in `pond()`, which landmarks.js `layout()` places before any
   landmark (left out when a crowded strip has no room); the pond landmark is a frog joining Lumi.
+- `src/garden/events.js` — pure: seasonal events, `eventOn(date, south)`, the 8th to the 21st of its season's middle month, six months apart by hemisphere
+  (the same `south` as the season, so Sydney's winter festival is in July). `scene(mood, shape, season, event)` repaints sky and land and dresses the whole scene; the garden
+  screen has a card and home's strip a small tag, neither saying when it ends. Its set (`src/data/events.json`) plays as an ordinary session of its subject, lesson id `event:<id>`,
+  with no item keys so no review cards; a rule in model.js grants the gift, a landmark kept all year. Nothing is lost for missing one: it returns every year.
 - `src/garden/art.js` — the garden's drawings, built like the cast: `plant(habit, stage, { flowers,
   closed })` (tree, lavender, sunflower, vine on a trellis, daisies, evening primrose; five stages, scaled by `GROW` so a
   sprout is about a third of full height and a sapling about half; up to 6 blooms that
