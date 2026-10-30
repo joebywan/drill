@@ -90,7 +90,7 @@ The app's vibe moves from "build knowledge" to "grow yourself", shown as a garde
   ring-tailed lemur, Lumi the seal). Insects and birds are garden life, not coaches. No owls.
 - Done (#72): the garden follows the real season for the device's hemisphere (`src/garden/season.js`;
   spring blossom, summer wildflowers, autumn leaves, winter frost and lanterns), and Lumi lounges by a pond.
-- Later: seasonal events and the name "Drill" (Still open below).
+- Done: seasonal events (`src/garden/events.js`). Later: the name "Drill" (Still open below).
 
 9. [x] **Garden model.** (#43) Pure: days practised per habit (kept permanently, not from the
    year-long log), growth stage, achievement rules and an `earned` record, and the garden's
@@ -121,7 +121,6 @@ The app's vibe moves from "build knowledge" to "grow yourself", shown as a garde
 
 ## Still open
 
-- **Seasonal events** that change the whole garden, beyond the season's tint.
 - **Renaming "Drill"**: the app has moved from "build knowledge" to "grow yourself".
 - **"Already practised today"** for Calm (from Fizz, task 4): a one-tap log for a session done
   away from the app. Task 8's one-tap logging covers tracked habits, not guided ones.

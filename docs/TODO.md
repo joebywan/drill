@@ -126,14 +126,21 @@ permission, and the pool stays the fallback even then.
   backend planned for now. To turn it on: deploy the sync API (`server/DEPLOY.md`: Cloudflare account, the DNS move to
   Cloudflare, D1, one deploy), then set `SYNC` to true. Create the Android release key once, put its SHA-256 in
   `android/release-key.sha256` and add the four `DRILL_KEY*` repo secrets (CLAUDE.md, Android).
-- **Play publishing.** A workflow that uploads the signed `assembleRelease` AAB/APK to a Play
-  track; today the **Android release** workflow only builds and verifies it.
+- **Play publishing: written, waiting on Joseph.** `.github/workflows/publish-play.yml` uploads the signed bundle from a
+  GitHub release to Play's internal track. It runs by hand only and refuses to run without its secret or a bundle signed with
+  the pinned key, so nothing happens until these steps are done:
+  1. The release key first (Joseph's steps above), then run **Android release** once; the release now carries the `.aab`.
+  2. Make a Play Console developer account and create the app, package `com.joebywan.drill`.
+  3. Upload that first `.aab` by hand to Internal testing and roll it out: the Play API can't release to an app still in draft.
+     Choose Play App Signing with the release key as the upload key; `verify-aab.sh` pins that key.
+  4. In Google Cloud make a service account with a JSON key; in Play Console, Users and permissions, invite it with release rights to this app.
+  5. Add the JSON as the repo secret `PLAY_SERVICE_ACCOUNT_JSON`.
+  6. Run **Publish to Google Play** from the Actions tab. Each later upload needs a higher version code, which the release's run number gives.
 - **Sync on Android.** The wrapper has no internet permission, so sync is hidden there. Adding it
   is a decision (and a CI check to change).
 - **QR pairing.** A QR code beside the 6-digit pairing code.
 - **On-device model** for coach lines (Coach voice above). The pool stays the fallback.
 - **Renaming "Drill"** (HABITS.md, the garden): the app has moved from drilling to growing.
-- **Garden seasonal events** that change the whole garden (HABITS.md).
 - **More courses:** JavaScript, TypeScript and TS test-writing are planned (CLAUDE.md); the
   test-writing one must grade code independently.
 - **From the 2026-10-30 integration walkthrough** (a design call, not a bug): above a new course's
