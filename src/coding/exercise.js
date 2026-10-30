@@ -1,7 +1,7 @@
 import { ARROW, answer, fill, holes, kind, parse, run, solve, tileKind } from './program.js';
 import { fennel, demo } from '../cast/fennel.js';
 import { flower } from '../garden/art.js';
-import { move, play } from '../feel.js';
+import { flourish, move, play } from '../feel.js';
 import { esc } from '../html.js';
 
 const STEP_MS = 380;
@@ -76,6 +76,7 @@ export function mount(el, item, { say, done }) {
         await walk(run(item.level, item.program));
         if (gone) return;
         world.querySelector(`.cell[data-x="${want[0]}"][data-y="${want[1]}"]`).classList.add('right');
+        flourish(c, right ? 'pop' : 'shake'); // the runner cues the sound and buzz
         done(right, item.explain);
       });
     }
@@ -101,6 +102,7 @@ export function mount(el, item, { say, done }) {
     b.addEventListener('click', async () => {
       picks[next()] = item.tiles[b.dataset.tile];
       play('tap');
+      flourish(b, 'pop');
       if (next() >= 0) { paint(); return; }
       paint(picks, true);
       const result = run(item.level, fill(item.program, picks));
@@ -113,6 +115,7 @@ export function mount(el, item, { say, done }) {
         programEl.classList.add('shown');
       }
       if (!right) say('Here is one way that works.', 'wrong');
+      flourish(programEl, right ? 'pop' : 'shake'); // the runner cues the sound and buzz
       done(right, item.explain);
     });
   }
