@@ -250,13 +250,28 @@ export function blooms(habit, stage, flowers = 0) {
   return spots.slice(0, n).map(([x, y]) => ({ x, y, r: BLOOM_R }));
 }
 
+// Each plant's drawing at each stage is scaled about its base so early stages read at a glance: a
+// sprout about a third of full height, a sapling about half, and every stage taller than the last
+// (a test measures it in the browser). Blooms on the plant scale with it; blooms on the ground don't.
+const GROW = {
+  tree: [1.6, 1.5, 1.05, 1.1, 1],
+  lavender: [1.8, 3.4, 2.7, 1.12, 1],
+  sunflower: [1.6, 1.9, 1.25, 1.08, 1],
+  vine: [1.6, 1.2, 1.05, 1, 1],
+  daisies: [1.8, 3.4, 1.7, 1.25, 1],
+};
+const grown = (k, svg) => (k === 1 ? svg : `<g transform="translate(50 106) scale(${k}) translate(-50 -106)">${svg}</g>`);
+
 export function plant(habit, stage = 0, { flowers = 0, closed = false } = {}) {
   const name = nameOf(habit), s = stageOf(stage);
+  const k = GROW[name][s];
   const mound = `<ellipse data-part="mound" cx="50" cy="107" rx="${14 + s * 3}" ry="4.5" fill="${SOIL}"/>`;
   const shine = s === 4 ? `<g data-part="twinkle">${twinkle(12, 18, 4)}${twinkle(88, 12, 3)}</g>` : '';
   const flowerSvg = blooms(habit, s, flowers).map((b) => bloom(b, BLOOM_COLOUR[name], closed)).join('');
   return `<svg class="plant plant-${name} stage-${s}" data-habit="${habit}" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">`
-    + `${mound}<g data-part="plant">${DRAW[name](s, closed)}<g data-part="blooms">${flowerSvg}</g></g>${shine}</svg>`;
+    + `${mound}<g data-part="plant">${SPOTS[name][s]
+      ? grown(k, `${DRAW[name](s, closed)}<g data-part="blooms">${flowerSvg}</g>`)
+      : `${grown(k, DRAW[name](s, closed))}<g data-part="blooms">${flowerSvg}</g>`}</g>${shine}</svg>`;
 }
 
 export function sway(el) {
@@ -275,7 +290,7 @@ export const flower = (habit) =>
   `<svg class="flower" viewBox="-5 -5 10 10" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${bloom({ x: 0, y: 0, r: BLOOM_R }, BLOOM_COLOUR[nameOf(habit)], false)}</svg>`;
 
 // The canvas y each stage reaches up to (its twinkles included), so visitors wait above it.
-const TOPS = [94, 86, 64, 40, 10];
+const TOPS = [84, 72, 52, 32, 6];
 const ASPECT = { butterfly: 1, bee: 1, birds: 56 / 32 };
 
 /**

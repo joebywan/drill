@@ -114,7 +114,7 @@ test('visitors perch inside the scene and never over their plant', () => {
             const at = `${shape} ${n} ${s} ${kind}`;
             assert.ok(b.x >= 0 && b.y >= 0 && b.x + b.w <= W && b.y + b.h <= H, `${at} in the scene`);
             // The plant's body: the middle of its canvas, from the top of its stage down to the base.
-            const top = y - ((106 - [94, 86, 64, 40, 10][s]) * w) / 100;
+            const top = y - ((106 - [84, 72, 52, 32, 6][s]) * w) / 100;
             const overlaps = b.x < x + 0.3 * w && b.x + b.w > x - 0.3 * w && b.y < y && b.y + b.h > top;
             assert.ok(!overlaps, `${at} off the plant`);
           }

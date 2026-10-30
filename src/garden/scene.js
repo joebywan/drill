@@ -5,7 +5,7 @@ import { move } from '../feel.js';
  * The garden's backdrop and its visitors. Import from art.js, which re-exports all of this.
  *
  *   MOODS                   ['sunlit', 'morning', 'resting'], as model.js `mood()` returns them
- *   SIZE                    { strip: [360, 124], tall: [360, 450] }, the viewBox of each shape: little
+ *   SIZE                    { strip: [360, 124], tall: [360, 390] }, the viewBox of each shape: little
  *                           sky, so the plants fill the view
  *   scene(mood, shape = 'tall') -> svg string
  *       sky, sun or moon, two rows of hills and the ground. Resting is a warm evening with a moon
@@ -22,7 +22,7 @@ import { move } from '../feel.js';
  *   animateVisitor(el, kind) -> Animation[] | null   flutter, hover or hop; null under reduced motion
  */
 export const MOODS = ['sunlit', 'morning', 'resting'];
-export const SIZE = { strip: [360, 124], tall: [360, 450] };
+export const SIZE = { strip: [360, 124], tall: [360, 390] };
 
 // One palette per mood and theme. Plants keep their own colours; grounds stay mid-tone so a
 // plant reads on both.
@@ -68,7 +68,7 @@ export function scene(mood = 'morning', shape = 'tall') {
   const m = PALETTE[mood] ? mood : 'morning';
   const [W, H] = SIZE[shape] || SIZE.tall;
   const tall = H > 200;
-  const hy = tall ? 150 : 66;          // where the ground starts
+  const hy = tall ? 120 : 66;          // where the ground starts
   const k = tall ? 1.8 : 1;            // sun, clouds and hills scale with the view
   const rand = seeded(tall ? 7 : 3);
   let sky = `<rect class="g-sky" width="${W}" height="${H}"/><rect class="g-band" y="${f(hy - 50 * k)}" width="${W}" height="${f(60 * k)}"/>`;
@@ -110,9 +110,10 @@ export function slots(shape = 'tall', n = 6) {
   const [W] = SIZE.tall;
   const row = (k, y, wMax) => Array.from({ length: k }, (_, i) => ({ x: f((W * (i + 0.5)) / k), y, w: f(Math.min(wMax, W / k)) }));
   if (shape === 'strip') return row(count, 112, 80);
-  if (count <= 3) return row(count, 420, 150);
-  const back = Math.floor(count / 2);
-  return [...row(back, 290, 120), ...row(count - back, 430, 120)];
+  if (count <= 3) return row(count, 360, 150);
+  // The back row takes the extra plant, so the front row's fewer plants can be bigger.
+  const back = Math.ceil(count / 2);
+  return [...row(back, 250, 120), ...row(count - back, 372, 150)];
 }
 
 /** Draws a plant svg (100 x 120, base at 50, 106) at a slot, as a nested svg. */

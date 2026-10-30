@@ -399,6 +399,37 @@ test('with all five habits started, the bar fits at 360px and the tabs are one r
   expect(await overflow(page)).toBe(0);
 });
 
+test('every plant grows visibly stage to stage, and a sprout and a sapling read at a glance', async ({ page }) => {
+  await page.goto('/');
+  const heights = await page.evaluate(async () => {
+    const { PLANTS, plant } = await import('/src/garden/art.js');
+    return Object.fromEntries(Object.keys(PLANTS).map((h) => [h, [0, 1, 2, 3, 4].map((s) => {
+      const box = document.createElement('div');
+      box.innerHTML = plant(h, s);
+      document.body.append(box);
+      const { y } = box.querySelector('[data-part="plant"]').getBBox();
+      box.remove();
+      return 106 - y; // the drawing's height above its base, in canvas units
+    })]));
+  });
+  for (const [habit, [, sprout, sapling, young, full]] of Object.entries(heights)) {
+    expect(sprout / full, `${habit} sprout`).toBeGreaterThan(0.3);
+    expect(sapling / full, `${habit} sapling`).toBeGreaterThan(0.45);
+    const h = heights[habit];
+    for (let s = 1; s < 5; s++) expect(h[s] - h[s - 1], `${habit} stage ${s} grows`).toBeGreaterThan(8);
+  }
+});
+
+test('on a phone, the first plant card shows above the fold under the full garden', async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 780 });
+  await grown(page, ['learn', 'calm', 'move', 'reflect', 'break'], 5, true);
+  await page.goto('/');
+  await strip(page, 5).click();
+  const card = await page.locator('.plant-card').first().boundingBox();
+  // A browser's own bars take about 100px of a 780px phone screen: the whole first card is above them.
+  expect(card.y + card.height).toBeLessThan(680);
+});
+
 const overflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
 for (const colorScheme of ['light', 'dark']) {
