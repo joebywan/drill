@@ -958,11 +958,8 @@ function keep(note = '') {
       ${CALM_SOUNDS.map(([name, label]) => `<button class="choice" data-pref="${name}" aria-pressed="${calmPref(name)}">${esc(label)}</button>`).join('')}
       <h2>Garden</h2>
       <button class="choice" data-pref="south" aria-pressed="${south()}">${esc(SOUTH_LABEL)}</button>
-<<<<<<< HEAD
-=======
       ${bridge() ? `<h2>${esc(REMINDER_WORDS.title)}</h2><button class="choice" data-remind aria-pressed="${bridge().remindersOn()}">${esc(REMINDER_WORDS.toggle)}</button>` : ''}
       ${remindersPaused(progress) ? `<p class="said paused">${esc(PAUSED_WORDS.line)} <button class="link" data-remind-on>${esc(PAUSED_WORDS.on)}</button></p>` : ''}
->>>>>>> origin/main
       <button class="choice" data-back>Back</button>
     </main>`;
   for (const b of app.querySelectorAll('[data-pref]')) {
@@ -1124,7 +1121,6 @@ function choose(picked) {
   focusOn(picked.length ? '.cta .next' : 'h1');
 }
 
-<<<<<<< HEAD
 /**
  * The Android wrapper's bridge (CLAUDE.md): plain functions on one small global, over the live
  * progress. `noteReminder` returns false for an outcome it doesn't know, which changes nothing.
@@ -1141,10 +1137,8 @@ window.drill = {
   },
 };
 
-=======
 tellAndroid(progress); // the widget catches up with a new day even when nothing is saved
 sendArt().catch(console.warn);
 passNotes();
 addEventListener('visibilitychange', () => document.hidden || passNotes()); // a note tapped while the app was open
->>>>>>> origin/main
 if (showsIntro(progress)) intro(); else home();
