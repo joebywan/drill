@@ -9,6 +9,7 @@ import { moss, NAME as MOSS } from './cast/moss.js';
 import * as calm from './calm/practice.js';
 import breakCourse from './data/break.json' with { type: 'json' };
 import * as screenBreak from './break/practice.js';
+import { STEPS as BREAK_STEPS } from './break/routines.js';
 import { lumi } from './cast/lumi.js';
 import { BREAK_LINES, CALM_HELP, CALM_LINES, FOCUS_LINES, MOVE_LINES, MOVE_SAFETY, REFLECT_LINES, SAFETY_LINE } from './cast/lines.js';
 import * as reflect from './reflect/practice.js';
@@ -42,7 +43,8 @@ import { hazel, NAME as HAZEL } from './cast/hazel.js';
  * Optional: `again`, { label, lesson }: once the path is done, home keeps a button with that label
  * which runs that lesson again ("Reflect today", "Breathe"); `dayDetail(progress, date)`, extra html under a day's sessions
  * in the habit view (Reflect's own lines); `placement`, { offer, question, options: [[label, unitTitle]] }:
- * an optional question home offers by the subject's path (`offer` is the link) to start further on.
+ * an optional question home offers by the subject's path (`offer` is the link) to start further on;
+ * `varied`, { key: [values] }: a timing marked `varies` in TIMINGS, as the routine has it per step.
  * It never stands in the way: answering opens the path at that unit, dismissing it hides the offer.
  */
 /** The built-in habits, in the order the home bar shows them. `habitsFor(progress)` adds the learner's own. */
@@ -134,6 +136,7 @@ export const subjects = [{
   ...breakCourse,
   mount: screenBreak.mount,
   habit: 'break',
+  varied: { seconds: BREAK_STEPS.map((s) => s.seconds) },
   kind: 'practice',
   coach: { draw: mira, demo: miraDemo, name: MIRA, start: 'guide', lines: BREAK_LINES, help: { text: SAFETY_LINE }, feel: 'refreshed', demonstrates: true },
 }, {

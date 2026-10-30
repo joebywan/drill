@@ -1,7 +1,7 @@
 import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
 import { award, garden, moreArrived, plantWords } from './garden/model.js';
 import { PLANTS, animateScene, animateVisitor, drawGarden, flower, plant, sway, visitor } from './garden/art.js';
-import { emptyProgress, unitsOf, finishPractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
+import { emptyProgress, nextUp, unitsOf, finishPractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
@@ -11,7 +11,7 @@ import { CALM_SOUNDS, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLa
 import { buzz, calmPref, chime, move, play, setPref, setSound, soundOn } from './feel.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
-import { TIMINGS, TIMING_WORDS, setTiming, timed } from './practice/timings.js';
+import { TIMINGS, TIMING_WORDS, pathTimings, setTiming, spread, timed } from './practice/timings.js';
 
 const STORE = 'drill.progress';
 const REVIEW_SIZE = 8;
@@ -93,17 +93,14 @@ function home(arrived = null, newly = []) {
   const repair = learning && needsRepair(progress);
   const reviewKeys = (due.length ? due : repair ? soonestKeys(progress).filter((k) => items.has(k)) : []).slice(0, REVIEW_SIZE);
   const units = subjects.filter((s) => s.habit === habitShown).flatMap((s) => unitsOf(progress, s));
-  // The next lesson, from the placement question's starting unit on.
-  const from = Math.max(0, units.findIndex((u) => u.placed));
   // A subject's optional placement question, offered by its path until answered or dismissed.
   const offer = subjects.find((s) => s.habit === habitShown && offersPlacement(progress, s));
   const brandNew = !progress.log.length && !Object.keys(progress.done).length;
   // After the intro, Lumi's welcome names the first thing picked.
   const firstPick = brandNew && habitOf(progress.picked?.[0]);
-  const current = [...units.slice(from), ...units].flatMap((u) => u.nodes).find((n) => n.state === 'open');
-  // A finished path whose subject has `again` ("Reflect today") keeps one of its lessons one tap away.
-  const again = !current && subjects.find((s) => s.habit === habitShown)?.again;
-  const repeat = again && units.flatMap((u) => u.nodes).find((n) => n.lesson.id === again.lesson);
+  // The next lesson; a finished path whose subject has `again` ("Reflect today") keeps one of its lessons one tap away.
+  const again = subjects.find((s) => s.habit === habitShown)?.again;
+  const { current, repeat } = nextUp(units, again);
   const minutes = `about ${Math.max(1, Math.round(reviewKeys.length * 0.4))} min`;
   const dueChip = !reviewKeys.length ? ''
     : repair ? `<button class="due" data-review>${esc(line('repair'))} · ${minutes}</button>`
@@ -307,6 +304,12 @@ function timingsView(id, back) {
   const all = TIMINGS[id];
   const own = () => progress.timings?.[id] ?? {};
   const fmt = (v, r) => `${v}${r.unit ? ` ${r.unit}` : ''}`;
+  // A growing value starts from what the next session's lesson uses.
+  const units = subjects.filter((s) => s.habit === id).flatMap((s) => unitsOf(progress, s));
+  const subject = subjects.find((s) => s.habit === id);
+  const { current, repeat } = nextUp(units, subject?.again);
+  const nodes = units.flatMap((u) => u.nodes);
+  const usual = pathTimings(id, nodes.map((n) => n.lesson), nodes.indexOf(current ?? repeat), subject?.varied);
   app.innerHTML = `
     <header class="bar"><button class="back" aria-label="Back">←</button></header>
     <main class="habit timings">
@@ -325,11 +328,16 @@ function timingsView(id, back) {
     for (const li of app.querySelectorAll('.steppers li')) {
       const r = all[li.dataset.k];
       const set = timed(id, { [li.dataset.k]: undefined }, own())[li.dataset.k];
-      const v = set ?? r.def;
-      li.querySelector('output').innerHTML = v == null ? `<b>${esc(TIMING_WORDS.usual)}</b> <small>(default)</small>`
-        : `<b>${esc(fmt(v, r))}</b> <small>(default ${esc(r.def == null ? TIMING_WORDS.path : String(r.def))})</small>`;
-      li.querySelector('[data-d="-1"]').disabled = (v ?? r.from) <= r.min;
-      li.querySelector('[data-d="1"]').disabled = (v ?? r.from) >= r.max;
+      const v = set ?? r.def ?? usual[li.dataset.k];
+      // A value that differs per step reads "As written (15–25 s)" until it is set.
+      const steps = r.varies && subject?.varied?.[li.dataset.k];
+      const written = steps && `${spread(steps).join('–')}${r.unit ? ` ${r.unit}` : ''}`;
+      const note = r.def != null ? `default ${r.def}` : written ? `default ${TIMING_WORDS.written.toLowerCase()}, ${written}`
+        : set != null ? `default ${TIMING_WORDS.path}` : TIMING_WORDS.path;
+      li.querySelector('output').innerHTML = written && set == null ? `<b>${esc(TIMING_WORDS.written)}</b> <small>(${esc(written)})</small>`
+        : `<b>${esc(fmt(v, r))}</b> <small>(${esc(note)})</small>`;
+      li.querySelector('[data-d="-1"]').disabled = v <= r.min;
+      li.querySelector('[data-d="1"]').disabled = v >= r.max;
       li.classList.toggle('own', set != null);
     }
     app.querySelector('.timings-reset').disabled = !Object.keys(own()).length;
@@ -338,8 +346,8 @@ function timingsView(id, back) {
   for (const b of app.querySelectorAll('.step')) b.addEventListener('click', () => {
     const k = b.closest('li').dataset.k;
     const r = all[k];
-    const v = timed(id, { [k]: r.def ?? r.from }, own())[k];
-    keep(setTiming(own(), id, k, Math.min(r.max, Math.max(r.min, v + Number(b.dataset.d) * (r.step ?? 1)))));
+    const v = timed(id, { [k]: r.def ?? usual[k] }, own())[k];
+    keep(setTiming(own(), id, k, Math.min(r.max, Math.max(r.min, v + Number(b.dataset.d) * (r.step ?? 1))), usual[k]));
   });
   app.querySelector('.timings-reset').addEventListener('click', () => { keep({}); focusOn('h1'); });
   app.querySelector('.back').addEventListener('click', back);
