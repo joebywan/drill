@@ -1614,6 +1614,29 @@ const codingCourse = JSON.parse(readFileSync(new URL('../../src/data/coding.json
 const codingPool = JSON.parse(readFileSync(new URL('../../src/data/coding-variants.json', import.meta.url)));
 const firstCoding = codingCourse.units[0].lessons[0];
 
+/** Lays out a laid-out item's own way on the tray, then presses Run. */
+async function layOut(page, item) {
+  const used = new Set();
+  const chipOf = (b) => {
+    const empty = typeof b === 'object' ? JSON.stringify({ ...b, ...Object.fromEntries(['do', 'then', 'else'].filter((k) => k in b).map((k) => [k, []])) }) : JSON.stringify(b);
+    const at = item.chips.findIndex((c, i) => JSON.stringify(c) === empty && (item.type !== 'unscramble' || !used.has(i)));
+    used.add(at);
+    return at;
+  };
+  const place = async (list, path) => {
+    for (const [i, b] of list.entries()) {
+      await page.locator(`.tiles [data-chip="${chipOf(b)}"]`).click();
+      for (const [a, arm] of ['do', 'then', 'else'].filter((k) => k in Object(b)).entries()) {
+        await page.locator(`.program button.slot[data-list="${[...path, i, a].join()}"]`).click();
+        await place(b[arm], [...path, i, a]);
+      }
+      if (typeof b === 'object' && ('do' in b || 'then' in b)) await page.locator(`.program button.slot[data-list="${path.join()}"]`).click();
+    }
+  };
+  await place(item.way, []);
+  await page.getByRole('button', { name: 'Run', exact: true }).click();
+}
+
 /** Plays one Coding item right: a build's tiles in a working order, or a predict's square. */
 async function solveCoding(page, item) {
   if (item.type === 'build') {
@@ -1624,6 +1647,7 @@ async function solveCoding(page, item) {
     await page.locator(`.program [data-part="${part}"]`).click();
     await page.locator('.tiles').getByRole('button', { name: tileName(tile), exact: true }).click();
   }
+  if (item.way) await layOut(page, item);
   if (item.type === 'predict') {
     const [x, y] = stopsAt(item);
     await page.getByRole('button', { name: `Column ${x + 1}, row ${y + 1}` }).click();
@@ -2043,6 +2067,30 @@ for (const [width, height] of [[360, 640], [375, 812]]) test(`every Coding item 
       const stop = mount(app.querySelector('.stage'), item, { say(t) { bubble.textContent = t; }, done() {} });
       const prog = app.querySelector('.program');
       const tiles = app.querySelector('.tiles');
+      // A laid-out item is measured at its fullest: its own way placed, or as many blocks as its limit.
+      const used = new Set();
+      const lay = (list, path) => list.forEach((b, i) => {
+        const empty = typeof b === 'object' ? JSON.stringify({ ...b, ...Object.fromEntries(['do', 'then', 'else'].filter((k) => k in b).map((k) => [k, []])) }) : JSON.stringify(b);
+        const at = item.chips.findIndex((c, n) => JSON.stringify(c) === empty && (item.type !== 'unscramble' || !used.has(n)));
+        used.add(at);
+        tiles.querySelector(`[data-chip="${at}"]`).click();
+        ['do', 'then', 'else'].filter((k) => k in Object(b)).forEach((k, a) => {
+          prog.querySelector(`button.slot[data-list="${[...path, i, a].join()}"]`).click();
+          lay(b[k], [...path, i, a]);
+        });
+        if (typeof b === 'object' && ('do' in b || 'then' in b)) prog.querySelector(`button.slot[data-list="${path.join()}"]`).click();
+      });
+      if (item.way) {
+        lay(item.way, []);
+        const step = item.chips.findIndex((c) => typeof c === 'string');
+        for (let n = 0; item.limit && step >= 0 && n < item.limit && !tiles.querySelector(`[data-chip="${step}"]`).disabled; n++) tiles.querySelector(`[data-chip="${step}"]`).click();
+        const small = [...prog.querySelectorAll('button')].filter((b) => b.getBoundingClientRect().height < 26);
+        if (small.length) out.push(`${item.id}: a placed block is under 26px tall`);
+      }
+      if (item.type === 'predict') {
+        const cell = app.querySelector('.cell-pick').getBoundingClientRect();
+        if (Math.min(cell.width, cell.height) < 36) out.push(`${item.id}: a square to tap is ${Math.round(cell.width)}px`);
+      }
       const limit = tiles?.children.length ? tiles.getBoundingClientRect().top : innerHeight - 90; // Continue's height
       const wide = document.documentElement.scrollWidth - innerWidth;
       const code = app.querySelector('.code');
@@ -2067,6 +2115,70 @@ for (const [width, height] of [[360, 640], [375, 812]]) test(`every Coding item 
     ...[...new Map(items.filter((i) => i.family).flatMap((i) => codingPool[i.family].map((e) => [JSON.stringify([i.view, e]), { id: i.id, type: i.type, ...(i.view && { view: i.view }), ...e }]))).values()]
       .flatMap((v) => [v, mirrored(v, { x: true })])]);
   expect(bad).toEqual([]);
+});
+
+test('Coding, laying out a program: the cursor, a limit, Run, and a run with steps to spare', async ({ page }) => {
+  await page.goto('/');
+  const mount = (item) => page.evaluate(async (item) => {
+    const { mount } = await import('/src/coding/exercise.js');
+    document.body.innerHTML = '<div id="t" class="quiz"></div><p id="said"></p>';
+    window.result = null;
+    window.drill = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right) { window.result = right; } });
+  }, item);
+  const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
+  const run = page.getByRole('button', { name: 'Run', exact: true });
+  const result = () => page.evaluate(() => window.result);
+  const loop3 = { repeat: 3, do: [] }, loop4 = { repeat: 4, do: [] };
+
+  // Unscramble: each chip once, Run waits for them all, and a wrong order fails with one way shown.
+  const un = { id: 'u', type: 'unscramble', level: ['S..#', '##.*'], chips: ['down', 'right', 'right', 'right'], way: ['right', 'right', 'down', 'right'], prompt: 'p', explain: 'e' };
+  await mount(un);
+  await expect(run).toBeDisabled();
+  const top = await page.locator('.grid-world').evaluate((g) => g.getBoundingClientRect().top);
+  await page.locator('[data-chip="0"]').click();
+  await expect(page.locator('[data-chip="0"]')).toBeDisabled();
+  await page.getByRole('button', { name: 'Step down, tap to take out' }).click(); // changing your mind is free
+  await expect(page.locator('[data-chip="0"]')).toBeEnabled();
+  for (const n of [1, 2, 0, 3]) await page.locator(`[data-chip="${n}"]`).click();
+  await run.click();
+  await expect.poll(result).toBe(true);
+  expect(await page.locator('.grid-world').evaluate((g) => g.getBoundingClientRect().top)).toBe(top);
+
+  // Palette: tap adds at the cursor, a loop takes it inside, tapping out comes back, the limit stops the tray.
+  const pal = { id: 'p', type: 'palette', level: ['S..*', '....'], chips: ['right', 'down', loop3, loop4], way: [{ repeat: 3, do: ['right'] }], limit: 2, prompt: 'p', explain: 'e' };
+  await mount(pal);
+  await expect(page.locator('.meter-line')).toHaveText('0 of 2 blocks');
+  await tile('Repeat 4 times').click();
+  await expect(page.locator('.inner .slot.here')).toHaveCount(1);
+  await tile('Step right').click();
+  await expect(page.locator('.meter-line')).toHaveText('2 of 2 blocks');
+  await expect(tile('Step down')).toBeDisabled();
+  await run.click();
+  await expect.poll(result).toBe(false);
+  await expect(page.locator('#said')).toHaveText(/steps to spare/);
+  await expect(page.locator('.program.shown .block.go')).toHaveCount(1);
+
+  // Taking out a loop takes what it holds; the cursor stays where it was, so a block can go in the middle.
+  await mount(pal);
+  await tile('Repeat 4 times').click();
+  await page.getByRole('button', { name: 'Repeat 4 times, tap to take out' }).click();
+  await expect(page.locator('.meter-line')).toHaveText('0 of 2 blocks');
+  await tile('Repeat 3 times').click();
+  await tile('Step right').click();
+  await run.click();
+  await expect.poll(result).toBe(true);
+
+  // Free: an if has two lists to tap into, and any program that reaches the flower is right.
+  const free = { id: 'f', type: 'free', level: ['S.#', '..*'], chips: ['right', 'down', { if: 'rock-right', then: [], else: [] }, loop3], way: ['right', 'down', 'right'], limit: 8, prompt: 'p', explain: 'e' };
+  await mount(free);
+  await tile('Repeat 3 times').click();
+  await tile('If rock right').click();
+  await tile('Step down').click();
+  await page.locator('.program button.slot[data-list="0,0,0,1"]').click();
+  await tile('Step right').click();
+  await run.click();
+  await expect.poll(result).toBe(true);
+  await expect(page.locator('.tiles')).toBeHidden();
 });
 
 test('Coding, values and shapes on a real page: the count shows while walking, the shape is compared, a bug in a new block is fixed', async ({ page }) => {
@@ -2134,14 +2246,20 @@ test('every Coding bug can be fixed by tapping the block it names, whichever way
   }
 });
 
-test('the first lesson of each new Coding unit plays through as a real session', async ({ page }) => {
-  for (const unit of codingCourse.units.slice(3)) {
-    const lesson = unit.lessons[0];
+test('the first lesson of each new Coding unit plays through as a real session, and so does one laid out from nothing', async ({ page }) => {
+  const loops = codingCourse.units.find((u) => u.title === 'Loops');
+  for (const [unit, lesson] of [...codingCourse.units.slice(3).map((u) => [u, u.lessons[0]]), [{ ...loops, lessons: loops.lessons }, loops.lessons.at(-1)]]) {
     await page.goto('/');
     await page.evaluate((start) => {
       localStorage.setItem('drill.course', 'coding');
       localStorage.setItem('drill.progress', JSON.stringify({ ...JSON.parse(localStorage.getItem('drill.progress') || '{}'), version: 3, picked: [], done: {}, cards: {}, habits: {}, log: [], start: { coding: start } }));
     }, unit.title);
+    if (lesson !== unit.lessons[0]) await page.evaluate((id) => {
+      const p = JSON.parse(localStorage.getItem('drill.progress'));
+      delete p.start.coding;
+      p.done = Object.fromEntries(id.map((k) => [`coding:${k}`, true]));
+      localStorage.setItem('drill.progress', JSON.stringify(p));
+    }, [...codingCourse.units.flatMap((u) => u.lessons).slice(0, codingCourse.units.flatMap((u) => u.lessons).indexOf(lesson)).map((l) => l.id), ...codingCourse.units.map((u) => `${u.lessons[0].id}-checkpoint`).slice(0, 1)]);
     await page.reload();
     await page.getByRole('button', { name: `Continue · ${lesson.title}` }).click();
     for (const item of lesson.items) {

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { mirrored, problem as codingProblem, solve, vary as codingVary, variantsOf as codingVariants } from '../src/coding/program.js';
+import { mirrored, parts, problem as codingProblem, solve, tileKind, vary as codingVary, variantsOf as codingVariants } from '../src/coding/program.js';
 import { problem as mathsProblem, target, vary as mathsVary, variantsOf as mathsVariants } from '../src/maths/items.js';
 import { buildCoding, buildMaths, toFile } from '../tools/variants.js';
 import codingCourse from '../src/data/coding.json' with { type: 'json' };
@@ -19,7 +19,7 @@ test('the pool files are what the tool writes: same seed, same bytes, and small 
     const text = readFileSync(`src/data/${file}-variants.json`, 'utf8');
     assert.equal(text, toFile(build()), `${file}: run npm run variants`);
     assert.deepEqual(JSON.parse(text), pool);
-    assert.ok(text.length < 220 * 1024, `${file}: ${text.length}`);
+    assert.ok(text.length < 400 * 1024, `${file}: ${text.length}`);
   }
 });
 
@@ -36,6 +36,12 @@ test('every Coding entry passes problem() as each of its items, at every flip', 
       assert.ok(entry.level[0].length <= 7 && entry.level.length <= 5, 'fits a phone');
     }
   }
+});
+
+test('every find-the-bug item but the odd one out comes back fresh, on tiles of mixed kinds in the bug units', () => {
+  const bugs = all(codingCourse).filter((i) => i.type === 'bug');
+  assert.ok(bugs.filter((i) => i.family).length >= bugs.length - 1);
+  for (const i of bugs.filter((b) => /^bug-[12]-/.test(b.id) && new Set(parts(b.program).map((x) => x.kind)).size > 1)) assert.ok(new Set(i.tiles.map(tileKind)).size > 1, `${i.id}: the tiles give the block away`);
 });
 
 test('every Coding item with a family has fresh entries, and a repeat keeps its id, type and view', () => {
@@ -56,8 +62,8 @@ test('a "how many times?" never comes back with the same number', () => {
 });
 
 test('without a family an item still flips, or returns as written in Maths', () => {
-  const bug = all(codingCourse).find((i) => i.type === 'bug');
-  assert.ok(!bug.family);
+  const bug = all(codingCourse).find((i) => i.type === 'bug' && !i.family);
+  assert.ok(bug);
   assert.deepEqual(codingVary(bug, () => 0).level, mirrored(bug, { x: true }).level);
   const plain = all(mathsCourse).find((i) => i.id === 'frac-2-4q');
   assert.ok(!plain.family);

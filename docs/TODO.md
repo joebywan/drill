@@ -147,46 +147,31 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 
 **Test by playing**
 
-- **Coding end to end, for pacing.** All 47 lessons have never been played through. Later lessons
+- **Coding end to end, for pacing.** All 51 lessons have never been played through. Later lessons
   have only had automated fit and solvability checks.
 - **Session length.** Warm-ups, "Once more" and checkpoints make every Learn session longer. Check
   it still feels like small wins, not a slog. Checkpoints now sit on every path, chess's included.
 - **Real touch on a phone** (`npm run phone`, or a real device): tapping the buggy block, dragging
   tiles into holes and into code, and the smaller blocks on phones under 700px tall.
-- **Tap size on short phones.** At 640px tall, 5-row maps have cells of about 29px, small for
-  predict taps; inner values in programs shrink to 26-28px.
 - **Sound and motion in the new units.** Live values and the drawing trail under normal motion were
   only seen in a one-off script: e2e runs with reduced motion.
 - **The live site** beyond its start screen, on a phone and from another network.
 
 **Coding: lessons to judge first**
 
-- `if-3` is the most samey lesson; `until-2` reuses the same undo trick.
-- `bug-1` and parts of `bug-2`: with only one kind of tile, the tiles nearly give the block away.
-- `logic-2`: and/or barely matters on maps this small; `logic-2-count` is contrived.
-- `list-2`: plain fill-a-list items, and a look overriding a list is an odd idea.
-- `draw-0`: `draw-0-extra2` and `draw-0-line` are very easy.
-- `param-0`, `param-1`: many items are just "pick the number".
-- `js-0` is mostly easy reading. `js-3` and `js-4` were cut hard to fit, and arrays hold 2 values.
+- `js-0` is mostly easy reading.
+- The rewritten `if-3`, `until-2`, `bug-1`, `bug-2`, `logic-2`, `list-2`, `draw-0`, `param-0`, `param-1`, `js-3`, `js-4` have
+  only had automated checks. Play them, and every new unscramble, palette and free build, on a phone.
 
 **Coding: bigger improvements**
 
-- **Let the learner lay out the structure.** "Build" means filling holes in a given shape; nobody
-  ever places a whole loop or if themselves. This is the biggest gap against real programming; see
-  free block-building below.
-- **Fresh numbers.** Done for Coding and Maths (#99, `tools/variants.js`). Still only flipped: all 28
-  find-the-bug items, and one-offs such as `if-3-two`, `nest-2-zig`, `var-2-order`, `logic-2-*`,
-  `param-2-pass2`, `until-2-ok`. Thin pools (2 fresh versions for some items): `var-by`, `draw-ring-list`,
-  `draw-spiral`, `read-spiral`, `nest-times`, `nest-sizes`, `rock-round`. `frac-2-4q` stays as written.
-- **The biggest tile always wins on counting items.** Fennel stops at the flower, so any big enough
-  count is right, and a learner can just tap the largest. Needs "exactly enough" or a rule change.
-- **Free block-building with a Run button** (agreed): unscramble, then a palette with a block limit,
-  then free build. Run is the one allowed Check, because pressing it is part of programming.
+- **Fresh numbers.** Done for Coding and Maths (#99, `tools/variants.js`), find-the-bug and the one-offs included. `frac-2-4q` stays
+  as written; `bug-2-h`, `list-2-add` and a few other one-offs still only flip.
+- **Laying out the structure, the biggest tile and Run: done** (`src/builder.js`, `exact` runs in `program.js`).
 - **Events** ("when Fennel reaches a rock") were left out; they fit the JavaScript course better.
-- **A JavaScript course like a language course** (agreed: no typing). Choose word chips and place them,
-  as Duolingo does. Graded by running it through a small interpreter for a JavaScript subset, any valid
-  arrangement right, Fennel walking the result. One builder for this and the unscramble stage; TypeScript,
-  test-writing and Japanese sentences could reuse it.
+- **A JavaScript course like a language course** (agreed: no typing). Choose word chips and place them
+  with `src/builder.js`. Graded by running it through a small interpreter for a JavaScript subset, any valid
+  arrangement right, Fennel walking the result. TypeScript, test-writing and Japanese sentences can use the same builder.
 
 **Repetition engine**
 

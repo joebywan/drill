@@ -1,9 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { answer, changed, fill, fixBug, holes, jsFace, mirrored, parse, parts, problem, punch, reached, reaches, run, runItem, solve, tileName, toJS, vary } from '../src/coding/program.js';
+import { answer, blockCount, changed, fewestSteps, fill, fixBug, fromTree, holes, jsFace, mirrored, parse, parts, pieces, problem, punch, reached, reaches, run, runItem, solve, tileName, toJS, vary } from '../src/coding/program.js';
 import course from '../src/data/coding.json' with { type: 'json' };
 
 const level = ['S.#*', '....'];
+const units = course.units;
+const lessons = units.flatMap((u) => u.lessons);
+const allItems = lessons.flatMap((l) => l.items);
 
 test('a program walks the grid step by step and stops on the flower', () => {
   const r = run(['S..*'], ['right', 'right', 'right', 'right']);
@@ -51,6 +54,63 @@ test('right is decided by running: any filling that reaches the flower is right'
   assert.equal(problem({ ...item, tiles: ['up'] }), 'no filling reaches the flower');
   assert.equal(problem({ ...item, level: ['S*'], program: [null], tiles: ['right'] }), 'every filling works: nothing to think about');
   assert.deepEqual(answer({ level, program: ['down', 'right'] }), [1, 1]);
+});
+
+test('an item with a number to pick must finish on the flower: more steps than it takes is a miss', () => {
+  const item = { id: 'x', type: 'build', level: ['S..*'], program: [{ repeat: null, do: ['right'] }], tiles: [2, 3, 4], prompt: 'p', explain: 'e' };
+  assert.equal(reaches(item, [3]), true);
+  assert.equal(reaches(item, [4]), false);
+  assert.equal(runItem(item, fill(item.program, [4])).end, 'spare');
+  assert.equal(run(['S..*'], [{ repeat: 4, do: ['right'] }]).end, 'flower', 'reading a program, the flower still stops me');
+  assert.equal(run(['S*.*.'], [{ repeat: 3, do: ['right'] }], undefined, true).end, 'flower');
+  assert.equal(run(['S*.*.'], [{ repeat: 4, do: ['right'] }], undefined, true).end, 'spare', 'past the last of several too');
+  assert.equal(run(['S.*'], [{ until: 'flower', do: ['right'] }], undefined, true).end, 'flower', 'an until that ends on it has nothing to spare');
+  assert.equal(run(['S.*'], [{ repeat: 2, do: ['right'] }, { set: 'n', to: 1 }], undefined, true).end, 'flower', 'only a step counts');
+});
+
+test('the biggest number never wins by being biggest, in the course or the pools', () => {
+  const count = allItems.filter((i) => i.type === 'build' && i.tiles.some((t) => typeof t === 'number'));
+  const biggest = (i) => Math.max(...i.tiles.filter((t) => typeof t === 'number'));
+  let top = 0;
+  for (const i of count) {
+    const ans = solve(i).filter((v) => typeof v === 'number');
+    if (Math.max(...ans) === biggest(i)) top++;
+    if (holes(i.program).length === 1 && ans[0] !== biggest(i)) assert.equal(reaches(i, [biggest(i)]), false, i.id);
+  }
+  assert.ok(top / count.length < 0.4, `the biggest tile is the answer on ${top} of ${count.length}`);
+});
+
+test('the three laid-out kinds are right by running, and problem() checks each', () => {
+  const way = [{ repeat: 3, do: ['right'] }, 'down'];
+  const base = { id: 'u', type: 'unscramble', level: ['S..#', '...*'], way, chips: ['down', 'right', { repeat: 3, do: [] }].slice(0), prompt: 'p', explain: 'e' };
+  assert.deepEqual(pieces(way), [{ repeat: 3, do: [] }, 'right', 'down']);
+  assert.equal(blockCount(way), 3);
+  assert.equal(problem(base), 'its way does not reach the goal');
+  const ok = { ...base, level: ['S...', '...*'] };
+  assert.equal(problem(ok), null);
+  assert.equal(problem({ ...ok, chips: pieces(way) }), 'the chips are already in order');
+  assert.equal(problem({ ...ok, chips: ['down', { repeat: 3, do: [] }] }), 'its way uses a block that is not a chip');
+  assert.equal(problem({ ...ok, chips: ['down', 'left', 'right', { repeat: 3, do: [] }] }), 'the chips must be the blocks of its way');
+  const line = { id: 'p', type: 'palette', level: ['S....*'], way: [{ repeat: 5, do: ['right'] }], chips: ['right', 'down', { repeat: 5, do: [] }, { repeat: 6, do: [] }], limit: 2, prompt: 'p', explain: 'e' };
+  assert.equal(fewestSteps(line.level), 5);
+  assert.equal(problem(line), null);
+  assert.equal(problem({ ...line, limit: 5 }), 'plain steps fit the limit: nothing forces a loop');
+  assert.equal(problem({ ...line, limit: 1 }), 'its way is over the limit');
+  assert.equal(problem({ ...line, type: 'free', limit: 8 }), null);
+  const m = mirrored(line, { x: true });
+  assert.deepEqual(m.way, [{ repeat: 5, do: ['left'] }]);
+  assert.equal(m.chips[0], 'left');
+  assert.equal(runItem(line, [{ repeat: 6, do: ['right'] }]).end, 'spare');
+  const chips = ['right', { if: 'rock-right', then: [], else: [] }, 'down'];
+  assert.deepEqual(fromTree([{ chip: 1, arms: [[{ chip: 2 }], [{ chip: 0 }]] }], chips), [{ if: 'rock-right', then: ['down'], else: ['right'] }]);
+});
+
+test('every palette forces a loop, and each unit unscrambles early', () => {
+  for (const i of allItems.filter((x) => x.type === 'palette')) assert.ok(fewestSteps(i.level) > i.limit, i.id);
+  assert.ok(allItems.some((i) => i.type === 'unscramble') && allItems.some((i) => i.type === 'free'));
+  for (const u of units.filter((x) => !['Find the bug', 'From blocks to code'].includes(x.title))) {
+    assert.ok(u.lessons.slice(0, 2).some((l) => l.items.some((i) => i.type === 'unscramble')), `${u.title} unscrambles early`);
+  }
 });
 
 test('the bump rule is shown before it is asked, and the demos do what their cards say', () => {
@@ -164,21 +224,18 @@ test('toJS writes every block as JavaScript, the one source of code text', () =>
   assert.equal(tileName('rock-up'), 'Look for rock up');
 });
 
-const units = course.units;
-const lessons = units.flatMap((u) => u.lessons);
-const allItems = lessons.flatMap((l) => l.items);
 const uses = (item, key) => JSON.stringify(item.program ?? []).includes(`"${key}"`);
 
 test('the course is long, and each lesson is a proper session', () => {
-  assert.ok(lessons.length >= 45 && lessons.length <= 50, `${lessons.length} lessons`);
+  assert.ok(lessons.length >= 48 && lessons.length <= 55, `${lessons.length} lessons`);
   for (const l of lessons) assert.ok(l.items.length >= 8 && l.items.length <= 10, `${l.id}: ${l.items.length}`);
   for (const l of lessons) assert.ok(l.items.some((i) => i.type === 'predict'), `${l.id} has something to read`);
-  // The last unit reads every earlier kind of block as code, so it runs one lesson longer.
-  for (const u of units) assert.ok(u.lessons.length >= 3 && u.lessons.length <= (u === units.at(-1) ? 5 : 4), u.title);
+  // Five at most: the last reads every earlier kind of block as code, others end on a lesson laid out from nothing.
+  for (const u of units) assert.ok(u.lessons.length >= 3 && u.lessons.length <= 5, u.title);
 });
 
 test('saved progress still points somewhere: every first-course id is kept', () => {
-  const old = { 'steps-0': 'meet one three turn where', 'steps-1': 'rock around wall stop bump', 'loops-0': 'meet count inside order stairs where', 'loops-1': 'long two where', 'if-0': 'meet again climb down where', 'if-1': 'count up where' };
+  const old = { 'steps-0': 'meet one three turn where', 'steps-1': 'rock around wall stop bump', 'loops-0': 'meet count inside order stairs where', 'loops-1': 'long two', 'if-0': 'meet again climb down where', 'if-1': 'count up where' };
   for (const [id, items] of Object.entries(old)) {
     const lesson = lessons.find((l) => l.id === id);
     assert.ok(lesson, id);
@@ -213,6 +270,10 @@ test('every new rule is shown on a teach card before anything asks it', () => {
     'parameters as code': (i) => i.view && uses(i, 'params'),
     'tests as code': (i) => i.view && (uses(i, 'or') || uses(i, 'and') || uses(i, 'not')),
     'arrays as code': (i) => i.view && uses(i, 'each'),
+    unscramble: (i) => i.type === 'unscramble' || i.shows === 'unscramble',
+    'a loop chip': (i) => (i.type === 'unscramble' && i.chips.some((c) => typeof c === 'object')) || i.shows === 'unscramble-loop',
+    'a tray with a limit': (i) => i.type === 'palette' || i.shows === 'palette',
+    'free build': (i) => i.type === 'free' || i.shows === 'free',
   };
   for (const [name, test] of Object.entries(rules)) {
     const at = first(test);

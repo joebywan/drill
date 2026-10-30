@@ -119,7 +119,14 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   right if exactly `want` (else all) were picked; a shape, the blocks running out, right if the squares
   stood on are exactly the shape. Items: teach, build (tap tiles into the holes; it runs when the last is
   filled, and any program that meets the goal is right), predict (tap where Fennel stops), bug (a whole program
-  that fails: tap a block, a tile replaces it, graded by running). `view: 'js' | 'both'` shows a program as
+  that fails: tap a block, a tile replaces it, graded by running), and three laid out from nothing with the
+  tap-only `src/builder.js` and run on **Run** (the one allowed Check, in the thumb zone): unscramble (the right
+  blocks in the wrong order), palette (`limit` blocks or fewer, too few for plain steps, which forces a loop) and
+  free (any program that gets there; `limit` is what fits). `way` is one program that works, shown after a miss.
+  **Overshooting fails:** an item with a number tile or a layout runs `exact`, so reaching the flower with steps
+  still to run ends 'spare' ("I got there with steps to spare"). `src/builder.js` knows nothing about Fennel: a tray of chips and
+  an ordered tree with a cursor, ready for a word-chip JavaScript course or Japanese sentences; a teach card marks
+  what it introduces with `shows`. `view: 'js' | 'both'` shows a program as
   JavaScript from `toJS()`; code text is never stored. A new block goes through `slots()` (holes, flips),
   `run()`, `blocks()` and `toJS()`; looks are written once by `writeLook()`. Words in prompts
   and explanations get swapped on a flip, so "right" means a direction only. `exercise.js` draws

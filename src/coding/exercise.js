@@ -1,4 +1,5 @@
-import { ARROW, answer, changed, fill, fixBug, holes, isStep, jsFace, kind, listKind, names, parse, punch, reached, runItem, solve, tileKind, tileName, toJS, writeLook } from './program.js';
+import { ARROW, answer, armsOf, fill, fixBug, fromTree, holes, isBuilt, isStep, jsFace, kind, listKind, names, parse, punch, reached, runItem, solve, tileKind, tileName, toJS, writeLook } from './program.js';
+import { builder } from '../builder.js';
 import { fennel, demo } from '../cast/fennel.js';
 import { flower } from '../garden/art.js';
 import { dragTile } from '../drag.js';
@@ -10,13 +11,15 @@ const DEMO_WAIT_MS = 900; // long enough to see the grid before a teach card's p
 const ROCK = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1.2 8.6 Q.6 5.2 3 3.6 Q4.4 1.6 6.6 2.6 Q9 3.4 8.9 6.4 Q9.2 8.6 7.4 8.8 Z" fill="var(--rock)"/><path d="M3.2 4.4 Q4.6 3 6.4 3.6" fill="none" stroke="var(--rock-shine)" stroke-width=".7" stroke-linecap="round"/></svg>';
 
 /** The bubble's line for a failed run: a loop that never ends is said out loud, or it just looks stuck. */
-const afterFail = (result) => (result.end === 'endless' ? 'That loop never ends, so I stopped it. Here is one way that works.' : 'Here is one way that works.');
+const afterFail = (result) => (result.end === 'endless' ? 'That loop never ends, so I stopped it. Here is one way that works.'
+  : result.end === 'spare' ? 'I got there with steps to spare. Here is one way that works.' : 'Here is one way that works.');
 
 /**
  * Mounts one Coding item in `el` (the subject contract: see src/subjects.js). The grid sits on
  * top with Fennel standing on it, the program under it, and the tiles in the thumb zone where
  * Continue will appear. A build item runs the moment its last hole is filled: no Check button.
  * A bug item plays its failing run, then the same tile flow fills the block the learner taps.
+ * Unscramble, palette and free items are laid out with src/builder.js and run on Run, the one Check.
  */
 export function mount(el, item, { say, done }) {
   const g = parse(item.level || ['S']);
@@ -24,7 +27,7 @@ export function mount(el, item, { say, done }) {
       ${g.rows.flatMap((row, y) => row.map((c, x) => `<span class="cell${c === 'o' || (c === 'S' && g.shape) ? ' target' : ''}" data-x="${x}" data-y="${y}">${c === '#' ? ROCK : c === '*' ? flower('learn') : ''}</span>`)).join('')}
       <div class="walker" aria-hidden="true">${fennel('think')}</div>
     </div>
-    ${item.program && names(item.program, item.tiles).length ? '<p class="vars" aria-label="Values"></p>' : ''}
+    ${(item.program || item.way) && names(item.program ?? item.way, item.tiles, item.chips).length ? '<p class="vars" aria-label="Values"></p>' : ''}
     <div class="program" aria-label="Program"></div>
     <div class="choices tiles"></div>`;
   const world = el.querySelector('.grid-world');
@@ -33,7 +36,7 @@ export function mount(el, item, { say, done }) {
   const tilesEl = el.querySelector('.tiles');
   const varsEl = el.querySelector('.vars');
   const showValues = (now = {}) => {
-    if (varsEl) varsEl.innerHTML = names(item.program, item.tiles).map((n) => `<span class="var"><i>${esc(n)}</i> <b>${esc(String(now[n] ?? '?'))}</b></span>`).join('');
+    if (varsEl) varsEl.innerHTML = names(item.program ?? item.way, item.tiles, item.chips).map((n) => `<span class="var"><i>${esc(n)}</i> <b>${esc(String(now[n] ?? '?'))}</b></span>`).join('');
   };
   showValues();
   const cellAt = ([x, y]) => world.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
@@ -102,9 +105,56 @@ export function mount(el, item, { say, done }) {
     return cleanup;
   }
 
+  /** Runs a finished program: Fennel walks it, a miss shows `oneWay()`, then the item is done. */
+  const perform = async (program, oneWay) => {
+    const result = runItem(item, program);
+    say(reached(result) ? 'Here I go!' : 'Here I go...', 'think');
+    await walk(result);
+    if (gone) return;
+    const right = reached(result);
+    if (!right) {
+      programEl.innerHTML = oneWay();
+      programEl.classList.add('shown');
+      say(afterFail(result), 'wrong');
+    }
+    flourish(programEl, right ? 'pop' : 'shake'); // the runner cues the sound and buzz
+    done(right, item.explain);
+  };
+
+  if (isBuilt(item)) {
+    tilesEl.classList.add('tray');
+    const whole = item.type === 'unscramble';
+    const runEl = document.createElement('button');
+    runEl.className = 'next run';
+    runEl.textContent = 'Run';
+    runEl.disabled = true;
+    const board = builder(programEl, tilesEl, {
+      chips: item.chips.map((c) => ({
+        face: tileFace(c), name: tileName(c), arms: holders(c),
+        chipClass: typeof c === 'object' ? 'word' : '', placedClass: placedClass(c), uses: whole ? 1 : undefined,
+      })),
+      limit: item.limit,
+      meter: item.limit ? (used, limit) => `${used} of ${limit} blocks` : null,
+      onTap: () => play('tap'),
+      onChange: (api) => { runEl.disabled = whole ? api.used() < item.chips.length : api.used() === 0; },
+    });
+    tilesEl.append(runEl);
+    // A long answer scrolls inside the space between the map and the tray, so neither moves.
+    programEl.style.maxHeight = `${tilesEl.getBoundingClientRect().top - programEl.getBoundingClientRect().top - 8}px`;
+    runEl.addEventListener('click', async () => {
+      runEl.disabled = true;
+      board.lock();
+      await perform(fromTree(board.tree(), item.chips), () => blocks(item.way, []));
+      if (!gone) tilesEl.style.visibility = 'hidden'; // Continue takes the thumb zone
+    });
+    say(item.prompt, 'think');
+    return cleanup;
+  }
+
   if (kind(item) === 'predict') {
     programEl.innerHTML = show(item.program);
     tilesEl.remove();
+    world.classList.add('picking');
     const want = answer(item);
     const cells = [...world.querySelectorAll('.cell')];
     for (const c of cells) {
@@ -163,19 +213,10 @@ export function mount(el, item, { say, done }) {
     flourish(b, 'pop');
     if (picks.includes(null)) { paint(); return; }
     paint(picks, true);
-    const result = runItem(item, fill(program, picks));
-    say(reached(result) ? 'Here I go!' : 'Here I go...', 'think');
-    await walk(result);
-    if (gone) return;
-    const right = reached(result);
-    if (!right) {
+    await perform(fill(program, picks), () => {
       const fix = isBug ? fixBug(item) : null;
-      programEl.innerHTML = isBug ? show(punch(item.program, fix.part), [fix.tile]) : show(item.program, solve(item));
-      programEl.classList.add('shown');
-      say(afterFail(result), 'wrong');
-    }
-    flourish(programEl, right ? 'pop' : 'shake'); // the runner cues the sound and buzz
-    done(right, item.explain);
+      return isBug ? show(punch(item.program, fix.part), [fix.tile]) : show(item.program, solve(item));
+    });
   };
   const stops = [...tilesEl.children].map((b) => {
     const tile = item.tiles[b.dataset.tile];
@@ -196,6 +237,12 @@ const FACE_LOOK = { look: lookFace, op: String, n: String, not: 'not ', and: ' a
 const tileFace = (t) => {
   if (typeof t === 'number') return String(t);
   if (typeof t === 'object') {
+    if (t.define) return `new ${t.define}${t.params ? `(${t.params.join(', ')})` : ''}`;
+    if ('repeat' in t) return `repeat ${t.repeat}`;
+    if ('until' in t) return `until ${writeLook(t.until, FACE_LOOK)}`;
+    if ('if' in t) return `if ${writeLook(t.if, FACE_LOOK)}`;
+    if (t.each) return `each ${t.each}: ${t.in.map(tileFace).join(' ')}`;
+    if (t.set) return `${t.set} = ${t.to}`;
     if (t.call) return `${t.call}${t.args ? `(${t.args.join(', ')})` : ''}`;
     if (t.go) return `go ${t.go}`;
     if (t.change) return `${t.change} ${t.by < 0 ? '-' : '+'} ${Math.abs(t.by)}`;
@@ -204,6 +251,9 @@ const tileFace = (t) => {
   const k = tileKind(t);
   return k === 'look' ? lookFace(t) : k === 'step' ? ARROW[t] : t;
 };
+/** A block as a chip's arm labels, and how it looks once placed. */
+const holders = (c) => (typeof c === 'object' && armsOf(c).length ? armsOf(c).map((k) => (k === 'else' ? 'else' : '')) : undefined);
+const placedClass = (c) => (typeof c !== 'object' ? 'block go' : 'if' in c ? 'block if' : armsOf(c).length ? `block loop${c.define ? ' def' : ''}` : c.call || c.go ? 'block go call' : 'block stmt');
 const slotClass = (kind, t) => (kind === 'step' ? `go${typeof t === 'object' && t ? ' call' : ''}` : kind);
 
 /** One hole: a gap to fill, or its pick (a button that empties it). `faceOf` is how the pick reads. */
