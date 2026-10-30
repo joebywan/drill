@@ -1111,6 +1111,118 @@ test('under reduced motion Calm stays quiet: no bell, no rain', async ({ page })
   expect(await page.evaluate(() => [window.heard.tones.includes(528), window.heard.noise])).toEqual([false, 0]);
 });
 
+// ---- Wide screens: tablets and desktop browsers ----
+// Each size plays the main flows (the garden, a lesson, a Calm practice) and screenshots them to
+// test-results/screens/<size>-<scheme>/. The phone sizes are here too, so a layout change can be
+// checked against the phone shots from before it.
+const SCREENS = [[360, 800], [412, 915], [768, 1024], [1024, 768], [1440, 900]];
+for (const colorScheme of ['light', 'dark']) {
+  for (const [width, height] of SCREENS) {
+    const wide = width >= 768;
+    test(`${width}x${height} ${colorScheme}: home, the garden, a lesson and a Calm practice fit and play`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme });
+      await page.setViewportSize({ width, height });
+      const at = new Date();
+      at.setHours(10, 0, 0, 0);
+      await page.clock.install({ time: at });
+      // The cast's lines are picked at random: seeded here, so two runs' shots can be compared.
+      await page.addInitScript(() => { let s = 1; Math.random = () => (s = (s * 16807) % 2147483647) / 2147483647; });
+      await grown(page, ['learn', 'calm', 'move', 'reflect', 'break'], 10, true);
+      const dir = `test-results/screens/${width}x${height}-${colorScheme}`;
+      const shot = async (name) => {
+        expect(await overflow(page), name).toBe(0);
+        await page.screenshot({ path: `${dir}/${name}.png` });
+      };
+
+      await firstVisit(page);
+      await expect(strip(page, 5)).toBeVisible();
+      await shot('1-home');
+      if (wide) {
+        // Two panes: the garden and the habit tabs in a rail beside the path.
+        const [rail, path] = await Promise.all([page.locator('.paths').boundingBox(), page.locator('.street').first().boundingBox()]);
+        expect(rail.x + rail.width).toBeLessThanOrEqual(path.x);
+        expect((await page.locator('.cta .next').boundingBox()).height).toBeGreaterThanOrEqual(48);
+      }
+
+      await strip(page, 5).click();
+      await expect(page.locator('.plant-card')).toHaveCount(5);
+      await shot('2-garden');
+      await page.getByRole('button', { name: 'Back' }).click();
+
+      await tab(page, 'Learning').click();
+      await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
+      await expect(page.locator('.board svg')).toBeVisible();
+      await shot('3-lesson');
+      if (wide) expect((await page.locator('div.board').boundingBox()).width).toBeGreaterThan(412);
+      for (const item of first.items) {
+        await solve(page, item);
+        await continueButton(page).click();
+      }
+      await expect(page.locator('.arrivals')).toBeVisible();
+      await shot('4-lesson-end');
+      await continueButton(page).click();
+
+      await tab(page, 'Calm').click();
+      await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
+      await page.getByRole('button', { name: 'Start' }).click();
+      await expect(page.getByText('Breath 1 of 3')).toBeVisible();
+      await page.clock.runFor(2_000);
+      await shot('5-calm');
+      await page.clock.runFor(60_000);
+      await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+      await shot('6-calm-end');
+    });
+  }
+}
+
+test.describe('a keyboard on a desktop', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('Tab reaches the habit tabs and Continue, and Enter and Space press them', async ({ page }) => {
+    await firstVisit(page);
+    const calm = tab(page, 'Calm');
+    for (let i = 0; i < 30 && !(await calm.evaluate((el) => el === document.activeElement)); i++) await page.keyboard.press('Tab');
+    await expect(calm).toBeFocused();
+    await page.keyboard.press('Space');
+    await expect(tab(page, 'Calm')).toHaveAttribute('aria-pressed', 'true');
+    const go = page.getByRole('button', { name: 'Continue · The long out-breath' });
+    for (let i = 0; i < 30 && !(await go.evaluate((el) => el === document.activeElement)); i++) await page.keyboard.press('Tab');
+    await expect(go).toBeFocused();
+    // The focus ring shows on a keyboard focus.
+    expect(await go.evaluate((el) => getComputedStyle(el).outlineStyle)).toBe('solid');
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('button', { name: 'Start' })).toBeVisible();
+  });
+});
+
+test('on a short landscape screen the rail scrolls inside itself, so + Habit is always in reach', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 600 });
+  const tracked = [{ id: 'walk' }, { id: 'water' }, { id: 'own-1', name: 'Stretch', plant: 'rose' }];
+  await grown(page, ['learn', 'calm', 'walk', 'water', 'own-1'], 3, true, { tracked });
+  await firstVisit(page);
+  const rail = page.locator('.rail');
+  const box = await rail.boundingBox();
+  expect(box.y + box.height).toBeLessThanOrEqual(600);
+  const add = page.getByRole('button', { name: 'Add a habit' });
+  await rail.evaluate((el) => { el.scrollTop = el.scrollHeight; }); // the rail scrolls, not the page
+  await expect(add).toBeInViewport();
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+});
+
+test('on a landscape desktop, end-screen and practice buttons follow the content', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Calm').click();
+  await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  const gap = async (above, button) => { const [a, b] = [await above.boundingBox(), await button.boundingBox()]; return b.y - a.y - a.height; };
+  expect(await gap(page.locator('.breath'), page.getByRole('button', { name: 'Pause' }))).toBeLessThan(80);
+  await page.clock.runFor(60_000);
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+  expect(await gap(page.locator('.feel'), continueButton(page))).toBeLessThan(80);
+});
+
 test('Wind down: settle in, Calm breathing on your own timings, a sigh, goodnight, all in the night palette', async ({ page }) => {
   const p = { ...emptyProgress(), picked: [], timings: { calm: { inhale: 6 } } };
   await page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
