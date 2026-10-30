@@ -67,8 +67,11 @@ try {
   // Chrome's own prompts ("Chrome notifications make things easier", …) sit over the page.
   const declinePrompts = async () => {
     for (const label of ['No thanks', 'No, thanks', 'Not now']) {
-      adb('shell', 'uiautomator', 'dump', '/sdcard/ui.xml');
-      const m = adb('shell', 'cat', '/sdcard/ui.xml').match(new RegExp(`text="${label}"[^>]*bounds="\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]"`));
+      let ui = '';
+      for (let i = 0; i < 3 && !ui; i++) { // uiautomator is sometimes killed mid-dump (exit 137): try again
+        try { adb('shell', 'uiautomator', 'dump', '/sdcard/ui.xml'); ui = adb('shell', 'cat', '/sdcard/ui.xml'); } catch { await sleep(1000); }
+      }
+      const m = ui.match(new RegExp(`text="${label}"[^>]*bounds="\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]"`));
       if (m) { adb('shell', 'input', 'tap', String((+m[1] + +m[3]) >> 1), String((+m[2] + +m[4]) >> 1)); await sleep(800); console.log(`  declined Chrome prompt: ${label}`); }
     }
   };
