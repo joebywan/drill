@@ -21,6 +21,8 @@ let progress = load();
 /** Every habit this learner has (built in, then their own; what the intro picked first), and one of them by id. */
 const habits = () => ordered(habitsFor(progress), progress.picked);
 const habitOf = (id) => habits().find((h) => h.id === id);
+/** Whose timings a habit plays by: its subject's `timings` (Wind down plays Calm's), or its own. */
+const timingsOf = (id) => subjects.find((s) => s.habit === id)?.timings ?? id;
 
 function load() {
   let raw = null;
@@ -149,7 +151,7 @@ function home(arrived = null, newly = []) {
       </nav>
       ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick.name) : line('welcome'))}</p>` : ''}
       ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
-        : TIMINGS[habitShown] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
+        : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
       ${offer ? `<p class="offer"><button data-place>${esc(offer.placement.offer)}</button><button class="dismiss" data-dismiss aria-label="Dismiss">×</button></p>` : ''}
       ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly) : ''}
       ${units.map((u) => `
@@ -196,7 +198,7 @@ function home(arrived = null, newly = []) {
   app.querySelector('.menu').addEventListener('click', () => { stopHome(); keep(); });
   app.querySelector('.streak-line')?.addEventListener('click', () => habitView(habitShown));
   // Before a habit's first session there is no habit view yet, so its timings are offered here.
-  app.querySelector('.timings-link')?.addEventListener('click', () => { stopHome(); timingsView(habitShown, () => { home(); focusOn('.timings-link'); }); });
+  app.querySelector('.timings-link')?.addEventListener('click', () => { stopHome(); timingsView(timingsOf(habitShown), () => { home(); focusOn('.timings-link'); }); });
   // The tabs are one row that scrolls inside itself: the selected one is brought into view.
   const tabs = app.querySelector('.paths');
   const shown = tabs.querySelector('[aria-pressed="true"]');
@@ -282,7 +284,7 @@ function habitView(id, back = () => { home(); focusOn('.streak-line'); }) {
     <main class="habit">
       <h1><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}</h1>
       <p class="said">${n ? `${n}-day streak` : NO_STREAK}</p>
-      ${TIMINGS[id] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
+      ${TIMINGS[timingsOf(id)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
       <h2>This week</h2>
       <ol class="week" aria-hidden="true">${week.map(cell).join('')}</ol>
       ${[...week].reverse().map(day).join('')}
@@ -292,7 +294,7 @@ function habitView(id, back = () => { home(); focusOn('.streak-line'); }) {
     </main>`;
   focusOn('h1');
   app.querySelector('.back').addEventListener('click', back);
-  app.querySelector('.timings-link')?.addEventListener('click', () => timingsView(id, () => { habitView(id, back); focusOn('.timings-link'); }));
+  app.querySelector('.timings-link')?.addEventListener('click', () => timingsView(timingsOf(id), () => { habitView(id, back); focusOn('.timings-link'); }));
 }
 
 /**
@@ -559,7 +561,7 @@ function run(lessonId, queue, title) {
       <button class="close" aria-label="${practice ? 'Stop' : 'Quit lesson'}">✕</button>
       <div ${practice ? 'hidden ' : ''}class="meter" data-heat="0" role="progressbar" aria-label="Lesson progress" aria-valuemin="0"><div class="fill"><i class="shine"></i></div><span class="flare" aria-hidden="true"></span></div>
     </header>
-    <main class="play">
+    <main class="play${queue[0].subject.night ? ' night' : ''}">
       <p class="topic"></p>
       <div class="coach${who.demonstrates ? ' demonstrates' : ''}">
         <button class="who" aria-label="${esc(who.name)}"></button>
@@ -626,7 +628,7 @@ function run(lessonId, queue, title) {
       coachEl: $('.who'),
       coach: who,
       help: who.help,
-      timings: progress.timings?.[entry.subject.habit],
+      timings: progress.timings?.[timingsOf(entry.subject.habit)],
       done: (correct, text = '', kept = null) => {
         // A practice item goes straight on: its own buttons were the Continue.
         if (practice) { if (text) did.push(text); if (kept) journal = kept; at++; return step(); }
@@ -681,7 +683,7 @@ function run(lessonId, queue, title) {
     const h = habitOf(subject.habit);
     const n = currentStreak(progress, new Date(), h.id);
     app.innerHTML = `
-      <main class="summary practice-end">
+      <main class="summary practice-end${subject.night ? ' night' : ''}">
         <div class="hero"></div>
         <p class="kicker">${esc(technique)}</p>
         <h1>${esc(line('done', Math.random(), who.lines))}</h1>

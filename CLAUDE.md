@@ -25,7 +25,7 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (learn, calm, move, break, reflect, scan, garden, log); a new one is
+No scenario runs all of `test/phone/*.js` (learn, calm, move, break, reflect, scan, garden, log, winddown); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
@@ -80,6 +80,11 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `progress.journal` via `writeJournal`, never the log; the habit view shows it through the
   subject's `dayDetail` hook. A subject's `again` ({ label, lesson }, in the course JSON) keeps a
   lesson on home once the path is done: "Reflect today", "Take a break", "Breathe". The learner's text is never linted or sent anywhere (a test checks).
+- `src/winddown/` — Wind down, a bedtime sequence made only of Calm's pieces: kit.js `sequence()`
+  plays a 'sequence' item's parts in turn (its own settle-in steps and goodnight card, then Calm's
+  `practise()` routines) and ends once; Calm's `sounded()` puts the bell and rain round the whole.
+  The subject's `timings: 'calm'` plays the learner's Calm timings, and `night: true` puts the
+  session and end screen in a warm dark palette (`body:has(main.night)` in styles.css).
 - `src/move/` — the Move practice subject, built like Calm. `routines.js` is pure: a set of
   exercises becomes timed phases with rests between; a rep exercise counts its reps (`countOf()` in
   `src/practice/timeline.js`). `practice.js` mounts it; the coach demonstrates each pose through one
@@ -104,7 +109,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   (one line of data each), `award()` records what is earned in `progress.garden.earned` and never
   removes it; `mood()` maps the habits' lights; `garden()` is all the garden screen needs.
 - `src/garden/art.js` — the garden's drawings, built like the cast: `plant(habit, stage, { flowers,
-  closed })` (tree, lavender, sunflower, vine on a trellis, daisies; five stages, scaled by `GROW` so a
+  closed })` (tree, lavender, sunflower, vine on a trellis, daisies, evening primrose; five stages, scaled by `GROW` so a
   sprout is about a third of full height and a sapling about half; up to 6 blooms that
   never overlap), `sway()`, `visitor()`/`animateVisitor()` (butterfly, bee, birds) and, from
   `scene.js`, `scene(mood, 'strip' | 'tall')`, `slots(shape, n)` and `place()`. Scene colours carry
