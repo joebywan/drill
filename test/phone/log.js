@@ -16,7 +16,7 @@ export default async ({ page, seed, touch, btn, type, shot, check }) => {
   await touch(btn('Add a habit'));
   await touch(btn('Make your own'));
   await touch(page.getByRole('textbox', { name: 'Name' })); await type('Stretch'); await shot('own-keyboard');
-  await page.keyboard.press('Escape').catch(() => {});
+  await touch(page.getByRole('heading', { name: 'Make your own' })); // off the field: the keyboard goes
   await touch(page.locator('label:has(input[value="🧘"])'));
   await touch(page.locator('label:has(input[value="mushroom"])')); await shot('own-form');
   await touch(btn('Add habit'));
