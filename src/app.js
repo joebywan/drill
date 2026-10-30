@@ -1,6 +1,6 @@
 import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
-import { award, garden, moreArrived, plantWords } from './garden/model.js';
-import { PLANTS, animateScene, animateVisitor, drawGarden, flower, plant, sway, visitor } from './garden/art.js';
+import { GARDEN_WORDS, award, garden, moreArrived, plantWords } from './garden/model.js';
+import { PLANTS, animateLandmarks, animateScene, animateVisitor, drawGarden, flower, landmark, plant, sway, visitor } from './garden/art.js';
 import { COMEBACK_WORDS, PAUSED_WORDS, activeComeback, answerComeback, noteReminder, preferred, reminderHour, remindersPaused, shorter, shouldRemind, startComeback, usualHours, usualLine } from './fitting.js';
 import { emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
@@ -22,7 +22,9 @@ const STORE = 'drill.progress';
 const REVIEW_SIZE = 8;
 const app = document.getElementById('app');
 
-let progress = load();
+// A garden that already earned a landmark before landmarks existed gets it now, quietly. Everything
+// else arrives after a session, where the end screen can say so.
+let progress = award(load(), new Date(), (r) => r.habit === null).progress;
 /** Every habit this learner has (built in, then their own; what the intro picked first), and one of them by id. */
 const habits = () => ordered(habitsFor(progress), preferred(progress)); // picks first, then the ones finished most
 const habitOf = (id) => habits().find((h) => h.id === id);
@@ -482,7 +484,7 @@ function timingsView(id, back) {
 function liven(el) {
   const anims = [...el.querySelectorAll('svg.plant')].map(sway)
     .concat([...el.querySelectorAll('svg.visitor')].flatMap((v) => animateVisitor(v, v.dataset.kind, 'new' in v.dataset) || []))
-    .concat(animateScene(el))
+    .concat(animateScene(el), animateLandmarks(el))
     .filter(Boolean);
   if (!anims.length) return () => {};
   let seen = true;
@@ -495,12 +497,15 @@ function liven(el) {
 
 const shortDate = (date) => dateOf(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
-/** One thing that arrived, drawn small beside its line: "A butterfly arrived · 12 Oct". */
-const arrival = ({ gift, text, on }, habit) =>
-  `<span class="arrival">${gift === 'flower' ? flower(habit) : visitor(gift)}<span>${esc(text)}${on ? ` · ${shortDate(on)}` : ''}</span></span>`;
+/** One thing that arrived, drawn small beside its line: "A butterfly arrived · 12 Oct". A visitor in its habit's species. */
+const arrival = ({ gift, text, on }, habit) => {
+  const species = habitsFor(progress).findIndex((h) => h.id === habit);
+  const art = gift === 'flower' ? flower(habit) : gift === 'butterfly' || gift === 'bee' ? visitor(gift, species) : landmark(gift);
+  return `<span class="arrival">${art}<span>${esc(text)}${on ? ` · ${shortDate(on)}` : ''}</span></span>`;
+};
 
 /** What arrived in the garden is heard: the first thing's own sound, after `wait` ms. */
-const arrive = (newly, wait = 0) => { if (newly.length) setTimeout(() => chime(newly[0].gift), wait); };
+const arrive = (newly, wait = 0) => { if (newly.length) setTimeout(() => chime(newly[0].sound || newly[0].gift), wait); };
 
 /** What a session brought to the garden, quietly: three lines at most, then "and N more". */
 const arrivals = (newly) => (!newly.length ? '' : `<ul class="arrivals">
@@ -532,7 +537,9 @@ function gardenView(from = null) {
     <main class="garden-page">
       <h1>Your garden</h1>
       <div class="garden-view">${drawGarden(g, 'tall')}</div>
-      <ul class="plant-cards">${g.plants.map(card).join('')}</ul>
+      <ul class="plant-cards">${g.plants.map(card).join('')}
+        ${g.landmarks.length ? `<li class="plant-card landmark-card"><span class="kicker">${esc(GARDEN_WORDS.kicker)}</span>
+          ${g.landmarks.map((l) => arrival(l, null)).join('')}</li>` : ''}</ul>
     </main>`;
   stopHome = liven(app.querySelector('.garden-view'));
   focusOn(from ? `[data-plant="${from}"]` : 'h1');

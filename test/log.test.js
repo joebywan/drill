@@ -148,13 +148,13 @@ test('rules and the garden follow the habit list: own habits earn visitors, hidd
   let p = track(emptyProgress(), { name: 'Stretch', plant: 'mushroom' });
   for (let d = 1; d <= 30; d++) p = logToday(p, 'own-1', 'Stretch', day(d));
   const { progress, newly } = award(p, day(30));
-  assert.deepEqual(newly.map((r) => r.id).sort(), ['bee:own-1', 'birds:own-1', 'butterfly:own-1']);
+  assert.deepEqual(newly.filter((r) => r.habit).map((r) => r.id).sort(), ['bee:own-1', 'butterfly:own-1']);
   assert.equal(newly.find((r) => r.gift === 'bee').text, 'A bee found Stretch');
   assert.ok(startedHabits(progress, ids(progress)).includes('own-1'));
   const plant = garden(progress, day(30)).plants.find((x) => x.habit === 'own-1');
   assert.equal(plant.plant, 'mushroom');
   assert.equal(plant.name, 'full grown');
-  assert.equal(plant.visitors.length, 3);
+  assert.equal(plant.visitors.length, 2);
   assert.equal(garden(progress, day(30)).plants.find((x) => x.habit === 'learn').plant, undefined);
   const renamed = track(progress, { id: 'own-1', name: 'Morning stretch' });
   assert.equal(garden(renamed, day(30)).plants.find((x) => x.habit === 'own-1').visitors.find((v) => v.gift === 'bee').text, 'A bee found Morning stretch');

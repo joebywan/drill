@@ -158,16 +158,25 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   habit's permanent count of dates practised, never the streak); `RULES` is the achievement table
   (one line of data each), `award()` records what is earned in `progress.garden.earned` and never
   removes it; `mood()` maps the habits' lights; `garden()` is all the garden screen needs.
+  Each habit earns a butterfly (7 in a row) and a bee (its first session, not Learning), each its
+  own species; the whole garden earns `LANDMARKS` (path, bench, birdhouse with birds, a frog at
+  Lumi's pond, fence, lanterns, hive with bees, more birds) from `gardenDays()`, every habit's days added
+  up. Each landmark is a different piece so every one changes the picture. The old per-habit
+  `birds:<habit>` stays in saves but is no longer drawn. app.js gives a save any landmark it had
+  already earned, quietly, on load.
 - `src/garden/season.js` — pure: `season(date, south)` (meteorological, flipped south) and
   `southern(timeZone)`, a guess (Australia/* is south). `garden()` carries `season`; app.js reads the
   hemisphere from the ⋯ screen's "Southern hemisphere seasons" toggle (`pref('south')`), defaulting to the
   guess. A season only retints the land and adds decoration (`scene(mood, shape, season)`): plants
-  never change with it. Lumi lounges in `pond()`, which `perches()` puts on clear ground first
-  (`.pond`, null when a big strip has no room).
+  never change with it. Lumi lounges in `pond()`, which landmarks.js `layout()` places before any
+  landmark (left out when a crowded strip has no room); the pond landmark is a frog joining Lumi.
 - `src/garden/art.js` — the garden's drawings, built like the cast: `plant(habit, stage, { flowers,
   closed })` (tree, lavender, sunflower, vine on a trellis, daisies, evening primrose; five stages, scaled by `GROW` so a
   sprout is about a third of full height and a sapling about half; up to 6 blooms that
-  never overlap), `sway()`, `visitor()`/`animateVisitor()` (butterfly, bee, birds) and, from
+  never overlap), `sway()`, `visitor(kind, species)`/`animateVisitor()` (butterfly, bee, birds;
+  `BUTTERFLIES`, `BEES`, `BIRDS` are the species) and, from `landmarks.js`, `layout()` (the path
+  and fence behind the plants, each other piece at the nearest free spot, smaller when crowded),
+  `landmark(gift)` and `animateLandmarks()`; and, from
   `scene.js`, `scene(mood, 'strip' | 'tall')`, `slots(shape, n)` and `place()`. Scene colours carry
   their own dark set. `tools/garden.html` renders it all; check it in light and dark.
 - The garden screen: `drawGarden(garden(), 'strip' | 'tall')` (art.js) is the strip at the top of
@@ -179,7 +188,8 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - Garden sounds are real files, `assets/sounds/*.wav`, made by `node tools/sounds.js` (plucks,
   bells, chirps, a buzz, all synthesised there, so they are ours to ship). `chime(gift)` in feel.js
   plays one through an `Audio` element (src/ never calls fetch): `plant` when a habit is added, and
-  the first arrival's own sound (`flower`, `butterfly`, `bee`, `birds`) when something arrives.
+  the first arrival's sound when something arrives: its gift (`flower`, `butterfly`, `bee`), or a
+  landmark's `sound` (`build`, `birds`, `pond`, `lantern`, `bee`).
 - **Self-reported habits** (kind 'log'): no path, one tap a day ("I walked today"). The habit list is
   `habitsFor(progress)` in subjects.js, never HABITS alone: the built-ins, then PRESETS and the
   learner's own from `progress.tracked`. `logToday`/`unlogToday`/`track` in progress.js; the tab's

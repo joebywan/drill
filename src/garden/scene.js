@@ -22,7 +22,7 @@ import { SEASONS } from './season.js';
  *       so drawing them in order layers them right.
  *   place(svg, slot) -> svg string   a plant drawn at a slot, to append inside the scene's svg
  *   VISITORS                ['butterfly', 'bee', 'birds', 'ladybird'], the gifts in model.js RULES
- *   visitor(kind) -> svg string      32 units tall (birds is a pair, 56 wide)
+ *   visitor(kind, species) -> svg string   32 units tall (birds is a pair, 56 wide), in that species' colours
  *   animateVisitor(el, kind, fresh) -> Animation[] | null   flutter, hover or hop, the butterfly and bee wander,
  *                           and a fresh one flies in first; null under reduced motion
  *   pond() -> svg string   80 x 50: the pond where Lumi lounges, placed by art.js drawGarden()
@@ -206,26 +206,49 @@ export const place = (svg, { x, y, w }) =>
 
 export const VISITORS = ['butterfly', 'bee', 'birds', 'ladybird'];
 
-const butterfly = () =>
-  `<g data-part="wings">`
-  + `<ellipse cx="9.5" cy="11.5" rx="7" ry="6" fill="#F28B30" transform="rotate(-20 9.5 11.5)"/><ellipse cx="22.5" cy="11.5" rx="7" ry="6" fill="#F28B30" transform="rotate(20 22.5 11.5)"/>`
-  + `<ellipse cx="11" cy="20.5" rx="4.6" ry="4" fill="#F7B548"/><ellipse cx="21" cy="20.5" rx="4.6" ry="4" fill="#F7B548"/>`
-  + `<circle cx="8" cy="10.5" r="1.8" fill="#FFF6E0"/><circle cx="24" cy="10.5" r="1.8" fill="#FFF6E0"/></g>`
+// Species: each habit's butterfly and bee is its own, so a garden of them never repeats (the 13th
+// habit's matches the first's). [upper wings, lower wings, spots]; a bee's [body, stripes].
+export const BUTTERFLIES = [
+  ['#F28B30', '#F7B548', '#FFF6E0'], ['#3E8EDE', '#7BB8F0', '#E6F3FF'], ['#F5D547', '#FBE88A', '#FFFFFF'],
+  ['#F4F1EA', '#E2DCCF', '#3A3A3A'], ['#C8423A', '#E07A5F', '#3C5BA8'], ['#F08BB5', '#F7B8D2', '#FFFFFF'],
+  ['#6CBF6A', '#A2D99A', '#FFFFFF'], ['#7A5BC7', '#A98CE0', '#F3E9FF'], ['#E06A2B', '#8C4A2F', '#FFE08A'],
+  ['#2FA8A0', '#7FD3C8', '#FFFFFF'], ['#B5884A', '#D9B57A', '#3A2A1A'], ['#E84E7A', '#F59AB5', '#FFE3EC'],
+];
+export const BEES = [
+  ['#F5C230', INK], ['#E3A33A', '#6B3F1D'], ['#E0533A', INK], ['#4FA36B', INK], ['#D27D3A', '#5A3A22'], ['#5C6BC0', INK],
+  ['#F2D27A', '#7A5A2A'], ['#E8E2D0', INK], ['#B6D35A', '#2F4A1E'], ['#E87FA0', INK], ['#7FC6E8', INK], ['#C9A0DC', INK],
+];
+// Pairs of birds, [body, wing, breast, cheek?] each: a robin and a blue tit, then a goldfinch and a wren.
+export const BIRDS = [
+  [['#8B6648', '#6B4C33', '#E8743B'], ['#5E95D6', '#3F6FB0', '#F4CF45', '#FFFFFF']],
+  [['#C8A060', '#8A6A3A', '#E5413A', '#FFFFFF'], ['#9A7A5A', '#6E5338', '#D8B98E']],
+];
+const pick = (list, i) => list[(Math.floor(i) || 0) % list.length] || list[0];
+
+const butterfly = (i) => {
+  const [up, low, spot] = pick(BUTTERFLIES, i);
+  return `<g data-part="wings">`
+  + `<ellipse cx="9.5" cy="11.5" rx="7" ry="6" fill="${up}" transform="rotate(-20 9.5 11.5)"/><ellipse cx="22.5" cy="11.5" rx="7" ry="6" fill="${up}" transform="rotate(20 22.5 11.5)"/>`
+  + `<ellipse cx="11" cy="20.5" rx="4.6" ry="4" fill="${low}"/><ellipse cx="21" cy="20.5" rx="4.6" ry="4" fill="${low}"/>`
+  + `<circle cx="8" cy="10.5" r="1.8" fill="${spot}"/><circle cx="24" cy="10.5" r="1.8" fill="${spot}"/></g>`
   + `<rect x="14.8" y="8.5" width="2.4" height="16" rx="1.2" fill="${INK}"/>`
   + `<path d="M15.4 9 Q13.5 5 11 3.6 M16.6 9 Q18.5 5 21 3.6" stroke="${INK}" stroke-width="1" fill="none" stroke-linecap="round"/>`
   + `<circle cx="11" cy="3.6" r="1" fill="${INK}"/><circle cx="21" cy="3.6" r="1" fill="${INK}"/>`;
+};
 
-const bee = () =>
-  `<g data-part="body">`
+const bee = (i) => {
+  const [body, stripe] = pick(BEES, i);
+  return `<g data-part="body">`
   + `<ellipse cx="13.5" cy="9.5" rx="4" ry="5.6" fill="#CFE6F7" transform="rotate(-22 13.5 9.5)"/><ellipse cx="19" cy="10" rx="3.6" ry="5" fill="#B8DAF2" transform="rotate(18 19 10)"/>`
   + `<path d="M24.5 17.4 L29 18.6 L24.6 20Z" fill="${INK}"/>`
-  + `<ellipse cx="17" cy="18.5" rx="8.6" ry="6.6" fill="#F5C230"/>`
-  + `<ellipse cx="15.6" cy="18.5" rx="1.6" ry="6.3" fill="${INK}"/><ellipse cx="20.4" cy="18.5" rx="1.5" ry="5.6" fill="${INK}"/>`
+  + `<ellipse cx="17" cy="18.5" rx="8.6" ry="6.6" fill="${body}"/>`
+  + `<ellipse cx="15.6" cy="18.5" rx="1.6" ry="6.3" fill="${stripe}"/><ellipse cx="20.4" cy="18.5" rx="1.5" ry="5.6" fill="${stripe}"/>`
   + `<circle cx="8.5" cy="17.5" r="4.6" fill="${INK}"/><circle cx="7.4" cy="16.4" r="1.3" fill="#FFFFFF"/>`
   + `<path d="M7.5 13.4 Q6 10 4 9.2" stroke="${INK}" stroke-width="1" fill="none" stroke-linecap="round"/></g>`;
+};
 
 // A robin and a blue tit: round bodies, a beak, a bright breast. Each one hops on its own.
-const bird = (dx, { body, wing, breast, cheek }) =>
+const bird = (dx, [body, wing, breast, cheek]) =>
   `<g transform="translate(${dx} 0)"><g data-part="bird">`
   + `<path d="M8 17 L1.5 13 L2.5 19.5Z" fill="${wing}"/>`
   + `<path d="M13 26 L13 30 M17.5 26 L17.5 30" stroke="#C9894A" stroke-width="1.3" stroke-linecap="round"/>`
@@ -236,9 +259,7 @@ const bird = (dx, { body, wing, breast, cheek }) =>
   + `<path d="M26 11.2 L30 12.6 L26 14Z" fill="#F2B53A"/>`
   + `<circle cx="22.6" cy="10.8" r="1.4" fill="${INK}"/><circle cx="23" cy="10.4" r=".45" fill="#FFFFFF"/></g></g>`;
 
-const birds = () =>
-  bird(0, { body: '#8B6648', wing: '#6B4C33', breast: '#E8743B' })
-  + bird(24, { body: '#5E95D6', wing: '#3F6FB0', breast: '#F4CF45', cheek: '#FFFFFF' });
+const birds = (i) => { const [a, b] = pick(BIRDS, i); return bird(0, a) + bird(24, b); };
 
 // The comeback's visitor (src/fitting.js): a ladybird seen from above, crawling about the plant's foot.
 const ladybird = () =>
@@ -251,10 +272,11 @@ const ladybird = () =>
 
 const DRAW = { butterfly, bee, birds, ladybird };
 
-export function visitor(kind = 'butterfly') {
+/** `species` picks the colours (see BUTTERFLIES, BEES, BIRDS); 0 is the first. */
+export function visitor(kind = 'butterfly', species = 0) {
   const k = DRAW[kind] ? kind : 'butterfly';
   const w = k === 'birds' ? 56 : 32;
-  return `<svg class="visitor visitor-${k}" viewBox="0 0 ${w} 32" overflow="visible" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g data-part="drift">${DRAW[k]()}</g></svg>`;
+  return `<svg class="visitor visitor-${k}" viewBox="0 0 ${w} 32" overflow="visible" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g data-part="drift">${DRAW[k](species)}</g></svg>`;
 }
 
 const loop = { iterations: Infinity, easing: 'ease-in-out' };

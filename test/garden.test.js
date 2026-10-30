@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { emptyProgress, finishPractice, finishSession, migrate } from '../src/progress.js';
-import { RULES, STAGES, award, garden, mood, stage } from '../src/garden/model.js';
+import { LANDMARKS, RULES, STAGES, award, garden, gardenDays, mood, stage } from '../src/garden/model.js';
 import { subjects } from '../src/subjects.js';
 
 const day = (d, h = 12) => new Date(2026, 9, d, h);
@@ -47,7 +47,7 @@ test('the mood follows the light: sunlit once anything is done, resting only whe
   assert.equal(mood(practise(emptyProgress(), 'calm', 1), day(10)), 'resting', 'Learning never started does not count');
 });
 
-test('achievements: a flower per finished unit, a butterfly at 7 in a row, birds at 30 days, a bee for a new habit', () => {
+test('achievements: a flower per finished unit, a butterfly at 7 in a row, a bee for a new habit', () => {
   const calm = subjects.find((s) => s.id === 'calm');
   const [unit] = calm.units;
   let p = emptyProgress();
@@ -57,19 +57,41 @@ test('achievements: a flower per finished unit, a butterfly at 7 in a row, birds
   assert.deepEqual(progress.garden.earned, { 'bee:calm': '2026-10-01', [`flower:calm:${unit.title}`]: '2026-10-01' });
   assert.deepEqual(award(progress, day(1)).newly, [], 'earned once');
   progress = practise(progress, 'calm', 6, 2);
-  assert.deepEqual(award(progress, day(7)).newly.map((r) => r.id), ['butterfly:calm']);
+  assert.deepEqual(award(progress, day(7)).newly.map((r) => r.id), ['butterfly:calm', 'garden:path'], 'and 7 days bring the path');
   assert.equal(award(practise(emptyProgress(), 'learn', 1), day(1)).newly.length, 0, 'no bee for Learning');
-  const thirty = practise(emptyProgress(), 'move', 30);
-  assert.ok(award(thirty, day(30)).newly.some((r) => r.id === 'birds:move'));
-  const g = garden(award(thirty, day(30)).progress, day(30)).plants.find((x) => x.habit === 'move');
-  assert.deepEqual(g.visitors.map((v) => v.gift).sort(), ['bee', 'birds', 'butterfly']);
+  const g = garden(award(practise(emptyProgress(), 'move', 30), day(30)).progress, day(30)).plants.find((x) => x.habit === 'move');
+  assert.deepEqual(g.visitors.map((v) => v.gift).sort(), ['bee', 'butterfly']);
   assert.deepEqual(g.flowers, []);
+});
+
+test('landmarks: the whole garden\'s days, added across habits, bring one new piece each', () => {
+  assert.equal(gardenDays(emptyProgress()), 0);
+  let p = practise(practise(emptyProgress(), 'calm', 2), 'move', 1); // 3 days between them
+  assert.equal(gardenDays(p), 3);
+  const { progress, newly } = award(p, day(3));
+  assert.ok(newly.some((r) => r.id === 'garden:path' && r.habit === null));
+  assert.deepEqual(garden(progress, day(3)).landmarks.map((l) => l.gift), ['path']);
+  const all = award(practise(emptyProgress(), 'calm', 90), day(90)).progress;
+  assert.deepEqual(garden(all, day(90)).landmarks.map((l) => l.gift), LANDMARKS.map((l) => l.gift), 'in the order they arrive');
+  assert.equal(new Set(LANDMARKS.map((l) => l.gift)).size, LANDMARKS.length, 'each one different');
+  assert.ok(LANDMARKS.every((l, i) => !i || l.at > LANDMARKS[i - 1].at), 'one at a time');
+});
+
+test('each habit\'s visitors are their own species, and a retired birds:<habit> is kept but not drawn', () => {
+  let p = practise(practise(emptyProgress(), 'calm', 8), 'move', 8);
+  p = award(p, day(8)).progress;
+  const g = garden(p, day(8));
+  const sp = (h) => g.plants.find((x) => x.habit === h).visitors.map((v) => v.species);
+  assert.notDeepEqual(sp('calm'), sp('move'));
+  const old = { ...p, garden: { earned: { ...p.garden.earned, 'birds:calm': '2026-09-01' } } };
+  assert.ok(garden(old, day(8)).plants.every((x) => x.visitors.every((v) => v.gift !== 'birds')));
+  assert.equal(award(old, day(8)).progress.garden.earned['birds:calm'], '2026-09-01', 'never removed');
 });
 
 test('earned is permanent: a streak starting again or a trimmed log takes nothing back', () => {
   let { progress: p } = award(practise(emptyProgress(), 'calm', 30), day(30));
   const earned = { ...p.garden.earned };
-  assert.ok(earned['butterfly:calm'] && earned['birds:calm']);
+  assert.ok(earned['butterfly:calm'] && earned['garden:fence']);
   p = finishPractice(p, 'calm', null, new Date(2028, 0, 1)); // long gap: the streak is 1, the log trimmed
   assert.equal(p.habits.calm.count, 1);
   assert.equal(p.log.length, 1);
@@ -102,7 +124,7 @@ test('every rule has a unique id, a known gift and a pure test', () => {
   const p = emptyProgress();
   const frozen = JSON.stringify(p);
   for (const r of RULES) {
-    assert.ok(['flower', 'butterfly', 'birds', 'bee', 'ladybird'].includes(r.gift), r.id);
+    assert.ok(['flower', 'butterfly', 'bee', 'ladybird', ...LANDMARKS.map((l) => l.gift)].includes(r.gift), r.id);
     assert.equal(r.test(p), false, r.id);
   }
   assert.equal(JSON.stringify(p), frozen);
