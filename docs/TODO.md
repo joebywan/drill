@@ -176,10 +176,11 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 
 **Code courses: to judge by playing**
 
-- **Pacing and tone.** 49 lessons have automated proofs (every item solvable, decoys fail, nothing asked before it is taught) but only
-  six have been played, and only by e2e. Items placing many small chips may feel slow: `for` lines are 15 or so taps.
-- **Fresh versions are thinner than Coding's.** Most swap names; numbers and words only where the prose allows, and many items are `fixed`. Test writing mostly renames.
-- **The type checker is a small subset.** It follows strict TypeScript for what the course teaches. A learner's valid but unusual arrangement could be refused or wrongly let through outside that.
+- **Pacing and tone.** 49 lessons have automated proofs (every item solvable, decoys fail, nothing asked before it is taught, 8 taps at most but
+  for a construct's first build) but only six have been played, and only by e2e. Judge whether chips are the right size.
+- **Fresh versions in Test writing** mostly rename: its numbers would need the expected answers worked out again.
+- **The type checker is a small subset.** It follows strict TypeScript for what the course teaches. A valid but unusual arrangement could be misjudged outside that.
+- **Wrong code in a branch that never runs passes.** Graded by running, so an `else` that never runs is not looked at. Any arrangement that does the job is right, by decision; hidden `cases` close it where it matters, and `print` items could run a second input if play shows it matters.
 
 **Repetition engine**
 

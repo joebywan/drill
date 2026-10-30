@@ -1,11 +1,12 @@
-import { Q, T, lesson, unit } from './author.js';
+import { AFTER_JS, Q, T, coarsened, lesson, unit } from './author.js';
 
 /**
  * Writing tests in TypeScript, by chips. Per the repo rule, a learner's tests are graded independently:
  * they must pass on the real code (`given`) and fail on every hand-made faulty version (`mutants`).
  */
 const CHIPS = ['() => {', '});', 'test(', 'expect('];
-const M = (given, mutants, way, chunks, prompt, explain, decoys) => ({ type: 'build', goal: 'tests', given, mutants, way, chunks: [...CHIPS, ...chunks], prompt, explain, ...(decoys && { decoys }) });
+const ended = (c) => (c.startsWith('.to') ? `${c};` : c); // a matcher's chip ends its line
+const M = (given, mutants, way, chunks, prompt, explain, decoys) => ({ type: 'build', goal: 'tests', given, mutants, way, chunks: [...CHIPS, ...chunks.map(ended)], prompt, explain, ...(decoys && { decoys: decoys.map(ended) }) });
 const F = (given, mutants, code, fill, prompt, explain, decoys) => ({ type: 'gap', goal: 'tests', given, mutants, code, fill, prompt, explain, ...(decoys && { decoys }) });
 const broken = (says, code) => ({ says, code });
 
@@ -42,7 +43,7 @@ const course = {
         F(dbl, dblBroken, 'test("doubles", () => { expect(dbl(3)).___(6); });', ['toBe'], 'Which word compares the answer?', 'expect(...).toBe(...) is the whole shape.', ['expect', 'test']),
         F(dbl, dblBroken, 'test("doubles", () => { expect(___(3)).toBe(6); });', ['dbl'], 'What is being tested?', 'expect holds the call you are checking.', ['add', 'test']),
         F(add, addBroken, 'test("adds", () => { ___(add(2, 3)).toBe(5); });', ['expect'], 'Which word starts the check?', 'expect takes what came back.', ['test', 'console.log']),
-        Q('console.log(2 + 3 === 5);', ['false', '5'], 'At heart a test is only this: a comparison that must be true.', { fixed: true }),
+        Q('console.log(2 + 3 === 5);', ['false', '5'], 'At heart a test is only this: a comparison that must be true.'),
         M(add, addBroken, 'test("adds", () => { expect(add(2, 3)).toBe(5); });', ['expect(add(2, 3))', '.toBe(5)'], 'Build the whole test from its pieces.', 'A name, an arrow, and one check inside.', ['.toBe(6)']),
       ]),
       lesson('tt-2', 'Why it fails', [
@@ -129,7 +130,7 @@ const course = {
       lesson('ts-1', 'Cover it all', [
         T('You have the whole kit now. For any function: the usual case, each edge, each road through the code. Then the faulty copies have nowhere to hide.', `${grade} test("low", () => { expect(band(1)).toBe("low"); });`),
         T('Read the code, list its roads, then write one check for each.', `${total} test("two", () => { expect(total([1, 2])).toBe(3); });`),
-        M(grade, gradeBroken, 'test("high", () => { expect(band(80)).toBe("high"); }); test("mid", () => { expect(band(50)).toBe("mid"); }); test("low", () => { expect(band(0)).toBe("low"); });', ['expect(band(80))', 'expect(band(50))', 'expect(band(0))', '.toBe("high")', '.toBe("mid")', '.toBe("low")', '"high"', '"mid"', '"low"'], 'Three roads, three tests.', 'Edges for the first two, anything for the last.'),
+        M(grade, gradeBroken, 'test("roads", () => { expect(band(80)).toBe("high"); expect(band(50)).toBe("mid"); expect(band(0)).toBe("low"); });', ['expect(band(80)).toBe("high");', 'expect(band(50)).toBe("mid");', 'expect(band(0)).toBe("low");', 'expect(band(70)).toBe("mid");'], 'Three roads, one check for each.', 'Edges for the first two, anything for the last.'),
         M(total, totalBroken, 'test("sum", () => { expect(total([2, 3])).toBe(5); });', ['expect(total([2, 3]))', '.toBe(5)', 'expect(total([0]))', '.toBe(0)'], 'One test can catch both. Choose carefully.', 'A first number that matters, and a start that shows.'),
         M(isAdult, adultBroken, 'test("adult", () => { expect(isAdult(18)).toBe(true); expect(isAdult(17)).toBe(false); });', ['expect(isAdult(18))', 'expect(isAdult(17))', '.toBe(true)', '.toBe(false)'], 'Both sides of the line, in one test.', 'The tightest pair there is.'),
         M(shout, shoutBroken, 'test("shout", () => { expect(shout("a")).toBe("A!"); });', ['expect(shout("a"))', 'expect(shout("!"))', '.toBe("A!")', '.toBe("!!")'], 'Catch both copies with one check.', 'A letter to change, and the ! on the end.'),
@@ -151,4 +152,4 @@ const course = {
 };
 
 course.units.forEach((u) => u.lessons.forEach((l) => { l.items = l.items.map((i) => ({ ...i, ts: true })); }));
-export default course;
+export default coarsened(course, AFTER_JS);

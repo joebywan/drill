@@ -45,7 +45,7 @@ function goalHtml(item) {
  */
 export function mount(el, item, ctx) {
   const { say, done } = ctx;
-  if (!item.level && (item.type === 'teach' || item.type === 'predict')) return mountQuiz(el, asQuiz(item), { ...ctx, look: 'code-look' });
+  if (!item.level && (item.type === 'teach' || item.type === 'predict')) return mountQuiz(el, asQuiz(item), { ...ctx, look: item.asks === 'check' ? 'code-look code-check' : 'code-look' });
   const g = item.level ? parseLevel(item.level) : null;
   const printing = item.goal === 'print';
   el.innerHTML = `<div class="code-item">

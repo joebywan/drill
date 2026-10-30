@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parse, run, same, show } from '../src/code/interp.js';
 import { check } from '../src/code/types.js';
-import { chipsOf, flaggedLine, grade, layout, pretty, problem, vary } from '../src/code/items.js';
+import { chipsOf, chunksFor, flaggedLine, grade, layout, pretty, problem, vary } from '../src/code/items.js';
 
 const out = (src, o) => { const r = run(src, o); assert.equal(r.error, null, r.error?.message); return r.output; };
 const said = (src, o) => run(src, o).error;
@@ -190,6 +190,16 @@ test('the checker grades a TS item before it runs, and flagged lines are worked 
   assert.equal(flaggedLine({ code: 'let a: number = 1;', ts: true }), 'No problem');
 });
 
+test('chunks: a known construct is one chip, a new one stays in tokens, and a value decoy keeps its place open', () => {
+  const src = 'for (let i = 0; i < 3; i++) { console.log(i); }';
+  assert.deepEqual(chunksFor(src, new Set()).chunks, []);
+  const { chunks, used } = chunksFor(src, new Set(['for', 'print']));
+  assert.deepEqual(chipsOf(src, chunks), ['for (let i = 0; i <', '3', '; i++) {', 'console.log(i);', '}']);
+  assert.deepEqual([...used].sort(), ['for', 'print']);
+  assert.ok(chunksFor('console.log(3);', new Set(['print']), ['4']).chunks.includes('console.log('), 'the 3 stays a chip, so the 4 can go there');
+  assert.deepEqual(layout(chipsOf(src, chunks)), [undefined, undefined, undefined, 1, 0]);
+});
+
 test('a fresh version has new names or numbers, still works and keeps its words in step', () => {
   const seq = (...v) => { let i = 0; return () => v[i++ % v.length]; };
   const item = { id: 'v', type: 'build', goal: 'print', way: 'let score = 4; console.log(score + 2);', prompt: 'Print score plus 2.', explain: 'score + 2 is {out}.', decoys: ['-'] };
@@ -203,4 +213,10 @@ test('a fresh version has new names or numbers, still works and keeps its words 
   const named = vary(adding, seq(0.2));
   assert.equal(named.name, 'add');
   assert.equal(vary({ id: 't', type: 'teach', text: 'x' }), null);
+  // Numbers move up in order, so a comparison keeps its answer; a list's place and a % keep theirs.
+  for (const seed of [0.1, 0.5, 0.9]) {
+    const q = vary({ id: 'q', type: 'predict', code: 'const xs = [3, 4, 5]; console.log(5 > 3, xs[2], 7 % 2);', wrong: ['x'], explain: 'e' }, seq(seed));
+    assert.match(q.code, /\[2\]/);
+    assert.match(q.code, /% 2/);
+  }
 });

@@ -81,13 +81,10 @@ export function layout(words) {
   return out;
 }
 
-/** Source laid out as lines of code, the way a person would write it. */
-export function pretty(src) {
-  if (!src) return '';
-  const words = chipsOf(src);
-  const breaks = layout(words);
+/** Words joined the way a person writes code, with a new line wherever `breaks` says. */
+function joined(words, breaks = []) {
   const generic = (i) => (words[i] === '<' && words[i + 2] === '>') || (words[i - 1] === '<' && words[i + 1] === '>') || (words[i] === '>' && words[i - 2] === '<');
-  const tight = (w, prev, i) => w[0] === '.' || prev === '(' || prev === '[' || prev === '!' || [';', ',', ')', ']', '++', '--', ':'].includes(w) || generic(i)
+  const tight = (w, prev, i) => w[0] === '.' || prev === '.' || prev === '(' || prev === '[' || prev === '!' || [';', ',', ')', ']', '++', '--', ':'].includes(w) || generic(i)
     || ((w === '(' || w === '[') && /[\w$\])]$/.test(prev) && !/^(if|for|while|return|of|function)$/.test(prev))
     || (w === '(' && prev === '>' && words[i - 3] === '<')
     || (w === '?' && words[i + 1] === ':');
@@ -99,6 +96,123 @@ export function pretty(src) {
   });
   return text;
 }
+
+/** Source laid out as lines of code, the way a person would write it. */
+export function pretty(src) {
+  if (!src) return '';
+  const words = chipsOf(src);
+  return joined(words, layout(words));
+}
+
+/**
+ * Chips at the level of thought. A construct's first build has its syntax in single tokens; once built,
+ * its boilerplate is one chip and only the parts with the idea in them stay apart, as a language
+ * course's word bank has "I would like" as one tile. `key` is the construct, and a `whole` rule swallows a
+ * value, so it stands down when a decoy could go there: a decoy must always have a place to be tried.
+ */
+const LIT = ['NUM', 'STR', 'true', 'false'];
+const VAL = ['ID', ...LIT];
+const OP = ['+', '-', '*', '/', '%', '<', '>', '<=', '>=', '===', '!==', '&&', '||'];
+const RULES = [
+  { key: 'test', pat: ['test', '(', 'STR', ',', '(', ')', '=>', '{'] },
+  { key: 'for', pat: ['for', '(', 'let', 'ID', '=', 'NUM', ';', 'ID', ['<', '<=', '>', '>=']] },
+  { key: 'for', pat: [';', 'ID', ['++', '--'], ')', '{'] },
+  { key: 'for', pat: [';', 'ID', '+=', 'NUM', ')', '{'] },
+  { key: 'forof', pat: ['for', '(', 'const', 'ID', 'of'] },
+  { key: 'else', pat: ['}', 'else', 'if', '('] },
+  { key: 'else', pat: ['}', 'else', '{'] },
+  { key: 'if', pat: ['if', '('] },
+  { key: 'while', pat: ['while', '('] },
+  { key: 'print', whole: true, pat: ['console', '.', 'log', '(', VAL, ')', ';'] },
+  { key: 'print', pat: ['console', '.', 'log', '('] },
+  { key: 'print', pat: ['Math', '.', 'ID', '('] },
+  { key: 'let', whole: true, pat: [['let', 'const'], 'ID', '=', VAL, ';'] },
+  { key: 'let', pat: [['let', 'const'], 'ID', '='] },
+  { key: 'change', whole: true, ops: true, pat: ['ID', ['=', '+='], VAL, OP, VAL, ';'] },
+  { key: 'change', whole: true, ops: true, pat: ['ID', ['=', '+=', '-='], VAL, ';'] },
+  { key: 'change', ops: true, pat: ['ID', ['++', '--'], ';'] },
+  { key: 'return', whole: true, ops: true, pat: ['return', VAL, OP, VAL, ';'] },
+  { key: 'return', whole: true, pat: ['return', VAL, ';'] },
+  { key: 'expr', whole: true, ops: true, pat: [VAL, OP, VAL], unless: OP },
+  { key: 'call', whole: true, pat: ['ID', '(', VAL, ')', ';'] },
+  { key: 'call', whole: true, pat: ['ID', '(', VAL, ')'], unless: [';'] },
+  { key: 'if', pat: ['!', 'ID', '(', ')'] },
+  { key: 'if', pat: ['!', 'ID', '(', 'STR', ')'] },
+  { key: 'call', pat: ['ID', '(', ')'], unless: [';'] },
+  { key: 'member', pat: ['ID', '.', 'ID'], unless: ['('] },
+  { key: 'label', pat: ['let', 'ID', ':'] },
+  { key: 'label', pat: ['=', VAL, ';'] },
+  { key: 'label', pat: [',', 'ID', ':'] },
+  { key: 'label', pat: ['interface', 'ID', '{'] },
+  { key: 'function', pat: ['function', 'ID', '('] },
+  { key: 'arrow', pat: ['(', ')', '=>', '{'] },
+  { key: 'arrow', pat: ['(', 'ID', ')', '=>', '{'] },
+  { key: 'arrow', pat: ['(', 'ID', ',', 'ID', ')', '=>', '{'] },
+  { key: 'arrow', pat: ['ID', '=>', '{'] },
+  { key: 'arrow', pat: ['ID', '=>'] },
+  { key: 'arrow', pat: ['}', ')', ';'] },
+  { key: 'call', pat: ['ID', '(', ')', ';'] },
+  { key: 'method', pat: ['.', 'ID', '('] },
+  { key: 'call', pat: ['ID', '('] },
+  { key: 'call', pat: [')', ';'] },
+  { key: 'if', pat: [')', '{'] },
+  { key: 'label', pat: ['ID', ':'] },
+];
+const fits1 = (tok, want) => {
+  if (Array.isArray(want)) return want.some((w) => fits1(tok, w));
+  if (want === 'ID') return tok?.t === 'id';
+  if (want === 'NUM') return tok?.t === 'num';
+  if (want === 'STR') return tok?.t === 'str';
+  return tok?.raw === want;
+};
+/** A list of plain values, or an object of them, or a function's head: how many tokens, or 0. */
+function bracketed(toks, i) {
+  if (toks[i]?.raw === 'function' && toks[i + 1]?.t === 'id' && toks[i + 2]?.raw === '(') {
+    let j = i + 3;
+    while (toks[j]?.t === 'id' && (toks[j + 1]?.raw === ',' || toks[j + 1]?.raw === ')')) j += toks[j + 1].raw === ',' ? 2 : 1;
+    return toks[j]?.raw === ')' && toks[j + 1]?.raw === '{' ? { key: 'function', n: j + 2 - i } : null;
+  }
+  if (toks[i]?.raw === '[') {
+    let j = i + 1;
+    while (fits1(toks[j], LIT) && toks[j + 1]?.raw === ',') j += 2;
+    return fits1(toks[j], LIT) && toks[j + 1]?.raw === ']' ? { key: 'array', lits: true, n: j + 2 - i } : null;
+  }
+  if (toks[i]?.raw === '{' && /^(=|\(|,|return)$/.test(toks[i - 1]?.raw ?? '')) {
+    let j = i + 1;
+    while (toks[j]?.t === 'id' && toks[j + 1]?.raw === ':' && fits1(toks[j + 2], LIT) && toks[j + 3]?.raw === ',') j += 4;
+    return toks[j]?.t === 'id' && toks[j + 1]?.raw === ':' && fits1(toks[j + 2], LIT) && toks[j + 3]?.raw === '}' ? { key: 'object', lits: true, n: j + 4 - i } : null;
+  }
+  return null;
+}
+const ruleAt = (toks, i) => [
+  bracketed(toks, i),
+  ...RULES.filter((r) => r.pat.every((w, k) => fits1(toks[i + k], w)) && !(r.unless && fits1(toks[i + r.pat.length], r.unless))).map((r) => ({ ...r, n: r.pat.length })),
+].filter(Boolean);
+
+/** The chunks `src` is built from, given the constructs already `known`, and every construct it uses. */
+export function chunksFor(src, known, decoys = []) {
+  const toks = tokenize(src).slice(0, -1);
+  const valued = decoys.some((d) => { const t = tokenize(d).slice(0, -1); return t.length === 1 && ['num', 'str', 'id'].includes(t[0].t); });
+  const litDecoy = decoys.some((d) => { const t = tokenize(d).slice(0, -1); return t.length === 1 && ['num', 'str'].includes(t[0].t); });
+  const opDecoy = decoys.some((d) => { const t = tokenize(d).slice(0, -1); return t.length === 1 && t[0].t === 'op'; });
+  const chunks = [];
+  const used = new Set();
+  for (let i = 0; i < toks.length;) {
+    const hits = ruleAt(toks, i);
+    hits.forEach((h) => used.add(h.key));
+    const hit = hits.find((h) => known.has(h.key) && !(h.whole && valued) && !(h.lits && litDecoy) && !(h.ops && opDecoy));
+    if (!hit) { i++; continue; }
+    chunks.push(joined(toks.slice(i, i + hit.n).map((t) => t.raw)));
+    i += hit.n;
+  }
+  return { chunks: [...new Set(chunks)], used };
+}
+
+/** Every construct a chunk rule knows. */
+export const CONSTRUCTS = [...new Set(RULES.map((r) => r.key)), 'function', 'array', 'object'];
+
+/** How many taps a build item takes, placed the way `way` is. */
+export const tapsOf = (item) => chipsOf(wayOf(item), item.chunks).length;
 
 /** A gap item's fixed text and holes, as a builder `start` tree. */
 export function startOf(item) {
@@ -225,12 +339,12 @@ function refused(item, source) {
   }
 }
 
-const joined = (item, src, given = item.given) => (given ? `${given}\n${src}` : src);
+const withGiven = (item, src, given = item.given) => (given ? `${given}\n${src}` : src);
 
 /** Runs `src` as `item` would, Fennel's calls included: { output, error, steps? }. */
 export function runIt(item, src) {
   const w = item.level ? walker(item.level) : null;
-  const source = joined(item, src);
+  const source = withGiven(item, src);
   const results = [];
   const testing = /\b(test|expect)\(/.test(source) ? tester(results) : null; // a card can show tests running
   const r = run(source, { ts: !!item.ts, globals: w?.globals ?? testing ?? undefined });
@@ -258,7 +372,7 @@ export const withOut = (item, text) => (text?.includes('{out}') ? text.replace(/
 function gradeTests(item, src) {
   const ask = (given) => {
     const results = [];
-    const r = run(joined(item, src, given), { ts: !!item.ts, globals: tester(results) });
+    const r = run(withGiven(item, src, given), { ts: !!item.ts, globals: tester(results) });
     return { results, error: r.error };
   };
   const real = ask(item.given);
@@ -284,7 +398,7 @@ function gradeTests(item, src) {
 export function grade(item, src) {
   // A function is checked as the hidden tests will call it, so the wrong input label fails too.
   const calls = item.goal === 'returns' ? item.cases.map(([args]) => `${item.name}(${args.map((a) => JSON.stringify(a) ?? 'undefined').join(', ')});`).join('\n') : '';
-  const stopped = refused(item, `${joined(item, src)}\n${calls}`);
+  const stopped = refused(item, `${withGiven(item, src)}\n${calls}`);
   if (stopped) return { right: false, why: stopped, output: [] };
   if (item.goal === 'tests') return { output: [], ...gradeTests(item, src) };
   const r = runIt(item, src);
@@ -311,13 +425,8 @@ export const flaggedLine = (item) => {
   const errors = check(parse(pretty(item.code), { ts: true }));
   return errors.length ? `Line ${errors[0].line}` : FINE;
 };
-/** The lines to choose from, around the flagged one so a long program still fits: at most four, and "No problem". */
-export function checkOptions(item) {
-  const count = pretty(item.code).split('\n').length;
-  const at = flaggedLine(item) === FINE ? 1 : +flaggedLine(item).slice(5);
-  const from = Math.max(1, Math.min(at - 2, count - 3));
-  return [...Array.from({ length: Math.min(count, 4) }, (_, i) => `Line ${from + i}`), FINE];
-}
+/** Every line is on offer, however long the program, so the choices never hint at the answer. */
+export const checkOptions = (item) => [...pretty(item.code).split('\n').map((_, i) => `Line ${i + 1}`), FINE];
 
 /** A predict item's answer and options, worked out by running. Numbers get near misses if it needs more. */
 export function optionsOf(item) {
@@ -357,7 +466,7 @@ export function problem(item) {
       const r = runIt(item, item.code);
       if (r.error && !r.error.thrown) return `its code fails: ${r.error.message}`;
       if (r.results.some((t) => t.failed)) return `a test on it fails: ${r.results.find((t) => t.failed).failed}`;
-      if (item.ts && refused(item, joined(item, item.code))) return `its code fails the checker: ${refused(item, joined(item, item.code))}`;
+      if (item.ts && refused(item, withGiven(item, item.code))) return `its code fails the checker: ${refused(item, withGiven(item, item.code))}`;
     }
     return null;
   }
@@ -478,10 +587,15 @@ function attempt(item, random) {
   const worked = item.type === 'predict' ? item.asks !== 'check' : item.goal === 'print' && !item.level;
   const nums = {}, strs = {};
   if (worked && !item.fixed) {
-    const taken = new Set(all.filter((t) => t.t === 'num').map((t) => t.v));
-    for (const n of [...taken].filter((v) => v >= 2 && Number.isInteger(v))) {
-      const to = n + 1 + Math.floor(random() * 3);
-      if (!taken.has(to)) { nums[n] = to; taken.add(to); }
+    // Upward and in order, so a comparison keeps its answer. A place in a list and a % keep their number.
+    const held = all.filter((t, i) => t.t === 'num' && (all[i - 1]?.raw === '[' || all[i - 1]?.raw === '%')).map((t) => t.v);
+    const taken = [...new Set(all.filter((t) => t.t === 'num').map((t) => t.v))].sort((x, y) => x - y);
+    let floor = 0;
+    for (const n of taken) {
+      const swap = n >= 2 && Number.isInteger(n) && !held.includes(n);
+      const to = swap ? Math.max(floor + 1, n + 1 + Math.floor(random() * 3)) : n;
+      if (to !== n) nums[n] = to;
+      floor = to;
     }
     const words = STRINGS.filter((s) => !present.has(s));
     for (const t of all) {
@@ -493,6 +607,10 @@ function attempt(item, random) {
   return next;
 }
 
+/** Words may say true or false, so a fresh version must print the same ones. */
+const verdicts = (item) => (item.type === 'predict' && item.asks ? [] : item.type === 'predict' || item.goal === 'print' ? printedBy(item, item.type === 'predict' ? item.code : wayOf(item)).join(' ').match(/\b(true|false)\b/g) ?? [] : []);
+const sameVerdict = (a, b) => verdicts(a).join() === verdicts(b).join();
+
 /**
  * A subject's `vary` (repeat.js): the same idea with new names, numbers and words, or a flipped map.
  * It is checked with `problem`, so a version that stopped working is never played. Teach cards don't
@@ -502,7 +620,7 @@ export function vary(item, random = Math.random) {
   if (item.type === 'teach') return null;
   for (let i = 0; i < 6; i++) {
     const v = attempt(item, random);
-    if (JSON.stringify(v) !== JSON.stringify(item) && !problem(v)) return v;
+    if (JSON.stringify(v) !== JSON.stringify(item) && !problem(v) && sameVerdict(item, v)) return v;
   }
   return item;
 }

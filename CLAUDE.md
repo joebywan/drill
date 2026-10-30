@@ -140,7 +140,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   With `ts: true` it also parses annotations, interfaces, aliases and generics. `types.js` is a small checker for what the course teaches,
   strict-flavoured, not the TypeScript compiler. `items.js` holds the items (teach, build, gap, predict, `asks: 'check'`) and goals
   (`print`, `walk`, `returns` with hidden `cases`, `tests`), `grade()`, `problem()` (the way passes, no decoy swapped in passes) and `vary()`
-  (names, numbers and words swapped, maps flipped, every version through `problem()`). Code is one source string in an item; chips (`chipsOf`),
+  (names, numbers and words swapped, maps flipped, every version through `problem()`). **Chips are chunks at the level of thought:** `coarsened()` (courses/author.js) walks a course in order, a construct's first build (`learns`) is single tokens, and after that `chunksFor()`'s rules make its boilerplate one chip, standing down where a decoy needs a place; a test holds builds to 8 taps but for `learns`. Code is one source string in an item; chips (`chipsOf`),
   lines (`layout`, `pretty`) and answers (printed output, flagged lines) are worked out from it, and prose that says a number must find
   it in the code or set `fixed` (test/code-courses.test.js). `exercise.js` mounts on `src/builder.js`, the quiz's teach and pick, and `src/coding/grid.js`, the
   grid and walker Coding also uses; Fennel's calls map to Coding's `run()`, with `onRock(f)` and `onStep(f)` as his events. Courses are data

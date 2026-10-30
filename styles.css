@@ -883,6 +883,7 @@ body:has(main.night) {
 .quiz.code-look .choices { flex-wrap: wrap; }
 .quiz.code-look .choices .choice { flex: 1 1 40%; min-height: 48px; padding: 8px; font: 700 .95rem/1.3 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 .quiz.code-look .choices { max-height: 46vh; overflow-y: auto; }
+.quiz.code-check .choices .choice { flex: 1 1 28%; min-height: 44px; padding: 6px; font-size: .85rem; }
 .play:has(.code-look) .bubble { min-height: 4.4em; }
 @media (max-height: 700px) {
   .code-given { max-height: 14vh; }

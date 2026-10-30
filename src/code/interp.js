@@ -25,7 +25,7 @@ export class RunError extends Error {
 /** Thrown by a host function to end a run: not an error in the program. */
 export class Stop extends Error {}
 
-const KEYWORDS = new Set(['let', 'const', 'var', 'if', 'else', 'for', 'of', 'while', 'function', 'return', 'break', 'continue', 'true', 'false', 'null', 'new', 'throw', 'typeof']);
+const KEYWORDS = new Set(['let', 'const', 'var', 'if', 'else', 'for', 'of', 'in', 'while', 'function', 'return', 'break', 'continue', 'true', 'false', 'null', 'new', 'throw', 'typeof']);
 const OPS = ['===', '!==', '=>', '==', '!=', '<=', '>=', '&&', '||', '++', '--', '+=', '-=', '*=', '/=', '+', '-', '*', '/', '%', '<', '>', '=', '!', '(', ')', '{', '}', '[', ']', ';', ',', '.', ':', '?', '|'];
 const ESCAPES = { n: '\n', t: '\t', '"': '"', "'": "'", '\\': '\\' };
 

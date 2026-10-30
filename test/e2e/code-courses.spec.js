@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures.js';
-import { chipsOf, optionsOf, wayOf } from '../../src/code/items.js';
+import { chipsOf, optionsOf, vary, wayOf } from '../../src/code/items.js';
 import { chipName } from '../../src/code/exercise.js';
 import javascript from '../../src/code/courses/javascript.js';
 import typescript from '../../src/code/courses/typescript.js';
@@ -27,7 +27,11 @@ for (const [width, height] of [[360, 640], [375, 812]]) test(`every code item fi
   await page.setViewportSize({ width, height });
   await page.goto('/');
   await page.addStyleTag({ content: 'body, button { font-family: "DejaVu Sans", Verdana, sans-serif; } :root { --mono: "DejaVu Sans Mono", monospace; }' });
-  const items = COURSES.flatMap(itemsOf);
+  const all = COURSES.flatMap(itemsOf);
+  let seed = 11;
+  const random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  // Shipped items, and a fresh version of each: new names can run longer.
+  const items = [...all, ...all.map((i) => vary(i, random)).filter(Boolean)];
   const bad = await page.evaluate(async (items) => {
     const { mount } = await import('/src/code/exercise.js');
     const { chipsOf, wayOf } = await import('/src/code/items.js');

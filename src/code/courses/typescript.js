@@ -1,4 +1,4 @@
-import { G, P, Q, R, RG, T, lesson, unit } from './author.js';
+import { AFTER_JS, G, P, Q, R, RG, T, coarsened, lesson, unit } from './author.js';
 
 /** A question for the checker: which line does it flag, if any? Worked out by running it. */
 const C = (code, explain) => ({ type: 'predict', asks: 'check', code, prompt: 'Which line does the checker flag?', explain });
@@ -14,24 +14,24 @@ const course = {
       lesson('tsa-1', 'Say what it holds', [
         T('TypeScript is JavaScript with labels saying what a name may hold. A checker reads them before anything runs, and stops mistakes there.', 'let ears: number = 2; console.log(ears);'),
         T('The label goes after a colon. The everyday ones are number, string and boolean.', 'let who: string = "Rosa"; let awake: boolean = true; console.log(who, awake);'),
-        G('let hops: ___ = 3; console.log(hops);', ['number'], 'Which label fits?', '3 is a number, so the label says number.', ['string', 'boolean'], { fixed: true }),
-        G('let who: ___ = "Ada"; console.log(who);', ['string'], 'Which label fits?', 'Text in quote marks is a string.', ['number', 'boolean'], { fixed: true }),
-        G('let ok: ___ = 2 > 1; console.log(ok);', ['boolean'], 'A comparison gives what?', 'True or false: a boolean.', ['number', 'string'], { fixed: true }),
+        G('let hops: ___ = 3; console.log(hops);', ['number'], 'Which label fits?', '3 is a number, so the label says number.', ['string', 'boolean']),
+        G('let who: ___ = "Ada"; console.log(who);', ['string'], 'Which label fits?', 'Text in quote marks is a string.', ['number', 'boolean']),
+        G('let ok: ___ = 2 > 1; console.log(ok);', ['boolean'], 'A comparison gives what?', 'True or false: a boolean.', ['number', 'string']),
         C('let n: number = 1; let w: string = 2; console.log(n);', 'A string label cannot hold a number. The checker stops it before it runs.'),
         C('let n: number = 1; n = 5; console.log(n);', 'A new number in a number: nothing wrong here.'),
         P('let tail: number = 1; console.log(tail);', 'Make tail a number holding 1, with its label, then print it.', 'Name, colon, label, equals, value.', ['string']),
-        G('let n: number = ___; console.log(n);', ['4'], 'Which value fits the label?', 'Only a number gets past the checker.', ['"4"', 'true'], { fixed: true }),
+        G('let n: number = ___; console.log(n);', ['4'], 'Which value fits the label?', 'Only a number gets past the checker.', ['"4"', 'true']),
       ]),
       lesson('tsa-2', 'What it works out', [
         T('You often need no label: the checker works it out from the value, and holds you to it. That is called inference.', 'let n = 1; n = 2; console.log(n);'),
         T('A list\'s label is what it holds, then []. number[] is a list of numbers.', 'const xs: number[] = [1, 2]; xs.push(3); console.log(xs);'),
         C('let n = 1; n = "two"; console.log(n);', 'n started as a number, and it stays one.'),
         C('const xs: string[] = ["a"]; xs.push(1); console.log(xs);', 'A list of strings will not take a number.'),
-        G('const xs: ___ = [1, 2]; console.log(xs);', ['number[]'], 'Label this list.', 'What it holds, then [].', ['number', 'string[]'], { chunks: ['number[]', 'string[]'], fixed: true }),
-        G('const ws: string[] = ["a"]; ws.push(___); console.log(ws);', ['"b"'], 'Push something that fits.', 'Only strings may join a list of strings.', ['2', 'true'], { fixed: true }),
+        G('const xs: ___ = [1, 2]; console.log(xs);', ['number[]'], 'Label this list.', 'What it holds, then [].', ['number', 'string[]'], { chunks: ['number[]', 'string[]'] }),
+        G('const ws: string[] = ["a"]; ws.push(___); console.log(ws);', ['"b"'], 'Push something that fits.', 'Only strings may join a list of strings.', ['2', 'true']),
         C('const a = "x"; console.log(a.length); console.log(a.size);', 'Text has .length, but no .size. The checker knows what each thing has.'),
         C('let n = 2; console.log(n * 3); console.log(n * "a");', 'You can only times a number by a number.'),
-        Q('const xs: number[] = [1, 2]; console.log(xs.length);', ['1', 'number[]'], 'The labels vanish when it runs. It is plain JavaScript by then.', { fixed: true }),
+        Q('const xs: number[] = [1, 2]; console.log(xs.length);', ['1', 'number[]'], 'The labels vanish when it runs. It is plain JavaScript by then.'),
       ]),
     ),
     unit('Typed functions',
@@ -39,7 +39,7 @@ const course = {
         T('Every input of a function needs a label. Without one, the checker stops you: it cannot tell what is coming.', 'function dbl(n: number) { return n * 2; } console.log(dbl(2));'),
         T('Calls are checked too: the right kinds, and the right number of them.', 'function add(a: number, b: number) { return a + b; } console.log(add(1, 2));'),
         RG('dbl', [[[2], 4], [[5], 10]], 'function dbl(n: ___) { return n * 2; }', ['number'], 'Label the input.', 'Multiplying needs a number.', ['string', 'boolean']),
-        R('add', [[[1, 2], 3], [[4, 4], 8]], 'function add(a: number, b: number) { return a + b; }', 'Make add(a, b) with both inputs labelled.', 'With no label the checker stops it, however right the sum is.', ['string']),
+        R('add', [[[1, 2], 3], [[4, 4], 8]], 'function add(a: number, b: number) { return a + b; }', 'Make add(a, b) with both inputs labelled.', 'With no label the checker stops it, however right the sum is.', ['string'], { chunks: ['return a + b;'] }),
         C('function f(x: number) { return x; } f("a"); f(1);', 'f wants a number, and got text.'),
         C('function f(a: number, b: number) { return a + b; } f(1, 2); f(1);', 'It takes two and got one.'),
         C('function f(w: string) { return w.length; } f("a"); f("b");', 'Both calls fit.'),
@@ -53,7 +53,7 @@ const course = {
         C('function f(n: number): string { return n; } f(1);', 'It promised a string and handed back a number.'),
         C('function f(n: number): number { if (n > 0) { return 1; } } f(1);', 'If n is not above 0, nothing comes back, and it promised a number.'),
         C('const f = (n: number): number => n + 1; const s: string = f(1); console.log(s);', 'f hands back a number, which cannot go in a string.'),
-        R('inc', [[[1], 2], [[9], 10]], 'const inc = (n: number): number => n + 1;', 'Make inc as an arrow, with labels on the input and what comes back.', 'The label goes after the brackets, before the arrow.', ['string']),
+        R('inc', [[[1], 2], [[9], 10]], 'const inc = (n: number): number => n + 1;', 'Make inc as an arrow, with labels on the input and what comes back.', 'The label goes after the brackets, before the arrow.', ['string'], { chunks: ['const inc = (n:', '): number => n + 1;'] }),
         RG('hello', [[['Ada'], 'hi Ada']], 'function hello(w: string): string { ___ "hi " + w; }', ['return'], 'The label promises a string. What gets it there?', 'Without return, that promise is not kept.', ['console.log', 'let']),
       ]),
     ),
@@ -61,7 +61,7 @@ const course = {
       lesson('tsu-1', 'One or the other', [
         T('A | in a label means "either". An id might be a number or a string.', 'let id: number | string = 3; id = "a3"; console.log(id);'),
         T('Exact values can be labels too. Now only those will do, and a typo is caught.', 'let mood: "calm" | "busy" = "calm"; mood = "busy"; console.log(mood);'),
-        G('let id: number ___ string = "a"; console.log(id);', ['|'], 'Which mark means either?', '| between labels.', ['+', '&&'], { fixed: true }),
+        G('let id: number ___ string = "a"; console.log(id);', ['|'], 'Which mark means either?', '| between labels.', ['+', '&&']),
         C('let id: number | string = 1; id = "a"; id = true; console.log(id);', 'true is neither of the two.'),
         C('let m: "on" | "off" = "on"; m = "off"; console.log(m);', 'Both are on the list.'),
         C('let m: "on" | "off" = "on"; m = "of"; console.log(m);', 'A typo, caught before anything runs.'),
@@ -85,13 +85,13 @@ const course = {
       lesson('tsi-1', 'The shape of an object', [
         T('An interface names an object\'s shape: which parts, and what each holds. It runs as nothing at all.', `${Pet} const p: Pet = { name: "Moss", age: 3 }; console.log(p.name);`),
         T('The checker wants every part, no extras, and each of the right kind.', `${Pet} function hi(p: Pet): string { return "hi " + p.name; } console.log(hi({ name: "Ada", age: 9 }));`),
-        { type: 'gap', goal: 'print', given: Pet, code: 'const p: ___ = { name: "Moss", age: 3 }; console.log(p.age);', fill: ['Pet'], prompt: 'Which label gives the shape?', explain: 'The interface\'s name is the label.', decoys: ['string', 'Toy'], fixed: true },
+        { type: 'gap', goal: 'print', given: Pet, code: 'const p: ___ = { name: "Moss", age: 3 }; console.log(p.age);', fill: ['Pet'], prompt: 'Which label gives the shape?', explain: 'The interface\'s name is the label.', decoys: ['string', 'Toy'] },
         C(`${Pet} const p: Pet = { name: "a" }; console.log(p);`, 'age is missing.'),
         C(`${Pet} const p: Pet = { name: "a", age: 1, tail: 1 }; console.log(p);`, 'tail is not on the shape.'),
         C(`${Pet} const p: Pet = { name: "a", age: "1" }; console.log(p);`, 'age has to be a number.'),
         C(`${Pet} const p: Pet = { name: "a", age: 1 }; console.log(p.nmae);`, 'The checker catches typos in part names.'),
-        { type: 'gap', goal: 'print', given: Pet, code: 'const p: Pet = { name: ___, age: ___ }; console.log(p.name);', fill: ['"Ada"', '2'], prompt: 'Fill both parts so it fits the shape.', explain: 'Each part takes its own kind.', decoys: ['true'], fixed: true },
-        P('interface Hat { size: number; } const h: Hat = { size: 2 }; console.log(h.size);', 'Build an interface Hat with a number size, then make one and print it.', 'interface, a name, then the parts in curly brackets.', ['string']),
+        { type: 'gap', goal: 'print', given: Pet, code: 'const p: Pet = { name: ___, age: ___ }; console.log(p.name);', fill: ['"Ada"', '2'], prompt: 'Fill both parts so it fits the shape.', explain: 'Each part takes its own kind.', decoys: ['true'] },
+        P('interface Hat { size: number; } const h: Hat = { size: 2 }; console.log(h.size);', 'Build an interface Hat with a number size, then make one and print it.', 'interface, a name, then the parts in curly brackets.', ['string;'], { chunks: ['size:', 'number;', 'const h: Hat = { size: 2 };', 'console.log(h.size);'] }),
       ]),
       lesson('tsi-2', 'Optional parts and aliases', [
         T('A ? makes a part optional. Then it might be undefined, so check before using it.', `${Toy} const t: Toy = { name: "kite" }; console.log(t.name);`),
@@ -99,10 +99,10 @@ const course = {
         C(`${Toy} const t: Toy = { name: "a" }; console.log(t.name);`, 'price is optional, so leaving it out is fine.'),
         C(`${Toy} function f(t: Toy): number { return t.price + 1; } f({ name: "a" });`, 'price might be undefined, so check first.'),
         RG('cost', [[[{ name: 'a' }], 0], [[{ name: 'b', price: 4 }], 4]], `${Toy} function cost(t: Toy): number { if (t.price === ___) { return 0; } return t.price; }`, ['undefined'], 'What should be ruled out first?', 'Not every toy has a price. A hidden test leaves it out.', ['0', 'null']),
-        G('type Size = "s" | "l"; const a: ___ = "s"; console.log(a);', ['Size'], 'Use the short name.', 'A type alias is a label like any other.', ['string[]', 'number'], { chunks: ['string[]'], fixed: true }),
+        G('type Size = "s" | "l"; const a: ___ = "s"; console.log(a);', ['Size'], 'Use the short name.', 'A type alias is a label like any other.', ['string[]', 'number'], { chunks: ['string[]'] }),
         C('type Size = "s" | "l"; const a: Size = "m"; console.log(a);', 'm is not on the list.'),
         G('type Id = number ___ string; const i: Id = "a"; console.log(i);', ['|'], 'Finish the alias.', 'Either one will do.', ['&&', '+'], { fixed: true }),
-        R('nameOf', [[[{ name: 'a' }], 'a']], 'interface T { name: string; } function nameOf(x: T): string { return x.name; }', 'Build an interface T with a string name, and a function handing that back.', 'Now the checker knows x.name is a string.', ['number']),
+        R('nameOf', [[[{ name: 'a' }], 'a']], 'interface T { name: string; } function nameOf(x: T): string { return x.name; }', 'Build an interface T with a string name, and a function handing that back.', 'Now the checker knows x.name is a string.', ['number'], { chunks: ['name:', 'string;', 'function nameOf(x: T): string {', 'return x.name;'] }),
       ]),
     ),
     unit('Generics',
@@ -114,22 +114,22 @@ const course = {
         C('function first<T>(xs: T[]): T { return xs[0]; } const s: string = first(["a"]); console.log(s);', 'T was read as string, so all is well.'),
         C('function bad<T>(x: T): T { return 1; } bad("a");', 'T could be anything, so returning a number does not keep the promise.'),
         RG('wrap', [[[1], [1]], [['a'], ['a']]], 'function wrap<T>(x: T): T[] { return ___; }', ['[x]'], 'Hand back a list holding x.', 'T[] is a list of whatever T is.', ['x', '[]'], { chunks: ['[x]'] }),
-        G('function same<T>(x: T): T { return x; } console.log(same<___>(2));', ['number'], 'Say T yourself.', 'The label in < > must match the input.', ['string', 'boolean'], { fixed: true }),
+        G('function same<T>(x: T): T { return x; } console.log(same<___>(2));', ['number'], 'Say T yourself.', 'The label in < > must match the input.', ['string', 'boolean']),
       ]),
       lesson('tsg-2', 'Generic shapes', [
         T('An interface can have a T too. Box<number> is a box with a number in it.', 'interface Box<T> { value: T; } const b: Box<number> = { value: 1 }; console.log(b.value);'),
         T('Put it all together: a function taking a function, with labels throughout.', 'function each<T>(xs: T[], f: (x: T) => void): void { for (const x of xs) { f(x); } } each([1], (x) => { console.log(x); });'),
-        G('interface Box<T> { value: T; } const b: Box<___> = { value: "a" }; console.log(b.value);', ['string'], 'What does this box hold?', 'The label decides what value may be.', ['number', 'boolean'], { fixed: true }),
+        G('interface Box<T> { value: T; } const b: Box<___> = { value: "a" }; console.log(b.value);', ['string'], 'What does this box hold?', 'The label decides what value may be.', ['number', 'boolean']),
         C('interface Box<T> { value: T; } const b: Box<number> = { value: "a" }; console.log(b);', 'This box was told to hold a number.'),
         C('interface Box<T> { value: T; } const b: Box<string> = { value: "a" }; const n: number = b.value; console.log(n);', 'b.value is a string.'),
         RG('open', [[[{ value: 3 }], 3]], 'interface Box<T> { value: T; } function open<T>(b: Box<T>): ___ { return b.value; }', ['T'], 'What comes out?', 'Whatever the box holds.', ['Box<T>', 'void'], { chunks: ['Box<T>'] }),
         RG('run', [[[2], 3]], 'function apply(f: (n: number) => number, n: number): number { return f(n); } function run(n: number): number { return apply(___, n); }', ['(x) => x + 1'], 'Pass in an arrow that adds one.', 'Its input takes its label from what apply asks for.', ['x + 1', 'n'], { chunks: ['(x) => x + 1', 'x + 1'] }),
         C('const xs: number[] = [1, 2]; const ys: string[] = xs.map((x) => x + 1); console.log(ys);', 'map gives back a list of what the arrow returned: numbers.'),
-        Q('function pair<T>(a: T, b: T): T[] { return [a, b]; } console.log(pair("x", "y"));', ['x y', '["x"]'], 'All the labels have left by the time it runs.', { fixed: true }),
+        Q('function pair<T>(a: T, b: T): T[] { return [a, b]; } console.log(pair("x", "y"));', ['x y', '["x"]'], 'All the labels have left by the time it runs.'),
       ]),
     ),
   ],
 };
 
 course.units.forEach((u) => u.lessons.forEach((l) => { l.items = l.items.map((i) => ({ ...i, ts: true })); }));
-export default course;
+export default coarsened(course, AFTER_JS);

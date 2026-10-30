@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { grade, problem, vary } from '../src/code/items.js';
+import { checkOptions, chipsOf, grade, pretty, problem, tapsOf, vary } from '../src/code/items.js';
 // The shipped courses.
 import { tokenize } from '../src/code/interp.js';
 import { WALK_API, optionsOf, answerOf, startOf, trayOf, wayOf, limitOf, withOut } from '../src/code/items.js';
@@ -102,7 +102,7 @@ test('fresh versions keep working, on every item, across many seeds', () => {
 test('fresh versions are mostly new, and flipped maps turn their words too', () => {
   const marked = COURSES.flatMap(itemsOf).filter((i) => i.type !== 'teach');
   const changed = marked.filter((i) => vary(i, seeded(5)) !== i);
-  assert.ok(changed.length / marked.length > 0.5, `${changed.length} of ${marked.length}`);
+  assert.ok(changed.length / marked.length > 0.75, `${changed.length} of ${marked.length}`);
   const v = vary(itemsOf(javascript).find((i) => i.goal === 'walk' && /\bright\b/.test(i.prompt ?? '') && i.type === 'build'), seeded(3));
   assert.equal(problem(v), null);
 });
@@ -112,7 +112,10 @@ test('prose never names a number the code does not hold, so a fresh version cann
     if (item.type === 'teach' || item.fixed || item.goal !== 'print' && item.type !== 'predict' || item.asks) continue;
     const src = (item.type === 'predict' ? item.code : wayOf(item)) + (item.given ?? '');
     const held = new Set(tokenize(src).filter((t) => t.t === 'num').map((t) => String(t.v)));
-    for (const text of [item.prompt, item.explain]) for (const n of (text ?? '').match(/\b\d+\b/g) ?? []) assert.ok(held.has(n), `${item.id}: ${n} in "${text}"`);
+    for (const text of [item.prompt, item.explain]) {
+      for (const n of (text ?? '').match(/\b\d+\b/g) ?? []) assert.ok(held.has(n), `${item.id}: ${n} in "${text}"`);
+      if ([...held].some((n) => +n >= 2)) assert.doesNotMatch(text ?? '', /\b(two|three|four|five|six|seven|eight|nine|ten|twice)\b/i, item.id);
+    }
   }
 });
 
@@ -122,5 +125,28 @@ test('placement names real units, and every code course is on the Learning habit
     assert.equal(s.habit, 'learn');
     for (const [, unitTitle] of s.placement.options) assert.ok(s.units.some((u) => u.title === unitTitle), unitTitle);
     assert.ok(s.coach.hello.line);
+  }
+});
+
+test('no build takes more than 8 taps, except the first build of a construct, which spells out its syntax once', () => {
+  const builds = COURSES.flatMap(itemsOf).filter((i) => i.type === 'build');
+  const over = builds.filter((i) => tapsOf(i) > 8);
+  for (const i of over) {
+    assert.ok(i.learns?.length, `${i.id}: ${tapsOf(i)} taps with nothing new in it`);
+    assert.ok(tapsOf(i) <= 12, `${i.id}: ${tapsOf(i)} taps`);
+  }
+  assert.ok(over.length <= 6, over.map((i) => i.id).join());
+});
+
+test('a construct is single tokens only once: after its first build it is one chip', () => {
+  const fors = itemsOf(javascript).filter((i) => i.type === 'build' && /^for \(let/.test(i.way ?? ''));
+  assert.deepEqual(fors[0].learns, ['for']);
+  for (const i of fors.slice(1)) assert.ok(chipsOf(i.way, i.chunks).length <= 8, i.id);
+  assert.ok(chipsOf('console.log(1);', itemsOf(javascript).find((i) => i.id === 'jsv-1-4').chunks).includes('console.log('));
+});
+
+test('which-line questions offer every line, so the choices never hint', () => {
+  for (const item of itemsOf(typescript).filter((i) => i.asks === 'check')) {
+    assert.equal(checkOptions(item).length, pretty(item.code).split('\n').length + 1, item.id);
   }
 });
