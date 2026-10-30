@@ -145,11 +145,13 @@ function home(arrived = null, newly = []) {
       <button class="menu" aria-label="Your progress">⋯</button>
     </header>
     <main class="home">
+      <div class="rail">
       <button class="garden-link" aria-label="Your garden: ${g.plants.length} plant${g.plants.length === 1 ? '' : 's'}">${drawGarden(g, 'strip', newly.map((r) => r.id))}</button>
       <nav class="paths" aria-label="Show the path for">
         ${habits().filter((h) => !h.hidden).map(habitTab).join('')}
         <button class="path-tab add-tab" data-add aria-label="Add a habit">${esc(LOG_WORDS.addTab)}</button>
       </nav>
+      </div><div class="pane">
       ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick.name) : line('welcome'))}</p>` : ''}
       ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
         : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
@@ -160,6 +162,7 @@ function home(arrived = null, newly = []) {
           <h2>${esc(u.title)}</h2>
           <div class="trailhead">${trail(u.nodes)}<ol class="path">${u.nodes.map(node).join('')}</ol></div>
         </section>`).join('')}
+      </div>
     </main>
     <footer class="cta">
       ${dueChip}
