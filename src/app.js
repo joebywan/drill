@@ -6,6 +6,7 @@ import { emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { lumi } from './cast/lumi.js';
+import { checkpoint, echoes, fresh, warmUps } from './repeat.js';
 import { CALM_SOUNDS, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, setSound, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
@@ -333,7 +334,7 @@ function home(arrived = null, newly = []) {
     focusOn('.cta .next');
   });
   app.querySelector('[data-review]')?.addEventListener('click', () =>
-    run(null, reviewKeys.map((k) => ({ key: k, ...items.get(k) })), 'Review'));
+    run(null, reviewKeys.map((k) => ({ key: k, ...items.get(k), item: window.DRILL_PLAIN ? items.get(k).item : fresh(items.get(k).subject, items.get(k).item) })), 'Review'));
   for (const btn of app.querySelectorAll('[data-lesson]')) {
     btn.addEventListener('click', () => lesson(units.flatMap((u) => u.nodes).find((x) => x.id === btn.dataset.lesson)));
   }
@@ -348,8 +349,20 @@ function home(arrived = null, newly = []) {
 }
 
 /** Runs a path node's lesson; `timings` goes over the learner's own for this session only. */
-const lesson = (n, timings) => !window.DRILL_MET && meetsCoach(progress, n.subject) ? meetCoach(n, () => lesson(n, timings)) :
-  run(n.id, n.lesson.items.map((item) => ({ key: `${n.subject.id}:${item.id}`, ...items.get(`${n.subject.id}:${item.id}`) })), n.lesson.title, timings);
+const lesson = (n, timings) => !window.DRILL_PLAIN && meetsCoach(progress, n.subject) ? meetCoach(n, () => lesson(n, timings)) :
+  run(n.id, lessonQueue(n), n.lesson.title, timings);
+
+/** A session's items: a lesson with its warm-ups and echoes (repeat.js), or a checkpoint's mix. */
+function lessonQueue({ subject, lesson: l }) {
+  const entry = (item, source = item) => ({ ...items.get(`${subject.id}:${source.id}`), key: `${subject.id}:${source.id}`, item });
+  const own = l.items.map((item) => entry(item));
+  if (subject.kind !== 'learn' || window.DRILL_PLAIN) return own;
+  if (l.mix) return checkpoint(subject, l.items).map(({ item, source }) => entry(item, source));
+  const keys = own.map((e) => e.key);
+  const warm = warmUps(progress.cards, (k) => items.get(k)?.subject === subject, keys)
+    .map((k) => ({ ...items.get(k), key: k, item: fresh(subject, items.get(k).item), topic: 'Warm up' }));
+  return [...warm, ...own, ...echoes(subject, l.items).map(({ item, source }) => ({ ...entry(item, source), topic: 'Once more', echo: true }))];
+}
 
 /** A coach's moods on the path: a teacher answers kit.js's, a practice coach has its own. */
 const homePoses = ({ start }) => (['guide', 'sleepy'].includes(start)
@@ -813,8 +826,9 @@ function run(lessonId, queue, title, extra = null) {
       done: (correct, text = '', kept = null) => {
         // A practice item goes straight on: its own buttons were the Continue.
         if (practice) { if (text) did.push(text); if (kept) journal = kept; at++; return step(); }
-        if (correct !== null && !entry.retry) results.push({ key: entry.key, correct });
-        if (correct === false && !entry.retry) queue.push({ ...entry, retry: true });
+        // Only the first try schedules a card, and an echo is a second go at something just learned.
+        if (correct !== null && !entry.retry && !entry.echo) results.push({ key: entry.key, correct });
+        if (correct === false && !entry.retry && !entry.echo) queue.push({ ...entry, retry: true });
         at++;
         let kind = 'plain';
         if (correct === true) {

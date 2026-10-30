@@ -4,6 +4,9 @@ import forks from './data/forks.json' with { type: 'json' };
 import calmCourse from './data/calm.json' with { type: 'json' };
 import reflectCourse from './data/reflect.json' with { type: 'json' };
 import * as chess from './chess/exercise.js';
+import { vary as chessVary } from './chess/items.js';
+import { vary as codingVary } from './coding/program.js';
+import { withCheckpoint } from './repeat.js';
 import { rosa } from './cast/rosa.js';
 import { moss, NAME as MOSS } from './cast/moss.js';
 import * as calm from './calm/practice.js';
@@ -53,6 +56,7 @@ import { CODING_HEADLINES, CODING_LINES, HELLO } from './cast/lines.js';
  * question in the habit's own words (Focus: "How did it go?"),
  * and `demonstrates`, for a coach the learner copies, which is drawn large above their line.
  * A Learn coach's `lines` and `headlines` stand in for Rosa's LINES and HEADLINES (same kinds).
+ * `vary(item, random)`: a fresh version of an item for a repeat (see src/repeat.js).
  * `hello`, { line, expect, go }: a Learn coach's one-time introduction before the course's first lesson.
  * Sessions and both end screens read everything subject-specific from here.
  *
@@ -131,10 +135,14 @@ const forksUnit = {
   ...forks,
   lessons: [...forks.lessons, ...lichessForks.lessons.map((l) => ({ ...l, title: `Real games: ${l.title}` }))],
 };
+// Worth repeating as written until a course can make fresh versions: a kana, a method.
+const asWritten = (item) => item;
+
 export const subjects = [{
   ...chessCourse,
-  units: [...basics.units, forksUnit, ...chessCourse.units.filter((u) => u !== lichessForks)],
+  units: [...basics.units, forksUnit, ...chessCourse.units.filter((u) => u !== lichessForks)].map(withCheckpoint),
   mount: chess.mount,
+  vary: chessVary,
   habit: 'learn',
   kind: 'learn',
   coach: { draw: rosa, name: 'Rosa', start: 'think', hello: HELLO.rosa },
@@ -151,7 +159,9 @@ export const subjects = [{
 }, {
   // Maths for adults rusty at it: sums and pictures, answers worked out, played as src/quiz/ items.
   ...mathsCourse,
+  units: mathsCourse.units.map(withCheckpoint),
   mount: maths.mount,
+  vary: asWritten,
   habit: 'learn',
   kind: 'learn',
   coach: { draw: ada, name: ADA, start: 'think', lines: MATHS_LINES, headlines: MATHS_HEADLINES, hello: HELLO.ada },
@@ -167,6 +177,8 @@ export const subjects = [{
 }, {
   // Hiragana from zero, played with the generic tap-and-match items in src/quiz/.
   ...japaneseCourse,
+  units: japaneseCourse.units.map(withCheckpoint),
+  vary: asWritten,
   mount: (el, item, ctx) => quiz.mount(el, item, { ...ctx, lang: japaneseCourse.lang }),
   habit: 'learn',
   kind: 'learn',
@@ -182,7 +194,9 @@ export const subjects = [{
   },
 }, {
   ...codingCourse,
+  units: codingCourse.units.map(withCheckpoint),
   mount: coding.mount,
+  vary: codingVary,
   habit: 'learn',
   kind: 'learn',
   coach: { draw: fennel, name: FENNEL, start: 'think', lines: CODING_LINES, headlines: CODING_HEADLINES, hello: HELLO.fennel },

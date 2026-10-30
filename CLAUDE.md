@@ -289,6 +289,11 @@ after `npm ci` at the root. App id `com.joebywan.drill`, locked.
 - **Every shipped item passes `problem()` and has an explanation.** Tap and true/false answers
   are computed from the position, never stored.
 - **A missed item comes back once, at the end of the session.** Only the first try is scheduled.
+- **Sessions drill.** `src/repeat.js`: a lesson opens with up to 2 earlier cards (the closest to slipping), ends
+  with up to 3 of its own items again ("Once more", not rescheduled), and each unit ends in a Checkpoint mixing
+  it (`mix`). A subject's `vary(item, random)` makes a repeat fresh: Coding flips the map, Chess mirrors a stars
+  puzzle, and returning the item means "worth repeating as written" (Maths, Japanese), null means "don't" (a
+  real-game puzzle). The card key stays the original's. E2E flows set `window.DRILL_PLAIN` (`test/e2e/fixtures.js`).
 - **The streak forgives.** One missed day in any seven is forgiven automatically; a gap of up
   to three days (or a second miss that week) is repaired by a review. A lesson finished in a
   repairable gap leaves the streak waiting for that review. Rules in `progress.js`, tested with

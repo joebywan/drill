@@ -225,3 +225,23 @@ export function problem(item) {
     return e.message;
   }
 }
+
+const flipFile = (f) => String.fromCharCode(201 - f.charCodeAt(0)); // a <-> h
+const flipSquare = (sq) => flipFile(sq[0]) + sq[1];
+
+/** A chess text mirrored: its squares, its files, and which way a step goes. */
+const flipText = (text) => text?.replace(/\b([a-h])([1-8])\b/g, (_, f, r) => flipFile(f) + r)
+  .replace(/\b([a-h])-(file|pawn)\b/g, (_, f, w) => `${flipFile(f)}-${w}`)
+  .replace(/\b(right(?! next)|left)\b/gi, (w) => ({ right: 'left', left: 'right', Right: 'Left', Left: 'Right' })[w]);
+
+/**
+ * The Chess subject's `vary` (repeat.js): a stars puzzle mirrored left to right, its piece no longer
+ * introduced. A puzzle from a real game has no fresh version, and would just be remembered: null.
+ */
+export function vary(item) {
+  if (kind(item) !== 'stars') return null;
+  const [board, ...rest] = item.fen.split(' ');
+  const fen = [board.split('/').map((rank) => [...rank.replace(/\d/g, (n) => '.'.repeat(n))].reverse().join('').replace(/\.+/g, (m) => m.length)).join('/'), rest[0], '-', '-', ...rest.slice(3)].join(' ');
+  const { new: _new, demo: _demo, intro: _intro, ...plain } = item;
+  return { ...plain, fen, stars: item.stars.map(flipSquare), prompt: flipText(item.prompt), explain: flipText(item.explain) };
+}
