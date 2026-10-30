@@ -145,11 +145,33 @@ test('journal text is read only by the habit view and the file export, and nothi
   const touch = sources('src').filter((f) => /journal/.test(readFileSync(f, 'utf8'))).sort();
   // progress.js keeps the shape (migrate, writeJournal); reflect/practice.js writes it and is the
   // habit view's dayDetail; app.js only hands it from the routine to writeJournal.
-  assert.deepEqual(touch, ['src/app.js', 'src/progress.js', 'src/reflect/practice.js']);
+  // sync/merge.js merges two devices' journals; sync/sync.js seals the whole progress before it leaves.
+  assert.deepEqual(touch, ['src/app.js', 'src/progress.js', 'src/reflect/practice.js', 'src/sync/merge.js']);
   assert.doesNotMatch(readFileSync('src/app.js', 'utf8'), /progress\.journal|\.journal\b/, 'app.js never reads the journal itself');
   // The export is the whole progress object, journal included, saved to the learner's own file.
   assert.match(readFileSync('src/app.js', 'utf8'), /new Blob\(\[JSON\.stringify\(progress\)\]/);
-  for (const f of sources('src')) assert.doesNotMatch(readFileSync(f, 'utf8'), /\bfetch\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource/, f);
+  // Only opt-in sync talks to a server, and it sends progress sealed (AES-GCM) and a card of presets and numbers.
+  for (const f of sources('src').filter((f) => f !== 'src/sync/sync.js')) assert.doesNotMatch(readFileSync(f, 'utf8'), /\bfetch\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource/, f);
+  const sync = readFileSync('src/sync/sync.js', 'utf8');
+  assert.equal(sync.match(/\bfetch\(/g).length, 1, 'one fetch, in call()');
+  assert.match(sync, /blob: await seal\(key, merged\)/, 'progress leaves sealed');
+});
+
+// Sync and friends: preset names, animals and cheers only, linted like the cast; the screens' words too.
+import { CHEERS, WORDS, ANIMALS } from '../src/sync/presets.js';
+test('friends see presets only, and the sync screens never nag, hurry or judge', () => {
+  const ui = readFileSync('src/sync/ui.js', 'utf8');
+  // Every string and template in the screens, with tags and ${…} taken out: what the learner reads.
+  const said = [...ui.matchAll(/`([^`]*)`|'([^'\n]*)'|"([^"\n]*)"/g)]
+    .map((m) => (m[1] ?? m[2] ?? m[3]).replace(/\$\{[^}]*\}?/g, ' ').replace(/<[^>]*>/g, ' ').trim()).filter((t) => /[a-z] [a-z]/i.test(t));
+  assert.ok(said.length > 10);
+  for (const text of [...Object.values(CHEERS), ...WORDS, ...Object.values(ANIMALS).map(([, n]) => n), ...said]) {
+    assert.doesNotMatch(text, ABILITY, text);
+    assert.doesNotMatch(text, LOSS, text);
+    assert.doesNotMatch(text, /\b(hurry|now or never|don'?t miss|last chance|before it'?s too late)\b/i, text);
+  }
+  assert.doesNotMatch(ui, /<textarea|contenteditable/, 'no free text goes to friends');
+  assert.ok(!Object.values(ANIMALS).some(([, n]) => /owl/i.test(n)), 'no owls');
 });
 
 // The screen break: no health claims, no urgency, no guilt, and no screen-time shaming.

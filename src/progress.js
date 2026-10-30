@@ -274,7 +274,7 @@ export function noteFeel(progress, habit, feel) {
   return { ...progress, log };
 }
 
-function nextStreak(streak, date, review) {
+export function nextStreak(streak, date, review) {
   if (streak.last === date) return streak;
   const g = gap(streak, date);
   if (g === 'repairable' && !review) return streak;
