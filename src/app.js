@@ -5,9 +5,8 @@ import { emptyProgress, nextUp, unitsOf, finishPractice, logToday, track, unlogT
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { lumi } from './cast/lumi.js';
-import { reducedMotion } from './cast/kit.js';
-import { CALM_SOUNDS, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
-import { buzz, calmPref, chime, move, play, setPref, setSound, soundOn } from './feel.js';
+import { CALM_SOUNDS, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer } from './cast/lines.js';
+import { buzz, calmPref, chime, cue, flourish, move, petals, play, setPref, setSound, soundOn } from './feel.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
 import { TIMINGS, TIMING_WORDS, pathTimings, setTiming, spread, timed } from './practice/timings.js';
@@ -74,6 +73,20 @@ function showHabit(id) {
   try { localStorage.setItem(HABIT_KEY, id); } catch { /* lasts the visit */ }
 }
 
+// The courses (Learn subjects) share the Learning tab; it shows one course's path at a time,
+// remembered like the habit shown.
+const COURSE_KEY = 'drill.course';
+const courses = subjects.filter((s) => s.kind === 'learn');
+let courseShown = (() => {
+  let c = null;
+  try { c = localStorage.getItem(COURSE_KEY); } catch { /* private mode */ }
+  return courses.find((s) => s.id === c) || courses[0];
+})();
+function showCourse(id) {
+  courseShown = courses.find((s) => s.id === id) || courses[0];
+  try { localStorage.setItem(COURSE_KEY, courseShown.id); } catch { /* lasts the visit */ }
+}
+
 const ROW = 112; // px from one node to the next; the drawn path assumes it
 const SWAY = 70; // px a node sits off centre at most
 
@@ -82,20 +95,6 @@ const SWAY = 70; // px a node sits off centre at most
  * shows a tick; the next one a gold "!" with Lumi beside it; locked ones a grey "!". Reviews due
  * and one Continue button sit at the bottom. Today's light colours the streak chip.
  */
-// The course whose path the Learning tab shows, when there is more than one. Remembered like the habit.
-const COURSE_KEY = 'drill.course';
-let courseShown = null;
-try { courseShown = localStorage.getItem(COURSE_KEY); } catch { /* private mode */ }
-function showCourse(id) {
-  courseShown = id;
-  try { localStorage.setItem(COURSE_KEY, id); } catch { /* lasts the visit */ }
-}
-/** The subject home shows for a habit: the chosen course, else the first one picked, else the first. */
-function subjectFor(habit) {
-  const list = subjects.filter((s) => s.habit === habit);
-  return list.find((s) => s.id === courseShown) || (progress.picked || []).map((id) => list.find((s) => s.id === id)).find(Boolean) || list[0];
-}
-
 function home(arrived = null, newly = []) {
   stopHome();
   if (!habitOf(habitShown) || habitOf(habitShown).hidden) showHabit(HABITS[0].id);
@@ -103,20 +102,21 @@ function home(arrived = null, newly = []) {
   // A self-reported habit has no path: one big button instead (logPanel).
   const logged = shownHabit.kind === 'log' && light(progress, new Date(), habitShown) === 'bright';
   const learning = habitShown === 'learn';
-  const due = learning ? dueKeys(progress).filter((k) => items.has(k)) : [];
+  // Learning shows one course at a time, and reviews that course's cards, so its coach runs them.
+  const shownSubjects = learning ? [courseShown] : subjects.filter((s) => s.habit === habitShown);
+  const ofCourse = (k) => items.get(k)?.subject === courseShown;
+  const due = learning ? dueKeys(progress).filter(ofCourse) : [];
   // A repair needs a review even when nothing is due yet: then the soonest cards stand in.
   const repair = learning && needsRepair(progress);
-  const reviewKeys = (due.length ? due : repair ? soonestKeys(progress).filter((k) => items.has(k)) : []).slice(0, REVIEW_SIZE);
-  const shownSubject = subjectFor(habitShown);
-  const courses = subjects.filter((s) => s.habit === habitShown);
-  const units = shownSubject ? unitsOf(progress, shownSubject) : [];
+  const reviewKeys = (due.length ? due : repair ? soonestKeys(progress).filter(ofCourse) : []).slice(0, REVIEW_SIZE);
+  const units = shownSubjects.flatMap((s) => unitsOf(progress, s));
   // A subject's optional placement question, offered by its path until answered or dismissed.
-  const offer = shownSubject && offersPlacement(progress, shownSubject) ? shownSubject : null;
+  const offer = shownSubjects.find((s) => offersPlacement(progress, s));
   const brandNew = !progress.log.length && !Object.keys(progress.done).length;
   // After the intro, Lumi's welcome names the first thing picked.
-  const firstPick = brandNew && (subjects.find((s) => s.id === progress.picked?.[0])?.title ?? habitOf(progress.picked?.[0])?.name);
+  const firstPick = brandNew && habitOf(progress.picked?.[0]);
   // The next lesson; a finished path whose subject has `again` ("Reflect today") keeps one of its lessons one tap away.
-  const again = shownSubject?.again;
+  const again = shownSubjects[0]?.again;
   const { current, repeat } = nextUp(units, again);
   const minutes = `about ${Math.max(1, Math.round(reviewKeys.length * 0.4))} min`;
   const dueChip = !reviewKeys.length ? ''
@@ -137,17 +137,21 @@ function home(arrived = null, newly = []) {
   };
 
   // The line through every node centre; the stretch up to the last finished node is drawn in green.
+  // Just after a lesson, its stretch to the next node is its own path (.fresh), which walkTo() fills.
   const trail = (nodes) => {
     const pts = nodes.map((_, i) => [xAt(i), i * ROW + 32]);
-    const d = (to) => pts.slice(0, to).map(([x, y], i) => {
-      if (!i) return `M${x} ${y}`;
+    const d = (to, from = 0) => pts.slice(from, to).map(([x, y], k) => {
+      const i = from + k;
+      if (!k) return `M${x} ${y}`;
       const [px, py] = pts[i - 1];
       return `C${px} ${py + ROW / 2} ${x} ${y - ROW / 2} ${x} ${y}`;
     }).join(' ');
-    const walked = nodes.filter((n) => n.state === 'done').length + 1;
+    const walked = Math.min(nodes.filter((n) => n.state === 'done').length + 1, pts.length);
+    const a = nodes.findIndex((n) => n.id === arrived);
+    const fresh = a >= 0 && nodes[a + 1] === current && walked === a + 2;
     const h = (nodes.length - 1) * ROW + 64;
     return `<svg class="trail" viewBox="-160 0 320 ${h}" width="320" height="${h}" aria-hidden="true">
-      <path d="${d(pts.length)}" class="ahead"/>${walked > 1 ? `<path d="${d(Math.min(walked, pts.length))}" class="walked"/>` : ''}
+      <path d="${d(pts.length)}" class="ahead"/>${walked > 1 ? `<path d="${d(fresh ? a + 1 : walked)}" class="walked"/>` : ''}${fresh ? `<path d="${d(a + 2, a)}" class="walked fresh"/>` : ''}
     </svg>`;
   };
 
@@ -166,10 +170,11 @@ function home(arrived = null, newly = []) {
         <button class="path-tab add-tab" data-add aria-label="Add a habit">${esc(LOG_WORDS.addTab)}</button>
       </nav>
       </div><div class="pane">
-      ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : ''}
+      ${learning && courses.length > 1 ? `<nav class="courses" aria-label="Course">${courses.map((s) =>
+        `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === courseShown}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
+      ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick.name) : line('welcome'))}</p>` : ''}
       ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
         : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
-      ${courses.length > 1 ? `<nav class="courses" aria-label="Course">${courses.map((s) => `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === shownSubject}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
       ${offer ? `<p class="offer"><button data-place>${esc(offer.placement.offer)}</button><button class="dismiss" data-dismiss aria-label="Dismiss">×</button></p>` : ''}
       ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly) : ''}
       ${units.map((u) => `
@@ -232,10 +237,10 @@ function home(arrived = null, newly = []) {
   for (const b of app.querySelectorAll('[data-path]')) {
     b.addEventListener('click', () => { showHabit(b.dataset.path); home(); focusOn(`[data-path="${b.dataset.path}"]`); });
   }
+  app.querySelector('[data-add]').addEventListener('click', addHabit);
   for (const b of app.querySelectorAll('[data-course]')) {
     b.addEventListener('click', () => { showCourse(b.dataset.course); home(); focusOn(`[data-course="${b.dataset.course}"]`); });
   }
-  app.querySelector('[data-add]').addEventListener('click', addHabit);
   app.querySelector('[data-log]')?.addEventListener('click', () => {
     progress = logToday(progress, habitShown, shownHabit.title);
     let got;
@@ -544,9 +549,17 @@ function editHabit(h) {
 
 /**
  * Lumi hops along the path from the lesson just finished to the next one, and that lesson's tick
- * pops in: the learner sees themselves move forward. Skipped under reduced motion (null).
+ * pops in: the learner sees themselves move forward. The green line fills ahead of Lumi (the
+ * trail's .fresh stretch) and the next node pops open with a chime as Lumi lands. Skipped under
+ * reduced motion (null): the line is simply drawn.
  */
 function walkTo(guide, fromNode, toNode) {
+  const fresh = app.querySelector('.trail .fresh');
+  if (fresh) {
+    const len = fresh.getTotalLength();
+    fresh.style.strokeDasharray = len;
+    move(fresh, [{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration: 1300, delay: 350, easing: 'ease-in-out', fill: 'backwards' });
+  }
   const a = fromNode.getBoundingClientRect();
   const b = toNode.getBoundingClientRect();
   const dx = a.left - b.left;
@@ -559,7 +572,9 @@ function walkTo(guide, fromNode, toNode) {
     const lift = i % 2 ? -14 : 0; // up on the odd frames: a hop between each landing
     frames.push({ transform: `translate(${dx * (1 - k)}px, ${dy * (1 - k) + lift}px)` });
   }
-  return move(guide, frames, { duration: 1300, delay: 350, easing: 'ease-in-out', fill: 'backwards' });
+  const walk = move(guide, frames, { duration: 1300, delay: 350, easing: 'ease-in-out', fill: 'backwards' });
+  walk?.finished.then(() => { flourish(toNode, 'pop'); cue('unlock'); }, () => {});
+  return walk;
 }
 
 /**
@@ -664,21 +679,23 @@ function run(lessonId, queue, title) {
           if (kind !== 'correct') flare(`${streak} in a row`);
           sessionCoach.set('correct');
           sessionCoach.hop();
-          play(kind === 'correct' ? 'right' : 'run');
-          buzz('right');
+          cue(kind === 'correct' ? 'right' : 'run');
         } else if (correct === false) {
           streak = 0;
           kind = 'wrong';
           sessionCoach.set('wrong');
           sessionCoach.sway();
-          play('wrong');
-          buzz('wrong');
+          cue('wrong');
         }
         meter();
         shine();
         foot.className = `foot show ${correct === null ? 'plain' : correct ? 'right' : 'wrong'}`;
         foot.querySelector('strong').textContent = kind === 'plain' ? '' : line(kind, Math.random(), who.lines);
         foot.querySelector('p').textContent = text;
+        // The answer tapped (or, on a board, the verdict) pops when right and gives a small shake when
+        // not, unless the item already gave it its own (a quiz's cheer).
+        const hit = correct === null ? null : stage.querySelector(correct ? '.choice.right' : '.choice.wrong') || foot.querySelector('strong');
+        if (hit && !hit.getAnimations().length) flourish(hit, correct ? 'pop' : 'shake');
         // Focus moves to Continue, which reads out the verdict (a teach card: Rosa's line). The
         // banner is fixed over the bottom, so nothing on the page moves.
         next.setAttribute('aria-describedby', correct === null ? 'said' : 'verdict');
@@ -686,7 +703,7 @@ function run(lessonId, queue, title) {
       },
     });
     // A question starts on its board (or its answers), not back at the top of the page.
-    if (!foot.classList.contains('show')) stage.querySelector('[autofocus], svg[tabindex], .choice, .tile, .numline, .practice-go')?.focus();
+    if (!foot.classList.contains('show')) stage.querySelector('[autofocus], svg[tabindex], .choice, .numline, .practice-go')?.focus();
   };
   next.addEventListener('click', step);
 
@@ -774,7 +791,7 @@ function run(lessonId, queue, title) {
           <p class="cheer">${esc(line('lumi'))}</p>
         </div>
         <p class="kicker">${esc(lessonId ? title : 'Review done')}</p>
-        <h1>${esc(headline(kind, Math.random(), who.headlines))}</h1>
+        <h1>${esc(line(kind, Math.random(), who.headlines || HEADLINES))}</h1>
         <p class="said">${esc(line(kind, Math.random(), who.lines))}</p>
         <div class="chips">
           ${percent === null ? '' : chip('acc', accuracyLabel(percent), `${percent}%`)}
@@ -814,10 +831,10 @@ function run(lessonId, queue, title) {
     };
     if (leanIn) leanIn.finished.then(settle, () => {}); else settle();
     focusOn('h1');
-    play('done');
+    cue('done');
     arrive(newly, 900);
-    buzz('done');
-    const stopParty = perfect ? confetti() : () => {};
+    // Petals and leaves for every finished lesson, and for a review right all through.
+    const stopParty = lessonId || perfect ? petals() : () => {};
     app.querySelector('.summary').addEventListener('click', stopParty);
     app.querySelector('.next').addEventListener('click', () => {
       left = true;
@@ -829,30 +846,6 @@ function run(lessonId, queue, title) {
   };
 
   step();
-}
-
-/**
- * Confetti for a lesson right first time all through. About 2.6 s, skipped by a tap (the returned
- * function) and by reduced motion.
- */
-function confetti() {
-  if (reducedMotion()) return () => {};
-  const layer = document.createElement('div');
-  layer.className = 'confetti';
-  const colours = ['#F5A524', '#4caf73', '#6E82A8', '#F28C8C', '#FFD978'];
-  for (let i = 0; i < 40; i++) {
-    const bit = document.createElement('i');
-    bit.style.left = `${Math.random() * 100}%`;
-    bit.style.background = colours[i % colours.length];
-    layer.append(bit);
-    bit.animate([
-      { transform: 'translateY(0) rotate(0)' },
-      { transform: `translateY(${window.innerHeight + 40}px) rotate(${360 + Math.random() * 360}deg)` },
-    ], { duration: 1800 + Math.random() * 800, delay: Math.random() * 300, easing: 'cubic-bezier(.3,.6,.5,1)', fill: 'forwards' });
-  }
-  document.body.append(layer);
-  const timer = setTimeout(() => layer.remove(), 2600);
-  return () => { clearTimeout(timer); layer.remove(); };
 }
 
 /** A subject's optional placement question (`subject.placement`), offered on home by its path. */
@@ -998,11 +991,11 @@ function intro() {
  * opening its own list. Picks are kept in the order tapped; home shows them first (ordered()).
  */
 function want(change = false) {
-  const courses = subjects.filter((s) => s.kind === 'learn');
   const list = [...HABITS.filter((h) => !courses.some((s) => s.habit === h.id)), ...PRESETS];
+  // Courses are picked by course id; choose() turns them into the Learning tab.
   const branch = { learn: courses.map((s) => s.id), habits: list.map((h) => h.id) };
-  // Picks from before there were two courses say 'learn', which meant chess.
-  let picked = (progress.picked || []).map((id) => (id === 'learn' ? 'chess' : id)).filter((id) => branch.learn.includes(id) || branch.habits.includes(id));
+  let picked = (progress.picked || []).map((id) => (id === courses[0].habit ? courseShown.id : id))
+    .filter((id) => branch.learn.includes(id) || branch.habits.includes(id));
   const on = (id) => picked.includes(id);
   const toggle = (attr, id, pressed, label) => `<button class="choice" ${attr}="${esc(id)}" aria-pressed="${pressed}">${label}</button>`;
   const open = (b) => branch[b].some(on);
@@ -1056,12 +1049,13 @@ function want(change = false) {
  * switched on the way + Habit does (track). [] is a skip: today's default home.
  */
 function choose(picked) {
+  const course = picked.find((id) => courses.some((s) => s.id === id));
+  if (course) showCourse(course);
+  picked = [...new Set(picked.map((id) => (courses.some((s) => s.id === id) ? courses[0].habit : id)))];
   for (const id of picked) if (PRESETS.some((p) => p.id === id)) progress = track(progress, { id, hidden: false });
   progress = { ...progress, picked };
   save();
-  const course = subjects.find((s) => picked.includes(s.id));
-  if (course) showCourse(course.id);
-  if (picked.length) showHabit(subjects.find((s) => s.id === picked[0])?.habit ?? picked[0]);
+  if (picked.length) showHabit(picked[0]);
   scrollTo(0, 0); // home starts at its top, not where the list was scrolled to
   home();
   focusOn(picked.length ? '.cta .next' : 'h1');

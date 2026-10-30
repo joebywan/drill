@@ -30,11 +30,13 @@
   import { NAME, MOODS as CALM, moss, breathe } from '../src/cast/moss.js';
   import * as clover from '../src/cast/clover.js';
   import * as mira from '../src/cast/mira.js';
+  import { kaede } from '../src/cast/kaede.js';
   import { NAME as ADA, ada } from '../src/cast/ada.js';
 
   const cast = [
     ['Rosa', MOODS.map((m) => [m, rosa(m)])],
     ['Lumi', MOODS.map((m) => [m, lumi(m)])],
+    ['Kaede', MOODS.map((m) => [m, kaede(m)])],
     [ADA, MOODS.map((m) => [m, ada(m)])],
     [NAME, CALM.map((m) => [m, moss(m)])],
     ...[[clover, clover.clover], [mira, mira.mira]].flatMap(([c, draw]) => [

@@ -76,7 +76,7 @@ html { scroll-padding-bottom: 160px; }
 .node.here { background: #F5A524; color: #1E1B2E; box-shadow: 0 5px 0 #B9741A; animation: beckon 1.8s ease-in-out infinite; }
 .node.locked { background: var(--line); color: var(--locked); box-shadow: 0 5px 0 var(--locked); cursor: default; }
 .node:active:not(:disabled) { transform: translateY(4px); box-shadow: none; }
-@keyframes beckon { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes beckon { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-5px) scale(1.05); } } /* the next node gently bobs */
 @media (prefers-reduced-motion: reduce) { .node.here { animation: none; } }
 .path .label { margin-top: 10px; max-width: 120px; padding: 1px 6px; border-radius: 6px; background: var(--bg); font-size: .8rem; color: var(--muted); text-align: center; }
 .path li:has(.here) .label { color: var(--text); font-weight: 700; }
@@ -158,8 +158,10 @@ html { scroll-padding-bottom: 160px; }
 .kicker { margin: 8px 0 0; font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
 .summary h1 { margin: 2px 0 4px; }
 .said { color: var(--muted); margin: 0 0 20px; }
-.confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
-.confetti i { position: absolute; top: -14px; width: 8px; height: 12px; border-radius: 2px; }
+/* ---- Feel: petal-and-leaf confetti (petals() in feel.js) ---- */
+.petals { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
+.petals i { position: absolute; top: -16px; width: 11px; height: 9px; border-radius: 60% 60% 50% 50% / 80% 80% 30% 30%; opacity: .9; }
+.petals i.leaf { width: 9px; height: 14px; border-radius: 0 100% 0 100%; }
 
 /* ---- Board skin: Drill's board, pieces (assets/pieces/drill.svg) and markers ---- */
 :root {
@@ -584,49 +586,59 @@ body:has(main.night) {
 .night .orb .count { color: #2a1d10; }
 .chip.winddown { --c: var(--chip-winddown); flex: 0 1 180px; margin: 0 auto; }
 
-/* Maths and the general play items (src/play/mount.js): a picture and the sum on stage, the answer
-   (choices, tiles, a number line, pairs) in the thumb zone. Ada's violet marks what is shaded. */
-:root { --maths: #6f4fc4; --maths-soft: #ece6fb; }
+/* --- Courses on the Learning tab, and the tap-and-match quiz items (src/quiz/) --- */
+.courses { display: flex; gap: 8px; justify-content: center; margin: 4px 0 8px; }
+.course { padding: 6px 14px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); font-weight: 600; font-size: .9rem; }
+.course[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+/* Japanese uses the system's own font for it (Noto Sans JP on Android): nothing is downloaded. */
+:lang(ja) { font-family: system-ui, "Noto Sans JP", "Noto Sans CJK JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; }
+.quiz .card {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 190px; padding: 16px; background: var(--card); border: 2px solid var(--line); border-radius: 18px; text-align: center;
+}
+/* One glyph is huge; a word shrinks to fit the card. */
+.quiz .glyph { margin: 0; font-size: min(110px, calc(250px / var(--len, 1))); line-height: 1.15; font-weight: 500; }
+.quiz .reading { margin: 0; font-size: 1.3rem; font-weight: 700; color: var(--muted); }
+.quiz .meaning { margin: 0; font-size: 1.1rem; font-weight: 700; }
+.quiz .slots { display: flex; gap: 8px; margin: 8px 0 0; }
+.quiz .slot {
+  display: grid; place-items: center; width: 64px; height: 72px; font-size: 44px;
+  border-bottom: 4px solid var(--line); border-radius: 6px;
+}
+.quiz .slot:not(:empty) { border-color: var(--accent); }
+.quiz .slot.shown { border-color: var(--wrong); color: var(--muted); }
+.quiz .hear { position: absolute; top: 8px; right: 8px; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--line); background: var(--bg); font-size: 1.3rem; }
+.quiz .hear.big { position: static; width: 112px; height: 112px; font-size: 3rem; }
+.quiz .choices .choice { font-size: 1.6rem; padding: 14px 6px; min-height: 64px; }
+.quiz .quiz-pairs { display: grid; grid-template-columns: 1fr 1fr; }
+.quiz .quiz-pairs .choice { font-size: 1.4rem; padding: 10px 6px; min-height: 56px; }
+.quiz .quiz-build { flex-wrap: wrap; justify-content: center; }
+.quiz .quiz-build .choice { flex: 0 0 calc(25% - 6px); }
+.quiz .choice[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+.quiz .choice.used { visibility: hidden; }
+.quiz-star { position: absolute; top: 12px; left: calc(50% - 12px); font-size: 28px; font-style: normal; color: #F5A524; pointer-events: none; }
+
+/* --- Maths (src/maths/): its pictures and sums on the quiz card, and the quiz number line ---
+   Ada's violet marks what is shaded. */
+:root { --maths: #6f4fc4; }
 @media (prefers-color-scheme: dark) {
-  :root { --maths: #b49cf5; --maths-soft: #2b2342; }
+  :root { --maths: #b49cf5; }
 }
-.courses { display: flex; justify-content: center; gap: 8px; margin: 10px 0 0; }
-.course {
-  min-height: 40px; padding: 6px 16px; border-radius: 999px; border: 2px solid var(--line); background: none;
-  color: var(--muted); font-weight: 600;
-}
-.course[aria-pressed="true"] { border-color: var(--accent); color: var(--text); }
-.sum { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 8px; }
-.pic { display: block; width: 100%; max-width: 320px; }
-.pic.grid { max-width: 210px; }
+.quiz.maths .glyph, .quiz.maths .meaning { font-size: 2.4rem; font-weight: 800; }
+.quiz.maths .slots { font-size: 2rem; font-weight: 800; }
+.pic { display: block; width: 100%; max-width: 300px; }
+.pic + .pic { margin-top: 6px; }
+.pic.grid { max-width: 200px; }
 .pic .cell { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
 .pic .cell.on { fill: var(--maths); }
 .pic .dot { fill: var(--maths); }
-.sum-text { margin: 0; font-size: 2.4rem; font-weight: 800; letter-spacing: .02em; text-align: center; }
-.built { display: flex; gap: 6px; margin: 0; font-size: 2.4rem; font-weight: 800; }
-.sum-text + .built::before { content: '='; margin-right: 6px; color: var(--muted); }
-.built i {
-  display: inline-block; min-width: 1.1em; border-bottom: 4px solid var(--line); font-style: normal; text-align: center;
-}
-.built i.shown { color: var(--muted); }
-.built.right i { color: var(--accent); border-color: var(--accent); }
-.choices.tiles, .choices.pairs { flex-wrap: wrap; justify-content: center; }
-.tile {
-  flex: 0 0 calc(25% - 6px); min-height: 56px; border-radius: 12px; border: 2px solid var(--line); background: var(--card);
-  box-shadow: 0 4px 0 var(--line); font-size: 1.4rem; font-weight: 800; color: var(--text);
-}
-.pairs .tile { flex-basis: calc(33.3% - 6px); }
-.tile[aria-pressed="true"] { border-color: var(--maths); background: var(--maths-soft); transform: translateY(2px); box-shadow: 0 2px 0 var(--maths); }
-.tile.used, .tile.gone { opacity: .3; box-shadow: none; }
-.tile.gone { border-color: var(--accent); }
-.tile.wrong { border-color: var(--wrong); color: var(--wrong); }
-.numline { align-self: stretch; position: relative; min-height: 96px; margin-top: 24px; padding: 30px 16px 0; touch-action: none; cursor: pointer; }
+.numline { align-self: stretch; position: relative; min-height: 96px; margin-top: 16px; padding: 30px 16px 0; touch-action: none; cursor: pointer; }
 .numline:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 12px; }
 .track { position: relative; height: 6px; border-radius: 3px; background: var(--line); }
-.track i { position: absolute; top: -9px; width: 3px; height: 24px; border-radius: 2px; background: var(--muted); transform: translateX(-50%); }
+.track i { position: absolute; top: -9px; width: 3px; height: 24px; margin-left: -1.5px; border-radius: 2px; background: var(--muted); }
 .marker {
-  position: absolute; top: 3px; width: 32px; height: 32px; border-radius: 50%; background: var(--maths);
-  border: 3px solid var(--card); box-shadow: 0 2px 6px rgba(0, 0, 0, .3); transform: translate(-50%, -50%);
+  position: absolute; top: -13px; width: 32px; height: 32px; margin-left: -16px; border-radius: 50%; background: var(--maths);
+  border: 3px solid var(--card); box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
 }
 .marker.right, .marker.answer { background: var(--accent); }
 .marker.wrong { background: var(--wrong); }

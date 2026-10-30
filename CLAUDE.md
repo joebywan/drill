@@ -1,7 +1,7 @@
 # Drill — working notes for Claude
 
 A Duolingo-style learning app: lessons that teach, a cast of characters, a streak, review.
-Static page, vanilla ES modules, no build step, no server. Chess and maths are live; Japanese,
+Static page, vanilla ES modules, no build step, no server. Chess, maths and Japanese are live;
 JavaScript, TypeScript and TS test-writing are planned.
 
 **Read the cast brief before building anything:** https://claude.ai/artifact/Td5spDrFgAah2w4PtBc2pn
@@ -25,7 +25,7 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>] [--avd <name>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (learn, maths, calm, move, break, reflect, scan, garden, log, winddown); a new one is
+No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, scan, garden, log, winddown); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
@@ -61,19 +61,26 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   other side never moves, and kings are optional (chess.js `skipValidation`). A piece's first
   puzzle (`new`, `demo`, `intro`) slides it along a path before input opens. `problem()` proves
   each one solvable in its budget by breadth-first search. Picked-up pieces show legal-move dots.
-- `src/play/` — item types any subject can play without a board, judged on every tap: teach, pick
-  (one of a few), tiles (build the answer a tile at a time), line (drag a marker on a number line,
-  snapped to its ticks) and pairs (tap two that go together until none are left). `items.js` is pure;
-  `mount.js` plays one with the subject's `rules` (answer, right, together, show, explain), and its
-  `choices()` is also chess's true/false buttons. A new subject's answer type goes here, not in a fork.
-- `src/maths/` — the Maths course (`src/data/maths.json`, three units for adults rusty at maths:
-  mental maths, percentages, fractions you can see). `items.js` works every answer out from the
-  sum or the picture (`value()` reads "15% of $60"), so 2/4 is right for 1/2; `problem()` checks every
-  shipped item. `exercise.js` draws the pictures (ten frame, bar, 100 grid) and mounts src/play items.
-  Its coach is Ada, an octopus (`src/cast/ada.js`, posed with `rig()`), with her own `MATHS_LINES`
-  and `MATHS_HEADLINES`. Maths shares the Learning habit with chess (one streak, plant and review
-  pile); home shows one course's path at a time with a Chess / Maths switcher (`drill.course`), and
-  the intro picks courses by subject id (`ordered()` maps a course to its habit).
+- **Courses.** Several Learn subjects share the Learning habit; home shows one course's path at a
+  time (`courseShown`, the switcher under the tabs, remembered in `drill.course`), and reviews that
+  course's cards so its coach runs them. The intro picks courses by course id; `choose()` turns them
+  into the Learning tab. A Learn coach's `lines`/`headlines` replace Rosa's in the runner and end screen.
+- `src/quiz/` — course-free tap-and-match items any course can use: `teach` (a big glyph or word),
+  `pick` (one tap; `listen` plays the sound instead of showing it when there is a voice), `pairs`
+  (match two columns), `build` (tap tiles in order). `items.js` is pure (`problem()`), `exercise.js`
+  mounts them; `ctx.lang` marks text for the system font and picks the voice (`speak()` in feel.js:
+  `speechSynthesis`, and with no voice or Sound muted the reading is shown instead).
+- Japanese: `src/data/japanese.json` (hiragana: vowels, k and s rows, first words), coached by Kaede, a red
+  panda (`src/cast/kaede.js`, rig-posed). `test/quiz.test.js` checks every answer against its own kana
+  table and that no kana is asked before a teach card shows it.
+- `src/quiz/` also has `line` (drag a marker on a number line, snapped to its ticks, answered on
+  release) and takes a `picture` the course draws through the mount's `ctx.art`, plus `ctx.look`
+  for a course's own styling.
+- `src/maths/` — the Maths course (`src/data/maths.json`: mental maths, percentages, fractions you
+  can see, for adults rusty at maths). Items are written as sums and pictures; `items.js` works every
+  answer out (`value()` reads "15% of $60", so 2/4 is right for 1/2) and `toQuiz()` turns each into a
+  src/quiz item; `problem()` checks both. `exercise.js` draws the ten frame, bars and 100 grid. Coach:
+  Ada, an octopus (`src/cast/ada.js`, posed with `rig()`), with `MATHS_LINES` and `MATHS_HEADLINES`.
 - `src/cast/` — the characters (`kit.js`, `rosa.js`, `lumi.js`), `coach.js` (a character that
   reacts in place) and `lines.js` (everything the cast says; the guardrail tests lint it).
   `tools/cast.html` renders every mood at 200/96/48 px, light and dark.
@@ -145,7 +152,11 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - Home lists each habit once: one row of tabs (icon, name, streak coloured by `light()`) that
   scrolls inside itself. The bar is just the title, Sound and ⋯, and fits at 360px with every habit.
 - `src/feel.js` — synthesised sounds (mute on the home bar), haptics, and `move()`, which skips
-  animation under reduced motion.
+  animation under reduced motion. Lesson moments go through it: `cue(name)` (sound and buzz; the
+  sound follows the Sound toggle only, reduced motion skips just the animations) for right, run, wrong, done and unlock;
+  `flourish(el, 'pop' | 'shake')` for the answer (under 400 ms, never blocking input); `petals()`,
+  the petal-and-leaf confetti on every finished lesson. On home the next node bobs, and after a
+  lesson `walkTo()` fills the trail's `.fresh` stretch as Lumi hops, then pops the next node open.
 - `src/data/chess.json` — generated by `npm run puzzles` from the Lichess CC0 dump; committed.
   `src/data/basics.json` — Chess from zero (board, moves, capturing, check and mate), first on
   the path; `src/data/forks.json` — the hand-written Forks unit after it. Both hand-written.

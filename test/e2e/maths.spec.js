@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { answer, right, together } from '../../src/maths/items.js';
-import { tick } from '../../src/play/items.js';
+import { answer, right, toQuiz } from '../../src/maths/items.js';
+import { tick } from '../../src/quiz/items.js';
 import { emptyProgress, finishSession } from '../../src/progress.js';
 
 // Maths, played the way a learner does: taps on choices and tiles, a drag on the number line. The
@@ -17,8 +17,8 @@ async function solve(page, item) {
   switch (item.type) {
     case 'teach': break;
     case 'pick': await bottom.getByRole('button', { name: item.options.find((o) => right(item, o)), exact: true }).click(); break;
-    case 'tiles':
-      for (const c of answer(item)) await bottom.locator('.tile:not([disabled])', { hasText: c }).first().click(); // one character a tile
+    case 'build':
+      for (const c of answer(item)) await bottom.getByRole('button', { name: c, exact: true, disabled: false }).first().click(); // one character a tile
       break;
     case 'line': {
       const k = Array.from({ length: item.ticks + 1 }, (_, i) => i).find((i) => right(item, tick(item, i)));
@@ -30,17 +30,9 @@ async function solve(page, item) {
       await page.mouse.up();
       break;
     }
-    case 'pairs': {
-      const left = [...item.tiles.keys()];
-      while (left.length) {
-        const a = left.shift();
-        const b = left.find((j) => together(item, item.tiles[a], item.tiles[j]));
-        left.splice(left.indexOf(b), 1);
-        await bottom.locator('.tile').nth(a).click();
-        await bottom.locator('.tile').nth(b).click();
-      }
+    case 'pairs': // one from each column, as worked out for the quiz item
+      for (const pair of toQuiz(item).pairs) for (const x of pair) await bottom.getByRole('button', { name: x, exact: true, disabled: false }).first().click();
       break;
-    }
   }
   await expect(continueButton(page), item.id).toBeInViewport();
 }
@@ -64,7 +56,7 @@ async function pickMaths(page) {
 test('picking Maths in the intro opens its path on Learning; a whole lesson plays with Ada, right first time', async ({ page }) => {
   await pickMaths(page);
   await expect(page.locator('.path-tab[aria-pressed="true"]')).toHaveAttribute('data-path', 'learn');
-  await expect(page.getByText('Maths is first. Start with the button below.')).toBeVisible();
+  await expect(page.getByText('Learning is first. Start with the button below.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Maths', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
   await expect(page.locator('.who svg.cast-ada')).toBeVisible();
@@ -84,12 +76,12 @@ test('picking Maths in the intro opens its path on Learning; a whole lesson play
 test('a wrong tile ends the item with the answer shown, and the item comes back once at the end', async ({ page }) => {
   await pickMaths(page);
   await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
-  const tiles = first.items.find((i) => i.type === 'tiles');
+  const tiles = first.items.find((i) => i.type === 'build');
   for (const item of first.items.slice(0, first.items.indexOf(tiles))) { await solve(page, item); await continueButton(page).click(); }
-  const wrong = page.locator('.choices .tile').filter({ hasNotText: answer(tiles)[0] }).first();
+  const wrong = page.locator('.choices .choice').filter({ hasNotText: answer(tiles)[0] }).first();
   await wrong.click();
   await expect(page.locator('.foot.wrong')).toBeVisible();
-  await expect(page.locator('.built i.shown')).toHaveCount(answer(tiles).length);
+  await expect(page.locator('.slot.shown')).toHaveCount(answer(tiles).length);
   await continueButton(page).click();
   for (const item of first.items.slice(first.items.indexOf(tiles) + 1)) { await solve(page, item); await continueButton(page).click(); }
   await solve(page, tiles); // the retry
@@ -103,7 +95,9 @@ test('maths cards come back in review, on the shared Learning review', async ({ 
   then.setDate(then.getDate() - 30);
   const results = marked(first).map((i) => ({ key: `maths:${i.id}`, correct: true }));
   const p = finishSession({ ...emptyProgress(), picked: ['maths'] }, `maths:${first.id}`, results, then);
-  await page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
+  await page.addInitScript((saved) => {
+    if (!localStorage.getItem('drill.progress')) { localStorage.setItem('drill.progress', saved); localStorage.setItem('drill.course', 'maths'); }
+  }, JSON.stringify(p));
   await page.goto('/');
   await page.getByRole('button', { name: new RegExp(`^${results.length} to review`) }).click();
   const byId = new Map(first.items.map((i) => [i.id, i]));
@@ -139,7 +133,7 @@ for (const colorScheme of ['light', 'dark']) {
       await pickMaths(page);
       await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
       for (const item of first.items) {
-        await expect(page.locator('.stage .sum')).toBeVisible();
+        await expect(page.locator('.stage .quiz')).toBeAttached();
         expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), item.id).toBe(0);
         await solve(page, item);
         await continueButton(page).click();

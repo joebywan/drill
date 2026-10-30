@@ -49,14 +49,14 @@
             },
             {
               "id": "ten-0-8p7",
-              "type": "tiles",
+              "type": "build",
               "show": "8 + 7",
               "prompt": "Give 2 of the 7 to the 8 to make 10. Then add what is left.",
               "explain": "8 + 2 is 10, with 5 left over: 15."
             },
             {
               "id": "ten-0-9p6",
-              "type": "tiles",
+              "type": "build",
               "show": "9 + 6",
               "prompt": "Make 10 first, then add the rest.",
               "explain": "9 + 1 is 10, with 5 left over: 15."
@@ -85,14 +85,14 @@
             },
             {
               "id": "ten-1-38p5",
-              "type": "tiles",
+              "type": "build",
               "show": "38 + 5",
               "prompt": "Hop to 40 first, then the rest.",
               "explain": "38 + 2 is 40, then 3 more: 43."
             },
             {
               "id": "ten-1-47p6",
-              "type": "tiles",
+              "type": "build",
               "show": "47 + 6",
               "prompt": "Hop to 50 first.",
               "explain": "47 + 3 is 50, then 3 more: 53."
@@ -126,7 +126,7 @@
             },
             {
               "id": "ten-1-65m7",
-              "type": "tiles",
+              "type": "build",
               "show": "65 - 7",
               "prompt": "Taking away works too: hop down to 60 first.",
               "explain": "65 - 5 is 60, then 2 more down: 58."
@@ -145,21 +145,21 @@
             },
             {
               "id": "ten-2-35x2",
-              "type": "tiles",
+              "type": "build",
               "show": "35 × 2",
               "prompt": "Double it: the tens, then the ones.",
               "explain": "30 doubled is 60 and 5 doubled is 10: 70."
             },
             {
               "id": "ten-2-64h2",
-              "type": "tiles",
+              "type": "build",
               "show": "64 ÷ 2",
               "prompt": "Halve it: the tens, then the ones.",
               "explain": "Half of 60 is 30 and half of 4 is 2: 32."
             },
             {
               "id": "ten-2-15x4",
-              "type": "tiles",
+              "type": "build",
               "show": "15 × 4",
               "prompt": "Double, then double again.",
               "explain": "15, 30, 60."
@@ -178,7 +178,7 @@
             },
             {
               "id": "ten-2-25x8",
-              "type": "tiles",
+              "type": "build",
               "show": "25 × 8",
               "prompt": "Double three times.",
               "explain": "25, 50, 100, 200."
@@ -276,28 +276,28 @@
             },
             {
               "id": "pct-1-10of60",
-              "type": "tiles",
+              "type": "build",
               "show": "10% of 60",
               "prompt": "Build the answer.",
               "explain": "A tenth of 60 is 6."
             },
             {
               "id": "pct-1-10of250",
-              "type": "tiles",
+              "type": "build",
               "show": "10% of 250",
               "prompt": "A tenth again.",
               "explain": "A tenth of 250 is 25."
             },
             {
               "id": "pct-1-50of46",
-              "type": "tiles",
+              "type": "build",
               "show": "50% of 46",
               "prompt": "Half of it.",
               "explain": "Half of 46 is 23."
             },
             {
               "id": "pct-1-20of30",
-              "type": "tiles",
+              "type": "build",
               "show": "20% of 30",
               "prompt": "20% is 10%, doubled.",
               "explain": "10% of 30 is 3, and double that is 6."
@@ -328,14 +328,14 @@
             },
             {
               "id": "pct-2-tip60",
-              "type": "tiles",
+              "type": "build",
               "show": "15% of $60",
               "prompt": "What is the tip? 10%, plus half of that.",
               "explain": "10% is 6 and half of that is 3: $9."
             },
             {
               "id": "pct-2-off80",
-              "type": "tiles",
+              "type": "build",
               "show": "25% off $80",
               "sum": "80 - 25% of 80",
               "prompt": "What do you pay? 25% is a quarter.",
@@ -409,7 +409,7 @@
             },
             {
               "id": "frac-0-2of5",
-              "type": "tiles",
+              "type": "build",
               "picture": {
                 "bar": [
                   2,
@@ -422,7 +422,7 @@
             },
             {
               "id": "frac-0-5of8",
-              "type": "tiles",
+              "type": "build",
               "picture": {
                 "bar": [
                   5,

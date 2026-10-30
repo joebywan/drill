@@ -1,7 +1,7 @@
 # Drill
 
 Short daily lessons with a day streak and spaced review, for the subjects I actually want
-to practise. Chess and maths are live; Japanese, JavaScript, TypeScript and writing TypeScript
+to practise. Chess, maths and Japanese are live; JavaScript, TypeScript and writing TypeScript
 tests are planned.
 
 No ads. No accounts. No server. It is a static page; progress lives in the browser.

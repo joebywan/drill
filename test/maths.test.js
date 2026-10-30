@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { answer, problem, right, target, together, value } from '../src/maths/items.js';
-import { clears, nearestTick, nextTile, shuffle, tick, tilesFor } from '../src/play/items.js';
+import { answer, pairing, problem, right, target, toQuiz, together, value } from '../src/maths/items.js';
+import { nearestTick, onLine, problem as quizProblem, tick } from '../src/quiz/items.js';
 import { subjects } from '../src/subjects.js';
 
 const course = JSON.parse(readFileSync('src/data/maths.json', 'utf8'));
@@ -36,17 +36,19 @@ test('tiles spell the number, or the fraction a bar shows', () => {
   assert.equal(answer({ picture: { bar: [2, 5] } }), '2/5');
 });
 
-test('a tile is judged the moment it is tapped', () => {
-  assert.equal(nextTile('43', '', '4'), 'right');
-  assert.equal(nextTile('43', '4', '3'), 'done');
-  assert.equal(nextTile('43', '', '3'), 'wrong');
-  assert.equal(nextTile('43', '4', '4'), 'wrong');
-  const tiles = tilesFor({ id: 'x' }, '43');
-  assert.equal(tiles.length, 4); // the answer's two, plus two more
-  assert.ok(tiles.includes('4') && tiles.includes('3'));
-  assert.deepEqual(tilesFor({ id: 'x' }, '43'), tiles, 'the same item shuffles the same every time');
-  assert.deepEqual(tilesFor({ id: 'y', extra: '7' }, '2/5').sort(), ['/', '2', '5', '7']);
-  assert.deepEqual(shuffle([1, 2, 3, 4], 'a').sort(), [1, 2, 3, 4]);
+test('a maths item plays as a quiz item with its answer worked out', () => {
+  const build = toQuiz({ id: 'x', type: 'build', show: '38 + 5', prompt: 'p', explain: 'e' });
+  assert.deepEqual(build.answer, ['4', '3']);
+  assert.equal(build.tiles.length, 2);
+  assert.ok(build.tiles.every((t) => !build.answer.includes(t)), 'decoys are never in the answer');
+  assert.deepEqual(toQuiz({ id: 'x', type: 'build', show: '38 + 5' }).tiles, build.tiles, 'the same item, the same decoys');
+  assert.deepEqual(toQuiz({ id: 'y', type: 'build', picture: { bar: [2, 5] }, extra: '3' }).answer, ['2', '/', '5']);
+  assert.equal(toQuiz({ type: 'pick', show: '16 × 5', options: ['8 × 10', '32 × 10'] }).answer, '8 × 10');
+  const line = toQuiz({ type: 'line', show: '2/3', min: 0, max: 1, ticks: 3 });
+  assert.ok(onLine(line, tick(line, 2)) && !onLine(line, tick(line, 1)));
+  const pairs = toQuiz({ type: 'pairs', make: 10, tiles: ['3', '8', '7', '2'] }).pairs;
+  assert.deepEqual(pairs.map((p) => p.map(Number).sort().join()), ['3,7', '2,8']);
+  assert.equal(quizProblem({ id: 'z', type: 'line', prompt: 'p', explain: 'e', min: 0, max: 1, ticks: 4, answer: 1 / 3 }), 'the answer must be on exactly one tick');
 });
 
 test('the number line snaps to the nearest tick and never past an end', () => {
@@ -63,16 +65,16 @@ test('pairs go together by adding up to `make`, or by being worth the same', () 
   assert.ok(!together({ make: 10 }, '3', '6'));
   assert.ok(together({}, '25%', '1/4'));
   assert.ok(!together({}, '25%', '1/2'));
-  assert.ok(clears(['3', '6', '7', '4'], (a, b) => together({ make: 10 }, a, b)));
-  assert.ok(!clears(['3', '6', '7', '5'], (a, b) => together({ make: 10 }, a, b)));
+  assert.ok(pairing(['3', '6', '7', '4'], (a, b) => together({ make: 10 }, a, b)));
+  assert.equal(pairing(['3', '6', '7', '5'], (a, b) => together({ make: 10 }, a, b)), null);
 });
 
 test('problem() catches items that can not be answered', () => {
   assert.equal(problem({ type: 'pick', show: '2 + 2', prompt: 'p', explain: 'e', options: ['3', '5'] }), '0 options are right');
   assert.equal(problem({ type: 'pick', show: '2 + 2', prompt: 'p', explain: 'e', options: ['4', '8/2'] }), '2 options are right');
-  assert.equal(problem({ type: 'line', show: '1/3', prompt: 'p', explain: 'e', min: 0, max: 1, ticks: 4 }), '0 ticks are right');
+  assert.equal(problem({ id: 'l', type: 'line', show: '1/3', prompt: 'p', explain: 'e', min: 0, max: 1, ticks: 4 }), 'the answer must be on exactly one tick');
   assert.equal(problem({ type: 'pairs', make: 10, prompt: 'p', explain: 'e', tiles: ['1', '2'] }), "the tiles don't all pair off");
-  assert.equal(problem({ type: 'tiles', show: '2 + 2', prompt: 'p' }), 'no explanation');
+  assert.equal(problem({ type: 'build', show: '2 + 2', prompt: 'p' }), 'no explanation');
 });
 
 test('every shipped maths item passes problem() and has a unique id', () => {
