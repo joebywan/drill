@@ -340,3 +340,11 @@ test('Wind down makes no sleep or health claims, never hurries and never shames 
   assert.equal(subject.coach.help.text, HELP_LINE, 'and after "Not really"');
   for (const kind of Object.keys(WINDDOWN_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
 });
+
+// The Android widget and its once-a-day note: no nagging, no hurry, nothing about a day off.
+import { REMINDER_WORDS, WIDGET_LINES } from '../src/cast/lines.js';
+test('the widget and the daily note never nag, hurry or judge', () => {
+  const texts = [...Object.values(WIDGET_LINES).flat(), ...Object.values(REMINDER_WORDS)];
+  assert.ok(texts.length > 15);
+  for (const text of texts) for (const lint of [NAGGING, LOSS, ABILITY, URGENCY]) assert.doesNotMatch(text, lint, text);
+});

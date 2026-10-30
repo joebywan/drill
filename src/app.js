@@ -5,12 +5,13 @@ import { emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { lumi } from './cast/lumi.js';
-import { CALM_SOUNDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer } from './cast/lines.js';
+import { CALM_SOUNDS, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, setSound, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
 import { TIMINGS, TIMING_WORDS, pathTimings, setTiming, spread, timed } from './practice/timings.js';
+import { bridge, passNotes, sendArt, tellAndroid } from './widget.js';
 
 const STORE = 'drill.progress';
 const REVIEW_SIZE = 8;
@@ -36,6 +37,7 @@ function load() {
 let persistAsked = false;
 function save() {
   try { localStorage.setItem(STORE, JSON.stringify(progress)); } catch { /* private mode: progress lasts the visit */ }
+  tellAndroid(progress);
   // Ask the browser, quietly and once a visit, not to evict progress (Safari clears it after a week away).
   if (persistAsked) return;
   persistAsked = true;
@@ -920,6 +922,7 @@ function keep(note = '') {
       ${CALM_SOUNDS.map(([name, label]) => `<button class="choice" data-pref="${name}" aria-pressed="${calmPref(name)}">${esc(label)}</button>`).join('')}
       <h2>Garden</h2>
       <button class="choice" data-pref="south" aria-pressed="${south()}">${esc(SOUTH_LABEL)}</button>
+      ${bridge() ? `<h2>${esc(REMINDER_WORDS.title)}</h2><button class="choice" data-remind aria-pressed="${bridge().remindersOn()}">${esc(REMINDER_WORDS.toggle)}</button>` : ''}
       <button class="choice" data-back>Back</button>
     </main>`;
   for (const b of app.querySelectorAll('[data-pref]')) {
@@ -930,6 +933,12 @@ function keep(note = '') {
       if (on && b.dataset.pref === 'bell') play('bell');
     });
   }
+  // Android only: the once-a-day note is off until turned on here.
+  app.querySelector('[data-remind]')?.addEventListener('click', (e) => {
+    const on = e.currentTarget.getAttribute('aria-pressed') !== 'true';
+    bridge().reminders(on);
+    e.currentTarget.setAttribute('aria-pressed', on);
+  });
   const status = app.querySelector('[role="status"]');
   const input = app.querySelector('input');
   focusOn('h1');
@@ -1074,4 +1083,8 @@ function choose(picked) {
   focusOn(picked.length ? '.cta .next' : 'h1');
 }
 
+tellAndroid(progress); // the widget catches up with a new day even when nothing is saved
+sendArt().catch(console.warn);
+passNotes();
+addEventListener('visibilitychange', () => document.hidden || passNotes()); // a note tapped while the app was open
 if (showsIntro(progress)) intro(); else home();
