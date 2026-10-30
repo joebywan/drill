@@ -215,6 +215,7 @@ function practised(progress, habit, now, review) {
 export function finishSession(progress, lessonId, results, now = new Date(), about = {}) {
   const cards = { ...progress.cards };
   for (const { key, correct } of results) {
+    if (!key) continue; // a seasonal event's items aren't course items, so nothing comes back for review
     const card = cards[key] || createEmptyCard(now);
     cards[key] = scheduler.next(card, now, correct ? Rating.Good : Rating.Again).card;
   }
