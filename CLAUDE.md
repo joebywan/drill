@@ -198,7 +198,10 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   and numbers only (`presets.js`, which the worker also imports to check them). `server/` is the
   Cloudflare Worker + D1 (`worker.js`, `migrations/`), tested with Miniflare (`npm test --prefix
   server`); e2e routes the API host to a local worker. Deploying is `server/DEPLOY.md`. `privacy.html`
-  is the policy, with delete-by-recovery-code for Play.
+  is the policy, with delete-by-recovery-code for Play. Inside the Android wrapper
+  (`DrillBridge`), which has no internet permission, the ⋯ section is hidden and sync never runs
+  (`available()`). The card's name and animal are `progress.look` ({ word, animal, at }), synced, the
+  latest pick winning.
 - `src/feel.js` — synthesised sounds (mute on the home bar), haptics, and `move()`, which skips
   animation under reduced motion. Lesson moments go through it: `cue(name)` (sound and buzz; the
   sound follows the Sound toggle only, reduced motion skips just the animations) for right, run, wrong, done and unlock;

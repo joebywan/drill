@@ -130,3 +130,22 @@ test('pair a second device, see progress arrive, make a friend, cheer, then dele
   await expect(c.getByText('No friends here yet')).toBeVisible();
   await expect(c.locator('.cheers')).toHaveCount(0);
 });
+
+// The Android wrapper has no internet permission: with its bridge there, the section is hidden
+// and sync never runs, even on a device that turned it on in a browser before.
+test('inside the Android wrapper, sync and friends are hidden and nothing is sent', async ({ page }) => {
+  const calls = [];
+  page.on('request', (r) => { if (!r.url().startsWith('http://127.0.0.1')) calls.push(r.url()); });
+  await page.addInitScript(() => {
+    window.DrillBridge = { summary() {}, art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]' };
+    localStorage.setItem('drill.sync', JSON.stringify({ recovery: '0000-1111-2222-3333-4444', code: 'ABCDEFGH' }));
+  });
+  await open(page, finishPractice(emptyProgress(), 'calm', null, new Date(), { title: 'Breathe', mins: 2 }));
+  await page.getByRole('button', { name: 'Your progress' }).click();
+  await expect(page.getByRole('heading', { name: 'Your progress' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Other devices and friends' })).toHaveCount(0);
+  for (const name of ['Use on another device', 'Recovery code', 'Friends', 'Delete my data'])
+    await expect(page.getByRole('button', { name, exact: true })).toHaveCount(0);
+  await page.waitForTimeout(2500); // past syncSoon's wait
+  expect(calls).toEqual([]);
+});

@@ -40,5 +40,6 @@ CREATE INDEX cheers_dst ON cheers(dst);
 CREATE TABLE rates (
   key TEXT PRIMARY KEY,
   win INTEGER NOT NULL,
-  count INTEGER NOT NULL
+  count INTEGER NOT NULL,
+  until INTEGER NOT NULL             -- when the window ends (ms); rows past it are swept (worker.js sweep)
 );

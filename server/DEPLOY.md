@@ -95,5 +95,15 @@ holds up to 10 GB, about 200,000 learners at ~50 KB each.
   (delete with a recovery code, no app needed). In the app: ⋯ → Delete my data.
 - Data safety answers: no data collected unless sync is on; then app activity (encrypted, not readable
   by us), and a user ID (the friend code). Not shared, not sold, encrypted in transit, deletable.
-- The Android wrapper is planned with no internet permission. Sync needs `android.permission.INTERNET`;
-  add it when the wrapper should sync, or leave sync to the web app.
+- The Android wrapper has no internet permission and keeps it that way: with its bridge
+  (`DrillBridge`) present, the ⋯ sync section is hidden and sync never runs. Allowing sync in the APK
+  is a decision for Joseph (it needs `android.permission.INTERNET` and the section shown again).
+
+## Known gaps
+
+- **No QR code.** Pairing is a 6-digit code only. A QR code carrying the recovery code itself would
+  never touch the server.
+- **Pairing strength.** A 6-digit code is a million possibilities. The recovery code it carries is
+  wrapped with PBKDF2 (200,000 rounds) under that code, so the server itself (or anyone who took
+  its database) could try every code within the 10 minutes the pairing lives. Outsiders can't: a
+  code works once and claims are limited to 10 per IP per 10 minutes. A QR code would close it.

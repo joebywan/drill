@@ -173,3 +173,14 @@ test('busy callers are slowed down', async () => {
   for (let i = 0; i < 125; i++) last = (await d.call('GET', '/v1/progress')).status;
   assert.equal(last, 429);
 });
+
+test('rate rows and pairings past their time are swept when something new is made', async () => {
+  await db.prepare("INSERT INTO rates (key, win, count, until) VALUES ('ip:old', 1, 5, 1000), ('ip:live', 1, 5, ?)").bind(Date.now() + 60000).run();
+  const d = await profile();
+  assert.equal(await db.prepare("SELECT COUNT(*) AS n FROM rates WHERE key = 'ip:old'").first('n'), 0, 'ended window: gone');
+  assert.equal(await db.prepare("SELECT COUNT(*) AS n FROM rates WHERE key = 'ip:live'").first('n'), 1, 'current window: kept');
+  await d.call('POST', '/v1/pair', { code: '424242', wrapped: 'w' });
+  await db.prepare("UPDATE pairings SET expires = 0 WHERE code = '424242'").run();
+  await d.call('POST', '/v1/pair', { code: '434343', wrapped: 'w' });
+  assert.equal(await db.prepare("SELECT COUNT(*) AS n FROM pairings WHERE code = '424242'").first('n'), 0);
+});

@@ -3,16 +3,24 @@ import { derive, newPairCode, newRecovery, open, readRecovery, seal, unwrap, wra
 import { merge } from './merge.js';
 import { ANIMALS, WORDS } from './presets.js';
 import { API } from './config.js';
+import { bridge } from '../widget.js';
 
 /**
  * Sync and friends: an opt-in layer over the device's own progress, which stays the record.
  * Off until turned on from the ⋯ menu; with it off, nothing here runs and nothing is sent.
  * The one place in src/ that talks to a server (the guardrails test holds that).
  */
-const KEY = 'drill.sync'; // { recovery, word, animal, code }: this device's copy of the profile
+const KEY = 'drill.sync'; // { recovery, code }: this device's copy of the profile
+
+/**
+ * Sync runs in the web app only. The Android wrapper (DrillBridge) has no internet permission, so
+ * there the ⋯ section is hidden and nothing here runs.
+ */
+export const available = () => !bridge();
 let keys = null; // { recovery, key, token }, derived once a visit
 
 export function profile() {
+  if (!available()) return null;
   try {
     const p = JSON.parse(localStorage.getItem(KEY));
     return p && readRecovery(p.recovery) ? p : null;
@@ -34,6 +42,7 @@ export class SyncError extends Error {
 }
 
 async function call(path, { method = 'GET', body, token } = {}) {
+  if (!available()) throw new SyncError(0);
   let res;
   try {
     res = await fetch(`${API}${path}`, {
@@ -49,8 +58,21 @@ async function call(path, { method = 'GET', body, token } = {}) {
 
 const authed = async (path, opts = {}) => call(path, { ...opts, token: (await keysFor(profile().recovery)).token });
 
+/**
+ * The learner's preset name and animal, from `progress.look` ({ word, animal, at }): kept in progress
+ * so it syncs, the latest pick winning (merge.js). Anything not in the presets reads as the default.
+ */
+export function lookOf(progress) {
+  const { word, animal } = progress.look ?? {};
+  return { word: WORDS.includes(word) ? word : WORDS[0], animal: Object.hasOwn(ANIMALS, animal) ? animal : 'fox' };
+}
+
+/** Progress with a new pick of name or animal, stamped `now` so it wins over older picks. */
+export const withLook = (progress, look, now = new Date()) => ({ ...progress, look: { ...lookOf(progress), ...look, at: now.toISOString() } });
+
 /** The public card friends see: numbers and presets, nothing else. `unit` is 'subject:index' or null. */
-export function card(progress, look, now = new Date(), unit = null) {
+export function card(progress, now = new Date(), unit = null) {
+  const look = lookOf(progress);
   const streak = Math.max(0, ...Object.keys(progress.habits).map((h) => currentStreak(progress, now, h)));
   return { word: look.word, animal: look.animal, streak, lessons: Object.keys(progress.done).length, unit };
 }
@@ -65,7 +87,9 @@ const pick = (list) => list[crypto.getRandomValues(new Uint32Array(1))[0] % list
 export async function join(progress, recovery = newRecovery(), unit = null) {
   const { token } = await keysFor(recovery);
   const { friendCode } = await call('/v1/profile', { method: 'POST', token });
-  keep({ word: pick(WORDS), animal: pick(Object.keys(ANIMALS)), ...profile(), recovery, code: friendCode });
+  keep({ recovery, code: friendCode });
+  // A first look, picked at random and stamped at time zero, so any real pick on any device wins.
+  if (!progress.look) progress = { ...progress, look: { word: pick(WORDS), animal: pick(Object.keys(ANIMALS)), at: new Date(0).toISOString() } };
   return sync(progress, unit);
 }
 
@@ -82,7 +106,7 @@ export async function sync(progress, unit = null) {
   for (let tries = 0; ; tries++) {
     const merged = blob ? merge(progress, await open(key, blob)) ?? progress : progress;
     try {
-      await call('/v1/progress', { method: 'PUT', token, body: { rev, blob: await seal(key, merged), card: card(merged, me, new Date(), unit) } });
+      await call('/v1/progress', { method: 'PUT', token, body: { rev, blob: await seal(key, merged), card: card(merged, new Date(), unit) } });
       return merged;
     } catch (e) {
       if (e.status !== 409 || tries >= 3) throw e;
@@ -109,7 +133,6 @@ export async function claim(code) {
   return unwrap(code, wrapped);
 }
 
-export const setLook = (look) => keep({ ...profile(), ...look });
 export const friends = () => authed('/v1/friends');
 export const friendAction = (action, code) => authed(`/v1/friends/${action}`, { method: 'POST', body: { code } });
 export const cheer = (code, id) => authed('/v1/cheer', { method: 'POST', body: { code, cheer: id } });

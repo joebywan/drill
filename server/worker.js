@@ -33,11 +33,20 @@ async function sha256(text) {
 /** Counts a hit on `key`; fails with 429 once it passes `limit` in the current `secs` window. */
 async function rate(env, key, limit, secs) {
   const win = Math.floor(Date.now() / 1000 / secs);
-  const row = await env.DB.prepare(`INSERT INTO rates (key, win, count) VALUES (?1, ?2, 1)
-    ON CONFLICT(key) DO UPDATE SET count = CASE WHEN win = ?2 THEN count + 1 ELSE 1 END, win = ?2 RETURNING count`)
-    .bind(key, win).first();
+  const row = await env.DB.prepare(`INSERT INTO rates (key, win, count, until) VALUES (?1, ?2, 1, ?3)
+    ON CONFLICT(key) DO UPDATE SET count = CASE WHEN win = ?2 THEN count + 1 ELSE 1 END, win = ?2, until = ?3 RETURNING count`)
+    .bind(key, win, (win + 1) * secs * 1000).first();
   if (row.count > limit) throw new Fail(429, 'slow down');
 }
+
+/**
+ * Drops rate rows whose window has ended (one per IP ever seen would pile up otherwise) and
+ * expired pairings. Run on the rare writes that create something: a new profile, a new pairing.
+ */
+const sweep = (env) => env.DB.batch([
+  env.DB.prepare('DELETE FROM rates WHERE until < ?').bind(Date.now()),
+  env.DB.prepare('DELETE FROM pairings WHERE expires < ?').bind(Date.now()),
+]);
 
 const friendCode = () => Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => CODE_CHARS[b % CODE_CHARS.length]).join('');
 
@@ -88,6 +97,7 @@ async function route(req, env) {
 
   if (path === '/v1/profile' && m === 'POST') {
     await rate(env, `new:${ip}`, 20, 3600);
+    await sweep(env);
     const now = Date.now();
     for (let tries = 0; tries < 5; tries++) {
       const done = await env.DB.prepare('INSERT INTO profiles (id, friend_code, created, updated) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO NOTHING')
@@ -133,7 +143,7 @@ async function route(req, env) {
     const { code, wrapped } = await body(req);
     if (typeof code !== 'string' || !/^\d{6}$/.test(code) || typeof wrapped !== 'string' || wrapped.length > 1000) throw new Fail(400, 'bad pairing');
     const expires = Date.now() + PAIR_MS;
-    await env.DB.prepare('DELETE FROM pairings WHERE expires < ?').bind(Date.now()).run();
+    await sweep(env);
     const ok = await env.DB.prepare('INSERT INTO pairings (code, profile, wrapped, expires) VALUES (?, ?, ?, ?) ON CONFLICT(code) DO NOTHING RETURNING code')
       .bind(code, id, wrapped, expires).first();
     if (!ok) throw new Fail(409, 'code taken');

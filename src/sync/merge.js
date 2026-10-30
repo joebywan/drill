@@ -7,6 +7,7 @@ import { LEARN, migrate, nextStreak } from '../progress.js';
  *   - log: a union (a session both sides have counts once; two identical sessions on one side stay two)
  *   - done, garden.earned (the earliest date), journal (per day and line), tracked, start, timings: unions,
  *     this device winning where both set the same thing
+ *   - look (the friends card's name and animal): the latest pick, by its `at`
  *   - each habit's streak is replayed from the merged log with the same rules as a live session,
  *     never lower than either side's when both end on the same day (the log keeps a year; a streak
  *     can be older), and `days` counts the dates only the other side had on top of the larger count
@@ -35,7 +36,16 @@ export function merge(local, remote) {
       .map((h) => [h, { ...b.timings[h], ...a.timings[h] }])),
     ...((a.start || b.start) && { start: { ...b.start, ...a.start } }),
     ...((a.picked || b.picked) && { picked: a.picked ?? b.picked }),
+    ...((a.look || b.look) && { look: latestLook(a.look, b.look) }),
   };
+}
+
+/** The friends card's name and animal: the latest pick wins; a tie is settled the same way on every device. */
+function latestLook(a, b) {
+  if (!a || !b) return a ?? b;
+  const at = (l) => Date.parse(l.at) || 0;
+  if (at(a) !== at(b)) return at(a) > at(b) ? a : b;
+  return JSON.stringify(a) >= JSON.stringify(b) ? a : b;
 }
 
 const reviewed = (c) => Date.parse(c.last_review) || 0;

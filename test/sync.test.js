@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { emptyProgress, finishPractice, finishSession, logToday, noteFeel, track, writeJournal, currentStreak } from '../src/progress.js';
 import { derive, newPairCode, newRecovery, open, readRecovery, seal, unwrap, wrap } from '../src/sync/keys.js';
 import { merge } from '../src/sync/merge.js';
-import { card } from '../src/sync/sync.js';
+import { card, lookOf, withLook } from '../src/sync/sync.js';
 import { checkCard } from '../src/sync/presets.js';
 
 const json = (p) => JSON.parse(JSON.stringify(p)); // as stored: dates are strings
@@ -176,7 +176,7 @@ test('merge refuses what isn\'t progress', () => {
 test('the public card carries numbers and presets only, never the journal or the log', () => {
   let p = lesson(lesson(emptyProgress(), 'a', '2026-10-01'), 'b', '2026-10-02');
   p = writeJournal(p, { good: 'secret words' }, at('2026-10-02'));
-  const c = card(p, { word: 'Sunny', animal: 'fox' }, at('2026-10-02'));
+  const c = card(withLook(p, { word: 'Sunny', animal: 'fox' }), at('2026-10-02'));
   assert.deepEqual(Object.keys(c).sort(), ['animal', 'lessons', 'streak', 'unit', 'word']);
   assert.equal(c.lessons, 2);
   assert.equal(c.streak, 2);
@@ -203,4 +203,19 @@ test('sessions split across two devices merge to what one device would have', ()
     assert.deepEqual(m.habits.calm ?? null, one.habits.calm ?? null, `round ${round}`);
     assert.deepEqual(m.log, one.log);
   }
+});
+
+test('the card\'s name and animal live in progress and sync: the latest pick wins', () => {
+  const base = { ...emptyProgress(), look: { word: 'Calm', animal: 'otter', at: new Date(0).toISOString() } };
+  const phone = withLook(base, { word: 'Brave' }, at('2026-10-02'));
+  const laptop = withLook(base, { animal: 'koala' }, at('2026-10-03')); // picked later
+  assert.deepEqual(lookOf(merge(phone, laptop)), { word: 'Calm', animal: 'koala' });
+  assert.deepEqual(merge(phone, laptop).look, merge(laptop, phone).look);
+  assert.deepEqual(merge(phone, base).look, phone.look, 'a real pick beats the first random one');
+  assert.deepEqual(merge(emptyProgress(), phone).look, phone.look, 'a device without one takes it');
+  // Two first random looks, both at time zero: every device settles on the same one.
+  const a = { ...emptyProgress(), look: { word: 'Sunny', animal: 'fox', at: new Date(0).toISOString() } };
+  assert.deepEqual(merge(a, base).look, merge(base, a).look);
+  // Anything outside the presets reads as the default, never as free text.
+  assert.deepEqual(lookOf({ look: { word: 'Rude words', animal: 'owl' } }), { word: 'Sunny', animal: 'fox' });
 });

@@ -2,7 +2,7 @@ import { esc } from '../html.js';
 import { subjects } from '../subjects.js';
 import { readRecovery } from './keys.js';
 import { ANIMALS, CHEERS, WORDS, displayName } from './presets.js';
-import { cheer, claim, forget, friendAction, friends, join, pairCode, profile, setLook, sync } from './sync.js';
+import { available, cheer, claim, forget, friendAction, friends, join, lookOf, pairCode, profile, sync, withLook } from './sync.js';
 
 /**
  * The ⋯ menu's sync screens: Use on another device, Recovery code, Friends, Delete my data.
@@ -17,8 +17,8 @@ export const SYNC_MENU = [
   ['delete', 'Delete my data'],
 ];
 
-export const syncMenuHtml = () => `<h2>Other devices and friends</h2>
-  ${SYNC_MENU.map(([id, label]) => `<button class="choice" data-sync="${id}">${esc(label)}</button>`).join('')}`;
+export const syncMenuHtml = () => (!available() ? '' : `<h2>Other devices and friends</h2>
+  ${SYNC_MENU.map(([id, label]) => `<button class="choice" data-sync="${id}">${esc(label)}</button>`).join('')}`);
 
 export function openSync(which, ctx) {
   ({ device, recovery, friends: friendsView, delete: deleteView })[which](ctx);
@@ -174,7 +174,7 @@ function friendsView(ctx) {
     }));
     return;
   }
-  const me = profile();
+  const me = { ...profile(), ...lookOf(ctx.progress()) };
   const s = screen(ctx, `<h1>Friends</h1>
     <div class="me">${face(me)}<b>${nameOf(me)}</b></div>
     <details class="look"><summary>Change your name and animal</summary>
@@ -187,8 +187,8 @@ function friendsView(ctx) {
     <div class="friends"><p class="said">Loading…</p></div>`);
   for (const b of ctx.app.querySelectorAll('[data-word], [data-animal]')) {
     b.addEventListener('click', async () => {
-      setLook(b.dataset.word ? { word: b.dataset.word } : { animal: b.dataset.animal });
-      const look = profile();
+      ctx.adopt(withLook(ctx.progress(), b.dataset.word ? { word: b.dataset.word } : { animal: b.dataset.animal }));
+      const look = lookOf(ctx.progress());
       for (const x of ctx.app.querySelectorAll('[data-word]')) x.setAttribute('aria-pressed', x.dataset.word === look.word);
       for (const x of ctx.app.querySelectorAll('[data-animal]')) x.setAttribute('aria-pressed', x.dataset.animal === look.animal);
       s.$('.me').innerHTML = `${face(look)}<b>${nameOf(look)}</b>`;
