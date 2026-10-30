@@ -1,6 +1,7 @@
 import chessCourse from './data/chess.json' with { type: 'json' };
 import basics from './data/basics.json' with { type: 'json' };
 import forks from './data/forks.json' with { type: 'json' };
+import tactics from './data/tactics.json' with { type: 'json' };
 import calmCourse from './data/calm.json' with { type: 'json' };
 import reflectCourse from './data/reflect.json' with { type: 'json' };
 import * as chess from './chess/exercise.js';
@@ -125,15 +126,17 @@ export const ordered = (list, picked = []) => [
 
 // Chess from zero comes first (the board, how pieces move, capturing, check and mate), then the
 // hand-written Forks unit, whose Lichess puzzles join it as its last lessons; the other Lichess
-// themes follow.
-const lichessForks = chessCourse.units.find((u) => u.title === 'Forks');
+// themes follow. chess.json is generated, so the cards teaching each theme are kept in tactics.json
+// (lesson id -> teach cards) and go in front of that lesson here.
+const taught = (unit) => ({ ...unit, lessons: unit.lessons.map((l) => ({ ...l, items: [...(tactics[l.id] || []), ...l.items] })) });
+const lichessForks = taught(chessCourse.units.find((u) => u.title === 'Forks'));
 const forksUnit = {
   ...forks,
   lessons: [...forks.lessons, ...lichessForks.lessons.map((l) => ({ ...l, title: `Real games: ${l.title}` }))],
 };
 export const subjects = [{
   ...chessCourse,
-  units: [...basics.units, forksUnit, ...chessCourse.units.filter((u) => u !== lichessForks)],
+  units: [...basics.units, forksUnit, ...chessCourse.units.filter((u) => u.title !== 'Forks').map(taught)],
   mount: chess.mount,
   habit: 'learn',
   kind: 'learn',

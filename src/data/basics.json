@@ -12,7 +12,7 @@
               "type": "teach",
               "side": "w",
               "fen": "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
-              "text": "A square is named by its letter, then its number: e4."
+              "text": "A square is named by its letter, then its number: e4. Letters run along the bottom, numbers up the side. A column is called a file, a row a rank."
             },
             {
               "id": "board-0-e4",
@@ -25,6 +25,13 @@
               "explain": "File e, the fifth letter, and rank 4, four rows up."
             },
             {
+              "id": "board-0-move",
+              "type": "teach",
+              "side": "w",
+              "fen": "8/8/8/8/8/8/4K3/8 w - - 0 1",
+              "text": "You have the white pieces, at the bottom. Tap a piece, then tap a dot to move it. The king steps one square, any direction, diagonals too."
+            },
+            {
               "id": "board-0-king-e4",
               "type": "stars",
               "side": "w",
@@ -33,7 +40,7 @@
                 "e4"
               ],
               "moves": 2,
-              "prompt": "The king steps one square. Walk him to the star on e4.",
+              "prompt": "Land on a gold star to collect it. Only you move here. Walk the king to e4 in 2 moves.",
               "explain": "e2, e3, e4: straight up the e-file."
             },
             {
@@ -55,7 +62,7 @@
                 "c3"
               ],
               "moves": 2,
-              "prompt": "Walk the king to the star on c3.",
+              "prompt": "Walk the king to the star on c3 in 2 moves.",
               "explain": "Two diagonal steps: a1, b2, c3."
             },
             {
@@ -68,7 +75,7 @@
                 "e5"
               ],
               "moves": 3,
-              "prompt": "Grab the stars on c5 and e5.",
+              "prompt": "Grab the stars on c5 and e5 in 3 moves.",
               "explain": "One step to c5, then two steps across to e5. Or e5 first, then back to c5."
             },
             {
@@ -145,7 +152,7 @@
                 "a8"
               ],
               "moves": 3,
-              "prompt": "Your own pawn is in the way. Get the star in 3 moves.",
+              "prompt": "A piece can't pass through or land on its own side. Your pawn's in the way. Get the star in 3 moves.",
               "explain": "The rook can't pass its own pawn. Step to the side, run up, step back: b1, b8, a8."
             },
             {
@@ -283,18 +290,6 @@
               ],
               "moves": 4,
               "explain": "Two steps to each: f5 and g6, then f7 and e6. Or e6 first and then g6."
-            },
-            {
-              "id": "moves-1-king-guard",
-              "type": "stars",
-              "side": "w",
-              "fen": "8/8/4p3/8/4K3/8/8/8 w - - 0 1",
-              "stars": [
-                "d6"
-              ],
-              "moves": 2,
-              "prompt": "The king can't step where the pawn attacks. Star in 2.",
-              "explain": "d5 is guarded, so go up to e5 first, then across to d6."
             }
           ]
         },
@@ -342,7 +337,7 @@
                 "f3"
               ],
               "moves": 1,
-              "prompt": "Boxed in? Not a knight: it jumps. Get the star.",
+              "prompt": "Boxed in? Not a knight: it jumps. Get the star in 1 move.",
               "explain": "The knight jumps straight over the pawns: an L ignores whatever is in between."
             },
             {
@@ -377,7 +372,7 @@
                 "e4",
                 "e5"
               ],
-              "intro": "Pawns step straight forward. From the start, two squares.",
+              "intro": "Pawns step straight forward, one square. On a pawn's first move it may step two.",
               "explain": "On its first move a pawn can go two: e2 to e4."
             },
             {
@@ -392,6 +387,13 @@
               "explain": "Two, then one, then one: e4, e5, e6."
             },
             {
+              "id": "moves-3-capture",
+              "type": "teach",
+              "side": "w",
+              "fen": "8/8/8/3p4/4P3/8/8/8 w - - 0 1",
+              "text": "Black's pieces are the enemy. Move onto one to take it, and it leaves the board. Pawns are the odd ones: they walk straight, but take one square diagonally forward."
+            },
+            {
               "id": "moves-3-take",
               "type": "stars",
               "side": "w",
@@ -400,8 +402,27 @@
                 "d5"
               ],
               "moves": 1,
-              "prompt": "Pawns take diagonally. Take the pawn on the star.",
+              "prompt": "Pawns take diagonally. Take the pawn on the star in 1 move.",
               "explain": "e4 takes on d5. Diagonally forward is the only way a pawn captures."
+            },
+            {
+              "id": "moves-3-attack",
+              "type": "teach",
+              "side": "w",
+              "fen": "8/8/4p3/8/4K3/8/8/8 w - - 0 1",
+              "text": "A piece attacks every square it could take on. Black's pawns come down the board, so this one attacks d5 and f5. A king may never step onto an attacked square."
+            },
+            {
+              "id": "moves-1-king-guard",
+              "type": "stars",
+              "side": "w",
+              "fen": "8/8/4p3/8/4K3/8/8/8 w - - 0 1",
+              "stars": [
+                "d6"
+              ],
+              "moves": 2,
+              "prompt": "The king can't step where the pawn attacks. Star in 2.",
+              "explain": "d5 is guarded, so go up to e5 first, then across to d6."
             },
             {
               "id": "moves-3-blocked",
@@ -425,7 +446,7 @@
                 "h2"
               ],
               "moves": 3,
-              "prompt": "Reach the far side and a pawn becomes a queen. 3 moves.",
+              "prompt": "A pawn reaching the far side becomes any piece but a king. Here, a queen. 3 moves.",
               "explain": "b7, b8 makes a queen, and the queen runs down the diagonal to h2."
             }
           ]
@@ -495,6 +516,13 @@
               "explain": "The bishop takes e4, c6 and e8 along the diagonals; the rook takes a7."
             },
             {
+              "id": "capture-0-worth",
+              "type": "teach",
+              "side": "w",
+              "fen": "4k3/8/8/8/8/8/PNBRQ3/4K3 w - - 0 1",
+              "text": "Pieces aren't equal. A pawn is worth 1, a knight or bishop 3, a rook 5, a queen 9. The king is never taken: he's what the game is about."
+            },
+            {
               "id": "capture-0-best",
               "type": "move",
               "side": "w",
@@ -503,6 +531,13 @@
               "to": "d2",
               "prompt": "Queen 9, rook 5, bishop and knight 3. Take the best.",
               "explain": "Rook takes the queen: 9 for a piece worth 5."
+            },
+            {
+              "id": "capture-0-turns",
+              "type": "teach",
+              "side": "w",
+              "fen": "4k3/8/8/2p5/3n4/8/8/3RK3 w - - 0 1",
+              "text": "In a real game the sides take turns, so what you take can be taken back. This knight is defended: take it and the pawn on c5 takes your rook. With nothing defending it, a piece is free."
             },
             {
               "id": "capture-0-free",
@@ -528,7 +563,7 @@
             {
               "id": "check-0-teach",
               "type": "teach",
-              "text": "A piece attacking the king gives check. It must be answered.",
+              "text": "A piece attacking the king gives check. It must be ended at once: move the king, take the attacker, or block the line. No move may leave your own king in check.",
               "side": "w",
               "fen": "4k3/8/8/8/8/8/8/4R1K1 b - - 0 1"
             },
@@ -584,7 +619,7 @@
             {
               "id": "check-1-teach",
               "type": "teach",
-              "text": "Checkmate: in check, with no way out. It wins the game.",
+              "text": "Checkmate: in check, with no way out. No safe square, nothing can take the attacker, nothing can block. It wins the game.",
               "side": "w",
               "fen": "3R2k1/5ppp/8/8/8/8/8/6K1 b - - 0 1"
             },
@@ -613,6 +648,13 @@
               "goal": "mate",
               "prompt": "Checkmate in one move.",
               "explain": "Rook to d8 is checkmate: the black pawns trap their own king on the back rank."
+            },
+            {
+              "id": "check-1-kings",
+              "type": "teach",
+              "side": "w",
+              "fen": "4k3/8/4K3/8/8/8/8/8 w - - 0 1",
+              "text": "Kings attack too: every square beside them. So two kings never stand side by side, and your king can help trap the other."
             },
             {
               "id": "check-1-queen",
