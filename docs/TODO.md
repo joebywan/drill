@@ -106,3 +106,7 @@ internet permission:
   most phones and on the web with WebGPU, but is a download of several hundred MB; Gemini Nano
   via ML Kit needs a recent flagship. Small models drift off a character's voice, so the pool
   stays as the fallback either way. Check the current options before choosing.
+
+Shipped: the line pool (`src/cast/voice/*.json`, `say()` in lines.js, `tools/voice-draft.js` for
+drafting with Claude at authoring time). The on-device model is still later: Drill has no internet
+permission, and the pool stays the fallback even then.

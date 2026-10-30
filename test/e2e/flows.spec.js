@@ -1576,6 +1576,33 @@ test('under reduced motion Calm stays quiet: no bell, no rain', async ({ page })
   expect(await page.evaluate(() => [window.heard.tones.includes(528), window.heard.noise])).toEqual([false, 0]);
 });
 
+// Coach voice: the shown habit's coach greets home from its line pools (say() in lines.js). A dare
+// comes at most once a day, only while the habit isn't done today, and never after a gap.
+test('the coach greets home in its own voice, dares once a day, and welcomes a comeback', async ({ page }) => {
+  await page.clock.setFixedTime(new Date(2026, 9, 30, 9));
+  await page.addInitScript(() => { Math.random = () => 0; });
+  let p = emptyProgress();
+  for (const d of [27, 28, 29]) p = finishPractice(p, 'calm', null, new Date(2026, 9, d, 8), { title: 'Breathing', mins: 2 });
+  await page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
+  await page.goto('/');
+  await tab(page, 'Calm').click();
+  const greeting = page.locator('.greeting');
+  await expect(greeting).toHaveText("Moss I bet you can't do three slow breaths before lunch.");
+  await expect(greeting).toHaveClass(/dare/);
+  // The same day, no second dare: a line about the person instead, filled from their own sessions.
+  await page.reload();
+  await tab(page, 'Calm').click();
+  await expect(greeting).toHaveText('Moss Your usual morning breathing, whenever you like.');
+  await expect(greeting).not.toHaveClass(/dare/);
+  // After a gap: a welcome, never a dare, even on a new day.
+  const back = finishPractice(emptyProgress(), 'calm', null, new Date(2026, 9, 20, 8), { title: 'Breathing', mins: 2 });
+  await page.evaluate((saved) => { localStorage.setItem('drill.progress', saved); localStorage.removeItem('drill.said'); }, JSON.stringify(back));
+  await page.reload();
+  await tab(page, 'Calm').click();
+  await expect(greeting).toHaveText('Moss Hello again. The pond is just as you left it.');
+  await expect(greeting).not.toHaveClass(/dare/);
+});
+
 // Coding: tap-to-build programs Fennel runs on a grid. Answers come from the same runner the app uses.
 const codingCourse = JSON.parse(readFileSync(new URL('../../src/data/coding.json', import.meta.url)));
 const firstCoding = codingCourse.units[0].lessons[0];

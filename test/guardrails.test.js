@@ -148,12 +148,14 @@ const reflectText = [
   ...strings(reflectCourse).filter((t) => /\s/.test(t)).map((text) => ['reflect.json', text]),
 ];
 
+const JUDGE = /\b(should|must|wrong|bad|better|best|score\w*|grade\w*|rate|marks?)\b/i;
+
 test('Reflect makes no claims, never hurries and never judges', () => {
   assert.ok(reflectText.length > 20);
   assert.ok(reflectText.some(([, text]) => text === reflectCourse.tip), 'the mic tip is linted');
   for (const [kind, text] of reflectText) {
     for (const rule of [CLAIMS, URGENCY, ABILITY, LOSS]) assert.doesNotMatch(text, rule, `${kind}: ${text}`);
-    assert.doesNotMatch(text, /\b(should|must|wrong|bad|better|best|score\w*|grade\w*|rate|marks?)\b/i, `${kind}: ${text}`);
+    assert.doesNotMatch(text, JUDGE, `${kind}: ${text}`);
   }
 });
 
@@ -400,4 +402,60 @@ test('the widget and the daily note never nag, hurry or judge', () => {
   const texts = [...Object.values(WIDGET_LINES).flat(), ...Object.values(REMINDER_WORDS)];
   assert.ok(texts.length > 15);
   for (const text of texts) for (const lint of [NAGGING, LOSS, ABILITY, URGENCY]) assert.doesNotMatch(text, lint, text);
+});
+
+// Coach voice (src/cast/voice/*.json): every pool line and dare gets the lint for the habits its
+// coach runs, plus the words its own voice sheet says it never uses. Lines are linted with their
+// slots filled. Comebacks welcome without counting the time away; dares are a playful bet in
+// character, never about streaks, loss or what wasn't done.
+import { VOICES } from '../src/cast/lines.js';
+const PRESSURE = /\b(hurry|don'?t miss|last chance|too late|right now|you haven'?t|still haven'?t|remember to|lazy|excuses?)\b/i;
+const AWAY = /\b(while|ages|away|finally|at last|long time|gap|skipp\w*|missed|where (have|were) you)\b/i;
+const DARE_BAD = /\b(streak\w*|lazy|excuses?|chicken|scared|coward\w*|regret\w*|or else|too late|last chance|disappoint\w*|let (me|us|yourself) down|fail\w*|quit\w*|give up|weak\w*|you haven'?t|still haven'?t|not yet|skipp\w*|prove yourself)\b/i;
+const DARE_WORD = /\b(bets?|dare)\b/i;
+// Lumi also coaches the one-tap habits, so she gets their lint too.
+const VOICE_LINTS = {
+  rosa: [],
+  moss: [CLAIMS, URGENCY],
+  mira: [CLAIMS, BREAK_CLAIMS, URGENCY, SHAMING],
+  clover: [PUSHING, BODY, CALORIE_NUMBERS],
+  lumi: [CLAIMS, URGENCY, JUDGE, NAGGING],
+  kaede: [],
+  ada: [],
+  fennel: [],
+  hazel: [CLAIMS, URGENCY, GRIND],
+  winddown: [CLAIMS, SLEEP, URGENCY, SHAMING],
+};
+const FACTS = { habit: 'Screen break', usualHour: 'evening', count: 12, days: 40 };
+const filled = (text) => text.replace(/\{(\w+)\}/g, (_, k) => FACTS[k]);
+const never = (word) => new RegExp(/^\w/.test(word) ? `\\b${word}\\b` : word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+
+test('every coach voice line passes its coach\'s lint and its own never-list', () => {
+  assert.deepEqual(Object.keys(VOICE_LINTS).sort(), Object.keys(VOICES).sort(), 'every coach has a lint');
+  let n = 0;
+  for (const [id, v] of Object.entries(VOICES)) {
+    const lints = [ABILITY, LOSS, PRESSURE, ...VOICE_LINTS[id], ...v.voice.never.map(never)];
+    for (const { when, lines } of [...v.lines, ...v.dares]) for (const text of lines) {
+      n++;
+      for (const lint of lints) assert.doesNotMatch(filled(text), lint, `${id}: ${text}`);
+      if (when.comeback) assert.doesNotMatch(text, AWAY, `${id} comeback: ${text}`);
+    }
+  }
+  assert.ok(n > 150, `${n} lines`);
+  for (const bad of ['Hurry, the day is nearly done', "You haven't breathed today", 'Remember to stretch']) assert.match(bad, PRESSURE, bad);
+  for (const bad of ["It's been a while", 'Finally, you came back', 'Where were you?', 'You missed three days']) assert.match(bad, AWAY, bad);
+  assert.match('Hello!', never('!'));
+  assert.match('Do it harder', never('harder'));
+});
+
+test('dares are a bet in character, never guilt, loss or pressure', () => {
+  const dares = Object.entries(VOICES).flatMap(([id, v]) => v.dares.flatMap((p) => p.lines.map((text) => [id, text])));
+  assert.ok(dares.length >= 15);
+  for (const [id, text] of dares) {
+    assert.match(text, DARE_WORD, `${id} dare: ${text}`);
+    for (const lint of [DARE_BAD, LOSS, ABILITY, PRESSURE]) assert.doesNotMatch(filled(text), lint, `${id} dare: ${text}`);
+  }
+  for (const bad of ["Bet you can't keep your streak", "I dare you to stop being lazy", "You haven't done it, I bet you won't", "Bet you'll give up", 'Dare you, or else', "Don't let me down"])
+    assert.ok([DARE_BAD, LOSS, PRESSURE].some((lint) => lint.test(bad)), bad);
+  assert.match("Moss bets you can't do three slow breaths before lunch.", DARE_WORD);
 });

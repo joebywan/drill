@@ -6,9 +6,10 @@ import { emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { lumi } from './cast/lumi.js';
-import { CALM_SOUNDS, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer } from './cast/lines.js';
+import { CALM_SOUNDS, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, setSound, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
+import { moment } from './cast/voice.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
 import { TIMINGS, TIMING_WORDS, pathTimings, setTiming, spread, timed } from './practice/timings.js';
@@ -102,6 +103,27 @@ let habitShown = (() => {
 function showHabit(id) {
   habitShown = id;
   try { localStorage.setItem(HABIT_KEY, id); } catch { /* lasts the visit */ }
+}
+
+// The shown habit's coach greets home in its own voice (say() in lines.js). Kept per habit, light
+// and day so a re-render doesn't change it; what was said lately and the day of the last dare
+// are kept in storage, so lines don't repeat and a dare comes at most once a day.
+const SAID = 'drill.said';
+const greeted = new Map();
+function greeting(h) {
+  // On Learning, the course shown speaks: Rosa, Kaede, Ada…
+  const course = h.id === 'learn' ? courseShown.coach.name.toLowerCase() : undefined;
+  const { coach: who, state, facts } = moment(progress, h, new Date(), course);
+  const key = `${h.id} ${who} ${state.light} ${state.today}`;
+  if (!greeted.has(key)) {
+    let kept = {};
+    try { kept = JSON.parse(localStorage.getItem(SAID)) || {}; } catch { /* private mode or unreadable */ }
+    const recent = Array.isArray(kept.recent) ? kept.recent : [];
+    const said = say(who, { ...state, daredToday: kept.dared === state.today }, facts, Math.random, recent);
+    try { localStorage.setItem(SAID, JSON.stringify({ recent: [...recent, said.line].slice(-6), dared: said.dare ? state.today : kept.dared })); } catch { /* lasts the visit */ }
+    greeted.set(key, `<p class="said welcome greeting${said.dare ? ' dare' : ''}"><b>${esc(VOICES[who].name)}</b> ${esc(said.text)}</p>`);
+  }
+  return greeted.get(key);
 }
 
 // The courses (Learn subjects) share the Learning tab; it shows one course's path at a time,
@@ -211,7 +233,7 @@ function home(arrived = null, newly = []) {
       </div><div class="pane">
       ${learning && courses.length > 1 ? `<nav class="courses" aria-label="Course">${courses.map((s) =>
         `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === courseShown}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
-      ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : ''}
+      ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : invite ? '' : greeting(shownHabit)}
       ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
         : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
       ${invite ? comebackCard(invite) : ''}
@@ -691,12 +713,14 @@ function run(lessonId, queue, title, extra = null) {
     focusOn('.cta .next');
   });
 
-  // Tapping Rosa: a hop and a line, then back to the question.
+  // Tapping Rosa: a hop and a line (not one of the last few), then back to the question.
   let aside;
+  let heard = [];
   $('.who').addEventListener('click', () => {
     play('tap');
     sessionCoach.hop();
-    bubble.textContent = line('tapped', Math.random(), who.lines);
+    heard = [...heard, line('tapped', Math.random(), who.lines, heard)].slice(-3);
+    bubble.textContent = heard.at(-1);
     clearTimeout(aside);
     aside = setTimeout(() => { bubble.textContent = said; }, 2500);
   });
