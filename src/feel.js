@@ -93,7 +93,7 @@ export function rain() {
   } catch { return () => {}; }
 }
 
-const BUZZ = { unlock: 8, right: 12, run: 12, wrong: [20, 60, 20], done: [15, 50, 15, 50, 30], inhale: 8, exhale: [6, 80, 6] };
+const BUZZ = { bell: [15, 60, 30], unlock: 8, right: 12, run: 12, wrong: [20, 60, 20], done: [15, 50, 15, 50, 30], inhale: 8, exhale: [6, 80, 6] };
 export const buzz = (name) => { try { navigator.vibrate?.(BUZZ[name]); } catch { /* no haptics */ } };
 
 /** `el.animate`, skipped under reduced motion. */

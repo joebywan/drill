@@ -25,11 +25,12 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>] [--avd <name>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, scan, garden, log, winddown); a new one is
+No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, focus, scan, garden, log, winddown); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
-- With no `--url` it serves this checkout on a free port; Chrome opens `http://10.0.2.2:<port>/`.
+- With no `--url` it serves this checkout on a free port forwarded with `adb reverse`; Chrome opens
+  `http://localhost:<port>/`, a secure context, so Wake Lock and the like work as on the real site.
 - It boots the AVD (`--avd`, else `PHONE_AVD`, default `splendor36`; `--avd daybook_tablet` for a tablet) `-read-only` if no emulator is running and
   shuts down only one it started. SDK from `ANDROID_HOME` or `~/Android/Sdk`.
 - Screenshots of the whole screen (keyboard included) go to `test-results/phone/<scenario>/NN-name.png`.
@@ -118,6 +119,12 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - **Calm is not therapy.** `test/guardrails.test.js` bars health claims, diagnosis words and urgency
   in Calm's text, and checks the Lifeline help line (13 11 14, as plain text) is on the first Calm
   lesson and after "Not really".
+- `src/focus/` — the Focus practice subject: "What are you focusing on?" (presets or your own words,
+  optional; kept in `progress.journal[date].focus`, never the log, shown by its `dayDetail`), then
+  one long `clock` phase (m:ss, `countOf`) with Hazel the beaver (`src/cast/hazel.js`, posed with
+  `rig()`) holding her stick. Pause and "I'm done" end it like any other; `stayAwake()` in
+  practice/kit.js keeps the screen on. The end screen's question comes from `coach.ask` ("How did it go?").
+  Its garden plant is bamboo. Guardrails bar productivity guilt and distraction counting.
 - `src/practice/timings.js` — the learner's own timings: `TIMINGS` (each practice habit's settable
   values, ranges, fixed defaults) and `timed(habit, defaults, overrides)`, the one merge every routine
   builder (calm, move, break `routines.js`) goes through; a value out of range falls back to the
