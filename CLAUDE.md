@@ -103,13 +103,18 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - `src/habitview.js` — pure helpers and the wording for the habit view (`habitView()` in app.js),
   opened from the "N-day streak · See your week" line over home's path (or a plant). Days without a session are plain, never missed.
 - `src/coding/` — the Coding learn subject, beside chess on the Learning habit. `program.js` is pure: a
-  level is rows of text ('S' Fennel, '*' the flower, '#' a rock), a program is blocks (steps,
-  `{ repeat, do }`, `{ if: 'rock-right', then, else }`, `{ until, do }`, `{ define, do }`, `{ call }`),
-  `run()` walks it (a loop back on a square it looped from ends as 'endless'), and `problem()` proves each
-  item answerable. Items: teach, build (tap tiles into the holes; it runs when the last is filled, and
-  any program that reaches the flower is right), predict (tap where Fennel stops), bug (a whole program
+  level is rows of text ('S' Fennel, '*' a flower, '#' a rock, 'o' a square of a shape to draw), a program is
+  blocks (steps, `{ repeat, do }`, `{ if, then, else }`, `{ until, do }`, `{ define, params, do }`, `{ call, args }`,
+  `{ set, to }`, `{ change, by }`, `{ each, in, do }`, `{ go }`), with looks that compare a variable or combine
+  with and/or/not. `run()` walks it and records the variables at each square, which the screen shows
+  (a loop back on a square and values it looped from ends as 'endless'), and `problem()` proves each
+  item answerable. **What ends a run:** one flower, reaching it; several flowers, the blocks running out,
+  right if exactly `want` (else all) were picked; a shape, the blocks running out, right if the squares
+  stood on are exactly the shape. Items: teach, build (tap tiles into the holes; it runs when the last is
+  filled, and any program that meets the goal is right), predict (tap where Fennel stops), bug (a whole program
   that fails: tap a block, a tile replaces it, graded by running). `view: 'js' | 'both'` shows a program as
-  JavaScript from `toJS()`; code text is never stored. A new block goes through `slots()`. Words in prompts
+  JavaScript from `toJS()`; code text is never stored. A new block goes through `slots()` (holes, flips),
+  `run()`, `blocks()` and `toJS()`; looks are written once by `writeLook()`. Words in prompts
   and explanations get swapped on a flip, so "right" means a direction only. `exercise.js` draws
   the grid, the blocks and the tiles, and Fennel (`src/cast/fennel.js`, a fennec fox posed with
   `rig()`) walks it. His lines are `CODING_LINES`/`CODING_HEADLINES`, read through the subject's

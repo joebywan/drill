@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { answer, changed, fill, fixBug, holes, jsFace, mirrored, parse, parts, problem, punch, reaches, run, solve, tileName, toJS, vary } from '../src/coding/program.js';
+import { answer, changed, fill, fixBug, holes, jsFace, mirrored, parse, parts, problem, punch, reached, reaches, run, runItem, solve, tileName, toJS, vary } from '../src/coding/program.js';
 import course from '../src/data/coding.json' with { type: 'json' };
 
 const level = ['S.#*', '....'];
@@ -170,10 +170,11 @@ const allItems = lessons.flatMap((l) => l.items);
 const uses = (item, key) => JSON.stringify(item.program ?? []).includes(`"${key}"`);
 
 test('the course is long, and each lesson is a proper session', () => {
-  assert.ok(lessons.length >= 25 && lessons.length <= 30, `${lessons.length} lessons`);
+  assert.ok(lessons.length >= 45 && lessons.length <= 50, `${lessons.length} lessons`);
   for (const l of lessons) assert.ok(l.items.length >= 8 && l.items.length <= 10, `${l.id}: ${l.items.length}`);
   for (const l of lessons) assert.ok(l.items.some((i) => i.type === 'predict'), `${l.id} has something to read`);
-  for (const u of units) assert.ok(u.lessons.length >= 3 && u.lessons.length <= 4, u.title);
+  // The last unit reads every earlier kind of block as code, so it runs one lesson longer.
+  for (const u of units) assert.ok(u.lessons.length >= 3 && u.lessons.length <= (u === units.at(-1) ? 5 : 4), u.title);
 });
 
 test('saved progress still points somewhere: every first-course id is kept', () => {
@@ -196,6 +197,22 @@ test('every new rule is shown on a teach card before anything asks it', () => {
     'bug hunting': (i) => i.type === 'bug' || (i.type === 'teach' && i.id === 'bug-0-meet'),
     'if with holes in its look': (i) => i.id === 'if-2-meet' || i.program?.some((b) => JSON.stringify(b ?? '').includes('"if":null')),
     javascript: (i) => !!i.view,
+    parameters: (i) => uses(i, 'params'),
+    variables: (i) => uses(i, 'set'),
+    'changing a value': (i) => uses(i, 'change'),
+    'several flowers': (i) => i.level && parse(i.level).flowers.length > 1,
+    'picking some of them': (i) => 'want' in i,
+    'more or less than': (i) => /"op":"[<>]"/.test(JSON.stringify(i.program ?? [])),
+    not: (i) => uses(i, 'not'),
+    and: (i) => uses(i, 'and'),
+    or: (i) => uses(i, 'or'),
+    lists: (i) => uses(i, 'each'),
+    'lists of numbers': (i) => /"in":\[(null,)*-?\d/.test(JSON.stringify(i.program ?? [])),
+    drawing: (i) => i.level && parse(i.level).shape,
+    'variables as code': (i) => i.view && uses(i, 'set'),
+    'parameters as code': (i) => i.view && uses(i, 'params'),
+    'tests as code': (i) => i.view && (uses(i, 'or') || uses(i, 'and') || uses(i, 'not')),
+    'arrays as code': (i) => i.view && uses(i, 'each'),
   };
   for (const [name, test] of Object.entries(rules)) {
     const at = first(test);
@@ -209,12 +226,104 @@ test('every level fits a phone, and every flip of every item still works', () =>
     assert.ok(i.level[0].length <= 7 && i.level.length <= 5, `${i.id} is too big for 360px`);
   }
   for (const i of allItems.filter((x) => x.type === 'bug')) {
-    assert.notEqual(run(i.level, i.program).end, 'flower', i.id);
-    assert.equal(run(i.level, changed(i, fixBug(i))).end, 'flower', i.id);
+    assert.ok(!reached(runItem(i)), i.id);
+    assert.ok(reached(runItem(i, changed(i, fixBug(i)))), i.id);
   }
 });
 
 test('words a flip would turn into nonsense stay out of what is said', () => {
   const idiom = /\b(times over|twice over|over and|all over|start over|is over|right (away|now|answer|one|choice)|that's right|is right\b(?!\()|set up|pick up|look up|left over|blocks? left|what's left)\b/i;
   for (const i of allItems) for (const t of [i.prompt, i.explain]) if (t) assert.doesNotMatch(t, idiom, `${i.id}: ${t}`);
+});
+
+test('every first-course lesson and item id is still there, in its place', () => {
+  const ids = lessons.flatMap((l) => l.items.map((i) => i.id));
+  assert.equal(new Set(ids).size, ids.length);
+  assert.deepEqual(units.map((u) => u.title), ['Step by step', 'Loops', 'If and else', 'Nested loops', 'Repeat until', 'Your own block', 'Parameters', 'Variables', 'Comparisons and logic', 'Lists', 'Drawing', 'Find the bug', 'From blocks to code']);
+});
+
+test('variables hold, change and are recorded at each square; a parameter holds only inside its block', () => {
+  const r = run(['S...*'], [{ set: 'n', to: 1 }, { change: 'n', by: 2 }, { repeat: 'n', do: ['right'] }]);
+  assert.deepEqual(r.path.at(-1), [3, 0]);
+  assert.deepEqual(r.values, [{ n: 3 }, { n: 3 }, { n: 3 }, { n: 3 }]);
+  assert.equal(run(['S..*'], [{ define: 'hop', params: ['k'], do: [{ repeat: 'k', do: ['right'] }] }, { call: 'hop', args: [3] }]).end, 'flower');
+  const after = run(['S..', '...'], [{ define: 'hop', params: ['k'], do: ['right'] }, { set: 'k', to: 7 }, { call: 'hop', args: [1] }, { set: 'j', to: 'k' }]);
+  assert.equal(after.values.at(-1).j, 7, 'the old value is back when the block ends');
+});
+
+test('a loop that only changes values is stopped too, and a comparison reads a variable', () => {
+  const count = (n, by = 1) => [{ set: 'c', to: 0 }, { until: { cmp: 'c', op: '=', n }, do: [{ change: 'c', by }] }];
+  assert.equal(run(['S.*'], count(3)).end, 'short');
+  assert.equal(run(['S.*'], count(3, 2)).end, 'endless', 'it counts past 3 for ever');
+  assert.equal(run(['S.*'], [{ until: 'flower', do: [{ set: 'c', to: 1 }] }]).end, 'endless');
+  const held = (look, vars = 2) => run(['S*'], [{ set: 'c', to: vars }, { if: look, then: ['right'], else: [] }]).end === 'flower';
+  assert.ok(held({ cmp: 'c', op: '<', n: 3 }) && !held({ cmp: 'c', op: '>', n: 3 }) && held({ cmp: 'c', op: '=', n: 2 }));
+  assert.ok(held({ not: { cmp: 'c', op: '>', n: 3 } }));
+  assert.ok(held({ and: ['rock-up', { cmp: 'c', op: '=', n: 2 }] }) && !held({ and: ['rock-right', 'rock-up'] }));
+  assert.ok(held({ or: ['rock-right', 'rock-up'] }));
+});
+
+test('several flowers: the walk goes on until the blocks run out, and exactly `want` is right', () => {
+  const walk = (n) => [{ repeat: n, do: ['right'] }];
+  assert.equal(run(['S*.*'], walk(1)).end, 'short');
+  assert.equal(run(['S*.*'], walk(3)).end, 'flower');
+  assert.equal(run(['S*.*.'], walk(4)).end, 'flower', 'walking past the last one is fine');
+  assert.equal(run(['S*.*.*'], walk(3), 2).end, 'flower');
+  assert.equal(run(['S*.*.*'], walk(5), 2).end, 'short', 'three is not two');
+  const count = [{ set: 'f', to: 0 }, { until: { cmp: 'f', op: '=', n: 2 }, do: ['right', { if: 'flower', then: [{ change: 'f', by: 1 }], else: [] }] }];
+  const r = run(['S*.*.*'], count, 2);
+  assert.equal(r.end, 'flower');
+  assert.deepEqual(r.path.at(-1), [3, 0]);
+  assert.equal(r.values.at(-1).f, 2);
+  assert.equal(problem({ id: 'x', type: 'predict', level: ['S*'], program: [], want: 1, prompt: 'p', explain: 'e' }), 'want needs enough flowers');
+});
+
+test('a list runs its blocks once per value, in order; go steps the way a variable holds', () => {
+  const r = run(['S.', '.*'], [{ each: 'way', in: ['right', 'down'], do: [{ go: 'way' }] }]);
+  assert.equal(r.end, 'flower');
+  assert.deepEqual(r.values[0], { way: 'right' });
+  assert.deepEqual(run(['S..', '..*'], [{ each: 'n', in: [2, 1], do: [{ repeat: 'n', do: ['right'] }] }]).path.at(-1), [2, 0], 'the second value bumps');
+  const m = mirrored({ id: 'a', type: 'build', level: ['S.', '.*'], program: [{ each: 'way', in: ['right', null, 'down'], do: [{ go: 'way' }] }], tiles: ['down', { go: 'way' }], prompt: 'p', explain: 'e' }, { x: true });
+  assert.deepEqual(m.program[0].in, ['left', null, 'down']);
+  assert.deepEqual(m.tiles, ['down', { go: 'way' }]);
+  assert.deepEqual(holes([{ each: 'n', in: [1, null], do: [null] }]), ['count', 'step']);
+});
+
+test('a drawing is right when the squares stood on are exactly the shape, however they were walked', () => {
+  const ring = ['So', 'oo'];
+  assert.equal(run(ring, ['right', 'down', 'left']).end, 'drawn');
+  assert.equal(run(ring, ['down', 'right', 'up']).end, 'drawn', 'the other way round');
+  assert.equal(run(ring, ['right', 'left', 'down', 'right', 'up', 'down']).end, 'drawn', 'with squares walked twice');
+  assert.equal(run(ring, ['right', 'down']).end, 'short', 'a square short');
+  assert.equal(run(['Soo.'], ['right', 'right', 'right']).end, 'short', 'a square too many');
+  const item = { id: 'd', type: 'build', level: ['So', 'oo'], program: [null, null, null], tiles: ['right', 'down', 'left', 'up'], prompt: 'p', explain: 'e' };
+  assert.equal(problem(item), null);
+  assert.deepEqual(mirrored(item, { x: true }).level, ['oS', 'oo']);
+  assert.equal(problem({ ...item, level: ['S.', '..'] }), 'level needs S and a flower or a shape');
+});
+
+test('toJS writes the new blocks, and holes stay in reading order', () => {
+  assert.equal(toJS([{ set: 'n', to: 2 }, { set: 'n', to: 3 }, { change: 'n', by: 1 }, { change: 'n', by: -2 }]), 'let n = 2;\nn = 3;\nn = n + 1;\nn = n - 2;');
+  assert.equal(toJS([{ define: 'hop', params: ['n'], do: [{ repeat: 'n', do: ['up'] }] }, { call: 'hop', args: [3] }]), 'function hop(n) {\n  for (let i = 0; i < n; i++) {\n    up();\n  }\n}\nhop(3);');
+  assert.equal(toJS([{ until: { cmp: 'n', op: '=', n: 3 }, do: [] }]), 'while (!(n === 3)) {\n}');
+  assert.equal(toJS([{ if: { and: ['rock-up', { not: 'flower' }] }, then: ['up'], else: [] }]), 'if (rock("up") && !flower()) {\n  up();\n}');
+  assert.equal(toJS([{ if: { or: [{ cmp: 'n', op: '<', n: 1 }, { cmp: 'n', op: '>', n: 3 }] }, then: [], else: [] }]), 'if (n < 1 || n > 3) {\n}');
+  assert.equal(toJS([{ each: 'way', in: ['up', 'left'], do: [{ go: 'way' }] }]), 'let ways = ["up", "left"];\nfor (const way of ways) {\n  go(way);\n}');
+  assert.equal(toJS([{ each: 'n', in: [2, 1], do: [] }]), 'let ns = [2, 1];\nfor (const n of ns) {\n}');
+  const holey = [{ set: 'a', to: null }, { until: { cmp: 'a', op: null, n: null }, do: [{ change: 'a', by: null }] }, { define: 'h', params: ['n'], do: [] }, { call: 'h', args: [null] }];
+  assert.deepEqual(holes(holey), ['count', 'op', 'count', 'count', 'count']);
+  assert.equal(toJS(holey).split('___').length - 1, 5);
+  assert.equal(jsFace('='), '===');
+  assert.equal(jsFace({ call: 'hop', args: [3] }), 'hop(3);');
+  assert.equal(tileName({ cmp: 'a', op: '<', n: 2 }), 'Look for a < 2');
+  const m = mirrored({ id: 'a', type: 'bug', level: ['S.', '.*'], program: [{ until: { and: ['rock-right', { not: 'rock-up' }] }, do: ['right'] }], tiles: [{ or: ['rock-left', 'flower'] }, '<'], prompt: 'p', explain: 'e' }, { x: true, y: true });
+  assert.deepEqual(m.program[0].until, { and: ['rock-left', { not: 'rock-down' }] });
+  assert.deepEqual(m.tiles[0], { or: ['rock-right', 'flower'] });
+});
+
+test('a call must give each parameter a value', () => {
+  const base = { id: 'x', type: 'predict', level: ['S*'], prompt: 'p', explain: 'e' };
+  const hop = { define: 'hop', params: ['n'], do: [] };
+  assert.equal(problem({ ...base, program: [hop, { call: 'hop', args: [1] }] }), null);
+  assert.equal(problem({ ...base, program: [hop, { call: 'hop' }] }), 'a call gives the wrong number of values');
 });

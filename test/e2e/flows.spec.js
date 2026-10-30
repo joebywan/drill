@@ -2039,8 +2039,9 @@ test('Coding, the new blocks on a real page: a bug fixed by tapping, an endless 
   await expect(page.locator('pre.code')).toContainText('hop();\nhop();');
 });
 
-test('every Coding item fits a 360px phone: no sideways scroll, the program clear of the tiles', async ({ page }) => {
-  await page.setViewportSize({ width: 360, height: 640 });
+// Each size has its own layout rules, so a tall phone gets the grid at full size: both must fit.
+for (const [width, height] of [[360, 640], [375, 812]]) test(`every Coding item fits a ${width}x${height} phone: no sideways scroll, the program clear of the tiles`, async ({ page }) => {
+  await page.setViewportSize({ width, height });
   await page.goto('/');
   // The widest font a phone or CI is likely to fall back to, so the fit doesn't depend on the machine's fonts.
   await page.addStyleTag({ content: 'body, button { font-family: "DejaVu Sans", Verdana, sans-serif; }' });
@@ -2077,6 +2078,71 @@ test('every Coding item fits a 360px phone: no sideways scroll, the program clea
   }, [...items.filter((i) => i.type !== 'teach' || i.program),
     ...items.filter((i) => i.type !== 'teach').flatMap((i) => [{ x: true }, { y: true }, { x: true, y: true }].map((flip) => mirrored(i, flip)))]);
   expect(bad).toEqual([]);
+});
+
+test('Coding, values and shapes on a real page: the count shows while walking, the shape is compared, a bug in a new block is fixed', async ({ page }) => {
+  await page.goto('/');
+  const mount = (item) => page.evaluate(async (item) => {
+    const { mount } = await import('/src/coding/exercise.js');
+    document.body.innerHTML = '<div id="t" class="quiz"></div><p id="said"></p>';
+    window.result = null;
+    window.drill = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right) { window.result = right; } });
+  }, item);
+  const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
+  const result = () => page.evaluate(() => window.result);
+
+  // The value is on screen before the run and ends on what the run left, with the grid staying put.
+  await mount({ id: 'v', type: 'build', level: ['S..*'], program: [{ set: 'steps', to: 0 }, { until: { cmp: 'steps', op: '=', n: null }, do: [{ change: 'steps', by: 1 }, 'right'] }], tiles: [2, 3], prompt: 'p', explain: 'e' });
+  await expect(page.locator('.vars b')).toHaveText('?');
+  const top = await page.locator('.grid-world').evaluate((g) => g.getBoundingClientRect().top);
+  await tile('Number 3').click();
+  await expect.poll(result).toBe(true);
+  await expect(page.locator('.vars b')).toHaveText('3');
+  expect(await page.locator('.grid-world').evaluate((g) => g.getBoundingClientRect().top)).toBe(top);
+
+  // Picked flowers stay marked, and stopping at the count is what makes it right.
+  await mount({ id: 'f', type: 'build', level: ['S*.*.*'], want: 2, program: [{ set: 'f', to: 0 }, { until: { cmp: 'f', op: '=', n: null }, do: ['right', { if: 'flower', then: [{ change: 'f', by: 1 }], else: [] }] }], tiles: [2, 3], prompt: 'p', explain: 'e' });
+  await tile('Number 2').click();
+  await expect.poll(result).toBe(true);
+  await expect(page.locator('.cell.picked svg')).toHaveCount(2);
+
+  // A drawing: the shape shows faintly, the trail covers it, and any route is right.
+  const shape = { id: 'd', type: 'build', level: ['So', 'oo'], program: [null, null, null], tiles: ['right', 'down', 'left', 'up'], prompt: 'p', explain: 'e' };
+  for (const way of [['Step right', 'Step down', 'Step left'], ['Step down', 'Step right', 'Step up']]) {
+    await mount(shape);
+    await expect(page.locator('.cell.target')).toHaveCount(4);
+    await expect(page.locator('.cell.trail')).toHaveCount(0);
+    for (const t of way) await tile(t).click();
+    await expect.poll(result).toBe(true);
+    await expect(page.locator('.cell.trail')).toHaveCount(4);
+  }
+  // A square short is not the shape.
+  await mount(shape);
+  for (const t of ['Step right', 'Step left', 'Step down']) await tile(t).click();
+  await expect.poll(result).toBe(false);
+
+  // A number inside a block is one tap away, and a name can replace it.
+  await mount({ id: 'b', type: 'bug', level: ['S...*'], program: [{ define: 'hop', params: ['n'], do: [{ repeat: 2, do: ['right'] }] }, { call: 'hop', args: [4] }], tiles: ['n', 3, 'up'], prompt: 'p', explain: 'e' });
+  await page.getByRole('button', { name: 'Change: Number 2' }).click();
+  await tile('Value n').click();
+  await expect.poll(result).toBe(true);
+});
+
+test('every Coding bug can be fixed by tapping the block it names, whichever way it is flipped: blocks and slots stay in step', async ({ page }) => {
+  await page.goto('/');
+  const bugs = codingCourse.units.flatMap((u) => u.lessons.flatMap((l) => l.items)).filter((i) => i.type === 'bug');
+  for (const item of bugs.flatMap((i) => [i, mirrored(i, { x: true, y: true })])) {
+    await page.evaluate(async (item) => {
+      const { mount } = await import('/src/coding/exercise.js');
+      document.body.innerHTML = '<div id="t" class="quiz"></div>';
+      window.result = null;
+      mount(document.getElementById('t'), item, { say() {}, done(right) { window.result = right; } });
+    }, item);
+    const { part, tile } = fixBug(item);
+    await page.locator(`.program [data-part="${part}"]`).click();
+    await page.locator('.tiles').getByRole('button', { name: tileName(tile), exact: true }).click();
+    await expect.poll(() => page.evaluate(() => window.result), item.id).toBe(true);
+  }
 });
 
 test('the first lesson of each new Coding unit plays through as a real session', async ({ page }) => {
