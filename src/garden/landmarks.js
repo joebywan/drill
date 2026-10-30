@@ -1,16 +1,17 @@
 import { INK } from '../cast/kit.js';
 import { move } from '../feel.js';
-import { SIZE, visitor } from './scene.js';
+import { SIZE, visitor, pond } from './scene.js';
 
 /**
  * The garden's landmarks, LANDMARKS in model.js: drawn into a scene by drawGarden (art.js).
  *
  *   layout(shape, taken, gifts, fresh) -> { back, front, life }   svg strings in the scene's units
- *       The path and the fence lie behind the plants (`back`); every other piece takes the free spot
+ *       Lumi's pond (scene.js pond()) is every garden's, there before any landmark; the pond landmark
+ *       is a frog joining it. The path and the fence lie behind the plants (`back`); every other piece takes the free spot
  *       nearest where it would like to be, clear of `taken` (the plants' boxes, which it adds to).
  *       The birdhouse brings a pair of birds, the nest a second pair, the hive two bees (`life`).
  *       In the home strip a piece with no room is left out; the tall view always has room.
- *   landmark(gift) -> svg string   a piece on its own, for "A pond, with a frog" lines
+ *   landmark(gift) -> svg string   a piece on its own, for "A frog joined Lumi at the pond" lines
  *   animateLandmarks(el) -> Animation[]   lanterns glow, the pond ripples, the frog hops
  */
 
@@ -52,7 +53,7 @@ export function landmark(gift) {
 
 const hit = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 // Where each piece would like to stand, as fractions of the scene.
-const WANT = { pond: [0.5, 0.42], bench: [0.15, 0.36], birdhouse: [0.86, 0.33], beehive: [0.88, 0.62], lantern: [0.05, 0.45], lantern2: [0.95, 0.5] };
+const WANT = { lumi: [0.8, 0.86], bench: [0.15, 0.36], birdhouse: [0.86, 0.33], beehive: [0.88, 0.62], lantern: [0.05, 0.45], lantern2: [0.95, 0.5] };
 
 export function layout(shape, taken, gifts, fresh = []) {
   const [W, H] = SIZE[shape] || SIZE.tall;
@@ -90,7 +91,10 @@ export function layout(shape, taken, gifts, fresh = []) {
     const b = canHide && free(want, w * 0.62, h * 0.62, true);
     return b ? { ...b, z: 0.62, behind: true } : null;
   };
-  const piece = (gift, b, z) => `<g transform="translate(${f(b.x)} ${f(b.y)}) scale(${f(z * 100) / 100})" data-landmark="${gift}"${isNew(gift)}>${ART[gift][2]}</g>`;
+  // The frog sits on Lumi's lily pad, in the pond's own units.
+  const frog = `<g data-landmark="pond"${isNew('pond')}><g transform="translate(-37 22)">${ART.pond[2].match(/<g data-part="frog">.*<\/g>/)[0]}</g></g>`;
+  const piece = (gift, b, z) => `<g transform="translate(${f(b.x)} ${f(b.y)}) scale(${f(z * 100) / 100})"${gift === 'lumi' ? '' : ` data-landmark="${gift}"${isNew(gift)}`}>`
+    + (gift === 'lumi' ? pond().replace('<svg ', '<svg width="80" height="50" ') + (has.has('pond') ? frog : '') : ART[gift][2]) + '</g>';
   const guest = (kind, species, b, gift) => (b ? visitor(kind, species)
     .replace('<svg ', `<svg x="${f(b.x)}" y="${f(b.y)}" width="${f(b.w)}" height="${f(b.h)}" data-kind="${kind}"${isNew(gift)} `) : '');
 
@@ -122,14 +126,15 @@ export function layout(shape, taken, gifts, fresh = []) {
   // A piece standing back on the hills is drawn behind the fence; one half behind the plants, before them.
   let far = '', hidden = '';
   const place = (gift, want = WANT[gift]) => {
-    const [w, h] = ART[gift];
+    const [w, h] = gift === 'lumi' ? [80, 50] : ART[gift];
     const b = fit(want, w * k, h * k, tall);
     if (!b) return null;
     const svg = piece(gift, b, b.z * k);
     if (b.y + b.h < hy + 10 * k) far += svg; else if (b.behind) hidden += svg; else front += svg;
     return { ...b, z: b.z * k };
   };
-  for (const gift of ['pond', 'bench', 'birdhouse', 'beehive']) {
+  place('lumi');
+  for (const gift of ['bench', 'birdhouse', 'beehive']) {
     if (!has.has(gift)) continue;
     const b = place(gift);
     if (!b) continue;

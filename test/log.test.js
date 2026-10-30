@@ -59,7 +59,7 @@ test('logToday is one tap a day through the finish path: streak, days, log and a
   let p = track(emptyProgress(), { id: 'walk' });
   p = logToday(p, 'walk', 'Walked', day(1));
   assert.deepEqual(p.habits.walk, { count: 1, last: '2026-10-01', forgiven: [], days: 1 });
-  assert.deepEqual(p.log, [{ date: '2026-10-01', habit: 'walk', title: 'Walked', mins: 0, was: null }]);
+  assert.deepEqual(p.log, [{ date: '2026-10-01', hour: 12, habit: 'walk', title: 'Walked', mins: 0, was: null }]);
   assert.equal(logToday(p, 'walk', 'Walked', day(1, 20)), p, 'a second tap the same day changes nothing');
   assert.equal(light(p, day(1), 'walk'), 'bright');
   const { newly } = award(p, day(1));
@@ -120,9 +120,9 @@ test('migrate: a v4 save goes through both steps (start per subject, then tracke
   const v4 = { version: 4, habits: { learn: { count: 2, last: '2026-10-02', forgiven: [], days: 2 } }, log: [], done: {}, cards: {},
     journal: {}, garden: { earned: {} }, start: 'Forks' };
   assert.ok(VERSION >= 6);
-  assert.deepEqual(migrate(roundTrip(v4)), { ...v4, version: VERSION, start: { chess: 'Forks' }, tracked: [], picked: [], timings: {} });
+  assert.deepEqual(migrate(roundTrip(v4)), { ...v4, version: VERSION, start: { chess: 'Forks' }, tracked: [], picked: [], timings: {}, left: [] });
   const v5 = { ...v4, version: 5, start: { chess: null } };
-  assert.deepEqual(migrate(roundTrip(v5)), { ...v5, version: VERSION, tracked: [], picked: [], timings: {} });
+  assert.deepEqual(migrate(roundTrip(v5)), { ...v5, version: VERSION, tracked: [], picked: [], timings: {}, left: [] });
   let p = track(track(emptyProgress(), { id: 'water' }), { name: '<b>Stretch</b>', icon: '🎵', plant: 'mushroom' });
   p = logToday(logToday(p, 'water', 'Drank water', day(1)), 'own-1', '<b>Stretch</b>', day(1));
   assert.deepEqual(migrate(roundTrip(p)), p);

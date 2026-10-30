@@ -1,5 +1,6 @@
 import { LEARN, light, startedHabits, today } from '../progress.js';
 import { habitsFor, subjects } from '../subjects.js';
+import { season } from './season.js';
 
 /**
  * The garden, read from progress. Pure. Plants grow from days practised (`habits[h].days`), never
@@ -48,7 +49,7 @@ export const LANDMARKS = [
   { at: 3, gift: 'path', sound: 'build', text: 'A path wound into the garden' },
   { at: 10, gift: 'bench', sound: 'build', text: 'A bench to sit a while' },
   { at: 14, gift: 'birdhouse', sound: 'birds', text: 'A birdhouse, and birds moved in' },
-  { at: 21, gift: 'pond', sound: 'pond', text: 'A pond, with a frog' },
+  { at: 21, gift: 'pond', sound: 'pond', text: 'A frog joined Lumi at the pond' },
   { at: 30, gift: 'fence', sound: 'build', text: 'A little fence around it all' },
   { at: 45, gift: 'lantern', sound: 'lantern', text: 'Lanterns for the evenings' },
   { at: 60, gift: 'beehive', sound: 'bee', text: 'A hive, humming with bees' },
@@ -70,6 +71,9 @@ export const rules = (progress) => [
   // A bee for trying something new: the first session of any habit but Learning.
   ...habitsFor(progress).filter((h) => h.id !== LEARN).map(({ id: h, name }) => (
     { id: `bee:${h}`, habit: h, gift: 'bee', text: `A bee found ${name}`, test: (p) => streak(p, h).days >= 1 })),
+  // A ladybird for answering a comeback (src/fitting.js) with a session of its habit.
+  ...habitsFor(progress).map(({ id: h }) => (
+    { id: `ladybird:${h}`, habit: h, gift: 'ladybird', text: 'A ladybird came to visit', test: (p) => p.comeback?.habit === h && !!p.comeback.done })),
   ...LANDMARKS.map(({ at, gift, sound, text }) => ({ id: `garden:${gift}`, habit: null, gift, sound, text, test: (p) => gardenDays(p) >= at })),
 ];
 // ponytail: 'birds:<habit>' (30 days) was retired for the birdhouse, which any such garden has long
@@ -105,14 +109,14 @@ export function mood(progress, now = new Date()) {
 }
 
 /**
- * Everything the garden screen draws: { mood, plants, landmarks }, a plant per started habit in
- * habitsFor order: { habit, plant, days, stage, name, next, flowers, visitors }. `plant` is the
- * drawing a self-reported habit chose (undefined for a built-in habit, whose drawing art.js knows).
- * Flowers and visitors are [{ id, gift, text, on, species }], `on` the date it arrived and `species`
- * the habit's place in habitsFor, so each habit's butterfly and bee look their own. Landmarks are
- * the same shape, in the order they arrive.
+ * Everything the garden screen draws: { mood, season, plants, landmarks } (`south` flips the season),
+ * a plant per started habit in habitsFor order: { habit, plant, days, stage, name, next, flowers,
+ * visitors }. `plant` is the drawing a self-reported habit chose (undefined for a built-in habit,
+ * whose drawing art.js knows). Flowers and visitors are [{ id, gift, text, on, species }], `on` the
+ * date it arrived and `species` the habit's place in habitsFor, so each habit's butterfly and bee
+ * look their own. Landmarks are the same shape, in the order they arrive.
  */
-export function garden(progress, now = new Date()) {
+export function garden(progress, now = new Date(), south = false) {
   const earned = progress.garden?.earned || {};
   const habits = habitsFor(progress);
   const all = rules(progress);
@@ -128,7 +132,7 @@ export function garden(progress, now = new Date()) {
     };
   });
   const landmarks = all.filter((r) => r.habit === null && earned[r.id]).map(({ id, gift, text }) => ({ id, gift, text, on: earned[id] }));
-  return { mood: mood(progress, now), plants, landmarks };
+  return { mood: mood(progress, now), season: season(now, south), plants, landmarks };
 }
 
 const dayCount = (n, more = '') => `${n} ${more}day${n === 1 ? '' : 's'}`;

@@ -188,6 +188,13 @@ const SOUNDS = {
     chirp(x, 1.02, 0.08, (p) => 3000 + 1600 * p, 0.25);
     return room(x, 0.25, 1.4);
   },
+  // A ladybird: tiny tiptoe steps on a marimba, then a soft glass note as it settles.
+  ladybird() {
+    const x = track(1.6);
+    [79, 81, 79, 84].forEach((n, i) => strike(x, i * 0.11, hz(n), MARIMBA, 0.3));
+    strike(x, 0.55, hz(88), GLASS, 0.2);
+    return room(x, 0.25);
+  },
 };
 
 for (const [name, make] of Object.entries(SOUNDS)) save(name, make());

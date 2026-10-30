@@ -90,8 +90,8 @@ test('sway and visitors move, and stay still under reduced motion', () => {
   const el = { querySelector: () => part(), querySelectorAll: () => [part(), part()] };
   assert.equal(sway(el), 'anim');
   assert.equal(calls[0][1].iterations, Infinity);
-  // Two parts each; the butterfly and bee also wander; a fresh one also flies in, on top.
-  const wander = { butterfly: 1, bee: 1, birds: 0 };
+  // Two parts each; the butterfly, bee and ladybird also wander; a fresh one also flies in, on top.
+  const wander = { butterfly: 1, bee: 1, birds: 0, ladybird: 1 };
   for (const k of VISITORS) assert.equal(animateVisitor(el, k).length, 2 + wander[k], k);
   calls.length = 0;
   for (const k of VISITORS) assert.equal(animateVisitor(el, k, true).length, 3 + wander[k], k);
@@ -100,7 +100,9 @@ test('sway and visitors move, and stay still under reduced motion', () => {
   // The scene: every living part moves forever, from a real scene's markup.
   const svg = scene('sunlit') + scene('resting');
   for (const p of ['cloud', 'halo', 'glint', 'star', 'firefly', 'tuft']) assert.match(svg, new RegExp(`data-part="${p}"`), p);
-  assert.equal(animateScene(el).length, 12, 'two of each of the six parts');
+  const seasons = scene('sunlit', 'tall', 'spring') + scene('sunlit', 'tall', 'autumn') + scene('sunlit', 'tall', 'winter') + drawGarden({ mood: 'sunlit', plants: [] });
+  for (const p of ['petal', 'leaf', 'lantern', 'lounge']) assert.match(seasons, new RegExp(`data-part="${p}"`), p);
+  assert.equal(animateScene(el).length, 20, 'two of each of the ten parts');
   calls.length = 0;
   globalThis.matchMedia = () => ({ matches: true });
   try {
@@ -117,9 +119,11 @@ test('no visitor sits on any plant: every plant, every stage, 1–6 plants, both
   const hit = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
   const check = (plants, shape, name) => {
     const [W, H] = SIZE[shape];
+    const n = plants.length;
     const at = slots(shape, plants.length);
     const boxes = plants.map((p, i) => plantBox(p.habit, p.stage, at[i]));
-    perches(plants, shape).forEach((spot, i) => {
+    const spots = perches(plants, shape);
+    spots.forEach((spot, i) => {
       for (const [kind, b] of Object.entries(spot)) {
         const where = `${name} plant ${i} ${kind}`;
         assert.ok(b.x >= 0 && b.y >= 0 && b.x + b.w <= W && b.y + b.h <= H, `${where} in the scene`);
@@ -176,7 +180,8 @@ test('a drawn garden has every plant at its stage, flowers capped at what the ar
     for (const p of plants) assert.match(svg, new RegExp(`class="plant plant-\\w+ stage-${p.stage}" data-habit="${p.habit}"`), p.habit);
     assert.equal(svg.match(/data-part="bloom"/g).length, plants.length * MAX_FLOWERS, 'capped');
     assert.equal(svg.match(/class="visitor /g).length, plants.length * 2);
-    assert.equal(svg.match(/<svg /g).length, 1 + plants.length * 3, 'one scene');
+    assert.match(svg, /class="pond"/, `Lumi's pond fits the ${shape} beside every plant`);
+    assert.equal(svg.match(/<svg /g).length, 1 + plants.length * 3 + 2, 'one scene, and the pond with Lumi');
     // Each habit's butterfly is its own species: no two share wing colours.
     const wings = [...svg.matchAll(/<g data-part="wings"><ellipse [^>]*fill="(#\w+)"/g)].map((m) => m[1]);
     assert.equal(new Set(wings).size, plants.length, shape);
@@ -247,9 +252,15 @@ test('the tall view has room for every landmark and its guests, clear of the pla
     const svg = drawGarden({ mood: 'sunlit', plants, landmarks: gifts.map((gift) => ({ gift, id: `garden:${gift}` })) }, 'tall');
     clean(svg, `${n} plants`);
     for (const g of gifts.filter((g) => g !== 'nest')) assert.match(svg, new RegExp(`data-landmark="${g}"`), `${n} plants: ${g}`);
+    assert.match(svg, /class="pond"/, `${n} plants: Lumi's pond`);
     assert.equal((svg.match(/data-landmark="lantern"/g) || []).length, 2, `${n} plants: both lanterns`);
     assert.equal((svg.match(/class="visitor visitor-birds/g) || []).length, 2, `${n} plants: the birdhouse's birds and the nest's`);
     assert.equal((svg.match(/class="visitor visitor-bee/g) || []).length, 2, `${n} plants: the hive's bees`);
   }
   for (const g of [...gifts, 'nope']) clean(landmark(g), g);
+  // A small garden always has Lumi's pond, landmarks or not, even in the strip.
+  for (let n = 1; n <= 3; n++) {
+    const plants = Array.from({ length: n }, (_, i) => ({ habit: kinds[i], stage: 4, flowers: [], visitors: [] }));
+    for (const shape of ['strip', 'tall']) assert.match(drawGarden({ mood: 'sunlit', plants }, shape), /class="pond"/, `${shape} ${n}`);
+  }
 });
