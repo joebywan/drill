@@ -1,0 +1,19 @@
+{
+  "chess": {
+    "moves-0": "A rook slides along its row or column. A bishop slides along a diagonal, so it stays on one colour all game. Neither can pass a piece. Trace the line with your finger before you move.",
+    "moves-1": "A queen slides along any straight line or diagonal, as far as it's clear: a rook and a bishop in one. A king goes the same ways, one square at a time.",
+    "moves-2": "A knight moves in an L: two squares one way, then one to the side. It jumps over anything in between, and it always lands on the other colour.",
+    "moves-3": "A pawn walks one square forward, or two from its starting row, and never back. It takes one square diagonally forward. On the far row it becomes a stronger piece."
+  },
+  "maths": {
+    "ten-0": "Find the pair that makes 10: 1 and 9, 2 and 8, 3 and 7, 4 and 6. Fill one number up to 10 from the other, then add what's over. 6 + 7 is 10 + 3.",
+    "ten-1": "Hop to the next ten, then do the rest. 38 + 5: 2 gets you to 40, with 3 still to go, so 43. Taking away works the same, hopping down to the ten first.",
+    "ten-2": "Doubling is adding a number to itself. Split it into tens and ones and double each: 43 doubled is 80 + 6. Times 4 is doubling twice."
+  },
+  "coding": {
+    "var-0": "A variable is a name holding one number. Set replaces the number, and change adds to it. Say the number out loud after each block I run.",
+    "var-1": "Count along with me: add one, step, and say the new value each round. The loop ends when the value equals the target exactly, so a count that skips that number keeps going.",
+    "var-2": "Each time I stand on a flower I can add one to my count. Stop when the count matches what's asked, even if there are more flowers on the map.",
+    "var-3": "An if can ask about a value: does steps hold 2 yet? Follow the loop round by round, keep the value in your head, and turn only on the round where the answer is yes."
+  }
+}
