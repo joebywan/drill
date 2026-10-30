@@ -11,7 +11,7 @@ test('ordered puts the picks first, in the order picked, and keeps the rest as t
   const all = habitsFor(p);
   assert.deepEqual(ordered(all), all);
   assert.deepEqual(ordered(all, []), all);
-  assert.deepEqual(ids(ordered(all, ['water', 'calm'])), ['water', 'calm', 'learn', 'break', 'reflect', 'move', 'focus', 'walk']);
+  assert.deepEqual(ids(ordered(all, ['water', 'calm'])), ['water', 'calm', 'learn', 'break', 'reflect', 'move', 'winddown', 'focus', 'walk']);
   assert.deepEqual(ids(ordered(all, ['learn'])), ids(all));
   assert.deepEqual(ids(ordered(all, ['gone', 'move'])), ['move', ...ids(all).filter((id) => id !== 'move')], 'an id not in the list is passed over');
   assert.equal(ordered(all, ['move', 'calm']).length, all.length);

@@ -540,3 +540,101 @@ html { scroll-padding-bottom: 160px; }
 }
 .focus-dial::before { content: ''; position: absolute; inset: 10px; border-radius: 50%; background: var(--bg); }
 .focus-dial .count { position: relative; font-variant-numeric: tabular-nums; }
+
+/* ---- Wide screens: tablets and desktop browsers. Nothing here applies below 768px, so the phone
+   layout is untouched. Same DOM at every width: home's .rail and .pane are display: contents on a
+   phone and become two panes here. ---- */
+.rail, .pane { display: contents; }
+@media (min-width: 768px) {
+  :root { --wide: 720px; --rail: 260px; }
+  #app, .cta, .choices, .foot { max-width: var(--wide); }
+  /* Home: the garden and the habit tabs in a rail, the path or panel beside it. */
+  #app:has(> .home) { --wide: 1040px; }
+  .home { display: flex; gap: 32px; align-items: flex-start; }
+  /* Capped at the screen's height and scrolling inside itself, so + Habit is always in reach. The
+     6px inset keeps the focus ring clear of the scroll clip. */
+  .rail {
+    display: block; flex: none; width: calc(var(--rail) + 12px); margin: -6px; padding: 6px;
+    position: sticky; top: 10px; max-height: calc(100dvh - 76px); overflow-y: auto; /* 76px: the bar above it */
+  }
+  .pane { display: block; flex: 1; min-width: 0; }
+  .rail .paths { flex-direction: column; margin: 0; padding: 0; overflow: visible; mask-image: none; }
+  .rail .path-tab { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 16px; }
+  /* Home's Continue bar spans the pane only, so its fade never covers the rail. */
+  .home + .cta {
+    left: calc(max(0px, 50% - var(--wide) / 2) + 16px + var(--rail) + 32px); right: max(0px, 50% - var(--wide) / 2);
+    max-width: none; margin: 0; padding-left: 0;
+  }
+  /* A lesson: a bigger board and coach, the board kept clear of the buttons at the bottom. */
+  div.board { width: min(100%, max(240px, 100dvh - 320px)); margin-inline: auto; }
+  .who { width: 84px; }
+  .coach.demonstrates .who { width: min(220px, 26dvh); }
+  .orb { width: min(36dvh, 300px); }
+  .sides span { width: min(22dvh, 160px); }
+  /* The garden beside its cards, as large as the screen's height allows (the tall scene is 360x390). */
+  #app:has(> .garden-page) { --wide: 1040px; }
+  .garden-page { display: grid; grid-template-columns: min(60%, (100dvh - 140px) * .92) 1fr; gap: 0 24px; align-items: start; }
+  .garden-page h1 { grid-column: 1 / -1; }
+  .garden-view { position: sticky; top: 16px; }
+  .garden-page .plant-cards { margin: 0; }
+}
+/* A landscape desktop has no thumb zone: an end screen's Continue and a practice's buttons follow
+   the content instead of sitting far below it. A lesson's answer buttons and banner stay put. */
+@media (min-width: 1024px) and (orientation: landscape) {
+  .summary { padding-bottom: 0; }
+  .summary + .cta { position: static; width: 100%; padding: 8px 16px 32px; background: none; }
+  .play:not(:has(div.board)) { padding-bottom: 32px; }
+  .play:not(:has(div.board)) .choices { position: static; padding: 24px 0 0; background: none; }
+}
+@media (min-width: 1200px) {
+  #app:has(> .home), #app:has(> .garden-page) { --wide: 1200px; --rail: 400px; }
+}
+/* ---- end wide screens ---- */
+
+/* ---- Wind down: the night palette ----
+   A Wind down session and its end screen (main.night) are dim and warm in either theme: low amber
+   light on a brown-black, no bright white. :has() puts the tokens on body, so the bar, the page and
+   the fixed button bar follow too. */
+:root { --chip-winddown: #8A5A1E; }
+@media (prefers-color-scheme: dark) { :root { --chip-winddown: #E0B070; } }
+body:has(main.night) {
+  --bg: #18140f; --card: #241e17; --text: #e8dcc8; --muted: #b5a58c; --line: #3a3127;
+  --accent: #d9a35b; --accent-text: #18140f; --calm: #d9a35b; --calm-soft: #3d2e1c;
+  --chip-ink: #18140f; --chip-winddown: #e0b070;
+  color-scheme: dark;
+}
+.night .orb { background: radial-gradient(circle at 40% 35%, #f2d9a6, #a8733f); }
+.night .orb .count { color: #2a1d10; }
+.chip.winddown { --c: var(--chip-winddown); flex: 0 1 180px; margin: 0 auto; }
+
+/* --- Courses on the Learning tab, and the tap-and-match quiz items (src/quiz/) --- */
+.courses { display: flex; gap: 8px; justify-content: center; margin: 4px 0 8px; }
+.course { padding: 6px 14px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); font-weight: 600; font-size: .9rem; }
+.course[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+/* Japanese uses the system's own font for it (Noto Sans JP on Android): nothing is downloaded. */
+:lang(ja) { font-family: system-ui, "Noto Sans JP", "Noto Sans CJK JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; }
+.quiz .card {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 190px; padding: 16px; background: var(--card); border: 2px solid var(--line); border-radius: 18px; text-align: center;
+}
+/* One glyph is huge; a word shrinks to fit the card. */
+.quiz .glyph { margin: 0; font-size: min(110px, calc(250px / var(--len, 1))); line-height: 1.15; font-weight: 500; }
+.quiz .reading { margin: 0; font-size: 1.3rem; font-weight: 700; color: var(--muted); }
+.quiz .meaning { margin: 0; font-size: 1.1rem; font-weight: 700; }
+.quiz .slots { display: flex; gap: 8px; margin: 8px 0 0; }
+.quiz .slot {
+  display: grid; place-items: center; width: 64px; height: 72px; font-size: 44px;
+  border-bottom: 4px solid var(--line); border-radius: 6px;
+}
+.quiz .slot:not(:empty) { border-color: var(--accent); }
+.quiz .slot.shown { border-color: var(--wrong); color: var(--muted); }
+.quiz .hear { position: absolute; top: 8px; right: 8px; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--line); background: var(--bg); font-size: 1.3rem; }
+.quiz .hear.big { position: static; width: 112px; height: 112px; font-size: 3rem; }
+.quiz .choices .choice { font-size: 1.6rem; padding: 14px 6px; min-height: 64px; }
+.quiz .quiz-pairs { display: grid; grid-template-columns: 1fr 1fr; }
+.quiz .quiz-pairs .choice { font-size: 1.4rem; padding: 10px 6px; min-height: 56px; }
+.quiz .quiz-build { flex-wrap: wrap; justify-content: center; }
+.quiz .quiz-build .choice { flex: 0 0 calc(25% - 6px); }
+.quiz .choice[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+.quiz .choice.used { visibility: hidden; }
+.quiz-star { position: absolute; top: 12px; left: calc(50% - 12px); font-size: 28px; font-style: normal; color: #F5A524; pointer-events: none; }

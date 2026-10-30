@@ -31,10 +31,12 @@
   import * as clover from '../src/cast/clover.js';
   import * as mira from '../src/cast/mira.js';
   import * as hazel from '../src/cast/hazel.js';
+  import { kaede } from '../src/cast/kaede.js';
 
   const cast = [
     ['Rosa', MOODS.map((m) => [m, rosa(m)])],
     ['Lumi', MOODS.map((m) => [m, lumi(m)])],
+    ['Kaede', MOODS.map((m) => [m, kaede(m)])],
     [NAME, CALM.map((m) => [m, moss(m)])],
     ...[[clover, clover.clover], [mira, mira.mira], [hazel, hazel.hazel]].flatMap(([c, draw]) => [
       [c.NAME, c.MOODS.map((m) => [m, draw(m)])],

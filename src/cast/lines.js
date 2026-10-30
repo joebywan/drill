@@ -190,6 +190,25 @@ export const FOCUS_LINES = {
   'no different': ["That's alright. Some days are bumpy, and that's not on you."],
 };
 
+/**
+ * Moss at bedtime, for Wind down: the same capybara, quieter. No exclamation marks, no hurry, no
+ * claims about sleep, and nothing about screens or how late it is (the guardrail tests check).
+ */
+export const WINDDOWN_LINES = {
+  paused: ['Paused. Take as long as you like.'],
+  tapped: [
+    'Capybaras are very good at evenings. We practise a lot.',
+    'Warm water, low light, a long sigh. That is my whole evening.',
+    'The day is done. You can set it down now.',
+    'Nothing else to do tonight. I checked.',
+  ],
+  // The end screen: settled, not a party.
+  done: ['All wound down. Goodnight.', 'Quiet now. Goodnight.', 'That was a soft end to the day.'],
+  'settled': ['Good. Take that with you.', 'Lovely. Rest easy.'],
+  'about the same': ["That's fine. A quiet few minutes still counts.", 'Fair enough. Thanks for winding down with me.'],
+  'no different': ["That's alright. Thanks for telling me. Some nights are heavy, and that's not on you."],
+};
+
 /** Calm's optional sounds, set from the ⋯ screen: [preference, label]. */
 export const CALM_SOUNDS = [['bell', 'A soft bell at the start and end'], ['rain', 'Soft rain while you practise']];
 
@@ -303,6 +322,7 @@ export const INTRO_WORDS = {
     move: 'Move: gentle exercises, a few minutes long.',
     reflect: 'Reflect: three lines about your day.',
     break: 'Screen break: rest your eyes and stretch.',
+    winddown: 'Wind down: a few quiet minutes before bed.',
     focus: 'Focus: a calm timer for one thing at a time.',
     track: 'Track: one tap for a walk, a book, water or time outside.',
   },
@@ -318,8 +338,78 @@ export const INTRO_WORDS = {
   courses: 'Courses',
   habitList: 'Habits',
   soon: 'coming soon',
-  soonCourses: ['Maths', 'Japanese', 'Coding'],
+  soonCourses: ['Maths', 'Coding'],
   done: 'Show my home',
   first: '{name} is first. Start with the button below.',
   change: 'Change what you see',
+};
+
+/**
+ * Kaede, the red panda who coaches Japanese. A show-off with a soft centre: she rears up on her
+ * hind legs to celebrate, takes a little credit, and talks about bamboo more than is strictly
+ * necessary. Same kinds as LINES, so the lesson runner and end screen read hers in Rosa's place.
+ */
+export const KAEDE_LINES = {
+  correct: [
+    'Yes! Read like a local.',
+    'That one is yours now.',
+    'Right. I am standing on my back legs about it.',
+    'Correct. You looked at the shape first. Good habit.',
+    'Nailed it. I would offer you bamboo, but it is mine.',
+    'Exactly that sound.',
+  ],
+  wrong: [
+    'Not that one. These two are twins, almost. Read why.',
+    'Nope, but now you have seen the difference.',
+    'Close. Look at the little strokes, that is where it hides.',
+    'Not quite. Everyone mixes these up on day one. Even me. Once.',
+    'Hm, no. The mnemonic is the trick: picture it again.',
+  ],
+  run3: [
+    'Three in a row! My tail is doing the thing.',
+    'Three! You are reading, actually reading.',
+  ],
+  run5: [
+    'Five in a row! I am up on my hind legs. This is my big pose.',
+    'Five! Somebody fetch me a bamboo trophy.',
+  ],
+  tapped: [
+    'Yes, I am a red panda. No, not that kind of panda. The original one.',
+    'Kaede means maple. Look at my fur. I suit it.',
+    'Each kana is one sound. Learn the shape, the sound comes with it.',
+    'Say it out loud. Your mouth remembers too.',
+    'I stand up on my back legs when I am pleased. You will see it a lot.',
+    'Hiragana first, then words. Then the menu. Then the world.',
+  ],
+  complete: [
+    'Lesson done. These come back in review, so they stick.',
+    'That is the lesson. New shapes, new sounds, all yours.',
+  ],
+  perfect: [
+    'Every one right first time. You read every stroke.',
+    'Not one slip. I checked with my whiskers.',
+  ],
+  fast: [
+    'Quick and right, every one. Those shapes are sinking in.',
+    'Fast, and not a guess among them.',
+  ],
+  struggled: [
+    'Every mix-up you sorted out is one you will spot next time.',
+    'The tricky ones come back in review. That is the plan, not a penalty.',
+  ],
+  review: [
+    'Review done. Those kana are moving in to stay.',
+    'Recall like that is how a script settles in.',
+  ],
+  relit: ['That review relit your streak. Welcome back to the kana.'],
+};
+
+/** Kaede's end-screen headlines, by the same kinds as HEADLINES. */
+export const KAEDE_HEADLINES = {
+  complete: ['Lesson done! Tail up, ears up.', 'And that is a lesson. Bamboo for everyone. Well, for me.'],
+  perfect: ['Flawless! I am standing on my hind legs right now.', 'Perfect. I will be taking some credit for this.'],
+  fast: ['Done already? I had barely finished my bamboo.', 'Whoosh. That was quick and right.'],
+  struggled: ['That took some wrestling, and you won.', 'Messy in the middle, tidy at the end.'],
+  review: ['Look at that recall!', 'Remembered! The kana are settling in.'],
+  relit: ['Streak relit! Ears up!'],
 };

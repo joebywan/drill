@@ -11,12 +11,18 @@ import breakCourse from './data/break.json' with { type: 'json' };
 import * as screenBreak from './break/practice.js';
 import { STEPS as BREAK_STEPS } from './break/routines.js';
 import { lumi } from './cast/lumi.js';
-import { BREAK_LINES, CALM_HELP, CALM_LINES, FOCUS_LINES, MOVE_LINES, MOVE_SAFETY, REFLECT_LINES, SAFETY_LINE } from './cast/lines.js';
+import { BREAK_LINES, CALM_HELP, CALM_LINES, MOVE_LINES, MOVE_SAFETY, REFLECT_LINES, SAFETY_LINE, WINDDOWN_LINES, FOCUS_LINES } from './cast/lines.js';
+import winddownCourse from './data/winddown.json' with { type: 'json' };
+import * as winddown from './winddown/practice.js';
 import * as reflect from './reflect/practice.js';
 import moveCourse from './data/move.json' with { type: 'json' };
 import * as move from './move/practice.js';
 import { clover, demo as cloverDemo, NAME as CLOVER } from './cast/clover.js';
 import { mira, demo as miraDemo, NAME as MIRA } from './cast/mira.js';
+import japaneseCourse from './data/japanese.json' with { type: 'json' };
+import * as quiz from './quiz/exercise.js';
+import { kaede, NAME as KAEDE } from './cast/kaede.js';
+import { KAEDE_HEADLINES, KAEDE_LINES } from './cast/lines.js';
 import focusCourse from './data/focus.json' with { type: 'json' };
 import * as focus from './focus/practice.js';
 import { hazel, NAME as HAZEL } from './cast/hazel.js';
@@ -38,7 +44,8 @@ import { hazel, NAME as HAZEL } from './cast/hazel.js';
  * `feel`, the good answer to "How do you feel?" (default 'calmer'; its reply is a key in `lines`), `ask`, that
  * question in the habit's own words (Focus: "How did it go?"),
  * and `demonstrates`, for a coach the learner copies, which is drawn large above their line.
- * Sessions and the practice end screen read everything subject-specific from here.
+ * A Learn coach's `lines` and `headlines` stand in for Rosa's LINES and HEADLINES (same kinds).
+ * Sessions and both end screens read everything subject-specific from here.
  *
  * Optional: `again`, { label, lesson }: once the path is done, home keeps a button with that label
  * which runs that lesson again ("Reflect today", "Breathe"); `dayDetail(progress, date)`, extra html under a day's sessions
@@ -46,6 +53,11 @@ import { hazel, NAME as HAZEL } from './cast/hazel.js';
  * an optional question home offers by the subject's path (`offer` is the link) to start further on;
  * `varied`, { key: [values] }: a timing marked `varies` in TIMINGS, as the routine has it per step.
  * It never stands in the way: answering opens the path at that unit, dismissing it hides the offer.
+ * `timings`, another habit's id whose own timings this subject plays by (Wind down plays Calm's);
+ * `night`, the session and its end screen in the dim night palette whatever the theme.
+ *
+ * Several Learn subjects (courses) share the Learning habit: home shows one course's path at a
+ * time, with a switcher between them (app.js).
  */
 /** The built-in habits, in the order the home bar shows them. `habitsFor(progress)` adds the learner's own. */
 export const HABITS = [
@@ -54,6 +66,7 @@ export const HABITS = [
   { id: 'break', name: 'Screen break', icon: '👀' },
   { id: 'reflect', name: 'Reflect', icon: '📓' },
   { id: 'move', name: 'Move', icon: '🌱' },
+  { id: 'winddown', name: 'Wind down', icon: '🌙' },
   { id: 'focus', name: 'Focus', icon: '⏳' },
 ];
 
@@ -127,6 +140,22 @@ export const subjects = [{
     ],
   },
 }, {
+  // Hiragana from zero, played with the generic tap-and-match items in src/quiz/.
+  ...japaneseCourse,
+  mount: (el, item, ctx) => quiz.mount(el, item, { ...ctx, lang: japaneseCourse.lang }),
+  habit: 'learn',
+  kind: 'learn',
+  coach: { draw: kaede, name: KAEDE, start: 'think', lines: KAEDE_LINES, headlines: KAEDE_HEADLINES },
+  placement: {
+    offer: 'Read some kana already? Skip ahead',
+    question: 'Can you read hiragana?',
+    options: [
+      ['Not a single one', 'Vowels'],
+      ['I know あいうえお', 'K and S'],
+      ['I can read the k and s rows', 'First words'],
+    ],
+  },
+}, {
   ...calmCourse,
   mount: calm.mount,
   habit: 'calm',
@@ -159,4 +188,12 @@ export const subjects = [{
   habit: 'focus',
   kind: 'practice',
   coach: { draw: hazel, name: HAZEL, start: 'guide', lines: FOCUS_LINES, feel: 'focused', ask: 'How did it go?' },
+}, {
+  ...winddownCourse,
+  mount: winddown.mount,
+  habit: 'winddown',
+  kind: 'practice',
+  timings: 'calm',
+  night: true,
+  coach: { draw: moss, name: MOSS, start: 'sleepy', lines: WINDDOWN_LINES, help: CALM_HELP, feel: 'settled' },
 }];

@@ -72,13 +72,15 @@ async function toStepTwo(page) {
   await expect(page.getByRole('heading', { name: 'What would you like out of Drill?' })).toBeFocused();
 }
 
-test('intro, learn only: Learn something picks chess, the others are coming soon, and home starts on Learning', async ({ page }) => {
+test('intro, learn only: Learn something lists the live courses, the others are coming soon, and home starts on Learning', async ({ page }) => {
   await toStepTwo(page);
   await expect(pick(page, 'Chess')).toBeHidden();
   await pick(page, 'Learn something').click();
   await expect(pick(page, 'Learn something')).toHaveAttribute('aria-pressed', 'true');
-  await expect(pick(page, 'Chess')).toHaveAttribute('aria-pressed', 'true'); // the one live course
-  for (const name of ['Maths', 'Japanese', 'Coding']) await expect(page.getByRole('button', { name: `${name} · coming soon` })).toBeDisabled();
+  await expect(pick(page, 'Japanese')).toBeEnabled(); // live
+  await pick(page, 'Chess').click();
+  await expect(pick(page, 'Chess')).toHaveAttribute('aria-pressed', 'true');
+  for (const name of ['Maths', 'Coding']) await expect(page.getByRole('button', { name: `${name} · coming soon` })).toBeDisabled();
   await expect(page.getByRole('heading', { name: 'Have you played chess before?' })).toHaveCount(0); // no placement questions
   await page.getByRole('button', { name: 'Show my home' }).click();
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
@@ -99,20 +101,20 @@ test('intro, habits only: the picks come first in the order tapped, and a tracke
   await pick(page, 'Read').click(); // changed my mind
   await expect(pick(page, 'Read')).toHaveAttribute('aria-pressed', 'false');
   await page.getByRole('button', { name: 'Show my home' }).click();
-  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'focus']);
+  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'winddown', 'focus']);
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'walk');
   await expect(page.getByText('Walk is first. Start with the button below.')).toBeVisible();
   await page.getByRole('button', { name: 'I walked today' }).click();
   await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
   await page.reload();
-  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'focus']);
+  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'winddown', 'focus']);
 });
 
 test("intro, skipped at either step: today's default home, and the intro never comes back", async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Skip' }).click();
   await expect(page.getByText("Hi, I'm Lumi. Pick something to grow")).toBeVisible();
-  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move', 'focus']);
+  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move', 'winddown', 'focus']);
   await page.reload();
   await expect(page.getByText("Hi, I'm Lumi. Pick something to grow")).toBeVisible();
 
@@ -121,7 +123,7 @@ test("intro, skipped at either step: today's default home, and the intro never c
   await pick(page, 'Build habits').click();
   await pick(page, 'Move').click();
   await page.getByRole('button', { name: 'Skip' }).click(); // a skip drops what was tapped
-  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move', 'focus']);
+  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move', 'winddown', 'focus']);
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
 });
 
@@ -167,7 +169,7 @@ test('"Change what you see" in the ⋯ menu reopens step 2 with the picks, and B
   await pick(page, 'Screen break').click();
   await pick(page, 'Learn something').click();
   await page.getByRole('button', { name: 'Show my home' }).click();
-  expect(await tabOrder(page)).toEqual(['break', 'learn', 'calm', 'reflect', 'move', 'focus']);
+  expect(await tabOrder(page)).toEqual(['break', 'learn', 'calm', 'reflect', 'move', 'winddown', 'focus']);
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'break');
 });
 
@@ -262,6 +264,138 @@ test('the "5 in a row" flare plays, then leaves nothing behind', async ({ page }
   await expect(flare).toHaveText('5 in a row');
   await expect(flare).toBeVisible();
   await expect(flare).toBeHidden({ timeout: 3000 });
+});
+
+// Japanese: a second course on the Learning tab, played with the tap-and-match items in src/quiz/.
+const japanese = JSON.parse(readFileSync(new URL('../../src/data/japanese.json', import.meta.url)));
+const kanaFirst = japanese.units[0].lessons[0];
+const quizChoice = (page, text) => page.locator('.quiz .choices .choice:not(:disabled)', { hasText: new RegExp(`^${text}$`) }).first();
+
+/** Answers one quiz item correctly by tapping, then waits for the answer banner. */
+async function solveQuiz(page, item) {
+  if (item.type === 'pick') await quizChoice(page, item.answer).click();
+  if (item.type === 'pairs') for (const [l, r] of item.pairs) { await quizChoice(page, l).click(); await quizChoice(page, r).click(); }
+  if (item.type === 'build') for (const t of item.answer) await quizChoice(page, t).click();
+  await expect(continueButton(page), item.id).toBeInViewport();
+}
+
+async function toJapanese(page) {
+  await firstVisit(page);
+  await page.getByRole('button', { name: 'Japanese', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Japanese', exact: true })).toHaveAttribute('aria-pressed', 'true');
+}
+
+test('intro: picking Japanese opens Learning on the Japanese path', async ({ page }) => {
+  await toStepTwo(page);
+  await pick(page, 'Learn something').click();
+  await pick(page, 'Japanese').click();
+  await page.getByRole('button', { name: 'Show my home' }).click();
+  await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
+  await expect(page.getByRole('heading', { name: 'Vowels' })).toBeVisible();
+  await expect(page.getByRole('button', { name: `Continue · ${kanaFirst.title}` })).toBeVisible();
+});
+
+test('a full Japanese lesson: teach, pick, listen, pairs; Kaede ends it, and the course is remembered', async ({ page }) => {
+  await toJapanese(page);
+  await expect(page.getByRole('heading', { name: 'Vowels' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Know some chess already? Skip ahead' })).toHaveCount(0);
+  await page.getByRole('button', { name: `Continue · ${kanaFirst.title}` }).click();
+  await expect(page.locator('.quiz .glyph')).toHaveText('あ');
+  await expect(page.locator('.quiz')).toHaveAttribute('lang', 'ja-JP');
+  await expect(page.locator('.who svg')).toHaveClass(/cast-kaede/);
+  for (const item of kanaFirst.items) {
+    // No voice in headless Chromium: a listening item shows its reading instead, and still plays.
+    if (item.listen) await expect(page.locator('.quiz .glyph')).toHaveText(item.show);
+    await solveQuiz(page, item);
+    await continueButton(page).click();
+  }
+  const marked = kanaFirst.items.filter((i) => i.type !== 'teach').length;
+  await expect(page.getByText(`${marked} of ${marked} right first try`)).toBeVisible();
+  await expect(page.locator('.duo .hero svg').first()).toHaveClass(/cast-kaede/);
+  await continueButton(page).click();
+  await expect(page.getByRole('button', { name: `${kanaFirst.title}, done` })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Japanese', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Chess', exact: true }).click();
+  await expect(page.getByRole('heading', { name: basics.units[0].title })).toBeVisible();
+});
+
+test('a wrong tap is judged at once, comes back at the end, and a mismatched pair flashes and lets go', async ({ page }) => {
+  await toJapanese(page);
+  await page.getByRole('button', { name: `Continue · ${kanaFirst.title}` }).click();
+  const [pickItem] = kanaFirst.items.filter((i) => i.type === 'pick');
+  for (const item of kanaFirst.items.slice(0, kanaFirst.items.indexOf(pickItem))) { await solveQuiz(page, item); await continueButton(page).click(); }
+  await quizChoice(page, pickItem.options.find((o) => o !== pickItem.answer)).click();
+  await expect(page.locator('.foot.wrong')).toBeVisible();
+  await expect(page.locator('.quiz .choice.right')).toHaveText(pickItem.answer);
+  await continueButton(page).click();
+  for (const item of kanaFirst.items.slice(kanaFirst.items.indexOf(pickItem) + 1)) {
+    if (item.type === 'pairs') {
+      const [[l1], [, r2]] = item.pairs;
+      await quizChoice(page, l1).click();
+      await quizChoice(page, r2).click();
+      await expect(page.locator('.quiz .choice.wrong')).toHaveCount(2);
+      await expect(page.locator('.quiz .choice.wrong')).toHaveCount(0); // lets go
+    }
+    await solveQuiz(page, item);
+    await continueButton(page).click();
+  }
+  await expect(page.locator('.quiz .glyph')).toHaveText(pickItem.show); // the missed one, once more
+  await solveQuiz(page, pickItem);
+  await continueButton(page).click();
+  await solveQuiz(page, kanaFirst.items.find((i) => i.type === 'pairs')); // and the pairs, which had a slip
+  await continueButton(page).click();
+  const marked = kanaFirst.items.filter((i) => i.type !== 'teach').length;
+  await expect(page.getByText(`${marked - 2} of ${marked} right first try`)).toBeVisible();
+});
+
+test('a Japanese review: due kana come back on the Japanese path, with Kaede', async ({ page }) => {
+  const lesson = japanese.units[0].lessons[2]; // has a build item
+  const results = lesson.items.filter((i) => i.type !== 'teach').map((i) => ({ key: `japanese:${i.id}`, correct: true }));
+  const then = new Date(Date.now() - 30 * 86400000);
+  const p = finishSession(emptyProgress(), `japanese:${lesson.id}`, results, then);
+  await page.addInitScript(([p, course]) => { localStorage.setItem('drill.progress', p); localStorage.setItem('drill.course', course); }, [JSON.stringify(p), 'japanese']);
+  await firstVisit(page);
+  await page.locator('[data-review]').click();
+  await expect(page.locator('.who svg')).toHaveClass(/cast-kaede/);
+  for (let n = 0; n < results.length; n++) {
+    const id = await page.evaluate(() => document.querySelector('.quiz .glyph, .quiz .meaning, .quiz .choices')?.textContent);
+    const item = lesson.items.find((i) => i.type !== 'teach' && (i.show === id || (i.type === 'pairs' && i.pairs.every(([l]) => id.includes(l)))));
+    await solveQuiz(page, item);
+    await continueButton(page).click();
+  }
+  await expect(page.locator('.kicker')).toHaveText('Review done');
+  await expect(page.getByText(`${results.length} of ${results.length} recalled`)).toBeVisible();
+});
+
+test('Japanese skip-ahead: someone who reads the vowels starts at K and S', async ({ page }) => {
+  await toJapanese(page);
+  await page.getByRole('button', { name: 'Read some kana already? Skip ahead' }).click();
+  await expect(page.getByRole('heading', { name: 'Can you read hiragana?' })).toBeFocused();
+  await page.getByRole('button', { name: 'I know あいうえお' }).click();
+  await page.getByRole('button', { name: 'Start at K and S' }).click();
+  await expect(page.locator('.street', { has: page.getByRole('heading', { name: 'K and S' }) }).locator('.here')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Read some kana already? Skip ahead' })).toHaveCount(0);
+});
+
+test('with a ja-JP voice, a listening item plays the sound and hides the reading', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.spoken = [];
+    const voice = { lang: 'ja-JP', name: 'Test JP' };
+    speechSynthesis.getVoices = () => [voice];
+    speechSynthesis.speak = (u) => window.spoken.push(u.text);
+    speechSynthesis.cancel = () => {};
+    window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } }; // a real one only takes a real voice
+  });
+  await toJapanese(page);
+  await page.getByRole('button', { name: `Continue · ${kanaFirst.title}` }).click();
+  await expect.poll(() => page.evaluate(() => window.spoken)).toEqual(['あ']); // the teach card says it
+  const listen = kanaFirst.items.find((i) => i.listen);
+  for (const item of kanaFirst.items.slice(0, kanaFirst.items.indexOf(listen))) { await solveQuiz(page, item); await continueButton(page).click(); }
+  await expect(page.locator('.quiz .glyph')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Hear it again' })).toBeVisible();
+  expect((await page.evaluate(() => window.spoken)).at(-1)).toBe(listen.speak);
+  await solveQuiz(page, listen);
 });
 
 test("a habit's chip opens its view, with today's session listed", async ({ page }) => {
@@ -999,7 +1133,7 @@ test('with many habits, the tab row stays one row that scrolls inside itself, an
   await grown(page, ['learn', 'calm', 'move', 'reflect', 'break', ...tracked.map((t) => t.id)], 9, true, { tracked });
   await firstVisit(page);
   const tabs = page.getByRole('navigation', { name: 'Show the path for' });
-  await expect(tabs.getByRole('button')).toHaveCount(14);
+  await expect(tabs.getByRole('button')).toHaveCount(15);
   expect(await tabs.getByRole('button').evaluateAll((els) => new Set(els.map((e) => e.offsetTop)).size)).toBe(1);
   await expect(tabs.getByRole('button').last()).toHaveAccessibleName('Add a habit');
   expect(await overflow(page)).toBe(0);
@@ -1200,4 +1334,160 @@ test('under reduced motion Calm stays quiet: no bell, no rain', async ({ page })
   await page.getByRole('button', { name: 'Continue · Five slow breaths' }).click();
   await expect(page.getByText('Breath 1 of 5')).toBeVisible();
   expect(await page.evaluate(() => [window.heard.tones.includes(528), window.heard.noise])).toEqual([false, 0]);
+});
+
+// ---- Wide screens: tablets and desktop browsers ----
+// Each size plays the main flows (the garden, a lesson, a Calm practice) and screenshots them to
+// test-results/screens/<size>-<scheme>/. The phone sizes are here too, so a layout change can be
+// checked against the phone shots from before it.
+const SCREENS = [[360, 800], [412, 915], [768, 1024], [1024, 768], [1440, 900]];
+for (const colorScheme of ['light', 'dark']) {
+  for (const [width, height] of SCREENS) {
+    const wide = width >= 768;
+    test(`${width}x${height} ${colorScheme}: home, the garden, a lesson and a Calm practice fit and play`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme });
+      await page.setViewportSize({ width, height });
+      const at = new Date();
+      at.setHours(10, 0, 0, 0);
+      await page.clock.install({ time: at });
+      // The cast's lines are picked at random: seeded here, so two runs' shots can be compared.
+      await page.addInitScript(() => { let s = 1; Math.random = () => (s = (s * 16807) % 2147483647) / 2147483647; });
+      await grown(page, ['learn', 'calm', 'move', 'reflect', 'break'], 10, true);
+      const dir = `test-results/screens/${width}x${height}-${colorScheme}`;
+      const shot = async (name) => {
+        expect(await overflow(page), name).toBe(0);
+        await page.screenshot({ path: `${dir}/${name}.png` });
+      };
+
+      await firstVisit(page);
+      await expect(strip(page, 5)).toBeVisible();
+      await shot('1-home');
+      if (wide) {
+        // Two panes: the garden and the habit tabs in a rail beside the path.
+        const [rail, path] = await Promise.all([page.locator('.paths').boundingBox(), page.locator('.street').first().boundingBox()]);
+        expect(rail.x + rail.width).toBeLessThanOrEqual(path.x);
+        expect((await page.locator('.cta .next').boundingBox()).height).toBeGreaterThanOrEqual(48);
+      }
+
+      await strip(page, 5).click();
+      await expect(page.locator('.plant-card')).toHaveCount(5);
+      await shot('2-garden');
+      await page.getByRole('button', { name: 'Back' }).click();
+
+      await tab(page, 'Learning').click();
+      await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
+      await expect(page.locator('.board svg')).toBeVisible();
+      await shot('3-lesson');
+      if (wide) expect((await page.locator('div.board').boundingBox()).width).toBeGreaterThan(412);
+      for (const item of first.items) {
+        await solve(page, item);
+        await continueButton(page).click();
+      }
+      await expect(page.locator('.arrivals')).toBeVisible();
+      await shot('4-lesson-end');
+      await continueButton(page).click();
+
+      await tab(page, 'Calm').click();
+      await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
+      await page.getByRole('button', { name: 'Start' }).click();
+      await expect(page.getByText('Breath 1 of 3')).toBeVisible();
+      await page.clock.runFor(2_000);
+      await shot('5-calm');
+      await page.clock.runFor(60_000);
+      await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+      await shot('6-calm-end');
+    });
+  }
+}
+
+test.describe('a keyboard on a desktop', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('Tab reaches the habit tabs and Continue, and Enter and Space press them', async ({ page }) => {
+    await firstVisit(page);
+    const calm = tab(page, 'Calm');
+    for (let i = 0; i < 30 && !(await calm.evaluate((el) => el === document.activeElement)); i++) await page.keyboard.press('Tab');
+    await expect(calm).toBeFocused();
+    await page.keyboard.press('Space');
+    await expect(tab(page, 'Calm')).toHaveAttribute('aria-pressed', 'true');
+    const go = page.getByRole('button', { name: 'Continue · The long out-breath' });
+    for (let i = 0; i < 30 && !(await go.evaluate((el) => el === document.activeElement)); i++) await page.keyboard.press('Tab');
+    await expect(go).toBeFocused();
+    // The focus ring shows on a keyboard focus.
+    expect(await go.evaluate((el) => getComputedStyle(el).outlineStyle)).toBe('solid');
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('button', { name: 'Start' })).toBeVisible();
+  });
+});
+
+test('on a short landscape screen the rail scrolls inside itself, so + Habit is always in reach', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 600 });
+  const tracked = [{ id: 'walk' }, { id: 'water' }, { id: 'own-1', name: 'Stretch', plant: 'rose' }];
+  await grown(page, ['learn', 'calm', 'walk', 'water', 'own-1'], 3, true, { tracked });
+  await firstVisit(page);
+  const rail = page.locator('.rail');
+  const box = await rail.boundingBox();
+  expect(box.y + box.height).toBeLessThanOrEqual(600);
+  const add = page.getByRole('button', { name: 'Add a habit' });
+  await rail.evaluate((el) => { el.scrollTop = el.scrollHeight; }); // the rail scrolls, not the page
+  await expect(add).toBeInViewport();
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+});
+
+test('on a landscape desktop, end-screen and practice buttons follow the content', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Calm').click();
+  await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  const gap = async (above, button) => { const [a, b] = [await above.boundingBox(), await button.boundingBox()]; return b.y - a.y - a.height; };
+  expect(await gap(page.locator('.breath'), page.getByRole('button', { name: 'Pause' }))).toBeLessThan(80);
+  await page.clock.runFor(60_000);
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+  expect(await gap(page.locator('.feel'), continueButton(page))).toBeLessThan(80);
+});
+
+test('Wind down: settle in, Calm breathing on your own timings, a sigh, goodnight, all in the night palette', async ({ page }) => {
+  const p = { ...emptyProgress(), picked: [], timings: { calm: { inhale: 6 } } };
+  await page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
+  await page.clock.install();
+  await page.goto('/');
+  const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  const day = await bg();
+  await tab(page, 'Wind down').click();
+  await expect(page.getByRole('heading', { name: 'Bedtime' })).toBeVisible();
+  // Wind down plays Calm's timings, so its timings link opens Calm's.
+  await expect(page.getByRole('button', { name: 'Your timings' })).toBeVisible();
+  await page.getByRole('button', { name: 'Continue · Lights low' }).click();
+  // Dim and warm even in the light theme.
+  await expect(page.locator('main.play.night')).toBeVisible();
+  expect(await bg()).toBe('rgb(24, 20, 15)');
+  await expect(page.locator('.cast-moss.mood-sleepy')).toBeVisible();
+  await expect(page.getByText('Lifeline is 13 11 14')).toBeVisible();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await expect(page.locator('.steps li.now')).toHaveText('Lights low');
+  await expect(page.locator('#said')).toHaveText('Dim the lights, or switch one off.');
+  await page.clock.runFor(20_000);
+  // Calm's breathing, with the breath in at the learner's own 6 s.
+  await expect(page.getByText('Breath 1 of 3')).toBeVisible();
+  await expect(page.locator('.orb .count')).toHaveText('6');
+  await page.getByRole('button', { name: 'Pause' }).click();
+  await page.clock.runFor(60_000);
+  await expect(page.getByText('Breath 1 of 3')).toBeVisible();
+  await page.getByRole('button', { name: 'Carry on' }).click();
+  await page.clock.runFor(3 * 14_000);
+  await expect(page.getByText('Sigh 1 of 1')).toBeVisible();
+  await page.clock.runFor(10_000);
+  await expect(page.getByText('Put your phone face down')).toBeVisible();
+  await page.getByRole('button', { name: 'Goodnight' }).click();
+  // The one practice end screen, still at night.
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+  await expect(page.locator('main.practice-end.night')).toBeVisible();
+  await expect(page.getByText(/^3 breaths · 1 sigh · \d+ min$/)).toBeVisible();
+  await expect(page.locator('.chip.winddown')).toContainText('🌙 1');
+  await page.getByRole('button', { name: 'Settled' }).click();
+  await continueButton(page).click();
+  await expect(page.getByRole('button', { name: 'Lights low, done' })).toBeVisible();
+  expect(await bg()).toBe(day);
 });

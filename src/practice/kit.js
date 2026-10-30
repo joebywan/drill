@@ -14,12 +14,15 @@ import { move, play } from '../feel.js';
 export const helpHtml = ({ text, tel, call }) =>
   `<p class="help">${esc(text)}${tel ? ` <a href="${esc(tel)}">Call ${esc(call)}</a>` : ''}</p>`;
 
-/** A teach card: paragraphs, the habit's help line when the item asks for it, and Start. */
+/**
+ * A teach card: paragraphs, the habit's help line when the item asks for it, and Start. An item may
+ * name its own button (`go`, Wind down's "Goodnight") and the coach's mood (`mood`, default 'guide').
+ */
 export function teach(el, item, { say, done, help }) {
   el.innerHTML = `<div class="practice-teach">${item.text.map((t) => `<p>${esc(t)}</p>`).join('')}
     ${item.help && help ? helpHtml(help) : ''}</div>
-    <div class="choices"><button class="next practice-go">Start</button></div>`;
-  say(item.say, 'guide');
+    <div class="choices"><button class="next practice-go">${esc(item.go ?? 'Start')}</button></div>`;
+  say(item.say, item.mood ?? 'guide');
   el.querySelector('.practice-go').addEventListener('click', () => done(null, ''));
   return () => {};
 }
@@ -103,6 +106,26 @@ export function routine(el, phases, ctx, draw, summary, paused) {
   document.addEventListener('visibilitychange', hidden);
   const cleanup = () => { clock.stop(); document.removeEventListener('visibilitychange', hidden); };
   return cleanup;
+}
+
+/**
+ * Plays several routines one after another as one item, run once: each part through
+ * `play(el, part, ctx)` (a habit's mount for a single routine, such as Calm's breathing or scan),
+ * then the next, each with its own Pause. `ctx.done(null, summary)` is called once at the end with
+ * the parts' summaries joined ("3 breaths · 2 sighs"). Wind down chains Calm's routines this way.
+ * Returns the cleanup function, which stops whichever part is playing.
+ */
+export function sequence(el, parts, ctx, play) {
+  const did = [];
+  let at = 0;
+  let stop = () => {};
+  const next = () => {
+    if (at === parts.length) return ctx.done(null, did.join(' · '));
+    stop = play(el, parts[at++], { ...ctx, done: (_, text) => { if (text) did.push(text); next(); } });
+    if (at > 1) el.querySelector('.practice-go, .choice')?.focus(); // the session focused the first
+  };
+  next();
+  return () => stop();
 }
 
 /**
