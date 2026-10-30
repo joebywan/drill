@@ -1,0 +1,58 @@
+{
+  "id": "winddown",
+  "title": "Wind down",
+  "units": [
+    {
+      "title": "Bedtime",
+      "lessons": [
+        {
+          "id": "wind1",
+          "title": "Lights low",
+          "items": [
+            {
+              "id": "wind-teach",
+              "type": "teach",
+              "help": true,
+              "mood": "sleepy",
+              "say": "Evening. Moss here, in my night-time voice. Let's wind down together.",
+              "text": [
+                "A few quiet minutes before bed: lights low, some slow breaths, a long sigh, then goodnight.",
+                "It's the same breathing and sighing as Calm, played one after another. The screen stays dim and warm.",
+                "Nothing to get right. If your eyes close part-way, that's fine too."
+              ]
+            },
+            { "id": "wind-a", "type": "sequence", "parts": [{ "type": "settle" }, { "type": "breathe", "cycles": 3 }, { "type": "sigh", "cycles": 1 }, { "type": "goodnight" }] }
+          ]
+        },
+        {
+          "id": "wind2",
+          "title": "A slow body scan",
+          "items": [
+            { "id": "wind-b", "type": "sequence", "parts": [{ "type": "settle" }, { "type": "breathe", "cycles": 4 }, { "type": "scan", "seconds": 10 }, { "type": "sigh", "cycles": 2 }, { "type": "goodnight" }] }
+          ]
+        },
+        {
+          "id": "wind3",
+          "title": "The whole wind down",
+          "items": [
+            { "id": "wind-c", "type": "sequence", "parts": [{ "type": "settle" }, { "type": "breathe", "cycles": 5 }, { "type": "scan", "seconds": 15 }, { "type": "sigh", "cycles": 2 }, { "type": "goodnight" }] }
+          ]
+        }
+      ]
+    }
+  ],
+  "again": { "label": "Wind down", "lesson": "wind3" },
+  "settle": [
+    { "name": "Lights low", "line": "Dim the lights, or switch one off.", "seconds": 10 },
+    { "name": "Get comfortable", "line": "Lie down, or sit somewhere soft. Let your shoulders drop.", "seconds": 10 }
+  ],
+  "goodnight": {
+    "say": "Goodnight.",
+    "mood": "sleepy",
+    "go": "Goodnight",
+    "text": [
+      "That's the day, set down gently.",
+      "Put your phone face down when you're ready."
+    ]
+  }
+}
