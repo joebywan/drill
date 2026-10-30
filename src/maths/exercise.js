@@ -14,12 +14,18 @@ const bar = ([n, d]) => `<svg class="pic bar" viewBox="0 0 204 34" role="img" ar
 const grid = (n) => `<svg class="pic grid" viewBox="0 0 102 102" role="img" aria-label="${n} of 100 squares shaded">
   ${Array.from({ length: 100 }, (_, i) => `<rect x="${1 + (i % 10) * 10}" y="${1 + Math.floor(i / 10) * 10}" width="10" height="10" class="${i < n ? 'cell on' : 'cell'}"/>`).join('')}</svg>`;
 
+/** A number line to look at, for a teach card: end numbers and equal hops, as the `line` item draws them. */
+const line = ([min, max, hops]) => `<svg class="pic line" viewBox="0 0 204 44" role="img" aria-label="A number line from ${min} to ${max} in ${hops} equal hops">
+  <path d="M6 12H198" class="track"/>${Array.from({ length: hops + 1 }, (_, k) => `<path d="M${6 + (k * 192) / hops} 4V20" class="hop"/>`).join('')}
+  <text x="6" y="38">${min}</text><text x="198" y="38" text-anchor="end">${max}</text></svg>`;
+
 /** A maths picture, drawn on the quiz card (numbers only, so nothing to escape). */
 export function art(p) {
   if (p.frame != null) return frame(Number(p.frame));
   if (p.bar) return bar(p.bar.map(Number));
   if (p.grid != null) return grid(Number(p.grid));
   if (p.bars) return p.bars.map((b) => bar(b.map(Number))).join('');
+  if (p.line) return line(p.line.map(Number));
   return '';
 }
 
