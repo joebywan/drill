@@ -1,7 +1,7 @@
 import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
 import { award, garden, moreArrived, plantWords } from './garden/model.js';
 import { PLANTS, animateScene, animateVisitor, drawGarden, flower, plant, sway, visitor } from './garden/art.js';
-import { emptyProgress, unitsOf, finishPractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
+import { emptyProgress, nextUp, unitsOf, finishPractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { lumi } from './cast/lumi.js';
@@ -10,7 +10,7 @@ import { CALM_SOUNDS, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLa
 import { buzz, calmPref, chime, move, play, setPref, setSound, soundOn } from './feel.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
-import { TIMINGS, TIMING_WORDS, setTiming, timed } from './practice/timings.js';
+import { TIMINGS, TIMING_WORDS, pathTimings, setTiming, spread, timed } from './practice/timings.js';
 
 const STORE = 'drill.progress';
 const REVIEW_SIZE = 8;
@@ -20,6 +20,8 @@ let progress = load();
 /** Every habit this learner has (built in, then their own; what the intro picked first), and one of them by id. */
 const habits = () => ordered(habitsFor(progress), progress.picked);
 const habitOf = (id) => habits().find((h) => h.id === id);
+/** Whose timings a habit plays by: its subject's `timings` (Wind down plays Calm's), or its own. */
+const timingsOf = (id) => subjects.find((s) => s.habit === id)?.timings ?? id;
 
 function load() {
   let raw = null;
@@ -108,17 +110,14 @@ function home(arrived = null, newly = []) {
   const shownSubject = subjectFor(habitShown);
   const courses = subjects.filter((s) => s.habit === habitShown);
   const units = shownSubject ? unitsOf(progress, shownSubject) : [];
-  // The next lesson, from the placement question's starting unit on.
-  const from = Math.max(0, units.findIndex((u) => u.placed));
   // A subject's optional placement question, offered by its path until answered or dismissed.
   const offer = shownSubject && offersPlacement(progress, shownSubject) ? shownSubject : null;
   const brandNew = !progress.log.length && !Object.keys(progress.done).length;
   // After the intro, Lumi's welcome names the first thing picked.
   const firstPick = brandNew && (subjects.find((s) => s.id === progress.picked?.[0])?.title ?? habitOf(progress.picked?.[0])?.name);
-  const current = [...units.slice(from), ...units].flatMap((u) => u.nodes).find((n) => n.state === 'open');
-  // A finished path whose subject has `again` ("Reflect today") keeps one of its lessons one tap away.
-  const again = !current && shownSubject?.again;
-  const repeat = again && units.flatMap((u) => u.nodes).find((n) => n.lesson.id === again.lesson);
+  // The next lesson; a finished path whose subject has `again` ("Reflect today") keeps one of its lessons one tap away.
+  const again = shownSubject?.again;
+  const { current, repeat } = nextUp(units, again);
   const minutes = `about ${Math.max(1, Math.round(reviewKeys.length * 0.4))} min`;
   const dueChip = !reviewKeys.length ? ''
     : repair ? `<button class="due" data-review>${esc(line('repair'))} · ${minutes}</button>`
@@ -160,14 +159,16 @@ function home(arrived = null, newly = []) {
       <button class="menu" aria-label="Your progress">⋯</button>
     </header>
     <main class="home">
+      <div class="rail">
       <button class="garden-link" aria-label="Your garden: ${g.plants.length} plant${g.plants.length === 1 ? '' : 's'}">${drawGarden(g, 'strip', newly.map((r) => r.id))}</button>
       <nav class="paths" aria-label="Show the path for">
         ${habits().filter((h) => !h.hidden).map(habitTab).join('')}
         <button class="path-tab add-tab" data-add aria-label="Add a habit">${esc(LOG_WORDS.addTab)}</button>
       </nav>
+      </div><div class="pane">
       ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : ''}
       ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
-        : TIMINGS[habitShown] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
+        : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
       ${courses.length > 1 ? `<nav class="courses" aria-label="Course">${courses.map((s) => `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === shownSubject}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
       ${offer ? `<p class="offer"><button data-place>${esc(offer.placement.offer)}</button><button class="dismiss" data-dismiss aria-label="Dismiss">×</button></p>` : ''}
       ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly) : ''}
@@ -176,6 +177,7 @@ function home(arrived = null, newly = []) {
           <h2>${esc(u.title)}</h2>
           <div class="trailhead">${trail(u.nodes)}<ol class="path">${u.nodes.map(node).join('')}</ol></div>
         </section>`).join('')}
+      </div>
     </main>
     <footer class="cta">
       ${dueChip}
@@ -215,7 +217,7 @@ function home(arrived = null, newly = []) {
   app.querySelector('.menu').addEventListener('click', () => { stopHome(); keep(); });
   app.querySelector('.streak-line')?.addEventListener('click', () => habitView(habitShown));
   // Before a habit's first session there is no habit view yet, so its timings are offered here.
-  app.querySelector('.timings-link')?.addEventListener('click', () => { stopHome(); timingsView(habitShown, () => { home(); focusOn('.timings-link'); }); });
+  app.querySelector('.timings-link')?.addEventListener('click', () => { stopHome(); timingsView(timingsOf(habitShown), () => { home(); focusOn('.timings-link'); }); });
   // The tabs are one row that scrolls inside itself: the selected one is brought into view.
   const tabs = app.querySelector('.paths');
   const shown = tabs.querySelector('[aria-pressed="true"]');
@@ -304,7 +306,7 @@ function habitView(id, back = () => { home(); focusOn('.streak-line'); }) {
     <main class="habit">
       <h1><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}</h1>
       <p class="said">${n ? `${n}-day streak` : NO_STREAK}</p>
-      ${TIMINGS[id] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
+      ${TIMINGS[timingsOf(id)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
       <h2>This week</h2>
       <ol class="week" aria-hidden="true">${week.map(cell).join('')}</ol>
       ${[...week].reverse().map(day).join('')}
@@ -314,7 +316,7 @@ function habitView(id, back = () => { home(); focusOn('.streak-line'); }) {
     </main>`;
   focusOn('h1');
   app.querySelector('.back').addEventListener('click', back);
-  app.querySelector('.timings-link')?.addEventListener('click', () => timingsView(id, () => { habitView(id, back); focusOn('.timings-link'); }));
+  app.querySelector('.timings-link')?.addEventListener('click', () => timingsView(timingsOf(id), () => { habitView(id, back); focusOn('.timings-link'); }));
 }
 
 /**
@@ -326,6 +328,12 @@ function timingsView(id, back) {
   const all = TIMINGS[id];
   const own = () => progress.timings?.[id] ?? {};
   const fmt = (v, r) => `${v}${r.unit ? ` ${r.unit}` : ''}`;
+  // A growing value starts from what the next session's lesson uses.
+  const units = subjects.filter((s) => s.habit === id).flatMap((s) => unitsOf(progress, s));
+  const subject = subjects.find((s) => s.habit === id);
+  const { current, repeat } = nextUp(units, subject?.again);
+  const nodes = units.flatMap((u) => u.nodes);
+  const usual = pathTimings(id, nodes.map((n) => n.lesson), nodes.indexOf(current ?? repeat), subject?.varied);
   app.innerHTML = `
     <header class="bar"><button class="back" aria-label="Back">←</button></header>
     <main class="habit timings">
@@ -344,11 +352,16 @@ function timingsView(id, back) {
     for (const li of app.querySelectorAll('.steppers li')) {
       const r = all[li.dataset.k];
       const set = timed(id, { [li.dataset.k]: undefined }, own())[li.dataset.k];
-      const v = set ?? r.def;
-      li.querySelector('output').innerHTML = v == null ? `<b>${esc(TIMING_WORDS.usual)}</b> <small>(default)</small>`
-        : `<b>${esc(fmt(v, r))}</b> <small>(default ${esc(r.def == null ? TIMING_WORDS.path : String(r.def))})</small>`;
-      li.querySelector('[data-d="-1"]').disabled = (v ?? r.from) <= r.min;
-      li.querySelector('[data-d="1"]').disabled = (v ?? r.from) >= r.max;
+      const v = set ?? r.def ?? usual[li.dataset.k];
+      // A value that differs per step reads "As written (15–25 s)" until it is set.
+      const steps = r.varies && subject?.varied?.[li.dataset.k];
+      const written = steps && `${spread(steps).join('–')}${r.unit ? ` ${r.unit}` : ''}`;
+      const note = r.def != null ? `default ${r.def}` : written ? `default ${TIMING_WORDS.written.toLowerCase()}, ${written}`
+        : set != null ? `default ${TIMING_WORDS.path}` : TIMING_WORDS.path;
+      li.querySelector('output').innerHTML = written && set == null ? `<b>${esc(TIMING_WORDS.written)}</b> <small>(${esc(written)})</small>`
+        : `<b>${esc(fmt(v, r))}</b> <small>(${esc(note)})</small>`;
+      li.querySelector('[data-d="-1"]').disabled = v <= r.min;
+      li.querySelector('[data-d="1"]').disabled = v >= r.max;
       li.classList.toggle('own', set != null);
     }
     app.querySelector('.timings-reset').disabled = !Object.keys(own()).length;
@@ -357,8 +370,8 @@ function timingsView(id, back) {
   for (const b of app.querySelectorAll('.step')) b.addEventListener('click', () => {
     const k = b.closest('li').dataset.k;
     const r = all[k];
-    const v = timed(id, { [k]: r.def ?? r.from }, own())[k];
-    keep(setTiming(own(), id, k, Math.min(r.max, Math.max(r.min, v + Number(b.dataset.d) * (r.step ?? 1)))));
+    const v = timed(id, { [k]: r.def ?? usual[k] }, own())[k];
+    keep(setTiming(own(), id, k, Math.min(r.max, Math.max(r.min, v + Number(b.dataset.d) * (r.step ?? 1))), usual[k]));
   });
   app.querySelector('.timings-reset').addEventListener('click', () => { keep({}); focusOn('h1'); });
   app.querySelector('.back').addEventListener('click', back);
@@ -570,7 +583,7 @@ function run(lessonId, queue, title) {
       <button class="close" aria-label="${practice ? 'Stop' : 'Quit lesson'}">✕</button>
       <div ${practice ? 'hidden ' : ''}class="meter" data-heat="0" role="progressbar" aria-label="Lesson progress" aria-valuemin="0"><div class="fill"><i class="shine"></i></div><span class="flare" aria-hidden="true"></span></div>
     </header>
-    <main class="play">
+    <main class="play${queue[0].subject.night ? ' night' : ''}">
       <p class="topic"></p>
       <div class="coach${who.demonstrates ? ' demonstrates' : ''}">
         <button class="who" aria-label="${esc(who.name)}"></button>
@@ -637,7 +650,7 @@ function run(lessonId, queue, title) {
       coachEl: $('.who'),
       coach: who,
       help: who.help,
-      timings: progress.timings?.[entry.subject.habit],
+      timings: progress.timings?.[timingsOf(entry.subject.habit)],
       done: (correct, text = '', kept = null) => {
         // A practice item goes straight on: its own buttons were the Continue.
         if (practice) { if (text) did.push(text); if (kept) journal = kept; at++; return step(); }
@@ -692,7 +705,7 @@ function run(lessonId, queue, title) {
     const h = habitOf(subject.habit);
     const n = currentStreak(progress, new Date(), h.id);
     app.innerHTML = `
-      <main class="summary practice-end">
+      <main class="summary practice-end${subject.night ? ' night' : ''}">
         <div class="hero"></div>
         <p class="kicker">${esc(technique)}</p>
         <h1>${esc(line('done', Math.random(), who.lines))}</h1>
