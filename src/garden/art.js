@@ -147,6 +147,7 @@ function lavender(s) {
 // Move: a sunflower. A striped seed, round seed-leaves, then one tall stalk with big heart leaves
 // and a shut green bud on top, a bud with yellow showing, then the big yellow head.
 const SUN_TOP = [0, 94, 72, 50, 34];
+const SUN_PETAL = '#F7C51E';
 // Heart leaves: [y, angle, size].
 const SUN_LEAVES = [null, [],
   [[96, -78, 1.25], [86, 78, 1.25]],
@@ -166,14 +167,15 @@ function sunflower(s, closed) {
   }
   out += SUN_LEAVES[s].map(([y, a, k], i) => heart(50, y, k, a, i % 2 ? LEAF_DARK : LEAF)).join('');
   if (s === 2) {
-    // A shut green bud, cupped in two sepals.
-    return out + `<ellipse cx="50" cy="${top - 4}" rx="3.6" ry="5.4" fill="${LEAF_DARK}"/>`
+    // A shut green bud, cupped in two sepals, with a hint of yellow at its tip: a sunflower coming.
+    const peek = [-22, 0, 22].map((a) => leaf(50, top - 6, 7, a, 2.2, SUN_PETAL)).join('');
+    return out + peek + `<ellipse cx="50" cy="${top - 4}" rx="3.6" ry="5.4" fill="${LEAF_DARK}"/>`
       + leaf(50, top + 1, 7, -40, 2.4, LEAF) + leaf(50, top + 1, 7, 40, 2.4, LEAF);
   }
   if (s === 3) {
-    // A green bud with yellow just showing.
-    const tips = Array.from({ length: 8 }, (_, i) => leaf(50, top, 9, i * 45 + 22, 2.4, i % 2 ? '#F5C21B' : LEAF_DARK)).join('');
-    return out + tips + `<circle cx="50" cy="${top}" r="6.5" fill="${LEAF}"/>`;
+    // A green bud opening: yellow petal tips past every green sepal.
+    const ring = (len, off, w, fill) => Array.from({ length: 8 }, (_, i) => leaf(50, top, len, i * 45 + off, w, fill)).join('');
+    return out + ring(12, 22.5, 2.8, SUN_PETAL) + ring(9, 0, 2.4, LEAF_DARK) + `<circle cx="50" cy="${top}" r="6.5" fill="${LEAF}"/>`;
   }
   if (s === 4) {
     const cy = 30, petal = closed ? 6 : 12;
@@ -182,7 +184,7 @@ function sunflower(s, closed) {
       const a = (i * 360 / 7) * Math.PI / 180;
       return `<circle cx="${f(50 + Math.cos(a) * 5.5)}" cy="${f(cy + Math.sin(a) * 5.5)}" r="1.2" fill="#8E5A30"/>`;
     }).join('');
-    out += `<g data-part="head">${ring(16, 11, '#F0A92A', petal - 2)}${ring(16, 0, '#F7C51E', petal)}`
+    out += `<g data-part="head">${ring(16, 11, '#F0A92A', petal - 2)}${ring(16, 0, SUN_PETAL, petal)}`
       + `<circle cx="50" cy="${cy}" r="11" fill="#6B3F1F"/>${seeds}<circle cx="50" cy="${cy}" r="2" fill="#8E5A30"/></g>`;
   }
   return out;
