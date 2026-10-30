@@ -821,6 +821,24 @@ test('with many habits, the tab row stays one row that scrolls inside itself, an
   expect(await overflow(page)).toBe(0);
 });
 
+test('the tab row fades only an edge with more tabs past it, and never fades the selected tab', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  const tracked = ['walk', 'read', 'water', 'outside'].map((id) => ({ id }));
+  await grown(page, ['learn', 'calm', 'move', 'reflect', 'break', ...tracked.map((t) => t.id)], 3, false, { tracked });
+  await firstVisit(page);
+  const row = page.getByRole('navigation', { name: 'Show the path for' });
+  const edges = () => row.evaluate((el) => [el.classList.contains('more-start'), el.classList.contains('more-end')]);
+  expect(await edges()).toEqual([false, true]); // Learning is first: nothing to the left
+  await row.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+  await expect.poll(edges).toEqual([true, false]);
+  for (const name of ['Move', 'Read', 'Water']) {
+    await tab(page, name).click();
+    const [nav, sel] = await Promise.all([row.boundingBox(), tab(page, name).boundingBox()]);
+    expect(sel.x, name).toBeGreaterThanOrEqual(nav.x + 36);
+    expect(sel.x + sel.width, name).toBeLessThanOrEqual(nav.x + nav.width - 36);
+  }
+});
+
 const overflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
 for (const colorScheme of ['light', 'dark']) {

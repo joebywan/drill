@@ -293,11 +293,15 @@ html { scroll-padding-bottom: 160px; }
 .paths {
   display: flex; gap: 8px; margin: 4px -16px 0; padding: 2px 16px 4px;
   overflow-x: auto; scrollbar-width: none; position: relative; /* offsetLeft is measured from here */
-  /* A swipe settles with a tab on the page's 16px gutter, never cut at the screen edge. */
-  scroll-snap-type: x mandatory; scroll-padding-inline: 16px;
-  /* The gutters fade out, so a tab cut at the edge reads as "more this way", not a stray line. */
-  mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+  /* A swipe settles with a tab just clear of the fade, never cut at the screen edge or faded. */
+  scroll-snap-type: x mandatory; scroll-padding-inline: 40px;
+  /* An edge with more tabs past it fades out (app.js sets .more-start/.more-end on scroll), so a
+     cut tab reads as "more this way"; an edge with nothing past it stays sharp. */
+  --fade-start: 0px; --fade-end: 0px;
+  mask-image: linear-gradient(to right, transparent, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent);
 }
+.paths.more-start { --fade-start: 36px; }
+.paths.more-end { --fade-end: 36px; }
 .path-tab { flex: none; scroll-snap-align: start; }
 .paths::-webkit-scrollbar { display: none; }
 /* A tab's streak, in a small pill so today's light reads on the pressed tab too. */

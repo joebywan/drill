@@ -200,6 +200,13 @@ function home(arrived = null, newly = []) {
   const tabs = app.querySelector('.paths');
   const shown = tabs.querySelector('[aria-pressed="true"]');
   tabs.scrollLeft = shown.offsetLeft - (tabs.clientWidth - shown.offsetWidth) / 2;
+  // An edge fades only when there are more tabs that way.
+  const edges = () => {
+    tabs.classList.toggle('more-start', tabs.scrollLeft > 1);
+    tabs.classList.toggle('more-end', tabs.scrollLeft < tabs.scrollWidth - tabs.clientWidth - 1);
+  };
+  edges();
+  tabs.addEventListener('scroll', edges, { passive: true });
   for (const b of app.querySelectorAll('[data-path]')) {
     b.addEventListener('click', () => { showHabit(b.dataset.path); home(); focusOn(`[data-path="${b.dataset.path}"]`); });
   }
