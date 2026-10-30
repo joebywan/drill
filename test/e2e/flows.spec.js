@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { answer, kind, starPath } from '../../src/chess/items.js';
-import { emptyProgress, finishPractice, finishSession } from '../../src/progress.js';
+import { emptyProgress, finishPractice, finishSession, leavePractice } from '../../src/progress.js';
 import { award } from '../../src/garden/model.js';
 
 // The first lesson on the path. Its answers are worked out from the course data with the same
@@ -72,13 +72,16 @@ async function toStepTwo(page) {
   await expect(page.getByRole('heading', { name: 'What would you like out of Drill?' })).toBeFocused();
 }
 
-test('intro, learn only: Learn something picks chess, the others are coming soon, and home starts on Learning', async ({ page }) => {
+test('intro, learn only: Learn something lists the live courses, the others are coming soon, and home starts on Learning', async ({ page }) => {
   await toStepTwo(page);
   await expect(pick(page, 'Chess')).toBeHidden();
   await pick(page, 'Learn something').click();
   await expect(pick(page, 'Learn something')).toHaveAttribute('aria-pressed', 'true');
-  await expect(pick(page, 'Chess')).toHaveAttribute('aria-pressed', 'true'); // the one live course
-  for (const name of ['Maths', 'Japanese', 'Coding']) await expect(page.getByRole('button', { name: `${name} · coming soon` })).toBeDisabled();
+  await expect(pick(page, 'Japanese')).toBeEnabled(); // live
+  await pick(page, 'Chess').click();
+  await expect(pick(page, 'Chess')).toHaveAttribute('aria-pressed', 'true');
+  await expect(pick(page, 'Maths')).toBeEnabled(); // live
+  for (const name of ['Coding']) await expect(page.getByRole('button', { name: `${name} · coming soon` })).toBeDisabled();
   await expect(page.getByRole('heading', { name: 'Have you played chess before?' })).toHaveCount(0); // no placement questions
   await page.getByRole('button', { name: 'Show my home' }).click();
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
@@ -99,20 +102,20 @@ test('intro, habits only: the picks come first in the order tapped, and a tracke
   await pick(page, 'Read').click(); // changed my mind
   await expect(pick(page, 'Read')).toHaveAttribute('aria-pressed', 'false');
   await page.getByRole('button', { name: 'Show my home' }).click();
-  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'winddown']);
+  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'winddown', 'focus']);
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'walk');
   await expect(page.getByText('Walk is first. Start with the button below.')).toBeVisible();
   await page.getByRole('button', { name: 'I walked today' }).click();
   await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
   await page.reload();
-  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'winddown']);
+  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'winddown', 'focus']);
 });
 
 test("intro, skipped at either step: today's default home, and the intro never comes back", async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Skip' }).click();
   await expect(page.getByText("Hi, I'm Lumi. Pick something to grow")).toBeVisible();
-  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move', 'winddown']);
+  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move', 'winddown', 'focus']);
   await page.reload();
   await expect(page.getByText("Hi, I'm Lumi. Pick something to grow")).toBeVisible();
 
@@ -121,7 +124,7 @@ test("intro, skipped at either step: today's default home, and the intro never c
   await pick(page, 'Build habits').click();
   await pick(page, 'Move').click();
   await page.getByRole('button', { name: 'Skip' }).click(); // a skip drops what was tapped
-  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move', 'winddown']);
+  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move', 'winddown', 'focus']);
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
 });
 
@@ -167,7 +170,7 @@ test('"Change what you see" in the ⋯ menu reopens step 2 with the picks, and B
   await pick(page, 'Screen break').click();
   await pick(page, 'Learn something').click();
   await page.getByRole('button', { name: 'Show my home' }).click();
-  expect(await tabOrder(page)).toEqual(['break', 'learn', 'calm', 'reflect', 'move', 'winddown']);
+  expect(await tabOrder(page)).toEqual(['break', 'learn', 'calm', 'reflect', 'move', 'winddown', 'focus']);
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'break');
 });
 
@@ -264,6 +267,202 @@ test('the "5 in a row" flare plays, then leaves nothing behind', async ({ page }
   await expect(flare).toBeHidden({ timeout: 3000 });
 });
 
+/** Home with the board unit done, then "Rook and bishop" played through: Lumi's next step is in the same unit. */
+async function rookAndBishop(page, during = async () => {}) {
+  const lesson = basics.units[1].lessons[0];
+  await page.addInitScript((p) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', p); },
+    JSON.stringify({ ...emptyProgress(), done: { [`chess:${basics.units[0].lessons[0].id}`]: true } }));
+  await firstVisit(page);
+  await page.getByRole('button', { name: `Continue · ${lesson.title}` }).click();
+  for (const [i, item] of lesson.items.entries()) {
+    if (item.demo) await expect(page.locator('#said')).not.toHaveText(item.intro, { timeout: 10000 }); // the piece's demo first
+    await solve(page, item);
+    if (!i) await during();
+    await continueButton(page).click();
+  }
+}
+
+test('lessons feel alive: answers pop, petals fall, and the path fills to the next node', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await rookAndBishop(page, async () => {
+    // The verdict pops (scale up and back), and Continue takes the tap while it plays.
+    expect(await page.evaluate(() => document.getAnimations().some((a) => a.effect.getKeyframes().some((k) => k.transform === 'scale(1.12)')))).toBe(true);
+  });
+  await expect(page.locator('.petals i.petal').first()).toBeAttached();
+  await expect(page.locator('.petals i.leaf').first()).toBeAttached();
+  await continueButton(page).click();
+  await expect(page.locator('.petals')).toHaveCount(0); // leaving the summary stops them
+  // The stretch from the lesson just done to the next node is its own path, filling as Lumi hops.
+  const fresh = page.locator('.trail .fresh');
+  await expect(fresh).toHaveCount(1);
+  expect(await fresh.evaluate((el) => el.getAnimations().length)).toBe(1);
+  await expect.poll(() => fresh.evaluate((el) => el.getAnimations().length), { timeout: 3000 }).toBe(0);
+  await expect(page.getByRole('button', { name: `${basics.units[1].lessons[1].title}, current` })).toBeVisible();
+});
+
+test('a wrong answer gives a small shake, never in the way', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await firstVisit(page);
+  await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
+  const tapItem = first.items.find((i) => kind(i) === 'tap');
+  for (const item of first.items.slice(0, first.items.indexOf(tapItem))) { await solve(page, item); await continueButton(page).click(); }
+  const right = new Set(answer(tapItem));
+  await tap(page, ['a1', 'h8', 'd4', 'e5', 'b2'].find((sq) => !right.has(sq)));
+  await expect(page.locator('.foot.wrong')).toBeVisible();
+  expect(await page.evaluate(() => document.getAnimations().some((a) => a.effect.getKeyframes().some((k) => k.transform === 'translateX(-6px)')))).toBe(true);
+  await continueButton(page).click();
+});
+
+test('under reduced motion, feedback is still and the path is simply drawn, but the cues still sound', async ({ page }) => {
+  // Counts the notes the lesson plays: reduced motion skips motion, never sound.
+  await page.addInitScript(() => {
+    window.notes = 0;
+    const make = AudioContext.prototype.createOscillator;
+    AudioContext.prototype.createOscillator = function () { window.notes++; return make.call(this); };
+  });
+  let heard = 0;
+  await rookAndBishop(page, async () => { heard = await page.evaluate(() => window.notes); });
+  expect(heard, 'the right-answer cue').toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.notes), 'more cues, up to lesson complete').toBeGreaterThan(heard);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.locator('.petals')).toHaveCount(0);
+  await continueButton(page).click();
+  await expect(page.locator('.trail .fresh')).toHaveCount(1);
+  expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+});
+
+// Japanese: a second course on the Learning tab, played with the tap-and-match items in src/quiz/.
+const japanese = JSON.parse(readFileSync(new URL('../../src/data/japanese.json', import.meta.url)));
+const kanaFirst = japanese.units[0].lessons[0];
+const quizChoice = (page, text) => page.locator('.quiz .choices .choice:not(:disabled)', { hasText: new RegExp(`^${text}$`) }).first();
+
+/** Answers one quiz item correctly by tapping, then waits for the answer banner. */
+async function solveQuiz(page, item) {
+  if (item.type === 'pick') await quizChoice(page, item.answer).click();
+  if (item.type === 'pairs') for (const [l, r] of item.pairs) { await quizChoice(page, l).click(); await quizChoice(page, r).click(); }
+  if (item.type === 'build') for (const t of item.answer) await quizChoice(page, t).click();
+  await expect(continueButton(page), item.id).toBeInViewport();
+}
+
+async function toJapanese(page) {
+  await firstVisit(page);
+  await page.getByRole('button', { name: 'Japanese', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Japanese', exact: true })).toHaveAttribute('aria-pressed', 'true');
+}
+
+test('intro: picking Japanese opens Learning on the Japanese path', async ({ page }) => {
+  await toStepTwo(page);
+  await pick(page, 'Learn something').click();
+  await pick(page, 'Japanese').click();
+  await page.getByRole('button', { name: 'Show my home' }).click();
+  await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
+  await expect(page.getByRole('heading', { name: 'Vowels' })).toBeVisible();
+  await expect(page.getByRole('button', { name: `Continue · ${kanaFirst.title}` })).toBeVisible();
+});
+
+test('a full Japanese lesson: teach, pick, listen, pairs; Kaede ends it, and the course is remembered', async ({ page }) => {
+  await toJapanese(page);
+  await expect(page.getByRole('heading', { name: 'Vowels' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Know some chess already? Skip ahead' })).toHaveCount(0);
+  await page.getByRole('button', { name: `Continue · ${kanaFirst.title}` }).click();
+  await expect(page.locator('.quiz .glyph')).toHaveText('あ');
+  await expect(page.locator('.quiz')).toHaveAttribute('lang', 'ja-JP');
+  await expect(page.locator('.who svg')).toHaveClass(/cast-kaede/);
+  for (const item of kanaFirst.items) {
+    // No voice in headless Chromium: a listening item shows its reading instead, and still plays.
+    if (item.listen) await expect(page.locator('.quiz .glyph')).toHaveText(item.show);
+    await solveQuiz(page, item);
+    await continueButton(page).click();
+  }
+  const marked = kanaFirst.items.filter((i) => i.type !== 'teach').length;
+  await expect(page.getByText(`${marked} of ${marked} right first try`)).toBeVisible();
+  await expect(page.locator('.duo .hero svg').first()).toHaveClass(/cast-kaede/);
+  await continueButton(page).click();
+  await expect(page.getByRole('button', { name: `${kanaFirst.title}, done` })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Japanese', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Chess', exact: true }).click();
+  await expect(page.getByRole('heading', { name: basics.units[0].title })).toBeVisible();
+});
+
+test('a wrong tap is judged at once, comes back at the end, and a mismatched pair flashes and lets go', async ({ page }) => {
+  await toJapanese(page);
+  await page.getByRole('button', { name: `Continue · ${kanaFirst.title}` }).click();
+  const [pickItem] = kanaFirst.items.filter((i) => i.type === 'pick');
+  for (const item of kanaFirst.items.slice(0, kanaFirst.items.indexOf(pickItem))) { await solveQuiz(page, item); await continueButton(page).click(); }
+  await quizChoice(page, pickItem.options.find((o) => o !== pickItem.answer)).click();
+  await expect(page.locator('.foot.wrong')).toBeVisible();
+  await expect(page.locator('.quiz .choice.right')).toHaveText(pickItem.answer);
+  await continueButton(page).click();
+  for (const item of kanaFirst.items.slice(kanaFirst.items.indexOf(pickItem) + 1)) {
+    if (item.type === 'pairs') {
+      const [[l1], [, r2]] = item.pairs;
+      await quizChoice(page, l1).click();
+      await quizChoice(page, r2).click();
+      await expect(page.locator('.quiz .choice.wrong')).toHaveCount(2);
+      await expect(page.locator('.quiz .choice.wrong')).toHaveCount(0); // lets go
+    }
+    await solveQuiz(page, item);
+    await continueButton(page).click();
+  }
+  await expect(page.locator('.quiz .glyph')).toHaveText(pickItem.show); // the missed one, once more
+  await solveQuiz(page, pickItem);
+  await continueButton(page).click();
+  await solveQuiz(page, kanaFirst.items.find((i) => i.type === 'pairs')); // and the pairs, which had a slip
+  await continueButton(page).click();
+  const marked = kanaFirst.items.filter((i) => i.type !== 'teach').length;
+  await expect(page.getByText(`${marked - 2} of ${marked} right first try`)).toBeVisible();
+});
+
+test('a Japanese review: due kana come back on the Japanese path, with Kaede', async ({ page }) => {
+  const lesson = japanese.units[0].lessons[2]; // has a build item
+  const results = lesson.items.filter((i) => i.type !== 'teach').map((i) => ({ key: `japanese:${i.id}`, correct: true }));
+  const then = new Date(Date.now() - 30 * 86400000);
+  const p = finishSession(emptyProgress(), `japanese:${lesson.id}`, results, then);
+  await page.addInitScript(([p, course]) => { localStorage.setItem('drill.progress', p); localStorage.setItem('drill.course', course); }, [JSON.stringify(p), 'japanese']);
+  await firstVisit(page);
+  await page.locator('[data-review]').click();
+  await expect(page.locator('.who svg')).toHaveClass(/cast-kaede/);
+  for (let n = 0; n < results.length; n++) {
+    const id = await page.evaluate(() => document.querySelector('.quiz .glyph, .quiz .meaning, .quiz .choices')?.textContent);
+    const item = lesson.items.find((i) => i.type !== 'teach' && (i.show === id || (i.type === 'pairs' && i.pairs.every(([l]) => id.includes(l)))));
+    await solveQuiz(page, item);
+    await continueButton(page).click();
+  }
+  await expect(page.locator('.kicker')).toHaveText('Review done');
+  await expect(page.getByText(`${results.length} of ${results.length} recalled`)).toBeVisible();
+});
+
+test('Japanese skip-ahead: someone who reads the vowels starts at K and S', async ({ page }) => {
+  await toJapanese(page);
+  await page.getByRole('button', { name: 'Read some kana already? Skip ahead' }).click();
+  await expect(page.getByRole('heading', { name: 'Can you read hiragana?' })).toBeFocused();
+  await page.getByRole('button', { name: 'I know あいうえお' }).click();
+  await page.getByRole('button', { name: 'Start at K and S' }).click();
+  await expect(page.locator('.street', { has: page.getByRole('heading', { name: 'K and S' }) }).locator('.here')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Read some kana already? Skip ahead' })).toHaveCount(0);
+});
+
+test('with a ja-JP voice, a listening item plays the sound and hides the reading', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.spoken = [];
+    const voice = { lang: 'ja-JP', name: 'Test JP' };
+    speechSynthesis.getVoices = () => [voice];
+    speechSynthesis.speak = (u) => window.spoken.push(u.text);
+    speechSynthesis.cancel = () => {};
+    window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } }; // a real one only takes a real voice
+  });
+  await toJapanese(page);
+  await page.getByRole('button', { name: `Continue · ${kanaFirst.title}` }).click();
+  await expect.poll(() => page.evaluate(() => window.spoken)).toEqual(['あ']); // the teach card says it
+  const listen = kanaFirst.items.find((i) => i.listen);
+  for (const item of kanaFirst.items.slice(0, kanaFirst.items.indexOf(listen))) { await solveQuiz(page, item); await continueButton(page).click(); }
+  await expect(page.locator('.quiz .glyph')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Hear it again' })).toBeVisible();
+  expect((await page.evaluate(() => window.spoken)).at(-1)).toBe(listen.speak);
+  await solveQuiz(page, listen);
+});
+
 test("a habit's chip opens its view, with today's session listed", async ({ page }) => {
   await firstVisit(page);
   await finishFirstLesson(page);
@@ -327,6 +526,23 @@ test('a Calm breathing session keeps its own streak, and asks how you feel', asy
   await expect(tab(page, 'Calm')).toHaveAttribute('aria-pressed', 'true');
   await tab(page, 'Learning').click();
   await expect(page.getByRole('button', { name: `Continue · ${first.title}` })).toBeVisible();
+});
+
+test('a Calm practice closed part-way is kept in `left`, with how far it got, and never logged', async ({ page }) => {
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Calm').click();
+  await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  // 4 in, 8 out: 13 s in is breath 2's in-breath, the third of six phases.
+  await page.clock.runFor(13_000);
+  await expect(page.getByText('Breath 2 of 3')).toBeVisible();
+  await page.getByRole('button', { name: 'Stop' }).click();
+  await expect(tab(page, 'Calm')).toHaveAccessibleName('Calm'); // no streak from a practice left part-way
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
+  expect(saved.log).toEqual([]);
+  expect(saved.left).toEqual([{ date: expect.any(String), hour: expect.any(Number), habit: 'calm', lessonId: 'calm:breathe1', title: 'Breathing', step: 2, of: 6 }]);
+  await expect(page.getByRole('button', { name: 'Continue · The long out-breath' })).toBeVisible();
 });
 
 test('your own timings: a growing value shows what the next lesson uses, and + steps from it', async ({ page }) => {
@@ -592,6 +808,147 @@ test('a Move session plays timed exercises with rests, and keeps its own streak'
   await expect(tab(page, 'Calm')).toHaveAccessibleName('Calm');
   await week(page, 1).click();
   await expect(page.locator('.day').first().getByRole('listitem')).toHaveText(/^Wake up · \d+ min · felt no different$/);
+});
+
+// Focus keeps the screen on through the Wake Lock API: a stand-in records each request and release.
+const fakeWakeLock = (page) => page.addInitScript(() => {
+  window.locks = [];
+  Object.defineProperty(navigator, 'wakeLock', { value: { request: async (type) => {
+    const lock = { type, released: false, release: async () => { lock.released = true; }, addEventListener() {} };
+    window.locks.push(lock);
+    return lock;
+  } } });
+});
+const held = (page) => page.evaluate(() => window.locks.filter((l) => !l.released).length);
+
+test('a Focus session: what it is for, a full timer with a pause, the screen kept on, and how it went', async ({ page }) => {
+  await fakeWakeLock(page);
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Focus').click();
+  await page.getByRole('button', { name: 'Continue · Ten minutes, one thing' }).click();
+  await expect(page.getByText('Stopping early is fine.', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Start' }).click();
+  // One optional tap: a preset starts it straight away.
+  await expect(page.getByRole('heading', { name: 'What are you focusing on?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Reading', exact: true }).click();
+  const left = page.getByRole('timer', { name: 'Time left' });
+  await expect(left).toHaveText('10:00');
+  await expect(page.locator('.focus-on')).toHaveText('Reading');
+  expect(await held(page)).toBe(1);
+  await page.clock.runFor(60_000);
+  await expect(left).toHaveText('9:00');
+  // Pause holds the clock, however long; Carry on goes on from the same second.
+  await page.getByRole('button', { name: 'Pause' }).click();
+  await page.clock.runFor(300_000);
+  await expect(left).toHaveText('9:00');
+  await page.getByRole('button', { name: 'Carry on' }).click();
+  await page.clock.runFor(540_000);
+  await expect(page.getByRole('heading', { name: 'How did it go?' })).toBeVisible();
+  expect(await held(page)).toBe(0);
+  await expect(page.locator('.chip.focus')).toContainText('⏳ 1');
+  await page.getByRole('button', { name: 'Focused' }).click();
+  await expect(page.getByRole('status')).not.toBeEmpty();
+  await continueButton(page).click();
+  await expect(page.getByRole('button', { name: 'Continue · Fifteen minutes' })).toBeVisible();
+  // The log says what was done, never what it was for; that is the day's own detail.
+  await week(page, 1).click();
+  const day = page.locator('.day').first();
+  await expect(day.locator('ul').first().getByRole('listitem')).toHaveText(/^Focus · \d+ min · felt focused$/);
+  await expect(day.getByRole('list', { name: 'What you focused on' })).toHaveText(/Focused on\s*Reading/);
+});
+
+test("Focus: your own words, then \"I'm done\" early ends it like any other, with no penalty", async ({ page }) => {
+  await fakeWakeLock(page);
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Focus').click();
+  await page.getByRole('button', { name: 'Continue · Ten minutes, one thing' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('textbox', { name: 'What are you focusing on?' }).fill('Tax <forms>');
+  await page.getByRole('button', { name: 'Start · 10 min' }).click();
+  await expect(page.locator('.focus-on')).toHaveText('Tax <forms>');
+  await page.clock.runFor(180_000);
+  await expect(page.getByRole('timer')).toHaveText('7:00');
+  await page.getByRole('button', { name: "I'm done" }).click();
+  await expect(page.getByRole('heading', { name: 'How did it go?' })).toBeVisible();
+  expect(await held(page)).toBe(0);
+  await expect(page.locator('.practice-end')).not.toContainText(/distract|only|early/i);
+  await continueButton(page).click();
+  // Finished is finished: the path moves on, as after a full session.
+  await expect(page.getByRole('button', { name: 'Continue · Fifteen minutes' })).toBeVisible();
+  await week(page, 1).click();
+  await expect(page.locator('.day').first().getByRole('list', { name: 'What you focused on' })).toHaveText(/Tax <forms>/);
+});
+
+/** Hides or shows the page as switching apps would: document.hidden, then visibilitychange. */
+const setHidden = (page, hidden) => page.evaluate((h) => {
+  Object.defineProperty(document, 'hidden', { configurable: true, get: () => h });
+  Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (h ? 'hidden' : 'visible') });
+  document.dispatchEvent(new Event('visibilitychange'));
+}, hidden);
+
+test('Focus keeps time while you are in another app, ends there if it runs out, and keeps every line of the day', async ({ page }) => {
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Focus').click();
+  await page.getByRole('button', { name: 'Continue · Ten minutes, one thing' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('button', { name: 'Reading', exact: true }).click();
+  const left = page.getByRole('timer');
+  await expect(left).toHaveText('10:00');
+  // Three minutes in another app: the timer moved on, and it never paused.
+  await setHidden(page, true);
+  await page.clock.runFor(180_000);
+  await setHidden(page, false);
+  await expect(left).toHaveText('7:00');
+  await expect(page.getByRole('button', { name: 'Pause' })).toHaveAttribute('aria-pressed', 'false');
+  // Away past the end: coming back shows the end screen.
+  await setHidden(page, true);
+  await page.clock.runFor(480_000);
+  await setHidden(page, false);
+  await expect(page.getByRole('heading', { name: 'How did it go?' })).toBeVisible();
+  await continueButton(page).click();
+  // A second session the same day: both lines are kept.
+  await page.getByRole('button', { name: 'Continue · Fifteen minutes' }).click();
+  await page.getByRole('button', { name: 'Study', exact: true }).click();
+  await page.getByRole('button', { name: "I'm done" }).click();
+  await continueButton(page).click();
+  await week(page, 1).click();
+  await expect(page.getByRole('list', { name: 'What you focused on' }).getByRole('listitem')).toHaveText([/Reading/, /Study/]);
+});
+
+test('every other habit still pauses when the page is hidden', async ({ page }) => {
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Screen break').click();
+  await page.getByRole('button', { name: 'Continue · Why breaks help' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await setHidden(page, true);
+  await page.clock.runFor(60_000);
+  await setHidden(page, false);
+  await expect(page.getByRole('button', { name: 'Carry on' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.steps li[aria-current="step"]')).toHaveText(/^Look far away/);
+});
+
+test('Focus with nothing picked, on your own time from the timings', async ({ page }) => {
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Focus').click();
+  await page.getByRole('button', { name: 'Your timings' }).click();
+  for (let i = 0; i < 2; i++) await page.getByRole('button', { name: 'More', exact: true }).click();
+  await expect(page.locator('.steppers output')).toContainText('20 min');
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue · Ten minutes, one thing' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('button', { name: 'Start · 20 min' }).click();
+  await expect(page.getByRole('timer')).toHaveText('20:00');
+  await expect(page.locator('.focus-on')).toHaveCount(0);
+  await page.clock.runFor(1_200_000);
+  await expect(page.getByRole('heading', { name: 'How did it go?' })).toBeVisible();
+  await continueButton(page).click();
+  await week(page, 1).click();
+  await expect(page.getByRole('list', { name: 'What you focused on' })).toHaveCount(0);
 });
 
 test('mute stays muted after a reload', async ({ page }) => {
@@ -908,7 +1265,7 @@ test('with many habits, the tab row stays one row that scrolls inside itself, an
   await grown(page, ['learn', 'calm', 'move', 'reflect', 'break', ...tracked.map((t) => t.id)], 9, true, { tracked });
   await firstVisit(page);
   const tabs = page.getByRole('navigation', { name: 'Show the path for' });
-  await expect(tabs.getByRole('button')).toHaveCount(14);
+  await expect(tabs.getByRole('button')).toHaveCount(15);
   expect(await tabs.getByRole('button').evaluateAll((els) => new Set(els.map((e) => e.offsetTop)).size)).toBe(1);
   await expect(tabs.getByRole('button').last()).toHaveAccessibleName('Add a habit');
   expect(await overflow(page)).toBe(0);
@@ -936,12 +1293,106 @@ test('the tab row fades only an edge with more tabs past it, and never fades the
   }
 });
 
+// Fitting the person (src/fitting.js), from seeded progress: dates are counted back from today.
+const daysAgo = (n, h = 19) => { const d = new Date(); d.setDate(d.getDate() - n); d.setHours(h, 0, 0, 0); return d; };
+/** Six weeks of Calm "Breathing" most evenings at 7 pm, then a quiet week and more. */
+function droppedOff() {
+  let p = emptyProgress();
+  for (let n = 49; n >= 9; n--) if (n % 7 !== 3) p = finishPractice(p, 'calm', null, daysAgo(n), { title: 'Breathing', mins: 2 });
+  return p;
+}
+/** The first breathing lesson done, then the second (five breaths) left at the sixth or seventh of ten steps, three times. */
+function leftAtTheSameStep() {
+  let p = finishPractice(emptyProgress(), 'calm', 'calm:breathe1', daysAgo(5), { title: 'Breathing', mins: 2 });
+  for (const [n, step] of [[4, 6], [3, 7], [2, 6]]) p = leavePractice(p, 'calm', 'calm:breathe2', step, 10, daysAgo(n), { title: 'Breathing' });
+  return p;
+}
+const seeded = (page, p) => page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
+const comebackCard = (page) => page.locator('.comeback');
+
+test('after a drop-off, home offers a gentle comeback: their usual practice at their usual hour, and one session brings a ladybird', async ({ page }) => {
+  await seeded(page, droppedOff());
+  await page.clock.install();
+  await firstVisit(page);
+  await expect(comebackCard(page)).toContainText('Some Breathing around 7 pm, the way you like it? A ladybird would love to visit your garden.');
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
+  expect(saved.comeback).toEqual({ date: expect.any(String), habit: 'calm', title: 'Breathing', hour: 19 });
+  await page.getByRole('button', { name: 'Start Breathing' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.clock.runFor(40_000);
+  await expect(page.getByText('A ladybird came to visit')).toBeVisible();
+  await continueButton(page).click();
+  await expect(comebackCard(page)).toHaveCount(0); // it ends after one session
+  await expect(page.locator('.garden-link svg[data-kind="ladybird"]')).toHaveCount(1);
+  const after = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
+  expect(after.comeback.done).toEqual(expect.any(String));
+  expect(Object.keys(after.garden.earned)).toContain('ladybird:calm');
+});
+
+test('the comeback can be set aside, and steady practice never shows one', async ({ page }) => {
+  await seeded(page, droppedOff());
+  await firstVisit(page);
+  await page.getByRole('button', { name: 'Not this time' }).click();
+  await expect(comebackCard(page)).toHaveCount(0);
+  await page.reload();
+  await expect(comebackCard(page)).toHaveCount(0);
+});
+
+test('a practice left at the same step offers a shorter one, for that session only', async ({ page }) => {
+  await seeded(page, leftAtTheSameStep());
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Calm').click();
+  await expect(page.getByRole('button', { name: 'Continue · Five slow breaths' })).toBeVisible();
+  await page.getByRole('button', { name: 'Try a shorter one: 3 breaths' }).click();
+  const start = page.getByRole('button', { name: 'Start' });
+  if (await start.count()) await start.click();
+  await expect(page.getByText('Breath 1 of 3')).toBeVisible();
+  await page.clock.runFor(40_000);
+  await expect(page.getByText('3 breaths', { exact: false }).first()).toBeVisible();
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
+  expect(saved.timings).toEqual({}); // never saved as their timings
+  await continueButton(page).click();
+  // Finished since: no more offer, and the path has moved on.
+  await expect(page.getByRole('button', { name: /^Try a shorter one/ })).toHaveCount(0);
+});
+
+test('the habit view shows the usual hour, and the bridge for the Android wrapper reads and records', async ({ page }) => {
+  await seeded(page, droppedOff());
+  await firstVisit(page);
+  await tab(page, 'Calm').click();
+  await page.getByRole('button', { name: /See your week$/ }).click();
+  await expect(page.getByText('You usually practise around 7 pm')).toBeVisible();
+  expect(await page.evaluate(() => window.drill.reminderHour())).toBe(19);
+  expect(await page.evaluate(() => window.drill.shouldRemind())).toBe(true);
+  expect(await page.evaluate(() => window.drill.noteReminder('snoozed'))).toBe(false);
+  for (let i = 0; i < 8; i++) expect(await page.evaluate(() => window.drill.noteReminder('cleared'))).toBe(true);
+  expect(await page.evaluate(() => window.drill.shouldRemind())).toBe(false);
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.getByRole('button', { name: 'Your progress' }).click();
+  await expect(page.getByText("Reminders are paused because they weren't helping.")).toBeVisible();
+  await page.getByRole('button', { name: 'Turn back on' }).click();
+  await expect(page.getByText('Reminders are on again.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Turn back on' })).toHaveCount(0);
+  expect(await page.evaluate(() => window.drill.shouldRemind())).toBe(true);
+});
+
 const overflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
 for (const colorScheme of ['light', 'dark']) {
   for (const width of [360, 412]) {
     test.describe(`${width}px, ${colorScheme}`, () => {
       test.use({ colorScheme, viewport: { width, height: 800 } });
+
+      test('the comeback card and the shorter-one offer have no sideways scroll', async ({ page }) => {
+        await seeded(page, { ...droppedOff(), left: leftAtTheSameStep().left, done: { 'calm:breathe1': true } });
+        await firstVisit(page);
+        await expect(comebackCard(page)).toBeVisible();
+        expect(await overflow(page)).toBe(0);
+        await tab(page, 'Calm').click();
+        await expect(page.getByRole('button', { name: /^Try a shorter one/ })).toBeVisible();
+        expect(await overflow(page)).toBe(0);
+      });
 
       test('home has no sideways scroll', async ({ page }) => {
         await firstVisit(page);
@@ -1111,6 +1562,153 @@ test('under reduced motion Calm stays quiet: no bell, no rain', async ({ page })
   expect(await page.evaluate(() => [window.heard.tones.includes(528), window.heard.noise])).toEqual([false, 0]);
 });
 
+// Garden seasons: the real calendar, by the device's hemisphere. Australia/* is south.
+test.describe('garden seasons in Sydney', () => {
+  test.use({ timezoneId: 'Australia/Sydney' });
+  test('July in Sydney is winter, Lumi lounges by the pond, and the ⋯ toggle turns it to northern summer', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-07-15T10:00:00+10:00'));
+    await firstVisit(page);
+    const strip = page.locator('.garden-link svg.garden-scene');
+    await expect(strip).toHaveClass(/season-winter/);
+    await expect(strip.locator('svg.pond svg.cast-lumi')).toHaveCount(1);
+    await expect(strip.locator('[data-part="lantern"]').first()).toBeAttached();
+    await page.getByRole('button', { name: 'Your progress' }).click();
+    const toggle = page.getByRole('button', { name: 'Southern hemisphere seasons' });
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await page.getByRole('button', { name: 'Back' }).click();
+    await expect(strip).toHaveClass(/season-summer/);
+    await page.reload();
+    await expect(page.locator('.garden-link svg.garden-scene')).toHaveClass(/season-summer/); // the choice is kept
+  });
+});
+
+test.describe('garden seasons in London', () => {
+  test.use({ timezoneId: 'Europe/London' });
+  test('October in London is autumn, in the full garden too', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-10-30T10:00:00Z'));
+    await firstVisit(page);
+    await expect(page.locator('.garden-link svg.garden-scene')).toHaveClass(/season-autumn/);
+    await page.locator('.garden-link').click();
+    await expect(page.locator('.garden-view svg.garden-scene')).toHaveClass(/season-autumn/);
+    await expect(page.locator('.garden-view [data-part="leaf"]').first()).toBeAttached();
+    await expect(page.locator('.garden-view svg.pond')).toHaveCount(1);
+  });
+});
+
+// ---- Wide screens: tablets and desktop browsers ----
+// Each size plays the main flows (the garden, a lesson, a Calm practice) and screenshots them to
+// test-results/screens/<size>-<scheme>/. The phone sizes are here too, so a layout change can be
+// checked against the phone shots from before it.
+const SCREENS = [[360, 800], [412, 915], [768, 1024], [1024, 768], [1440, 900]];
+for (const colorScheme of ['light', 'dark']) {
+  for (const [width, height] of SCREENS) {
+    const wide = width >= 768;
+    test(`${width}x${height} ${colorScheme}: home, the garden, a lesson and a Calm practice fit and play`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme });
+      await page.setViewportSize({ width, height });
+      const at = new Date();
+      at.setHours(10, 0, 0, 0);
+      await page.clock.install({ time: at });
+      // The cast's lines are picked at random: seeded here, so two runs' shots can be compared.
+      await page.addInitScript(() => { let s = 1; Math.random = () => (s = (s * 16807) % 2147483647) / 2147483647; });
+      await grown(page, ['learn', 'calm', 'move', 'reflect', 'break'], 10, true);
+      const dir = `test-results/screens/${width}x${height}-${colorScheme}`;
+      const shot = async (name) => {
+        expect(await overflow(page), name).toBe(0);
+        await page.screenshot({ path: `${dir}/${name}.png` });
+      };
+
+      await firstVisit(page);
+      await expect(strip(page, 5)).toBeVisible();
+      await shot('1-home');
+      if (wide) {
+        // Two panes: the garden and the habit tabs in a rail beside the path.
+        const [rail, path] = await Promise.all([page.locator('.paths').boundingBox(), page.locator('.street').first().boundingBox()]);
+        expect(rail.x + rail.width).toBeLessThanOrEqual(path.x);
+        expect((await page.locator('.cta .next').boundingBox()).height).toBeGreaterThanOrEqual(48);
+      }
+
+      await strip(page, 5).click();
+      await expect(page.locator('.plant-card')).toHaveCount(5);
+      await shot('2-garden');
+      await page.getByRole('button', { name: 'Back' }).click();
+
+      await tab(page, 'Learning').click();
+      await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
+      await expect(page.locator('.board svg')).toBeVisible();
+      await shot('3-lesson');
+      if (wide) expect((await page.locator('div.board').boundingBox()).width).toBeGreaterThan(412);
+      for (const item of first.items) {
+        await solve(page, item);
+        await continueButton(page).click();
+      }
+      await expect(page.locator('.arrivals')).toBeVisible();
+      await shot('4-lesson-end');
+      await continueButton(page).click();
+
+      await tab(page, 'Calm').click();
+      await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
+      await page.getByRole('button', { name: 'Start' }).click();
+      await expect(page.getByText('Breath 1 of 3')).toBeVisible();
+      await page.clock.runFor(2_000);
+      await shot('5-calm');
+      await page.clock.runFor(60_000);
+      await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+      await shot('6-calm-end');
+    });
+  }
+}
+
+test.describe('a keyboard on a desktop', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('Tab reaches the habit tabs and Continue, and Enter and Space press them', async ({ page }) => {
+    await firstVisit(page);
+    const calm = tab(page, 'Calm');
+    for (let i = 0; i < 30 && !(await calm.evaluate((el) => el === document.activeElement)); i++) await page.keyboard.press('Tab');
+    await expect(calm).toBeFocused();
+    await page.keyboard.press('Space');
+    await expect(tab(page, 'Calm')).toHaveAttribute('aria-pressed', 'true');
+    const go = page.getByRole('button', { name: 'Continue · The long out-breath' });
+    for (let i = 0; i < 30 && !(await go.evaluate((el) => el === document.activeElement)); i++) await page.keyboard.press('Tab');
+    await expect(go).toBeFocused();
+    // The focus ring shows on a keyboard focus.
+    expect(await go.evaluate((el) => getComputedStyle(el).outlineStyle)).toBe('solid');
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('button', { name: 'Start' })).toBeVisible();
+  });
+});
+
+test('on a short landscape screen the rail scrolls inside itself, so + Habit is always in reach', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 600 });
+  const tracked = [{ id: 'walk' }, { id: 'water' }, { id: 'own-1', name: 'Stretch', plant: 'rose' }];
+  await grown(page, ['learn', 'calm', 'walk', 'water', 'own-1'], 3, true, { tracked });
+  await firstVisit(page);
+  const rail = page.locator('.rail');
+  const box = await rail.boundingBox();
+  expect(box.y + box.height).toBeLessThanOrEqual(600);
+  const add = page.getByRole('button', { name: 'Add a habit' });
+  await rail.evaluate((el) => { el.scrollTop = el.scrollHeight; }); // the rail scrolls, not the page
+  await expect(add).toBeInViewport();
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+});
+
+test('on a landscape desktop, end-screen and practice buttons follow the content', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Calm').click();
+  await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  const gap = async (above, button) => { const [a, b] = [await above.boundingBox(), await button.boundingBox()]; return b.y - a.y - a.height; };
+  expect(await gap(page.locator('.breath'), page.getByRole('button', { name: 'Pause' }))).toBeLessThan(80);
+  await page.clock.runFor(60_000);
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+  expect(await gap(page.locator('.feel'), continueButton(page))).toBeLessThan(80);
+});
+
 test('Wind down: settle in, Calm breathing on your own timings, a sigh, goodnight, all in the night palette', async ({ page }) => {
   const p = { ...emptyProgress(), picked: [], timings: { calm: { inhale: 6 } } };
   await page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
@@ -1153,4 +1751,57 @@ test('Wind down: settle in, Calm breathing on your own timings, a sigh, goodnigh
   await continueButton(page).click();
   await expect(page.getByRole('button', { name: 'Lights low, done' })).toBeVisible();
   expect(await bg()).toBe(day);
+});
+
+test('Japanese taps get the same pop and shake as every lesson', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const frames = (t) => page.evaluate((t) => document.getAnimations().some((a) => a.effect.getKeyframes().some((k) => k.transform === t)), t);
+  await toJapanese(page);
+  await page.getByRole('button', { name: `Continue · ${kanaFirst.title}` }).click();
+  const [a, b] = kanaFirst.items.filter((i) => i.type === 'pick');
+  for (const item of kanaFirst.items.slice(0, kanaFirst.items.indexOf(a))) { await solveQuiz(page, item); await continueButton(page).click(); }
+  await quizChoice(page, a.answer).click();
+  expect(await frames('scale(1.12)'), 'pop').toBe(true);
+  await continueButton(page).click();
+  for (const item of kanaFirst.items.slice(kanaFirst.items.indexOf(a) + 1, kanaFirst.items.indexOf(b))) { await solveQuiz(page, item); await continueButton(page).click(); }
+  await quizChoice(page, b.options.find((o) => o !== b.answer)).click();
+  expect(await frames('translateX(-6px)'), 'shake').toBe(true);
+});
+
+// The Android wrapper's bridge, faked: the app tells it about each save and offers the daily note.
+test('with the Android bridge, a finished lesson sends a summary and the ⋯ screen offers the note', async ({ page }) => {
+  await page.addInitScript(() => {
+    const calls = (window.bridgeCalls = []);
+    let on = false;
+    window.DrillBridge = {
+      summary: (json) => calls.push(['summary', JSON.parse(json)]),
+      art: (pose, png) => calls.push(['art', pose, png.length]),
+      remindersOn: () => on,
+      reminders: (v) => { on = v; calls.push(['reminders', v]); },
+      notes: () => { calls.push(['notes']); return '["opened"]'; },
+    };
+    // A stand-in reminder brain, if the real one hasn't defined itself.
+    window.drill ??= { noteReminder: (n) => calls.push(['heard', n]) };
+  });
+  await firstVisit(page);
+  await expect.poll(() => page.evaluate(() => bridgeCalls.filter((c) => c[0] === 'art').map((c) => c[1]))).toEqual(['teach', 'sleepy', 'complete']);
+  expect(await page.evaluate(() => bridgeCalls.some((c) => c[0] === 'notes')), 'opened/cleared notes go to the reminder brain').toBe(true);
+  await finishFirstLesson(page);
+  const last = await page.evaluate(() => bridgeCalls.filter((c) => c[0] === 'summary').at(-1)[1]);
+  expect(last.looks[0]).toMatchObject({ light: 'bright', streak: 1, pose: 'complete' });
+  expect(last.doneOn).toMatch(/^\d{4}-\d\d-\d\d$/);
+  await continueButton(page).click();
+  await page.getByRole('button', { name: 'Your progress' }).click();
+  const note = page.getByRole('button', { name: /One quiet note/ });
+  await expect(note).toHaveAttribute('aria-pressed', 'false');
+  await note.click();
+  await expect(note).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.evaluate(() => bridgeCalls.at(-1))).toEqual(['reminders', true]);
+});
+
+test('without the bridge, the ⋯ screen has no note toggle', async ({ page }) => {
+  await firstVisit(page);
+  await page.getByRole('button', { name: 'Your progress' }).click();
+  await expect(page.getByRole('heading', { name: 'Your progress' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /One quiet note/ })).toHaveCount(0);
 });

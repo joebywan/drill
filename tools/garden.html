@@ -1,7 +1,7 @@
 <!doctype html>
 <!-- Render harness for the garden art: every plant at every stage, with flowers and shut for
      resting; the visitors at 64, 32 and 24 px; and every scene, as a home strip and as the tall
-     view, with sample plants in its slots. Light or dark follows the system, as the app does:
+     view, with sample plants in its slots; then each season (season.js) in the sunlit mood. Light or dark follows the system, as the app does:
      view it in both. `npm start`, then open /tools/garden.html. -->
 <html lang="en">
 <head>
@@ -24,7 +24,8 @@
 <body>
 <div id="sheet"></div>
 <script type="module">
-  import { KINDS, PLANTS, plant, sway, MOODS, scene, slots, place, VISITORS, visitor, animateVisitor } from '../src/garden/art.js';
+  import { KINDS, PLANTS, plant, sway, MOODS, scene, slots, place, VISITORS, visitor, animateVisitor, animateScene } from '../src/garden/art.js';
+  import { SEASONS } from '../src/garden/season.js';
   // Names only: model.js and subjects.js pull in the app's dependencies. The tests check every
   // habit in HABITS has a plant.
   const STAGES = ['seed', 'sprout', 'sapling', 'young', 'full grown'].map((name) => ({ name }));
@@ -41,8 +42,8 @@
   const visitors = ['v64', 'v32', 'v24'].map((c) => `<div class="row ${c}">${VISITORS.map((k) => fig(k, visitor(k))).join('')}</div>`).join('');
 
   // Sample gardens: every habit at a different stage, some with flowers, and the visitors about.
-  const sample = [[4, 3], [3, 1], [4, 6], [2, 0], [1, 2], [3, 2]];
-  const garden = (mood, shape) => {
+  const sample = [[4, 3], [3, 1], [4, 6], [2, 0], [1, 2], [3, 2], [2, 1]];
+  const garden = (mood, shape, season) => {
     const at = slots(shape, HABITS.length);
     const [W, H] = shape === 'strip' ? [360, 140] : [360, 560];
     const grown = HABITS.map((h, i) => place(plant(h.id, sample[i][0], { flowers: sample[i][1], closed: mood === 'resting' }), at[i])).join('');
@@ -50,17 +51,20 @@
     const life = shape === 'strip'
       ? v('butterfly', 100, 30, 22) + v('bee', 240, 40, 18)
       : v('butterfly', 130, 190, 34) + v('bee', 240, 270, 28) + v('birds', 140, 470, 34);
-    return `<div class="scene" data-mood="${mood}">${scene(mood, shape).replace('</svg>', grown + life + '</svg>')}</div>`;
+    return `<div class="scene" data-mood="${mood}">${scene(mood, shape, season).replace(/<\/svg>$/, grown + life + '</svg>')}</div>`;
   };
-  const slotDemo = (shape) => `<div class="scene">${scene('morning', shape).replace('</svg>',
+  const slotDemo = (shape) => `<div class="scene">${scene('morning', shape).replace(/<\/svg>$/,
     slots(shape, 6).map((s) => place(plant('learn', 4), s)).join('') + '</svg>')}</div>`;
 
   document.getElementById('sheet').innerHTML = `<h1>Garden</h1>${plants}<h2>Visitors</h2>${visitors}`
     + MOODS.map((m) => `<h2>${m}: strip</h2><div id="strip-${m}">${garden(m, 'strip')}</div>`
       + `<h2>${m}: tall</h2><div id="tall-${m}">${garden(m, 'tall')}</div>`).join('')
+    + SEASONS.map((s) => `<h2>${s}: strip</h2><div id="strip-${s}">${garden('sunlit', 'strip', s)}</div>`
+      + `<h2>${s}: tall</h2><div id="tall-${s}">${garden('sunlit', 'tall', s)}</div>`).join('')
     + `<h2>All six slots</h2><div id="slots-strip">${slotDemo('strip')}</div><div id="slots-tall" style="margin-top:8px">${slotDemo('tall')}</div>`;
 
   document.querySelectorAll('svg.plant').forEach(sway);
+  document.querySelectorAll('svg.garden-scene').forEach(animateScene);
   document.querySelectorAll('svg.visitor').forEach((el) => animateVisitor(el, el.classList[1].replace('visitor-', '')));
 </script>
 </body>

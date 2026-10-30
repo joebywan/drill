@@ -32,6 +32,9 @@ export const TIMINGS = {
   break: {
     seconds: { label: 'Each step', unit: 's', min: 5, max: 60, step: 5, from: 20, varies: true },
   },
+  focus: {
+    minutes: { label: 'Focus time', unit: 'min', min: 5, max: 90, step: 5, from: 10, at: { type: 'session', field: 'minutes' } },
+  },
 };
 
 /** The words around them, linted with the rest (test/guardrails.test.js). */
@@ -65,7 +68,7 @@ export function setTiming(overrides, habit, key, value, usual) {
 }
 
 /** The first value a lesson keeps at `at` ({ type?, field }), looking in its items and their sets. */
-const valueIn = (lesson, at) => lesson.items.flatMap((it) => [it, ...(it.set ?? [])])
+export const valueIn = (lesson, at) => lesson.items.flatMap((it) => [it, ...(it.set ?? [])])
   .find((x) => (!at.type || x.type === at.type) && Number.isInteger(x[at.field]))?.[at.field];
 
 /**

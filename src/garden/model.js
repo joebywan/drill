@@ -1,5 +1,6 @@
 import { LEARN, light, startedHabits, today } from '../progress.js';
 import { habitsFor, subjects } from '../subjects.js';
+import { season } from './season.js';
 
 /**
  * The garden, read from progress. Pure. Plants grow from days practised (`habits[h].days`), never
@@ -51,6 +52,9 @@ export const rules = (progress) => [
   // A bee for trying something new: the first session of any habit but Learning.
   ...habitsFor(progress).filter((h) => h.id !== LEARN).map(({ id: h, name }) => (
     { id: `bee:${h}`, habit: h, gift: 'bee', text: `A bee found ${name}`, test: (p) => streak(p, h).days >= 1 })),
+  // A ladybird for answering a comeback (src/fitting.js) with a session of its habit.
+  ...habitsFor(progress).map(({ id: h }) => (
+    { id: `ladybird:${h}`, habit: h, gift: 'ladybird', text: 'A ladybird came to visit', test: (p) => p.comeback?.habit === h && !!p.comeback.done })),
 ];
 /** The built-in habits' achievements, before the learner adds any of their own. */
 export const RULES = rules(null);
@@ -83,12 +87,12 @@ export function mood(progress, now = new Date()) {
 }
 
 /**
- * Everything the garden screen draws: { mood, plants }, a plant per started habit in habitsFor
+ * Everything the garden screen draws: { mood, season, plants } (`south` flips the season), a plant per started habit in habitsFor
  * order: { habit, plant, days, stage, name, next, flowers, visitors }. `plant` is the drawing a
  * self-reported habit chose (undefined for a built-in habit, whose drawing art.js knows). Flowers
  * and visitors are [{ id, gift, text, on }], `on` the date it arrived.
  */
-export function garden(progress, now = new Date()) {
+export function garden(progress, now = new Date(), south = false) {
   const earned = progress.garden?.earned || {};
   const habits = habitsFor(progress);
   const all = rules(progress);
@@ -102,7 +106,7 @@ export function garden(progress, now = new Date()) {
       visitors: got.filter((g) => g.gift !== 'flower'),
     };
   });
-  return { mood: mood(progress, now), plants };
+  return { mood: mood(progress, now), season: season(now, south), plants };
 }
 
 const dayCount = (n, more = '') => `${n} ${more}day${n === 1 ? '' : 's'}`;

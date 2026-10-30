@@ -170,6 +170,27 @@ export const CALM_LINES = {
 };
 
 /**
+ * Hazel, the Focus coach: a beaver who builds one stick at a time. Steady and unbothered. Never a
+ * word about distraction, productivity or time wasted: a wandering mind is normal, and stopping is fine.
+ */
+export const FOCUS_LINES = {
+  ask: ['One thing at a time. What is it today?', 'Pick one, or just start. Either is fine.'],
+  go: ['Off you go. I will be here, building.', 'One thing. Stick by stick.', 'If your mind wanders, just come back to it.'],
+  paused: ['Paused. Take whatever you need. The dam will keep.'],
+  tapped: [
+    'Nobody builds a dam in a day. One stick, then the next.',
+    'I chew when I think. Mostly I chew.',
+    'Tail tap. That means hello.',
+    'Water, wood and a bit of quiet. That is my whole plan.',
+  ],
+  // The end screen: settled, not a party, whenever it finished.
+  done: ['That was some time for one thing.', 'Done. Stretch your paws.', 'Nice and steady. One thing at a time.'],
+  'focused': ['Good. Hold on to that.', 'Lovely. A bit of quiet goes a long way.'],
+  'about the same': ['That is fine. Sitting with one thing still counts.', 'Fair enough. Thanks for giving it a go.'],
+  'no different': ["That's alright. Some days are bumpy, and that's not on you."],
+};
+
+/**
  * Moss at bedtime, for Wind down: the same capybara, quieter. No exclamation marks, no hurry, no
  * claims about sleep, and nothing about screens or how late it is (the guardrail tests check).
  */
@@ -189,6 +210,8 @@ export const WINDDOWN_LINES = {
 };
 
 /** Calm's optional sounds, set from the ⋯ screen: [preference, label]. */
+// The ⋯ screen's season toggle: on when the timezone guesses south, and it can be changed.
+export const SOUTH_LABEL = 'Southern hemisphere seasons';
 export const CALM_SOUNDS = [['bell', 'A soft bell at the start and end'], ['rain', 'Soft rain while you practise']];
 
 /** Real help, shown as plain text on the first Calm lesson and after "Not really". */
@@ -302,6 +325,7 @@ export const INTRO_WORDS = {
     reflect: 'Reflect: three lines about your day.',
     break: 'Screen break: rest your eyes and stretch.',
     winddown: 'Wind down: a few quiet minutes before bed.',
+    focus: 'Focus: a calm timer for one thing at a time.',
     track: 'Track: one tap for a walk, a book, water or time outside.',
   },
   garden: 'Your habits grow plants in a garden, and nothing ever wilts.',
@@ -316,8 +340,191 @@ export const INTRO_WORDS = {
   courses: 'Courses',
   habitList: 'Habits',
   soon: 'coming soon',
-  soonCourses: ['Maths', 'Japanese', 'Coding'],
+  soonCourses: ['Coding'],
   done: 'Show my home',
   first: '{name} is first. Start with the button below.',
   change: 'Change what you see',
+};
+
+/**
+ * Kaede, the red panda who coaches Japanese. A show-off with a soft centre: she rears up on her
+ * hind legs to celebrate, takes a little credit, and talks about bamboo more than is strictly
+ * necessary. Same kinds as LINES, so the lesson runner and end screen read hers in Rosa's place.
+ */
+export const KAEDE_LINES = {
+  correct: [
+    'Yes! Read like a local.',
+    'That one is yours now.',
+    'Right. I am standing on my back legs about it.',
+    'Correct. You looked at the shape first. Good habit.',
+    'Nailed it. I would offer you bamboo, but it is mine.',
+    'Exactly that sound.',
+  ],
+  wrong: [
+    'Not that one. These two are twins, almost. Read why.',
+    'Nope, but now you have seen the difference.',
+    'Close. Look at the little strokes, that is where it hides.',
+    'Not quite. Everyone mixes these up on day one. Even me. Once.',
+    'Hm, no. The mnemonic is the trick: picture it again.',
+  ],
+  run3: [
+    'Three in a row! My tail is doing the thing.',
+    'Three! You are reading, actually reading.',
+  ],
+  run5: [
+    'Five in a row! I am up on my hind legs. This is my big pose.',
+    'Five! Somebody fetch me a bamboo trophy.',
+  ],
+  tapped: [
+    'Yes, I am a red panda. No, not that kind of panda. The original one.',
+    'Kaede means maple. Look at my fur. I suit it.',
+    'Each kana is one sound. Learn the shape, the sound comes with it.',
+    'Say it out loud. Your mouth remembers too.',
+    'I stand up on my back legs when I am pleased. You will see it a lot.',
+    'Hiragana first, then words. Then the menu. Then the world.',
+  ],
+  complete: [
+    'Lesson done. These come back in review, so they stick.',
+    'That is the lesson. New shapes, new sounds, all yours.',
+  ],
+  perfect: [
+    'Every one right first time. You read every stroke.',
+    'Not one slip. I checked with my whiskers.',
+  ],
+  fast: [
+    'Quick and right, every one. Those shapes are sinking in.',
+    'Fast, and not a guess among them.',
+  ],
+  struggled: [
+    'Every mix-up you sorted out is one you will spot next time.',
+    'The tricky ones come back in review. That is the plan, not a penalty.',
+  ],
+  review: [
+    'Review done. Those kana are moving in to stay.',
+    'Recall like that is how a script settles in.',
+  ],
+  relit: ['That review relit your streak. Welcome back to the kana.'],
+};
+
+/** Kaede's end-screen headlines, by the same kinds as HEADLINES. */
+export const KAEDE_HEADLINES = {
+  complete: ['Lesson done! Tail up, ears up.', 'And that is a lesson. Bamboo for everyone. Well, for me.'],
+  perfect: ['Flawless! I am standing on my hind legs right now.', 'Perfect. I will be taking some credit for this.'],
+  fast: ['Done already? I had barely finished my bamboo.', 'Whoosh. That was quick and right.'],
+  struggled: ['That took some wrestling, and you won.', 'Messy in the middle, tidy at the end.'],
+  review: ['Look at that recall!', 'Remembered! The kana are settling in.'],
+  relit: ['Streak relit! Ears up!'],
+};
+
+// --- Maths ----------------------------------------------------------------------------------
+
+/**
+ * Ada, the maths coach: an octopus who counts on all eight arms and is very pleased about it.
+ * Quick, a show-off, fond of a dare; she teases the sum, never the person, and praises the method
+ * (making ten, doubling, checking) rather than the learner. Same kinds as LINES, for the runner.
+ */
+export const MATHS_LINES = {
+  correct: [
+    'Yes. Eight arms and I could not have done it neater.',
+    'Spot on. I would have shown off doing it, but fine.',
+    'Correct. I am writing that down. In ink.',
+    'That is the one. Tidy working.',
+    'Right! One step at a time. Lovely.',
+    'Mm. Numbers behaving themselves for once.',
+    'Got it. I counted on four arms to check.',
+  ],
+  wrong: [
+    'Not quite. Read the working, then it is yours.',
+    'Close. Take it in smaller steps and look again.',
+    'Nope, but that is the slip worth making today.',
+    'Not this one. I got that wrong for years. Well, minutes.',
+    'Hm. The numbers fibbed to you there. Check why.',
+    'Not quite. That one comes back at the end, so you get a rematch.',
+  ],
+  run3: [
+    'Three in a row. I may need another arm to keep count.',
+    'Three! Bet you can not make it five.',
+    'Three in a row. Now you are doing it in your head.',
+  ],
+  run5: [
+    'Five in a row! I am running out of fingers. Which is saying something.',
+    'Five! That is steady, careful working.',
+    'Five in a row. Fine, I will admit it: that was tidy.',
+  ],
+  tapped: [
+    'Eight arms. Yes, I count on them. No, you may not borrow one.',
+    'Tens first. Everything is easier from a ten.',
+    'Double, then double again. That is times four, sorted.',
+    'Per cent means out of 100. That is all it ever means.',
+    'A fraction is just a bar, cut fair and shaded.',
+    'I keep a pencil behind my eye. Where else would it go?',
+    'Rosa says chess is harder. Rosa is wrong, and has two arms.',
+    'Take your time. The numbers are not going anywhere.',
+  ],
+  complete: [
+    'Lesson done. These come back in review, so they stick.',
+    'That is the lesson. Short, tidy, done.',
+  ],
+  perfect: [
+    'Every one right first time. Careful working.',
+    'Not a single slip. I checked with all eight arms.',
+  ],
+  fast: [
+    'Quick and right, every one. That is mental maths.',
+    'Fast, and not a guess among them.',
+  ],
+  struggled: [
+    'Every slip you fixed is one you will spot next time.',
+    'You worked those out. That is where the learning happens.',
+    'The tricky ones come back in review. That is the plan, not a penalty.',
+  ],
+  review: [
+    'Review done. Those tricks are sticking.',
+    'Recall like that is how sums get easy.',
+  ],
+  relit: ['That review relit your streak. Welcome back to the numbers.'],
+};
+
+/** Ada's end-screen headlines, the same kinds as HEADLINES. */
+export const MATHS_HEADLINES = {
+  complete: [
+    'Lesson done. Eight arms up!',
+    'And that is a lesson. I would clap, but it takes a while.',
+  ],
+  perfect: [
+    'Flawless. I counted twice to be sure.',
+    'Not one slip! I am putting this on the fridge.',
+    'Perfect. Even my pencil is impressed.',
+  ],
+  fast: [
+    'Done already? I was still sharpening my pencil.',
+    'That was quick. I needed all eight arms to keep up.',
+  ],
+  struggled: [
+    'That took some wrestling, and you came out on top.',
+    'Messy in the middle, tidy at the end. That is real working.',
+  ],
+  review: [
+    'Look at that recall. Somebody has been practising.',
+    'Remembered! The tricks are moving in to stay.',
+  ],
+  relit: ['Streak relit! Ink all round.', 'There it is, the streak is glowing again.'],
+};
+
+/**
+ * The Android home-screen widget and its once-a-day note (src/widget.js picks the pool). Lumi
+ * says hello; nothing counts down, nothing is owed, and a day off is just a day.
+ */
+export const WIDGET_LINES = {
+  done: ['Done for today. Nice.', 'That was a good one.', 'All set. Enjoy the rest of the day.'],
+  morning: ['Morning. Fancy a lesson?', 'A new day. Pick anything you like.', 'Good morning from Lumi.'],
+  day: ['Got a few minutes? I have a puzzle.', 'Lumi is around if you want a lesson.', 'Something small today?'],
+  evening: ['A calm few minutes before bed?', 'Evening. One small thing, if you like.', 'Lumi saved you a puzzle.'],
+  night: ['Sleep well. See you tomorrow.', 'Lumi is dozing.', 'Rest is good too.'],
+  // The once-a-day note, opted into on the ⋯ screen. Posted only on a day with nothing done.
+  remind: ['Lumi has a puzzle for you, if you fancy one.', 'A few calm minutes are here when you want them.', 'Something small today? Lumi is around.'],
+};
+export const REMINDER_WORDS = {
+  title: 'Daily note',
+  toggle: 'One quiet note in the evening, only on days with nothing done',
 };

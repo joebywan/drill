@@ -1,0 +1,1219 @@
+{
+  "id": "japanese",
+  "title": "Japanese",
+  "lang": "ja-JP",
+  "units": [
+    {
+      "title": "Vowels",
+      "lessons": [
+        {
+          "id": "v1",
+          "title": "あ い う",
+          "items": [
+            {
+              "id": "v1-teach-1",
+              "type": "teach",
+              "show": "あ",
+              "read": "a",
+              "speak": "あ",
+              "text": "This is あ, said \"a\" as in \"ah\". See the cross with a big loop swinging off it? Someone on a swing going \"aah\"."
+            },
+            {
+              "id": "v1-teach-2",
+              "type": "teach",
+              "show": "い",
+              "read": "i",
+              "speak": "い",
+              "text": "い is \"i\", the \"ee\" in \"see\". Two strokes standing side by side, like two eels poking up: \"ee\"."
+            },
+            {
+              "id": "v1-pick-3",
+              "type": "pick",
+              "show": "あ",
+              "speak": "あ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "a",
+                "i"
+              ],
+              "answer": "a",
+              "explain": "あ reads \"a\"."
+            },
+            {
+              "id": "v1-pick-4",
+              "type": "pick",
+              "show": "い",
+              "speak": "い",
+              "prompt": "Which sound is this?",
+              "options": [
+                "i",
+                "a"
+              ],
+              "answer": "i",
+              "explain": "い reads \"i\"."
+            },
+            {
+              "id": "v1-teach-5",
+              "type": "teach",
+              "show": "う",
+              "read": "u",
+              "speak": "う",
+              "text": "う is \"u\", the \"oo\" in \"zoo\". A little dash on top of a curve: lips pushed out to say \"oo\"."
+            },
+            {
+              "id": "v1-pick-6",
+              "type": "pick",
+              "show": "う",
+              "speak": "う",
+              "prompt": "Which sound is this?",
+              "options": [
+                "a",
+                "u",
+                "i"
+              ],
+              "answer": "u",
+              "explain": "う reads \"u\"."
+            },
+            {
+              "id": "v1-listen-7",
+              "type": "pick",
+              "listen": true,
+              "show": "a",
+              "speak": "あ",
+              "prompt": "Which kana is this sound?",
+              "options": [
+                "い",
+                "あ",
+                "う"
+              ],
+              "answer": "あ",
+              "explain": "That was \"a\": あ."
+            },
+            {
+              "id": "v1-pairs-8",
+              "type": "pairs",
+              "prompt": "Match each kana to its sound.",
+              "pairs": [
+                [
+                  "あ",
+                  "a"
+                ],
+                [
+                  "い",
+                  "i"
+                ],
+                [
+                  "う",
+                  "u"
+                ]
+              ],
+              "explain": "あ a, い i, う u."
+            }
+          ]
+        },
+        {
+          "id": "v2",
+          "title": "え お",
+          "items": [
+            {
+              "id": "v2-teach-9",
+              "type": "teach",
+              "show": "え",
+              "read": "e",
+              "speak": "え",
+              "text": "え is \"e\", as in \"eh\". A dancer: one arm flung up top, a leg kicking out below. \"Eh!\""
+            },
+            {
+              "id": "v2-pick-10",
+              "type": "pick",
+              "show": "え",
+              "speak": "え",
+              "prompt": "Which sound is this?",
+              "options": [
+                "u",
+                "e",
+                "i"
+              ],
+              "answer": "e",
+              "explain": "え reads \"e\"."
+            },
+            {
+              "id": "v2-teach-11",
+              "type": "teach",
+              "show": "お",
+              "read": "o",
+              "speak": "お",
+              "text": "お is \"o\", as in \"oh\". It is あ with a ball flying off the top right: \"oh, there it goes\"."
+            },
+            {
+              "id": "v2-pick-12",
+              "type": "pick",
+              "show": "お",
+              "speak": "お",
+              "prompt": "Which sound is this?",
+              "options": [
+                "a",
+                "o",
+                "e"
+              ],
+              "answer": "o",
+              "explain": "お reads \"o\"."
+            },
+            {
+              "id": "v2-which-13",
+              "type": "pick",
+              "show": "o",
+              "prompt": "Which kana says \"o\"?",
+              "options": [
+                "あ",
+                "お"
+              ],
+              "answer": "お",
+              "explain": "\"o\" is お."
+            },
+            {
+              "id": "v2-listen-14",
+              "type": "pick",
+              "listen": true,
+              "show": "e",
+              "speak": "え",
+              "prompt": "Which kana is this sound?",
+              "options": [
+                "え",
+                "う",
+                "お"
+              ],
+              "answer": "え",
+              "explain": "That was \"e\": え."
+            },
+            {
+              "id": "v2-pairs-15",
+              "type": "pairs",
+              "prompt": "Match each kana to its sound.",
+              "pairs": [
+                [
+                  "あ",
+                  "a"
+                ],
+                [
+                  "い",
+                  "i"
+                ],
+                [
+                  "う",
+                  "u"
+                ],
+                [
+                  "え",
+                  "e"
+                ],
+                [
+                  "お",
+                  "o"
+                ]
+              ],
+              "explain": "あ a, い i, う u, え e, お o."
+            }
+          ]
+        },
+        {
+          "id": "v3",
+          "title": "All five",
+          "items": [
+            {
+              "id": "v3-teach-16",
+              "type": "teach",
+              "show": "あいうえお",
+              "read": "a i u e o",
+              "speak": "あいうえお",
+              "text": "The whole vowel row: a, i, u, e, o. Every other row is built on these five sounds. Learn this row and you are a fifth of the way there."
+            },
+            {
+              "id": "v3-pick-17",
+              "type": "pick",
+              "show": "い",
+              "speak": "い",
+              "prompt": "Which sound is this?",
+              "options": [
+                "e",
+                "i",
+                "u"
+              ],
+              "answer": "i",
+              "explain": "い reads \"i\"."
+            },
+            {
+              "id": "v3-which-18",
+              "type": "pick",
+              "show": "a",
+              "prompt": "Which kana says \"a\"?",
+              "options": [
+                "お",
+                "あ",
+                "え"
+              ],
+              "answer": "あ",
+              "explain": "\"a\" is あ."
+            },
+            {
+              "id": "v3-listen-19",
+              "type": "pick",
+              "listen": true,
+              "show": "o",
+              "speak": "お",
+              "prompt": "Which kana is this sound?",
+              "options": [
+                "あ",
+                "お",
+                "え"
+              ],
+              "answer": "お",
+              "explain": "That was \"o\": お."
+            },
+            {
+              "id": "v3-build-20",
+              "type": "build",
+              "show": "ao: blue",
+              "speak": "あお",
+              "prompt": "Build \"ao\" from the tiles.",
+              "answer": [
+                "あ",
+                "お"
+              ],
+              "tiles": [
+                "い"
+              ],
+              "explain": "あお is あ a + お o: blue."
+            },
+            {
+              "id": "v3-build-21",
+              "type": "build",
+              "show": "ie: house",
+              "speak": "いえ",
+              "prompt": "Build \"ie\" from the tiles.",
+              "answer": [
+                "い",
+                "え"
+              ],
+              "tiles": [
+                "う"
+              ],
+              "explain": "いえ is い i + え e: house."
+            },
+            {
+              "id": "v3-pairs-22",
+              "type": "pairs",
+              "prompt": "Match each kana to its sound.",
+              "pairs": [
+                [
+                  "お",
+                  "o"
+                ],
+                [
+                  "え",
+                  "e"
+                ],
+                [
+                  "う",
+                  "u"
+                ],
+                [
+                  "い",
+                  "i"
+                ],
+                [
+                  "あ",
+                  "a"
+                ]
+              ],
+              "explain": "お o, え e, う u, い i, あ a."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "K and S",
+      "lessons": [
+        {
+          "id": "k1",
+          "title": "か き く け こ",
+          "items": [
+            {
+              "id": "k1-teach-23",
+              "type": "teach",
+              "show": "か",
+              "read": "ka",
+              "speak": "か",
+              "text": "か is \"ka\": the vowels again with a k in front. A karate chop, bent arm and a little dash for the shout: \"ka!\""
+            },
+            {
+              "id": "k1-teach-24",
+              "type": "teach",
+              "show": "き",
+              "read": "ki",
+              "speak": "き",
+              "text": "き is \"ki\". It looks like a key: two bars across a shaft and a loop at the bottom to hold it by."
+            },
+            {
+              "id": "k1-pick-25",
+              "type": "pick",
+              "show": "か",
+              "speak": "か",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ka",
+                "ki"
+              ],
+              "answer": "ka",
+              "explain": "か reads \"ka\"."
+            },
+            {
+              "id": "k1-pick-26",
+              "type": "pick",
+              "show": "き",
+              "speak": "き",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ka",
+                "a",
+                "ki"
+              ],
+              "answer": "ki",
+              "explain": "き reads \"ki\"."
+            },
+            {
+              "id": "k1-teach-27",
+              "type": "teach",
+              "show": "く",
+              "read": "ku",
+              "speak": "く",
+              "text": "く is \"ku\". An open beak, a cuckoo calling \"ku, ku\"."
+            },
+            {
+              "id": "k1-pick-28",
+              "type": "pick",
+              "show": "く",
+              "speak": "く",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ka",
+                "u",
+                "ku"
+              ],
+              "answer": "ku",
+              "explain": "く reads \"ku\"."
+            },
+            {
+              "id": "k1-teach-29",
+              "type": "teach",
+              "show": "け",
+              "read": "ke",
+              "speak": "け",
+              "text": "け is \"ke\". A keg on a stand: the post on the left, the barrel and its tap on the right."
+            },
+            {
+              "id": "k1-teach-30",
+              "type": "teach",
+              "show": "こ",
+              "read": "ko",
+              "speak": "こ",
+              "text": "こ is \"ko\". Two coins lying flat, one above the other. Turn い on its side and you nearly have it."
+            },
+            {
+              "id": "k1-pick-31",
+              "type": "pick",
+              "show": "け",
+              "speak": "け",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ke",
+                "ko",
+                "ki"
+              ],
+              "answer": "ke",
+              "explain": "け reads \"ke\"."
+            },
+            {
+              "id": "k1-pick-32",
+              "type": "pick",
+              "show": "こ",
+              "speak": "こ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ku",
+                "ko",
+                "i"
+              ],
+              "answer": "ko",
+              "explain": "こ reads \"ko\"."
+            },
+            {
+              "id": "k1-listen-33",
+              "type": "pick",
+              "listen": true,
+              "show": "ko",
+              "speak": "こ",
+              "prompt": "Which kana is this sound?",
+              "options": [
+                "く",
+                "か",
+                "こ"
+              ],
+              "answer": "こ",
+              "explain": "That was \"ko\": こ."
+            },
+            {
+              "id": "k1-pairs-34",
+              "type": "pairs",
+              "prompt": "Match each kana to its sound.",
+              "pairs": [
+                [
+                  "か",
+                  "ka"
+                ],
+                [
+                  "き",
+                  "ki"
+                ],
+                [
+                  "く",
+                  "ku"
+                ],
+                [
+                  "け",
+                  "ke"
+                ],
+                [
+                  "こ",
+                  "ko"
+                ]
+              ],
+              "explain": "か ka, き ki, く ku, け ke, こ ko."
+            }
+          ]
+        },
+        {
+          "id": "s1",
+          "title": "さ し す せ そ",
+          "items": [
+            {
+              "id": "s1-teach-35",
+              "type": "teach",
+              "show": "さ",
+              "read": "sa",
+              "speak": "さ",
+              "text": "さ is \"sa\". Like き with one bar knocked off: a key that sags. \"Sa.\""
+            },
+            {
+              "id": "s1-pick-36",
+              "type": "pick",
+              "show": "さ",
+              "speak": "さ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "sa",
+                "ki"
+              ],
+              "answer": "sa",
+              "explain": "さ reads \"sa\"."
+            },
+            {
+              "id": "s1-teach-37",
+              "type": "teach",
+              "show": "し",
+              "read": "shi",
+              "speak": "し",
+              "text": "し is \"shi\", not \"si\": a fishhook, and she fishes with it."
+            },
+            {
+              "id": "s1-pick-38",
+              "type": "pick",
+              "show": "し",
+              "speak": "し",
+              "prompt": "Which sound is this?",
+              "options": [
+                "su",
+                "shi",
+                "sa"
+              ],
+              "answer": "shi",
+              "explain": "し reads \"shi\"."
+            },
+            {
+              "id": "s1-teach-39",
+              "type": "teach",
+              "show": "す",
+              "read": "su",
+              "speak": "す",
+              "text": "す is \"su\". A swing: a loop hanging off a bar, whooshing \"su\"."
+            },
+            {
+              "id": "s1-teach-40",
+              "type": "teach",
+              "show": "せ",
+              "read": "se",
+              "speak": "せ",
+              "text": "せ is \"se\". A sail on a mast with a bent boom: \"se\", said like the start of \"set\"."
+            },
+            {
+              "id": "s1-pick-41",
+              "type": "pick",
+              "show": "す",
+              "speak": "す",
+              "prompt": "Which sound is this?",
+              "options": [
+                "su",
+                "se",
+                "so"
+              ],
+              "answer": "su",
+              "explain": "す reads \"su\"."
+            },
+            {
+              "id": "s1-pick-42",
+              "type": "pick",
+              "show": "せ",
+              "speak": "せ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "sa",
+                "se",
+                "ke"
+              ],
+              "answer": "se",
+              "explain": "せ reads \"se\"."
+            },
+            {
+              "id": "s1-teach-43",
+              "type": "teach",
+              "show": "そ",
+              "read": "so",
+              "speak": "そ",
+              "text": "そ is \"so\". A zig-zag of thread pulled through by a sewing needle: \"so\"."
+            },
+            {
+              "id": "s1-pick-44",
+              "type": "pick",
+              "show": "そ",
+              "speak": "そ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "so",
+                "su",
+                "ko"
+              ],
+              "answer": "so",
+              "explain": "そ reads \"so\"."
+            },
+            {
+              "id": "s1-which-45",
+              "type": "pick",
+              "show": "shi",
+              "prompt": "Which kana says \"shi\"?",
+              "options": [
+                "す",
+                "し",
+                "さ"
+              ],
+              "answer": "し",
+              "explain": "\"shi\" is し."
+            },
+            {
+              "id": "s1-listen-46",
+              "type": "pick",
+              "listen": true,
+              "show": "sa",
+              "speak": "さ",
+              "prompt": "Which kana is this sound?",
+              "options": [
+                "さ",
+                "そ",
+                "せ"
+              ],
+              "answer": "さ",
+              "explain": "That was \"sa\": さ."
+            },
+            {
+              "id": "s1-pairs-47",
+              "type": "pairs",
+              "prompt": "Match each kana to its sound.",
+              "pairs": [
+                [
+                  "さ",
+                  "sa"
+                ],
+                [
+                  "し",
+                  "shi"
+                ],
+                [
+                  "す",
+                  "su"
+                ],
+                [
+                  "せ",
+                  "se"
+                ],
+                [
+                  "そ",
+                  "so"
+                ]
+              ],
+              "explain": "さ sa, し shi, す su, せ se, そ so."
+            }
+          ]
+        },
+        {
+          "id": "ks",
+          "title": "K and S mixed",
+          "items": [
+            {
+              "id": "ks-teach-48",
+              "type": "teach",
+              "show": "かきくけこ",
+              "read": "ka ki ku ke ko",
+              "speak": "かきくけこ",
+              "text": "Same five vowels, two new starts. The k row: ka, ki, ku, ke, ko. Watch き and さ: the key has two bars, the sagging key has one."
+            },
+            {
+              "id": "ks-which-49",
+              "type": "pick",
+              "show": "ki",
+              "prompt": "Which kana says \"ki\"?",
+              "options": [
+                "さ",
+                "き"
+              ],
+              "answer": "き",
+              "explain": "\"ki\" is き."
+            },
+            {
+              "id": "ks-which-50",
+              "type": "pick",
+              "show": "sa",
+              "prompt": "Which kana says \"sa\"?",
+              "options": [
+                "き",
+                "さ",
+                "そ"
+              ],
+              "answer": "さ",
+              "explain": "\"sa\" is さ."
+            },
+            {
+              "id": "ks-pick-51",
+              "type": "pick",
+              "show": "け",
+              "speak": "け",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ke",
+                "se",
+                "ko"
+              ],
+              "answer": "ke",
+              "explain": "け reads \"ke\"."
+            },
+            {
+              "id": "ks-listen-52",
+              "type": "pick",
+              "listen": true,
+              "show": "su",
+              "speak": "す",
+              "prompt": "Which kana is this sound?",
+              "options": [
+                "す",
+                "く",
+                "し"
+              ],
+              "answer": "す",
+              "explain": "That was \"su\": す."
+            },
+            {
+              "id": "ks-listen-53",
+              "type": "pick",
+              "listen": true,
+              "show": "ki",
+              "speak": "き",
+              "prompt": "Which kana is this sound?",
+              "options": [
+                "か",
+                "き",
+                "さ"
+              ],
+              "answer": "き",
+              "explain": "That was \"ki\": き."
+            },
+            {
+              "id": "ks-pick-54",
+              "type": "pick",
+              "show": "し",
+              "speak": "し",
+              "prompt": "Which sound is this?",
+              "options": [
+                "shi",
+                "su",
+                "ku"
+              ],
+              "answer": "shi",
+              "explain": "し reads \"shi\"."
+            },
+            {
+              "id": "ks-pairs-55",
+              "type": "pairs",
+              "prompt": "Match each kana to its sound.",
+              "pairs": [
+                [
+                  "か",
+                  "ka"
+                ],
+                [
+                  "さ",
+                  "sa"
+                ],
+                [
+                  "き",
+                  "ki"
+                ],
+                [
+                  "し",
+                  "shi"
+                ],
+                [
+                  "す",
+                  "su"
+                ]
+              ],
+              "explain": "か ka, さ sa, き ki, し shi, す su."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "First words",
+      "lessons": [
+        {
+          "id": "w1",
+          "title": "Words with k",
+          "items": [
+            {
+              "id": "w1-teach-56",
+              "type": "teach",
+              "show": "かお",
+              "read": "kao",
+              "speak": "かお",
+              "text": "かお, \"kao\": face. You already know both: か ka and お o. Real Japanese, read by you."
+            },
+            {
+              "id": "w1-build-57",
+              "type": "build",
+              "show": "kao: face",
+              "speak": "かお",
+              "prompt": "Build \"kao\" from the tiles.",
+              "answer": [
+                "か",
+                "お"
+              ],
+              "tiles": [
+                "く",
+                "あ"
+              ],
+              "explain": "かお is か ka + お o: face."
+            },
+            {
+              "id": "w1-teach-58",
+              "type": "teach",
+              "show": "あき",
+              "read": "aki",
+              "speak": "あき",
+              "text": "あき, \"aki\": autumn. あ a, き ki."
+            },
+            {
+              "id": "w1-pick-59",
+              "type": "pick",
+              "show": "あき",
+              "speak": "あき",
+              "prompt": "How does this word read?",
+              "options": [
+                "aki",
+                "iki",
+                "aku"
+              ],
+              "answer": "aki",
+              "explain": "あき reads \"aki\"."
+            },
+            {
+              "id": "w1-teach-60",
+              "type": "teach",
+              "show": "いけ",
+              "read": "ike",
+              "speak": "いけ",
+              "text": "いけ, \"ike\": a pond. い i, け ke."
+            },
+            {
+              "id": "w1-build-61",
+              "type": "build",
+              "show": "ike: pond",
+              "speak": "いけ",
+              "prompt": "Build \"ike\" from the tiles.",
+              "answer": [
+                "い",
+                "け"
+              ],
+              "tiles": [
+                "こ",
+                "え"
+              ],
+              "explain": "いけ is い i + け ke: pond."
+            },
+            {
+              "id": "w1-teach-62",
+              "type": "teach",
+              "show": "えき",
+              "read": "eki",
+              "speak": "えき",
+              "text": "えき, \"eki\": a station. え e, き ki."
+            },
+            {
+              "id": "w1-listen-63",
+              "type": "pick",
+              "listen": true,
+              "show": "eki",
+              "speak": "えき",
+              "prompt": "Which kana is this sound?",
+              "options": [
+                "いけ",
+                "えき",
+                "あき"
+              ],
+              "answer": "えき",
+              "explain": "That was \"eki\": えき."
+            },
+            {
+              "id": "w1-pairs-64",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "かお",
+                  "face"
+                ],
+                [
+                  "あき",
+                  "autumn"
+                ],
+                [
+                  "いけ",
+                  "pond"
+                ],
+                [
+                  "えき",
+                  "station"
+                ]
+              ],
+              "explain": "かお face, あき autumn, いけ pond, えき station."
+            }
+          ]
+        },
+        {
+          "id": "w2",
+          "title": "Words with s",
+          "items": [
+            {
+              "id": "w2-teach-65",
+              "type": "teach",
+              "show": "すし",
+              "read": "sushi",
+              "speak": "すし",
+              "text": "すし, \"sushi\". す su, し shi. You can read a menu now. Well, one line of it."
+            },
+            {
+              "id": "w2-build-66",
+              "type": "build",
+              "show": "sushi: sushi",
+              "speak": "すし",
+              "prompt": "Build \"sushi\" from the tiles.",
+              "answer": [
+                "す",
+                "し"
+              ],
+              "tiles": [
+                "さ",
+                "そ"
+              ],
+              "explain": "すし is す su + し shi: sushi."
+            },
+            {
+              "id": "w2-teach-67",
+              "type": "teach",
+              "show": "あさ",
+              "read": "asa",
+              "speak": "あさ",
+              "text": "あさ, \"asa\": morning."
+            },
+            {
+              "id": "w2-teach-68",
+              "type": "teach",
+              "show": "かさ",
+              "read": "kasa",
+              "speak": "かさ",
+              "text": "かさ, \"kasa\": umbrella. One letter off from あさ."
+            },
+            {
+              "id": "w2-pick-69",
+              "type": "pick",
+              "show": "かさ",
+              "speak": "かさ",
+              "prompt": "How does this word read?",
+              "options": [
+                "kasa",
+                "asa",
+                "kaso"
+              ],
+              "answer": "kasa",
+              "explain": "かさ reads \"kasa\"."
+            },
+            {
+              "id": "w2-teach-70",
+              "type": "teach",
+              "show": "いす",
+              "read": "isu",
+              "speak": "いす",
+              "text": "いす, \"isu\": a chair."
+            },
+            {
+              "id": "w2-build-71",
+              "type": "build",
+              "show": "isu: chair",
+              "speak": "いす",
+              "prompt": "Build \"isu\" from the tiles.",
+              "answer": [
+                "い",
+                "す"
+              ],
+              "tiles": [
+                "し",
+                "う"
+              ],
+              "explain": "いす is い i + す su: chair."
+            },
+            {
+              "id": "w2-teach-72",
+              "type": "teach",
+              "show": "しお",
+              "read": "shio",
+              "speak": "しお",
+              "text": "しお, \"shio\": salt."
+            },
+            {
+              "id": "w2-listen-73",
+              "type": "pick",
+              "listen": true,
+              "show": "shio",
+              "speak": "しお",
+              "prompt": "Which kana is this sound?",
+              "options": [
+                "しお",
+                "すし",
+                "いす"
+              ],
+              "answer": "しお",
+              "explain": "That was \"shio\": しお."
+            },
+            {
+              "id": "w2-teach-74",
+              "type": "teach",
+              "show": "すいか",
+              "read": "suika",
+              "speak": "すいか",
+              "text": "すいか, \"suika\": watermelon. Three kana, all yours."
+            },
+            {
+              "id": "w2-build-75",
+              "type": "build",
+              "show": "suika: watermelon",
+              "speak": "すいか",
+              "prompt": "Build \"suika\" from the tiles.",
+              "answer": [
+                "す",
+                "い",
+                "か"
+              ],
+              "tiles": [
+                "き",
+                "さ"
+              ],
+              "explain": "すいか is す su + い i + か ka: watermelon."
+            },
+            {
+              "id": "w2-pairs-76",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "すし",
+                  "sushi"
+                ],
+                [
+                  "あさ",
+                  "morning"
+                ],
+                [
+                  "かさ",
+                  "umbrella"
+                ],
+                [
+                  "いす",
+                  "chair"
+                ],
+                [
+                  "しお",
+                  "salt"
+                ]
+              ],
+              "explain": "すし sushi, あさ morning, かさ umbrella, いす chair, しお salt."
+            }
+          ]
+        },
+        {
+          "id": "w3",
+          "title": "Here and there",
+          "items": [
+            {
+              "id": "w3-teach-77",
+              "type": "teach",
+              "show": "うし",
+              "read": "ushi",
+              "speak": "うし",
+              "text": "うし, \"ushi\": a cow."
+            },
+            {
+              "id": "w3-teach-78",
+              "type": "teach",
+              "show": "しか",
+              "read": "shika",
+              "speak": "しか",
+              "text": "しか, \"shika\": a deer. うし and しか share a し."
+            },
+            {
+              "id": "w3-pick-79",
+              "type": "pick",
+              "show": "しか",
+              "speak": "しか",
+              "prompt": "How does this word read?",
+              "options": [
+                "shika",
+                "sika",
+                "shiko"
+              ],
+              "answer": "shika",
+              "explain": "しか reads \"shika\"."
+            },
+            {
+              "id": "w3-teach-80",
+              "type": "teach",
+              "show": "ここ",
+              "read": "koko",
+              "speak": "ここ",
+              "text": "ここ, \"koko\": here. The same kana twice."
+            },
+            {
+              "id": "w3-build-81",
+              "type": "build",
+              "show": "koko: here",
+              "speak": "ここ",
+              "prompt": "Build \"koko\" from the tiles.",
+              "answer": [
+                "こ",
+                "こ"
+              ],
+              "tiles": [
+                "く",
+                "そ"
+              ],
+              "explain": "ここ is こ ko + こ ko: here."
+            },
+            {
+              "id": "w3-teach-82",
+              "type": "teach",
+              "show": "そこ",
+              "read": "soko",
+              "speak": "そこ",
+              "text": "そこ, \"soko\": there."
+            },
+            {
+              "id": "w3-listen-83",
+              "type": "pick",
+              "listen": true,
+              "show": "soko",
+              "speak": "そこ",
+              "prompt": "Which kana is this sound?",
+              "options": [
+                "ここ",
+                "そこ",
+                "すし"
+              ],
+              "answer": "そこ",
+              "explain": "That was \"soko\": そこ."
+            },
+            {
+              "id": "w3-teach-84",
+              "type": "teach",
+              "show": "おかし",
+              "read": "okashi",
+              "speak": "おかし",
+              "text": "おかし, \"okashi\": sweets. Treat yourself, you read it."
+            },
+            {
+              "id": "w3-build-85",
+              "type": "build",
+              "show": "okashi: sweets",
+              "speak": "おかし",
+              "prompt": "Build \"okashi\" from the tiles.",
+              "answer": [
+                "お",
+                "か",
+                "し"
+              ],
+              "tiles": [
+                "あ",
+                "す"
+              ],
+              "explain": "おかし is お o + か ka + し shi: sweets."
+            },
+            {
+              "id": "w3-pairs-86",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "うし",
+                  "cow"
+                ],
+                [
+                  "しか",
+                  "deer"
+                ],
+                [
+                  "ここ",
+                  "here"
+                ],
+                [
+                  "そこ",
+                  "there"
+                ],
+                [
+                  "おかし",
+                  "sweets"
+                ]
+              ],
+              "explain": "うし cow, しか deer, ここ here, そこ there, おかし sweets."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
