@@ -136,10 +136,6 @@ permission, and the pool stays the fallback even then.
 - **More courses:** JavaScript, TypeScript and TS test-writing are planned (CLAUDE.md); the
   test-writing one must grade code independently.
 - **Chess promotion picker** (the board always makes a queen; `puzzle.js`).
-- **From the 2026-10-30 integration walkthrough** (design calls, not bugs):
-  - Above a new course's path sit five layers: the garden strip, habit tabs, course switcher,
-    the welcome line and the "Skip ahead" offer. Nothing overlaps, but the path starts halfway down.
-  - The ⋯ screen is headed "Your progress" but holds files, sync, Calm sounds and garden settings.
-  - A one-tap habit's greeting can still invite ("Walk is here whenever you are") after it's logged.
-  - `npm run phone` runs on `page.clock`, which freezes Lumi's hop after a lesson, so "home-after"
-    shots show Lumi on the finished node's label. In real time the hop lands; the shots mislead.
+- **From the 2026-10-30 integration walkthrough** (a design call, not a bug): above a new course's
+  path sit five layers: the garden strip, habit tabs, course switcher, the welcome line and the
+  "Skip ahead" offer. Nothing overlaps, but the path starts halfway down.

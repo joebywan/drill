@@ -620,7 +620,8 @@ const slots = (text) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]);
  * What `coach` says in `state`: the most specific lines of the pools that match (most `when` keys,
  * plus one for each slot filled; ties pooled), falling back to less specific ones and the general
  * pool. A line with a slot ("{usualHour}") is used only when `facts` knows it, and then counts as
- * more specific, being about the person; none of the `recent` lines is said again
+ * more specific, being about the person. `{habit}` is always known and says nothing about them, so it
+ * doesn't count: a general "{habit} is here whenever you are" never joins the done-today pool; none of the `recent` lines is said again
  * while another is left. Sometimes a dare (see mayDare). Returns { text, line, dare }: `line` is
  * the unfilled line, for the caller's `recent`.
  */
@@ -632,7 +633,7 @@ export function say(coach, state, facts = {}, rng = Math.random, recent = []) {
   for (const { when, lines } of dare ? voice.dares : voice.lines) {
     if (!fits(when, state)) continue;
     for (const text of lines.filter(known)) {
-      const n = Object.keys(when).length + slots(text).length;
+      const n = Object.keys(when).length + slots(text).filter((k) => k !== 'habit').length;
       levels.set(n, [...(levels.get(n) || []), text]);
     }
   }

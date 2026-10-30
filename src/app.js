@@ -221,7 +221,7 @@ function home(arrived = null, newly = []) {
     <header class="bar">
       <h1>Drill</h1>
       <button class="sound" aria-pressed="${soundOn()}" aria-label="Sound">${soundOn() ? '🔊' : '🔇'}</button>
-      <button class="menu" aria-label="Your progress">⋯</button>
+      <button class="menu" aria-label="Settings">⋯</button>
     </header>
     <main class="home">
       <div class="rail">
@@ -1000,7 +1000,7 @@ const south = () => pref('south', southern(Intl.DateTimeFormat().resolvedOptions
 function keep(note = '') {
   app.innerHTML = `
     <main class="survey">
-      <h1>Your progress</h1>
+      <h1>Settings</h1>
       <p class="said">Keep a copy in a file, or load one from another device.</p>
       <button class="choice" data-save>Save to a file</button>
       <button class="choice" data-load>Load from a file</button>

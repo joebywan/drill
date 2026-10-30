@@ -2,8 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DARE_ODDS, VOICES, line, mayDare, say } from '../src/cast/lines.js';
 import { COMEBACK_DAYS, coachOf, hourBand, moment, streakBand } from '../src/cast/voice.js';
-import { emptyProgress, finishPractice, logToday, track } from '../src/progress.js';
-import { subjects } from '../src/subjects.js';
+import { emptyProgress, finishPractice, finishSession, logToday, track } from '../src/progress.js';
+import { habitsFor, subjects } from '../src/subjects.js';
 
 const day = (d, h = 12) => new Date(2026, 9, d, h);
 const NO_DARE = 0.99; // rng values at or over DARE_ODDS never dare
@@ -156,4 +156,27 @@ test('moment reads the state and facts from progress', () => {
   const m = moment(walk, { id: 'walk', name: 'Walk' }, day(1, 9));
   assert.equal(m.coach, 'lumi');
   assert.equal(m.state.light, 'done');
+});
+
+test('once a habit is done today, every kind and every coach greets from the done pool, never an invite', () => {
+  const now = day(5, 10);
+  let p = { ...emptyProgress(), start: 'x' };
+  p = track(p, { id: 'walk' });
+  p = track(p, { id: 'mine', name: 'Stretch', icon: '🌱', plant: 'tulip' });
+  const all = habitsFor(p).filter((h) => !h.hidden);
+  for (const h of all) {
+    p = h.id === 'learn' ? finishSession(p, null, [], now) : h.kind === 'log' ? logToday(p, h.id, h.title, now) : finishPractice(p, h.id, null, now);
+  }
+  const done = (coach) => new Set(pools(coach, (w) => w.light === 'done'));
+  const courseCoaches = subjects.filter((s) => s.kind === 'learn').map((s) => s.coach.name.toLowerCase());
+  for (const h of all) {
+    for (const coach of h.id === 'learn' ? courseCoaches : [coachOf(h.id)]) {
+      const { state, facts } = moment(p, h, now, coach);
+      assert.equal(state.light, 'done', `${h.id} reads as done today`);
+      for (let i = 0; i < 40; i++) {
+        const { line: said } = say(coach, state, facts, () => i / 40); // done today never dares, so every draw picks the line
+        assert.ok(done(coach).has(said), `${h.id} (${coach}) said "${said}"`);
+      }
+    }
+  }
 });

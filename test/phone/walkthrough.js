@@ -52,7 +52,7 @@ export default async ({ page, touch, btn, swipe, shot, run, check }) => {
   await touch(btn(/^Your garden/)); await run(1500); await shot('garden');
   await page.evaluate(() => document.querySelector('.plant-cards')?.scrollIntoView()); await shot('garden-cards');
   await touch(btn('Back'));
-  await touch(btn('Your progress')); await shot('menu');
+  await touch(btn('Settings')); await shot('menu');
   await page.evaluate(() => scrollTo(0, document.body.scrollHeight)); await page.waitForTimeout(400); await shot('menu-bottom');
   check('walkthrough reached the menu', true);
 };

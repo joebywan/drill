@@ -3,7 +3,7 @@ export default async ({ seed, touch, btn, shot, run, checkSound, vibrations, che
   await seed();
   // The bell is off until turned on; turning it on rings it once. Nothing else has played since
   // the reload, so Chrome's stream starting here is the bell.
-  await touch(btn('Your progress'));
+  await touch(btn('Settings'));
   await touch(btn(/^A soft bell/)); await run(800); await shot('bell-on');
   checkSound();
   await touch(btn('Back'));

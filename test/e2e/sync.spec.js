@@ -33,7 +33,7 @@ async function open(page, progress) {
 }
 
 const menu = async (page, item) => {
-  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('button', { name: item }).click();
 };
 const stored = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
@@ -141,8 +141,8 @@ test('inside the Android wrapper, sync and friends are hidden and nothing is sen
     localStorage.setItem('drill.sync', JSON.stringify({ recovery: '0000-1111-2222-3333-4444', code: 'ABCDEFGH' }));
   });
   await open(page, finishPractice(emptyProgress(), 'calm', null, new Date(), { title: 'Breathe', mins: 2 }));
-  await page.getByRole('button', { name: 'Your progress' }).click();
-  await expect(page.getByRole('heading', { name: 'Your progress' })).toBeVisible();
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Other devices and friends' })).toHaveCount(0);
   for (const name of ['Use on another device', 'Recovery code', 'Friends', 'Delete my data'])
     await expect(page.getByRole('button', { name, exact: true })).toHaveCount(0);

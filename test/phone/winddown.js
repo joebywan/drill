@@ -2,7 +2,7 @@
 // breathing and sigh chained after settling in, then goodnight and the one end screen.
 export default async ({ page, seed, touch, btn, shot, run, checkSound, vibrations, check }) => {
   await seed({ picked: [] });
-  await touch(btn('Your progress'));
+  await touch(btn('Settings'));
   await touch(btn(/^A soft bell/)); await run(800);
   await touch(btn('Back'));
   await touch(btn(/^Wind down(,|$)/)); await shot('home');
