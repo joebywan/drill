@@ -98,20 +98,20 @@ test('intro, habits only: the picks come first in the order tapped, and a tracke
   await pick(page, 'Read').click(); // changed my mind
   await expect(pick(page, 'Read')).toHaveAttribute('aria-pressed', 'false');
   await page.getByRole('button', { name: 'Show my home' }).click();
-  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move']);
+  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'focus']);
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'walk');
   await expect(page.getByText('Walk is first. Start with the button below.')).toBeVisible();
   await page.getByRole('button', { name: 'I walked today' }).click();
   await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
   await page.reload();
-  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move']);
+  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'focus']);
 });
 
 test("intro, skipped at either step: today's default home, and the intro never comes back", async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Skip' }).click();
   await expect(page.getByText("Hi, I'm Lumi. Pick something to grow")).toBeVisible();
-  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move']);
+  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move', 'focus']);
   await page.reload();
   await expect(page.getByText("Hi, I'm Lumi. Pick something to grow")).toBeVisible();
 
@@ -120,7 +120,7 @@ test("intro, skipped at either step: today's default home, and the intro never c
   await pick(page, 'Build habits').click();
   await pick(page, 'Move').click();
   await page.getByRole('button', { name: 'Skip' }).click(); // a skip drops what was tapped
-  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move']);
+  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move', 'focus']);
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
 });
 
@@ -166,7 +166,7 @@ test('"Change what you see" in the ⋯ menu reopens step 2 with the picks, and B
   await pick(page, 'Screen break').click();
   await pick(page, 'Learn something').click();
   await page.getByRole('button', { name: 'Show my home' }).click();
-  expect(await tabOrder(page)).toEqual(['break', 'learn', 'calm', 'reflect', 'move']);
+  expect(await tabOrder(page)).toEqual(['break', 'learn', 'calm', 'reflect', 'move', 'focus']);
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'break');
 });
 
@@ -566,6 +566,97 @@ test('a Move session plays timed exercises with rests, and keeps its own streak'
   await expect(page.locator('.day').first().getByRole('listitem')).toHaveText(/^Wake up · \d+ min · felt no different$/);
 });
 
+// Focus keeps the screen on through the Wake Lock API: a stand-in records each request and release.
+const fakeWakeLock = (page) => page.addInitScript(() => {
+  window.locks = [];
+  Object.defineProperty(navigator, 'wakeLock', { value: { request: async (type) => {
+    const lock = { type, released: false, release: async () => { lock.released = true; } };
+    window.locks.push(lock);
+    return lock;
+  } } });
+});
+const held = (page) => page.evaluate(() => window.locks.filter((l) => !l.released).length);
+
+test('a Focus session: what it is for, a full timer with a pause, the screen kept on, and how it went', async ({ page }) => {
+  await fakeWakeLock(page);
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Focus').click();
+  await page.getByRole('button', { name: 'Continue · Ten minutes, one thing' }).click();
+  await expect(page.getByText('Stopping early is fine.', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Start' }).click();
+  // One optional tap: a preset starts it straight away.
+  await expect(page.getByRole('heading', { name: 'What are you focusing on?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Reading', exact: true }).click();
+  const left = page.getByRole('timer', { name: 'Time left' });
+  await expect(left).toHaveText('10:00');
+  await expect(page.locator('.focus-on')).toHaveText('Reading');
+  expect(await held(page)).toBe(1);
+  await page.clock.runFor(60_000);
+  await expect(left).toHaveText('9:00');
+  // Pause holds the clock, however long; Carry on goes on from the same second.
+  await page.getByRole('button', { name: 'Pause' }).click();
+  await page.clock.runFor(300_000);
+  await expect(left).toHaveText('9:00');
+  await page.getByRole('button', { name: 'Carry on' }).click();
+  await page.clock.runFor(540_000);
+  await expect(page.getByRole('heading', { name: 'How did it go?' })).toBeVisible();
+  expect(await held(page)).toBe(0);
+  await expect(page.locator('.chip.focus')).toContainText('⏳ 1');
+  await page.getByRole('button', { name: 'Focused' }).click();
+  await expect(page.getByRole('status')).not.toBeEmpty();
+  await continueButton(page).click();
+  await expect(page.getByRole('button', { name: 'Continue · Fifteen minutes' })).toBeVisible();
+  // The log says what was done, never what it was for; that is the day's own detail.
+  await week(page, 1).click();
+  const day = page.locator('.day').first();
+  await expect(day.locator('ul').first().getByRole('listitem')).toHaveText(/^Focus · \d+ min · felt focused$/);
+  await expect(day.getByRole('list', { name: 'What you focused on' })).toHaveText(/Focused on\s*Reading/);
+});
+
+test("Focus: your own words, then \"I'm done\" early ends it like any other, with no penalty", async ({ page }) => {
+  await fakeWakeLock(page);
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Focus').click();
+  await page.getByRole('button', { name: 'Continue · Ten minutes, one thing' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('textbox', { name: 'What are you focusing on?' }).fill('Tax <forms>');
+  await page.getByRole('button', { name: 'Start · 10 min' }).click();
+  await expect(page.locator('.focus-on')).toHaveText('Tax <forms>');
+  await page.clock.runFor(180_000);
+  await expect(page.getByRole('timer')).toHaveText('7:00');
+  await page.getByRole('button', { name: "I'm done" }).click();
+  await expect(page.getByRole('heading', { name: 'How did it go?' })).toBeVisible();
+  expect(await held(page)).toBe(0);
+  await expect(page.locator('.practice-end')).not.toContainText(/distract|only|early/i);
+  await continueButton(page).click();
+  // Finished is finished: the path moves on, as after a full session.
+  await expect(page.getByRole('button', { name: 'Continue · Fifteen minutes' })).toBeVisible();
+  await week(page, 1).click();
+  await expect(page.locator('.day').first().getByRole('list', { name: 'What you focused on' })).toHaveText(/Tax <forms>/);
+});
+
+test('Focus with nothing picked, on your own time from the timings', async ({ page }) => {
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Focus').click();
+  await page.getByRole('button', { name: 'Your timings' }).click();
+  for (let i = 0; i < 2; i++) await page.getByRole('button', { name: 'More', exact: true }).click();
+  await expect(page.locator('.steppers output')).toContainText('20 min');
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue · Ten minutes, one thing' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('button', { name: 'Start · 20 min' }).click();
+  await expect(page.getByRole('timer')).toHaveText('20:00');
+  await expect(page.locator('.focus-on')).toHaveCount(0);
+  await page.clock.runFor(1_200_000);
+  await expect(page.getByRole('heading', { name: 'How did it go?' })).toBeVisible();
+  await continueButton(page).click();
+  await week(page, 1).click();
+  await expect(page.getByRole('list', { name: 'What you focused on' })).toHaveCount(0);
+});
+
 test('mute stays muted after a reload', async ({ page }) => {
   await firstVisit(page);
   const sound = page.getByRole('button', { name: 'Sound' });
@@ -880,7 +971,7 @@ test('with many habits, the tab row stays one row that scrolls inside itself, an
   await grown(page, ['learn', 'calm', 'move', 'reflect', 'break', ...tracked.map((t) => t.id)], 9, true, { tracked });
   await firstVisit(page);
   const tabs = page.getByRole('navigation', { name: 'Show the path for' });
-  await expect(tabs.getByRole('button')).toHaveCount(13);
+  await expect(tabs.getByRole('button')).toHaveCount(14);
   expect(await tabs.getByRole('button').evaluateAll((els) => new Set(els.map((e) => e.offsetTop)).size)).toBe(1);
   await expect(tabs.getByRole('button').last()).toHaveAccessibleName('Add a habit');
   expect(await overflow(page)).toBe(0);

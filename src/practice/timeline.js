@@ -8,9 +8,11 @@ export const total = (phases) => phases.reduce((s, p) => s + p.seconds, 0);
 
 /**
  * What a phase's count shows with `s` whole seconds left: those seconds, or for a phase with
- * `reps`, the rep it is on, counting up evenly through the phase.
+ * `reps`, the rep it is on, counting up evenly through the phase, or for a `clock` phase (a long
+ * one, Focus's), minutes and seconds: "9:05".
  */
-export const countOf = (p, s) => (p.reps ? Math.min(p.reps, Math.floor(((p.seconds - s) * p.reps) / p.seconds) + 1) : s);
+export const countOf = (p, s) => (p.reps ? Math.min(p.reps, Math.floor(((p.seconds - s) * p.reps) / p.seconds) + 1)
+  : p.clock ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : s);
 
 /**
  * Where a timeline stands `ms` in: the phase index, ms into it and ms left of it. Past the end,

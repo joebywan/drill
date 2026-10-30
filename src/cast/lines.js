@@ -169,6 +169,27 @@ export const CALM_LINES = {
   'no different': ["That's alright. Thanks for telling me. Some days are heavy, and that's not on you."],
 };
 
+/**
+ * Hazel, the Focus coach: a beaver who builds one stick at a time. Steady and unbothered. Never a
+ * word about distraction, productivity or time wasted: a wandering mind is normal, and stopping is fine.
+ */
+export const FOCUS_LINES = {
+  ask: ['One thing at a time. What is it today?', 'Pick one, or just start. Either is fine.'],
+  go: ['Off you go. I will be here, building.', 'One thing. Stick by stick.', 'If your mind wanders, just come back to it.'],
+  paused: ['Paused. Take whatever you need. The dam will keep.'],
+  tapped: [
+    'Nobody builds a dam in a day. One stick, then the next.',
+    'I chew when I think. Mostly I chew.',
+    'Tail tap. That means hello.',
+    'Water, wood and a bit of quiet. That is my whole plan.',
+  ],
+  // The end screen: settled, not a party, whenever it finished.
+  done: ['That was some time for one thing.', 'Done. Stretch your paws.', 'Nice and steady. One thing at a time.'],
+  'focused': ['Good. Hold on to that.', 'Lovely. A bit of quiet goes a long way.'],
+  'about the same': ['That is fine. Sitting with one thing still counts.', 'Fair enough. Thanks for giving it a go.'],
+  'no different': ["That's alright. Some days are bumpy, and that's not on you."],
+};
+
 /** Calm's optional sounds, set from the ⋯ screen: [preference, label]. */
 export const CALM_SOUNDS = [['bell', 'A soft bell at the start and end'], ['rain', 'Soft rain while you practise']];
 
@@ -282,6 +303,7 @@ export const INTRO_WORDS = {
     move: 'Move: gentle exercises, a few minutes long.',
     reflect: 'Reflect: three lines about your day.',
     break: 'Screen break: rest your eyes and stretch.',
+    focus: 'Focus: a calm timer for one thing at a time.',
     track: 'Track: one tap for a walk, a book, water or time outside.',
   },
   garden: 'Your habits grow plants in a garden, and nothing ever wilts.',

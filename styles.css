@@ -517,3 +517,26 @@ html { scroll-padding-bottom: 160px; }
 .step:disabled { opacity: .4; cursor: default; }
 .timings-reset { display: block; width: 100%; padding: 14px; }
 .timings-reset:disabled { color: var(--muted); border-style: dashed; }
+
+/* ---- Focus: what it's for, then a calm timer that fills a ring ---- */
+:root { --chip-focus: #7A5230; --focus-ring: #9A6038; --focus-soft: #F1E4D3; }
+@media (prefers-color-scheme: dark) { :root { --chip-focus: #DDB088; --focus-ring: #DDB088; --focus-soft: #33271C; } }
+.chip.focus { --c: var(--chip-focus); flex: 0 1 180px; margin: 0 auto; }
+.focus-ask h2 { margin: 4px 0 12px; font-size: 1.3rem; }
+.focus-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.focus-presets .choice { flex: 1 1 40%; }
+.focus-ask input {
+  display: block; box-sizing: border-box; width: 100%; margin-top: 10px; padding: 14px 12px; font: inherit;
+  color: var(--text); background: var(--card); border: 2px solid var(--line); border-radius: 12px;
+}
+.focus-ask input:focus { outline: none; border-color: var(--chip-focus); }
+.focus-ask input::placeholder { color: var(--muted); }
+.focus-timer { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 4px; }
+.focus-on { margin: 0; max-width: 100%; color: var(--muted); font-weight: 600; overflow-wrap: anywhere; text-align: center; }
+.focus-dial {
+  width: min(56vw, 210px); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--focus-ring) var(--fill), var(--focus-soft) var(--fill));
+  position: relative;
+}
+.focus-dial::before { content: ''; position: absolute; inset: 10px; border-radius: 50%; background: var(--bg); }
+.focus-dial .count { position: relative; font-variant-numeric: tabular-nums; }

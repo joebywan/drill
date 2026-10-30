@@ -14,8 +14,8 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *   cards    { itemKey: FSRS card }  — every item ever answered, scheduled for review
  *   start    { subjectId: unitTitle | null }  — where a subject's optional placement question put
  *            the learner, null once the offer is dismissed, absent while it is still offered
- *   journal  { 'YYYY-MM-DD': { good?, learned?, tomorrow? } }  — Reflect's lines, the learner's
- *            own words. Kept here, not in the log; only the habit view and the file export read them
+ *   journal  { 'YYYY-MM-DD': { good?, learned?, tomorrow?, focus? } }  — Reflect's lines and what a
+ *            Focus session was for (the day's latest), the learner's own words. Kept here, not in the log; only the habit view and the file export read them
  *   garden   { earned: { achievementId: 'YYYY-MM-DD' } }  — what the garden has been given
  *            (src/garden/model.js). Earned once, kept forever: nothing removes an entry
  *   tracked  [{ id, name?, icon?, plant?, hidden? }]  — the self-reported habits the learner added,
@@ -45,7 +45,8 @@ function readStreak(raw) {
   return { ...raw, forgiven };
 }
 
-const JOURNAL_KEYS = ['good', 'learned', 'tomorrow'];
+// Reflect's three lines, and what a Focus session was for.
+const JOURNAL_KEYS = ['good', 'learned', 'tomorrow', 'focus'];
 const isJournal = (j) => isObject(j) && Object.entries(j).every(([date, day]) =>
   isDate(date) && isObject(day) && JOURNAL_KEYS.every((k) => day[k] == null || typeof day[k] === 'string'));
 

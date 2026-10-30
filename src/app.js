@@ -683,7 +683,7 @@ function run(lessonId, queue, title) {
         </div>
         ${arrivals(newly)}
         <section class="feel" aria-labelledby="feel-q">
-          <h2 id="feel-q">How do you feel?</h2>
+          <h2 id="feel-q">${esc(who.ask ?? 'How do you feel?')}</h2>
           <div class="feels">${feelsFor(who.feel).map(([value, label]) => `<button class="choice" data-feel="${value}">${esc(label)}</button>`).join('')}</div>
           <p class="said" role="status"></p>
         </section>

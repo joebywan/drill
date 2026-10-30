@@ -29,6 +29,9 @@ export const TIMINGS = {
   break: {
     seconds: { label: 'Each step', unit: 's', min: 5, max: 60, step: 5, from: 20 },
   },
+  focus: {
+    minutes: { label: 'Focus time', unit: 'min', min: 5, max: 90, step: 5, from: 10 },
+  },
 };
 
 /** The words around them, linted with the rest (test/guardrails.test.js). */

@@ -10,12 +10,15 @@ import * as calm from './calm/practice.js';
 import breakCourse from './data/break.json' with { type: 'json' };
 import * as screenBreak from './break/practice.js';
 import { lumi } from './cast/lumi.js';
-import { BREAK_LINES, CALM_HELP, CALM_LINES, MOVE_LINES, MOVE_SAFETY, REFLECT_LINES, SAFETY_LINE } from './cast/lines.js';
+import { BREAK_LINES, CALM_HELP, CALM_LINES, FOCUS_LINES, MOVE_LINES, MOVE_SAFETY, REFLECT_LINES, SAFETY_LINE } from './cast/lines.js';
 import * as reflect from './reflect/practice.js';
 import moveCourse from './data/move.json' with { type: 'json' };
 import * as move from './move/practice.js';
 import { clover, demo as cloverDemo, NAME as CLOVER } from './cast/clover.js';
 import { mira, demo as miraDemo, NAME as MIRA } from './cast/mira.js';
+import focusCourse from './data/focus.json' with { type: 'json' };
+import * as focus from './focus/practice.js';
+import { hazel, NAME as HAZEL } from './cast/hazel.js';
 
 /**
  * The contract. A subject is a course plus one `mount(el, item, { say, done })` that plays a
@@ -31,7 +34,8 @@ import { mira, demo as miraDemo, NAME as MIRA } from './cast/mira.js';
  * character (rosa, moss…), its name for screen readers, the mood an item starts in, its own
  * lines (default: Rosa's LINES) and, for a practice habit, its help line { text, tel?, call? },
  * shown on a teach card that asks for it and after "Not really" (rendered by practice/kit.js helpHtml),
- * `feel`, the good answer to "How do you feel?" (default 'calmer'; its reply is a key in `lines`),
+ * `feel`, the good answer to "How do you feel?" (default 'calmer'; its reply is a key in `lines`), `ask`, that
+ * question in the habit's own words (Focus: "How did it go?"),
  * and `demonstrates`, for a coach the learner copies, which is drawn large above their line.
  * Sessions and the practice end screen read everything subject-specific from here.
  *
@@ -48,6 +52,7 @@ export const HABITS = [
   { id: 'break', name: 'Screen break', icon: '👀' },
   { id: 'reflect', name: 'Reflect', icon: '📓' },
   { id: 'move', name: 'Move', icon: '🌱' },
+  { id: 'focus', name: 'Focus', icon: '⏳' },
 ];
 
 /**
@@ -144,4 +149,11 @@ export const subjects = [{
   habit: 'move',
   kind: 'practice',
   coach: { draw: clover, demo: cloverDemo, name: CLOVER, start: 'guide', lines: MOVE_LINES, help: { text: MOVE_SAFETY }, feel: 'better', demonstrates: true },
+}, {
+  ...focusCourse,
+  mount: focus.mount,
+  dayDetail: focus.dayDetail,
+  habit: 'focus',
+  kind: 'practice',
+  coach: { draw: hazel, name: HAZEL, start: 'guide', lines: FOCUS_LINES, feel: 'focused', ask: 'How did it go?' },
 }];

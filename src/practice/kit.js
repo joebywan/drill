@@ -36,6 +36,31 @@ export function demo({ coach, coachEl }, pose, seconds, reps) {
   return anims ?? [];
 }
 
+/**
+ * Keeps the screen on while a routine runs, where the Wake Lock API exists (a phone lets go of the
+ * lock when the page is hidden, so it is asked for again on return). Returns the release function,
+ * safe to call more than once. Quietly nothing where it isn't supported or is refused.
+ */
+export function stayAwake() {
+  let lock = null;
+  let on = true;
+  const ask = async () => {
+    if (!on || document.hidden || !navigator.wakeLock) return;
+    try {
+      const l = await navigator.wakeLock.request('screen');
+      if (on) lock = l; else l.release();
+    } catch { /* refused: the screen sleeps as usual */ }
+  };
+  document.addEventListener('visibilitychange', ask);
+  ask();
+  return () => {
+    on = false;
+    document.removeEventListener('visibilitychange', ask);
+    lock?.release().catch(() => {});
+    lock = null;
+  };
+}
+
 /** The Pause button a timed routine sits above, in the thumb zone. Put it after the routine's own markup. */
 export const pauseBar = '<div class="choices"><button class="choice practice-pause" aria-pressed="false">Pause</button></div>';
 

@@ -6,9 +6,10 @@ import { lumi } from '../src/cast/lumi.js';
 import { MOODS as CALM, moss, breathe } from '../src/cast/moss.js';
 import * as Clover from '../src/cast/clover.js';
 import * as Mira from '../src/cast/mira.js';
+import * as Hazel from '../src/cast/hazel.js';
 
 // The posable characters, each drawn with kit.js rig(): [module, draw].
-const posed = [[Clover, Clover.clover], [Mira, Mira.mira]];
+const posed = [[Clover, Clover.clover], [Mira, Mira.mira], [Hazel, Hazel.hazel]];
 
 const drawings = [
   ...MOODS.map((m) => [`rosa ${m}`, rosa(m)]),
@@ -112,4 +113,9 @@ test("Mira's slow blink closes her eyes through the lids, held still under reduc
 test('Mira sits tall on a log that only shows when she sits', () => {
   assert.match(Mira.mira('guide', 'sit-tall'), /data-part="seat" style="[^"]*scale\(1, 1\)/);
   for (const p of Mira.POSES.filter((x) => x !== 'sit-tall')) assert.match(Mira.mira('guide', p), /data-part="seat" style="[^"]*scale\(1, 0\)/, p);
+});
+
+test('Hazel holds her stick while you focus, and puts it away otherwise', () => {
+  assert.match(Hazel.hazel('focus'), /data-part="stick" style="[^"]*scale\(1, 1\)/);
+  for (const m of Hazel.MOODS.filter((x) => x !== 'focus')) assert.match(Hazel.hazel(m), /data-part="stick" style="[^"]*scale\(1, 0\)/, m);
 });

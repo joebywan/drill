@@ -240,6 +240,32 @@ function daisies(s, closed) {
   return rosette + heads;
 }
 
+// Focus: bamboo. A pointed shoot, one jointed cane, then a grove of canes with sprays of narrow leaves.
+const CANE = '#7AAE45', CANE_DARK = '#4F7E2C', CANE_LIGHT = '#B2D67A';
+function cane(x, top, w) {
+  let out = `<rect x="${f(x - w / 2)}" y="${top}" width="${w}" height="${106 - top}" rx="${f(w / 2)}" fill="${CANE}"/>`
+    + `<rect x="${f(x - w / 2 + 0.9)}" y="${top + 2}" width="${f(w * 0.22)}" height="${104 - top - 2}" rx=".6" fill="${CANE_LIGHT}"/>`;
+  for (let y = 93; y > top + 4; y -= 12) out += `<rect x="${f(x - w / 2 - 0.7)}" y="${y}" width="${f(w + 1.4)}" height="2" rx="1" fill="${CANE_DARK}"/>`;
+  return out;
+}
+/** A spray of `n` narrow leaves from a node at (x, y), fanning out and down to one `side`. */
+const spray = (x, y, side, n, len) => stem(`M${x} ${y} l${side * 6} -3`, 1.2, CANE_DARK)
+  + Array.from({ length: n }, (_, i) => leaf(x + side * 6, y - 3, len - i * 2, side * (50 + i * 28), len * 0.15, i % 2 ? LEAF_DARK : LEAF)).join('');
+// Each stage: canes [x, top, width] and sprays [x, y, side, leaves, length].
+const BAMBOO = [null,
+  { canes: [[50, 80, 4]], sprays: [[50, 82, -1, 2, 12], [50, 82, 1, 2, 12]] },
+  { canes: [[50, 60, 4.5]], sprays: [[50, 62, -1, 3, 14], [50, 62, 1, 2, 14], [50, 82, 1, 2, 11]] },
+  { canes: [[56, 54, 4.5], [44, 38, 5]], sprays: [[44, 40, -1, 3, 15], [44, 40, 1, 2, 14], [56, 56, 1, 3, 14], [44, 70, -1, 2, 12], [56, 80, 1, 2, 11]] },
+  { canes: [[66, 42, 4.5], [32, 52, 4], [56, 28, 5.5], [44, 18, 5.5]], sprays: [[44, 20, -1, 3, 15], [56, 30, 1, 3, 15], [66, 44, 1, 3, 14],
+    [32, 54, -1, 3, 14], [44, 48, -1, 2, 13], [56, 62, 1, 2, 12], [66, 76, 1, 2, 11], [32, 82, -1, 2, 10]] },
+];
+
+function bamboo(s) {
+  if (s === 0) return `<path d="M45 106 Q48 96 50 91 Q52 96 55 106Z" fill="#A8925A"/><path d="M48 98 Q50 93 52 98Z" fill="${CANE}"/>`;
+  const { canes, sprays } = BAMBOO[s];
+  return canes.map(([x, top, w]) => cane(x, top, w)).join('') + sprays.map(([x, y, side, n, len]) => spray(x, y, side, n, len)).join('');
+}
+
 // --- Plants a self-reported habit can be (subjects.js PRESETS and OWN_PLANTS) ----------------
 
 // A tulip: a papery bulb, two blades, a green bud on a stem, a coloured bud, then the open cup.
@@ -358,9 +384,9 @@ function mushrooms(s) {
 
 // --- The public API -------------------------------------------------------------------------
 
-const DRAW = { tree, lavender, sunflower, vine, daisies, tulip, fern, cactus, rose: roses, mushroom: mushrooms };
-export const PLANTS = { learn: 'tree', calm: 'lavender', move: 'sunflower', reflect: 'vine', break: 'daisies' };
-const BLOOM_COLOUR = { tree: '#F4A6C0', lavender: '#F2A7C3', sunflower: '#E8613C', vine: '#C99BEA', daisies: '#F28CB0',
+const DRAW = { tree, lavender, sunflower, vine, daisies, bamboo, tulip, fern, cactus, rose: roses, mushroom: mushrooms };
+export const PLANTS = { learn: 'tree', calm: 'lavender', move: 'sunflower', reflect: 'vine', break: 'daisies', focus: 'bamboo' };
+const BLOOM_COLOUR = { tree: '#F4A6C0', lavender: '#F2A7C3', sunflower: '#E8613C', vine: '#C99BEA', daisies: '#F28CB0', bamboo: '#F2A7C3',
   tulip: '#F5C542', fern: '#F2A7C3', cactus: '#F27BA8', rose: '#F4A6C0', mushroom: '#F2A7C3' };
 /** Every drawing there is: the built-in habits' and the ones a self-reported habit picks from. */
 export const KINDS = Object.keys(DRAW);
@@ -395,6 +421,7 @@ const GROW = {
   sunflower: [1.6, 1.9, 1.25, 1.08, 1],
   vine: [1.6, 1.2, 1.05, 1, 1],
   daisies: [1.8, 3.4, 1.7, 1.25, 1],
+  bamboo: [1, 1, 1, 1, 1],
   tulip: [1, 1.65, 1, 1, 1],
   fern: [1.6, 1.2, 1, 1, 1],
   cactus: [1.8, 1.35, 1.15, 1, 1],
@@ -439,6 +466,7 @@ export const BOUNDS = {
   sunflower: [[3, 87, 97, 118], [3, 72, 97, 118], [3, 46, 97, 118], [11, 31, 89, 113], [7, 6, 92, 113]],
   vine: [[3, 94, 97, 118], [3, 73, 97, 118], [20, 51, 80, 113], [22, 31, 78, 113], [7, 8, 92, 113]],
   daisies: [[3, 94, 97, 118], [3, 76, 97, 118], [3, 55, 97, 118], [3, 32, 97, 113], [7, 8, 93, 114]],
+  bamboo: [[3, 90, 97, 118], [3, 69, 97, 118], [3, 48, 97, 118], [3, 25, 97, 118], [3, 5, 97, 118]],
   tulip: [[3, 89, 97, 118], [3, 75, 97, 118], [3, 61, 97, 118], [3, 40, 97, 118], [3, 8, 97, 118]],
   fern: [[3, 90, 97, 118], [3, 78, 97, 118], [3, 65, 97, 118], [3, 51, 97, 118], [2, 8, 98, 118]],
   cactus: [[3, 96, 97, 118], [3, 80, 97, 118], [3, 68, 97, 118], [3, 57, 97, 118], [3, 8, 97, 118]],
