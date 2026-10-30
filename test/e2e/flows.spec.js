@@ -40,9 +40,8 @@ async function solve(page, item) {
   await expect(continueButton(page), item.id).toBeInViewport();
 }
 
-async function placeAtStart(page) {
+async function firstVisit(page) {
   await page.goto('/');
-  await page.getByRole('button', { name: "I've never played" }).click();
 }
 
 async function finishFirstLesson(page) {
@@ -53,16 +52,67 @@ async function finishFirstLesson(page) {
   }
 }
 
-test('first visit asks where to start, then shows the path', async ({ page }) => {
+const offer = (page) => page.getByRole('button', { name: 'Know some chess already? Skip ahead' });
+
+test('a first visit lands on home with a welcome and no questions; Learning starts straight in', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Have you played chess before?' })).toBeVisible();
-  await page.getByRole('button', { name: "I've never played" }).click();
+  await expect(page.getByText("Hi, I'm Lumi. Pick something to grow")).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Have you played chess before?' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /streak/ })).toHaveCount(0); // no streak line before a first session
   await expect(page.getByRole('heading', { name: basics.units[0].title })).toBeVisible();
+  await expect(offer(page)).toBeVisible();
+  await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
+  await expect(page.locator('div.board')).toBeVisible();
+  await expect(page.locator('.survey')).toHaveCount(0);
+});
+
+test('Calm never offers or asks a placement question', async ({ page }) => {
+  await page.goto('/');
+  await tab(page, 'Calm').click();
+  await expect(page.getByRole('heading', { name: 'Breathing' })).toBeVisible();
+  await expect(offer(page)).toHaveCount(0);
+  await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
+  await expect(page.getByRole('button', { name: 'Start' })).toBeVisible();
+  await expect(page.locator('.survey')).toHaveCount(0);
+});
+
+test('the skip-ahead offer is optional: taking it starts the path further on, and it never comes back', async ({ page }) => {
+  await page.goto('/');
+  await offer(page).click();
+  await expect(page.getByRole('heading', { name: 'Have you played chess before?' })).toBeFocused();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(offer(page)).toBeVisible(); // backing out changes nothing
+  await offer(page).click();
+  await page.getByRole('button', { name: 'I play now and then' }).click();
+  await page.getByRole('button', { name: 'Start at Forks' }).click();
+  await expect(page.locator('.cta .next')).toBeFocused();
+  await expect(page.locator('.cta .next')).toHaveText(/^Continue · /);
+  await expect(page.locator('.street', { has: page.getByRole('heading', { name: 'Forks' }) }).locator('.here')).toHaveCount(1);
+  await expect(offer(page)).toHaveCount(0);
+  await page.reload();
+  await expect(offer(page)).toHaveCount(0);
+  await expect(page.locator('.street', { has: page.getByRole('heading', { name: 'Forks' }) }).locator('.here')).toHaveCount(1);
+});
+
+test('the skip-ahead offer stops once the first unit is finished', async ({ page }) => {
+  const done = Object.fromEntries(basics.units[0].lessons.map((l) => [`chess:${l.id}`, true]));
+  await page.addInitScript((p) => localStorage.setItem('drill.progress', p), JSON.stringify({ ...emptyProgress(), done }));
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: basics.units[0].title })).toBeVisible();
+  await expect(offer(page)).toHaveCount(0);
+});
+
+test('dismissing the skip-ahead offer hides it for good', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Dismiss' }).click();
+  await expect(offer(page)).toHaveCount(0);
+  await page.reload();
+  await expect(offer(page)).toHaveCount(0);
   await expect(page.getByRole('button', { name: `Continue · ${first.title}` })).toBeVisible();
 });
 
 test('finishing the first lesson shows the summary, starts the streak, and survives a reload', async ({ page }) => {
-  await placeAtStart(page);
+  await firstVisit(page);
   await expect(tab(page, 'Learning')).toHaveAccessibleName('Learning');
   await finishFirstLesson(page);
 
@@ -82,7 +132,7 @@ test('finishing the first lesson shows the summary, starts the streak, and survi
 });
 
 test("a habit's chip opens its view, with today's session listed", async ({ page }) => {
-  await placeAtStart(page);
+  await firstVisit(page);
   await finishFirstLesson(page);
   await continueButton(page).click();
 
@@ -99,7 +149,7 @@ test("a habit's chip opens its view, with today's session listed", async ({ page
 /** Switches home to Calm and does the first breathing lesson, on a fake clock: 3 breaths, 36 s. */
 async function firstBreathing(page) {
   await page.clock.install();
-  await placeAtStart(page);
+  await firstVisit(page);
   await breathe(page);
 }
 
@@ -155,7 +205,7 @@ test('"Not really" gets a kind line and the help line', async ({ page }) => {
 
 test('a screen break is taught once, plays its six steps on the clock, and keeps its own streak', async ({ page }) => {
   await page.clock.install();
-  await placeAtStart(page);
+  await firstVisit(page);
   await tab(page, 'Screen break').click();
   await page.getByRole('button', { name: 'Continue · Why breaks help' }).click();
   await expect(page.getByText('Move gently and stop if anything hurts.')).toBeVisible();
@@ -197,7 +247,7 @@ test('grounding is tap-to-count, and stopping is one tap with no questions', asy
 });
 
 test('Reflect keeps two lines and a skip, on its own streak, and shows them back in the habit view', async ({ page }) => {
-  await placeAtStart(page);
+  await firstVisit(page);
   await tab(page, 'Reflect').click();
   await page.getByRole('button', { name: 'Continue · Three small lines' }).click();
   await page.getByRole('button', { name: 'Start' }).click();
@@ -224,7 +274,7 @@ test('Reflect keeps two lines and a skip, on its own streak, and shows them back
 });
 
 test('once the short Reflect path is done, "Reflect today" stays on home', async ({ page }) => {
-  await placeAtStart(page);
+  await firstVisit(page);
   await tab(page, 'Reflect').click();
   for (const title of ['Three small lines', 'Another day', 'Making it yours']) {
     await page.getByRole('button', { name: `Continue · ${title}` }).click();
@@ -238,7 +288,7 @@ test('once the short Reflect path is done, "Reflect today" stays on home', async
 
 test('a Move session plays timed exercises with rests, and keeps its own streak', async ({ page }) => {
   await page.clock.install();
-  await placeAtStart(page);
+  await firstVisit(page);
   await tab(page, 'Move').click();
   await expect(page.getByRole('heading', { name: 'Wake up' })).toBeVisible();
   await page.getByRole('button', { name: 'Continue · Loosen up' }).click();
@@ -272,7 +322,7 @@ test('a Move session plays timed exercises with rests, and keeps its own streak'
 });
 
 test('mute stays muted after a reload', async ({ page }) => {
-  await placeAtStart(page);
+  await firstVisit(page);
   const sound = page.getByRole('button', { name: 'Sound' });
   await expect(sound).toHaveAttribute('aria-pressed', 'true');
   await sound.click();
@@ -282,7 +332,7 @@ test('mute stays muted after a reload', async ({ page }) => {
 });
 
 test('progress saved to a file loads back', async ({ page }) => {
-  await placeAtStart(page);
+  await firstVisit(page);
   await finishFirstLesson(page);
   await continueButton(page).click();
 
@@ -293,7 +343,7 @@ test('progress saved to a file loads back', async ({ page }) => {
 
   // A browser that lost everything: start over, then load the file back.
   await page.evaluate(() => localStorage.clear());
-  await placeAtStart(page);
+  await firstVisit(page);
   await expect(tab(page, 'Learning')).toHaveAccessibleName('Learning');
   await page.getByRole('button', { name: 'Your progress' }).click();
   const chooser = page.waitForEvent('filechooser');
@@ -311,7 +361,7 @@ test('progress saved to a file loads back', async ({ page }) => {
  * `earned` gives it what that has earned, as if every session had been in the app.
  */
 async function grown(page, habits, days, earned = false) {
-  let p = { ...emptyProgress(), start: basics.units[0].title };
+  let p = { ...emptyProgress(), start: { chess: basics.units[0].title } };
   for (const h of habits) {
     for (let i = days; i >= 1; i--) {
       const d = new Date();
@@ -326,7 +376,7 @@ async function grown(page, habits, days, earned = false) {
 const strip = (page, n) => page.getByRole('button', { name: `Your garden: ${n} plant${n === 1 ? '' : 's'}` });
 
 test('a fresh garden is one seed; the first lesson grows a sprout and opens a flower', async ({ page }) => {
-  await placeAtStart(page);
+  await firstVisit(page);
   await expect(strip(page, 1).locator('svg.plant')).toHaveCount(1);
   await expect(strip(page, 1).locator('svg.plant-tree.stage-0')).toBeVisible();
   await finishFirstLesson(page);
@@ -499,14 +549,15 @@ for (const colorScheme of ['light', 'dark']) {
       test.use({ colorScheme, viewport: { width, height: 800 } });
 
       test('home has no sideways scroll', async ({ page }) => {
-        await placeAtStart(page);
+        await firstVisit(page);
         await expect(tab(page, 'Learning')).toBeVisible();
         expect(await overflow(page)).toBe(0);
       });
 
       test('the habit view has no sideways scroll', async ({ page }) => {
-        await placeAtStart(page);
-        await page.getByRole('button', { name: 'Your first session starts a streak' }).click();
+        await grown(page, ['learn'], 1);
+        await page.goto('/');
+        await page.getByRole('button', { name: /See your week$/ }).click();
         await expect(page.getByRole('heading', { name: 'Learning' })).toBeVisible();
         expect(await overflow(page)).toBe(0);
       });
@@ -522,7 +573,7 @@ for (const colorScheme of ['light', 'dark']) {
       });
 
       test('a lesson has no sideways scroll', async ({ page }) => {
-        await placeAtStart(page);
+        await firstVisit(page);
         await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
         await expect(page.locator('.board svg')).toBeVisible();
         expect(await overflow(page)).toBe(0);
