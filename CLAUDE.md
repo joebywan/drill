@@ -91,7 +91,8 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   (one line of data each), `award()` records what is earned in `progress.garden.earned` and never
   removes it; `mood()` maps the habits' lights; `garden()` is all the garden screen needs.
 - `src/garden/art.js` — the garden's drawings, built like the cast: `plant(habit, stage, { flowers,
-  closed })` (tree, lavender, sunflower, vine on a trellis, daisies; five stages; up to 6 blooms that
+  closed })` (tree, lavender, sunflower, vine on a trellis, daisies; five stages, scaled by `GROW` so a
+  sprout is about a third of full height and a sapling about half; up to 6 blooms that
   never overlap), `sway()`, `visitor()`/`animateVisitor()` (butterfly, bee, birds) and, from
   `scene.js`, `scene(mood, 'strip' | 'tall')`, `slots(shape, n)` and `place()`. Scene colours carry
   their own dark set. `tools/garden.html` renders it all; check it in light and dark.
