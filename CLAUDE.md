@@ -167,4 +167,4 @@ Promotion picker; accessibility. Backlog (sync, friends, Android): `docs/TODO.md
   habit). Placement is an optional part of a subject: its `placement` (chess has one) shows as a
   "Skip ahead" link by its path; the question then suggests a starting unit, or the learner starts
   from the beginning. Answering or dismissing (×) hides the offer for good (`progress.start`, per
-  subject); starting a lesson never asks. Units before the start stay open.
+  subject), and so does finishing the subject's first unit; starting a lesson never asks. Units before the start stay open.

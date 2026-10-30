@@ -85,8 +85,12 @@ export function migrate(raw) {
   return { ...kept, ...(start && { start }), version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal, garden };
 }
 
-/** True while `subject` offers its optional placement question: it has one, neither answered nor dismissed. */
-export const offersPlacement = (progress, subject) => !!subject.placement && !(subject.id in (progress.start ?? {}));
+/**
+ * True while `subject` offers its optional placement question: it has one, neither answered nor
+ * dismissed, and the subject's first unit isn't finished yet (after that, skipping ahead is moot).
+ */
+export const offersPlacement = (progress, subject) => !!subject.placement && !(subject.id in (progress.start ?? {}))
+  && !subject.units[0].lessons.every((l) => progress.done[`${subject.id}:${l.id}`]);
 
 /** Progress with a subject's placement answered (its path starts at `unit`) or dismissed (`unit` null). */
 export const placeAt = (progress, subjectId, unit) => ({ ...progress, start: { ...progress.start, [subjectId]: unit } });

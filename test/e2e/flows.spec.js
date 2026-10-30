@@ -58,6 +58,7 @@ test('a first visit lands on home with a welcome and no questions; Learning star
   await page.goto('/');
   await expect(page.getByText("Hi, I'm Lumi. Pick something to grow")).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Have you played chess before?' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /streak/ })).toHaveCount(0); // no streak line before a first session
   await expect(page.getByRole('heading', { name: basics.units[0].title })).toBeVisible();
   await expect(offer(page)).toBeVisible();
   await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
@@ -93,9 +94,17 @@ test('the skip-ahead offer is optional: taking it starts the path further on, an
   await expect(page.locator('.street', { has: page.getByRole('heading', { name: 'Forks' }) }).locator('.here')).toHaveCount(1);
 });
 
+test('the skip-ahead offer stops once the first unit is finished', async ({ page }) => {
+  const done = Object.fromEntries(basics.units[0].lessons.map((l) => [`chess:${l.id}`, true]));
+  await page.addInitScript((p) => localStorage.setItem('drill.progress', p), JSON.stringify({ ...emptyProgress(), done }));
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: basics.units[0].title })).toBeVisible();
+  await expect(offer(page)).toHaveCount(0);
+});
+
 test('dismissing the skip-ahead offer hides it for good', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'No thanks' }).click();
+  await page.getByRole('button', { name: 'Dismiss' }).click();
   await expect(offer(page)).toHaveCount(0);
   await page.reload();
   await expect(offer(page)).toHaveCount(0);
@@ -352,7 +361,7 @@ test('progress saved to a file loads back', async ({ page }) => {
  * `earned` gives it what that has earned, as if every session had been in the app.
  */
 async function grown(page, habits, days, earned = false) {
-  let p = { ...emptyProgress(), start: basics.units[0].title };
+  let p = { ...emptyProgress(), start: { chess: basics.units[0].title } };
   for (const h of habits) {
     for (let i = days; i >= 1; i--) {
       const d = new Date();
@@ -546,8 +555,9 @@ for (const colorScheme of ['light', 'dark']) {
       });
 
       test('the habit view has no sideways scroll', async ({ page }) => {
-        await firstVisit(page);
-        await page.getByRole('button', { name: 'Your first session starts a streak' }).click();
+        await grown(page, ['learn'], 1);
+        await page.goto('/');
+        await page.getByRole('button', { name: /See your week$/ }).click();
         await expect(page.getByRole('heading', { name: 'Learning' })).toBeVisible();
         expect(await overflow(page)).toBe(0);
       });

@@ -237,5 +237,7 @@ test('placement is offered per subject until answered or dismissed', () => {
   assert.deepEqual(placed.start, { chess: 'Forks' });
   assert.equal(offersPlacement(placed, chess), false);
   assert.equal(offersPlacement(placeAt(fresh, 'chess', null), chess), false);
+  const firstUnit = Object.fromEntries(chess.units[0].lessons.map((l) => [`chess:${l.id}`, true]));
+  assert.equal(offersPlacement({ ...fresh, done: firstUnit }, chess), false, 'moot once the first unit is done');
   assert.deepEqual(placeAt(placed, 'other', 'x').start, { chess: 'Forks', other: 'x' });
 });

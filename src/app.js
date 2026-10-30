@@ -140,8 +140,8 @@ function home(arrived = null) {
         ${HABITS.map(habitTab).join('')}
       </nav>
       ${brandNew ? `<p class="said welcome">${esc(line('welcome'))}</p>` : ''}
-      <button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), !!progress.habits[habitShown]?.last))}</button>
-      ${offer ? `<p class="offer"><button class="skip" data-place>${esc(offer.placement.offer)}</button><button class="dismiss" data-dismiss aria-label="No thanks">×</button></p>` : ''}
+      ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>` : ''}
+      ${offer ? `<p class="offer"><button data-place>${esc(offer.placement.offer)}</button><button class="dismiss" data-dismiss aria-label="Dismiss">×</button></p>` : ''}
       ${units.map((u) => `
         <section class="street">
           <h2>${esc(u.title)}</h2>
@@ -183,7 +183,7 @@ function home(arrived = null) {
   app.querySelector('.garden-link').addEventListener('click', () => gardenView());
   app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); focusOn('.sound'); });
   app.querySelector('.menu').addEventListener('click', () => { stopHome(); keep(); });
-  app.querySelector('.streak-line').addEventListener('click', () => habitView(habitShown));
+  app.querySelector('.streak-line')?.addEventListener('click', () => habitView(habitShown));
   // The tabs are one row that scrolls inside itself: the selected one is brought into view.
   const tabs = app.querySelector('.paths');
   const shown = tabs.querySelector('[aria-pressed="true"]');
@@ -196,7 +196,7 @@ function home(arrived = null) {
     progress = placeAt(progress, offer.id, null);
     save();
     home();
-    focusOn('.streak-line');
+    focusOn('.cta .next');
   });
   app.querySelector('[data-review]')?.addEventListener('click', () =>
     run(null, reviewKeys.map((k) => ({ key: k, ...items.get(k) })), 'Review'));
@@ -659,7 +659,7 @@ function survey(subject) {
       <h1>${esc(question)}</h1>
       <p class="said">Pick the closest. It only sets where you start: every earlier lesson stays open.</p>
       ${options.map(([label], i) => `<button class="choice" data-i="${i}">${esc(label)}</button>`).join('')}
-      <button class="choice" data-back>Back</button>
+      <button class="link" data-back>Back</button>
     </main>`;
   const guide = coach(app.querySelector('.hero'), lumi);
   guide.set('teach');
