@@ -1,6 +1,6 @@
 import { move } from '../feel.js';
-import { scene, slots, place, SIZE, visitor, gust, lean } from './scene.js';
-export { scene, slots, place, SIZE, MOODS, visitor, animateVisitor, animateScene, VISITORS } from './scene.js';
+import { GROUND_Y, pond, scene, slots, place, SIZE, visitor, gust, lean } from './scene.js';
+export { scene, slots, place, SIZE, MOODS, visitor, animateVisitor, animateScene, VISITORS, pond } from './scene.js';
 
 /**
  * The garden's plants, drawn like the cast (src/cast/kit.js): hand-written SVG strings, flat
@@ -484,7 +484,8 @@ export const BOUNDS = {
   rose: [[3, 90, 97, 118], [3, 75, 97, 118], [3, 63, 97, 118], [3, 46, 97, 118], [3, 8, 97, 118]],
   mushroom: [[3, 95, 97, 118], [3, 85, 97, 118], [3, 76, 97, 118], [3, 65, 97, 118], [3, 8, 97, 118]],
 };
-const ASPECT = { butterfly: 1, bee: 1, birds: 56 / 32 };
+const ASPECT = { butterfly: 1, bee: 1, birds: 56 / 32, pond: 80 / 50 };
+const POND = { strip: 26, tall: 46 }; // the pond's height in each shape
 
 /** A plant's drawn box at a slot, in the scene's units { x, y, w, h }. A plant not measured yet is its whole canvas. */
 export function plantBox(habit, stage, { x, y, w }) {
@@ -500,18 +501,19 @@ const overlap = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h 
  * slots(shape, n), one { butterfly, bee, birds } of boxes { x, y, w, h } per plant. Each wants a
  * spot by its own plant (the butterfly above it to the left, the bee above it to the right, the birds
  * on the ground beside it, towards the middle) and takes the nearest one, inside the scene, that is
- * clear of every plant's drawn box and of the visitors placed before it. Pure.
+ * clear of every plant's drawn box and of the visitors placed before it. Pure. The pond goes first,
+ * on the clearest ground nearest the front right, as `.pond` on the result (null if there's none).
  */
 export function perches(plants, shape = 'tall') {
   const [W, H] = SIZE[shape] || SIZE.tall;
   const at = slots(shape, plants.length);
   const taken = plants.map((p, i) => plantBox(p.plant || p.habit, p.stage, at[i]));
   const STEP = 3; // ponytail: a grid scan for the nearest free spot; a few thousand box tests per visitor
-  const place = (kind, cx, bottom, h) => {
+  const place = (kind, cx, bottom, h, anywhere = true, top = 0) => {
     const bw = h * ASPECT[kind];
     const want = { x: cx - bw / 2, y: bottom - h };
     let best = null, bestD = Infinity;
-    for (let y = 0; y <= H - h; y += STEP) {
+    for (let y = top; y <= H - h; y += STEP) {
       for (let x = 0; x <= W - bw; x += STEP) {
         const d = (x - want.x) ** 2 + (y - want.y) ** 2;
         if (d < bestD) {
@@ -521,6 +523,8 @@ export function perches(plants, shape = 'tall') {
       }
     }
     // Nowhere free (never in a real garden; a test checks every layout): stay by the plant.
+    // The pond is a nice-to-have: with no clear ground it isn't drawn.
+    if (!best && !anywhere) return null;
     const b = best || { x: Math.max(0, Math.min(W - bw, want.x)), y: Math.max(0, Math.min(H - h, want.y)), w: bw, h };
     taken.push(b);
     return { x: f(b.x), y: f(b.y), w: f(bw), h: f(h) };
@@ -534,6 +538,8 @@ export function perches(plants, shape = 'tall') {
     };
   };
   const out = plants.map(() => ({}));
+  const ph = POND[shape] || POND.tall;
+  out.pond = place('pond', W * 0.8, H - 2, ph, false, (GROUND_Y[shape] || GROUND_Y.tall) - ph * 0.5);
   // Biggest first, every plant's birds before any butterfly, so the small ones fill the gaps left.
   for (const kind of ['birds', 'butterfly', 'bee']) {
     out.forEach((spot, i) => { spot[kind] = place(kind, ...wants(i)[kind]); });
@@ -548,7 +554,7 @@ export function perches(plants, shape = 'tall') {
  * data-new, to fly in. A clear rect under each plant
  * makes the whole plant tappable.
  */
-export function drawGarden({ mood, plants: all }, shape = 'tall', fresh = []) {
+export function drawGarden({ mood, plants: all, season }, shape = 'tall', fresh = []) {
   const at = slots(shape, all.length);
   const plants = all.slice(0, at.length); // past MAX_PLANTS, the first ones
   const closed = mood === 'resting';
@@ -560,5 +566,6 @@ export function drawGarden({ mood, plants: all }, shape = 'tall', fresh = []) {
     const isNew = fresh.includes(id) ? ' data-new' : '';
     return b ? visitor(gift).replace('<svg ', `<svg x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" data-kind="${gift}"${isNew} `) : '';
   })).join('');
-  return scene(mood, shape).replace(/<\/svg>$/, `${grown}${life}</svg>`);
+  const water = spots.pond ? pond().replace('<svg ', `<svg x="${spots.pond.x}" y="${spots.pond.y}" width="${spots.pond.w}" height="${spots.pond.h}" `) : '';
+  return scene(mood, shape, season).replace(/<\/svg>$/, `${water}${grown}${life}</svg>`);
 }
