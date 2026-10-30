@@ -25,7 +25,7 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>] [--avd <name>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, focus, scan, garden, log, winddown, left, fitting, sync); a new one is
+No scenario runs all of `test/phone/*.js` (one per habit and course, plus onboarding, first-visit, garden, timings, fitting, voice, sync, scan, left); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
@@ -311,7 +311,7 @@ after `npm ci` at the root. App id `com.joebywan.drill`, locked.
 
 ## Open
 
-Promotion picker; accessibility. Backlog (sync, friends, Android): `docs/TODO.md`.
+What is still open: `docs/TODO.md` ("Still open") and `docs/HABITS.md`.
 
 - **Beginners play, they don't pick notation.** Answers are moves on the board or taps on squares;
   text says "Knight to c7", never "Nc7+" (`words()` turns SAN into words). Boards show coordinates.
