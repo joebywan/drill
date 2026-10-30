@@ -163,5 +163,8 @@ Promotion picker; accessibility. Backlog (sync, friends, Android): `docs/TODO.md
 
 - **Beginners play, they don't pick notation.** Answers are moves on the board or taps on squares;
   text says "Knight to c7", never "Nc7+" (`words()` turns SAN into words). Boards show coordinates.
-- **First visit asks one placement question** (`PLACEMENT` in `app.js`) and suggests a starting
-  unit; the learner can take it or start from the beginning. Units before the start stay open.
+- **No questions in the way.** A first visit lands on home (Lumi's welcome line, the garden, every
+  habit). Placement is an optional part of a subject: its `placement` (chess has one) shows as a
+  "Skip ahead" link by its path; the question then suggests a starting unit, or the learner starts
+  from the beginning. Answering or dismissing (×) hides the offer for good (`progress.start`, per
+  subject); starting a lesson never asks. Units before the start stay open.

@@ -75,6 +75,8 @@ export const LINES = {
   ],
   relit: ['That review relit your streak. Welcome back to the board.'],
   repair: ['One short review relights your streak'],
+  // Lumi, on home for a brand-new learner.
+  welcome: ["Hi, I'm Lumi. Pick something to grow: a lesson, a breath, a stretch."],
   // Lumi, beside Rosa on the end screen.
   lumi: ['Flipper five!', 'Arf arf!', 'High fin!', 'Wheee!', 'Again! Again!'],
 };

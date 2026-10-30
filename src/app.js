@@ -1,7 +1,7 @@
 import { HABITS, subjects } from './subjects.js';
 import { award, garden, moreArrived, plantWords } from './garden/model.js';
 import { PLANTS, animateVisitor, drawGarden, flower, sway, visitor } from './garden/art.js';
-import { emptyProgress, finishPractice, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, soonestKeys, today } from './progress.js';
+import { emptyProgress, finishPractice, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, soonestKeys, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
@@ -85,8 +85,11 @@ function home(arrived = null) {
   const repair = learning && needsRepair(progress);
   const reviewKeys = (due.length ? due : repair ? soonestKeys(progress).filter((k) => items.has(k)) : []).slice(0, REVIEW_SIZE);
   const units = subjects.filter((s) => s.habit === habitShown).flatMap(unitsOf);
-  // The next lesson, from the placement survey's starting unit on.
-  const from = Math.max(0, units.findIndex((u) => u.title === progress.start));
+  // The next lesson, from the placement question's starting unit on.
+  const from = Math.max(0, units.findIndex((u) => u.placed));
+  // A subject's optional placement question, offered by its path until answered or dismissed.
+  const offer = subjects.find((s) => s.habit === habitShown && offersPlacement(progress, s));
+  const brandNew = !progress.log.length && !Object.keys(progress.done).length;
   const current = [...units.slice(from), ...units].flatMap((u) => u.nodes).find((n) => n.state === 'open');
   // A finished path whose subject has `again` ("Reflect today") keeps one of its lessons one tap away.
   const again = !current && subjects.find((s) => s.habit === habitShown)?.again;
@@ -136,7 +139,9 @@ function home(arrived = null) {
       <nav class="paths" aria-label="Show the path for">
         ${HABITS.map(habitTab).join('')}
       </nav>
+      ${brandNew ? `<p class="said welcome">${esc(line('welcome'))}</p>` : ''}
       <button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), !!progress.habits[habitShown]?.last))}</button>
+      ${offer ? `<p class="offer"><button class="skip" data-place>${esc(offer.placement.offer)}</button><button class="dismiss" data-dismiss aria-label="No thanks">×</button></p>` : ''}
       ${units.map((u) => `
         <section class="street">
           <h2>${esc(u.title)}</h2>
@@ -186,6 +191,13 @@ function home(arrived = null) {
   for (const b of app.querySelectorAll('[data-path]')) {
     b.addEventListener('click', () => { showHabit(b.dataset.path); home(); focusOn(`[data-path="${b.dataset.path}"]`); });
   }
+  app.querySelector('[data-place]')?.addEventListener('click', () => { stopHome(); survey(offer); });
+  app.querySelector('[data-dismiss]')?.addEventListener('click', () => {
+    progress = placeAt(progress, offer.id, null);
+    save();
+    home();
+    focusOn('.streak-line');
+  });
   app.querySelector('[data-review]')?.addEventListener('click', () =>
     run(null, reviewKeys.map((k) => ({ key: k, ...items.get(k) })), 'Review'));
   for (const btn of app.querySelectorAll('[data-lesson]')) {
@@ -333,11 +345,11 @@ function walkTo(guide, fromNode, toNode) {
 /**
  * One subject's units, each lesson marked done, open or locked. A unit opens when the previous
  * unit's first lesson is done, so a beginner can move across topics without first clearing every
- * hard tier; within a unit, lessons open in order. Units before the placement survey's starting
+ * hard tier; within a unit, lessons open in order. Units before the placement question's starting
  * point are open all through, to go back to.
  */
 function unitsOf(subject) {
-  const start = subject.units.findIndex((u) => u.title === progress.start);
+  const start = subject.units.findIndex((u) => u.title === progress.start?.[subject.id]);
   let unitOpen = true;
   return subject.units.map((unit, i) => {
     let open = unitOpen || i <= start;
@@ -348,7 +360,7 @@ function unitsOf(subject) {
       if (state !== 'done' && i >= start) open = false;
       return { id, subject, lesson, state };
     });
-    return { title: unit.title, nodes };
+    return { title: unit.title, nodes, placed: i === start };
   });
 }
 
@@ -638,32 +650,29 @@ function confetti() {
   return () => { clearTimeout(timer); layer.remove(); };
 }
 
-/** A first visit with nothing done yet: ask once where to start. */
-const PLACEMENT = [
-  ["I've never played", 'The board'],
-  ['I know how the pieces move', 'Capturing'],
-  ['I play now and then', 'Forks'],
-  ['I play often and know some tactics', 'Mate in one'],
-];
-
-function survey() {
+/** A subject's optional placement question (`subject.placement`), offered on home by its path. */
+function survey(subject) {
+  const { question, options } = subject.placement;
   app.innerHTML = `
     <main class="survey">
       <div class="hero"></div>
-      <h1>Have you played chess before?</h1>
+      <h1>${esc(question)}</h1>
       <p class="said">Pick the closest. It only sets where you start: every earlier lesson stays open.</p>
-      ${PLACEMENT.map(([label], i) => `<button class="choice" data-i="${i}">${esc(label)}</button>`).join('')}
+      ${options.map(([label], i) => `<button class="choice" data-i="${i}">${esc(label)}</button>`).join('')}
+      <button class="choice" data-back>Back</button>
     </main>`;
   const guide = coach(app.querySelector('.hero'), lumi);
   guide.set('teach');
+  focusOn('h1');
   for (const b of app.querySelectorAll('[data-i]')) {
-    b.addEventListener('click', () => { guide.stop(); suggest(PLACEMENT[b.dataset.i][1]); });
+    b.addEventListener('click', () => { guide.stop(); suggest(subject, options[b.dataset.i][1]); });
   }
+  app.querySelector('[data-back]').addEventListener('click', () => { guide.stop(); home(); focusOn('[data-place]'); });
 }
 
-function suggest(unit) {
-  const first = subjects[0].units[0].title;
-  if (unit === first) return place(first);
+function suggest(subject, unit) {
+  const first = subject.units[0].title;
+  if (unit === first) return place(subject, first);
   app.innerHTML = `
     <main class="survey">
       <div class="hero"></div>
@@ -676,12 +685,12 @@ function suggest(unit) {
   guide.set('correct');
   guide.hop();
   focusOn('h1');
-  app.querySelector('[data-start]').addEventListener('click', () => { guide.stop(); place(unit); });
-  app.querySelector('[data-first]').addEventListener('click', () => { guide.stop(); place(first); });
+  app.querySelector('[data-start]').addEventListener('click', () => { guide.stop(); place(subject, unit); });
+  app.querySelector('[data-first]').addEventListener('click', () => { guide.stop(); place(subject, first); });
 }
 
-function place(unit) {
-  progress = { ...progress, start: unit };
+function place(subject, unit) {
+  progress = placeAt(progress, subject.id, unit);
   save();
   home();
   focusOn('.cta .next');
@@ -739,5 +748,4 @@ function confirmLoad(p) {
   app.querySelector('[data-keep]').addEventListener('click', () => keep('Nothing changed.'));
 }
 
-const fresh = progress.start == null && !Object.keys(progress.done).length && !Object.keys(progress.cards).length;
-if (fresh) survey(); else home();
+home();

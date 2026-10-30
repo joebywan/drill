@@ -1,4 +1,5 @@
-// The first Learning lesson from a first visit: placement, then every item played with real taps.
+// The first Learning lesson from a first visit: home with no questions, a look at the optional
+// skip-ahead offer, then every item played with real taps.
 import { readFileSync } from 'node:fs';
 import { answer, kind, starPath } from '../../src/chess/items.js';
 
@@ -6,8 +7,9 @@ const first = JSON.parse(readFileSync(new URL('../../src/data/basics.json', impo
 
 export default async ({ page, touch, btn, shot }) => {
   const square = (sq) => page.locator(`.board rect[data-square="${sq}"]`);
-  await shot('placement');
-  await touch(btn("I've never played")); await shot('path');
+  await shot('home');
+  await touch(btn('Know some chess already? Skip ahead')); await shot('placement');
+  await touch(btn('Back')); await shot('path');
   await touch(btn(`Continue · ${first.title}`));
   for (const [i, item] of first.items.entries()) {
     await shot(`item${i}-${kind(item)}`);

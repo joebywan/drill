@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { VERSION, emptyProgress, finishSession, finishPractice, writeJournal, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, startedHabits } from '../src/progress.js';
+import { VERSION, emptyProgress, finishSession, finishPractice, writeJournal, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, startedHabits } from '../src/progress.js';
+import { subjects } from '../src/subjects.js';
 
 const day = (d, h = 12) => new Date(2026, 9, d, h);
 const roundTrip = (p) => JSON.parse(JSON.stringify(p)); // as it comes back out of localStorage
@@ -69,7 +70,7 @@ test('migrate brings every older shape up to the current one', () => {
   assert.deepEqual(p.cards, roundTrip(first.cards));
   // Today's unversioned shape, without xp, keeps its placement.
   const v0 = { streak: { count: 0, last: null, forgiven: [] }, done: {}, cards: {}, start: 'Forks' };
-  assert.deepEqual(migrate(v0), { version: VERSION, habits: { learn: { ...v0.streak, days: 0 } }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, start: 'Forks' });
+  assert.deepEqual(migrate(v0), { version: VERSION, habits: { learn: { ...v0.streak, days: 0 } }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, start: { chess: 'Forks' } });
   // Version 1: the one streak becomes Learning's, and there is no log yet.
   const v1 = { ...v0, version: 1, streak: { count: 4, last: '2026-10-29', forgiven: [] } };
   assert.deepEqual(migrate(v1).habits, { learn: { ...v1.streak, days: 4 } });
@@ -103,6 +104,7 @@ test('migrate refuses anything that is not progress, so an import never replaces
     { ...good, cards: { x: { due: 'never' } } },
     { ...good, cards: { x: 1 } },
     { ...good, start: 3 },
+    { ...good, start: { chess: 3 } },
     { ...good, journal: [] },
     { ...good, journal: { today: { good: 'x' } } },
     { ...good, journal: { '2026-10-30': 'x' } },
@@ -213,4 +215,27 @@ test('migrate counts days from the log, never fewer than the streak', () => {
   assert.deepEqual(p.garden, { earned: {} });
   // A v4 count is kept as it is, even when the log is shorter.
   assert.equal(migrate({ ...p, habits: { learn: { ...p.habits.learn, days: 40 } } }).habits.learn.days, 40);
+});
+
+test('migrate makes an old chess-only start per subject; anyone who answered is never offered it again', () => {
+  const old = { ...emptyProgress(), version: 4, start: 'Forks' };
+  const p = migrate(roundTrip(old));
+  assert.deepEqual(p.start, { chess: 'Forks' });
+  const chess = subjects.find((s) => s.id === 'chess');
+  assert.equal(offersPlacement(p, chess), false);
+  assert.equal('start' in migrate(emptyProgress()), false, 'nothing answered, nothing stored');
+  assert.deepEqual(migrate(roundTrip({ ...p, start: { chess: null } })).start, { chess: null }, 'a dismissed offer stays dismissed');
+});
+
+test('placement is offered per subject until answered or dismissed', () => {
+  const [chess, calm] = ['chess', 'calm'].map((id) => subjects.find((s) => s.id === id));
+  const fresh = emptyProgress();
+  assert.equal(offersPlacement(fresh, chess), true);
+  assert.equal(offersPlacement(fresh, calm), false, 'practice subjects have no placement');
+  assert.ok(chess.placement.options.every(([, unit]) => chess.units.some((u) => u.title === unit)), 'every option starts at a real unit');
+  const placed = placeAt(fresh, 'chess', 'Forks');
+  assert.deepEqual(placed.start, { chess: 'Forks' });
+  assert.equal(offersPlacement(placed, chess), false);
+  assert.equal(offersPlacement(placeAt(fresh, 'chess', null), chess), false);
+  assert.deepEqual(placeAt(placed, 'other', 'x').start, { chess: 'Forks', other: 'x' });
 });
