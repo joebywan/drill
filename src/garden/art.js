@@ -72,14 +72,20 @@ function smooth(pts) {
 
 // --- The plants: each one function of stage (0 seed … 4 full grown) -----------------------
 
-// Learning: a tree. An acorn, a two-leaf sprout, a leafy sapling, then a trunk and a round canopy
-// that grows to full size and bears apples.
+// Learning: a tree. An acorn, a sprout that is already a tiny tree (a trunk and a round crown of
+// oak leaves), a sapling with a fuller crown, then a trunk and a round canopy that grows to full
+// size and bears apples.
 const TREE_CANOPY = [[50, 36, 24], [30, 50, 17], [70, 50, 17], [36, 28, 15], [64, 28, 15], [50, 56, 16]];
 const TREE_SPOTS = [[32, 46], [46, 22], [64, 28], [72, 50], [52, 42], [40, 60]];
 const APPLES = [[26, 58], [58, 60], [76, 60], [42, 34]];
 const TREE_SAPLING = [null,
-  { top: 92, leaves: [[92, -50, 10], [92, 50, 10]] },
-  { top: 70, leaves: [[94, -70, 11], [84, 65, 13], [76, -55, 13], [72, 30, 12], [70, -10, 12]] }];
+  { top: 95, w: 2.4, leaves: [[95, -55, 15], [95, 55, 15], [94, 0, 14]] },
+  { top: 76, w: 3.4, leaves: [[90, -80, 13], [88, 76, 13], [77, -50, 16], [77, 50, 16], [76, 0, 16]] }];
+/** A lobed oak leaf from (x, y), `len` long, turned `ang` degrees clockwise from straight up. */
+const oak = (x, y, len, ang, fill) =>
+  `<g transform="translate(${f(x)} ${f(y)}) rotate(${ang})" fill="${fill}"><ellipse cx="0" cy="${f(-len * 0.55)}" rx="${f(len * 0.2)}" ry="${f(len * 0.45)}"/>`
+  + [0.35, 0.6, 0.84].map((t, i) => [-1, 1].map((side) =>
+    `<circle cx="${f(side * len * (0.2 - i * 0.03))}" cy="${f(-len * t)}" r="${f(len * (0.17 - i * 0.03))}"/>`).join('')).join('') + '</g>';
 // Canopy grows about its centre: young is 0.66 of full, lower down on a shorter trunk.
 const treeAt = (s) => (s === 3 ? { k: 0.66, cy: 62 } : { k: 1, cy: 44 });
 const inCanopy = (s, [x, y]) => {
@@ -93,9 +99,9 @@ function tree(s) {
       + stem('M50 95 L51 93', 1.6, SEED);
   }
   if (s <= 2) {
-    const { top, leaves } = TREE_SAPLING[s];
-    return stem(`M50 106 Q48 ${f((106 + top) / 2)} 50 ${top}`, s + 1.5, '#7A5634')
-      + leaves.map(([y, a, l], i) => leaf(50, y, l, a, l * 0.4, i % 2 ? LEAF_DARK : LEAF)).join('');
+    const { top, w, leaves } = TREE_SAPLING[s];
+    return `<path d="M${f(50 - w)} 106 Q${f(50 - w * 0.4)} ${f((106 + top) / 2)} ${f(50 - w * 0.4)} ${top} L${f(50 + w * 0.4)} ${top} Q${f(50 + w * 0.4)} ${f((106 + top) / 2)} ${f(50 + w)} 106Z" fill="#8A5E3B"/>`
+      + leaves.map(([y, a, l], i) => oak(50, y, l, a, i % 2 ? LEAF_DARK : LEAF)).join('');
   }
   const { k, cy } = treeAt(s);
   const w = 3 + 3 * k, top = cy + 10;
@@ -136,13 +142,14 @@ function lavender(s) {
   return tuft + spikes;
 }
 
-// Move: a sunflower. A striped seed, round seed-leaves, broad leaves up a tall stem, a green bud,
-// then the big yellow head.
+// Move: a sunflower. A striped seed, round seed-leaves, then one tall stalk with big heart leaves
+// and a shut green bud on top, a bud with yellow showing, then the big yellow head.
 const SUN_TOP = [0, 94, 72, 50, 34];
+// Heart leaves: [y, angle, size].
 const SUN_LEAVES = [null, [],
-  [[92, -70, 14], [84, 70, 15], [74, -30, 9], [74, 30, 9]],
-  [[96, -70, 16], [86, 70, 17], [74, -65, 15], [64, 65, 14]],
-  [[98, -72, 18], [88, 72, 19], [76, -68, 18], [64, 68, 17], [52, -62, 13]]];
+  [[96, -78, 1.25], [86, 78, 1.25]],
+  [[96, -75, 1.3], [86, 75, 1.35], [74, -70, 1.2], [64, 70, 1.1]],
+  [[98, -75, 1.4], [88, 75, 1.5], [76, -70, 1.4], [64, 70, 1.35], [52, -65, 1]]];
 
 function sunflower(s, closed) {
   if (s === 0) {
@@ -155,7 +162,12 @@ function sunflower(s, closed) {
     out += `<ellipse cx="44" cy="${top}" rx="6" ry="3.4" fill="${LEAF}" transform="rotate(-18 44 ${top})"/>`
       + `<ellipse cx="56" cy="${top}" rx="6" ry="3.4" fill="${LEAF_DARK}" transform="rotate(18 56 ${top})"/>`;
   }
-  out += SUN_LEAVES[s].map(([y, a, l], i) => leaf(50, y, l, a, l * 0.5, i % 2 ? LEAF_DARK : LEAF)).join('');
+  out += SUN_LEAVES[s].map(([y, a, k], i) => heart(50, y, k, a, i % 2 ? LEAF_DARK : LEAF)).join('');
+  if (s === 2) {
+    // A shut green bud, cupped in two sepals.
+    return out + `<ellipse cx="50" cy="${top - 4}" rx="3.6" ry="5.4" fill="${LEAF_DARK}"/>`
+      + leaf(50, top + 1, 7, -40, 2.4, LEAF) + leaf(50, top + 1, 7, 40, 2.4, LEAF);
+  }
   if (s === 3) {
     // A green bud with yellow just showing.
     const tips = Array.from({ length: 8 }, (_, i) => leaf(50, top, 9, i * 45 + 22, 2.4, i % 2 ? '#F5C21B' : LEAF_DARK)).join('');
@@ -254,7 +266,7 @@ export function blooms(habit, stage, flowers = 0) {
 // sprout about a third of full height, a sapling about half, and every stage taller than the last
 // (a test measures it in the browser). Blooms on the plant scale with it; blooms on the ground don't.
 const GROW = {
-  tree: [1.6, 1.5, 1.05, 1.1, 1],
+  tree: [1.6, 1.4, 1.05, 1.1, 1],
   lavender: [1.8, 3.4, 2.7, 1.12, 1],
   sunflower: [1.6, 1.9, 1.25, 1.08, 1],
   vine: [1.6, 1.2, 1.05, 1, 1],
@@ -289,29 +301,71 @@ export function sway(el) {
 export const flower = (habit) =>
   `<svg class="flower" viewBox="-5 -5 10 10" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${bloom({ x: 0, y: 0, r: BLOOM_R }, BLOOM_COLOUR[nameOf(habit)], false)}</svg>`;
 
-// The canvas y each stage reaches up to (its twinkles included), so visitors wait above it.
-const TOPS = [84, 72, 52, 32, 6];
+// What each plant draws at each stage, in canvas units [x0, y0, x1, y1]: mound, twinkles, shut buds
+// and MAX_FLOWERS blooms included, a unit of room around. Measured with getBBox in the browser; an
+// e2e test re-measures and fails with the new numbers when a drawing changes.
+export const BOUNDS = {
+  tree: [[3, 84, 97, 118], [3, 68, 97, 118], [3, 56, 97, 118], [22, 35, 78, 113], [7, 8, 92, 113]],
+  lavender: [[3, 93, 97, 118], [3, 74, 97, 118], [3, 61, 97, 118], [14, 32, 86, 113], [7, 8, 92, 113]],
+  sunflower: [[3, 87, 97, 118], [3, 72, 97, 118], [3, 50, 97, 118], [11, 35, 89, 113], [7, 6, 92, 113]],
+  vine: [[3, 94, 97, 118], [3, 73, 97, 118], [20, 51, 80, 113], [22, 31, 78, 113], [7, 8, 92, 113]],
+  daisies: [[3, 94, 97, 118], [3, 76, 97, 118], [3, 55, 97, 118], [3, 32, 97, 113], [7, 8, 93, 114]],
+};
 const ASPECT = { butterfly: 1, bee: 1, birds: 56 / 32 };
 
+/** A plant's drawn box at a slot, in the scene's units { x, y, w, h }. A plant not measured yet is its whole canvas. */
+export function plantBox(habit, stage, { x, y, w }) {
+  const [x0, y0, x1, y1] = BOUNDS[nameOf(habit)]?.[stageOf(stage)] || [0, 0, 100, 120];
+  const k = w / 100, left = x - w / 2, top = y - w * 1.06;
+  return { x: f(left + x0 * k), y: f(top + y0 * k), w: f((x1 - x0) * k), h: f((y1 - y0) * k) };
+}
+
+const overlap = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
 /**
- * Where a plant's visitors wait, in the scene's units, as boxes { x, y, w, h }: the butterfly
- * above the plant to the left, the bee above it to the right, the birds on the ground beside it,
- * on the side towards the middle of the scene, inside the scene. Never over the plant itself. Pure.
+ * Where each plant's visitors wait, in the scene's units: for plants [{ habit, stage }] laid out by
+ * slots(shape, n), one { butterfly, bee, birds } of boxes { x, y, w, h } per plant. Each wants a
+ * spot by its own plant (the butterfly above it to the left, the bee above it to the right, the birds
+ * on the ground beside it, towards the middle) and takes the nearest one, inside the scene, that is
+ * clear of every plant's drawn box and of the visitors placed before it. Pure.
  */
-export function perches({ x, y, w }, stage, shape = 'tall') {
+export function perches(plants, shape = 'tall') {
   const [W, H] = SIZE[shape] || SIZE.tall;
-  const top = y - ((106 - TOPS[stageOf(stage)]) * w) / 100;
-  // Kept inside the scene: a plant at the edge has its visitor slide in, still above or beside it.
-  const clamp = (v, max) => f(Math.max(0, Math.min(max, v)));
-  const box = (kind, cx, bottom, h) => {
+  const at = slots(shape, plants.length);
+  const taken = plants.map((p, i) => plantBox(p.habit, p.stage, at[i]));
+  const STEP = 3; // ponytail: a grid scan for the nearest free spot; a few thousand box tests per visitor
+  const place = (kind, cx, bottom, h) => {
     const bw = h * ASPECT[kind];
-    return { x: clamp(cx - bw / 2, W - bw), y: clamp(bottom - h, H - h), w: f(bw), h: f(h) };
+    const want = { x: cx - bw / 2, y: bottom - h };
+    let best = null, bestD = Infinity;
+    for (let y = 0; y <= H - h; y += STEP) {
+      for (let x = 0; x <= W - bw; x += STEP) {
+        const d = (x - want.x) ** 2 + (y - want.y) ** 2;
+        if (d < bestD) {
+          const b = { x, y, w: bw, h };
+          if (!taken.some((t) => overlap(b, t))) [best, bestD] = [b, d];
+        }
+      }
+    }
+    // Nowhere free (never in a real garden; a test checks every layout): stay by the plant.
+    const b = best || { x: Math.max(0, Math.min(W - bw, want.x)), y: Math.max(0, Math.min(H - h, want.y)), w: bw, h };
+    taken.push(b);
+    return { x: f(b.x), y: f(b.y), w: f(bw), h: f(h) };
   };
-  return {
-    butterfly: box('butterfly', x - 0.3 * w, top - 0.04 * w, 0.26 * w),
-    bee: box('bee', x + 0.3 * w, top - 0.1 * w, 0.2 * w),
-    birds: box('birds', x + (x > W / 2 ? -1 : 1) * 0.53 * w, y + 0.06 * w, 0.22 * w),
+  const wants = (i) => {
+    const { x, y, w } = at[i], top = taken[i].y;
+    return {
+      birds: [x + (x > W / 2 ? -1 : 1) * 0.53 * w, y + 0.06 * w, 0.22 * w],
+      butterfly: [x - 0.3 * w, top - 0.04 * w, 0.26 * w],
+      bee: [x + 0.3 * w, top - 0.1 * w, 0.2 * w],
+    };
   };
+  const out = plants.map(() => ({}));
+  // Biggest first, every plant's birds before any butterfly, so the small ones fill the gaps left.
+  for (const kind of ['birds', 'butterfly', 'bee']) {
+    out.forEach((spot, i) => { spot[kind] = place(kind, ...wants(i)[kind]); });
+  }
+  return out;
 }
 
 /**
@@ -325,8 +379,9 @@ export function drawGarden({ mood, plants }, shape = 'tall') {
   const closed = mood === 'resting';
   const grown = plants.map((p, i) => place(plant(p.habit, p.stage, { flowers: p.flowers.length, closed }), at[i])
     .replace(/^(<svg [^>]*>)/, '$1<rect width="100" height="120" fill="transparent"/>')).join('');
+  const spots = perches(plants, shape);
   const life = plants.flatMap((p, i) => p.visitors.map(({ gift }) => {
-    const b = perches(at[i], p.stage, shape)[gift];
+    const b = spots[i][gift];
     return b ? visitor(gift).replace('<svg ', `<svg x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" data-kind="${gift}" `) : '';
   })).join('');
   return scene(mood, shape).replace(/<\/svg>$/, `${grown}${life}</svg>`);

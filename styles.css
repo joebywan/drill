@@ -292,6 +292,8 @@ html { scroll-padding-bottom: 160px; }
   overflow-x: auto; scrollbar-width: none; position: relative; /* offsetLeft is measured from here */
   /* A swipe settles with a tab on the page's 16px gutter, never cut at the screen edge. */
   scroll-snap-type: x mandatory; scroll-padding-inline: 16px;
+  /* The gutters fade out, so a tab cut at the edge reads as "more this way", not a stray line. */
+  mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
 }
 .path-tab { flex: none; scroll-snap-align: start; }
 .paths::-webkit-scrollbar { display: none; }

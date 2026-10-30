@@ -420,6 +420,67 @@ test('every plant grows visibly stage to stage, and a sprout and a sapling read 
   }
 });
 
+test('BOUNDS in art.js is what each plant really draws (re-measure and paste if this fails)', async ({ page }) => {
+  await page.goto('/');
+  const { measured, table } = await page.evaluate(async () => {
+    const { PLANTS, plant, MAX_FLOWERS, BOUNDS } = await import('/src/garden/art.js');
+    const box = (svg) => {
+      const d = document.createElement('div');
+      d.innerHTML = svg.replace(/^(<svg [^>]*>)/, '$1<g>').replace(/<\/svg>$/, '</g></svg>');
+      document.body.append(d);
+      const b = d.querySelector('svg > g').getBBox();
+      d.remove();
+      return b;
+    };
+    // Open and shut, with every bloom; floored and ceiled to whole units, a unit of room around.
+    const measured = Object.fromEntries(Object.entries(PLANTS).map(([habit, name]) => [name, [0, 1, 2, 3, 4].map((s) => {
+      const bs = [false, true].map((closed) => box(plant(habit, s, { flowers: MAX_FLOWERS, closed })));
+      return [Math.floor(Math.min(...bs.map((b) => b.x))) - 1, Math.floor(Math.min(...bs.map((b) => b.y))) - 1,
+        Math.ceil(Math.max(...bs.map((b) => b.x + b.width))) + 1, Math.ceil(Math.max(...bs.map((b) => b.y + b.height))) + 1];
+    })]));
+    return { measured, table: BOUNDS };
+  });
+  expect(table).toEqual(measured);
+});
+
+test('young plants have shapes of their own, whatever their size', async ({ page }) => {
+  await page.goto('/');
+  const pairs = await page.evaluate(async () => {
+    const { PLANTS, plant } = await import('/src/garden/art.js');
+    // A plant's silhouette without its mound, cropped and fitted into a small square (sitting on its
+    // bottom edge), so two plants compare by shape alone, at about the strip's size on a phone.
+    const N = 32;
+    const shape = async (habit, s) => {
+      const img = new Image();
+      img.src = `data:image/svg+xml,${encodeURIComponent(plant(habit, s).replace(/<ellipse data-part="mound"[^>]*\/>/, ''))}`;
+      await img.decode();
+      const big = Object.assign(document.createElement('canvas'), { width: 200, height: 240 });
+      big.getContext('2d').drawImage(img, 0, 0, 200, 240);
+      const a = big.getContext('2d').getImageData(0, 0, 200, 240).data;
+      let x0 = 200, y0 = 240, x1 = 0, y1 = 0;
+      for (let i = 0; i < 200 * 240; i++) {
+        if (a[i * 4 + 3] > 128) { const x = i % 200, y = (i / 200) | 0; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+      }
+      const w = x1 - x0 + 1, h = y1 - y0 + 1, k = N / Math.max(w, h);
+      const small = Object.assign(document.createElement('canvas'), { width: N, height: N });
+      small.getContext('2d').drawImage(big, x0, y0, w, h, (N - w * k) / 2, N - h * k, w * k, h * k);
+      const d = small.getContext('2d').getImageData(0, 0, N, N).data;
+      return Array.from({ length: N * N }, (_, i) => d[i * 4 + 3] > 128);
+    };
+    const young = [];
+    for (const habit of Object.keys(PLANTS)) for (const s of [1, 2]) young.push({ name: PLANTS[habit], id: `${PLANTS[habit]} ${s}`, px: await shape(habit, s) });
+    const out = [];
+    for (const a of young) for (const b of young) {
+      if (a.name >= b.name) continue;
+      let differ = 0, union = 0;
+      a.px.forEach((on, i) => { if (on || b.px[i]) union++; if (on !== b.px[i]) differ++; });
+      out.push([`${a.id} vs ${b.id}`, differ / union]);
+    }
+    return out;
+  });
+  for (const [pair, diff] of pairs) expect(diff, pair).toBeGreaterThan(0.4);
+});
+
 test('on a phone, the first plant card shows above the fold under the full garden', async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 780 });
   await grown(page, ['learn', 'calm', 'move', 'reflect', 'break'], 5, true);

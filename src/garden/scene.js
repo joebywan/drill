@@ -110,10 +110,10 @@ export function slots(shape = 'tall', n = 6) {
   const [W] = SIZE.tall;
   const row = (k, y, wMax) => Array.from({ length: k }, (_, i) => ({ x: f((W * (i + 0.5)) / k), y, w: f(Math.min(wMax, W / k)) }));
   if (shape === 'strip') return row(count, 112, 80);
-  if (count <= 3) return row(count, 360, 150);
+  if (count <= 3) return row(count, 350, 150);
   // The back row takes the extra plant, so the front row's fewer plants can be bigger.
   const back = Math.ceil(count / 2);
-  return [...row(back, 250, 120), ...row(count - back, 372, 150)];
+  return [...row(back, 232, 120), ...row(count - back, 364, 150)];
 }
 
 /** Draws a plant svg (100 x 120, base at 50, 106) at a slot, as a nested svg. */
