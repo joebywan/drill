@@ -27,13 +27,12 @@ test('the intro shows on a first visit only: once answered or skipped, or with a
 });
 
 test('migrate v6 to v7: an existing save is marked as past the intro; v7 keeps its picks', () => {
-  assert.equal(VERSION, 7);
   const v6 = { version: 6, habits: { learn: { count: 0, last: null, forgiven: [], days: 0 } }, log: [], done: {}, cards: {},
     journal: {}, garden: { earned: {} }, tracked: [] };
   const p = migrate(roundTrip(v6));
-  assert.deepEqual(p, { ...v6, version: VERSION, picked: [] });
+  assert.deepEqual(p, { ...v6, version: VERSION, picked: [], timings: {} });
   assert.equal(showsIntro(p), false, 'someone who used Drill before never sees the intro');
-  assert.equal(showsIntro(migrate(roundTrip(emptyProgress()))), true, 'a fresh v7 save still does');
+  assert.equal(showsIntro(migrate(roundTrip(emptyProgress()))), true, 'a fresh save still does');
   const picked = { ...emptyProgress(), picked: ['walk', 'learn'] };
   assert.deepEqual(migrate(roundTrip(picked)), picked);
   for (const bad of ['calm', [1], ['<b>'], ['calm', 'calm']]) assert.equal(migrate({ ...emptyProgress(), picked: bad }), null, JSON.stringify(bad));

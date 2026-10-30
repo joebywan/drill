@@ -1,5 +1,5 @@
 import { BREAK_LINES, line } from '../cast/lines.js';
-import { STEPS } from './routines.js';
+import { breakSteps } from './routines.js';
 import { demo, steps, teach } from '../practice/kit.js';
 import { esc } from '../html.js';
 
@@ -10,10 +10,11 @@ import { esc } from '../html.js';
  */
 export function mount(el, item, ctx) {
   if (item.type === 'teach') return teach(el, item, ctx);
-  let now = STEPS[0];
-  const stop = steps(el, STEPS, ctx, {
+  const all = breakSteps(ctx.timings);
+  let now = all[0];
+  const stop = steps(el, all, ctx, {
     label: 'Screen break steps', mood: 'guide', tone: 'break', inline: true,
-    summary: `${STEPS.length} steps`, paused: line('paused', Math.random(), BREAK_LINES),
+    summary: `${all.length} steps`, paused: line('paused', Math.random(), BREAK_LINES),
     act: (p) => { now = p; return demo(ctx, p.pose, p.seconds, p.loops); },
   });
   const pause = el.querySelector('.practice-pause');
