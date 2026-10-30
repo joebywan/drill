@@ -271,6 +271,7 @@ export const feelsFor = (good = 'calmer') => [[good, good[0].toUpperCase() + goo
  * have been on a screen.
  */
 export const BREAK_LINES = {
+  room: ["You'll stand and reach up, so check there's room around you."],
   paused: ["Paused. I'll sit here and look at the trees."],
   tapped: ['Big eyes, soft gaze. That is the whole trick.', 'Look far. Further. Is that a mango tree?', 'Tail swish allowed.'],
   done: ['Break done. Back to it, nice and loose.', 'That was a good stretch.', 'Eyes rested, shoulders rolled. Lovely.'],
@@ -309,6 +310,7 @@ export const REFLECT_LINES = {
 export const MOVE_LINES = {
   go: ['Copy me, nice and easy.', 'Your pace is the right pace.', 'Smaller is fine. Comfy is the goal.', 'Breathe as you go.'],
   rest: ['Have a breather.', 'Shake it out.', 'Rest. Next one coming up.'],
+  room: ["Moves need space, so check there's room around you."],
   paused: ["Paused. Rest as long as you like. I'll stretch while I wait."],
   tapped: [
     'I do these every morning. Well, most mornings.',

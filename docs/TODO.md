@@ -197,16 +197,9 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 - **Tune the numbers from real play.** `tools/sessions.js` models a fixed miss rate; nobody has played the new limits
   (2 echoes, 4 goes, 5 repeats a session). "One step back" has only run in tests and an E2E flow.
 
-**Characters**
-
-- **Practice coaches' first card should name them.** Not a whole "Meet" screen, as a tap before a breathing
-  exercise is the wrong friction: one line ("I'm Moss. Breathe in for 4...").
-
 **Layouts from phone testing**
 
-- **Move** got the Screen break's X and header change, but keeps its full-width Pause and has no on-screen how.
-  Check whether it should match. Other timed practices too.
-- **Screen break on a phone:** check the new layout there. Later sessions have no room-check card, only
-  "Next: Stand and stretch".
-- **Dark board's ledge shadow** is faint, and a very fast second tap as a piece lands can be dropped.
+- **The timed practice layout on a real phone:** Move, Calm, Wind down, Focus and the Screen break were only
+  checked in a desktop browser at phone size.
+- **A very fast second tap** as a piece lands can be dropped.
 - **Cast brief** (the Claude Doc) still describes lamps and predates quest markers, the garden and no XP.

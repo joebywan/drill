@@ -69,16 +69,16 @@ export function stayAwake() {
   };
 }
 
-/** The Pause button a timed routine sits above, in the thumb zone. Put it after the routine's own markup. */
-export const pauseBar = '<div class="choices"><button class="choice practice-pause" aria-pressed="false">Pause</button></div>';
+/**
+ * A timed routine's round pause, which sits beside the coach (styles.css): nobody should have to tap
+ * on a timer, so nothing they need waits at the bottom. Put it after the routine's own markup.
+ */
+export const pauseButton = '<button class="choice practice-pause" aria-pressed="false" aria-label="Pause">❚❚</button>';
 
-/** A pause button's face: its word, or for a small round one, an icon named by the word. */
-const pauseFace = (button, word, icon) => {
-  if (button.classList.contains('icon')) { button.textContent = icon; button.setAttribute('aria-label', word); } else button.textContent = word;
-};
+const pauseFace = (button, word, icon) => { button.textContent = icon; button.setAttribute('aria-label', word); };
 
 /**
- * Runs a timed routine in `el` (which already holds the routine's markup and `pauseBar`). Leaving
+ * Runs a timed routine in `el` (which already holds the routine's markup and `pauseButton`). Leaving
  * the page pauses it too, so it never finishes unattended, unless `hidden: 'run'` (Focus, whose
  * learner is off in the app they're focusing in): then it keeps wall-clock time while hidden, and
  * coming back shows where it is now, or the end screen if it finished meanwhile. `draw(phase, index, say)` shows each
@@ -152,30 +152,47 @@ export function sequence(el, parts, ctx, play) {
  * habit's colours. `act(phase, index)` adds the step's own animations (the screen break's demos).
  * `inline` shows the seconds left in the current row, for a screen with a large coach above.
  * `detail` is html under the list; with it, only the current step's row shows, to leave it room.
- * Calm's body scan and the screen break both use it.
+ * A phase's own `mood` goes over `mood`, its `reps` count as "3 of 8". `sound(phase)` plays at each step.
+ * Calm's body scan and `coached()` both use it.
  */
-export function steps(el, phases, ctx, { label, summary, paused, mood, rising = false, tone = '', act = () => [], inline = false, detail = '' }) {
-  const left = '<span class="count"></span> s';
+export function steps(el, phases, ctx, { label, summary, paused, mood, rising = false, tone = '', act = () => [], inline = false, detail = '', sound = () => play('exhale') }) {
+  const left = '<span class="count"></span> <span class="unit">s</span>';
   el.innerHTML = `<div class="scan ${tone}${inline ? ' inline' : ''}${detail ? ' detailed' : ''}">
       <ol class="steps${rising ? ' rising' : ''}" aria-label="${esc(label)}">${phases.map((p) => `<li>${esc(p.name)}</li>`).join('')}</ol>
       ${inline ? '' : `<p class="scan-left" aria-hidden="true">${left}</p>`}${detail}
-    </div>${pauseBar}`;
+    </div>${pauseButton}`;
   const rows = [...el.querySelectorAll('.steps li')];
   const inRow = Object.assign(document.createElement('span'), { className: 'step-left', innerHTML: left });
   inRow.setAttribute('aria-hidden', 'true');
-  if (detail) {
-    const pause = el.querySelector('.practice-pause');
-    pause.classList.add('icon');
-    pauseFace(pause, 'Pause', '❚❚');
-  }
   return routine(el, phases, ctx, (p, i, say) => {
     if (inline) rows[i].append(inRow);
     rows.forEach((r, j) => {
       r.className = j < i ? 'past' : j === i ? 'now' : '';
       if (j === i) r.setAttribute('aria-current', 'step'); else r.removeAttribute('aria-current');
     });
-    say(p.line, mood);
-    play('exhale');
+    el.querySelector('.unit').textContent = p.reps ? `of ${p.reps}` : 's';
+    say(p.line, p.mood ?? mood);
+    sound(p);
     return [move(rows[i], [{ '--fill': '0%' }, { '--fill': '100%' }], { duration: p.seconds * 1000, fill: 'forwards' }), ...act(p, i)];
   }, summary, paused);
+}
+
+/**
+ * A routine the learner copies from a demonstrating coach (the screen break, Move): the step and its
+ * time, how to do it, what's next, all on screen, as nobody should have to tap on a timer. `room` is a
+ * line for the first step only, as moves need space. Each phase is { name, line, seconds, how, mood?,
+ * reps?, loops?, pose? }; one with no pose (a rest) has nothing to demonstrate and isn't named as next.
+ */
+export function coached(el, phases, ctx, { room, ...rest }) {
+  return steps(el, phases, ctx, {
+    ...rest, mood: 'guide', inline: true,
+    act: (p, i) => {
+      el.querySelector('.how-now').innerHTML = p.how.map((t) => `<li>${esc(t)}</li>`).join('');
+      const next = phases.slice(i + 1).find((x) => x.pose);
+      el.querySelector('.next-step').textContent = next ? `Next: ${next.name}` : 'Last one';
+      el.querySelector('.room').hidden = i > 0;
+      return p.pose ? demo(ctx, p.pose, p.seconds, p.loops ?? p.reps) : [];
+    },
+    detail: `<ul class="how-now"></ul><p class="next-step"></p><p class="room">${esc(room)}</p>`,
+  });
 }

@@ -4,7 +4,7 @@ import { timed } from '../practice/timings.js';
 /**
  * Each step: { name, line, seconds, pose, loops, how }. `line` is the short cue Mira says; Mira
  * demonstrates `pose` (src/cast/mira.js) `loops` times over the step (not `reps`, which the count
- * would show as reps); `how` is the plain-words guidance behind "How?". The first is 20 seconds
+ * would show as reps); `how` is the plain-words guidance shown beside the timer. The first is 20 seconds
  * of looking far away (the 20-20-20 idea).
  */
 export const STEPS = [
