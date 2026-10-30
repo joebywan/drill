@@ -222,10 +222,12 @@ test('every practice habit answers each "How do you feel?" reply in its own coac
 });
 
 // The garden: every achievement line and stage name is gentle. Nothing is lost, nothing is owed.
-import { RULES as GARDEN_RULES, STAGES as GARDEN_STAGES } from '../src/garden/model.js';
+import { RULES as GARDEN_RULES, STAGES as GARDEN_STAGES, moreArrived, plantWords, stage as gardenStage } from '../src/garden/model.js';
 
 test('garden text has no loss, guilt, urgency or ability words', () => {
-  const texts = [...GARDEN_RULES.map((r) => r.text), ...GARDEN_STAGES.map((s) => s.name)];
+  const screen = [0, 1, 4, 13, 29, 30, 400].flatMap((d) => Object.values(plantWords({ days: d, ...gardenStage(d) })));
+  const texts = [...GARDEN_RULES.map((r) => r.text), ...GARDEN_STAGES.map((s) => s.name), ...screen, moreArrived(4), 'Your garden'];
   assert.ok(texts.length > 10);
   for (const text of texts) for (const lint of [LOSS, URGENCY, ABILITY]) assert.doesNotMatch(text, lint, text);
+  for (const text of texts) assert.doesNotMatch(text, /\b(missing|locked|wilt\w*|die[sd]?|dying|dead)\b/i, text);
 });

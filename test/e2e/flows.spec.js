@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { answer, kind, starPath } from '../../src/chess/items.js';
+import { emptyProgress, finishPractice, finishSession } from '../../src/progress.js';
+import { award } from '../../src/garden/model.js';
 
 // The first lesson on the path. Its answers are worked out from the course data with the same
 // item logic the app uses, so the test follows the content when it changes.
@@ -92,6 +94,11 @@ test("a habit's chip opens its view, with today's session listed", async ({ page
 async function firstBreathing(page) {
   await page.clock.install();
   await placeAtStart(page);
+  await breathe(page);
+}
+
+/** From home, the first breathing lesson on Calm's path, played on the installed fake clock. */
+async function breathe(page) {
   await page.getByRole('button', { name: '🌿 Calm', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Breathing' })).toBeVisible();
   await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
@@ -293,6 +300,77 @@ test('progress saved to a file loads back', async ({ page }) => {
   await expect(page.getByRole('button', { name: `${first.title}, done` })).toBeVisible();
 });
 
+/**
+ * Progress with `habits` each practised on the `days` days before today, loaded before the page.
+ * `earned` gives it what that has earned, as if every session had been in the app.
+ */
+async function grown(page, habits, days, earned = false) {
+  let p = { ...emptyProgress(), start: basics.units[0].title };
+  for (const h of habits) {
+    for (let i = days; i >= 1; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      p = h === 'learn' ? finishSession(p, null, [], d) : finishPractice(p, h, null, d);
+    }
+  }
+  if (earned) p = award(p).progress;
+  await page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
+}
+
+const strip = (page, n) => page.getByRole('button', { name: `Your garden: ${n} plant${n === 1 ? '' : 's'}` });
+
+test('a fresh garden is one seed; the first lesson grows a sprout and opens a flower', async ({ page }) => {
+  await placeAtStart(page);
+  await expect(strip(page, 1).locator('svg.plant')).toHaveCount(1);
+  await expect(strip(page, 1).locator('svg.plant-tree.stage-0')).toBeVisible();
+  await finishFirstLesson(page);
+  // The first unit is one lesson long, so finishing it is a finished unit: a flower opens.
+  await expect(page.locator('.arrivals li')).toHaveText([`A flower opened for ${basics.units[0].title}`]);
+  await continueButton(page).click();
+  await expect(strip(page, 1).locator('svg.plant-tree.stage-1')).toBeVisible();
+  await expect(strip(page, 1).locator('[data-part="bloom"]')).toHaveCount(1);
+});
+
+test('a 7-day Calm streak brings a butterfly, shown on the end screen and in the garden', async ({ page }) => {
+  await grown(page, ['calm'], 7);
+  await page.clock.install();
+  await page.goto('/');
+  await expect(strip(page, 2).locator('svg.visitor')).toHaveCount(0);
+  await breathe(page);
+  await expect(page.locator('.arrivals')).toContainText('A butterfly arrived');
+  await expect(page.locator('.arrivals svg.visitor-butterfly')).toBeVisible();
+  await continueButton(page).click();
+
+  await expect(strip(page, 2).locator('svg.visitor-butterfly')).toHaveCount(1);
+  await strip(page, 2).click();
+  await expect(page.getByRole('heading', { name: 'Your garden' })).toBeFocused();
+  const calm = page.locator('.plant-card[data-plant="calm"]');
+  await expect(calm).toContainText('Lavender · sapling');
+  await expect(calm).toContainText('8 days practised');
+  await expect(calm).toContainText('6 more days to young');
+  await expect(calm).toContainText(/A butterfly arrived · \d+ \w{3}/);
+
+  // A card opens that habit's view; Back comes to the garden, then home to the strip.
+  await calm.click();
+  await expect(page.getByRole('heading', { name: 'Calm' })).toBeFocused();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(calm).toBeFocused();
+  await page.locator('.garden-view svg.plant-tree').click();
+  await expect(page.getByRole('heading', { name: 'Learning' })).toBeFocused();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(strip(page, 2)).toBeFocused();
+});
+
+test('a backlog of arrivals shows three lines, then the rest in one', async ({ page }) => {
+  await grown(page, ['calm', 'move', 'break'], 30);
+  await page.clock.install();
+  await page.goto('/');
+  await breathe(page);
+  await expect(page.locator('.arrivals li')).toHaveCount(4);
+  await expect(page.locator('.arrivals li').last()).toHaveText(/^and \d+ more in your garden$/);
+});
+
 const overflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
 for (const colorScheme of ['light', 'dark']) {
@@ -310,6 +388,17 @@ for (const colorScheme of ['light', 'dark']) {
         await placeAtStart(page);
         await page.getByTitle('Day streak').click();
         await expect(page.getByRole('heading', { name: 'Learning' })).toBeVisible();
+        expect(await overflow(page)).toBe(0);
+      });
+
+      test('the garden strip and the full garden have no sideways scroll', async ({ page }) => {
+        await grown(page, ['learn', 'calm', 'move', 'reflect', 'break'], 30, true);
+        await page.goto('/');
+        await expect(strip(page, 5).locator('svg.visitor')).toHaveCount(14); // a bee for each but Learning
+        // The strip itself; the home bar with five habit chips is wider than 360px on its own.
+        expect(await strip(page, 5).evaluate((el) => el.scrollWidth - el.clientWidth + Math.max(0, el.getBoundingClientRect().right - innerWidth))).toBe(0);
+        await strip(page, 5).click();
+        await expect(page.locator('.plant-card')).toHaveCount(5);
         expect(await overflow(page)).toBe(0);
       });
 

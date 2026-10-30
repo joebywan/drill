@@ -78,9 +78,12 @@ The app's vibe moves from "build knowledge" to "grow yourself", shown as a garde
    after each finish in app.js, and `garden()`, the one read model for the screen.
 10. [x] **Garden art.** SVG plants per habit across five stages, flowers, visitors and the
     three moods, with a harness like tools/cast.html.
-11. [ ] **Garden screen.** A garden strip on home and a full garden view. Tapping a plant
+11. [x] **Garden screen.** A garden strip on home and a full garden view. Tapping a plant
     opens its habit view. A quiet "a butterfly arrived" moment on the end screen when
     something is earned.
+    Done: `drawGarden()` and `perches()` in art.js draw the whole garden once per render;
+    `gardenView()` in app.js; both end screens show `award()`'s `newly` (three lines, then
+    "and N more"). Wording (`plantWords`, `moreArrived`) is in model.js and linted.
 
 ## Kept out
 

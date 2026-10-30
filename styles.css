@@ -371,3 +371,24 @@ html { scroll-padding-bottom: 160px; }
 .exercise .tally { margin: 16px 0 0; color: var(--muted); font-weight: 600; }
 .exercise .tally .count { color: var(--text); }
 .exercise[data-kind="rest"] h2 { color: var(--muted); }
+
+/* ---- The garden: a strip on home, the full view, and what arrived on an end screen ---- */
+.garden-link { display: block; width: 100%; margin: 0 0 12px; padding: 0; border: 0; border-radius: 16px; overflow: hidden; background: none; }
+.garden-link svg.garden-scene, .garden-view svg.garden-scene { display: block; width: 100%; height: auto; }
+.garden-page { padding: 0 16px 40px; }
+.garden-page h1 { margin: 0 0 12px; font-size: 1.6rem; }
+.garden-view { border-radius: 16px; overflow: hidden; }
+.garden-view svg.plant { cursor: pointer; }
+.plant-cards { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 10px; }
+.plant-card {
+  display: block; width: 100%; text-align: left; padding: 12px 14px; border-radius: 14px;
+  border: 1px solid var(--line); background: var(--card);
+}
+.plant-card > span { display: block; }
+.plant-card .kicker { margin: 0; font-size: .75rem; }
+.plant-card b { display: block; font-size: 1.1rem; margin: 2px 0; }
+.plant-card .hint { color: var(--muted); font-size: .9rem; }
+.plant-card .arrival { margin-top: 6px; font-size: .9rem; }
+.arrival { display: flex; align-items: center; gap: 8px; }
+.arrival svg { height: 22px; width: auto; flex: none; }
+.arrivals { list-style: none; margin: 14px auto 0; padding: 0; display: grid; gap: 6px; justify-content: center; color: var(--muted); font-size: .95rem; }

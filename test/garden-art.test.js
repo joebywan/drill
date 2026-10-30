@@ -100,3 +100,45 @@ test('sway and visitors move, and stay still under reduced motion', () => {
   } finally { delete globalThis.matchMedia; }
   assert.equal(calls.length, 0);
 });
+
+import { perches, drawGarden, flower } from '../src/garden/art.js';
+
+test('visitors perch inside the scene and never over their plant', () => {
+  for (const shape of ['strip', 'tall']) {
+    const [W, H] = SIZE[shape];
+    for (let n = 1; n <= 6; n++) {
+      for (const slot of slots(shape, n)) {
+        for (const s of STAGE_IDS) {
+          const { x, y, w } = slot;
+          for (const [kind, b] of Object.entries(perches(slot, s, shape))) {
+            const at = `${shape} ${n} ${s} ${kind}`;
+            assert.ok(b.x >= 0 && b.y >= 0 && b.x + b.w <= W && b.y + b.h <= H, `${at} in the scene`);
+            // The plant's body: the middle of its canvas, from the top of its stage down to the base.
+            const top = y - ((106 - [94, 86, 64, 40, 10][s]) * w) / 100;
+            const overlaps = b.x < x + 0.3 * w && b.x + b.w > x - 0.3 * w && b.y < y && b.y + b.h > top;
+            assert.ok(!overlaps, `${at} off the plant`);
+          }
+        }
+      }
+    }
+  }
+});
+
+test('a drawn garden has every plant at its stage, flowers capped at what the art draws, and its visitors', () => {
+  const many = Array.from({ length: 9 }, (_, i) => ({ gift: 'flower', on: '2026-10-01', id: `f${i}` }));
+  const all = ['butterfly', 'bee', 'birds'].map((gift) => ({ gift, on: '2026-10-01', id: gift }));
+  const plants = HABITS.map((h, i) => ({ habit: h.id, stage: i % 5, flowers: many, visitors: all }));
+  for (const shape of ['strip', 'tall']) {
+    const svg = drawGarden({ mood: 'sunlit', plants }, shape);
+    clean(svg, shape);
+    for (const p of plants) assert.match(svg, new RegExp(`class="plant plant-\\w+ stage-${p.stage}" data-habit="${p.habit}"`), p.habit);
+    assert.equal(svg.match(/data-part="bloom"/g).length, plants.length * MAX_FLOWERS, 'capped');
+    assert.equal(svg.match(/class="visitor /g).length, plants.length * 3);
+    assert.equal(svg.match(/<svg /g).length, 1 + plants.length * 4, 'one scene');
+  }
+  const resting = drawGarden({ mood: 'resting', plants: plants.slice(0, 1) });
+  assert.equal(resting, drawGarden({ mood: 'resting', plants: plants.slice(0, 1) }), 'the same every time');
+  assert.match(resting, /garden-resting/);
+  assert.doesNotMatch(drawGarden({ mood: 'sunlit', plants: [] }, 'strip'), /class="plant /, 'nothing unearned is drawn');
+  for (const h of HABITS) clean(flower(h.id), h.id);
+});

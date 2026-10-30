@@ -1,5 +1,6 @@
 import { HABITS, subjects } from './subjects.js';
-import { award } from './garden/model.js';
+import { award, garden, moreArrived, plantWords } from './garden/model.js';
+import { PLANTS, animateVisitor, drawGarden, flower, sway, visitor } from './garden/art.js';
 import { LEARN, emptyProgress, finishPractice, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, soonestKeys, startedHabits, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
@@ -123,6 +124,7 @@ function home(arrived = null) {
     </svg>`;
   };
 
+  const g = garden(progress);
   app.innerHTML = `
     <header class="bar">
       <h1>Drill</h1>
@@ -131,6 +133,7 @@ function home(arrived = null) {
       <button class="menu" aria-label="Your progress">⋯</button>
     </header>
     <main class="home">
+      <button class="garden-link" aria-label="Your garden: ${g.plants.length} plant${g.plants.length === 1 ? '' : 's'}">${drawGarden(g, 'strip')}</button>
       <nav class="paths" aria-label="Show the path for">
         ${HABITS.map((h) => `<button class="path-tab" data-path="${h.id}" aria-pressed="${h.id === habitShown}">${h.icon} ${esc(h.name)}</button>`).join('')}
       </nav>
@@ -146,6 +149,13 @@ function home(arrived = null) {
         : repeat ? `<button class="next" data-lesson="${repeat.id}">${esc(again.label)}</button>` : ''}
     </footer>`;
 
+  const stopGarden = liven(app.querySelector('.garden-link'));
+  // The current lesson is brought into view, centred, only when it is out of view (the fixed
+  // footer covers the bottom 160px), so the garden at the top stays in sight when there's room.
+  const showHere = () => {
+    const r = app.querySelector('.here')?.getBoundingClientRect();
+    if (r && (r.top < 0 || r.bottom > innerHeight - 160)) app.querySelector('.here').scrollIntoView({ block: 'center' });
+  };
   const guide = app.querySelector('.guide');
   if (guide) {
     // Lumi rests once today is done, and is content otherwise: never sad, whatever the light.
@@ -154,17 +164,21 @@ function home(arrived = null) {
     const guideLight = light(progress, new Date(), habitShown);
     const settle = () => lumiCoach.set(guideLight === 'bright' ? (late ? 'sleepy' : 'complete') : 'teach');
     const from = arrived && app.querySelector(`.node[data-lesson="${arrived}"]`);
-    app.querySelector('.here').scrollIntoView({ block: 'center' });
+    showHere();
     const walk = from && walkTo(guide, from, app.querySelector('.node.here'));
     if (walk) {
       lumiCoach.set('correct');
       walk.finished.then(settle, () => {});
     } else settle();
-    stopHome = () => { walk?.cancel(); lumiCoach.stop(); };
-  } else app.querySelector('.here')?.scrollIntoView({ block: 'center' });
+    stopHome = () => { walk?.cancel(); lumiCoach.stop(); stopGarden(); };
+  } else {
+    showHere();
+    stopHome = stopGarden;
+  }
+  app.querySelector('.garden-link').addEventListener('click', () => gardenView());
   app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); focusOn('.sound'); });
   app.querySelector('.menu').addEventListener('click', () => { stopHome(); keep(); });
-  for (const chip of app.querySelectorAll('[data-habit]')) chip.addEventListener('click', () => habitView(chip.dataset.habit));
+  for (const chip of app.querySelectorAll('.bar [data-habit]')) chip.addEventListener('click', () => habitView(chip.dataset.habit));
   for (const b of app.querySelectorAll('[data-path]')) {
     b.addEventListener('click', () => { showHabit(b.dataset.path); home(); focusOn(`[data-path="${b.dataset.path}"]`); });
   }
@@ -191,7 +205,7 @@ function habitChip(id) {
  * of filled squares. The week ends today rather than on a Sunday, so it is always seven real days
  * and never a row of days still to come. Days without a session are plain.
  */
-function habitView(id) {
+function habitView(id, back = () => { home(); focusOn(`.bar [data-habit="${id}"]`); }) {
   stopHome();
   const h = HABITS.find((x) => x.id === id);
   const now = new Date();
@@ -219,7 +233,74 @@ function habitView(id) {
       <div class="month" role="img" aria-label="Days with a session, last four weeks">${month.map((d) => `<i${d.sessions.length ? ' class="on"' : ''}></i>`).join('')}</div>
     </main>`;
   focusOn('h1');
-  app.querySelector('.back').addEventListener('click', () => { home(); focusOn(`[data-habit="${id}"]`); });
+  app.querySelector('.back').addEventListener('click', back);
+}
+
+/**
+ * The garden's plants sway and its visitors move, each on the Web Animations API, so the svg is
+ * drawn once. Paused while it is off screen or the tab is hidden; nothing moves under reduced
+ * motion. Returns the stop.
+ */
+function liven(el) {
+  const anims = [...el.querySelectorAll('svg.plant')].map(sway)
+    .concat([...el.querySelectorAll('svg.visitor')].flatMap((v) => animateVisitor(v, v.dataset.kind) || []))
+    .filter(Boolean);
+  if (!anims.length) return () => {};
+  let seen = true;
+  const sync = () => anims.forEach((a) => (seen && !document.hidden ? a.play() : a.pause()));
+  const watch = new IntersectionObserver(([e]) => { seen = e.isIntersecting; sync(); });
+  watch.observe(el);
+  document.addEventListener('visibilitychange', sync);
+  return () => { watch.disconnect(); document.removeEventListener('visibilitychange', sync); anims.forEach((a) => a.cancel()); };
+}
+
+const shortDate = (date) => dateOf(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+/** One thing that arrived, drawn small beside its line: "A butterfly arrived · 12 Oct". */
+const arrival = ({ gift, text, on }, habit) =>
+  `<span class="arrival">${gift === 'flower' ? flower(habit) : visitor(gift)}<span>${esc(text)}${on ? ` · ${shortDate(on)}` : ''}</span></span>`;
+
+/** What a session brought to the garden, quietly: three lines at most, then "and N more". */
+const arrivals = (newly) => (!newly.length ? '' : `<ul class="arrivals">
+  ${newly.slice(0, 3).map((r) => `<li>${arrival(r, r.habit)}</li>`).join('')}
+  ${newly.length > 3 ? `<li>${esc(moreArrived(newly.length - 3))}</li>` : ''}</ul>`);
+
+/**
+ * The whole garden, tall, with a card per plant under it: its stage, days practised, a gentle
+ * hint of the next stage and what has arrived. A plant or its card opens its habit view, whose
+ * Back comes here. `from` is the plant to put focus back on.
+ */
+function gardenView(from = null) {
+  stopHome();
+  const g = garden(progress);
+  const card = (p) => {
+    const h = HABITS.find((x) => x.id === p.habit);
+    const words = plantWords(p);
+    const kind = PLANTS[p.habit];
+    return `<li><button class="plant-card" data-plant="${p.habit}">
+      <span class="kicker">${h.icon} ${esc(h.name)}</span>
+      <b>${esc(kind[0].toUpperCase() + kind.slice(1))} · ${esc(p.name)}</b>
+      ${words.days ? `<span>${esc(words.days)}</span>` : ''}
+      ${words.next ? `<span class="hint">${esc(words.next)}</span>` : ''}
+      ${[...p.flowers, ...p.visitors].sort((a, b) => a.on.localeCompare(b.on)).map((a) => arrival(a, p.habit)).join('')}
+    </button></li>`;
+  };
+  app.innerHTML = `
+    <header class="bar"><button class="back" aria-label="Back">←</button></header>
+    <main class="garden-page">
+      <h1>Your garden</h1>
+      <div class="garden-view">${drawGarden(g, 'tall')}</div>
+      <ul class="plant-cards">${g.plants.map(card).join('')}</ul>
+    </main>`;
+  stopHome = liven(app.querySelector('.garden-view'));
+  focusOn(from ? `[data-plant="${from}"]` : 'h1');
+  const open = (id) => habitView(id, () => gardenView(id));
+  app.querySelector('.back').addEventListener('click', () => { home(); focusOn('.garden-link'); });
+  app.querySelector('.garden-view').addEventListener('click', (e) => {
+    const p = e.target.closest('svg.plant');
+    if (p) open(p.dataset.habit);
+  });
+  for (const b of app.querySelectorAll('[data-plant]')) b.addEventListener('click', () => open(b.dataset.plant));
 }
 
 /**
@@ -396,7 +477,8 @@ function run(lessonId, queue, title) {
     const firstTime = lessonId && !progress.done[lessonId];
     const mins = Math.max(1, Math.round((Date.now() - started) / 60000));
     progress = writeJournal(finishPractice(progress, subject.habit, lessonId, new Date(), { title: technique, mins }), journal);
-    ({ progress } = award(progress)); // returns `newly` too: the garden screen shows it here
+    let newly;
+    ({ progress, newly } = award(progress));
     save();
     const h = HABITS.find((x) => x.id === subject.habit);
     const n = currentStreak(progress, new Date(), h.id);
@@ -409,6 +491,7 @@ function run(lessonId, queue, title) {
         <div class="chips">
           ${chip(h.id, `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`)}
         </div>
+        ${arrivals(newly)}
         <section class="feel" aria-labelledby="feel-q">
           <h2 id="feel-q">How do you feel?</h2>
           <div class="feels">${feelsFor(who.feel).map(([value, label]) => `<button class="choice" data-feel="${value}">${esc(label)}</button>`).join('')}</div>
@@ -445,7 +528,8 @@ function run(lessonId, queue, title) {
     const firstTime = lessonId && !progress.done[lessonId];
     const seconds = Math.round((Date.now() - started) / 1000);
     progress = finishSession(progress, lessonId, results, new Date(), { title: title || 'Review', mins: Math.max(1, Math.round(seconds / 60)) });
-    ({ progress } = award(progress)); // returns `newly` too: the garden screen shows it here
+    let newly;
+    ({ progress, newly } = award(progress));
     save();
     const right = results.filter((r) => r.correct).length;
     const perfect = perfectRun();
@@ -475,6 +559,7 @@ function run(lessonId, queue, title) {
           ${chip('fire', STREAK_LABEL, `🔥 ${currentStreak(progress)}`)}
         </div>
         <p class="learned">${Object.keys(progress.cards).length} learned so far · ${right} of ${results.length} ${lessonId ? 'right first try' : 'recalled'}</p>
+        ${arrivals(newly)}
       </main>
       <footer class="cta"><button class="next">Continue</button></footer>`;
     const [rosaEl, lumiEl] = app.querySelectorAll('.duo .hero');
