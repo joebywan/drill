@@ -52,5 +52,5 @@ test('a unit ends in a checkpoint that mixes it', async ({ page }) => {
   await seeded(page, { 'coding:steps-0': true, 'coding:steps-1': true });
   await page.goto('/');
   await page.getByRole('button', { name: 'Checkpoint, current' }).click();
-  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '6');
+  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '7');
 });
