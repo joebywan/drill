@@ -167,6 +167,11 @@ try {
     adb('shell', 'input', 'swipe', at(x0), y, at(x0 + dx), y, '400');
     await sleep(800);
   };
+  const dragTo = async (from, to) => {
+    const at = async (loc) => { const b = await loc.first().boundingBox(); return [origin.x + (b.x + b.width / 2) * dpr, origin.y + (b.y + b.height / 2) * dpr].map((n) => String(Math.round(n))); };
+    adb('shell', 'input', 'swipe', ...await at(from), ...await at(to), '600');
+    await sleep(800);
+  };
   const type = async (text) => { adb('shell', 'input', 'text', text.replaceAll(' ', '%s')); await sleep(800); };
   /** Starts from the home path, skipping placement, with `patch` merged into the saved progress. */
   const seed = async (patch = {}) => {
@@ -205,7 +210,7 @@ try {
     await declinePrompts();
     try {
       const { default: scenario } = await import(`${ROOT}test/phone/${name}.js`);
-      await scenario({ page, device, adb, touch, btn, swipe, type, shot, run, seed, check, checkSound, vibrations, declinePrompts });
+      await scenario({ page, device, adb, touch, btn, swipe, dragTo, type, shot, run, seed, check, checkSound, vibrations, declinePrompts });
     } catch (e) {
       errors.push(`scenario ${name}: ${e.message.split('\n').filter((l) => !/^Call log:|^\s*$/.test(l)).slice(0, 2).join(' ')}`);
       await shot('failed').catch(() => {});

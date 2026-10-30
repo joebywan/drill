@@ -1,6 +1,7 @@
 import { ARROW, answer, fill, holes, kind, parse, run, solve, tileKind } from './program.js';
 import { fennel, demo } from '../cast/fennel.js';
 import { flower } from '../garden/art.js';
+import { dragTile } from '../drag.js';
 import { flourish, move, play } from '../feel.js';
 import { esc } from '../html.js';
 
@@ -85,43 +86,48 @@ export function mount(el, item, { say, done }) {
     return cleanup;
   }
 
-  // build: tap tiles into the holes, in order; tap a filled hole to empty it.
+  // build: tap a tile into the first hole it fits, or drag it into any; tap a filled hole to empty it.
   const kinds = holes(item.program);
   const picks = Array(kinds.length).fill(null);
-  const next = () => picks.indexOf(null);
+  const firstFor = (t) => kinds.findIndex((k, n) => k === tileKind(t) && picks[n] === null);
   tilesEl.innerHTML = item.tiles.map((t, i) => `<button class="choice tile" data-tile="${i}" aria-label="${esc(tileName(t))}">${esc(tileFace(t))}</button>`).join('');
   const paint = (shown = picks, locked = false) => {
     programEl.innerHTML = blocks(item.program, shown, locked);
-    const k = kinds[next()];
-    for (const b of tilesEl.children) b.disabled = locked || tileKind(item.tiles[b.dataset.tile]) !== k;
-    for (const b of programEl.querySelectorAll('[data-hole]')) {
+    for (const b of tilesEl.children) b.disabled = locked || firstFor(item.tiles[b.dataset.tile]) < 0;
+    for (const b of programEl.querySelectorAll('button[data-hole]')) {
       b.addEventListener('click', () => { picks[b.dataset.hole] = null; play('tap'); paint(); });
     }
   };
-  for (const b of tilesEl.children) {
-    b.addEventListener('click', async () => {
-      picks[next()] = item.tiles[b.dataset.tile];
-      play('tap');
-      flourish(b, 'pop');
-      if (next() >= 0) { paint(); return; }
-      paint(picks, true);
-      const result = run(item.level, fill(item.program, picks));
-      say(result.end === 'flower' ? 'Here I go!' : 'Here I go...', 'think');
-      await walk(result);
-      if (gone) return;
-      const right = result.end === 'flower';
-      if (!right) {
-        programEl.innerHTML = blocks(item.program, solve(item), true);
-        programEl.classList.add('shown');
-      }
-      if (!right) say('Here is one way that works.', 'wrong');
-      flourish(programEl, right ? 'pop' : 'shake'); // the runner cues the sound and buzz
-      done(right, item.explain);
+  const put = async (n, tile, b) => {
+    picks[n] = tile;
+    play('tap');
+    flourish(b, 'pop');
+    if (picks.includes(null)) { paint(); return; }
+    paint(picks, true);
+    const result = run(item.level, fill(item.program, picks));
+    say(result.end === 'flower' ? 'Here I go!' : 'Here I go...', 'think');
+    await walk(result);
+    if (gone) return;
+    const right = result.end === 'flower';
+    if (!right) {
+      programEl.innerHTML = blocks(item.program, solve(item), true);
+      programEl.classList.add('shown');
+    }
+    if (!right) say('Here is one way that works.', 'wrong');
+    flourish(programEl, right ? 'pop' : 'shake'); // the runner cues the sound and buzz
+    done(right, item.explain);
+  };
+  const stops = [...tilesEl.children].map((b) => {
+    const tile = item.tiles[b.dataset.tile];
+    b.addEventListener('click', () => put(firstFor(tile), tile, b));
+    return dragTile(b, {
+      targets: () => [...programEl.querySelectorAll('[data-hole]')].filter((h) => kinds[h.dataset.hole] === tileKind(tile)),
+      drop: (h) => put(+h.dataset.hole, tile, b),
     });
-  }
+  });
   paint();
   say(item.prompt, 'think');
-  return cleanup;
+  return () => { stops.forEach((stop) => stop()); cleanup(); };
 }
 
 const tileFace = (t) => (typeof t === 'number' ? `${t}×` : ARROW[t]);
@@ -133,7 +139,7 @@ function blocks(program, picks, locked = true) {
   const hole = (k) => {
     const n = i++;
     const v = picks[n];
-    if (v == null) return `<span role="img" class="block hole${n === picks.indexOf(null) && !locked ? ' fill-next' : ''}" aria-label="Empty ${k === 'count' ? 'count' : 'step'}"></span>`;
+    if (v == null) return `<span role="img" class="block hole${n === picks.indexOf(null) && !locked ? ' fill-next' : ''}"${locked ? '' : ` data-hole="${n}"`} aria-label="Empty ${k === 'count' ? 'count' : 'step'}"></span>`;
     const face = k === 'count' ? String(v) : ARROW[v];
     return locked ? `<span role="img" class="block ${k === 'step' ? 'go' : k} filled" aria-label="${esc(tileName(v))}">${esc(face)}</span>`
       : `<button class="block ${k === 'step' ? 'go' : k} filled" data-hole="${n}" aria-label="${esc(tileName(v))}, tap to take out">${esc(face)}</button>`;

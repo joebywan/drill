@@ -1,3 +1,4 @@
+import { dragTile } from '../drag.js';
 import { esc } from '../html.js';
 import { cue, flourish, move, play, speak, voice } from '../feel.js';
 import { nearestTick, nextTile, onLine, paired, picked, shuffle, tick, tilesOf } from './items.js';
@@ -167,30 +168,34 @@ const TYPES = {
     return () => {};
   },
 
-  /** Tap the tiles in order. A right tile drops into its slot; a wrong one ends it and shows the word. */
+  /** Tap a tile into the first empty slot, or drag it into any. A right tile stays; a wrong one ends it and shows the word. */
   build({ card, choices, item, say, done, hear }) {
     const tiles = tilesOf(item);
     choices.innerHTML = tiles.map((t) => button(t)).join('');
     say(item.prompt, 'think');
     const slots = [...card.querySelectorAll('.slot')];
-    let at = 0;
-    for (const b of choices.children) b.addEventListener('click', () => {
-      if (b.textContent === nextTile(item, at)) {
+    const empty = () => slots.filter((s) => !s.textContent);
+    const put = (slot, b) => {
+      if (b.textContent === nextTile(item, slots.indexOf(slot))) {
         b.disabled = true;
         b.classList.add('used');
-        slots[at].textContent = b.textContent;
-        move(slots[at], [{ transform: 'scale(.6)' }, { transform: 'scale(1)' }], { duration: 180, easing: 'ease-out' });
-        if (++at < item.answer.length) return play('tap');
+        slot.textContent = b.textContent;
+        move(slot, [{ transform: 'scale(.6)' }, { transform: 'scale(1)' }], { duration: 180, easing: 'ease-out' });
+        if (empty().length) return play('tap');
       } else {
         b.classList.add('wrong');
-        slots.slice(at).forEach((s, i) => { s.textContent = item.answer[at + i]; s.classList.add('shown'); });
+        for (const s of empty()) { s.textContent = item.answer[slots.indexOf(s)]; s.classList.add('shown'); }
       }
       for (const x of choices.children) x.disabled = true;
-      const correct = at === item.answer.length;
+      const correct = !card.querySelector('.slot.shown');
       if (correct) cheer(card.querySelector('.slots'), card);
       if (item.speak) hear(item.speak);
       done(correct, item.explain);
+    };
+    const stops = [...choices.children].map((b) => {
+      b.addEventListener('click', () => put(empty()[0], b));
+      return dragTile(b, { targets: empty, drop: (slot) => put(slot, b) });
     });
-    return () => {};
+    return () => stops.forEach((stop) => stop());
   },
 };

@@ -1941,3 +1941,42 @@ test('without the bridge, the ⋯ screen has no note toggle', async ({ page }) =
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
   await expect(page.getByRole('button', { name: /One quiet note/ })).toHaveCount(0);
 });
+
+test('tiles drag into any slot, by default: a Coding hole and a word slot', async ({ page }) => {
+  await page.goto('/');
+  const mount = (path, item) => page.evaluate(async ([path, item]) => {
+    const { mount } = await import(path);
+    document.body.innerHTML = '<div id="t" class="quiz"></div>';
+    window.result = null;
+    window.drill = mount(document.getElementById('t'), item, { say() {}, done(right) { window.result = right; } });
+  }, [path, item]);
+  const drag = async (from, to) => {
+    const a = await from.boundingBox(), b = await to.boundingBox();
+    await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 5 });
+    await page.mouse.up();
+  };
+  const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
+
+  await mount('/src/coding/exercise.js', { id: 'x', type: 'build', level: ['..#*', '.#..', '#...', 'S...'], program: [{ repeat: 3, do: [null, null] }], tiles: ['up', 'right'], prompt: 'p', explain: 'e' });
+  const holes = page.locator('.block.hole');
+  await expect(holes).toHaveCount(2);
+  await drag(tile('Step up'), page.locator('.program').getByRole('img', { name: 'Empty step' }).nth(1)); // second square first
+  await expect(page.getByRole('button', { name: 'Step up, tap to take out' })).toBeVisible();
+  await expect(holes).toHaveCount(1);
+  await expect(page.locator('.tile-ghost')).toHaveCount(0);
+  await drag(tile('Step right'), page.locator('.grid-world')); // let go away from a square: nothing happens
+  await expect(holes).toHaveCount(1);
+  await tile('Step right').click(); // a tap still fills the empty one
+  await expect.poll(() => page.evaluate(() => window.result)).toBe(true);
+
+  await mount('/src/quiz/exercise.js', { id: 'y', type: 'build', prompt: 'p', answer: ['1', '2'], explain: 'e' });
+  await expect(page.locator('.slot')).toHaveCount(2);
+  const pick = (name) => page.locator('.choices').getByRole('button', { name, exact: true });
+  await drag(pick('2'), page.locator('.slot').nth(1));
+  await expect(page.locator('.slot').nth(1)).toHaveText('2');
+  await expect(page.locator('.slot').nth(0)).toBeEmpty();
+  await pick('1').click();
+  await expect.poll(() => page.evaluate(() => window.result)).toBe(true);
+});
