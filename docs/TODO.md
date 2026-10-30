@@ -1,12 +1,12 @@
 # Drill backlog
 
-Not MVP. Ideas agreed in principle, to pick up later.
+Ideas agreed in principle. Most are now built (each section says where); what is genuinely left is
+under **Still open** at the end.
 
 ## Cross-device profiles and friends
 
-Built 2026-10-30 (src/sync/, server/, privacy.html; see CLAUDE.md). Left: deploy it
-(server/DEPLOY.md: Cloudflare account, D1, DNS move), a QR code beside the 6-digit code, and the
-Android wrapper's internet permission if the app should sync.
+**Done** (#73, #81): src/sync/, server/, privacy.html; see CLAUDE.md. Deploying it, the QR code and
+sync inside the Android wrapper are under Still open.
 
 Decided 2026-10-29 as the shape to build, when it's time:
 
@@ -40,10 +40,15 @@ and a self-hosted PocketBase (~€6/month, own backups) were the alternatives.
 
 ## Feel
 
+**Done** (#67, #59, #64).
+
 - More animation and sound throughout lessons and the path. Done: answer pop and shake, petal confetti, the
   path filling as Lumi hops, the next node bobbing, and generated cues for each (`cue()` in feel.js).
 
 ## Android wrapper
+
+**Done** (#78, icon #79): the wrapper, DrillBridge, the widget, the opt-in daily note and the
+release checks. The signing key and Play publishing are under Still open.
 
 WebView shell serving the bundled app from `appassets.androidplatform.net` (as Saffron Road),
 no internet permission, then a JS bridge passing a session summary, a home-screen widget
@@ -83,7 +88,7 @@ the Android wrapper for anything about notifications.
   offered; the ones they finish most come first on the path.
 - Everything stays on the device, can be seen in the habit view, and goes in the file export.
 
-Built in `src/fitting.js` (see CLAUDE.md): the reminders themselves are the Android wrapper's,
+**Done** (#80, on #62's log): built in `src/fitting.js` (see CLAUDE.md): the reminders themselves are the Android wrapper's,
 which calls `window.drill.reminderHour()`, `shouldRemind()` and `noteReminder(outcome)`.
 
 ## Coach voice
@@ -107,6 +112,23 @@ internet permission:
   via ML Kit needs a recent flagship. Small models drift off a character's voice, so the pool
   stays as the fallback either way. Check the current options before choosing.
 
-Shipped: the line pool (`src/cast/voice/*.json`, `say()` in lines.js, `tools/voice-draft.js` for
+**Done** (#68; plan #61). Shipped: the line pool (`src/cast/voice/*.json`, `say()` in lines.js, `tools/voice-draft.js` for
 drafting with Claude at authoring time). The on-device model is still later: Drill has no internet
 permission, and the pool stays the fallback even then.
+
+## Still open
+
+- **Joseph's steps.** Deploy the sync API (`server/DEPLOY.md`: Cloudflare account, the DNS move to
+  Cloudflare, D1, one deploy). Create the Android release key once, put its SHA-256 in
+  `android/release-key.sha256` and add the four `DRILL_KEY*` repo secrets (CLAUDE.md, Android).
+- **Play publishing.** A workflow that uploads the signed `assembleRelease` AAB/APK to a Play
+  track; today the **Android release** workflow only builds and verifies it.
+- **Sync on Android.** The wrapper has no internet permission, so sync is hidden there. Adding it
+  is a decision (and a CI check to change).
+- **QR pairing.** A QR code beside the 6-digit pairing code.
+- **On-device model** for coach lines (Coach voice above). The pool stays the fallback.
+- **Renaming "Drill"** (HABITS.md, the garden): the app has moved from drilling to growing.
+- **Garden seasonal events** that change the whole garden (HABITS.md).
+- **More courses:** JavaScript, TypeScript and TS test-writing are planned (CLAUDE.md); the
+  test-writing one must grade code independently.
+- **Chess promotion picker** (the board always makes a queen; `puzzle.js`).

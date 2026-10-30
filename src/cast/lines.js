@@ -344,7 +344,7 @@ export const INTRO_WORDS = {
     track: 'Track: one tap for a walk, a book, water or time outside.',
   },
   garden: 'Your habits grow plants in a garden, and nothing ever wilts.',
-  privacy: 'Everything stays on this device.',
+  privacy: 'Everything stays on this device. Sync to your other devices is optional, and encrypted first.',
   next: 'Next',
   skip: 'Skip',
   back: 'Back',
