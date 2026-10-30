@@ -154,8 +154,8 @@ test('the log records what was done, and keeps a year', () => {
   p = finishPractice(p, 'calm', null, day(1), { title: 'Breathing', mins: 2 });
   p = noteFeel(p, 'calm', 'calmer');
   assert.deepEqual(p.log, [
-    { date: '2026-10-01', habit: 'learn', title: 'Forks', mins: 6, right: 1, of: 2 },
-    { date: '2026-10-01', habit: 'calm', title: 'Breathing', mins: 2, feel: 'calmer' },
+    { date: '2026-10-01', hour: 12, habit: 'learn', title: 'Forks', mins: 6, right: 1, of: 2 },
+    { date: '2026-10-01', hour: 12, habit: 'calm', title: 'Breathing', mins: 2, feel: 'calmer' },
   ]);
   const later = finishPractice(p, 'calm', null, new Date(2027, 9, 2, 9));
   assert.deepEqual(later.log.map((e) => e.date), ['2027-10-02'], 'sessions over a year old are dropped');
@@ -182,7 +182,7 @@ test('Reflect lines are kept by day, blanks left out, and a second visit adds to
   assert.equal(writeJournal(q, {}, now), q);
   assert.equal(writeJournal(q, null, now), q);
   const done = writeJournal(finishPractice(q, 'reflect', 'reflect:reflect1', now, { title: 'Reflect', mins: 1 }), { good: 'A walk' }, now);
-  assert.deepEqual(done.log, [{ date: '2026-10-30', habit: 'reflect', title: 'Reflect', mins: 1 }]);
+  assert.deepEqual(done.log, [{ date: '2026-10-30', hour: 20, habit: 'reflect', title: 'Reflect', mins: 1 }]);
   assert.equal(done.habits.reflect.count, 1);
   assert.deepEqual(migrate(roundTrip(done)), done);
 });

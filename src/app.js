@@ -7,7 +7,8 @@ import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
 import { reducedMotion } from './cast/kit.js';
-import { CALM_SOUNDS, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
+import { CALM_SOUNDS, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
+import { moment } from './cast/voice.js';
 import { buzz, calmPref, chime, move, play, setPref, setSound, soundOn } from './feel.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
@@ -71,6 +72,25 @@ let habitShown = (() => {
 function showHabit(id) {
   habitShown = id;
   try { localStorage.setItem(HABIT_KEY, id); } catch { /* lasts the visit */ }
+}
+
+// The shown habit's coach greets home in its own voice (say() in lines.js). Kept per habit, light
+// and day so a re-render doesn't change it; what was said lately and the day of the last dare
+// are kept in storage, so lines don't repeat and a dare comes at most once a day.
+const SAID = 'drill.said';
+const greeted = new Map();
+function greeting(h) {
+  const { coach: who, state, facts } = moment(progress, h);
+  const key = `${h.id} ${state.light} ${state.today}`;
+  if (!greeted.has(key)) {
+    let kept = {};
+    try { kept = JSON.parse(localStorage.getItem(SAID)) || {}; } catch { /* private mode or unreadable */ }
+    const recent = Array.isArray(kept.recent) ? kept.recent : [];
+    const said = say(who, { ...state, daredToday: kept.dared === state.today }, facts, Math.random, recent);
+    try { localStorage.setItem(SAID, JSON.stringify({ recent: [...recent, said.line].slice(-6), dared: said.dare ? state.today : kept.dared })); } catch { /* lasts the visit */ }
+    greeted.set(key, `<p class="said welcome greeting${said.dare ? ' dare' : ''}"><b>${esc(VOICES[who].name)}</b> ${esc(said.text)}</p>`);
+  }
+  return greeted.get(key);
 }
 
 const ROW = 112; // px from one node to the next; the drawn path assumes it
@@ -150,7 +170,7 @@ function home(arrived = null, newly = []) {
         ${habits().filter((h) => !h.hidden).map(habitTab).join('')}
         <button class="path-tab add-tab" data-add aria-label="Add a habit">${esc(LOG_WORDS.addTab)}</button>
       </nav>
-      ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick.name) : line('welcome'))}</p>` : ''}
+      ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick.name) : line('welcome'))}</p>` : greeting(shownHabit)}
       ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
         : TIMINGS[habitShown] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
       ${offer ? `<p class="offer"><button data-place>${esc(offer.placement.offer)}</button><button class="dismiss" data-dismiss aria-label="Dismiss">×</button></p>` : ''}
@@ -570,12 +590,14 @@ function run(lessonId, queue, title) {
   const quit = () => { cleanup(); sessionCoach.stop(); };
   $('.close').addEventListener('click', () => { quit(); home(); focusOn('.cta .next'); });
 
-  // Tapping Rosa: a hop and a line, then back to the question.
+  // Tapping Rosa: a hop and a line (not one of the last few), then back to the question.
   let aside;
+  let heard = [];
   $('.who').addEventListener('click', () => {
     play('tap');
     sessionCoach.hop();
-    bubble.textContent = line('tapped', Math.random(), who.lines);
+    heard = [...heard, line('tapped', Math.random(), who.lines, heard)].slice(-3);
+    bubble.textContent = heard.at(-1);
     clearTimeout(aside);
     aside = setTimeout(() => { bubble.textContent = said; }, 2500);
   });

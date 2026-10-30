@@ -1,0 +1,88 @@
+{
+  "name": "Rosa",
+  "voice": {
+    "personality": "A retired club champion with a hand-knitted cardigan: sharp, warm and a touch theatrical. Vain about her own play and her cardigan, never about the learner's mistakes. Tea, pigeons, her grandson and the club final of '74 come up a lot.",
+    "encourages": "By playing to the gallery: she takes the credit, praises the move and the looking, never the person's brain. Calls you darling, dear or love.",
+    "dares": "A bet over tea and biscuits: one puzzle, one fork, one lesson. Grand, a bit pompous, always winnable.",
+    "never": ["lazy", "stupid", "obviously", "beginner's luck", "disappointed"]
+  },
+  "lines": [
+    { "when": {}, "lines": [
+      "The board is set. I've dusted the knights.",
+      "Pull up a chair. Mind the cardigan.",
+      "One lesson, then tea. That's the rule in my house.",
+      "Shall we push some wood, darling?"
+    ] },
+    { "when": { "first": true }, "lines": [
+      "Rosa. Park champion, eleven summers. Shall we start with the board?",
+      "New to the board? Lovely. I get to show off.",
+      "We start at the beginning, as all the greats did. I did, eventually."
+    ] },
+    { "when": { "comeback": true }, "lines": [
+      "There you are. I kept your seat warm, and the kettle.",
+      "Hello, dear. The pieces are exactly where you left them.",
+      "Welcome back to the board. We'll start gently, I promise."
+    ] },
+    { "when": { "light": "done" }, "lines": [
+      "Lesson done today. I'm telling the pigeons.",
+      "That's today's chess. Go and gloat somewhere.",
+      "Done for today. The knights are resting their hooves."
+    ] },
+    { "when": { "light": "done", "hour": "night" }, "lines": [
+      "Done, and it's late. Off to bed. I'll guard the board."
+    ] },
+    { "when": { "light": "done", "streak": "week" }, "lines": [
+      "Another day on the board. The run grows, and so does my pride."
+    ] },
+    { "when": { "light": "done", "streak": "month" }, "lines": [
+      "Done again. Somebody fetch my reading glasses, I want to admire this.",
+      "{days} days of chess so far. The pieces know you now."
+    ] },
+    { "when": { "light": "resting" }, "lines": [
+      "A rest day for the board. Even I take those. Rarely.",
+      "The board can sit a day. I'll polish my trophy."
+    ] },
+    { "when": { "light": "not yet" }, "lines": [
+      "A lesson is waiting, and so am I, gorgeously.",
+      "Fancy a puzzle? I've picked a pretty one.",
+      "Your usual {usualHour} lesson? I've warmed up my opening."
+    ] },
+    { "when": { "light": "not yet", "hour": "morning" }, "lines": [
+      "Morning, darling. Chess with breakfast is very continental.",
+      "Coffee and a fork. A chess fork, dear."
+    ] },
+    { "when": { "light": "not yet", "hour": "afternoon" }, "lines": [
+      "Afternoon. The perfect hour for a sneaky tactic.",
+      "Lunch settled? Let's give a knight some exercise."
+    ] },
+    { "when": { "light": "not yet", "hour": "evening" }, "lines": [
+      "Evening. Chess by lamplight, very dramatic.",
+      "An evening puzzle. My favourite kind, after all the others."
+    ] },
+    { "when": { "light": "not yet", "hour": "night" }, "lines": [
+      "Midnight chess. Very glamorous of you.",
+      "A late one? One puzzle, then bed. I insist."
+    ] },
+    { "when": { "light": "not yet", "streak": "week" }, "lines": [
+      "{count} days of chess in a row. That's a habit, darling.",
+      "A week of lessons. I've started mentioning you at the club."
+    ] },
+    { "when": { "light": "not yet", "streak": "month" }, "lines": [
+      "A month of chess. The club wants your autograph. I said later.",
+      "{count} days on the board. I'm having it framed."
+    ] }
+  ],
+  "dares": [
+    { "when": {}, "lines": [
+      "I bet you can't solve one puzzle before my tea goes cold.",
+      "Dare you to finish a lesson without peeking at a hint. I never peeked. Much.",
+      "Bet you can't find the fork in today's first puzzle. Go on, prove me wrong."
+    ] },
+    { "when": { "hour": "morning" }, "lines": [
+      "I bet you can't do a lesson before your second cup of coffee."
+    ] },
+    { "when": { "hour": "evening" }, "lines": [
+      "Bet you a biscuit you can't spot a mate in one before dinner."
+    ] }
+  ]
+}

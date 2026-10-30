@@ -1,0 +1,88 @@
+{
+  "name": "Mira",
+  "voice": {
+    "personality": "A ring-tailed lemur with big amber eyes who loves a sunny branch and a long look at the trees. Playful and easy, a little dreamy, fond of mangoes and tail swishes.",
+    "encourages": "By inviting, never correcting: come and sit on the branch, look at something far away, roll your shoulders. Never a word about how long anyone has been on a screen.",
+    "dares": "A game of spotting: three green things, a cloud changing shape, something further than her mango tree.",
+    "never": ["!", "screen time", "should", "posture", "too long"]
+  },
+  "lines": [
+    { "when": {}, "lines": [
+      "I'm on my sunny branch. There's room for two.",
+      "Big eyes, soft gaze. Want to try it with me?",
+      "The trees are doing their swaying. Come and watch.",
+      "A little stretch and a long look. That's my whole plan."
+    ] },
+    { "when": { "first": true }, "lines": [
+      "Hi, I'm Mira. I rest my eyes on faraway trees.",
+      "First one? Look far, roll your shoulders, and that's it.",
+      "Hello. I'll show you my favourite way to look at nothing."
+    ] },
+    { "when": { "comeback": true }, "lines": [
+      "Oh, hello. My branch is still sunny. Hop up.",
+      "Hi again. The trees are right where we left them.",
+      "Welcome. Let's start with one long look out the window."
+    ] },
+    { "when": { "light": "done" }, "lines": [
+      "Rested today. I'm going back to my sunbeam.",
+      "Eyes rested, tail swished. Lovely.",
+      "That's today's stretch. The mangoes salute you."
+    ] },
+    { "when": { "light": "done", "hour": "night" }, "lines": [
+      "Done, and the moon's up. Goodnight from the branch."
+    ] },
+    { "when": { "light": "done", "streak": "week" }, "lines": [
+      "Another one done. The branch gets comfier every day."
+    ] },
+    { "when": { "light": "done", "streak": "month" }, "lines": [
+      "A month of this, and done again. I'm very pleased.",
+      "{days} days of long looks with me. Lovely company."
+    ] },
+    { "when": { "light": "resting" }, "lines": [
+      "A rest day. I'm napping in the sun about it.",
+      "Resting suits a lemur. It suits you too."
+    ] },
+    { "when": { "light": "not yet" }, "lines": [
+      "A little pause is here when you want one.",
+      "Your eyes might like a look at something far away.",
+      "Your usual {usualHour} stretch, whenever suits."
+    ] },
+    { "when": { "light": "not yet", "hour": "morning" }, "lines": [
+      "Morning. The sun just reached my branch.",
+      "Good morning. A stretch and a long look to start?"
+    ] },
+    { "when": { "light": "not yet", "hour": "afternoon" }, "lines": [
+      "Afternoon. A lovely time for a long look at the sky.",
+      "Midday sun, warm branch. Fancy a stretch?"
+    ] },
+    { "when": { "light": "not yet", "hour": "evening" }, "lines": [
+      "Evening. The trees are going gold.",
+      "A slow stretch as the light goes soft?"
+    ] },
+    { "when": { "light": "not yet", "hour": "night" }, "lines": [
+      "Night. Even my tail is sleepy. One easy stretch?",
+      "The moon's up. Big eyes, soft gaze, then bed."
+    ] },
+    { "when": { "light": "not yet", "streak": "week" }, "lines": [
+      "{count} days in a row. My tail is doing a happy swish.",
+      "A week of long looks. You and the trees are friends now."
+    ] },
+    { "when": { "light": "not yet", "streak": "month" }, "lines": [
+      "A month of pauses. I'm naming a branch after you.",
+      "{count} days in a row. The mango tree is impressed."
+    ] }
+  ],
+  "dares": [
+    { "when": {}, "lines": [
+      "I bet you can't spot three green things out the window.",
+      "Dare you to roll your shoulders slower than a sleepy lemur.",
+      "Bet you can't find something further away than my mango tree."
+    ] },
+    { "when": { "hour": "afternoon" }, "lines": [
+      "I dare you to watch one cloud until it changes shape."
+    ] },
+    { "when": { "hour": "morning" }, "lines": [
+      "Bet you can't find the sun before I do. I always find it first."
+    ] }
+  ]
+}

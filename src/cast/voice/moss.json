@@ -1,0 +1,90 @@
+{
+  "name": "Moss",
+  "voice": {
+    "personality": "A capybara: unhurried and warm, with a dry little sense of humour. Sits in warm water, lets birds land on its head, has nowhere to be. Speaks in short, slow sentences.",
+    "encourages": "By making it small and easy: a few slow breaths, whenever suits. Approves of resting, because resting is what capybaras do best.",
+    "dares": "A sleepy, deadpan bet: three slow breaths, one long sigh, sitting still like a capybara. Never about speed.",
+    "never": ["!", "hurry", "push", "grind", "crush"]
+  },
+  "lines": [
+    { "when": {}, "lines": [
+      "Hello. I'm sitting. You're welcome to join.",
+      "The water's warm. Metaphorically.",
+      "A few slow breaths, whenever suits.",
+      "No plans here. Just breathing, mostly."
+    ] },
+    { "when": { "first": true }, "lines": [
+      "Hello, I'm Moss. I breathe slowly for a living.",
+      "First time? There's nothing to get right. I checked.",
+      "Pull up a rock. We'll start with one slow breath."
+    ] },
+    { "when": { "comeback": true }, "lines": [
+      "Hello again. The pond is just as you left it.",
+      "Ah, there you are. I was sitting. I'm always sitting.",
+      "Welcome. We can start small, as small as you like."
+    ] },
+    { "when": { "light": "done" }, "lines": [
+      "That's today's calm. I'll keep sitting, for both of us.",
+      "Done. A bird has landed on my head. I think it approves.",
+      "All done. The rest of the day can be as it is."
+    ] },
+    { "when": { "light": "done", "hour": "night" }, "lines": [
+      "Done, and it's late. Sleep well. I'll float here."
+    ] },
+    { "when": { "light": "done", "streak": "week" }, "lines": [
+      "Another calm day. The pond approves."
+    ] },
+    { "when": { "light": "done", "streak": "month" }, "lines": [
+      "Done again. A month of this. I'm very relaxed about it.",
+      "{days} days of slow breaths. That's a lot of sitting."
+    ] },
+    { "when": { "light": "resting" }, "lines": [
+      "A rest day. I approve. I'm an expert.",
+      "Resting is a thing capybaras do very well. Join me."
+    ] },
+    { "when": { "light": "not yet" }, "lines": [
+      "A little calm is here when you want it.",
+      "Three slow breaths, whenever you're ready.",
+      "Your usual {usualHour} breathing, whenever you like."
+    ] },
+    { "when": { "light": "not yet", "hour": "morning" }, "lines": [
+      "Morning. The pond is still and so am I.",
+      "Good morning. Breathe in, and the day can wait a moment."
+    ] },
+    { "when": { "light": "not yet", "hour": "afternoon" }, "lines": [
+      "Afternoon. A good time to sit like a capybara.",
+      "Halfway through the day. A slow breath might be nice."
+    ] },
+    { "when": { "light": "not yet", "hour": "evening" }, "lines": [
+      "Evening. The water's warm and the sky is going soft.",
+      "A slow evening breath. My favourite kind."
+    ] },
+    { "when": { "light": "not yet", "hour": "night" }, "lines": [
+      "Late now. A few slow breaths before sleep, perhaps.",
+      "Night. Even the frogs are winding down."
+    ] },
+    { "when": { "light": "not yet", "streak": "week" }, "lines": [
+      "{count} days of calm in a row. Very steady of you.",
+      "A week of slow breathing. The birds have noticed."
+    ] },
+    { "when": { "light": "not yet", "streak": "month" }, "lines": [
+      "A month of calm. I've started telling the ducks about you.",
+      "{count} days in a row. I'd clap, but I'm comfortable."
+    ] }
+  ],
+  "dares": [
+    { "when": {}, "lines": [
+      "I bet you can't breathe out slower than I do. I'm very slow.",
+      "Dare you to sit as still as a capybara for one breath. Birds may land."
+    ] },
+    { "when": { "hour": "morning" }, "lines": [
+      "I bet you can't do three slow breaths before lunch."
+    ] },
+    { "when": { "hour": "evening" }, "lines": [
+      "Bet you can't do one long sigh before dinner. A proper one."
+    ] },
+    { "when": { "hour": "night" }, "lines": [
+      "I dare you to do three slow breaths in bed. I won't tell anyone."
+    ] }
+  ]
+}

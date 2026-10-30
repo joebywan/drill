@@ -8,7 +8,7 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            `last` is the local date (YYYY-MM-DD) of the habit's last finished session;
  *            `forgiven` lists the dates a missed day was forgiven; `days` counts every date with a
  *            session, ever (the log only keeps a year), and only goes up: the garden grows from it
- *   log      [{ date, habit, title, mins, right?, of?, feel? }]  — every finished session,
+ *   log      [{ date, hour?, habit, title, mins, right?, of?, feel? }]  — every finished session,
  *            oldest first, for the habit view: what was done each day
  *   done     { lessonId: true }
  *   cards    { itemKey: FSRS card }  — every item ever answered, scheduled for review
@@ -155,7 +155,7 @@ const LOG_DAYS = 366;
 function logged(progress, entry, now) {
   const date = today(now);
   const kept = (progress.log || []).filter((e) => daysBetween(e.date, date) < LOG_DAYS);
-  return [...kept, { date, ...entry }];
+  return [...kept, { date, hour: now.getHours(), ...entry }];
 }
 
 const habitStreak = (progress, habit) => progress.habits[habit] || emptyStreak();

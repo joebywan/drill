@@ -64,6 +64,16 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - `src/cast/` — the characters (`kit.js`, `rosa.js`, `lumi.js`), `coach.js` (a character that
   reacts in place) and `lines.js` (everything the cast says; the guardrail tests lint it).
   `tools/cast.html` renders every mood at 200/96/48 px, light and dark.
+- **Coach voice:** each coach's voice sheet and line pools are data, one file each in
+  `src/cast/voice/<coach>.json` (`voice`: personality, how they encourage and dare, `never` words;
+  `lines` and `dares`: `{ when, lines }` pools keyed by habit, streak band, hour band, light, and the
+  moments `first`/`comeback`). `say(coach, state, facts, rng, recent)` in lines.js picks the most
+  specific line (filled slots like `{usualHour}` count as more specific; a line with an unknown fact
+  is skipped), never one of `recent`, and sometimes a dare: once a day, only while the habit isn't
+  done today, never first or after a gap. `moment()` in `src/cast/voice.js` reads state and facts
+  from progress (log entries carry `hour`). Home's greeting uses it. New lines are drafted by hand
+  with `tools/voice-draft.js` (Claude API, `ANTHROPIC_API_KEY`) into `drafts/voice/` for review,
+  never into the pool; the guardrail tests lint every pool line and dare.
 - `src/habitview.js` — pure helpers and the wording for the habit view (`habitView()` in app.js),
   opened from the "N-day streak · See your week" line over home's path (or a plant). Days without a session are plain, never missed.
 - `src/calm/` — the Calm practice subject. `routines.js` is pure: each routine is a list of timed
