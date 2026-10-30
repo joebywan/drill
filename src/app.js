@@ -1,7 +1,7 @@
 import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
 import { award, garden, moreArrived, plantWords } from './garden/model.js';
 import { PLANTS, animateVisitor, drawGarden, flower, plant, sway, visitor } from './garden/art.js';
-import { emptyProgress, unitsOf, finishPractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
+import { emptyProgress, unitsOf, finishPractice, leavePractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
@@ -528,6 +528,7 @@ function run(lessonId, queue, title) {
   const who = queue[0].subject.coach; // the session's coach and their lines
   const did = []; // what each practice item did, for its end screen ("3 breaths")
   let journal = null; // what a Reflect item wrote, for the journal (never the log)
+  let reached = { step: 0, of: null }; // how far a practice routine got, kept in `left` if it is closed part-way
   const results = [];
   let at = 0;
   let streak = 0; // right answers in a row, this session
@@ -555,7 +556,12 @@ function run(lessonId, queue, title) {
   const sessionCoach = coach($('.who'), who.draw);
   let said = '';
   const quit = () => { cleanup(); sessionCoach.stop(); };
-  $('.close').addEventListener('click', () => { quit(); home(); focusOn('.cta .next'); });
+  $('.close').addEventListener('click', () => {
+    quit();
+    if (practice) { progress = leavePractice(progress, queue[0].subject.habit, lessonId, reached.step, reached.of, new Date(), { title: queue[0].topic }); save(); }
+    home();
+    focusOn('.cta .next');
+  });
 
   // Tapping Rosa: a hop and a line, then back to the question.
   let aside;
@@ -603,6 +609,7 @@ function run(lessonId, queue, title) {
       coach: who,
       help: who.help,
       timings: progress.timings?.[entry.subject.habit],
+      reached: (step, of) => { reached = { step, of }; },
       done: (correct, text = '', kept = null) => {
         // A practice item goes straight on: its own buttons were the Continue.
         if (practice) { if (text) did.push(text); if (kept) journal = kept; at++; return step(); }

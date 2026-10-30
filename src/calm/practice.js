@@ -92,13 +92,14 @@ function scanning(el, item, ctx) {
 }
 
 /** 5-4-3-2-1: tap a bubble for each thing noticed. Self-paced, so no clock and no Pause. */
-function grounding(el, item, { say, done }) {
+function grounding(el, item, { say, done, reached }) {
   const senses = course.senses;
   let at = 0;
   let noticed = 0;
   let timer;
   const show = () => {
     const s = senses[at];
+    reached?.(at, senses.length);
     el.innerHTML = `<div class="ground">
         <p class="topic">Step ${at + 1} of ${senses.length}</p>
         <h2>${esc(s.prompt)}</h2>

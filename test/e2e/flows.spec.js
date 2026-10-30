@@ -312,6 +312,23 @@ test('a Calm breathing session keeps its own streak, and asks how you feel', asy
   await expect(page.getByRole('button', { name: `Continue · ${first.title}` })).toBeVisible();
 });
 
+test('a Calm practice closed part-way is kept in `left`, with how far it got, and never logged', async ({ page }) => {
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Calm').click();
+  await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  // 4 in, 8 out: 13 s in is breath 2's in-breath, the third of six phases.
+  await page.clock.runFor(13_000);
+  await expect(page.getByText('Breath 2 of 3')).toBeVisible();
+  await page.getByRole('button', { name: 'Stop' }).click();
+  await expect(tab(page, 'Calm')).toHaveAccessibleName('Calm'); // no streak from a practice left part-way
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
+  expect(saved.log).toEqual([]);
+  expect(saved.left).toEqual([{ date: expect.any(String), hour: expect.any(Number), habit: 'calm', lessonId: 'calm:breathe1', title: 'Breathing', step: 2, of: 6 }]);
+  await expect(page.getByRole('button', { name: 'Continue · The long out-breath' })).toBeVisible();
+});
+
 test('your own timings: Calm breathes in for 6 when set, saves at once, and goes back to defaults', async ({ page }) => {
   await page.clock.install();
   await firstVisit(page);

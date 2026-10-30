@@ -44,7 +44,8 @@ export const pauseBar = '<div class="choices"><button class="choice practice-pau
  * the page pauses it too, so it never finishes unattended. `draw(phase, index, say)` shows each
  * phase and returns its animations, which pause and play with the clock. `paused` is the coach's
  * line while paused. Any `.count` in `el` shows the seconds left in the phase, or for a phase with
- * `reps`, which rep it is on (see countOf). Ends with
+ * `reps`, which rep it is on (see countOf). `ctx.reached(index, phases.length)` hears each phase
+ * start, so a routine closed part-way can say how far it got. Ends with
  * `ctx.done(null, summary)`. Returns the cleanup function.
  */
 export function routine(el, phases, ctx, draw, summary, paused) {
@@ -55,7 +56,7 @@ export function routine(el, phases, ctx, draw, summary, paused) {
   const say = (text, mood) => { said = text; ctx.say(text, mood); };
   const pause = el.querySelector('.practice-pause');
   const clock = timeline(phases, {
-    onPhase: (p, i) => { now = p; anims = draw(p, i, say).filter(Boolean); },
+    onPhase: (p, i) => { now = p; ctx.reached?.(i, phases.length); anims = draw(p, i, say).filter(Boolean); },
     onTick: (s) => { const c = el.querySelector('.count'); if (c) c.textContent = countOf(now, s); },
     onEnd: () => { cleanup(); ctx.done(null, summary); },
   });

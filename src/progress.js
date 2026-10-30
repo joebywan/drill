@@ -8,8 +8,13 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            `last` is the local date (YYYY-MM-DD) of the habit's last finished session;
  *            `forgiven` lists the dates a missed day was forgiven; `days` counts every date with a
  *            session, ever (the log only keeps a year), and only goes up: the garden grows from it
- *   log      [{ date, habit, title, mins, right?, of?, feel? }]  — every finished session,
- *            oldest first, for the habit view: what was done each day
+ *   log      [{ date, hour?, habit, title, mins, right?, of?, feel? }]  — every finished session,
+ *            oldest first, for the habit view: what was done each day. `hour` is the local hour
+ *            (0–23) it was logged, absent on entries from before version 9
+ *   left     [{ date, hour, habit, lessonId, title, step, of }]  — practices closed part-way, oldest
+ *            first: `step` phases of `of` were done (`of` null when closed on the teach card, before the
+ *            routine was built). Never in the log, so streaks, days and the habit view don't see them.
+ *            Kept a year, like the log
  *   done     { lessonId: true }
  *   cards    { itemKey: FSRS card }  — every item ever answered, scheduled for review
  *   start    { subjectId: unitTitle | null }  — where a subject's optional placement question put
@@ -27,10 +32,10 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            over the path's defaults. Untrusted like the rest: `timed()` ignores a value out of range
  *   version  the shape's version; `migrate()` brings any older shape up to VERSION
  */
-export const VERSION = 8;
+export const VERSION = 9;
 export const LEARN = 'learn';
 const emptyStreak = () => ({ count: 0, last: null, forgiven: [], days: 0 });
-export const emptyProgress = () => ({ version: VERSION, habits: { [LEARN]: emptyStreak() }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, tracked: [], timings: {} });
+export const emptyProgress = () => ({ version: VERSION, habits: { [LEARN]: emptyStreak() }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, tracked: [], timings: {}, left: [] });
 
 const isObject = (v) => v != null && typeof v === 'object' && !Array.isArray(v);
 const isDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
@@ -49,9 +54,13 @@ const JOURNAL_KEYS = ['good', 'learned', 'tomorrow'];
 const isJournal = (j) => isObject(j) && Object.entries(j).every(([date, day]) =>
   isDate(date) && isObject(day) && JOURNAL_KEYS.every((k) => day[k] == null || typeof day[k] === 'string'));
 
+const isHour = (h) => Number.isInteger(h) && h >= 0 && h <= 23;
 // `was` is the streak before a one-tap log, kept so the same day's Undo can put it back (unlogToday).
 const isEntry = (e) => isObject(e) && isDate(e.date) && typeof e.habit === 'string' && typeof e.title === 'string'
-  && (e.was === undefined || e.was === null || !!readStreak(e.was));
+  && (e.hour === undefined || isHour(e.hour)) && (e.was === undefined || e.was === null || !!readStreak(e.was));
+const isLeft = (e) => isObject(e) && isDate(e.date) && isHour(e.hour) && typeof e.habit === 'string' && typeof e.title === 'string'
+  && (e.lessonId === null || typeof e.lessonId === 'string') && (e.of === null || (Number.isInteger(e.of) && e.of > 0))
+  && Number.isInteger(e.step) && e.step >= 0 && e.step <= (e.of ?? 0);
 
 // Ids go into attributes and storage keys, so they are plain; names are the learner's own text.
 const NAME_MAX = 30;
@@ -69,7 +78,8 @@ const isTracked = (t) => isObject(t) && typeof t.id === 'string' && /^[a-z0-9-]{
  * was one string, chess's (the only subject that asked), and becomes { chess: it }; up to version 5
  * nothing was `tracked`, which starts empty; up to version 6 there was no first-visit intro, so
 `picked` becomes [] and someone who already used Drill never sees it; up to version 7 there were
- * no timings of the learner's own, so `timings` becomes {}.
+ * no timings of the learner's own, so `timings` becomes {}; up to version 8 no session had its hour
+ * and nothing was `left`, which becomes [].
  * Unknown fields are kept, so a file from a newer build loses nothing.
  */
 export function migrate(raw) {
@@ -109,7 +119,10 @@ export function migrate(raw) {
   if (picked != null && !(Array.isArray(picked) && picked.every((id) => typeof id === 'string' && /^[a-z0-9-]{1,40}$/.test(id)) && new Set(picked).size === picked.length)) return null;
   // Version 8: the learner's own timings. Not an object means none; each value is checked where it is used.
   const timings = isObject(raw.timings) ? raw.timings : {};
-  return { ...kept, ...(start && { start }), ...(picked && { picked }), version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal, garden, tracked, timings };
+  // Version 9: practices closed part-way (none before).
+  const left = raw.left ?? [];
+  if (!Array.isArray(left) || !left.every(isLeft)) return null;
+  return { ...kept, ...(start && { start }), ...(picked && { picked }), version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal, garden, tracked, timings, left };
 }
 
 /**
@@ -151,11 +164,11 @@ export function gap(streak, date) {
 // ponytail: the log keeps every session for a year; summarise older days if it ever grows large.
 const LOG_DAYS = 366;
 
-/** Adds a session to the log and drops entries older than a year. */
-function logged(progress, entry, now) {
+/** Adds `entry` to `list` (the log, or `left`) with today's date and hour, and drops entries older than a year. */
+function logged(list, entry, now) {
   const date = today(now);
-  const kept = (progress.log || []).filter((e) => daysBetween(e.date, date) < LOG_DAYS);
-  return [...kept, { date, ...entry }];
+  const kept = (list || []).filter((e) => daysBetween(e.date, date) < LOG_DAYS);
+  return [...kept, { date, hour: now.getHours(), ...entry }];
 }
 
 const habitStreak = (progress, habit) => progress.habits[habit] || emptyStreak();
@@ -188,7 +201,7 @@ export function finishSession(progress, lessonId, results, now = new Date(), abo
   return {
     ...progress,
     habits: { ...progress.habits, [LEARN]: practised(progress, LEARN, now, !lessonId) },
-    log: logged(progress, entry, now),
+    log: logged(progress.log, entry, now),
     done: lessonId ? { ...progress.done, [lessonId]: true } : progress.done,
     cards,
   };
@@ -203,9 +216,18 @@ export function finishPractice(progress, habit, lessonId, now = new Date(), abou
   return {
     ...progress,
     habits: { ...progress.habits, [habit]: practised(progress, habit, now, true) },
-    log: logged(progress, { habit, title: about.title || 'Practice', mins: about.mins || 0 }, now),
+    log: logged(progress.log, { habit, title: about.title || 'Practice', mins: about.mins || 0 }, now),
     done: lessonId ? { ...progress.done, [lessonId]: true } : progress.done,
   };
+}
+
+/**
+ * A practice closed part-way, `step` phases of `of` done (`of` null when it was closed before the
+ * routine began). Goes in `left`, never the log: it keeps no streak and counts no day.
+ * `about` is { title } as for finishPractice.
+ */
+export function leavePractice(progress, habit, lessonId, step, of, now = new Date(), about = {}) {
+  return { ...progress, left: logged(progress.left, { habit, lessonId, title: about.title || 'Practice', step, of }, now) };
 }
 
 /**
