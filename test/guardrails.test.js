@@ -4,13 +4,13 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, streakLine } from '../src/habitview.js';
 import { helpHtml } from '../src/practice/kit.js';
 import { subjects } from '../src/subjects.js';
-import { ACCURACY, BREAK_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
+import { ACCURACY, BREAK_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, KAEDE_LINES, KAEDE_HEADLINES, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
 // Praise the process, never the person: no ability words. No absence, loss or guilt either.
 const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intelligen\w*|born to)\b/i;
 const LOSS = /\b(lose|losing|lost|gone|we miss you|missed you|sad|disappoint\w*|abandon\w*|forg[eo]t\w*|broke(n)?|break(ing)? your|come back (soon|to us|tomorrow)|where were you|absen\w*|guilt\w*|shame)\b/i;
 
-const lines = [LINES, HEADLINES, CALM_LINES, BREAK_LINES, REFLECT_LINES, MOVE_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
+const lines = [LINES, HEADLINES, KAEDE_LINES, KAEDE_HEADLINES, CALM_LINES, BREAK_LINES, REFLECT_LINES, MOVE_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
 const labels = [...ACCURACY, ...PACE].map(([, label]) => label).concat(STREAK_LABEL, QUIET_DAY, REST_DAY, NO_STREAK, FIRST_SQUARE, streakLine(0, false), streakLine(0, true), streakLine(14, true));
 
 test('end-screen headlines and chip labels pass the same lint', () => {
@@ -38,6 +38,13 @@ test('every way a session ends has a headline, and chip bands cover every value'
   assert.equal(paceLabel(5), 'BLAZING');
   assert.equal(paceLabel(10), 'SWIFT');
   assert.equal(paceLabel(600), 'STEADY');
+});
+
+test("a Learn coach's own lines cover every kind the lesson runner and end screen ask for", () => {
+  for (const [kind, list] of Object.entries(LINES)) if (!['repair', 'welcome', 'lumi'].includes(kind)) assert.ok(KAEDE_LINES[kind]?.length, `Kaede: ${kind}`);
+  for (const kind of Object.keys(HEADLINES)) assert.ok(KAEDE_HEADLINES[kind]?.length, `Kaede headline: ${kind}`);
+  for (const s of subjects.filter((x) => x.kind === 'learn' && x.coach.lines))
+    for (const kind of [...CELEBRATIONS, 'correct', 'wrong', 'tapped']) assert.ok(s.coach.lines[kind]?.length, `${s.id}: ${kind}`);
 });
 
 test('no character line praises ability', () => {

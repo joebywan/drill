@@ -144,3 +144,30 @@ export function petals() {
   const timer = setTimeout(() => layer.remove(), 3000);
   return () => { clearTimeout(timer); layer.remove(); };
 }
+
+/**
+ * Speech, for a course in another language: the browser's own voice for `lang` ('ja-JP'), if it
+ * has one. `voice(lang)` is null without one, or with Sound muted: then the screen shows the
+ * written reading instead, and nothing waits on speech. Voices load late in Chrome, so asking
+ * once here warms the list before the first lesson needs it.
+ */
+const synth = () => (typeof speechSynthesis === 'undefined' ? null : speechSynthesis);
+try { synth()?.getVoices(); } catch { /* no speech */ }
+export const voice = (lang) => {
+  if (!soundOn()) return null;
+  try {
+    const voices = synth()?.getVoices() || [];
+    const norm = (l) => l.replace('_', '-').toLowerCase();
+    return voices.find((v) => norm(v.lang) === lang.toLowerCase()) || voices.find((v) => norm(v.lang).startsWith(lang.slice(0, 2).toLowerCase())) || null;
+  } catch { return null; }
+};
+/** Says `text` in `lang`, slowly. False when there is no voice for it: show the reading instead. */
+export function speak(text, lang) {
+  const v = voice(lang);
+  if (!v) return false;
+  try {
+    synth().cancel();
+    synth().speak(Object.assign(new SpeechSynthesisUtterance(text), { voice: v, lang: v.lang, rate: 0.8 }));
+    return true;
+  } catch { return false; }
+}

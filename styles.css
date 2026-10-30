@@ -585,3 +585,35 @@ body:has(main.night) {
 .night .orb { background: radial-gradient(circle at 40% 35%, #f2d9a6, #a8733f); }
 .night .orb .count { color: #2a1d10; }
 .chip.winddown { --c: var(--chip-winddown); flex: 0 1 180px; margin: 0 auto; }
+
+/* --- Courses on the Learning tab, and the tap-and-match quiz items (src/quiz/) --- */
+.courses { display: flex; gap: 8px; justify-content: center; margin: 4px 0 8px; }
+.course { padding: 6px 14px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); font-weight: 600; font-size: .9rem; }
+.course[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+/* Japanese uses the system's own font for it (Noto Sans JP on Android): nothing is downloaded. */
+:lang(ja) { font-family: system-ui, "Noto Sans JP", "Noto Sans CJK JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; }
+.quiz .card {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 190px; padding: 16px; background: var(--card); border: 2px solid var(--line); border-radius: 18px; text-align: center;
+}
+/* One glyph is huge; a word shrinks to fit the card. */
+.quiz .glyph { margin: 0; font-size: min(110px, calc(250px / var(--len, 1))); line-height: 1.15; font-weight: 500; }
+.quiz .reading { margin: 0; font-size: 1.3rem; font-weight: 700; color: var(--muted); }
+.quiz .meaning { margin: 0; font-size: 1.1rem; font-weight: 700; }
+.quiz .slots { display: flex; gap: 8px; margin: 8px 0 0; }
+.quiz .slot {
+  display: grid; place-items: center; width: 64px; height: 72px; font-size: 44px;
+  border-bottom: 4px solid var(--line); border-radius: 6px;
+}
+.quiz .slot:not(:empty) { border-color: var(--accent); }
+.quiz .slot.shown { border-color: var(--wrong); color: var(--muted); }
+.quiz .hear { position: absolute; top: 8px; right: 8px; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--line); background: var(--bg); font-size: 1.3rem; }
+.quiz .hear.big { position: static; width: 112px; height: 112px; font-size: 3rem; }
+.quiz .choices .choice { font-size: 1.6rem; padding: 14px 6px; min-height: 64px; }
+.quiz .quiz-pairs { display: grid; grid-template-columns: 1fr 1fr; }
+.quiz .quiz-pairs .choice { font-size: 1.4rem; padding: 10px 6px; min-height: 56px; }
+.quiz .quiz-build { flex-wrap: wrap; justify-content: center; }
+.quiz .quiz-build .choice { flex: 0 0 calc(25% - 6px); }
+.quiz .choice[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+.quiz .choice.used { visibility: hidden; }
+.quiz-star { position: absolute; top: 12px; left: calc(50% - 12px); font-size: 28px; font-style: normal; color: #F5A524; pointer-events: none; }
