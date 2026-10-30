@@ -9,7 +9,7 @@ const yours = (set, own) => set.map((x) => ({ ...x, ...timed('move', x.reps ? { 
 
 /**
  * A set of exercises ([{ move, seconds } or { move, reps }]) as phases: each exercise is one timed
- * phase, with a rest between. `moves` is the catalog ({ name, cue, pose, pace?, unit? }). A rep
+ * phase, with a rest between. `moves` is the catalog ({ name, how, pose, pace?, unit? }). A rep
  * exercise lasts reps × pace seconds; the kit's count shows its reps rather than seconds.
  */
 export function phases(set, moves, own) {
@@ -19,7 +19,7 @@ export function phases(set, moves, own) {
     const m = moves[x.move];
     const seconds = x.reps ? x.reps * (m.pace ?? PACE) : x.seconds;
     const p = { ...m, kind: 'move', seconds, n: i + 1, of: mine.length, ...(x.reps && { reps: x.reps }) };
-    return i ? [{ kind: 'rest', seconds: rest, next: m.name, cue: m.cue }, p] : [p];
+    return i ? [{ kind: 'rest', seconds: rest, how: m.how }, p] : [p];
   });
 }
 

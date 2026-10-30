@@ -1,6 +1,6 @@
 import course from '../data/focus.json' with { type: 'json' };
 import { FOCUS_LINES, line } from '../cast/lines.js';
-import { pauseBar, routine, stayAwake, teach } from '../practice/kit.js';
+import { pauseButton, routine, stayAwake, teach } from '../practice/kit.js';
 import { timed } from '../practice/timings.js';
 import { cue, move } from '../feel.js';
 import { esc } from '../html.js';
@@ -43,9 +43,8 @@ function run(el, phases, on, ctx) {
   el.innerHTML = `<div class="focus-timer">
       ${on ? `<p class="focus-on">${esc(on)}</p>` : ''}
       <div class="focus-dial" role="timer" aria-label="Time left"><span class="count"></span></div>
-    </div>${pauseBar}`;
+    </div>${pauseButton}<div class="choices"><button class="choice focus-early">${esc(course.early)}</button></div>`;
   const pause = el.querySelector('.practice-pause');
-  pause.insertAdjacentHTML('beforebegin', `<button class="choice focus-early">${esc(course.early)}</button>`);
   const kept = on ? { focus: [on] } : null;
   const awake = stayAwake();
   const finish = () => { awake(); ctx.done(null, '', kept); };

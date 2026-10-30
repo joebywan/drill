@@ -16,7 +16,7 @@ test('each exercise is one timed phase, with a rest between', () => {
   assert.deepEqual(p.map((x) => x.n), [1, undefined, 2]);
   assert.equal(p[2].reps, 5);
   assert.equal(p[2].of, 2);
-  assert.equal(p[1].next, 'Squats');
+  assert.deepEqual(p[1].how, course.moves.squat.how); // a rest looks ahead
   assert.equal(summary(set, course.moves), '2 moves · 5 squats');
   assert.equal(summary([...set, { move: 'squat', reps: 3 }], course.moves), '3 moves · 8 squats');
 });
@@ -27,9 +27,9 @@ test('a rep phase counts reps up, a timed one counts seconds down', () => {
   assert.equal(countOf({ seconds: 30 }, 12), 12);
 });
 
-test('every move has a name, a plain cue and a pose the coach can demonstrate', () => {
+test('every move has a name, plain how-to lines and a pose the coach can demonstrate', () => {
   for (const [id, m] of Object.entries(course.moves)) {
-    assert.ok(m.name && m.cue, id);
+    assert.ok(m.name && m.how.length, id);
     assert.ok(POSES.includes(m.pose), `${id}: ${m.pose}`);
   }
   for (const r of routines) for (const x of r.set) {

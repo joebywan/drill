@@ -144,8 +144,8 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `demo()` adapter in `src/practice/kit.js`, which calls the subject coach's own `demo` (Clover,
   `src/cast/clover.js`). The screen break shares it with Mira (`src/cast/mira.js`, a lemur with big
   amber eyes) demonstrating each of its steps; both are posed with `rig()` in `src/cast/kit.js`.
-  "How?" opens the step's guidance (`how` in
-  `src/break/routines.js`) with the routine paused. Course in `src/data/move.json`:
+  Both play through `coached()` in kit.js: the step and its time, how to do it (`how`), what's next, and
+  a first-step room check, with no tap needed. Every timed routine's pause (`pauseButton`) is round and beside the coach. Course in `src/data/move.json`:
   Wake up, Strength (reps grow 5, 8, 10), Stretch. Guardrails bar pushing and body or weight
   words, and check the safety line is on the first lesson and after "Not really".
 - **Calm is not therapy.** `test/guardrails.test.js` bars health claims, diagnosis words and urgency
@@ -204,6 +204,8 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   learner's own from `progress.tracked`. `logToday`/`unlogToday`/`track` in progress.js; the tab's
   panel, the "+ Habit" sheet and the make-your-own form in app.js (`logPanel`, `addHabit`,
   `editHabit`). Learners' habit names are never linted and always escaped.
+- Home's top is kept short so the next lesson's node shows without scrolling at 360x640 (`layouts.spec.js`):
+  a cropped garden strip, the courses in one row, and "Skip ahead" in the footer, under Continue.
 - Home lists each habit once: one row of tabs (icon, name, streak coloured by `light()`) that
   scrolls inside itself. The bar is just the title, Sound and ⋯, and fits at 360px with every habit.
 - `src/fitting.js` — pure: fitting the person from the on-device log (docs/TODO.md "Fitting the
@@ -366,6 +368,6 @@ What is still open: `docs/TODO.md` ("Still open") and `docs/HABITS.md`.
   `ordered()` in subjects.js; picked one-tap habits are switched on with `track()`. Skip is today's
   home (Lumi's welcome line, the garden, every habit). Shown once (`showsIntro`); saves from before
   v7 never see it. The ⋯ menu's "Change what you see" reopens the second step. It never asks placement. Placement is an optional part of a subject: its `placement` (chess has one) shows as a
-  "Skip ahead" link by its path; the question then suggests a starting unit, or the learner starts
+  "Skip ahead" link under Continue; the question then suggests a starting unit, or the learner starts
   from the beginning. Answering or dismissing (×) hides the offer for good (`progress.start`, per
   subject), and so does finishing the subject's first unit; starting a lesson never asks. Units before the start stay open.

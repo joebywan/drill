@@ -469,3 +469,10 @@ test('dares are a bet in character, never guilt, loss or pressure', () => {
     assert.ok([DARE_BAD, LOSS, PRESSURE].some((lint) => lint.test(bad)), bad);
   assert.match("Moss bets you can't do three slow breaths before lunch.", DARE_WORD);
 });
+
+test("a practice coach names themselves on the path's first card", () => {
+  for (const s of subjects.filter((x) => x.kind === 'practice')) {
+    const first = s.units[0].lessons[0].items[0];
+    assert.ok(first.say.includes(`I'm ${s.coach.name}`), `${s.id}: ${first.say}`);
+  }
+});

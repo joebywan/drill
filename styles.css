@@ -36,7 +36,7 @@ body {
   color: var(--text);
   font: 16px/1.4 system-ui, sans-serif;
 }
-#app { max-width: 520px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
+#app { position: relative; max-width: 520px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
 button { font: inherit; color: inherit; cursor: pointer; }
 /* One focus ring for every control, in the text colour so it reads on both themes. */
 :focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
@@ -170,7 +170,7 @@ html { scroll-padding-bottom: 160px; }
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --sq-light: #8496AC; --sq-dark: #5B6B80; --sq-frame: #2B3443; --sq-coord: #C9D3E0; --sq-ledge: #1A2029;
+    --sq-light: #8496AC; --sq-dark: #5B6B80; --sq-frame: #2B3443; --sq-coord: #C9D3E0; --sq-ledge: #4E5D73;
     --sq-hl: #F5B83D; --sq-good: #5AD08A; --sq-bad: #d0583c;
   }
 }
@@ -378,14 +378,6 @@ html { scroll-padding-bottom: 160px; }
 .scan.inline .steps li { display: flex; padding: 5px 12px; }
 .step-left { margin-left: auto; font-weight: 700; }
 .step-left .count { font-size: inherit; }
-/* "How?": a step's guidance, a sheet over the thumb zone while the routine waits. */
-.how {
-  width: calc(100% - 32px); max-width: 488px; margin: auto auto 16px; padding: 16px 16px 4px;
-  border: 2px solid var(--break); border-radius: 16px; background: var(--card); color: var(--text);
-}
-.how::backdrop { background: rgb(0 0 0 / .45); }
-.how h2 { font-size: 1.15rem; margin: 0 0 8px; }
-.how p { margin: 0 0 8px; }
 .feel h2 { font-size: 1.05rem; margin: 16px 0 8px; }
 .feels { display: flex; flex-direction: column; gap: 8px; }
 .feel .said { margin: 8px 0; }
@@ -412,18 +404,14 @@ html { scroll-padding-bottom: 160px; }
 .journal span { display: block; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
 
 /* ---- Move's practice screens ---- */
-:root { --chip-move: #8A4A86; }
-@media (prefers-color-scheme: dark) { :root { --chip-move: #E0A6DA; } }
+:root { --chip-move: #8A4A86; --move-soft: #F1E2F0; }
+@media (prefers-color-scheme: dark) { :root { --chip-move: #E0A6DA; --move-soft: #33233A; } }
 .chip.move { --c: var(--chip-move); flex: 0 1 180px; margin: 0 auto; }
-.exercise { text-align: center; margin-top: 8px; }
-.exercise h2 { margin: 4px 0 6px; font-size: 1.4rem; }
-.exercise .cue { margin: 0 auto; max-width: 30ch; min-height: 3em; }
-.exercise .tally { margin: 16px 0 0; color: var(--muted); font-weight: 600; }
-.exercise .tally .count { color: var(--text); }
-.exercise[data-kind="rest"] h2 { color: var(--muted); }
+.scan.move { --calm: var(--chip-move); --calm-soft: var(--move-soft); }
 
 /* ---- The garden: a strip on home, the full view, and what arrived on an end screen ---- */
-.garden-link { display: block; width: 100%; margin: 0 0 12px; padding: 0; border: 0; border-radius: 16px; overflow: hidden; background: none; }
+/* The strip on home shows its ground and plants, its sky cut off: the next lesson's node stays on the first screen. */
+.garden-link { display: flex; align-items: flex-end; width: 100%; height: 84px; margin: 0 0 8px; padding: 0; border: 0; border-radius: 16px; overflow: hidden; background: none; }
 .garden-link svg.garden-scene, .garden-view svg.garden-scene { display: block; width: 100%; height: auto; }
 .garden-page { padding: 0 16px 40px; }
 .garden-page h1 { margin: 0 0 12px; font-size: 1.6rem; }
@@ -477,9 +465,10 @@ html { scroll-padding-bottom: 160px; }
 .pick-plant { display: grid; grid-template-columns: repeat(5, 1fr); }
 .pick-plant label > span { min-width: 0; padding: 4px 0; font-size: .7rem; }
 .pick-plant svg { width: 44px; height: 53px; }
-.welcome { margin: 12px 0 0; text-align: center; }
+.welcome { margin: 8px 0 0; text-align: center; }
+.street:not(.street ~ .street) h2 { margin-top: 12px; }
 .offer {
-  display: flex; width: fit-content; max-width: 100%; align-items: center; margin: 10px auto 0; padding-left: 14px;
+  display: flex; width: fit-content; max-width: 100%; align-items: center; margin: 8px auto 0; padding-left: 14px;
   border: 1px solid var(--line); border-radius: 999px; background: var(--card);
 }
 .offer button { min-height: 40px; padding: 0; border: 0; background: none; color: var(--muted); font-size: .9rem; }
@@ -676,8 +665,9 @@ body:has(main.night) {
 .chip.winddown { --c: var(--chip-winddown); flex: 0 1 180px; margin: 0 auto; }
 
 /* --- Courses on the Learning tab, and the tap-and-match quiz items (src/quiz/) --- */
-.courses { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 4px 0 8px; }
-.course { padding: 6px 14px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); font-weight: 600; font-size: .9rem; }
+/* One row that scrolls inside itself once there are more courses than fit. */
+.courses { display: flex; gap: 6px; justify-content: safe center; margin: 4px -16px 0; padding: 2px 16px; overflow-x: auto; scrollbar-width: none; }
+.course { flex: none; min-height: 36px; padding: 4px 10px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); font-weight: 600; font-size: .85rem; white-space: nowrap; }
 .course[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 /* Japanese uses the system's own font for it (Noto Sans JP on Android): nothing is downloaded. */
 :lang(ja) { font-family: system-ui, "Noto Sans JP", "Noto Sans CJK JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; }
@@ -748,7 +738,7 @@ body:has(main.night) {
 .cta .short { margin: 4px auto 0; }
 .habit .usual { margin: 4px 0 0; color: var(--muted); }
 .paused { margin-top: 16px; }
-.home:has(~ .cta .short) { padding-bottom: 170px; } /* room for the offer under Continue */
+.home:has(~ .cta :is(.short, .offer)) { padding-bottom: 170px; } /* room for the offer under Continue */
 
 /* ---- Sync and friends (src/sync/ui.js): pairing and recovery codes, the friend list. ---- */
 .survey.sync { text-align: left; }
@@ -801,8 +791,13 @@ body:has(main.night) {
 .how-now { margin: 10px 0 0; padding-left: 20px; }
 .how-now li { margin-bottom: 6px; }
 .next-step { margin: 8px 0 0; color: var(--muted); }
-/* Its pause is a small round button level with the X, on the other side of the coach. */
-.practice-pause.icon {
-  position: absolute; top: max(12px, env(safe-area-inset-top)); right: 16px; z-index: 1; width: 44px; height: 44px; margin: 0; padding: 0; border-radius: 50%; font-size: 1rem;
-}
-.choices:has(> .practice-pause.icon) { position: static; padding: 0; border: 0; background: none; }
+/* A timed routine's pause: small and round, beside the coach. Nothing waits at the bottom of the screen. */
+.play:has(.practice-pause) { position: relative; padding-bottom: 16px; }
+.play:has(.focus-early) { padding-bottom: 90px; } /* its "I'm done" stays in the thumb zone */
+.play:has(.practice-pause) .coach:not(.demonstrates) { padding-right: 54px; }
+.practice-pause { position: absolute; top: 32px; right: 16px; z-index: 1; width: 44px; height: 44px; margin: 0; padding: 0; border-radius: 50%; font-size: 1rem; }
+/* Level with the X, on the other side of a coach the learner copies. */
+.play:has(.coach.demonstrates) .practice-pause { top: max(12px, env(safe-area-inset-top)); }
+.play:has(.practice-pause) .coach:not(.demonstrates) .bubble { min-height: 5.8em; }
+.play:has(.practice-pause) .coach.demonstrates .bubble { min-height: 4.4em; } /* a longer line must not move what's under it */
+.room { margin: 4px 0 0; color: var(--muted); font-size: .9rem; }

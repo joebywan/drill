@@ -2,7 +2,7 @@ import course from '../data/calm.json' with { type: 'json' };
 import { breathe, tap } from '../cast/moss.js';
 import { CALM_LINES, line } from '../cast/lines.js';
 import { breaths, hugTaps, scan, sighs } from './routines.js';
-import { pauseBar, routine, steps, teach } from '../practice/kit.js';
+import { pauseButton, routine, steps, teach } from '../practice/kit.js';
 import { buzz, calmSound, move, play, rain } from '../feel.js';
 import { esc } from '../html.js';
 
@@ -54,7 +54,7 @@ function breathing(el, item, ctx) {
   el.innerHTML = `<div class="breath">
       <div class="orb" aria-hidden="true"><span class="count"></span></div>
       <p class="which" aria-live="polite"></p>
-    </div>${pauseBar}`;
+    </div>${pauseButton}`;
   const orb = el.querySelector('.orb');
   const which = el.querySelector('.which');
   return routine(el, phases, ctx, (p, i, say) => {
@@ -81,7 +81,7 @@ function hugging(el, item, ctx) {
   el.innerHTML = `<div class="hug">
       <div class="sides" aria-hidden="true"><span data-side="left">Left</span><span data-side="right">Right</span></div>
       <p class="which" aria-live="off"></p>
-    </div>${pauseBar}`;
+    </div>${pauseButton}`;
   const sides = el.querySelectorAll('[data-side]');
   const which = el.querySelector('.which');
   return routine(el, taps, ctx, (p, i, say) => {
@@ -96,7 +96,7 @@ function hugging(el, item, ctx) {
 function scanning(el, item, ctx) {
   const zones = course.zones;
   return steps(el, scan(zones, item.seconds, ctx.timings), ctx, {
-    label: 'Body scan, feet to head', rising: true, mood: 'notice',
+    label: 'Body scan, feet to head', rising: true, mood: 'notice', inline: true,
     summary: `${zones.length} places, feet to head`, paused: calm('paused'),
   });
 }
