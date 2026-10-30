@@ -128,8 +128,8 @@ export function line(item) {
 }
 
 /** A stars board: any pieces, kings optional. Legality is still all chess.js. */
-const load = (fen) => new Chess(fen, { skipValidation: true });
-const handBack = (fen, turn) => { const f = fen.split(' '); f[1] = turn; f[3] = '-'; return f.join(' '); };
+export const load = (fen) => new Chess(fen, { skipValidation: true });
+export const handBack = (fen, turn) => { const f = fen.split(' '); f[1] = turn; f[3] = '-'; return f.join(' '); };
 
 /**
  * One move in a stars item: null if the rules don't allow it. The other side never replies,

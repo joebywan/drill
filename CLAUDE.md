@@ -71,6 +71,13 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   time (`courseShown`, the switcher under the tabs, remembered in `drill.course`), and reviews that
   course's cards so its coach runs them. The intro picks courses by course id; `choose()` turns them
   into the Learning tab. A Learn coach's `lines`/`headlines` replace Rosa's in the runner and end screen.
+- **Chess games** (`src/chess/games.js`, the "Games" row on chess's home, a subject's `games`): replayable modes, each a one-entry session
+  for `run()` whose mount never calls `done`, so nothing is scored, scheduled or logged; a `.foot` banner ends a game and its button remounts it.
+  **Mate** (`mate.js`, `prover.js`, `prover-worker.js`): Daybook's game. `prover.js` is a port of its mate search on its own small
+  board, because chess.js is far too slow to prove a mate in 4; it has no imports so it can run in a Worker (import maps don't reach workers).
+  `src/data/mate.json` comes from `node tools/mate-positions.js`, Lichess CC0 (`docs/chess-positions/NOTICE.md`). Lazy-loaded. **Scramble** (`capture.js`): our own
+  capture game; pure rules on chess.js, the best on the device in `drill.capture.best`. **Play Rosa** (`engine.js`): alpha-beta on chess.js as a
+  generator, run in timer slices so the page stays live; `LEVELS` is its four levels. Words in `GAME_WORDS`, linted.
 - `src/quiz/` — course-free tap-and-match items any course can use: `teach` (a big glyph or word),
   `pick` (one tap; `listen` plays the sound instead of showing it when there is a voice), `pairs`
   (match two columns), `build` (tap tiles in order). `items.js` is pure (`problem()`), `exercise.js`

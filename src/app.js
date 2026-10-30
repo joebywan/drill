@@ -237,6 +237,7 @@ function home(arrived = null, newly = []) {
       </div><div class="pane">
       ${learning && courses.length > 1 ? `<nav class="courses" aria-label="Course">${courses.map((s) =>
         `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === courseShown}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
+      ${learning && courseShown.games ? `<nav class="courses games" aria-label="Games"><span>Games</span>${courseShown.games.map((g) => `<button class="course" data-game="${g.id}">${esc(g.label)}</button>`).join('')}</nav>` : ''}
       ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : invite ? '' : greeting(shownHabit)}
       ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
         : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
@@ -309,6 +310,9 @@ function home(arrived = null, newly = []) {
   app.querySelector('[data-add]').addEventListener('click', addHabit);
   for (const b of app.querySelectorAll('[data-course]')) {
     b.addEventListener('click', () => { showCourse(b.dataset.course); home(); focusOn(`[data-course="${b.dataset.course}"]`); });
+  }
+  for (const b of app.querySelectorAll('[data-game]')) {
+    b.addEventListener('click', () => run(null, [courseShown.games.find((g) => g.id === b.dataset.game).entry]));
   }
   app.querySelector('[data-log]')?.addEventListener('click', () => {
     progress = logToday(progress, habitShown, shownHabit.title);
