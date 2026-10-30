@@ -99,8 +99,8 @@ test('sway and visitors move, and stay still under reduced motion', () => {
   assert.equal(animateVisitor(el, 'owl'), null);
   // The scene: every living part moves forever, from a real scene's markup.
   const svg = scene('sunlit') + scene('resting');
-  for (const p of ['cloud', 'halo', 'glint', 'star', 'firefly']) assert.match(svg, new RegExp(`data-part="${p}"`), p);
-  assert.equal(animateScene(el).length, 10, 'two of each of the five parts');
+  for (const p of ['cloud', 'halo', 'glint', 'star', 'firefly', 'tuft']) assert.match(svg, new RegExp(`data-part="${p}"`), p);
+  assert.equal(animateScene(el).length, 12, 'two of each of the six parts');
   calls.length = 0;
   globalThis.matchMedia = () => ({ matches: true });
   try {
