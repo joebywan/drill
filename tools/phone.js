@@ -102,6 +102,15 @@ try {
     await sleep(700); await page.clock.runFor(700);
   };
   const btn = (name) => page.getByRole('button', { name });
+  /** A real finger drag across the middle of `loc`, `dx` CSS px sideways. */
+  const swipe = async (loc, dx) => {
+    const b = await loc.first().boundingBox();
+    const at = (x) => String(Math.round(origin.x + x * dpr));
+    const y = String(Math.round(origin.y + (b.y + b.height / 2) * dpr));
+    const x0 = b.x + b.width / 2 - dx / 2;
+    adb('shell', 'input', 'swipe', at(x0), y, at(x0 + dx), y, '400');
+    await sleep(800);
+  };
   const type = async (text) => { adb('shell', 'input', 'text', text.replaceAll(' ', '%s')); await sleep(800); };
   /** Starts from the home path, skipping placement, with `patch` merged into the saved progress. */
   const seed = async (patch = {}) => {
@@ -136,7 +145,7 @@ try {
     await declinePrompts();
     try {
       const { default: scenario } = await import(`${ROOT}test/phone/${name}.js`);
-      await scenario({ page, device, adb, touch, btn, type, shot, run, seed, check, checkSound, vibrations, declinePrompts });
+      await scenario({ page, device, adb, touch, btn, swipe, type, shot, run, seed, check, checkSound, vibrations, declinePrompts });
     } catch (e) {
       errors.push(`scenario ${name}: ${e.message.split('\n').filter((l) => !/^Call log:|^\s*$/.test(l)).slice(0, 2).join(' ')}`);
       await shot('failed').catch(() => {});
