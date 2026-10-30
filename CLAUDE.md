@@ -1,8 +1,8 @@
 # Drill — working notes for Claude
 
 A Duolingo-style learning app: lessons that teach, a cast of characters, a streak, review.
-Static page, vanilla ES modules, no build step, no server. Chess, maths, Japanese and coding are live;
-JavaScript, TypeScript and TS test-writing are planned.
+Static page, vanilla ES modules, no build step, no server. Chess, maths, Japanese, coding, JavaScript,
+TypeScript and TS test-writing are live.
 
 **Read the cast brief before building anything:** https://claude.ai/artifact/Td5spDrFgAah2w4PtBc2pn
 (a Claude Doc: read it with the docs tools). It holds the cast, the character states, the
@@ -125,7 +125,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   free (any program that gets there; `limit` is what fits). `way` is one program that works, shown after a miss.
   **Overshooting fails:** an item with a number tile or a layout runs `exact`, so reaching the flower with steps
   still to run ends 'spare' ("I got there with steps to spare"). `src/builder.js` knows nothing about Fennel: a tray of chips and
-  an ordered tree with a cursor, ready for a word-chip JavaScript course or Japanese sentences; a teach card marks
+  an ordered tree with a cursor, or part-written text with holes (`start`), set out in lines by `breaks`: the code courses use it, and Japanese sentences could; a teach card marks
   what it introduces with `shows`. `view: 'js' | 'both'` shows a program as
   JavaScript from `toJS()`; code text is never stored. A new block goes through `slots()` (holes, flips),
   `run()`, `blocks()` and `toJS()`; looks are written once by `writeLook()`. Words in prompts
@@ -133,6 +133,19 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   the grid, the blocks and the tiles, and Fennel (`src/cast/fennel.js`, a fennec fox posed with
   `rig()`) walks it. His lines are `CODING_LINES`/`CODING_HEADLINES`, read through the subject's
   `coach.lines`/`coach.headlines`. Home's course switcher (shared with Japanese) shows it.
+- `src/code/` — the JavaScript, TypeScript and Test writing courses, treated like a language course: no typing, word chips placed in
+  order, and **right is decided by running**, so any arrangement that does the job passes. `interp.js` is pure and safe: tokens, a parser
+  and a tree-walker with a step limit (no eval, no Function, no way to a host prototype), plain-words errors, console.log captured.
+  With `ts: true` it also parses annotations, interfaces, aliases and generics. `types.js` is a small checker for what the course teaches,
+  strict-flavoured, not the TypeScript compiler. `items.js` holds the items (teach, build, gap, predict, `asks: 'check'`) and goals
+  (`print`, `walk`, `returns` with hidden `cases`, `tests`), `grade()`, `problem()` (the way passes, no decoy swapped in passes) and `vary()`
+  (names, numbers and words swapped, maps flipped, every version through `problem()`). Code is one source string in an item; chips (`chipsOf`),
+  lines (`layout`, `pretty`) and answers (printed output, flagged lines) are worked out from it, and prose that says a number must find
+  it in the code or set `fixed` (test/code-courses.test.js). `exercise.js` mounts on `src/builder.js`, the quiz's teach and pick, and `src/coding/grid.js`, the
+  grid and walker Coding also uses; Fennel's calls map to Coding's `run()`, with `onRock(f)` and `onStep(f)` as his events. Courses are data
+  in `src/code/courses/` (`author.js` is the shorthand; ids come from a lesson and its place, so add items at a lesson's end). A test checks
+  that nothing is asked before a teach card shows it. **Test writing** grades as the rule below says: `given` is the real code, `mutants` hand-made faulty
+  copies with `says` in plain words, and a miss names the one that got through. Guardrails bar "broken" in prose, so they are "faulty copies".
 - `src/calm/` — the Calm practice subject. `routines.js` is pure: each routine is a list of timed
   phases (breathing 4 in, 8 out; the sigh 3 in, 1 top-up, 6 out; the butterfly hug's taps; the body scan feet to head), and `timeline()` plays one on a
   pausable clock. `practice.js` mounts teach cards and the routines with Moss (`src/cast/moss.js`)
@@ -351,9 +364,8 @@ after `npm ci` at the root. App id `com.joebywan.drill`, locked.
   `CELEBRATIONS` whitelist in `lines.js`: learning events only.
 - **No XP or points.** Leagues and boosts are out, so points would only reward activity. The
   summary shows what was learned: right first time, the streak, and items learned so far.
-- **Exercises that grade code must grade it independently.** For the planned TS test-writing
-  subject, a learner's tests pass against the real implementation and fail against several
-  broken ones; don't grade by matching text.
+- **Exercises that grade code must grade it independently.** In Test writing (`src/code/items.js`), a learner's
+  tests pass against the real implementation and fail against several broken ones; don't grade by matching text.
 - **Verify by rendering.** Run it in the browser at phone width before calling a UI change done.
 
 ## Git

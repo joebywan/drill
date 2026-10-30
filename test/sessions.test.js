@@ -4,7 +4,7 @@ import { simulate } from '../tools/sessions.js';
 
 test('sessions stay short: a typical lesson, and one that is going badly', () => {
   const rows = simulate(2);
-  assert.equal(rows.length, 12, 'four courses, three learners');
+  assert.equal(rows.length, 21, 'seven courses, three learners');
   for (const { course, learner, lessons, checkpoints } of rows) {
     const who = `${course}, ${learner}`;
     assert.ok(lessons.max <= 24, `${who}: a lesson of ${lessons.max} screens`);

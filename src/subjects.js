@@ -40,7 +40,12 @@ import { hazel, NAME as HAZEL } from './cast/hazel.js';
 import codingCourse from './data/coding.json' with { type: 'json' };
 import * as coding from './coding/exercise.js';
 import { fennel, NAME as FENNEL } from './cast/fennel.js';
-import { CODING_HEADLINES, CODING_LINES, HELLO } from './cast/lines.js';
+import { CODE_HEADLINES, CODE_LINES, CODING_HEADLINES, CODING_LINES, HELLO } from './cast/lines.js';
+import * as code from './code/exercise.js';
+import { vary as codeVary } from './code/items.js';
+import javascriptCourse from './code/courses/javascript.js';
+import typescriptCourse from './code/courses/typescript.js';
+import testingCourse from './code/courses/testing.js';
 
 /**
  * The contract. A subject is a course plus one `mount(el, item, { say, done })` that plays a
@@ -142,6 +147,17 @@ const forksUnit = {
   ...forks,
   lessons: [...forks.lessons, ...lichessForks.lessons.map((l) => ({ ...l, title: `Real games: ${l.title}` }))],
 };
+/** A course of word-chip code: Fennel, graded by running (src/code/). */
+const codeSubject = (course, hello, placement) => ({
+  ...course,
+  units: course.units.map(withCheckpoint),
+  mount: code.mount,
+  vary: codeVary,
+  habit: 'learn',
+  kind: 'learn',
+  coach: { draw: fennel, name: FENNEL, start: 'think', lines: CODE_LINES, headlines: CODE_HEADLINES, hello },
+  placement,
+});
 export const subjects = [{
   ...chessCourse,
   units: [...basics.units, forksUnit, ...chessCourse.units.filter((u) => u.title !== 'Forks').map(taught)].map(withCheckpoint),
@@ -218,7 +234,38 @@ export const subjects = [{
       ['I know variables and lists', 'Find the bug'],
     ],
   },
-}, {
+},
+codeSubject(javascriptCourse, HELLO.javascript, {
+  offer: 'Written JavaScript already? Skip ahead',
+  question: 'How much JavaScript have you written?',
+  options: [
+    ['None yet', 'Printing'],
+    ['Variables and text are fine', 'Conditions'],
+    ['I can write a loop', 'Functions'],
+    ['Functions too', 'Arrays'],
+    ['Lists and objects too', 'Array methods'],
+  ],
+}),
+codeSubject(typescriptCourse, HELLO.typescript, {
+  offer: 'Used TypeScript already? Skip ahead',
+  question: 'How much TypeScript have you written?',
+  options: [
+    ['None yet', 'Annotations'],
+    ['I label my functions', 'Unions'],
+    ['Unions are fine too', 'Interfaces'],
+    ['Interfaces are fine too', 'Generics'],
+  ],
+}),
+codeSubject(testingCourse, HELLO.testing, {
+  offer: 'Written tests already? Skip ahead',
+  question: 'Have you written tests before?',
+  options: [
+    ['Never', 'Your first test'],
+    ['I can write a basic test', 'Catching bugs'],
+    ['I think about edge cases', 'Lists and objects'],
+  ],
+}),
+{
   ...calmCourse,
   mount: calm.mount,
   habit: 'calm',

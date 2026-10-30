@@ -134,8 +134,6 @@ permission, and the pool stays the fallback even then.
 - **On-device model** for coach lines (Coach voice above). The pool stays the fallback.
 - **Renaming "Drill"** (HABITS.md, the garden): the app has moved from drilling to growing.
 - **Garden seasonal events** that change the whole garden (HABITS.md).
-- **More courses:** JavaScript, TypeScript and TS test-writing are planned (CLAUDE.md); the
-  test-writing one must grade code independently.
 - **Chess promotion picker** (the board always makes a queen; `puzzle.js`).
 - **From the 2026-10-30 integration walkthrough** (a design call, not a bug): above a new course's
   path sit five layers: the garden strip, habit tabs, course switcher, the welcome line and the
@@ -168,10 +166,15 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 - **Fresh numbers.** Done for Coding and Maths (#99, `tools/variants.js`), find-the-bug and the one-offs included. `frac-2-4q` stays
   as written; `bug-2-h`, `list-2-add` and a few other one-offs still only flip.
 - **Laying out the structure, the biggest tile and Run: done** (`src/builder.js`, `exact` runs in `program.js`).
-- **Events** ("when Fennel reaches a rock") were left out; they fit the JavaScript course better.
-- **A JavaScript course like a language course** (agreed: no typing). Choose word chips and place them
-  with `src/builder.js`. Graded by running it through a small interpreter for a JavaScript subset, any valid
-  arrangement right, Fennel walking the result. TypeScript, test-writing and Japanese sentences can use the same builder.
+- **Events** ("when Fennel reaches a rock"): done in the JavaScript course's Callbacks unit (`onRock`, `onStep`).
+- **The JavaScript course like a language course: done, with TypeScript and Test writing** (`src/code/`). Japanese sentences could use the same builder.
+
+**Code courses: to judge by playing**
+
+- **Pacing and tone.** 49 lessons have automated proofs (every item solvable, decoys fail, nothing asked before it is taught) but only
+  six have been played, and only by e2e. Items placing many small chips may feel slow: `for` lines are 15 or so taps.
+- **Fresh versions are thinner than Coding's.** Most swap names; numbers and words only where the prose allows, and many items are `fixed`. Test writing mostly renames.
+- **The type checker is a small subset.** It follows strict TypeScript for what the course teaches. A learner's valid but unusual arrangement could be refused or wrongly let through outside that.
 
 **Repetition engine**
 
