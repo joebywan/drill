@@ -747,3 +747,5 @@ body:has(main.night) {
 .sync .cheers { list-style: none; padding: 0; margin: 0; }
 .sync .danger { background: var(--wrong); color: var(--bg); }
 /* ---- end sync and friends ---- */
+.meet h2 { margin: 20px 0 4px; font-size: 1rem; text-align: left; }
+.cast { overflow: visible; } /* a pose may reach past the 100-wide viewBox: Ada's presenting arm */

@@ -2,7 +2,7 @@ import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } 
 import { GARDEN_WORDS, award, garden, moreArrived, plantWords } from './garden/model.js';
 import { PLANTS, animateLandmarks, animateScene, animateVisitor, drawGarden, flower, landmark, plant, sway, visitor } from './garden/art.js';
 import { COMEBACK_WORDS, PAUSED_WORDS, activeComeback, answerComeback, noteReminder, preferred, reminderHour, remindersPaused, shorter, shouldRemind, startComeback, usualHours, usualLine } from './fitting.js';
-import { emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
+import { emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, track, unlogToday, writeJournal, finishSession, meetsCoach, metCoach, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { lumi } from './cast/lumi.js';
@@ -265,19 +265,21 @@ function home(arrived = null, newly = []) {
   };
   const guide = app.querySelector('.guide');
   if (guide) {
-    // Lumi rests once today is done, and is content otherwise: never sad, whatever the light.
+    // The next session's own coach waits at the next step. They rest once today is done, and are
+    // content otherwise: never sad, whatever the light.
     const late = new Date().getHours() >= 21;
-    const lumiCoach = coach(guide, lumi);
+    const pose = homePoses(current.subject.coach);
+    const guideCoach = coach(guide, current.subject.coach.draw);
     const guideLight = light(progress, new Date(), habitShown);
-    const settle = () => lumiCoach.set(guideLight === 'bright' ? (late ? 'sleepy' : 'complete') : 'teach');
+    const settle = () => guideCoach.set(guideLight === 'bright' ? (late ? pose.rest : pose.done) : pose.ready);
     const from = arrived && app.querySelector(`.node[data-lesson="${arrived}"]`);
     showHere();
     const walk = from && walkTo(guide, from, app.querySelector('.node.here'));
     if (walk) {
-      lumiCoach.set('correct');
+      guideCoach.set(pose.cheer);
       walk.finished.then(settle, () => {});
     } else settle();
-    stopHome = () => { walk?.cancel(); lumiCoach.stop(); stopGarden(); };
+    stopHome = () => { walk?.cancel(); guideCoach.stop(); stopGarden(); };
   } else {
     showHere();
     stopHome = stopGarden;
@@ -346,8 +348,44 @@ function home(arrived = null, newly = []) {
 }
 
 /** Runs a path node's lesson; `timings` goes over the learner's own for this session only. */
-const lesson = (n, timings) =>
+const lesson = (n, timings) => !window.DRILL_MET && meetsCoach(progress, n.subject) ? meetCoach(n, () => lesson(n, timings)) :
   run(n.id, n.lesson.items.map((item) => ({ key: `${n.subject.id}:${item.id}`, ...items.get(`${n.subject.id}:${item.id}`) })), n.lesson.title, timings);
+
+/** A coach's moods on the path: a teacher answers kit.js's, a practice coach has its own. */
+const homePoses = ({ start }) => (['guide', 'sleepy'].includes(start)
+  ? { ready: start, done: 'done', rest: 'done', cheer: 'done' }
+  : { ready: 'teach', done: 'complete', rest: 'sleepy', cheer: 'correct' });
+
+/**
+ * Meeting a course's coach, once, before its first lesson: who they are in their own voice and
+ * what to expect. One tap and it's gone; `then` starts the lesson.
+ */
+function meetCoach({ subject }, then) {
+  stopHome();
+  const { draw, name, hello } = subject.coach;
+  const row = (text) => `<li><span aria-hidden="true">✓</span><span>${esc(text)}</span></li>`;
+  app.innerHTML = `
+    <header class="bar"><button class="back" aria-label="Back">←</button></header>
+    <main class="survey intro meet">
+      <div class="hero"></div>
+      <h1>Meet ${esc(name)}</h1>
+      <p class="said">${esc(hello.line)}</p>
+      <h2>What to expect</h2>
+      <ul class="does">${hello.expect.map(row).join('')}</ul>
+    </main>
+    <footer class="cta"><button class="next" data-go>${esc(hello.go)}</button></footer>`;
+  const who = coach(app.querySelector('.hero'), draw);
+  who.set('teach');
+  who.hop();
+  focusOn('h1');
+  app.querySelector('.back').addEventListener('click', () => { who.stop(); home(); });
+  app.querySelector('[data-go]').addEventListener('click', () => {
+    who.stop();
+    progress = metCoach(progress, subject.id);
+    save();
+    then();
+  });
+}
 
 /** The comeback card on home (fitting.js): their favourite practice at their usual hour, a ladybird to come. */
 const comebackCard = (c) => `<section class="comeback" aria-labelledby="comeback-text">

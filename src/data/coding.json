@@ -10,7 +10,7 @@
           "title": "First steps",
           "items": [
             { "id": "steps-0-meet", "type": "teach", "level": ["S..*"],
-              "text": "I'm Fennel. I follow steps, one at a time, in order. Your steps get me to the flower." },
+              "text": "I follow steps, one at a time, in order. Your steps get me to the flower." },
             { "id": "steps-0-one", "type": "build", "level": [".S*."], "program": [null], "tiles": ["left", "up", "right"],
               "prompt": "Tap a step to get me to the flower.",
               "explain": "One step right and I'm there." },

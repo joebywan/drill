@@ -17,6 +17,30 @@ import winddown from './voice/winddown.json' with { type: 'json' };
  * her own play and her cardigan, never about the learner's mistakes: she teases the move, not
  * the person. Lumi is a baby seal and keeps it short.
  */
+/** Each Learn coach introducing themselves before their course's first lesson (meetCoach in app.js). */
+export const HELLO = {
+  rosa: {
+    line: "I'm Rosa. Retired club champion, and yes, the cardigan is hand-knitted. Sit down. We start with the board.",
+    expect: ['First the squares, then how each piece moves.', 'You learn by playing: move the piece and collect the stars.', 'Then captures, checkmate and your first real tactics.'],
+    go: "Let's play",
+  },
+  ada: {
+    line: "I'm Ada. I have eight arms to count on, and I still check my working.",
+    expect: ['Quick ways to add and take away in your head.', 'Then percentages, and fractions you can see.', 'A miss comes back at the end of the lesson, so you get another go.'],
+    go: "Let's count",
+  },
+  kaede: {
+    line: "I'm Kaede. I'll have you reading Japanese, and I will take the credit.",
+    expect: ['Hiragana from zero, a few characters at a time.', 'Each one comes with a picture that helps it stick.', 'Then you read your first real words.'],
+    go: "Let's read",
+  },
+  fennel: {
+    line: "I'm Fennel. Give me a plan and I follow it to the letter, even a bad one.",
+    expect: ['No typing. You tap blocks to build a program, and I walk it.', 'Steps first, then loops, then if and else.', 'If I end up in the wrong place, we try that one again at the end of the lesson.'],
+    go: "Let's build",
+  },
+};
+
 export const LINES = {
   correct: [
     'Well spotted.',
