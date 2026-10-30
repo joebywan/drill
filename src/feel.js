@@ -8,8 +8,8 @@ export const pref = (name, dflt) => { try { const v = localStorage.getItem(`dril
 export const setPref = (name, on) => { try { localStorage.setItem(`drill.${name}`, on ? 'on' : 'off'); } catch { /* lasts the visit */ } };
 export const soundOn = () => pref('sound', true);
 export const setSound = (on) => setPref('sound', on);
-/** Calm's bell (on unless turned off) and rain (off unless turned on): never when muted or under reduced motion. */
-export const calmPref = (name) => pref(name, name === 'bell');
+/** Calm's bell and rain, each off until turned on, and never when muted or under reduced motion. */
+export const calmPref = (name) => pref(name, false);
 export const calmSound = (name) => soundOn() && !reducedMotion() && calmPref(name);
 
 // Synthesised, so there are no audio files: [frequency Hz, start s, length s, wave].

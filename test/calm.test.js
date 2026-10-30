@@ -38,8 +38,8 @@ test('the butterfly hug taps left, right, left… once a second; taps grow 40, 6
   assert.deepEqual(items.filter((i) => i.type === 'hug').map((i) => i.taps), [40, 60]);
 });
 
-test('the Calm path: breathing, sighing, grounding, the butterfly hug, the body scan', () => {
-  assert.deepEqual(course.units.map((u) => u.title), ['Breathing', 'Sighing', 'Grounding', 'Butterfly hug', 'Body scan']);
+test('the Calm path: breathing, grounding, the body scan, then sighing and the butterfly hug', () => {
+  assert.deepEqual(course.units.map((u) => u.title), ['Breathing', 'Grounding', 'Body scan', 'Sighing', 'Butterfly hug']);
 });
 
 test('the body scan goes feet to head, 15-20 s a zone', () => {
@@ -114,5 +114,20 @@ test('a timeline paused mid-phase picks up where it was', () => {
     assert.equal(ended, true);
   } finally {
     mock.timers.reset();
+  }
+});
+
+test('new Calm units only go on the end, so a saved progress never loses an open lesson', async () => {
+  const { emptyProgress, unitsOf } = await import('../src/progress.js');
+  const ADDED = ['Sighing', 'Butterfly hug']; // units added after learners already had Calm
+  const now = { id: 'calm', units: course.units };
+  const before = { id: 'calm', units: course.units.filter((u) => !ADDED.includes(u.title)) };
+  const ids = before.units.flatMap((u) => u.lessons.map((l) => `calm:${l.id}`));
+  const state = (subject, p) => Object.fromEntries(unitsOf(p, subject).flatMap((u) => u.nodes).map((n) => [n.id, n.state]));
+  // Every combination of lessons done in the course as it was.
+  for (let mask = 0; mask < 2 ** ids.length; mask++) {
+    const p = { ...emptyProgress(), done: Object.fromEntries(ids.filter((_, i) => mask & (1 << i)).map((id) => [id, '2026-10-01'])) };
+    const was = state(before, p), is = state(now, p);
+    for (const id of ids) assert.equal(is[id], was[id], `${id} with ${Object.keys(p.done)}`);
   }
 });

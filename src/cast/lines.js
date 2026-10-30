@@ -185,14 +185,14 @@ export const FEELS = [['calmer', 'Calmer'], ['about the same', 'About the same']
 export const feelsFor = (good = 'calmer') => [[good, good[0].toUpperCase() + good.slice(1)], ...FEELS.slice(1)];
 
 /**
- * Lumi, the screen break's coach: short, bouncy, a baby seal who loves a stretch. Plain words,
+ * Clover, the screen break's coach too: playful and easy, a rabbit who loves a stretch. Plain words,
  * no health claims, no hurry, and never a word about how long you have been on a screen.
  */
 export const BREAK_LINES = {
-  paused: ['Paused. I will just float here.'],
-  tapped: ['Seals stretch all day. It is most of the job.', 'Look far. Further. Is that a fish?', 'Wiggle allowed.'],
-  done: ['Break done. Back to it, nice and loose.', 'That was a good stretch.', 'Eyes rested, shoulders rolled. Arf.'],
-  'refreshed': ['Nice. A loose seal is a happy seal.'],
+  paused: ["Paused. I'll keep my ears up while I wait."],
+  tapped: ['Rabbits look far all day. Mostly for carrots.', 'Look far. Further. Is that a carrot?', 'Wiggle allowed. Ears too.'],
+  done: ['Break done. Back to it, nice and loose.', 'That was a good stretch.', 'Eyes rested, shoulders rolled. Lovely.'],
+  'refreshed': ['Nice. A loose bunny is a happy bunny.'],
   'about the same': ['That is fine. A short break still counts.'],
   'no different': ['That is alright. Thanks for telling me.'],
 };
@@ -243,3 +243,27 @@ export const MOVE_LINES = {
 
 /** Safety, shown as plain text on the first Move lesson and after "Not really". */
 export const MOVE_SAFETY = 'Move gently and stop if anything hurts. If you have an injury or a health condition, check with a doctor first.';
+
+/**
+ * Self-reported habits ("I walked today"): one tap says yes, today. The words stay plain and
+ * calm: no counting toward a target, no reminders, nothing about a day it didn't happen. The
+ * names learners give their own habits are theirs and are never linted; these words are.
+ */
+export const LOG_WORDS = {
+  hint: 'One tap when it happens. That is all.',
+  done: 'Done for today.',
+  undo: 'Undo',
+  edit: 'Edit',
+  add: 'Pick one to keep track of. Each one grows its own plant in your garden.',
+  addTab: '+ Habit',
+  own: 'Make your own',
+  ownTitle: 'Make your own',
+  editTitle: 'Edit habit',
+  name: 'Name',
+  icon: 'Icon',
+  plant: 'Plant',
+  create: 'Add habit',
+  save: 'Save',
+  hide: 'Hide this habit',
+  hideNote: 'Hiding keeps its days and its plant. Add it again any time from + Habit.',
+};

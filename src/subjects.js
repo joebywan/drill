@@ -40,7 +40,7 @@ import { clover, NAME as CLOVER } from './cast/clover.js';
  * an optional question home offers by the subject's path (`offer` is the link) to start further on.
  * It never stands in the way: answering opens the path at that unit, dismissing it hides the offer.
  */
-/** Every habit, in the order the home bar shows them. A habit appears once it has a session (Learning always). */
+/** The built-in habits, in the order the home bar shows them. `habitsFor(progress)` adds the learner's own. */
 export const HABITS = [
   { id: 'learn', name: 'Learning', icon: '🔥' },
   { id: 'calm', name: 'Calm', icon: '🌿' },
@@ -48,6 +48,41 @@ export const HABITS = [
   { id: 'reflect', name: 'Reflect', icon: '📓' },
   { id: 'move', name: 'Move', icon: '🌱' },
 ];
+
+/**
+ * Self-reported habits (kind 'log'): no lessons and no path, one tap says "yes, today". The learner
+ * picks presets from PRESETS and makes their own, kept in `progress.tracked` (see progress.js).
+ * `did` is the big button, `title` the log entry, `plant` the garden's drawing (art.js).
+ */
+export const PRESETS = [
+  { id: 'walk', name: 'Walk', icon: '🚶', plant: 'tulip', did: 'I walked today', title: 'Walked' },
+  { id: 'read', name: 'Read', icon: '📖', plant: 'fern', did: 'I read today', title: 'Read' },
+  { id: 'water', name: 'Water', icon: '💧', plant: 'rose', did: 'I drank water today', title: 'Drank water' },
+  { id: 'outside', name: 'Outside', icon: '🌤️', plant: 'cactus', did: 'I went outside today', title: 'Went outside' },
+];
+/** What a habit of the learner's own can look like. The first of each is the default. */
+export const OWN_ICONS = ['⭐', '🧘', '🎵', '🎨', '🧹', '🦷', '☕', '💛'];
+export const OWN_PLANTS = ['tulip', 'fern', 'cactus', 'rose', 'mushroom'];
+export const OWN_DID = 'Done today';
+
+/**
+ * Every habit for this learner, in tab order: the built-in HABITS, then each tracked log habit in
+ * the order it was added, as { id, name, icon, kind: 'log', plant, did, title, hidden? }. Hidden
+ * ones are kept (their plant and history stay); only the tabs leave them out. An entry that is
+ * neither a preset nor has a name of its own, or that reuses a built-in id, is skipped.
+ */
+export function habitsFor(progress) {
+  const own = (progress?.tracked || []).filter((t) => !HABITS.some((h) => h.id === t.id)).map((t) => {
+    const preset = PRESETS.find((x) => x.id === t.id);
+    if (preset) return { ...preset, hidden: !!t.hidden };
+    if (!t.name) return null;
+    return {
+      id: t.id, name: t.name, icon: OWN_ICONS.includes(t.icon) ? t.icon : OWN_ICONS[0],
+      plant: OWN_PLANTS.includes(t.plant) ? t.plant : OWN_PLANTS[0], did: OWN_DID, title: t.name, hidden: !!t.hidden, own: true,
+    };
+  }).filter(Boolean);
+  return [...HABITS, ...own.map((h) => ({ ...h, kind: 'log' }))];
+}
 
 // Chess from zero comes first (the board, how pieces move, capturing, check and mate), then the
 // hand-written Forks unit, whose Lichess puzzles join it as its last lessons; the other Lichess
@@ -85,7 +120,7 @@ export const subjects = [{
   mount: screenBreak.mount,
   habit: 'break',
   kind: 'practice',
-  coach: { draw: lumi, name: 'Lumi', start: 'teach', lines: BREAK_LINES, help: { text: SAFETY_LINE }, feel: 'refreshed' },
+  coach: { draw: clover, name: CLOVER, start: 'guide', lines: BREAK_LINES, help: { text: SAFETY_LINE }, feel: 'refreshed', demonstrates: true },
 }, {
   ...reflectCourse,
   mount: reflect.mount,

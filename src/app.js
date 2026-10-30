@@ -1,13 +1,13 @@
-import { HABITS, subjects } from './subjects.js';
+import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, subjects } from './subjects.js';
 import { award, garden, moreArrived, plantWords } from './garden/model.js';
-import { PLANTS, animateVisitor, drawGarden, flower, sway, visitor } from './garden/art.js';
-import { emptyProgress, finishPractice, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, soonestKeys, today } from './progress.js';
+import { PLANTS, animateVisitor, drawGarden, flower, plant, sway, visitor } from './garden/art.js';
+import { emptyProgress, unitsOf, finishPractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, soonestKeys, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
 import { reducedMotion } from './cast/kit.js';
-import { CALM_SOUNDS, feelsFor, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
+import { CALM_SOUNDS, feelsFor, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
 import { buzz, calmPref, move, play, setPref, setSound, soundOn } from './feel.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
@@ -17,6 +17,9 @@ const REVIEW_SIZE = 8;
 const app = document.getElementById('app');
 
 let progress = load();
+/** Every habit this learner has (built in, then their own), and one of them by id. */
+const habits = () => habitsFor(progress);
+const habitOf = (id) => habits().find((h) => h.id === id);
 
 function load() {
   let raw = null;
@@ -62,7 +65,7 @@ const HABIT_KEY = 'drill.habit';
 let habitShown = (() => {
   let h = null;
   try { h = localStorage.getItem(HABIT_KEY); } catch { /* private mode */ }
-  return HABITS.some((x) => x.id === h) ? h : HABITS[0].id;
+  return habits().some((x) => x.id === h && !x.hidden) ? h : HABITS[0].id;
 })();
 function showHabit(id) {
   habitShown = id;
@@ -77,14 +80,18 @@ const SWAY = 70; // px a node sits off centre at most
  * shows a tick; the next one a gold "!" with Lumi beside it; locked ones a grey "!". Reviews due
  * and one Continue button sit at the bottom. Today's light colours the streak chip.
  */
-function home(arrived = null) {
+function home(arrived = null, newly = []) {
   stopHome();
+  if (!habitOf(habitShown) || habitOf(habitShown).hidden) showHabit(HABITS[0].id);
+  const shownHabit = habitOf(habitShown);
+  // A self-reported habit has no path: one big button instead (logPanel).
+  const logged = shownHabit.kind === 'log' && light(progress, new Date(), habitShown) === 'bright';
   const learning = habitShown === 'learn';
   const due = learning ? dueKeys(progress).filter((k) => items.has(k)) : [];
   // A repair needs a review even when nothing is due yet: then the soonest cards stand in.
   const repair = learning && needsRepair(progress);
   const reviewKeys = (due.length ? due : repair ? soonestKeys(progress).filter((k) => items.has(k)) : []).slice(0, REVIEW_SIZE);
-  const units = subjects.filter((s) => s.habit === habitShown).flatMap(unitsOf);
+  const units = subjects.filter((s) => s.habit === habitShown).flatMap((s) => unitsOf(progress, s));
   // The next lesson, from the placement question's starting unit on.
   const from = Math.max(0, units.findIndex((u) => u.placed));
   // A subject's optional placement question, offered by its path until answered or dismissed.
@@ -137,11 +144,13 @@ function home(arrived = null) {
     <main class="home">
       <button class="garden-link" aria-label="Your garden: ${g.plants.length} plant${g.plants.length === 1 ? '' : 's'}">${drawGarden(g, 'strip')}</button>
       <nav class="paths" aria-label="Show the path for">
-        ${HABITS.map(habitTab).join('')}
+        ${habits().filter((h) => !h.hidden).map(habitTab).join('')}
+        <button class="path-tab add-tab" data-add aria-label="Add a habit">${esc(LOG_WORDS.addTab)}</button>
       </nav>
       ${brandNew ? `<p class="said welcome">${esc(line('welcome'))}</p>` : ''}
       ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>` : ''}
       ${offer ? `<p class="offer"><button data-place>${esc(offer.placement.offer)}</button><button class="dismiss" data-dismiss aria-label="Dismiss">×</button></p>` : ''}
+      ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly) : ''}
       ${units.map((u) => `
         <section class="street">
           <h2>${esc(u.title)}</h2>
@@ -150,7 +159,8 @@ function home(arrived = null) {
     </main>
     <footer class="cta">
       ${dueChip}
-      ${current ? `<button class="next" data-lesson="${current.id}">Continue · ${esc(current.lesson.title)}</button>`
+      ${shownHabit.kind === 'log' ? (logged ? '' : `<button class="next" data-log>${esc(shownHabit.did)}</button>`)
+        : current ? `<button class="next" data-lesson="${current.id}">Continue · ${esc(current.lesson.title)}</button>`
         : repeat ? `<button class="next" data-lesson="${repeat.id}">${esc(again.label)}</button>` : ''}
     </footer>`;
 
@@ -191,6 +201,24 @@ function home(arrived = null) {
   for (const b of app.querySelectorAll('[data-path]')) {
     b.addEventListener('click', () => { showHabit(b.dataset.path); home(); focusOn(`[data-path="${b.dataset.path}"]`); });
   }
+  app.querySelector('[data-add]').addEventListener('click', addHabit);
+  app.querySelector('[data-log]')?.addEventListener('click', () => {
+    progress = logToday(progress, habitShown, shownHabit.title);
+    let got;
+    ({ progress, newly: got } = award(progress));
+    save();
+    play('tap');
+    buzz('right');
+    home(null, got);
+    focusOn('.log-habit [role="status"]');
+  });
+  app.querySelector('[data-undo]')?.addEventListener('click', () => {
+    progress = unlogToday(progress, habitShown);
+    save();
+    home();
+    focusOn('[data-log]');
+  });
+  app.querySelector('[data-edit]')?.addEventListener('click', () => editHabit(shownHabit));
   app.querySelector('[data-place]')?.addEventListener('click', () => { stopHome(); survey(offer); });
   app.querySelector('[data-dismiss]')?.addEventListener('click', () => {
     progress = placeAt(progress, offer.id, null);
@@ -215,8 +243,8 @@ function home(arrived = null) {
 function habitTab(h) {
   const n = currentStreak(progress, new Date(), h.id);
   const started = !!progress.habits[h.id]?.last;
-  return `<button class="path-tab" data-path="${h.id}" aria-pressed="${h.id === habitShown}"
-    aria-label="${esc(h.name)}${started ? `, ${n}-day streak` : ''}">${h.icon} ${esc(h.name)}${started ? ` <b class="streak-${light(progress, new Date(), h.id)}">${n}</b>` : ''}</button>`;
+  return `<button class="path-tab" data-path="${esc(h.id)}" aria-pressed="${h.id === habitShown}"
+    aria-label="${esc(h.name)}${started ? `, ${n}-day streak` : ''}">${esc(h.icon)} ${esc(h.name)}${started ? ` <b class="streak-${light(progress, new Date(), h.id)}">${n}</b>` : ''}</button>`;
 }
 
 /**
@@ -226,7 +254,7 @@ function habitTab(h) {
  */
 function habitView(id, back = () => { home(); focusOn('.streak-line'); }) {
   stopHome();
-  const h = HABITS.find((x) => x.id === id);
+  const h = habitOf(id);
   const now = new Date();
   const n = currentStreak(progress, now, id);
   const rest = restDays(progress.habits[id]);
@@ -242,7 +270,7 @@ function habitView(id, back = () => { home(); focusOn('.streak-line'); }) {
   app.innerHTML = `
     <header class="bar"><button class="back" aria-label="Back">←</button></header>
     <main class="habit">
-      <h1><span aria-hidden="true">${h.icon}</span> ${esc(h.name)}</h1>
+      <h1><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}</h1>
       <p class="said">${n ? `${n}-day streak` : NO_STREAK}</p>
       <h2>This week</h2>
       <ol class="week" aria-hidden="true">${week.map(cell).join('')}</ol>
@@ -293,11 +321,11 @@ function gardenView(from = null) {
   stopHome();
   const g = garden(progress);
   const card = (p) => {
-    const h = HABITS.find((x) => x.id === p.habit);
+    const h = habitOf(p.habit);
     const words = plantWords(p);
-    const kind = PLANTS[p.habit];
-    return `<li><button class="plant-card" data-plant="${p.habit}">
-      <span class="kicker">${h.icon} ${esc(h.name)}</span>
+    const kind = p.plant || PLANTS[p.habit];
+    return `<li><button class="plant-card" data-plant="${esc(p.habit)}">
+      <span class="kicker">${esc(h.icon)} ${esc(h.name)}</span>
       <b>${esc(kind[0].toUpperCase() + kind.slice(1))} · ${esc(p.name)}</b>
       ${words.days ? `<span>${esc(words.days)}</span>` : ''}
       ${words.next ? `<span class="hint">${esc(words.next)}</span>` : ''}
@@ -323,6 +351,96 @@ function gardenView(from = null) {
 }
 
 /**
+ * A self-reported habit's part of home, in place of a path. Before today's tap: a short hint, and
+ * the big button sits in the footer. After it: a calm "done", today's streak, anything that arrived
+ * in the garden (the end screens' own lines) and a small Undo for the rest of the day.
+ */
+function logPanel(h, logged, newly) {
+  const n = currentStreak(progress, new Date(), h.id);
+  return `<section class="log-habit">
+    <h2><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}</h2>
+    ${logged ? `<p class="said" role="status">${esc(LOG_WORDS.done)}</p>
+      <div class="chips">${chip('log', `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`)}</div>
+      ${arrivals(newly)}
+      <button class="link" data-undo>${esc(LOG_WORDS.undo)}</button>`
+    : `<p class="said">${esc(LOG_WORDS.hint)}</p>`}
+    <button class="link" data-edit>${esc(LOG_WORDS.edit)}</button>
+  </section>`;
+}
+
+/** Back to home showing `id`'s tab, with focus on it. */
+const homeOn = (id) => { showHabit(id); home(); focusOn(`[data-path="${id}"]`); };
+
+/**
+ * The "+ Habit" sheet: the presets not yet on the tabs, any hidden habit to bring back (its days
+ * kept), and "Make your own". One tap starts tracking.
+ */
+function addHabit() {
+  stopHome();
+  const shown = new Set(habits().filter((h) => !h.hidden).map((h) => h.id));
+  const offer = [...PRESETS.filter((p) => !shown.has(p.id)), ...habits().filter((h) => h.own && h.hidden)];
+  app.innerHTML = `
+    <header class="bar"><button class="back" aria-label="Back">←</button></header>
+    <main class="survey add-habit">
+      <h1>Add a habit</h1>
+      <p class="said">${esc(LOG_WORDS.add)}</p>
+      ${offer.map((h) => `<button class="choice" data-track="${esc(h.id)}"><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}</button>`).join('')}
+      <button class="choice" data-own>${esc(LOG_WORDS.own)}</button>
+    </main>`;
+  focusOn('h1');
+  app.querySelector('.back').addEventListener('click', () => { home(); focusOn('[data-add]'); });
+  for (const b of app.querySelectorAll('[data-track]')) {
+    b.addEventListener('click', () => {
+      progress = track(progress, { id: b.dataset.track, hidden: false });
+      save();
+      homeOn(b.dataset.track);
+    });
+  }
+  app.querySelector('[data-own]').addEventListener('click', () => editHabit(null));
+}
+
+/**
+ * Make a habit of the learner's own (`h` null), or change one: its name, icon and plant, for their
+ * own; and for any self-reported habit, hiding it. The name is theirs: kept as typed (trimmed),
+ * never judged, and always escaped.
+ */
+function editHabit(h) {
+  stopHome();
+  const own = !h || h.own;
+  const picks = (name, values, chosen, show) => `<fieldset class="pick pick-${name}"><legend>${esc(LOG_WORDS[name])}</legend>
+    ${values.map((v, i) => `<label><input type="radio" name="${name}" value="${esc(v)}"${(chosen ? v === chosen : !i) ? ' checked' : ''}>${show(v)}</label>`).join('')}</fieldset>`;
+  app.innerHTML = `
+    <header class="bar"><button class="back" aria-label="Back">←</button></header>
+    <main class="survey own-habit">
+      <h1>${esc(h ? LOG_WORDS.editTitle : LOG_WORDS.ownTitle)}</h1>
+      ${h ? `<p class="said"><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}</p>` : ''}
+      ${own ? `<form>
+        <label class="field">${esc(LOG_WORDS.name)}<input name="name" maxlength="30" required pattern=".*\\S.*" autocomplete="off" value="${esc(h?.name || '')}"></label>
+        ${picks('icon', OWN_ICONS, h?.icon, (v) => `<span>${esc(v)}</span>`)}
+        ${picks('plant', OWN_PLANTS, h?.plant, (v) => `<span>${plant(v, 4)}<span>${esc(v[0].toUpperCase() + v.slice(1))}</span></span>`)}
+        <button class="next">${esc(h ? LOG_WORDS.save : LOG_WORDS.create)}</button>
+      </form>` : ''}
+      ${h ? `<button class="choice" data-hide>${esc(LOG_WORDS.hide)}</button><p class="said">${esc(LOG_WORDS.hideNote)}</p>` : ''}
+    </main>`;
+  focusOn(own ? '[name="name"]' : 'h1');
+  app.querySelector('.back').addEventListener('click', () => (h ? homeOn(h.id) : addHabit()));
+  app.querySelector('form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const data = new FormData(e.target);
+    progress = track(progress, { id: h?.id, name: data.get('name'), icon: data.get('icon'), plant: data.get('plant') });
+    save();
+    homeOn(h?.id || progress.tracked.at(-1).id);
+  });
+  app.querySelector('[data-hide]')?.addEventListener('click', () => {
+    progress = track(progress, { id: h.id, hidden: true });
+    save();
+    showHabit(HABITS[0].id);
+    home();
+    focusOn('[data-add]');
+  });
+}
+
+/**
  * Lumi hops along the path from the lesson just finished to the next one, and that lesson's tick
  * pops in: the learner sees themselves move forward. Skipped under reduced motion (null).
  */
@@ -340,28 +458,6 @@ function walkTo(guide, fromNode, toNode) {
     frames.push({ transform: `translate(${dx * (1 - k)}px, ${dy * (1 - k) + lift}px)` });
   }
   return move(guide, frames, { duration: 1300, delay: 350, easing: 'ease-in-out', fill: 'backwards' });
-}
-
-/**
- * One subject's units, each lesson marked done, open or locked. A unit opens when the previous
- * unit's first lesson is done, so a beginner can move across topics without first clearing every
- * hard tier; within a unit, lessons open in order. Units before the placement question's starting
- * point are open all through, to go back to.
- */
-function unitsOf(subject) {
-  const start = subject.units.findIndex((u) => u.title === progress.start?.[subject.id]);
-  let unitOpen = true;
-  return subject.units.map((unit, i) => {
-    let open = unitOpen || i <= start;
-    unitOpen = !!progress.done[`${subject.id}:${unit.lessons[0].id}`];
-    const nodes = unit.lessons.map((lesson) => {
-      const id = `${subject.id}:${lesson.id}`;
-      const state = progress.done[id] ? 'done' : open ? 'open' : 'locked';
-      if (state !== 'done' && i >= start) open = false;
-      return { id, subject, lesson, state };
-    });
-    return { title: unit.title, nodes, placed: i === start };
-  });
 }
 
 /**
@@ -499,7 +595,7 @@ function run(lessonId, queue, title) {
     let newly;
     ({ progress, newly } = award(progress));
     save();
-    const h = HABITS.find((x) => x.id === subject.habit);
+    const h = habitOf(subject.habit);
     const n = currentStreak(progress, new Date(), h.id);
     app.innerHTML = `
       <main class="summary practice-end">

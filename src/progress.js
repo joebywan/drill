@@ -18,12 +18,15 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            own words. Kept here, not in the log; only the habit view and the file export read them
  *   garden   { earned: { achievementId: 'YYYY-MM-DD' } }  — what the garden has been given
  *            (src/garden/model.js). Earned once, kept forever: nothing removes an entry
+ *   tracked  [{ id, name?, icon?, plant?, hidden? }]  — the self-reported habits the learner added,
+ *            in order: a preset is just its id ('walk'); one of their own ('own-1') carries its name,
+ *            icon and plant. `hidden` takes it off the tabs and keeps everything else (subjects.js habitsFor)
  *   version  the shape's version; `migrate()` brings any older shape up to VERSION
  */
-export const VERSION = 5;
+export const VERSION = 6;
 export const LEARN = 'learn';
 const emptyStreak = () => ({ count: 0, last: null, forgiven: [], days: 0 });
-export const emptyProgress = () => ({ version: VERSION, habits: { [LEARN]: emptyStreak() }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} } });
+export const emptyProgress = () => ({ version: VERSION, habits: { [LEARN]: emptyStreak() }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, tracked: [] });
 
 const isObject = (v) => v != null && typeof v === 'object' && !Array.isArray(v);
 const isDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
@@ -42,7 +45,16 @@ const JOURNAL_KEYS = ['good', 'learned', 'tomorrow'];
 const isJournal = (j) => isObject(j) && Object.entries(j).every(([date, day]) =>
   isDate(date) && isObject(day) && JOURNAL_KEYS.every((k) => day[k] == null || typeof day[k] === 'string'));
 
-const isEntry = (e) => isObject(e) && isDate(e.date) && typeof e.habit === 'string' && typeof e.title === 'string';
+// `was` is the streak before a one-tap log, kept so the same day's Undo can put it back (unlogToday).
+const isEntry = (e) => isObject(e) && isDate(e.date) && typeof e.habit === 'string' && typeof e.title === 'string'
+  && (e.was === undefined || e.was === null || !!readStreak(e.was));
+
+// Ids go into attributes and storage keys, so they are plain; names are the learner's own text.
+const NAME_MAX = 30;
+const isTracked = (t) => isObject(t) && typeof t.id === 'string' && /^[a-z0-9-]{1,40}$/.test(t.id)
+  && (t.name == null || (typeof t.name === 'string' && t.name.trim().length > 0 && t.name.length <= NAME_MAX))
+  && ['icon', 'plant'].every((k) => t[k] == null || (typeof t[k] === 'string' && t[k].length <= 16))
+  && (t.hidden == null || typeof t.hidden === 'boolean');
 
 /**
  * Any stored or imported progress, brought to the current shape, or null when it isn't progress
@@ -50,7 +62,8 @@ const isEntry = (e) => isObject(e) && isDate(e.date) && typeof e.habit === 'stri
  * one `streak`, which becomes Learning's, and no log; up to version 2 there was no journal; up to
  * version 3 no garden, and no `days` on a streak, which is counted from the log's dates and is never
  * less than the streak's count (the log may have started after the streak); up to version 4 `start`
- * was one string, chess's (the only subject that asked), and becomes { chess: it }.
+ * was one string, chess's (the only subject that asked), and becomes { chess: it }; up to version 5
+ * nothing was `tracked`, which starts empty.
  * Unknown fields are kept, so a file from a newer build loses nothing.
  */
 export function migrate(raw) {
@@ -82,7 +95,10 @@ export function migrate(raw) {
   }
   const garden = raw.garden ?? { earned: {} };
   if (!isObject(garden) || !isObject(garden.earned) || !Object.values(garden.earned).every(isDate)) return null;
-  return { ...kept, ...(start && { start }), version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal, garden };
+  // Version 6: the self-reported habits the learner tracks (none before).
+  const tracked = raw.tracked ?? [];
+  if (!Array.isArray(tracked) || !tracked.every(isTracked) || new Set(tracked.map((t) => t.id)).size !== tracked.length) return null;
+  return { ...kept, ...(start && { start }), version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal, garden, tracked };
 }
 
 /**
@@ -179,6 +195,51 @@ export function finishPractice(progress, habit, lessonId, now = new Date(), abou
 }
 
 /**
+ * One tap on a self-reported habit ("I walked today"): recorded through finishPractice, so the
+ * streak, `days` and the log all work as for any habit. Once a day; a second tap changes nothing.
+ * The log entry keeps the streak as it was (`was`) so unlogToday can put it back.
+ */
+export function logToday(progress, habit, title, now = new Date()) {
+  const date = today(now);
+  if ((progress.log || []).some((e) => e.habit === habit && e.date === date)) return progress;
+  const p = finishPractice(progress, habit, null, now, { title });
+  const log = [...p.log];
+  log[log.length - 1] = { ...log.at(-1), was: progress.habits[habit] ?? null };
+  return { ...p, log };
+}
+
+/**
+ * Undoes today's one-tap log of `habit`, for a mis-tap: the streak (count, days, forgiven) goes back
+ * to exactly what it was before the tap, and the entry leaves the log. Only today's, and only a
+ * log entry; anything else is returned unchanged. The garden's `earned` is never touched.
+ */
+export function unlogToday(progress, habit, now = new Date()) {
+  const date = today(now);
+  const at = (progress.log || []).findLastIndex((e) => e.habit === habit && e.date === date && e.was !== undefined);
+  if (at < 0) return progress;
+  const { was } = progress.log[at];
+  const habits = { ...progress.habits };
+  if (was) habits[habit] = was; else delete habits[habit];
+  return { ...progress, habits, log: progress.log.filter((_, i) => i !== at) };
+}
+
+/**
+ * Adds a self-reported habit to `tracked`, or changes one already there (rename, hide, show
+ * again): `entry` is merged into the one with its id. With no id it is a new habit of the
+ * learner's own ('own-1', 'own-2', …). The name is trimmed and kept short; it is never judged.
+ */
+export function track(progress, entry) {
+  const tracked = progress.tracked || [];
+  const id = entry.id || `own-${1 + Math.max(0, ...tracked.map((t) => Number(t.id.match(/^own-(\d+)$/)?.[1]) || 0))}`;
+  const next = { ...entry, id };
+  if (typeof next.name === 'string') next.name = next.name.trim().slice(0, NAME_MAX);
+  if (next.name === '') delete next.name;
+  const at = tracked.findIndex((t) => t.id === id);
+  if (at < 0) return { ...progress, tracked: [...tracked, next] };
+  return { ...progress, tracked: tracked.map((t, i) => (i === at ? { ...t, ...next } : t)) };
+}
+
+/**
  * Keeps today's Reflect lines in the journal. Blank lines are left out, and a second visit the
  * same day adds to the first rather than wiping it. Nothing written, nothing kept.
  */
@@ -255,4 +316,26 @@ export function light(progress, now = new Date(), habit = LEARN) {
   const s = habitStreak(progress, habit);
   if (s.last === date) return 'bright';
   return gap(s, date) === 'kept' ? 'soft' : 'ember';
+}
+
+/**
+ * One subject's units, each lesson marked done, open or locked. A unit opens when the previous
+ * unit's first lesson is done, so a beginner can move across topics without first clearing every
+ * hard tier; within a unit, lessons open in order. Units before the placement question's starting
+ * point are open all through, to go back to.
+ */
+export function unitsOf(progress, subject) {
+  const start = subject.units.findIndex((u) => u.title === progress.start?.[subject.id]);
+  let unitOpen = true;
+  return subject.units.map((unit, i) => {
+    let open = unitOpen || i <= start;
+    unitOpen = !!progress.done[`${subject.id}:${unit.lessons[0].id}`];
+    const nodes = unit.lessons.map((lesson) => {
+      const id = `${subject.id}:${lesson.id}`;
+      const state = progress.done[id] ? 'done' : open ? 'open' : 'locked';
+      if (state !== 'done' && i >= start) open = false;
+      return { id, subject, lesson, state };
+    });
+    return { title: unit.title, nodes, placed: i === start };
+  });
 }

@@ -211,12 +211,12 @@ test('a screen break is taught once, plays its six steps on the clock, and keeps
   await expect(page.getByText('Move gently and stop if anything hurts.')).toBeVisible();
   await page.getByRole('button', { name: 'Start' }).click();
   const now = page.locator('.steps li[aria-current="step"]');
-  await expect(now).toHaveText('Look far away');
+  await expect(now).toHaveText(/^Look far away\s*\d+ s$/);
   await expect(page.getByText(/at least 6 metres away/)).toBeVisible();
   await page.clock.runFor(20_000);
-  await expect(now).toHaveText('Slow blinks');
+  await expect(now).toHaveText(/^Slow blinks\s*\d+ s$/);
   await page.clock.runFor(85_000);
-  await expect(now).toHaveText('Sit tall');
+  await expect(now).toHaveText(/^Sit tall\s*\d+ s$/);
   await page.clock.runFor(16_000);
   await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
   await expect(page.getByText(/^6 steps · \d+ min$/)).toBeVisible();
@@ -229,13 +229,52 @@ test('a screen break is taught once, plays its six steps on the clock, and keeps
   await expect(page.locator('.day').first().getByRole('listitem')).toHaveText(/^Screen break · \d+ min · felt about the same$/);
 });
 
-test('grounding is tap-to-count, and stopping is one tap with no questions', async ({ page }) => {
-  await firstBreathing(page);
-  await continueButton(page).click();
-  // Grounding opens once the sigh, the unit before it, has been started.
-  await page.getByRole('button', { name: 'Two breaths in, one long out', exact: true }).click();
+test('Clover demonstrates the screen break, and "How?" pauses it for the guidance', async ({ page }) => {
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Screen break').click();
+  await page.getByRole('button', { name: 'Continue · Why breaks help' }).click();
   await page.getByRole('button', { name: 'Start' }).click();
-  await page.clock.runFor(31_000);
+  await expect(page.locator('.coach.demonstrates .who')).toHaveAccessibleName('Clover');
+  await expect(page.locator('.who svg.cast-clover')).toBeVisible();
+  const now = page.locator('.steps li[aria-current="step"]');
+  await page.clock.runFor(21_000);
+  await expect(now).toHaveText(/^Slow blinks\s*\d+ s$/);
+  await page.getByRole('button', { name: 'How?' }).click();
+  const how = page.getByRole('dialog', { name: 'Slow blinks' });
+  await expect(how).toContainText('Hold them closed for a slow count of two');
+  const left = await page.locator('.steps .count').textContent();
+  expect(Number(left)).toBeGreaterThan(10); // seconds left in the 15 s step
+  await page.clock.runFor(30_000); // the clock waits while the guidance is open
+  await expect(now).toHaveText(/^Slow blinks\s*\d+ s$/);
+  await expect(page.locator('.steps .count')).toHaveText(left);
+  await how.getByRole('button', { name: 'Got it' }).click();
+  await expect(how).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Pause' })).toHaveAttribute('aria-pressed', 'false');
+  await page.clock.runFor(15_000);
+  await expect(now).toHaveText(/^Shoulder rolls\s*\d+ s$/);
+  await page.clock.runFor(86_000);
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+});
+
+for (const [width, height] of [[412, 780], [360, 740]]) {
+  test(`at ${width}x${height} the screen break's step and its seconds sit clear of the buttons`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await firstVisit(page);
+    await tab(page, 'Screen break').click();
+    await page.getByRole('button', { name: 'Continue · Why breaks help' }).click();
+    await page.getByRole('button', { name: 'Start' }).click();
+    const top = (await page.locator('.choices').boundingBox()).y;
+    for (const el of [page.locator('.steps li[aria-current="step"]'), page.locator('.steps .count')]) {
+      const box = await el.boundingBox();
+      expect(box.y).toBeGreaterThanOrEqual(0);
+      expect(box.y + box.height).toBeLessThanOrEqual(top);
+    }
+  });
+}
+
+test('grounding is tap-to-count, and stopping is one tap with no questions', async ({ page }) => {
+  await firstBreathing(page); // grounding opens once breathing has been started
   await continueButton(page).click();
   await page.getByRole('button', { name: 'Five senses' }).click();
   await page.getByRole('button', { name: 'Start' }).click();
@@ -246,9 +285,9 @@ test('grounding is tap-to-count, and stopping is one tap with no questions', asy
   await expect(page.getByRole('heading', { name: '3 things you can touch' })).toBeVisible();
   await page.getByRole('button', { name: 'Stop' }).click();
   await expect(tab(page, 'Calm')).toHaveAttribute('aria-pressed', 'true');
-  // Stopping logs nothing: today still shows just the breathing and the sigh.
+  // Stopping logs nothing: today still shows just the breathing.
   await week(page, 1).click();
-  await expect(page.locator('.day').first().getByRole('listitem')).toHaveCount(2);
+  await expect(page.locator('.day').first().getByRole('listitem')).toHaveCount(1);
 });
 
 test('Reflect keeps two lines and a skip, on its own streak, and shows them back in the habit view', async ({ page }) => {
@@ -363,10 +402,11 @@ test('progress saved to a file loads back', async ({ page }) => {
 
 /**
  * Progress with `habits` each practised on the `days` days before today, loaded before the page.
- * `earned` gives it what that has earned, as if every session had been in the app.
+ * `earned` gives it what that has earned, as if every session had been in the app; `extra` is merged
+ * in first (`tracked`, for self-reported habits).
  */
-async function grown(page, habits, days, earned = false) {
-  let p = { ...emptyProgress(), start: { chess: basics.units[0].title } };
+async function grown(page, habits, days, earned = false, extra = {}) {
+  let p = { ...emptyProgress(), start: { chess: basics.units[0].title }, ...extra };
   for (const h of habits) {
     for (let i = days; i >= 1; i--) {
       const d = new Date();
@@ -478,7 +518,7 @@ test('every plant grows visibly stage to stage, and a sprout and a sapling read 
 test('BOUNDS in art.js is what each plant really draws (re-measure and paste if this fails)', async ({ page }) => {
   await page.goto('/');
   const { measured, table } = await page.evaluate(async () => {
-    const { PLANTS, plant, MAX_FLOWERS, BOUNDS } = await import('/src/garden/art.js');
+    const { KINDS, plant, MAX_FLOWERS, BOUNDS } = await import('/src/garden/art.js');
     const box = (svg) => {
       const d = document.createElement('div');
       d.innerHTML = svg.replace(/^(<svg [^>]*>)/, '$1<g>').replace(/<\/svg>$/, '</g></svg>');
@@ -488,8 +528,9 @@ test('BOUNDS in art.js is what each plant really draws (re-measure and paste if 
       return b;
     };
     // Open and shut, with every bloom; floored and ceiled to whole units, a unit of room around.
-    const measured = Object.fromEntries(Object.entries(PLANTS).map(([habit, name]) => [name, [0, 1, 2, 3, 4].map((s) => {
-      const bs = [false, true].map((closed) => box(plant(habit, s, { flowers: MAX_FLOWERS, closed })));
+    // Every drawing, the self-reported habits' too (plant() takes a drawing's own name).
+    const measured = Object.fromEntries(KINDS.map((name) => [name, [0, 1, 2, 3, 4].map((s) => {
+      const bs = [false, true].map((closed) => box(plant(name, s, { flowers: MAX_FLOWERS, closed })));
       return [Math.floor(Math.min(...bs.map((b) => b.x))) - 1, Math.floor(Math.min(...bs.map((b) => b.y))) - 1,
         Math.ceil(Math.max(...bs.map((b) => b.x + b.width))) + 1, Math.ceil(Math.max(...bs.map((b) => b.y + b.height))) + 1];
     })]));
@@ -546,6 +587,108 @@ test('on a phone, the first plant card shows above the fold under the full garde
   expect(card.y + card.height).toBeLessThan(680);
 });
 
+test('a self-reported habit: add Walk, one tap, its streak and plant, and Undo takes the tap back', async ({ page }) => {
+  await firstVisit(page);
+  await page.getByRole('button', { name: 'Add a habit' }).click();
+  await expect(page.getByRole('heading', { name: 'Add a habit' })).toBeFocused();
+  for (const name of ['Walk', 'Read', 'Water', 'Outside', 'Make your own']) await expect(page.getByRole('button', { name: new RegExp(name) })).toBeVisible();
+  await page.getByRole('button', { name: /Walk/ }).click();
+
+  await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk');
+  await expect(tab(page, 'Walk')).toBeFocused();
+  await expect(page.locator('.street')).toHaveCount(0); // no path
+  await expect(strip(page, 1).locator('svg.plant[data-habit="walk"]')).toHaveCount(0);
+  const walked = page.getByRole('button', { name: 'I walked today' });
+  const box = await walked.boundingBox();
+  expect(box.y + box.height).toBeGreaterThan(915 - 160); // in the thumb zone
+  await walked.click();
+
+  await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
+  await expect(page.getByText('Done for today.')).toBeFocused();
+  await expect(page.locator('.chip.log')).toContainText('1');
+  await expect(page.locator('.arrivals li')).toHaveText(['A bee found Walk']);
+  await expect(walked).toHaveCount(0);
+  await expect(page.getByText('How do you feel?')).toHaveCount(0);
+  await expect(strip(page, 2).locator('svg.plant-tulip[data-habit="walk"]')).toBeVisible();
+  await expect(week(page, 1)).toBeVisible();
+  await page.reload();
+  await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
+
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk');
+  await expect(walked).toBeFocused();
+  await expect(strip(page, 1).locator('svg.plant[data-habit="walk"]')).toHaveCount(0);
+  // Tapped again: the streak is back at one, and the bee, already earned, does not arrive twice.
+  await walked.click();
+  await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
+  await expect(page.locator('.arrivals')).toHaveCount(0);
+});
+
+test('a habit of your own: name, icon and plant; log it, rename it, and its name is only ever text', async ({ page }) => {
+  await firstVisit(page);
+  await page.getByRole('button', { name: 'Add a habit' }).click();
+  await page.getByRole('button', { name: 'Make your own' }).click();
+  await expect(page.getByRole('textbox', { name: 'Name' })).toBeFocused();
+  await page.getByRole('textbox', { name: 'Name' }).fill('   ');
+  await page.getByRole('button', { name: 'Add habit' }).click();
+  await expect(page.getByRole('heading', { name: 'Make your own' })).toBeVisible(); // a blank name is not a habit
+  await page.getByRole('textbox', { name: 'Name' }).fill('Stretch');
+  await page.getByRole('radio', { name: '🧘' }).check();
+  await page.getByRole('radio', { name: 'Cactus' }).check();
+  await page.getByRole('button', { name: 'Add habit' }).click();
+
+  await expect(tab(page, 'Stretch')).toBeFocused();
+  await page.getByRole('button', { name: 'Done today' }).click();
+  await expect(tab(page, 'Stretch')).toHaveAccessibleName('Stretch, 1-day streak');
+  await expect(page.locator('.arrivals li')).toHaveText(['A bee found Stretch']);
+  await expect(strip(page, 2).locator('svg.plant-cactus[data-habit="own-1"]')).toBeVisible();
+
+  const name = '<img src=x onerror=hacked=1>&'; // within the 30-letter name
+  await page.getByRole('button', { name: 'Edit' }).click();
+  await expect(page.getByRole('textbox', { name: 'Name' })).toHaveValue('Stretch');
+  await expect(page.getByRole('radio', { name: 'Cactus' })).toBeChecked();
+  await page.getByRole('textbox', { name: 'Name' }).fill(name);
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.locator('.log-habit h2')).toHaveText(`🧘 ${name}`);
+  await expect(page.locator('.path-tab[data-path="own-1"]')).toContainText(name);
+  await expect(page.locator('#app img')).toHaveCount(0);
+  await strip(page, 2).click();
+  await expect(page.locator('.plant-card[data-plant="own-1"]')).toContainText(`A bee found ${name}`);
+  await expect(page.locator('.plant-card[data-plant="own-1"]')).toContainText('Cactus · sprout');
+  await page.locator('.plant-card[data-plant="own-1"]').click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(`🧘 ${name}`);
+  await expect(page.getByText('Stretch', { exact: true })).toBeVisible(); // the log keeps what it was called that day
+  expect(await page.evaluate(() => window.hacked)).toBeUndefined();
+
+  // Hiding takes it off the tabs and keeps its days; + Habit brings it back.
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.locator('.path-tab[data-path="own-1"]').click();
+  await page.getByRole('button', { name: 'Edit' }).click();
+  await page.getByRole('button', { name: 'Hide this habit' }).click();
+  await expect(page.locator('.path-tab[data-path="own-1"]')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Add a habit' }).click();
+  await page.locator('[data-track="own-1"]').click();
+  await expect(page.locator('.path-tab[data-path="own-1"]')).toHaveAccessibleName(`${name}, 1-day streak`);
+});
+
+test('with many habits, the tab row stays one row that scrolls inside itself, and + Habit is last', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  const tracked = [...['walk', 'read', 'water', 'outside'].map((id) => ({ id })),
+    ...['Stretch', 'Floss', 'Guitar practice, slow and easy'].map((name, i) => ({ id: `own-${i + 1}`, name, plant: 'mushroom' }))];
+  await grown(page, ['learn', 'calm', 'move', 'reflect', 'break', ...tracked.map((t) => t.id)], 9, true, { tracked });
+  await page.goto('/');
+  const tabs = page.getByRole('navigation', { name: 'Show the path for' });
+  await expect(tabs.getByRole('button')).toHaveCount(13);
+  expect(await tabs.getByRole('button').evaluateAll((els) => new Set(els.map((e) => e.offsetTop)).size)).toBe(1);
+  await expect(tabs.getByRole('button').last()).toHaveAccessibleName('Add a habit');
+  expect(await overflow(page)).toBe(0);
+  await expect(strip(page, 12).locator('svg.plant')).toHaveCount(12);
+  await tab(page, 'Guitar practice, slow and easy').click();
+  await expect(page.getByRole('button', { name: 'Done today' })).toBeVisible();
+  expect(await overflow(page)).toBe(0);
+});
+
 const overflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
 for (const colorScheme of ['light', 'dark']) {
@@ -574,6 +717,25 @@ for (const colorScheme of ['light', 'dark']) {
         expect(await overflow(page)).toBe(0);
         await strip(page, 5).click();
         await expect(page.locator('.plant-card')).toHaveCount(5);
+        expect(await overflow(page)).toBe(0);
+      });
+
+      test('a log habit, the + Habit sheet and the make-your-own form have no sideways scroll', async ({ page }) => {
+        const tracked = [{ id: 'walk' }, { id: 'water' }, { id: 'own-1', name: 'A very long name for a habit!!', plant: 'rose' }];
+        await grown(page, ['learn', 'calm', 'walk', 'water', 'own-1'], 3, true, { tracked });
+        await page.goto('/');
+        await tab(page, 'A very long name for a habit!!').click();
+        await page.getByRole('button', { name: 'Done today' }).click();
+        await expect(page.getByText('Done for today.')).toBeVisible();
+        expect(await overflow(page)).toBe(0);
+        await page.getByRole('button', { name: 'Add a habit' }).click();
+        expect(await overflow(page)).toBe(0);
+        await page.getByRole('button', { name: 'Make your own' }).click();
+        await expect(page.getByRole('radio', { name: 'Mushroom' })).toBeAttached();
+        expect(await overflow(page)).toBe(0);
+        await page.getByRole('button', { name: 'Back' }).click();
+        await page.getByRole('button', { name: 'Back' }).click();
+        await strip(page, 5).click();
         expect(await overflow(page)).toBe(0);
       });
 
@@ -606,7 +768,7 @@ async function listen(page) {
 }
 
 test('the sigh is taught once, then two breaths in and one long sigh out, with Moss along', async ({ page }) => {
-  await calmDone(page, ['breathe1']);
+  await calmDone(page, ['breathe1', 'ground1', 'scan1']);
   await page.clock.install();
   await page.goto('/');
   await tab(page, 'Calm').click();
@@ -632,7 +794,7 @@ test('the sigh is taught once, then two breaths in and one long sigh out, with M
 });
 
 test('the butterfly hug: Moss crosses its arms, and left and right light in turn, a second each', async ({ page }) => {
-  await calmDone(page, ['breathe1', 'ground1']);
+  await calmDone(page, ['breathe1', 'ground1', 'scan1', 'sigh1']);
   await page.clock.install();
   await page.goto('/');
   await tab(page, 'Calm').click();
@@ -655,7 +817,7 @@ test('the butterfly hug: Moss crosses its arms, and left and right light in turn
   await expect(page.getByText(/^40 slow taps · \d+ min$/)).toBeVisible();
 });
 
-test('Calm sounds: the bell rings at the start and end, rain is off until turned on, and mute silences both', async ({ page }) => {
+test('Calm sounds: both are off until turned on, the bell then rings at the start and end, and mute silences both', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await listen(page);
   await calmDone(page, ['breathe1']);
@@ -664,8 +826,10 @@ test('Calm sounds: the bell rings at the start and end, rain is off until turned
   await page.getByRole('button', { name: 'Your progress' }).click();
   const bell = page.getByRole('button', { name: 'A soft bell at the start and end' });
   const rainButton = page.getByRole('button', { name: 'Soft rain while you practise' });
-  await expect(bell).toHaveAttribute('aria-pressed', 'true');
+  await expect(bell).toHaveAttribute('aria-pressed', 'false');
   await expect(rainButton).toHaveAttribute('aria-pressed', 'false');
+  await bell.click(); // turning it on rings it once, as a sample
+  await expect(bell).toHaveAttribute('aria-pressed', 'true');
   await rainButton.click();
   await expect(rainButton).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Back' }).click();
@@ -674,24 +838,24 @@ test('Calm sounds: the bell rings at the start and end, rain is off until turned
   await tab(page, 'Calm').click();
   await page.getByRole('button', { name: 'Continue · Five slow breaths' }).click();
   await expect(page.getByText('Breath 1 of 5')).toBeVisible();
-  expect(await bells()).toBe(1);
+  expect(await bells()).toBe(2);
   expect(await page.evaluate(() => window.heard.noise)).toBe(1);
   await page.clock.runFor(60_000);
   await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
-  expect(await bells()).toBe(2);
+  expect(await bells()).toBe(3);
 
   // Muted on the home bar: no bell and no rain.
   await continueButton(page).click();
   await page.getByRole('button', { name: 'Sound' }).click();
   await page.getByRole('button', { name: 'Continue · Six slow breaths' }).click();
   await expect(page.getByText('Breath 1 of 6')).toBeVisible();
-  expect(await bells()).toBe(2);
+  expect(await bells()).toBe(3);
   expect(await page.evaluate(() => window.heard.noise)).toBe(1);
 });
 
 test('under reduced motion Calm stays quiet: no bell, no rain', async ({ page }) => {
   await listen(page);
-  await page.addInitScript(() => localStorage.setItem('drill.rain', 'on'));
+  await page.addInitScript(() => { localStorage.setItem('drill.rain', 'on'); localStorage.setItem('drill.bell', 'on'); });
   await calmDone(page, ['breathe1']);
   await page.goto('/');
   await tab(page, 'Calm').click();
