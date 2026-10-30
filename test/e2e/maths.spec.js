@@ -73,6 +73,15 @@ test('picking Maths in the intro opens its path on Learning; a whole lesson play
   await expect(page.getByRole('heading', { name: 'The board' })).toBeVisible();
 });
 
+test('a teach card draws the number line before the first line item asks for one', async ({ page }) => {
+  await pickMaths(page);
+  await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
+  const at = first.items.findIndex((i) => i.picture?.line);
+  for (const item of first.items.slice(0, at)) { await solve(page, item); await continueButton(page).click(); }
+  await expect(page.locator('svg.pic.line .hop')).toHaveCount(first.items[at].picture.line[2] + 1);
+  await expect(page.locator('svg.pic.line text')).toHaveText(['0', '20']);
+});
+
 test('a wrong tile ends the item with the answer shown, and the item comes back once at the end', async ({ page }) => {
   await pickMaths(page);
   await page.getByRole('button', { name: `Continue · ${first.title}` }).click();

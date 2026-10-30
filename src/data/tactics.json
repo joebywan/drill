@@ -1,0 +1,137 @@
+{
+  "fork-0": [
+    {
+      "id": "real-0-how",
+      "type": "teach",
+      "text": "These come from real games. The other side moves first, then you answer. Only the strongest move counts. If the line goes on, they reply and you keep going."
+    },
+    {
+      "id": "real-0-black",
+      "type": "teach",
+      "side": "b",
+      "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1",
+      "text": "Sometimes you're Black. The board turns round so your pieces are at the bottom, and the letters and numbers turn with it. I'll say whose move it is."
+    }
+  ],
+  "mateIn1-0": [
+    {
+      "id": "mate1-teach",
+      "type": "teach",
+      "text": "Mate in one: a checkmate is there to find, this move. Any checkmate counts."
+    }
+  ],
+  "hangingPiece-0": [
+    {
+      "id": "free-teach",
+      "type": "teach",
+      "side": "w",
+      "fen": "4k3/8/8/7p/n5b1/8/8/3Q3K w - - 0 1",
+      "text": "Free pieces: enemy pieces nothing defends. In real games they hide among the others, so see what defends a piece before you take it."
+    }
+  ],
+  "pin-0": [
+    {
+      "id": "pin-teach",
+      "type": "teach",
+      "side": "w",
+      "fen": "4k3/8/4n3/8/8/8/8/4R1K1 w - - 0 1",
+      "text": "A pin freezes a piece: moving it would expose what's behind it. This knight can't move, or its king would be in check. Attack a pinned piece and it can't run."
+    }
+  ],
+  "skewer-0": [
+    {
+      "id": "skewer-teach",
+      "type": "teach",
+      "side": "w",
+      "fen": "4q3/8/4k3/8/8/8/8/4R1K1 b - - 0 1",
+      "text": "A skewer is a pin turned round: the more valuable piece is in front. Here the king has to step off the line, then the rook takes the queen behind him."
+    }
+  ],
+  "backRankMate-0": [
+    {
+      "id": "backrank-teach",
+      "type": "teach",
+      "side": "w",
+      "fen": "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1",
+      "text": "The back rank is a king's home row. When his own pawns box him in, a rook or queen landing on that row is checkmate, unless something can take or block it."
+    }
+  ],
+  "mateIn2-0": [
+    {
+      "id": "mate2-teach",
+      "type": "teach",
+      "text": "Mate in two: your move, their reply, your checkmate. Look for a first move that leaves them almost no choice, usually a check."
+    }
+  ],
+  "discoveredAttack-0": [
+    {
+      "id": "discovered-teach",
+      "type": "teach",
+      "side": "w",
+      "fen": "4k3/8/8/8/4N3/8/8/4R1K1 w - - 0 1",
+      "text": "A discovered attack: one piece moves off a line and uncovers the piece behind it. Move this knight and the rook checks the king, while the knight attacks something else."
+    }
+  ],
+  "discoveredAttack-1": [
+    {
+      "id": "enpassant-teach",
+      "type": "teach",
+      "side": "w",
+      "fen": "4k3/8/8/4pP2/8/8/8/4K3 w - e6 0 1",
+      "text": "A rare pawn rule, en passant. A pawn that steps two squares past an enemy pawn can be taken as if it stepped one, on the very next move only. Here f5 takes e5 by landing on e6."
+    }
+  ],
+  "doubleCheck-0": [
+    {
+      "id": "double-teach",
+      "type": "teach",
+      "side": "w",
+      "fen": "4k3/8/5N2/8/8/8/8/4R1K1 b - - 0 1",
+      "text": "Double check: two pieces check the king at once. You can't take or block both, so the king has to move. If he can't, it's checkmate."
+    }
+  ],
+  "trappedPiece-0": [
+    {
+      "id": "trapped-teach",
+      "type": "teach",
+      "text": "A trapped piece has nowhere safe to go. Attack it, and wherever it runs it can be taken. Look for enemy pieces with few moves."
+    }
+  ],
+  "deflection-0": [
+    {
+      "id": "deflection-teach",
+      "type": "teach",
+      "text": "A deflection drags a defender away. Force the piece guarding something to move, and what it was guarding falls."
+    }
+  ],
+  "attraction-0": [
+    {
+      "id": "attraction-teach",
+      "type": "teach",
+      "text": "An attraction lures a piece, often the king, onto a bad square, usually by offering something to take. Then the trap closes."
+    },
+    {
+      "id": "castling-teach",
+      "type": "teach",
+      "side": "w",
+      "fen": "4k3/8/8/8/8/8/8/4K2R w K - 0 1",
+      "text": "One more rule, castling. Once a game, an unmoved king steps two squares toward an unmoved rook, and the rook hops to his other side. Nothing may stand between them, and never out of or through check."
+    }
+  ],
+  "promotion-0": [
+    {
+      "id": "promotion-teach",
+      "type": "teach",
+      "side": "w",
+      "fen": "8/4P3/8/8/8/8/8/4K2k w - - 0 1",
+      "text": "Promotion: a pawn reaching the far side. In these puzzles it becomes a queen for you. Clear its way, or win the square it lands on."
+    }
+  ],
+  "mateIn3-0": [
+    {
+      "id": "mate3-teach",
+      "type": "teach",
+      "text": "Mate in three: three of your moves, two replies. The same idea as mate in two, looking further ahead."
+    }
+  ]
+}

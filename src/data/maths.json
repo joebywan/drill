@@ -15,7 +15,7 @@
               "picture": {
                 "frame": 7
               },
-              "text": "Tens are the easiest numbers to add, so spot the pairs that make 10: 1 and 9, 2 and 8, 3 and 7, 4 and 6, 5 and 5. Here, 7 dots and 3 gaps make 10."
+              "text": "Tens are the easiest numbers to add, so spot the pairs that make 10: 1 and 9, 2 and 8, 3 and 7, 4 and 6, 5 and 5. This frame has room for 10 dots: 7 dots and 3 gaps make 10."
             },
             {
               "id": "ten-0-gaps",
@@ -48,6 +48,12 @@
               "explain": "3 and 7, 8 and 2, 6 and 4. Ten every time."
             },
             {
+              "type": "teach",
+              "id": "ten-0-add",
+              "show": "6 + 7",
+              "text": "The + sign means add: put the two together. 6 needs 4 to make 10, so take 4 from the 7, leaving 3. 10 and 3 is 13. To answer, tap the digits in order: 1, then 3."
+            },
+            {
               "id": "ten-0-8p7",
               "type": "build",
               "show": "8 + 7",
@@ -60,6 +66,18 @@
               "show": "9 + 6",
               "prompt": "Make 10 first, then add the rest.",
               "explain": "9 + 1 is 10, with 5 left over: 15."
+            },
+            {
+              "type": "teach",
+              "id": "ten-0-numline",
+              "picture": {
+                "line": [
+                  0,
+                  20,
+                  10
+                ]
+              },
+              "text": "A number line runs from one end number to the other in equal hops. This one goes 0 to 20 in 10 hops, so each hop is 2. Other lines are cut differently, so check first. Drag the marker; letting go answers."
             },
             {
               "id": "ten-0-line",
@@ -81,7 +99,7 @@
               "id": "ten-1-teach",
               "type": "teach",
               "show": "38 + 5",
-              "text": "Bigger numbers work the same way. 38 needs 2 to reach 40, so split the 5 into 2 and 3. 40 and 3 is 43."
+              "text": "Bigger numbers work the same way. Hop to the next ten first: 38 needs 2 to reach 40, so split the 5 into 2 and 3. 40 and 3 is 43."
             },
             {
               "id": "ten-1-38p5",
@@ -96,6 +114,12 @@
               "show": "47 + 6",
               "prompt": "Hop to 50 first.",
               "explain": "47 + 3 is 50, then 3 more: 53."
+            },
+            {
+              "type": "teach",
+              "id": "ten-1-hundred",
+              "show": "35 + 65",
+              "text": "Pairs can make 100 too. 4 and 6 make 10, so 40 and 60 make 100. With ones: 35 needs 5 to reach 40, then 60 more, so 35 and 65 make 100."
             },
             {
               "id": "ten-1-pairs",
@@ -125,6 +149,12 @@
               "explain": "56 + 4 is 60, then 4 more: 64."
             },
             {
+              "type": "teach",
+              "id": "ten-1-down",
+              "show": "43 - 5",
+              "text": "The - sign means take away. Hop down the same way: 43 is 3 above 40, so split the 5 into 3 and 2. 40 take away 2 is 38."
+            },
+            {
               "id": "ten-1-65m7",
               "type": "build",
               "show": "65 - 7",
@@ -138,10 +168,22 @@
           "title": "Doubling and halving",
           "items": [
             {
+              "type": "teach",
+              "id": "ten-2-times",
+              "show": "3 × 4",
+              "text": "The × sign means times: 3 × 4 is three lots of 4, so 4 + 4 + 4, which is 12. Doubling is times 2: 6 doubled is 6 + 6, which is 12."
+            },
+            {
               "id": "ten-2-teach",
               "type": "teach",
               "show": "25 × 4",
-              "text": "To times by 4, double twice. 25 doubled is 50, and doubled again is 100. Halving goes the other way."
+              "text": "To times by 4, double twice. 25 doubled is 50, and doubled again is 100."
+            },
+            {
+              "type": "teach",
+              "id": "ten-2-tens",
+              "show": "43 × 2",
+              "text": "43 is 4 tens and 3 ones: 40 and 3. To double it, double each part. 40 doubled is 80, 3 doubled is 6, and 80 and 6 is 86."
             },
             {
               "id": "ten-2-35x2",
@@ -149,6 +191,12 @@
               "show": "35 × 2",
               "prompt": "Double it: the tens, then the ones.",
               "explain": "30 doubled is 60 and 5 doubled is 10: 70."
+            },
+            {
+              "type": "teach",
+              "id": "ten-2-halve",
+              "show": "86 ÷ 2",
+              "text": "The ÷ sign means share equally: 86 ÷ 2 is 86 shared between 2. That is halving, the other way from doubling. Half of 80 is 40, half of 6 is 3: 43."
             },
             {
               "id": "ten-2-64h2",
@@ -165,10 +213,16 @@
               "explain": "15, 30, 60."
             },
             {
+              "type": "teach",
+              "id": "ten-2-swap",
+              "show": "6 × 5",
+              "text": "Halve one number and double the other, and the answer stays the same. 6 × 5 is 3 × 10: both are 30. So pick whichever is easier to work out."
+            },
+            {
               "id": "ten-2-16x5",
               "type": "pick",
               "show": "16 × 5",
-              "prompt": "Halve one number, double the other. Which is the same?",
+              "prompt": "Halve one number, double the other. Which has the same answer?",
               "options": [
                 "8 × 10",
                 "32 × 10",
@@ -200,7 +254,7 @@
               "picture": {
                 "grid": 25
               },
-              "text": "Per cent means out of 100. This grid has 100 squares and 25 are shaded: that is 25%."
+              "text": "Per cent means out of 100, and % is its sign. This grid has 10 rows of 10, so 100 squares, and 25 are shaded: that is 25%."
             },
             {
               "id": "pct-0-grid",
@@ -226,6 +280,18 @@
               "unit": "%",
               "prompt": "Drag the marker to 50% and let go.",
               "explain": "50% is halfway: 50 out of 100."
+            },
+            {
+              "type": "teach",
+              "id": "pct-0-fractions",
+              "picture": {
+                "bar": [
+                  1,
+                  2
+                ]
+              },
+              "show": "1/2",
+              "text": "A fraction is a share, written with a /. 1/2 means 1 out of 2 equal parts: a half. 1/4 is 1 out of 4, a quarter. 1/10 is 1 out of 10, a tenth."
             },
             {
               "id": "pct-0-half",
@@ -272,7 +338,7 @@
               "id": "pct-1-teach",
               "type": "teach",
               "show": "10% of 80",
-              "text": "10% is a tenth: take a 0 off. 10% of 80 is 8. And 50% is a half."
+              "text": "10% of 80 means a 10% share of 80. 10% is a tenth: take a 0 off, so 10% of 80 is 8. And 50% is a half."
             },
             {
               "id": "pct-1-10of60",
@@ -324,7 +390,7 @@
               "id": "pct-2-teach",
               "type": "teach",
               "show": "15% of $40",
-              "text": "A 15% tip is 10%, plus half of that again. On a $40 bill: 4, plus 2, is $6."
+              "text": "A tip is extra money you add to a bill. A 15% tip is 10%, plus half of that. On a $40 bill: 4, plus 2, is $6."
             },
             {
               "id": "pct-2-tip60",
@@ -332,6 +398,12 @@
               "show": "15% of $60",
               "prompt": "What is the tip? 10%, plus half of that.",
               "explain": "10% is 6 and half of that is 3: $9."
+            },
+            {
+              "type": "teach",
+              "id": "pct-2-off",
+              "show": "10% off $50",
+              "text": "Off means taken away from the price. 10% of $50 is $5, so you pay $50 take away $5: $45. And 25% is a quarter: halve, then halve again."
             },
             {
               "id": "pct-2-off80",
@@ -388,7 +460,7 @@
                   4
                 ]
               },
-              "text": "A fraction is part of a whole. The bottom number is how many equal parts; the top is how many you have. One of four parts is 1/4."
+              "text": "A fraction is part of a whole. In 1/4, the number after the / is how many equal parts there are; the number before it is how many are shaded. One of four parts is 1/4."
             },
             {
               "id": "frac-0-3of4",
@@ -495,6 +567,23 @@
               "explain": "2 of 4 parts is half the bar: 1/2."
             },
             {
+              "type": "teach",
+              "id": "frac-1-cut",
+              "picture": {
+                "bars": [
+                  [
+                    1,
+                    4
+                  ],
+                  [
+                    3,
+                    12
+                  ]
+                ]
+              },
+              "text": "Cut every part of this 1/4 into 3 pieces and you get 3/12: the same amount. Times both numbers by the same thing and the amount stays put."
+            },
+            {
               "id": "frac-1-pairs",
               "type": "pairs",
               "tiles": [
@@ -507,6 +596,23 @@
               ],
               "prompt": "Match the fractions that are the same amount.",
               "explain": "1/2 is 3/6, 1/3 is 2/6, and 3/4 is 6/8."
+            },
+            {
+              "type": "teach",
+              "id": "frac-1-size",
+              "picture": {
+                "bars": [
+                  [
+                    1,
+                    2
+                  ],
+                  [
+                    1,
+                    8
+                  ]
+                ]
+              },
+              "text": "These bars are the same length, so you can compare them by eye. Fewer parts means bigger parts: 1/2 beats 1/8. And the further the shading reaches, the more it is."
             },
             {
               "id": "frac-1-biggest",
@@ -528,7 +634,7 @@
                   ]
                 ]
               },
-              "prompt": "Which piece is biggest?",
+              "prompt": "Which shaded part is biggest?",
               "options": [
                 "1/3",
                 "1/4",
@@ -574,12 +680,13 @@
               "id": "frac-2-teach",
               "type": "teach",
               "picture": {
-                "bar": [
+                "line": [
+                  0,
                   1,
                   4
                 ]
               },
-              "text": "Fractions sit between whole numbers. Cut the gap from 0 to 1 into 4 equal hops, and each hop is 1/4."
+              "text": "Fractions sit between whole numbers. Cut the gap from 0 to 1 into 4 equal hops, and each hop is 1/4. So the hops land on 1/4, 2/4, 3/4."
             },
             {
               "id": "frac-2-half",
@@ -610,6 +717,19 @@
               "ticks": 3,
               "prompt": "This line is cut in thirds. Drag to 2/3.",
               "explain": "Two hops of three."
+            },
+            {
+              "type": "teach",
+              "id": "frac-2-past",
+              "picture": {
+                "line": [
+                  0,
+                  2,
+                  6
+                ]
+              },
+              "show": "4/3",
+              "text": "The first number can be the bigger one. Here each hop is 1/3. Three hops is 3/3, and that lands on 1: when both numbers match, it is one whole. One hop more is 4/3, past 1."
             },
             {
               "id": "frac-2-3halves",

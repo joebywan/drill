@@ -84,6 +84,27 @@ test('every shipped maths item passes problem() and has a unique id', () => {
   for (const u of course.units) assert.ok(u.lessons[0].items[0].type === 'teach', `${u.title} starts by teaching`);
 });
 
+test('every sign, picture and answer type is taught on a card before anything uses it', () => {
+  const standalone = (sign) => new RegExp(`(^|\\s)\\${sign}([\\s.,:;]|$)`);
+  const SIGNS = { '+': /\+/, '-': /\d - \d/, '×': /×/, '÷': /÷/, '%': /%/, '/': /\d\/\d/ };
+  const written = (i) => [i.show, i.text, i.prompt, i.explain, ...(i.options || []), ...(i.tiles || [])].filter(Boolean).join(' ');
+  for (const [sign, used] of Object.entries(SIGNS)) {
+    const first = items.findIndex((i) => used.test(written(i)));
+    const taught = items.findIndex((i) => i.type === 'teach' && standalone(sign).test(i.text));
+    assert.ok(first >= 0 && taught >= 0 && taught <= first, `${sign} is first used by ${items[first]?.id}, taught by ${items[taught]?.id}`);
+  }
+  const taughtBefore = (needs, teaches, what) => {
+    const first = items.findIndex((i) => i.type !== 'teach' && needs(i));
+    assert.ok(first >= 0, what);
+    assert.ok(items.slice(0, first).some((i) => i.type === 'teach' && teaches(i)), `${what}: ${items[first].id} comes first`);
+  };
+  for (const kind of ['frame', 'grid', 'bar', 'bars']) taughtBefore((i) => i.picture?.[kind], (i) => i.picture?.[kind], kind);
+  taughtBefore((i) => i.type === 'line', (i) => i.picture?.line, 'a number line');
+  taughtBefore((i) => i.type === 'build', (i) => /\btap the digits\b/i.test(i.text), 'how tiles work');
+  const pastOne = (i) => /^(\d+)\/(\d+)$/.test(i.show || '') && value(i.show) >= 1;
+  taughtBefore(pastOne, (i) => pastOne(i) && i.picture?.line, 'a fraction of 1 or more');
+});
+
 test('maths is a Learning course with its own coach and a placement that names real units', () => {
   const maths = subjects.find((s) => s.id === 'maths');
   assert.equal(maths.habit, 'learn');
