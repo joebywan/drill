@@ -71,7 +71,8 @@ try {
       for (let i = 0; i < 3 && !ui; i++) { // uiautomator is sometimes killed mid-dump (exit 137): try again
         try { adb('shell', 'uiautomator', 'dump', '/sdcard/ui.xml'); ui = adb('shell', 'cat', '/sdcard/ui.xml'); } catch { await sleep(1000); }
       }
-      const m = ui.match(new RegExp(`text="${label}"[^>]*bounds="\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]"`));
+      // Chrome's own views have a resource-id; the page's (e.g. a × labelled "No thanks") have none.
+      const m = ui.match(new RegExp(`text="${label}" resource-id="[^"]+"[^>]*bounds="\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]"`));
       if (m) { adb('shell', 'input', 'tap', String((+m[1] + +m[3]) >> 1), String((+m[2] + +m[4]) >> 1)); await sleep(800); console.log(`  declined Chrome prompt: ${label}`); }
     }
   };
