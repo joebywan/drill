@@ -579,7 +579,7 @@ export function perches(plants, shape = 'tall', more = []) {
  * plant's visitors, in its species, at its perches. Anything whose id is in `fresh` is marked
  * data-new, to fly or fade in. A clear rect under each plant makes the whole plant tappable.
  */
-export function drawGarden({ mood, plants: all, landmarks = [], season }, shape = 'tall', fresh = []) {
+export function drawGarden({ mood, plants: all, landmarks = [], season, event }, shape = 'tall', fresh = []) {
   const at = slots(shape, all.length);
   const plants = all.slice(0, at.length); // past MAX_PLANTS, the first ones
   const closed = mood === 'resting';
@@ -594,5 +594,5 @@ export function drawGarden({ mood, plants: all, landmarks = [], season }, shape 
     const isNew = fresh.includes(id) ? ' data-new' : '';
     return b ? visitor(gift, species).replace('<svg ', `<svg x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" data-kind="${gift}"${isNew} `) : '';
   })).join('');
-  return scene(mood, shape, season).replace(/<\/svg>$/, `${back}${grown}${front}${guests}${life}</svg>`);
+  return scene(mood, shape, season, event?.id).replace(/<\/svg>$/, `${back}${grown}${front}${guests}${life}</svg>`);
 }

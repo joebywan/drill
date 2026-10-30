@@ -1,8 +1,7 @@
 import { Chess } from 'chess.js';
 import { MARKER_TYPE } from 'cm-chessboard/src/extensions/markers/Markers.js';
 import { ARROW_TYPE } from 'cm-chessboard/src/extensions/arrows/Arrows.js';
-import { PromotionDialog } from 'cm-chessboard/src/extensions/promotion-dialog/PromotionDialog.js';
-import { board, cantMove, pop, withDots } from './exercise.js';
+import { board, cantMove, pop, withDots, withPromotion } from './exercise.js';
 import { TIERS, dailyIndex, entry, mistake, sideName, teach } from './mate.js';
 import { HIT_MS, RUN_MS, hunted, play as playCapture, start as startCapture } from './capture.js';
 import { HINT, LEVELS, thinking } from './engine.js';
@@ -110,20 +109,9 @@ function mountMate(el, item, { say }) {
 
   const input = () => withDots(b, fen, ({ squareFrom: from, squareTo: to }) => {
     const probe = new Chess(fen());
-    const piece = probe.get(from);
-    const promoting = piece?.type === 'p' && (to[1] === '8' || to[1] === '1');
     const legal = probe.moves({ square: from, verbose: true }).some((m) => m.to === to);
-    if (!legal) { say(cantMove(piece?.type), 'think'); return false; }
-    if (promoting) {
-      b.disableMoveInput();
-      b.showPromotionDialog(to, piece.color, ({ piece: chosen }) => {
-        if (chosen) commit(from + to + chosen[1]);
-        else { b.setPosition(fen()); open(); }
-      });
-      return true;
-    }
-    commit(from + to);
-    return true;
+    if (!legal) { say(cantMove(probe.get(from)?.type), 'think'); return false; }
+    return withPromotion(b, fen(), from, to, (promotion = '') => { commit(from + to + promotion); return true; }, open);
   });
   const open = () => { b.disableMoveInput(); b.enableMoveInput(input(), b.getOrientation()); };
 
@@ -189,7 +177,7 @@ function mountMate(el, item, { say }) {
     dead = null;
     still = undefined;
     b?.destroy();
-    b = board(boardEl, first.fen, first.fen.split(' ')[1], [{ class: PromotionDialog }]);
+    b = board(boardEl, first.fen, first.fen.split(' ')[1]);
     shown();
     ready();
     say((daily ? W.mate.today : W.mate.another)(sideName(first.fen), n), 'think');
@@ -349,11 +337,10 @@ function mountRosa(el, item, { say }) {
     say(g.inCheck() ? W.rosa.check : W.rosa.played(words(m.san).replace(/, check$/, '')), 'teach');
     open();
   };
-  const input = withDots(b, () => g.fen(), ({ squareFrom: from, squareTo: to }) => {
+  const input = withDots(b, () => g.fen(), ({ squareFrom: from, squareTo: to }) => withPromotion(b, g.fen(), from, to, (promotion) => {
     let m;
     const type = g.get(from)?.type;
-    // ponytail: promotion is always a queen, as in the lessons; Mate has the picker where it can matter.
-    try { m = g.move({ from, to, promotion: 'q' }); } catch { say(cantMove(type), 'think'); return false; }
+    try { m = g.move({ from, to, promotion }); } catch { say(cantMove(type), 'think'); return false; }
     play('tap');
     stopThinking(); // a hint still working on the old position
     b.removeArrows();
@@ -365,7 +352,7 @@ function mountRosa(el, item, { say }) {
     }, LAND);
     b.disableMoveInput();
     return true;
-  });
+  }, () => open()));
   const note = el.querySelector('.game-note');
   const open = () => { b.disableMoveInput(); b.enableMoveInput(input, colour === 'w' ? 'w' : 'b'); };
 

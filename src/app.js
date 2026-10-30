@@ -11,6 +11,7 @@ import { GOES, easier, flying, helpFor, misses, noteAnswer, struggling, warmedLa
 import { CALM_SOUNDS, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, setSound, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
+import { lessonOf } from './garden/events.js';
 import { moment } from './cast/voice.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
@@ -230,7 +231,7 @@ function home(arrived = null, newly = []) {
     </header>
     <main class="home">
       <div class="rail">
-      <button class="garden-link" aria-label="Your garden: ${g.plants.length} plant${g.plants.length === 1 ? '' : 's'}">${drawGarden(g, 'strip', newly.map((r) => r.id))}</button>
+      <button class="garden-link" aria-label="Your garden: ${g.plants.length} plant${g.plants.length === 1 ? '' : 's'}">${drawGarden(g, 'strip', newly.map((r) => r.id))}${g.event ? `<span class="event-tag">${esc(g.event.name)}</span>` : ''}</button>
       <nav class="paths" aria-label="Show the path for">
         ${habits().filter((h) => !h.hidden).map(habitTab).join('')}
         <button class="path-tab add-tab" data-add aria-label="Add a habit">${esc(LOG_WORDS.addTab)}</button>
@@ -572,6 +573,20 @@ const arrivals = (newly) => (!newly.length ? '' : `<ul class="arrivals">
   ${newly.slice(0, 3).map((r) => `<li>${arrival(r, r.habit)}</li>`).join('')}
   ${newly.length > 3 ? `<li>${esc(moreArrived(newly.length - 3))}</li>` : ''}</ul>`);
 
+/** A seasonal event's card on the garden screen: what's on, its set, and what it leaves. Never when it ends. */
+const eventCard = (e) => {
+  const done = progress.done[lessonOf(e)];
+  return `<section class="plant-card event-card"><span class="kicker">${esc(e.name)}</span>
+    <p>${esc(e.about)}</p><p class="hint">${esc(done ? e.keep : e.offer)}</p>
+    <button class="choice" data-event>${esc(done ? `${e.title} again` : e.title)}</button></section>`;
+};
+
+/** An event's set, played as an ordinary session of its subject's. Its items have no key: no review cards. */
+const playEvent = (e) => {
+  const subject = subjects.find((s) => s.id === e.subject);
+  run(lessonOf(e), e.items.map((item) => ({ subject, topic: e.name, item })), e.title);
+};
+
 /**
  * The whole garden, tall, with a card per plant under it: its stage, days practised, a gentle
  * hint of the next stage and what has arrived. A plant or its card opens its habit view, whose
@@ -597,11 +612,13 @@ function gardenView(from = null) {
     <main class="garden-page">
       <h1>Your garden</h1>
       <div class="garden-view">${drawGarden(g, 'tall')}</div>
+      ${g.event ? eventCard(g.event) : ''}
       <ul class="plant-cards">${g.plants.map(card).join('')}
         ${g.landmarks.length ? `<li class="plant-card landmark-card"><span class="kicker">${esc(GARDEN_WORDS.kicker)}</span>
           ${g.landmarks.map((l) => arrival(l, null)).join('')}</li>` : ''}</ul>
     </main>`;
   stopHome = liven(app.querySelector('.garden-view'));
+  app.querySelector('[data-event]')?.addEventListener('click', () => playEvent(g.event));
   focusOn(from ? `[data-plant="${from}"]` : 'h1');
   const open = (id) => habitView(id, () => gardenView(id));
   app.querySelector('.back').addEventListener('click', () => { home(); focusOn('.garden-link'); });
