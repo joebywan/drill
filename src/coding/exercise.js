@@ -6,6 +6,7 @@ import { flourish, move, play } from '../feel.js';
 import { esc } from '../html.js';
 
 const STEP_MS = 380;
+const DEMO_WAIT_MS = 900; // long enough to see the grid before a teach card's program plays
 const ROCK = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1.2 8.6 Q.6 5.2 3 3.6 Q4.4 1.6 6.6 2.6 Q9 3.4 8.9 6.4 Q9.2 8.6 7.4 8.8 Z" fill="var(--rock)"/><path d="M3.2 4.4 Q4.6 3 6.4 3.6" fill="none" stroke="var(--rock-shine)" stroke-width=".7" stroke-linecap="round"/></svg>';
 
 /**
@@ -54,6 +55,13 @@ export function mount(el, item, { say, done }) {
 
   if (kind(item) === 'teach') {
     if (!item.level) world.remove();
+    if (item.program) {
+      programEl.innerHTML = blocks(item.program, []);
+      const wait = setTimeout(() => walk(run(item.level, item.program)), DEMO_WAIT_MS);
+      say(item.text, 'teach');
+      done(null);
+      return () => { clearTimeout(wait); cleanup(); };
+    }
     programEl.remove();
     say(item.text, 'teach');
     done(null);

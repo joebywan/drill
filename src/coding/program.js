@@ -10,7 +10,7 @@
  * repeat's count, a step fills a block. Holes fill in reading order.
  *
  * Items (`type`):
- *   teach    { text, level? }                         a card to read: not marked, not reviewed
+ *   teach    { text, level?, program? }               a card to read: not marked, not reviewed; a program plays on the level
  *   build    { level, program, tiles, prompt, explain } fill the holes; it runs when the last one is filled
  *   predict  { level, program, prompt, explain }     tap the square where Fennel stops
  * Right is decided by running the program, never by comparing to a stored answer: any filling that
@@ -127,7 +127,7 @@ export const answer = (item) => run(item.level, item.program).path.at(-1);
 /** Why an item can't be shipped, or null. Every shipped item passes this (test/coding.test.js). */
 export function problem(item) {
   if (!item.id) return 'no id';
-  if (item.type === 'teach') return item.text ? null : 'teach without text';
+  if (item.type === 'teach') return !item.text ? 'teach without text' : item.program && !item.level ? 'teach program needs a level' : null;
   if (!['build', 'predict'].includes(item.type)) return `unknown type ${item.type}`;
   if (!item.prompt || !item.explain) return 'needs a prompt and an explanation';
   const g = parse(item.level);

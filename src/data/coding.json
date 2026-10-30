@@ -37,6 +37,8 @@
             { "id": "steps-1-wall", "type": "build", "level": ["S#*", ".#.", "..."], "program": [null, null, null, null, null, null], "tiles": ["right", "up", "down"],
               "prompt": "A taller rock. Six steps.",
               "explain": "Down twice, right twice, up twice: all the way round." },
+            { "id": "steps-1-stop", "type": "teach", "level": ["S#.*", "...."], "program": ["right", "down"],
+              "text": "Watch. The right step hits the rock, so I stop there. The down step never happens: a rock, or the edge of the grid, ends the run." },
             { "id": "steps-1-bump", "type": "predict", "level": ["S.#.*", "....."], "program": ["right", "right", "down"],
               "prompt": "A rock is on my way. Tap where I stop.",
               "explain": "One step right, then the rock blocks the next one, so I stop there. A step into a rock ends the run." }
@@ -59,6 +61,8 @@
             { "id": "loops-0-inside", "type": "build", "level": ["S....*"], "program": [{ "repeat": 5, "do": [null] }], "tiles": ["up", "down", "right"],
               "prompt": "The count is set. Pick the step to repeat.",
               "explain": "Right, five times over." },
+            { "id": "loops-0-order", "type": "teach", "level": ["S..", "...", "..*"], "program": [{ "repeat": 2, "do": ["right", "down"] }],
+              "text": "Watch. With two steps inside, I do them in order, then go back to the top and do both again." },
             { "id": "loops-0-stairs", "type": "build", "level": ["..#*", ".#..", "#...", "S..."], "program": [{ "repeat": 3, "do": [null, null] }], "tiles": ["up", "right"],
               "prompt": "Stairs! Two steps inside, done three times.",
               "explain": "Right then up, three times: a staircase. Up first runs into a rock." },
@@ -93,7 +97,9 @@
           "title": "If there's a rock",
           "items": [
             { "id": "if-0-meet", "type": "teach", "level": ["...*.", "...#.", "S.#.."],
-              "text": "An if block looks first. If there's a rock to my right, I do the first step. Else, I do the other one." },
+              "text": "An if block looks at the very next square. If there's a rock right beside me on my right, I do the first step. Else, meaning no rock there, I do the other one." },
+            { "id": "if-0-again", "type": "teach", "level": ["..*", "S#."], "program": [{ "repeat": 3, "do": [{ "if": "rock-right", "then": ["up"], "else": ["right"] }] }],
+              "text": "Watch. In a repeat, I look again each time round. Rock beside me, so up. Then no rock, so right, and right again." },
             { "id": "if-0-climb", "type": "build", "level": ["...*.", "...#.", "S.#.."],
               "program": [{ "repeat": 5, "do": [{ "if": "rock-right", "then": [null], "else": [null] }] }], "tiles": ["up", "right", "down"],
               "prompt": "Rock to my right: which way? No rock: which way?",

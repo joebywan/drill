@@ -1470,7 +1470,9 @@ for (const colorScheme of ['light', 'dark']) {
         await page.goto('/');
         await page.getByRole('button', { name: 'Continue · If there\'s a rock' }).click();
         await continueButton(page).click(); // the teach card
-        await expect(page.locator('.block.if')).toBeVisible();
+        await expect(page.locator('.block.if')).toBeVisible(); // the teach card that plays an if
+        await continueButton(page).click();
+        await expect(page.locator('.tiles .tile').first()).toBeVisible();
         expect(await overflow(page)).toBe(0);
         const program = await page.locator('.program').boundingBox();
         const tiles = await page.locator('.tiles').boundingBox();
