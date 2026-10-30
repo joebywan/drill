@@ -103,6 +103,12 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   habit's permanent count of dates practised, never the streak); `RULES` is the achievement table
   (one line of data each), `award()` records what is earned in `progress.garden.earned` and never
   removes it; `mood()` maps the habits' lights; `garden()` is all the garden screen needs.
+- `src/garden/season.js` — pure: `season(date, south)` (meteorological, flipped south) and
+  `southern(timeZone)`, a guess (Australia/* is south). `garden()` carries `season`; app.js reads the
+  hemisphere from the ⋯ screen's "Southern hemisphere seasons" toggle (`pref('south')`), defaulting to the
+  guess. A season only retints the land and adds decoration (`scene(mood, shape, season)`): plants
+  never change with it. Lumi lounges in `pond()`, which `perches()` puts on clear ground first
+  (`.pond`, null when a big strip has no room).
 - `src/garden/art.js` — the garden's drawings, built like the cast: `plant(habit, stage, { flowers,
   closed })` (tree, lavender, sunflower, vine on a trellis, daisies; five stages, scaled by `GROW` so a
   sprout is about a third of full height and a sapling about half; up to 6 blooms that

@@ -76,7 +76,9 @@ The app's vibe moves from "build knowledge" to "grow yourself", shown as a garde
   numbers are the detail.
 - **Characters are recognisable animals** (Moss the capybara, Clover the rabbit, Mira the
   ring-tailed lemur, Lumi the seal). Insects and birds are garden life, not coaches. No owls.
-- Later: seasonal events that change the whole garden (blossom, lanterns), Lumi by a pond,
+- Done: the garden follows the real season for the device's hemisphere (`src/garden/season.js`;
+  spring blossom, summer wildflowers, autumn leaves, winter frost and lanterns), and Lumi lounges by a pond.
+- Later: seasonal events that change the whole garden,
   and reconsidering the name "Drill".
 
 9. [x] **Garden model.** Pure: days practised per habit (kept permanently, not from the

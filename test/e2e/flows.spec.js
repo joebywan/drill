@@ -1082,3 +1082,38 @@ test('under reduced motion Calm stays quiet: no bell, no rain', async ({ page })
   await expect(page.getByText('Breath 1 of 5')).toBeVisible();
   expect(await page.evaluate(() => [window.heard.tones.includes(528), window.heard.noise])).toEqual([false, 0]);
 });
+
+// Garden seasons: the real calendar, by the device's hemisphere. Australia/* is south.
+test.describe('garden seasons in Sydney', () => {
+  test.use({ timezoneId: 'Australia/Sydney' });
+  test('July in Sydney is winter, Lumi lounges by the pond, and the ⋯ toggle turns it to northern summer', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-07-15T10:00:00+10:00'));
+    await firstVisit(page);
+    const strip = page.locator('.garden-link svg.garden-scene');
+    await expect(strip).toHaveClass(/season-winter/);
+    await expect(strip.locator('svg.pond svg.cast-lumi')).toHaveCount(1);
+    await expect(strip.locator('[data-part="lantern"]').first()).toBeAttached();
+    await page.getByRole('button', { name: 'Your progress' }).click();
+    const toggle = page.getByRole('button', { name: 'Southern hemisphere seasons' });
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await page.getByRole('button', { name: 'Back' }).click();
+    await expect(strip).toHaveClass(/season-summer/);
+    await page.reload();
+    await expect(page.locator('.garden-link svg.garden-scene')).toHaveClass(/season-summer/); // the choice is kept
+  });
+});
+
+test.describe('garden seasons in London', () => {
+  test.use({ timezoneId: 'Europe/London' });
+  test('October in London is autumn, in the full garden too', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-10-30T10:00:00Z'));
+    await firstVisit(page);
+    await expect(page.locator('.garden-link svg.garden-scene')).toHaveClass(/season-autumn/);
+    await page.locator('.garden-link').click();
+    await expect(page.locator('.garden-view svg.garden-scene')).toHaveClass(/season-autumn/);
+    await expect(page.locator('.garden-view [data-part="leaf"]').first()).toBeAttached();
+    await expect(page.locator('.garden-view svg.pond')).toHaveCount(1);
+  });
+});
