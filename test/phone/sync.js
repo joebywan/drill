@@ -21,7 +21,7 @@ export default async ({ page, seed, touch, btn, type, shot, check, run }) => {
     await otherCall('POST', '/v1/pair', { code, wrapped: await wrap(code, other) });
 
     await seed({ version: 8, habits: { learn: { count: 0, last: null, forgiven: [], days: 0 } }, picked: [] });
-    await touch(btn('Your progress')); await shot('menu');
+    await touch(btn('Settings')); await shot('menu');
     await touch(btn('Use on another device')); await shot('device');
     await touch(btn('Enter a code'));
     await touch(page.getByRole('textbox', { name: 'Code from your other device' }));

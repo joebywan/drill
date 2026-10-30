@@ -112,6 +112,22 @@ test('intro, habits only: the picks come first in the order tapped, and a tracke
   expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'winddown', 'focus']);
 });
 
+test('once Walk is logged today, Lumi greets from her done-today lines, not an invite', async ({ page }) => {
+  // The first line of the matching pool: "{habit} is here whenever you are" used to tie with "done".
+  await page.addInitScript(() => { Math.random = () => 0; });
+  const lumi = JSON.parse(readFileSync(new URL('../../src/cast/voice/lumi.json', import.meta.url)));
+  const doneLines = lumi.lines.filter(({ when }) => when.light === 'done').flatMap((p) => p.lines);
+  await toStepTwo(page);
+  await pick(page, 'Build habits').click();
+  await pick(page, 'Walk').click();
+  await page.getByRole('button', { name: 'Show my home' }).click();
+  await page.getByRole('button', { name: 'I walked today' }).click();
+  const said = (await page.locator('.greeting').textContent()).replace(/^Lumi\s*/, '');
+  expect(doneLines).toContain(said);
+  await page.reload();
+  expect(doneLines).toContain((await page.locator('.greeting').textContent()).replace(/^Lumi\s*/, ''));
+});
+
 test("intro, skipped at either step: today's default home, and the intro never comes back", async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Skip' }).click();
@@ -158,14 +174,14 @@ test('"Change what you see" in the ⋯ menu reopens step 2 with the picks, and B
   await pick(page, 'Build habits').click();
   await pick(page, 'Calm').click();
   await page.getByRole('button', { name: 'Show my home' }).click();
-  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('button', { name: 'Change what you see' }).click();
   await expect(page.getByRole('heading', { name: 'What would you like out of Drill?' })).toBeFocused();
   await expect(pick(page, 'Calm')).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Back' }).click();
   expect((await tabOrder(page))[0]).toBe('calm');
 
-  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('button', { name: 'Change what you see' }).click();
   await pick(page, 'Calm').click();
   await pick(page, 'Screen break').click();
@@ -967,7 +983,7 @@ test('progress saved to a file loads back', async ({ page }) => {
   await finishFirstLesson(page);
   await continueButton(page).click();
 
-  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save to a file' }).click();
   const file = await (await download).path();
@@ -976,7 +992,7 @@ test('progress saved to a file loads back', async ({ page }) => {
   await page.evaluate(() => localStorage.clear());
   await firstVisit(page);
   await expect(tab(page, 'Learning')).toHaveAccessibleName('Learning');
-  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
   const chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Load from a file' }).click();
   await (await chooser).setFiles(file);
@@ -1063,7 +1079,7 @@ test('with all five habits started, the bar fits at 360px and the tabs are one r
   await page.setViewportSize({ width: 360, height: 800 });
   await grown(page, ['learn', 'calm', 'move', 'reflect', 'break'], 14);
   await firstVisit(page);
-  for (const name of ['Sound', 'Your progress']) {
+  for (const name of ['Sound', 'Settings']) {
     const box = await page.getByRole('button', { name }).boundingBox();
     expect(box.x >= 0 && box.x + box.width <= 360, name).toBe(true);
   }
@@ -1370,7 +1386,7 @@ test('the habit view shows the usual hour, and the bridge for the Android wrappe
   for (let i = 0; i < 8; i++) expect(await page.evaluate(() => window.drill.noteReminder('cleared'))).toBe(true);
   expect(await page.evaluate(() => window.drill.shouldRemind())).toBe(false);
   await page.getByRole('button', { name: 'Back' }).click();
-  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
   await expect(page.getByText("Reminders are paused because they weren't helping.")).toBeVisible();
   await page.getByRole('button', { name: 'Turn back on' }).click();
   await expect(page.getByText('Reminders are on again.')).toBeVisible();
@@ -1535,7 +1551,7 @@ test('Calm sounds: both are off until turned on, the bell then rings at the star
   await calmDone(page, ['breathe1']);
   await page.clock.install();
   await page.goto('/');
-  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
   const bell = page.getByRole('button', { name: 'A soft bell at the start and end' });
   const rainButton = page.getByRole('button', { name: 'Soft rain while you practise' });
   await expect(bell).toHaveAttribute('aria-pressed', 'false');
@@ -1692,7 +1708,7 @@ test.describe('garden seasons in Sydney', () => {
     await expect(strip).toHaveClass(/season-winter/);
     await expect(strip.locator('svg.pond svg.cast-lumi')).toHaveCount(1);
     await expect(strip.locator('[data-part="lantern"]').first()).toBeAttached();
-    await page.getByRole('button', { name: 'Your progress' }).click();
+    await page.getByRole('button', { name: 'Settings' }).click();
     const toggle = page.getByRole('button', { name: 'Southern hemisphere seasons' });
     await expect(toggle).toHaveAttribute('aria-pressed', 'true');
     await toggle.click();
@@ -1911,7 +1927,7 @@ test('with the Android bridge, a finished lesson sends a summary and the ⋯ scr
   expect(last.looks[0]).toMatchObject({ light: 'bright', streak: 1, pose: 'complete' });
   expect(last.doneOn).toMatch(/^\d{4}-\d\d-\d\d$/);
   await continueButton(page).click();
-  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
   const note = page.getByRole('button', { name: /One quiet note/ });
   await expect(note).toHaveAttribute('aria-pressed', 'false');
   await note.click();
@@ -1921,7 +1937,7 @@ test('with the Android bridge, a finished lesson sends a summary and the ⋯ scr
 
 test('without the bridge, the ⋯ screen has no note toggle', async ({ page }) => {
   await firstVisit(page);
-  await page.getByRole('button', { name: 'Your progress' }).click();
-  await expect(page.getByRole('heading', { name: 'Your progress' })).toBeVisible();
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
   await expect(page.getByRole('button', { name: /One quiet note/ })).toHaveCount(0);
 });

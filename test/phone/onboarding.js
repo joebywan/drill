@@ -24,7 +24,7 @@ export default async ({ page, touch, btn, shot, check }) => {
   await touch(btn('I walked today')); await shot('walked');
   check('Walk logged', (await page.locator('.path-tab[data-path="walk"]').getAttribute('aria-label')) === 'Walk, 1-day streak');
 
-  await touch(btn('Your progress'));
+  await touch(btn('Settings'));
   await touch(btn('Change what you see')); await shot('change');
   await touch(pick('Learn something')); await shot('change-learn');
   await touch(btn('Show my home')); await shot('home-after');

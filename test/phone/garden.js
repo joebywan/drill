@@ -45,13 +45,13 @@ export default async ({ page, seed, touch, btn, swipe, shot, run, check, checkSo
   const want = season(new Date(), southern(tz));
   const seasonOf = () => page.locator('.garden-link svg.garden-scene').getAttribute('class');
   check(`garden: ${want} for ${tz}`, (await seasonOf()).includes(`season-${want}`), await seasonOf());
-  await touch(btn('Your progress'));
+  await touch(btn('Settings'));
   await touch(btn('Southern hemisphere seasons')); await shot('season-toggle');
   await touch(btn('Back'));
   const flipped = season(new Date(), !southern(tz));
   check(`garden: the toggle turns it to ${flipped}`, (await seasonOf()).includes(`season-${flipped}`), await seasonOf());
   await shot('home-flipped');
-  await touch(btn('Your progress')); await touch(btn('Southern hemisphere seasons')); await touch(btn('Back'));
+  await touch(btn('Settings')); await touch(btn('Southern hemisphere seasons')); await touch(btn('Back'));
 
   await touch(btn(/^Your garden/)); await shot('garden');
   check("garden: Lumi lounges by the pond", await page.locator('.garden-view svg.pond svg.cast-lumi').count() === 1);
