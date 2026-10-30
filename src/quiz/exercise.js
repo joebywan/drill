@@ -1,11 +1,13 @@
 import { esc } from '../html.js';
 import { cue, flourish, move, play, speak, voice } from '../feel.js';
-import { nextTile, paired, picked, shuffle, tilesOf } from './items.js';
+import { nearestTick, nextTile, onLine, paired, picked, shuffle, tick, tilesOf } from './items.js';
 
 /**
  * Mounts one item from src/quiz/items.js in `el`, for the shared lesson runner (app.js run()).
  * `ctx` is the runner's { say, done } plus `lang`, the course's language ('ja-JP'): it marks the
- * text (so the system's own font for it is used) and picks the voice. With no voice, or Sound
+ * text (so the system's own font for it is used) and picks the voice; `art(picture)`, for a course
+ * whose items carry a `picture`, returns its drawing for the card (html the course has escaped);
+ * `look`, a class for the course's own styling (maths sets its sums large). With no voice, or Sound
  * muted, readings are shown instead of spoken and nothing waits on speech.
  * Returns a cleanup function.
  */
@@ -18,15 +20,16 @@ export function mount(el, item, ctx) {
   const speaker = item.speak && voice(lang) && (item.type !== 'pick' || listening)
     ? `<button class="hear${listening ? ' big' : ''}" aria-label="Hear it again"><span aria-hidden="true">🔊</span></button>` : '';
   const glyph = (text) => `<p class="glyph" style="--len:${[...text].length}">${esc(text)}</p>`;
-  el.innerHTML = `<div class="quiz" lang="${esc(lang)}">
-    <div class="card">${item.type === 'build' ? `<p class="meaning">${esc(item.show)}</p><p class="slots">${item.answer.map(() => '<span class="slot"></span>').join('')}</p>`
-      : item.type === 'pairs' ? '' : listening ? '' : glyph(item.show)}
+  const art = item.picture && ctx.art ? ctx.art(item.picture) : '';
+  el.innerHTML = `<div class="quiz ${esc(ctx.look || '')}" lang="${esc(lang)}">
+    <div class="card">${art}${item.type === 'build' ? `${item.show ? `<p class="meaning">${esc(item.show)}</p>` : ''}<p class="slots">${item.answer.map(() => '<span class="slot"></span>').join('')}</p>`
+      : item.type === 'pairs' || listening || !item.show ? '' : glyph(item.show)}
       ${item.type === 'teach' && item.read ? `<p class="reading" lang="en">${esc(item.read)}</p>` : ''}${item.type === 'pairs' ? '' : speaker}</div>
     <div class="choices quiz-${item.type}"></div></div>`;
   const card = el.querySelector('.card');
   const choices = el.querySelector('.choices');
   el.querySelector('.hear')?.addEventListener('click', () => hear(item.speak));
-  if (item.type === 'pairs') card.remove();
+  if (item.type === 'pairs' && !art) card.remove();
   return TYPES[item.type]({ card, choices, item, hear, ...ctx });
 }
 
@@ -101,6 +104,67 @@ const TYPES = {
       }
     });
     return () => timers.forEach(clearTimeout);
+  },
+
+  /**
+   * A number line on the card (the answer banner would cover the thumb zone, and where the marker
+   * landed is the feedback): drag the marker, or tap the line, and let go to answer. It snaps to
+   * the nearest tick. Arrow keys step along it; Enter or Space answers.
+   */
+  line({ card, choices, item, say, done }) {
+    choices.remove();
+    const unit = item.unit || '';
+    const at = (k) => `${(100 * k) / item.ticks}%`;
+    card.insertAdjacentHTML('beforeend', `<div class="numline" role="slider" tabindex="0" aria-label="${esc(item.prompt)}"
+        aria-valuemin="${item.min}" aria-valuemax="${item.max}">
+        <div class="track">${Array.from({ length: item.ticks + 1 }, (_, k) => `<i style="left:${at(k)}"></i>`).join('')}
+          <b class="marker"></b><b class="marker answer" hidden></b></div>
+        <span class="end">${esc(item.min + unit)}</span><span class="end">${esc(item.max + unit)}</span>
+      </div>`);
+    const slider = card.querySelector('.numline');
+    const track = slider.querySelector('.track');
+    const [marker, shown] = slider.querySelectorAll('.marker');
+    let k = 0;
+    let over = false;
+    const place = (next) => {
+      k = next;
+      marker.style.left = at(k);
+      slider.setAttribute('aria-valuenow', tick(item, k));
+      slider.setAttribute('aria-valuetext', `${+tick(item, k).toFixed(4)}${unit}`);
+    };
+    const fromPointer = (e) => {
+      const r = track.getBoundingClientRect();
+      place(nearestTick(item, (e.clientX - r.left) / r.width));
+    };
+    const answer = () => {
+      if (over) return;
+      over = true;
+      const correct = onLine(item, tick(item, k));
+      marker.classList.add(correct ? 'right' : 'wrong');
+      if (correct) cheer(marker, card);
+      else {
+        shown.hidden = false;
+        shown.style.left = at(Array.from({ length: item.ticks + 1 }, (_, i) => i).find((i) => onLine(item, tick(item, i))));
+        flourish(marker, 'shake');
+      }
+      done(correct, item.explain);
+    };
+    place(0); // the marker waits at the start, ready to drag
+    slider.addEventListener('pointerdown', (e) => {
+      if (over) return;
+      slider.setPointerCapture?.(e.pointerId);
+      fromPointer(e);
+    });
+    slider.addEventListener('pointermove', (e) => { if (!over && e.buttons) fromPointer(e); });
+    slider.addEventListener('pointerup', answer);
+    slider.addEventListener('keydown', (e) => {
+      if (over) return;
+      const step = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 }[e.key];
+      if (step) { e.preventDefault(); place(Math.min(item.ticks, Math.max(0, k + step))); }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); answer(); }
+    });
+    say(item.prompt, 'think');
+    return () => {};
   },
 
   /** Tap the tiles in order. A right tile drops into its slot; a wrong one ends it and shows the word. */

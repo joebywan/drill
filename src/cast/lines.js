@@ -170,6 +170,27 @@ export const CALM_LINES = {
 };
 
 /**
+ * Hazel, the Focus coach: a beaver who builds one stick at a time. Steady and unbothered. Never a
+ * word about distraction, productivity or time wasted: a wandering mind is normal, and stopping is fine.
+ */
+export const FOCUS_LINES = {
+  ask: ['One thing at a time. What is it today?', 'Pick one, or just start. Either is fine.'],
+  go: ['Off you go. I will be here, building.', 'One thing. Stick by stick.', 'If your mind wanders, just come back to it.'],
+  paused: ['Paused. Take whatever you need. The dam will keep.'],
+  tapped: [
+    'Nobody builds a dam in a day. One stick, then the next.',
+    'I chew when I think. Mostly I chew.',
+    'Tail tap. That means hello.',
+    'Water, wood and a bit of quiet. That is my whole plan.',
+  ],
+  // The end screen: settled, not a party, whenever it finished.
+  done: ['That was some time for one thing.', 'Done. Stretch your paws.', 'Nice and steady. One thing at a time.'],
+  'focused': ['Good. Hold on to that.', 'Lovely. A bit of quiet goes a long way.'],
+  'about the same': ['That is fine. Sitting with one thing still counts.', 'Fair enough. Thanks for giving it a go.'],
+  'no different': ["That's alright. Some days are bumpy, and that's not on you."],
+};
+
+/**
  * Moss at bedtime, for Wind down: the same capybara, quieter. No exclamation marks, no hurry, no
  * claims about sleep, and nothing about screens or how late it is (the guardrail tests check).
  */
@@ -189,6 +210,8 @@ export const WINDDOWN_LINES = {
 };
 
 /** Calm's optional sounds, set from the ⋯ screen: [preference, label]. */
+// The ⋯ screen's season toggle: on when the timezone guesses south, and it can be changed.
+export const SOUTH_LABEL = 'Southern hemisphere seasons';
 export const CALM_SOUNDS = [['bell', 'A soft bell at the start and end'], ['rain', 'Soft rain while you practise']];
 
 /** Real help, shown as plain text on the first Calm lesson and after "Not really". */
@@ -302,6 +325,7 @@ export const INTRO_WORDS = {
     reflect: 'Reflect: three lines about your day.',
     break: 'Screen break: rest your eyes and stretch.',
     winddown: 'Wind down: a few quiet minutes before bed.',
+    focus: 'Focus: a calm timer for one thing at a time.',
     track: 'Track: one tap for a walk, a book, water or time outside.',
   },
   garden: 'Your habits grow plants in a garden, and nothing ever wilts.',
@@ -316,7 +340,7 @@ export const INTRO_WORDS = {
   courses: 'Courses',
   habitList: 'Habits',
   soon: 'coming soon',
-  soonCourses: ['Maths'],
+  soonCourses: [],
   done: 'Show my home',
   first: '{name} is first. Start with the button below.',
   change: 'Change what you see',
@@ -390,6 +414,101 @@ export const KAEDE_HEADLINES = {
   struggled: ['That took some wrestling, and you won.', 'Messy in the middle, tidy at the end.'],
   review: ['Look at that recall!', 'Remembered! The kana are settling in.'],
   relit: ['Streak relit! Ears up!'],
+};
+
+// --- Maths ----------------------------------------------------------------------------------
+
+/**
+ * Ada, the maths coach: an octopus who counts on all eight arms and is very pleased about it.
+ * Quick, a show-off, fond of a dare; she teases the sum, never the person, and praises the method
+ * (making ten, doubling, checking) rather than the learner. Same kinds as LINES, for the runner.
+ */
+export const MATHS_LINES = {
+  correct: [
+    'Yes. Eight arms and I could not have done it neater.',
+    'Spot on. I would have shown off doing it, but fine.',
+    'Correct. I am writing that down. In ink.',
+    'That is the one. Tidy working.',
+    'Right! One step at a time. Lovely.',
+    'Mm. Numbers behaving themselves for once.',
+    'Got it. I counted on four arms to check.',
+  ],
+  wrong: [
+    'Not quite. Read the working, then it is yours.',
+    'Close. Take it in smaller steps and look again.',
+    'Nope, but that is the slip worth making today.',
+    'Not this one. I got that wrong for years. Well, minutes.',
+    'Hm. The numbers fibbed to you there. Check why.',
+    'Not quite. That one comes back at the end, so you get a rematch.',
+  ],
+  run3: [
+    'Three in a row. I may need another arm to keep count.',
+    'Three! Bet you can not make it five.',
+    'Three in a row. Now you are doing it in your head.',
+  ],
+  run5: [
+    'Five in a row! I am running out of fingers. Which is saying something.',
+    'Five! That is steady, careful working.',
+    'Five in a row. Fine, I will admit it: that was tidy.',
+  ],
+  tapped: [
+    'Eight arms. Yes, I count on them. No, you may not borrow one.',
+    'Tens first. Everything is easier from a ten.',
+    'Double, then double again. That is times four, sorted.',
+    'Per cent means out of 100. That is all it ever means.',
+    'A fraction is just a bar, cut fair and shaded.',
+    'I keep a pencil behind my eye. Where else would it go?',
+    'Rosa says chess is harder. Rosa is wrong, and has two arms.',
+    'Take your time. The numbers are not going anywhere.',
+  ],
+  complete: [
+    'Lesson done. These come back in review, so they stick.',
+    'That is the lesson. Short, tidy, done.',
+  ],
+  perfect: [
+    'Every one right first time. Careful working.',
+    'Not a single slip. I checked with all eight arms.',
+  ],
+  fast: [
+    'Quick and right, every one. That is mental maths.',
+    'Fast, and not a guess among them.',
+  ],
+  struggled: [
+    'Every slip you fixed is one you will spot next time.',
+    'You worked those out. That is where the learning happens.',
+    'The tricky ones come back in review. That is the plan, not a penalty.',
+  ],
+  review: [
+    'Review done. Those tricks are sticking.',
+    'Recall like that is how sums get easy.',
+  ],
+  relit: ['That review relit your streak. Welcome back to the numbers.'],
+};
+
+/** Ada's end-screen headlines, the same kinds as HEADLINES. */
+export const MATHS_HEADLINES = {
+  complete: [
+    'Lesson done. Eight arms up!',
+    'And that is a lesson. I would clap, but it takes a while.',
+  ],
+  perfect: [
+    'Flawless. I counted twice to be sure.',
+    'Not one slip! I am putting this on the fridge.',
+    'Perfect. Even my pencil is impressed.',
+  ],
+  fast: [
+    'Done already? I was still sharpening my pencil.',
+    'That was quick. I needed all eight arms to keep up.',
+  ],
+  struggled: [
+    'That took some wrestling, and you came out on top.',
+    'Messy in the middle, tidy at the end. That is real working.',
+  ],
+  review: [
+    'Look at that recall. Somebody has been practising.',
+    'Remembered! The tricks are moving in to stay.',
+  ],
+  relit: ['Streak relit! Ink all round.', 'There it is, the streak is glowing again.'],
 };
 
 /**

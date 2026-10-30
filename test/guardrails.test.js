@@ -4,13 +4,13 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, streakLine } from '../src/habitview.js';
 import { helpHtml } from '../src/practice/kit.js';
 import { subjects } from '../src/subjects.js';
-import { ACCURACY, BREAK_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, KAEDE_LINES, KAEDE_HEADLINES, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
+import { ACCURACY, BREAK_LINES, FOCUS_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, KAEDE_LINES, KAEDE_HEADLINES, MATHS_LINES, MATHS_HEADLINES, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
 // Praise the process, never the person: no ability words. No absence, loss or guilt either.
 const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intelligen\w*|born to)\b/i;
 const LOSS = /\b(lose|losing|lost|gone|we miss you|missed you|sad|disappoint\w*|abandon\w*|forg[eo]t\w*|broke(n)?|break(ing)? your|come back (soon|to us|tomorrow)|where were you|absen\w*|guilt\w*|shame)\b/i;
 
-const lines = [LINES, HEADLINES, KAEDE_LINES, KAEDE_HEADLINES, CALM_LINES, BREAK_LINES, REFLECT_LINES, MOVE_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
+const lines = [LINES, HEADLINES, KAEDE_LINES, KAEDE_HEADLINES, MATHS_LINES, MATHS_HEADLINES, CALM_LINES, BREAK_LINES, REFLECT_LINES, MOVE_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
 const labels = [...ACCURACY, ...PACE].map(([, label]) => label).concat(STREAK_LABEL, QUIET_DAY, REST_DAY, NO_STREAK, FIRST_SQUARE, streakLine(0, false), streakLine(0, true), streakLine(14, true));
 
 test('end-screen headlines and chip labels pass the same lint', () => {
@@ -53,6 +53,18 @@ test('no character line praises ability', () => {
 
 test('no character line mentions absence, loss or guilt', () => {
   for (const [kind, text] of lines) assert.doesNotMatch(text, LOSS, `${kind}: ${text}`);
+});
+
+test("Ada's lines cover every kind the runner asks for, and the maths course passes the lint", () => {
+  for (const kind of Object.keys(LINES).filter((k) => !['repair', 'welcome', 'lumi'].includes(k))) assert.ok(MATHS_LINES[kind]?.length, kind);
+  for (const kind of Object.keys(HEADLINES)) assert.ok(MATHS_HEADLINES[kind]?.length, kind);
+  const all = (v) => (typeof v === 'string' ? [v] : v && typeof v === 'object' ? Object.values(v).flatMap(all) : []);
+  const maths = all(JSON.parse(readFileSync('src/data/maths.json', 'utf8'))).filter((t) => /\s/.test(t));
+  assert.ok(maths.length > 50);
+  for (const text of maths) {
+    assert.doesNotMatch(text, ABILITY, text);
+    assert.doesNotMatch(text, LOSS, text);
+  }
 });
 
 test('what Rosa says mid-puzzle passes the same lint', () => {
@@ -150,9 +162,9 @@ const sources = (dir) => readdirSync(dir, { withFileTypes: true, recursive: true
 
 test('journal text is read only by the habit view and the file export, and nothing is sent anywhere', () => {
   const touch = sources('src').filter((f) => /journal/.test(readFileSync(f, 'utf8'))).sort();
-  // progress.js keeps the shape (migrate, writeJournal); reflect/practice.js writes it and is the
+  // progress.js keeps the shape (migrate, writeJournal); reflect/ and focus/practice.js write it and are the
   // habit view's dayDetail; app.js only hands it from the routine to writeJournal.
-  assert.deepEqual(touch, ['src/app.js', 'src/progress.js', 'src/reflect/practice.js']);
+  assert.deepEqual(touch, ['src/app.js', 'src/focus/practice.js', 'src/progress.js', 'src/reflect/practice.js']);
   assert.doesNotMatch(readFileSync('src/app.js', 'utf8'), /progress\.journal|\.journal\b/, 'app.js never reads the journal itself');
   // The export is the whole progress object, journal included, saved to the learner's own file.
   assert.match(readFileSync('src/app.js', 'utf8'), /new Blob\(\[JSON\.stringify\(progress\)\]/);
@@ -303,6 +315,26 @@ test("Fennel's lines and the Coding course pass the lint, and cover every kind a
   const coach = subjects.find((s) => s.id === 'coding').coach;
   assert.equal(coach.lines, CODING_LINES);
   assert.equal(coach.headlines, CODING_HEADLINES);
+});
+
+// Focus: a calm timer, never a productivity tool. No hurry, no claims, no guilt, and nothing that
+// counts distraction or calls time wasted. Stopping early is fine, so nothing hints otherwise.
+const focusCourse = JSON.parse(readFileSync('src/data/focus.json', 'utf8'));
+const GRIND = /\b(distract\w*|productiv\w*|wast\w*|lazy|procrastinat\w*|fail\w*|unfocused|lost focus|give up|quit\w*|didn'?t finish|only|just \d+|should|must|better|best|score\w*)\b/i;
+const focusText = [
+  ...Object.entries(FOCUS_LINES).flatMap(([kind, list]) => list.map((text) => [kind, text])),
+  ...strings(focusCourse).filter((t) => /\s/.test(t)).map((text) => ['focus.json', text]),
+  ...feelsFor(subjects.find((x) => x.habit === 'focus').coach.feel).map(([, label]) => ['feel', label]),
+  ['ask', subjects.find((x) => x.habit === 'focus').coach.ask],
+];
+
+test('Focus never hurries, claims, shames or keeps count', () => {
+  assert.ok(focusText.length > 20);
+  for (const [kind, text] of focusText) {
+    for (const rule of [CLAIMS, URGENCY, ABILITY, LOSS, GRIND]) assert.doesNotMatch(text, rule, `${kind}: ${text}`);
+  }
+  for (const bad of ['You got distracted 3 times', 'Be more productive', 'Time wasted', 'You only did 4 minutes']) assert.match(bad, GRIND, bad);
+  for (const kind of Object.keys(FOCUS_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
 });
 
 // Wind down: Calm's lint, plus no sleep claims or sleep numbers, no screen-time shaming, and the

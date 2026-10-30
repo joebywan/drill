@@ -60,7 +60,10 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
   session and its end screen are in a warm dark palette in either theme (`night: true`). Its plant
   is an evening primrose. Guardrails add no sleep claims or numbers and no screen-time shaming.
 
-Later: Focus (a timed focus session with a check-in before and after).
+- [x] **Focus.** Hazel the beaver (`src/cast/hazel.js`) and bamboo in the garden. One optional tap
+  for what it's for (presets or your own words, kept in the journal's `focus`, never the log), a
+  calm timer of 10, 15 then 25 minutes (`timed()` overrides apply), Pause and "I'm done" with no
+  penalty, the screen kept on with the Wake Lock API, and "How did it go?" on `finishRoutine()`.
 
 ## The garden (agreed 2026-10-30)
 
@@ -83,7 +86,9 @@ The app's vibe moves from "build knowledge" to "grow yourself", shown as a garde
   numbers are the detail.
 - **Characters are recognisable animals** (Moss the capybara, Clover the rabbit, Mira the
   ring-tailed lemur, Lumi the seal). Insects and birds are garden life, not coaches. No owls.
-- Later: seasonal events that change the whole garden (blossom, lanterns), Lumi by a pond,
+- Done: the garden follows the real season for the device's hemisphere (`src/garden/season.js`;
+  spring blossom, summer wildflowers, autumn leaves, winter frost and lanterns), and Lumi lounges by a pond.
+- Later: seasonal events that change the whole garden,
   and reconsidering the name "Drill".
 
 9. [x] **Garden model.** Pure: days practised per habit (kept permanently, not from the

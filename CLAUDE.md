@@ -1,7 +1,7 @@
 # Drill — working notes for Claude
 
 A Duolingo-style learning app: lessons that teach, a cast of characters, a streak, review.
-Static page, vanilla ES modules, no build step, no server. Chess and Japanese are live; maths,
+Static page, vanilla ES modules, no build step, no server. Chess, maths and Japanese are live;
 JavaScript, TypeScript and TS test-writing are planned.
 
 **Read the cast brief before building anything:** https://claude.ai/artifact/Td5spDrFgAah2w4PtBc2pn
@@ -25,11 +25,12 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>] [--avd <name>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, scan, garden, log, winddown); a new one is
+No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, focus, scan, garden, log, winddown); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
-- With no `--url` it serves this checkout on a free port; Chrome opens `http://10.0.2.2:<port>/`.
+- With no `--url` it serves this checkout on a free port forwarded with `adb reverse`; Chrome opens
+  `http://localhost:<port>/`, a secure context, so Wake Lock and the like work as on the real site.
 - It boots the AVD (`--avd`, else `PHONE_AVD`, default `splendor36`; `--avd daybook_tablet` for a tablet) `-read-only` if no emulator is running and
   shuts down only one it started. SDK from `ANDROID_HOME` or `~/Android/Sdk`.
 - Screenshots of the whole screen (keyboard included) go to `test-results/phone/<scenario>/NN-name.png`.
@@ -73,6 +74,14 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - Japanese: `src/data/japanese.json` (hiragana: vowels, k and s rows, first words), coached by Kaede, a red
   panda (`src/cast/kaede.js`, rig-posed). `test/quiz.test.js` checks every answer against its own kana
   table and that no kana is asked before a teach card shows it.
+- `src/quiz/` also has `line` (drag a marker on a number line, snapped to its ticks, answered on
+  release) and takes a `picture` the course draws through the mount's `ctx.art`, plus `ctx.look`
+  for a course's own styling.
+- `src/maths/` — the Maths course (`src/data/maths.json`: mental maths, percentages, fractions you
+  can see, for adults rusty at maths). Items are written as sums and pictures; `items.js` works every
+  answer out (`value()` reads "15% of $60", so 2/4 is right for 1/2) and `toQuiz()` turns each into a
+  src/quiz item; `problem()` checks both. `exercise.js` draws the ten frame, bars and 100 grid. Coach:
+  Ada, an octopus (`src/cast/ada.js`, posed with `rig()`), with `MATHS_LINES` and `MATHS_HEADLINES`.
 - `src/cast/` — the characters (`kit.js`, `rosa.js`, `lumi.js`), `coach.js` (a character that
   reacts in place) and `lines.js` (everything the cast says; the guardrail tests lint it).
   `tools/cast.html` renders every mood at 200/96/48 px, light and dark.
@@ -118,6 +127,12 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - **Calm is not therapy.** `test/guardrails.test.js` bars health claims, diagnosis words and urgency
   in Calm's text, and checks the Lifeline help line (13 11 14, as plain text) is on the first Calm
   lesson and after "Not really".
+- `src/focus/` — the Focus practice subject: "What are you focusing on?" (presets or your own words,
+  optional; kept in `progress.journal[date].focus`, never the log, shown by its `dayDetail`), then
+  one long `clock` phase (m:ss, `countOf`) with Hazel the beaver (`src/cast/hazel.js`, posed with
+  `rig()`) holding her stick. Pause and "I'm done" end it like any other; `stayAwake()` in
+  practice/kit.js keeps the screen on. The end screen's question comes from `coach.ask` ("How did it go?").
+  Its garden plant is bamboo. Guardrails bar productivity guilt and distraction counting.
 - `src/practice/timings.js` — the learner's own timings: `TIMINGS` (each practice habit's settable
   values, ranges, fixed defaults) and `timed(habit, defaults, overrides)`, the one merge every routine
   builder (calm, move, break `routines.js`) goes through; a value out of range falls back to the
@@ -128,6 +143,12 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   habit's permanent count of dates practised, never the streak); `RULES` is the achievement table
   (one line of data each), `award()` records what is earned in `progress.garden.earned` and never
   removes it; `mood()` maps the habits' lights; `garden()` is all the garden screen needs.
+- `src/garden/season.js` — pure: `season(date, south)` (meteorological, flipped south) and
+  `southern(timeZone)`, a guess (Australia/* is south). `garden()` carries `season`; app.js reads the
+  hemisphere from the ⋯ screen's "Southern hemisphere seasons" toggle (`pref('south')`), defaulting to the
+  guess. A season only retints the land and adds decoration (`scene(mood, shape, season)`): plants
+  never change with it. Lumi lounges in `pond()`, which `perches()` puts on clear ground first
+  (`.pond`, null when a big strip has no room).
 - `src/garden/art.js` — the garden's drawings, built like the cast: `plant(habit, stage, { flowers,
   closed })` (tree, lavender, sunflower, vine on a trellis, daisies, evening primrose; five stages, scaled by `GROW` so a
   sprout is about a third of full height and a sapling about half; up to 6 blooms that

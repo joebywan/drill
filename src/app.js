@@ -5,8 +5,9 @@ import { emptyProgress, nextUp, unitsOf, finishPractice, logToday, track, unlogT
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { lumi } from './cast/lumi.js';
-import { CALM_SOUNDS, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer } from './cast/lines.js';
-import { buzz, calmPref, chime, cue, flourish, move, petals, play, setPref, setSound, soundOn } from './feel.js';
+import { CALM_SOUNDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer } from './cast/lines.js';
+import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, setSound, soundOn } from './feel.js';
+import { southern } from './garden/season.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
 import { TIMINGS, TIMING_WORDS, pathTimings, setTiming, spread, timed } from './practice/timings.js';
@@ -114,7 +115,9 @@ function home(arrived = null, newly = []) {
   const offer = shownSubjects.find((s) => offersPlacement(progress, s));
   const brandNew = !progress.log.length && !Object.keys(progress.done).length;
   // After the intro, Lumi's welcome names the first thing picked.
-  const firstPick = brandNew && habitOf(progress.picked?.[0]);
+  // A course pick is kept as the Learning habit; the course it named is the one shown, so that names it.
+  const first = progress.picked?.[0];
+  const firstPick = brandNew && first && (first === courseShown.habit ? courseShown.title : habitOf(first)?.name);
   // The next lesson; a finished path whose subject has `again` ("Reflect today") keeps one of its lessons one tap away.
   const again = shownSubjects[0]?.again;
   const { current, repeat } = nextUp(units, again);
@@ -155,7 +158,7 @@ function home(arrived = null, newly = []) {
     </svg>`;
   };
 
-  const g = garden(progress);
+  const g = garden(progress, new Date(), south());
   app.innerHTML = `
     <header class="bar">
       <h1>Drill</h1>
@@ -172,7 +175,7 @@ function home(arrived = null, newly = []) {
       </div><div class="pane">
       ${learning && courses.length > 1 ? `<nav class="courses" aria-label="Course">${courses.map((s) =>
         `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === courseShown}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
-      ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick.name) : line('welcome'))}</p>` : ''}
+      ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : ''}
       ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
         : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
       ${offer ? `<p class="offer"><button data-place>${esc(offer.placement.offer)}</button><button class="dismiss" data-dismiss aria-label="Dismiss">×</button></p>` : ''}
@@ -424,7 +427,7 @@ const arrivals = (newly) => (!newly.length ? '' : `<ul class="arrivals">
  */
 function gardenView(from = null) {
   stopHome();
-  const g = garden(progress);
+  const g = garden(progress, new Date(), south());
   const card = (p) => {
     const h = habitOf(p.habit);
     const words = plantWords(p);
@@ -703,7 +706,7 @@ function run(lessonId, queue, title) {
       },
     });
     // A question starts on its board (or its answers), not back at the top of the page.
-    if (!foot.classList.contains('show')) stage.querySelector('[autofocus], svg[tabindex], .choice, .practice-go')?.focus();
+    if (!foot.classList.contains('show')) stage.querySelector('[autofocus], svg[tabindex], .choice, .numline, .practice-go')?.focus();
   };
   next.addEventListener('click', step);
 
@@ -732,7 +735,7 @@ function run(lessonId, queue, title) {
         </div>
         ${arrivals(newly)}
         <section class="feel" aria-labelledby="feel-q">
-          <h2 id="feel-q">How do you feel?</h2>
+          <h2 id="feel-q">${esc(who.ask ?? 'How do you feel?')}</h2>
           <div class="feels">${feelsFor(who.feel).map(([value, label]) => `<button class="choice" data-feel="${value}">${esc(label)}</button>`).join('')}</div>
           <p class="said" role="status"></p>
         </section>
@@ -894,6 +897,9 @@ function place(subject, unit) {
   focusOn('.cta .next');
 }
 
+/** The garden's hemisphere: the ⋯ screen's choice, else a guess from the timezone (Australia/* is south). */
+const south = () => pref('south', southern(Intl.DateTimeFormat().resolvedOptions().timeZone));
+
 /** Save progress to a file, or load one back: for a new device, or a browser that cleared it. */
 function keep(note = '') {
   app.innerHTML = `
@@ -907,6 +913,8 @@ function keep(note = '') {
       <button class="choice" data-change>${esc(INTRO_WORDS.change)}</button>
       <h2>Calm sounds</h2>
       ${CALM_SOUNDS.map(([name, label]) => `<button class="choice" data-pref="${name}" aria-pressed="${calmPref(name)}">${esc(label)}</button>`).join('')}
+      <h2>Garden</h2>
+      <button class="choice" data-pref="south" aria-pressed="${south()}">${esc(SOUTH_LABEL)}</button>
       <button class="choice" data-back>Back</button>
     </main>`;
   for (const b of app.querySelectorAll('[data-pref]')) {

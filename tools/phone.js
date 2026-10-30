@@ -1,7 +1,8 @@
 /**
  * Phone tests: drives Chrome on an Android emulator with real touches. Not part of `npm test` or CI.
  *   npm run phone -- [scenario...] [--url <base>] [--avd <name>]   (no scenario: all of test/phone/*.js)
- * With no --url it serves this checkout on a free port and Chrome opens http://10.0.2.2:<port>/.
+ * With no --url it serves this checkout on a free port, forwarded with `adb reverse`, and Chrome opens
+ * http://localhost:<port>/: a secure context, so APIs such as Wake Lock are there as on the real site.
  * It boots the AVD (--avd, else PHONE_AVD, default splendor36; e.g. --avd daybook_tablet) read-only if no emulator is running, and shuts
  * down only an emulator it started. Screenshots: test-results/phone/<scenario>/NN-name.png.
  * Exits non-zero on page errors or a failed device check. One agent on the emulator at a time.
@@ -30,11 +31,12 @@ const cleanup = [];
 let failed = false;
 try {
   // Serve this checkout unless told where to go.
+  let served = null; // the local port, forwarded to the phone once it is up
   if (!base) {
     const port = await new Promise((r) => { const s = createServer().listen(0, () => { const { port } = s.address(); s.close(() => r(port)); }); });
     const server = spawn(process.execPath, [`${ROOT}tools/serve.js`], { env: { ...process.env, HOST: '0.0.0.0', PORT: String(port) }, stdio: 'ignore' });
     cleanup.push(() => server.kill());
-    base = `http://10.0.2.2:${port}/`;
+    served = port;
   }
 
   // Boot the emulator only if none is running; then it's ours to shut down.
@@ -51,6 +53,13 @@ try {
       if (i > 180) throw new Error('emulator did not finish booting in 3 minutes');
       await sleep(1000);
     }
+  }
+
+  // localhost on the phone is this machine's port: a secure context, unlike http://10.0.2.2.
+  if (served) {
+    adb('reverse', `tcp:${served}`, `tcp:${served}`);
+    cleanup.unshift(() => adb('reverse', '--remove', `tcp:${served}`)); // before the emulator goes
+    base = `http://localhost:${served}/`;
   }
 
   const [device] = await android.devices();

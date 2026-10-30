@@ -11,7 +11,7 @@ import breakCourse from './data/break.json' with { type: 'json' };
 import * as screenBreak from './break/practice.js';
 import { STEPS as BREAK_STEPS } from './break/routines.js';
 import { lumi } from './cast/lumi.js';
-import { BREAK_LINES, CALM_HELP, CALM_LINES, MOVE_LINES, MOVE_SAFETY, REFLECT_LINES, SAFETY_LINE, WINDDOWN_LINES } from './cast/lines.js';
+import { BREAK_LINES, CALM_HELP, CALM_LINES, MOVE_LINES, MOVE_SAFETY, REFLECT_LINES, SAFETY_LINE, WINDDOWN_LINES, FOCUS_LINES } from './cast/lines.js';
 import winddownCourse from './data/winddown.json' with { type: 'json' };
 import * as winddown from './winddown/practice.js';
 import * as reflect from './reflect/practice.js';
@@ -21,8 +21,15 @@ import { clover, demo as cloverDemo, NAME as CLOVER } from './cast/clover.js';
 import { mira, demo as miraDemo, NAME as MIRA } from './cast/mira.js';
 import japaneseCourse from './data/japanese.json' with { type: 'json' };
 import * as quiz from './quiz/exercise.js';
+import mathsCourse from './data/maths.json' with { type: 'json' };
+import * as maths from './maths/exercise.js';
+import { ada, NAME as ADA } from './cast/ada.js';
+import { MATHS_HEADLINES, MATHS_LINES } from './cast/lines.js';
 import { kaede, NAME as KAEDE } from './cast/kaede.js';
 import { KAEDE_HEADLINES, KAEDE_LINES } from './cast/lines.js';
+import focusCourse from './data/focus.json' with { type: 'json' };
+import * as focus from './focus/practice.js';
+import { hazel, NAME as HAZEL } from './cast/hazel.js';
 import codingCourse from './data/coding.json' with { type: 'json' };
 import * as coding from './coding/exercise.js';
 import { fennel, NAME as FENNEL } from './cast/fennel.js';
@@ -42,7 +49,8 @@ import { CODING_HEADLINES, CODING_LINES } from './cast/lines.js';
  * character (rosa, moss…), its name for screen readers, the mood an item starts in, its own
  * lines (default: Rosa's LINES) and, for a practice habit, its help line { text, tel?, call? },
  * shown on a teach card that asks for it and after "Not really" (rendered by practice/kit.js helpHtml),
- * `feel`, the good answer to "How do you feel?" (default 'calmer'; its reply is a key in `lines`),
+ * `feel`, the good answer to "How do you feel?" (default 'calmer'; its reply is a key in `lines`), `ask`, that
+ * question in the habit's own words (Focus: "How did it go?"),
  * and `demonstrates`, for a coach the learner copies, which is drawn large above their line.
  * A Learn coach's `lines` and `headlines` stand in for Rosa's LINES and HEADLINES (same kinds).
  * Sessions and both end screens read everything subject-specific from here.
@@ -67,6 +75,7 @@ export const HABITS = [
   { id: 'reflect', name: 'Reflect', icon: '📓' },
   { id: 'move', name: 'Move', icon: '🌱' },
   { id: 'winddown', name: 'Wind down', icon: '🌙' },
+  { id: 'focus', name: 'Focus', icon: '⏳' },
 ];
 
 /**
@@ -139,6 +148,22 @@ export const subjects = [{
     ],
   },
 }, {
+  // Maths for adults rusty at it: sums and pictures, answers worked out, played as src/quiz/ items.
+  ...mathsCourse,
+  mount: maths.mount,
+  habit: 'learn',
+  kind: 'learn',
+  coach: { draw: ada, name: ADA, start: 'think', lines: MATHS_LINES, headlines: MATHS_HEADLINES },
+  placement: {
+    offer: 'Done some maths already? Skip ahead',
+    question: 'How is your maths?',
+    options: [
+      ['Rusty. Start me at the start', 'Mental maths'],
+      ['Adding in my head is fine', 'Percentages'],
+      ['Percentages are fine too', 'Fractions you can see'],
+    ],
+  },
+}, {
   // Hiragana from zero, played with the generic tap-and-match items in src/quiz/.
   ...japaneseCourse,
   mount: (el, item, ctx) => quiz.mount(el, item, { ...ctx, lang: japaneseCourse.lang }),
@@ -195,6 +220,13 @@ export const subjects = [{
   habit: 'move',
   kind: 'practice',
   coach: { draw: clover, demo: cloverDemo, name: CLOVER, start: 'guide', lines: MOVE_LINES, help: { text: MOVE_SAFETY }, feel: 'better', demonstrates: true },
+}, {
+  ...focusCourse,
+  mount: focus.mount,
+  dayDetail: focus.dayDetail,
+  habit: 'focus',
+  kind: 'practice',
+  coach: { draw: hazel, name: HAZEL, start: 'guide', lines: FOCUS_LINES, feel: 'focused', ask: 'How did it go?' },
 }, {
   ...winddownCourse,
   mount: winddown.mount,
