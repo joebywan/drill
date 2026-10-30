@@ -11,6 +11,14 @@
           "title": "あ い う",
           "items": [
             {
+              "id": "v1-kana",
+              "type": "teach",
+              "show": "あ",
+              "read": "a",
+              "speak": "あ",
+              "text": "Japanese is written in kana: symbols that each make one sound. Hiragana is the first set of them. Under each one I write its sound in English letters. See a speaker? Tap it to hear it."
+            },
+            {
               "id": "v1-teach-1",
               "type": "teach",
               "show": "あ",
@@ -92,7 +100,7 @@
             {
               "id": "v1-pairs-8",
               "type": "pairs",
-              "prompt": "Match each kana to its sound.",
+              "prompt": "Match each kana to its sound. Tap one, then its partner.",
               "pairs": [
                 [
                   "あ",
@@ -226,7 +234,7 @@
               "show": "あいうえお",
               "read": "a i u e o",
               "speak": "あいうえお",
-              "text": "The whole vowel row: a, i, u, e, o. Every other row is built on these five sounds. Learn this row and you are a fifth of the way there."
+              "text": "These five sounds are the vowels. Kana come in sets called rows, and this is the vowel row. Every other row is built on these same five, with a new sound in front. This one is about a tenth of all hiragana."
             },
             {
               "id": "v3-pick-17",
@@ -269,6 +277,14 @@
               ],
               "answer": "お",
               "explain": "That was \"o\": お."
+            },
+            {
+              "id": "v3-words",
+              "type": "teach",
+              "show": "あお",
+              "read": "ao",
+              "speak": "あお",
+              "text": "Kana join up to make words. Read left to right, each kana keeping its own sound: あ a, お o, so あお says \"ao\". It means blue. To build a word, tap its tiles in order."
             },
             {
               "id": "v3-build-20",
@@ -882,7 +898,7 @@
               "listen": true,
               "show": "eki",
               "speak": "えき",
-              "prompt": "Which kana is this sound?",
+              "prompt": "Which word is this sound?",
               "options": [
                 "いけ",
                 "えき",
@@ -959,7 +975,7 @@
               "show": "かさ",
               "read": "kasa",
               "speak": "かさ",
-              "text": "かさ, \"kasa\": umbrella. One letter off from あさ."
+              "text": "かさ, \"kasa\": umbrella. One kana off from あさ."
             },
             {
               "id": "w2-pick-69",
@@ -1013,7 +1029,7 @@
               "listen": true,
               "show": "shio",
               "speak": "しお",
-              "prompt": "Which kana is this sound?",
+              "prompt": "Which word is this sound?",
               "options": [
                 "しお",
                 "すし",
@@ -1149,7 +1165,7 @@
               "listen": true,
               "show": "soko",
               "speak": "そこ",
-              "prompt": "Which kana is this sound?",
+              "prompt": "Which word is this sound?",
               "options": [
                 "ここ",
                 "そこ",
