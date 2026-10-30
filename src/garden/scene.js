@@ -1,0 +1,184 @@
+import { INK } from '../cast/kit.js';
+import { move } from '../feel.js';
+
+/**
+ * The garden's backdrop and its visitors. Import from art.js, which re-exports all of this.
+ *
+ *   MOODS                   ['sunlit', 'morning', 'resting'], as model.js `mood()` returns them
+ *   SIZE                    { strip: [360, 140], tall: [360, 560] }, the viewBox of each shape
+ *   scene(mood, shape = 'tall') -> svg string
+ *       sky, sun or moon, two rows of hills and the ground. Resting is a warm evening with a moon
+ *       and fireflies. Colours come from palette constants written into the svg as CSS, with a
+ *       `prefers-color-scheme: dark` set, so one string works in both themes.
+ *   slots(shape, n = 6) -> [{ x, y, w }]
+ *       Where n plants go (1–6), in the scene's viewBox: (x, y) is the base of the plant and w its
+ *       width. A scalable layout: one row spaced evenly across the strip, or in the tall view one
+ *       row for up to 3 plants and two rows (back row first, smaller) for more. Listed back to front,
+ *       so drawing them in order layers them right.
+ *   place(svg, slot) -> svg string   a plant drawn at a slot, to append inside the scene's svg
+ *   VISITORS                ['butterfly', 'bee', 'birds'], the gifts in model.js RULES
+ *   visitor(kind) -> svg string      32 units tall (birds is a pair, 56 wide)
+ *   animateVisitor(el, kind) -> Animation[] | null   flutter, hover or hop; null under reduced motion
+ */
+export const MOODS = ['sunlit', 'morning', 'resting'];
+export const SIZE = { strip: [360, 140], tall: [360, 560] };
+
+// One palette per mood and theme. Plants keep their own colours; grounds stay mid-tone so a
+// plant reads on both.
+const PALETTE = {
+  sunlit: {
+    light: { sky: '#BFE3F7', band: '#DDF1FB', sun: '#FFD45C', halo: '#FFE9A3', cloud: '#FFFFFF', far: '#A9D69E', near: '#8DC47E', ground: '#7DB86A', shade: '#68A257', dot: '#FFFFFF' },
+    dark: { sky: '#1D3550', band: '#27476A', sun: '#F5C542', halo: '#5A5A48', cloud: '#34506D', far: '#2D5745', near: '#2F6646', ground: '#2E5E3B', shade: '#244E30', dot: '#CFE8FF' },
+  },
+  morning: {
+    light: { sky: '#F7E4D4', band: '#FCEFD9', sun: '#FFB86B', halo: '#FFD9AE', cloud: '#FFFFFF', far: '#BBD4B0', near: '#9DC590', ground: '#8CBB78', shade: '#78A766', dot: '#FFFFFF' },
+    dark: { sky: '#2B3150', band: '#4A3E5C', sun: '#E59A55', halo: '#6B4E50', cloud: '#525B7A', far: '#384E48', near: '#33604A', ground: '#2F5A3D', shade: '#274D33', dot: '#B9C3DD' },
+  },
+  resting: {
+    light: { sky: '#D8CCEC', band: '#F5D3C4', sun: '#FFF4D2', halo: '#EFE3F6', cloud: '#FFFFFF', far: '#A3B9AB', near: '#86A992', ground: '#7BA47E', shade: '#6A936E', dot: '#F2E04F' },
+    dark: { sky: '#1E2142', band: '#3B3058', sun: '#F3E7B8', halo: '#3A3C5C', cloud: '#E8E3C8', far: '#2A4241', near: '#284B3F', ground: '#244135', shade: '#1D372C', dot: '#E7F27A' },
+  },
+};
+
+const css = (mood) => {
+  const rules = (p) => Object.entries(p).map(([k, v]) => `.garden-${mood} .g-${k}{fill:${v}}`).join('');
+  return `<style>${rules(PALETTE[mood].light)}@media (prefers-color-scheme: dark){${rules(PALETTE[mood].dark)}}</style>`;
+};
+
+// A small seeded random, so a scene draws the same every time.
+const seeded = (seed) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+const f = (v) => Math.round(v * 10) / 10;
+
+/** A rolling hill line across the width at height y, as a filled shape down to the bottom. */
+const hills = (W, H, y, amp, waves, phase, cls) => {
+  let d = `M0 ${H} L0 ${f(y)}`;
+  for (let x = 0; x <= W; x += 12) d += ` L${x} ${f(y - amp * Math.sin((x / W) * Math.PI * waves + phase))}`;
+  return `<path class="g-${cls}" d="${d} L${W} ${H}Z"/>`;
+};
+
+const cloud = (x, y, s) => `<g class="g-cloud">`
+  + `<circle cx="${x}" cy="${y}" r="${7 * s}"/><circle cx="${x + 9 * s}" cy="${y - 4 * s}" r="${9 * s}"/>`
+  + `<circle cx="${x + 19 * s}" cy="${y}" r="${7 * s}"/><rect x="${x}" y="${y}" width="${19 * s}" height="${7 * s}"/></g>`;
+
+const spark = (x, y, s) =>
+  `<path class="g-dot" d="M${x} ${y - s} L${f(x + s * 0.25)} ${f(y - s * 0.25)} L${x + s} ${y} L${f(x + s * 0.25)} ${f(y + s * 0.25)} L${x} ${y + s} L${f(x - s * 0.25)} ${f(y + s * 0.25)} L${x - s} ${y} L${f(x - s * 0.25)} ${f(y - s * 0.25)}Z"/>`;
+
+export function scene(mood = 'morning', shape = 'tall') {
+  const m = PALETTE[mood] ? mood : 'morning';
+  const [W, H] = SIZE[shape] || SIZE.tall;
+  const tall = H > 200;
+  const hy = tall ? 260 : 78;          // where the ground starts
+  const k = tall ? 1.8 : 1;            // sun, clouds and hills scale with the view
+  const rand = seeded(tall ? 7 : 3);
+  let sky = `<rect class="g-sky" width="${W}" height="${H}"/><rect class="g-band" y="${f(hy - 50 * k)}" width="${W}" height="${f(60 * k)}"/>`;
+  if (m === 'sunlit') {
+    sky += `<circle class="g-halo" cx="${W - 56}" cy="${f(30 * k)}" r="${f(22 * k)}"/><circle class="g-sun" cx="${W - 56}" cy="${f(30 * k)}" r="${f(14 * k)}"/>`
+      + cloud(40, f(26 * k), k * 0.9) + cloud(150, f(44 * k), k * 0.7);
+  } else if (m === 'morning') {
+    // A low sun just over the far hills, and a little mist.
+    sky += `<circle class="g-halo" cx="80" cy="${f(hy - 22 * k)}" r="${f(26 * k)}"/><circle class="g-sun" cx="80" cy="${f(hy - 22 * k)}" r="${f(17 * k)}"/>`
+      + cloud(220, f(hy - 54 * k), k * 0.7);
+  } else {
+    // Evening: a crescent moon and a few early stars.
+    const mx = W - 64, my = f(28 * k);
+    sky += `<circle class="g-sun" cx="${mx}" cy="${my}" r="${f(12 * k)}"/>`
+      + `<circle class="g-sky" cx="${f(mx + 6 * k)}" cy="${f(my - 4 * k)}" r="${f(10 * k)}"/>`
+      + Array.from({ length: tall ? 12 : 6 }, () => `<circle class="g-cloud" cx="${f(rand() * W)}" cy="${f(rand() * (hy - 60 * k))}" r="${f(0.8 + rand())}"/>`).join('');
+  }
+  const land = hills(W, H, hy - 26 * k, 8 * k, 3, 0.6, 'far') + hills(W, H, hy - 10 * k, 7 * k, 2, 2.2, 'near')
+    + `<path class="g-ground" d="M0 ${hy} Q${W / 2} ${f(hy - 8 * k)} ${W} ${hy} L${W} ${H} L0 ${H}Z"/>`
+    + Array.from({ length: tall ? 22 : 9 }, () => {
+      const x = f(rand() * W), y = f(hy + 10 + rand() * (H - hy - 14));
+      return `<path class="g-shade" d="M${x - 3} ${y} L${x - 1} ${y - 6} L${x} ${y - 1} L${x + 1.5} ${y - 7} L${x + 3} ${y}Z"/>`;
+    }).join('');
+  // Sunlit is dewy: a few glints on the grass. Resting has fireflies, warm and slow.
+  const life = m === 'sunlit'
+    ? Array.from({ length: tall ? 8 : 4 }, () => spark(f(rand() * W), f(hy + 12 + rand() * (H - hy - 20)), 2.5)).join('')
+    : m === 'resting'
+      ? Array.from({ length: tall ? 12 : 6 }, () => {
+        const x = f(rand() * W), y = f(hy - 30 * k + rand() * (H - hy + 10 * k));
+        return `<g data-part="firefly"><circle class="g-dot" cx="${x}" cy="${y}" r="5" opacity=".28"/><circle class="g-dot" cx="${x}" cy="${y}" r="1.8"/></g>`;
+      }).join('')
+      : '';
+  return `<svg class="garden-scene garden-${m} garden-${tall ? 'tall' : 'strip'}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">`
+    + `${css(m)}${sky}${land}${life}</svg>`;
+}
+
+export function slots(shape = 'tall', n = 6) {
+  const count = Math.max(1, Math.min(6, Math.floor(n) || 1));
+  const [W] = SIZE.tall;
+  const row = (k, y, wMax) => Array.from({ length: k }, (_, i) => ({ x: f((W * (i + 0.5)) / k), y, w: f(Math.min(wMax, (W / k) * 0.92)) }));
+  if (shape === 'strip') return row(count, 124, 80);
+  if (count <= 3) return row(count, 460, 130);
+  const back = Math.floor(count / 2);
+  return [...row(back, 380, 104), ...row(count - back, 520, 116)];
+}
+
+/** Draws a plant svg (100 x 120, base at 50, 106) at a slot, as a nested svg. */
+export const place = (svg, { x, y, w }) =>
+  svg.replace('<svg ', `<svg x="${f(x - w / 2)}" y="${f(y - w * 1.06)}" width="${w}" height="${f(w * 1.2)}" `);
+
+// --- Visitors -------------------------------------------------------------------------------
+
+export const VISITORS = ['butterfly', 'bee', 'birds'];
+
+const butterfly = () =>
+  `<g data-part="wings">`
+  + `<ellipse cx="9.5" cy="11.5" rx="7" ry="6" fill="#F28B30" transform="rotate(-20 9.5 11.5)"/><ellipse cx="22.5" cy="11.5" rx="7" ry="6" fill="#F28B30" transform="rotate(20 22.5 11.5)"/>`
+  + `<ellipse cx="11" cy="20.5" rx="4.6" ry="4" fill="#F7B548"/><ellipse cx="21" cy="20.5" rx="4.6" ry="4" fill="#F7B548"/>`
+  + `<circle cx="8" cy="10.5" r="1.8" fill="#FFF6E0"/><circle cx="24" cy="10.5" r="1.8" fill="#FFF6E0"/></g>`
+  + `<rect x="14.8" y="8.5" width="2.4" height="16" rx="1.2" fill="${INK}"/>`
+  + `<path d="M15.4 9 Q13.5 5 11 3.6 M16.6 9 Q18.5 5 21 3.6" stroke="${INK}" stroke-width="1" fill="none" stroke-linecap="round"/>`
+  + `<circle cx="11" cy="3.6" r="1" fill="${INK}"/><circle cx="21" cy="3.6" r="1" fill="${INK}"/>`;
+
+const bee = () =>
+  `<g data-part="body">`
+  + `<ellipse cx="13.5" cy="9.5" rx="4" ry="5.6" fill="#CFE6F7" transform="rotate(-22 13.5 9.5)"/><ellipse cx="19" cy="10" rx="3.6" ry="5" fill="#B8DAF2" transform="rotate(18 19 10)"/>`
+  + `<path d="M24.5 17.4 L29 18.6 L24.6 20Z" fill="${INK}"/>`
+  + `<ellipse cx="17" cy="18.5" rx="8.6" ry="6.6" fill="#F5C230"/>`
+  + `<ellipse cx="15.6" cy="18.5" rx="1.6" ry="6.3" fill="${INK}"/><ellipse cx="20.4" cy="18.5" rx="1.5" ry="5.6" fill="${INK}"/>`
+  + `<circle cx="8.5" cy="17.5" r="4.6" fill="${INK}"/><circle cx="7.4" cy="16.4" r="1.3" fill="#FFFFFF"/>`
+  + `<path d="M7.5 13.4 Q6 10 4 9.2" stroke="${INK}" stroke-width="1" fill="none" stroke-linecap="round"/></g>`;
+
+// A robin and a blue tit: round bodies, a beak, a bright breast. Each one hops on its own.
+const bird = (dx, { body, wing, breast, cheek }) =>
+  `<g transform="translate(${dx} 0)"><g data-part="bird">`
+  + `<path d="M8 17 L1.5 13 L2.5 19.5Z" fill="${wing}"/>`
+  + `<path d="M13 26 L13 30 M17.5 26 L17.5 30" stroke="#C9894A" stroke-width="1.3" stroke-linecap="round"/>`
+  + `<circle cx="15" cy="18.5" r="8.5" fill="${body}"/><circle cx="21" cy="12" r="5.6" fill="${body}"/>`
+  + `<ellipse cx="19.8" cy="18" rx="5" ry="5.6" fill="${breast}"/>`
+  + (cheek ? `<ellipse cx="22.5" cy="13" rx="2.8" ry="2.2" fill="${cheek}"/>` : '')
+  + `<ellipse cx="12" cy="18.5" rx="5.6" ry="3.8" fill="${wing}" transform="rotate(-15 12 18.5)"/>`
+  + `<path d="M26 11.2 L30 12.6 L26 14Z" fill="#F2B53A"/>`
+  + `<circle cx="22.6" cy="10.8" r="1.4" fill="${INK}"/><circle cx="23" cy="10.4" r=".45" fill="#FFFFFF"/></g></g>`;
+
+const birds = () =>
+  bird(0, { body: '#8B6648', wing: '#6B4C33', breast: '#E8743B' })
+  + bird(24, { body: '#5E95D6', wing: '#3F6FB0', breast: '#F4CF45', cheek: '#FFFFFF' });
+
+const DRAW = { butterfly, bee, birds };
+
+export function visitor(kind = 'butterfly') {
+  const k = DRAW[kind] ? kind : 'butterfly';
+  const w = k === 'birds' ? 56 : 32;
+  return `<svg class="visitor visitor-${k}" viewBox="0 0 ${w} 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${DRAW[k]()}</svg>`;
+}
+
+const loop = { iterations: Infinity, easing: 'ease-in-out' };
+const MOTION = {
+  // Wings fold and open quickly, with a rest between beats.
+  butterfly: ['[data-part="wings"]', [{ transform: 'scaleX(1)' }, { transform: 'scaleX(.3)', offset: 0.12 }, { transform: 'scaleX(1)', offset: 0.24 }, { transform: 'scaleX(1)' }], { duration: 1400, ...loop }],
+  bee: ['[data-part="body"]', [{ transform: 'translate(0, 0) rotate(0deg)' }, { transform: 'translate(0, -2px) rotate(-4deg)' }, { transform: 'translate(0, 0) rotate(0deg)' }], { duration: 1100, ...loop }],
+  birds: ['[data-part="bird"]', [{ transform: 'translateY(0)' }, { transform: 'translateY(-4px)', offset: 0.1 }, { transform: 'translateY(0)', offset: 0.2 }, { transform: 'translateY(0)' }], { duration: 2400, ...loop }],
+};
+
+export function animateVisitor(el, kind) {
+  if (!MOTION[kind] || !el?.querySelectorAll) return null;
+  const [sel, frames, opts] = MOTION[kind];
+  const anims = [...el.querySelectorAll(sel)].map((part, i) => {
+    if (part.style) Object.assign(part.style, { transformBox: 'fill-box', transformOrigin: 'center' });
+    // The second bird hops a little after the first.
+    return move(part, frames, { ...opts, delay: i * 700 });
+  }).filter(Boolean);
+  return anims.length ? anims : null;
+}
