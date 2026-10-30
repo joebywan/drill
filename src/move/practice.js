@@ -37,6 +37,6 @@ export function mount(el, item, ctx) {
     cue.textContent = p.cue;
     unit.textContent = p.reps ? `of ${p.reps}` : 's';
     coachSay(say('go'), 'guide');
-    return demo(ctx.coachEl, p.pose, p.seconds, p.reps);
+    return demo(ctx, p.pose, p.seconds, p.reps);
   }, summary(item.set, course.moves), say('paused'));
 }

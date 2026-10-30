@@ -4,14 +4,17 @@ import { MOODS } from '../src/cast/kit.js';
 import { rosa } from '../src/cast/rosa.js';
 import { lumi } from '../src/cast/lumi.js';
 import { MOODS as CALM, moss, breathe } from '../src/cast/moss.js';
-import { MOODS as MOVE, POSES, clover, demo } from '../src/cast/clover.js';
+import * as Clover from '../src/cast/clover.js';
+import * as Mira from '../src/cast/mira.js';
+
+// The posable characters, each drawn with kit.js rig(): [module, draw].
+const posed = [[Clover, Clover.clover], [Mira, Mira.mira]];
 
 const drawings = [
   ...MOODS.map((m) => [`rosa ${m}`, rosa(m)]),
   ...MOODS.map((m) => [`lumi ${m}`, lumi(m)]),
   ...CALM.map((m) => [`moss ${m}`, moss(m)]),
-  ...MOVE.map((m) => [`clover ${m}`, clover(m)]),
-  ...POSES.map((p) => [`clover ${p}`, clover('guide', p)]),
+  ...posed.flatMap(([c, draw]) => [...c.MOODS.map((m) => [`${c.NAME} ${m}`, draw(m)]), ...c.POSES.map((p) => [`${c.NAME} ${p}`, draw('guide', p)])]),
 ];
 
 test('every character draws every mood, with no holes in the geometry', () => {
@@ -27,8 +30,10 @@ test('moods look different from each other', () => {
   assert.equal(faces(rosa).size, MOODS.length);
   assert.equal(faces(lumi).size, MOODS.length);
   assert.equal(new Set(CALM.map(moss)).size, CALM.length);
-  assert.equal(new Set(MOVE.map((m) => clover(m))).size, MOVE.length);
-  assert.equal(new Set(POSES.map((p) => clover('guide', p))).size, POSES.length);
+  for (const [c, draw] of posed) {
+    assert.equal(new Set(c.MOODS.map((m) => draw(m))).size, c.MOODS.length, c.NAME);
+    assert.equal(new Set(c.POSES.map((p) => draw('guide', p))).size, c.POSES.length, c.NAME);
+  }
 });
 
 test('breathe animates the body for exactly the phase, and stays still under reduced motion', () => {
@@ -54,48 +59,57 @@ test('breathe animates the body for exactly the phase, and stays still under red
   assert.equal(calls.length, 4);
 });
 
-test('a Clover pose moves the same parts, never redraws them', () => {
-  const parts = (s) => s.match(/data-part="[^"]+"/g).join();
-  const shape = (s) => s.replace(/style="[^"]*"|data-pose="[^"]*"/g, '');
-  for (const p of POSES) {
-    assert.equal(parts(clover('guide', p)), parts(clover('guide')), p);
-    assert.equal(shape(clover('guide', p)), shape(clover('guide')), p);
-    assert.match(clover('guide', p), new RegExp(`data-pose="${p}"`));
-  }
-});
-
-test('every Clover pose changes the 48 px silhouette, not just the face', () => {
-  const outline = (s) => s.replace(/data-part="(eyes|lids)" style="[^"]*"/g, '');
-  for (const p of POSES) assert.notEqual(outline(clover('idle', p)), outline(clover('idle')), p);
-});
-
-test('the slow blink closes the eyes through the lids, held still under reduced motion', () => {
-  assert.match(clover('guide', 'blink'), /data-part="eyes" style="[^"]*scale\(1, 0\.05\)/);
-  assert.match(clover('guide', 'blink'), /data-part="lids" style="[^"]*scale\(1, 1\)/);
-  assert.match(clover('guide'), /data-part="eyes" style="[^"]*scale\(1, 1\)/);
-  assert.match(clover('guide'), /data-part="lids" style="[^"]*scale\(1, 0\)/);
-});
-
-test('demo runs every pose for exactly seconds over reps, and stays still under reduced motion', () => {
-  const calls = [];
-  const part = { animate: (frames, opts) => (calls.push([frames, opts]), 'anim') };
-  const el = { querySelector: () => part };
-  for (const p of POSES) {
-    calls.length = 0;
-    const anims = demo(el, p, 6, 3);
-    assert.equal(anims.length, 9, p);
-    for (const [frames, opts] of calls) {
-      assert.equal(opts.duration, 2000, p);
-      assert.equal(opts.iterations, 3, p);
-      assert.equal(frames.at(0).transform, frames.at(-1).transform, p); // each rep ends standing
+for (const [{ NAME, POSES, demo }, draw] of posed) {
+  test(`a ${NAME} pose moves the same parts, never redraws them`, () => {
+    const parts = (s) => s.match(/data-part="[^"]+"/g).join();
+    const shape = (s) => s.replace(/style="[^"]*"|data-pose="[^"]*"/g, '');
+    for (const p of POSES) {
+      assert.equal(parts(draw('guide', p)), parts(draw('guide')), p);
+      assert.equal(shape(draw('guide', p)), shape(draw('guide')), p);
+      assert.match(draw('guide', p), new RegExp(`data-pose="${p}"`));
     }
-    assert.ok(calls.some(([f]) => f[0].transform !== f[1].transform), `${p} moves something`);
-  }
-  assert.equal(demo(el, 'squat', 4).length, 9);
-  assert.equal(calls.at(-1)[1].duration, 4000);
-  assert.equal(demo(el, 'cartwheel', 4, 1), null);
-  calls.length = 0;
-  globalThis.matchMedia = () => ({ matches: true });
-  try { assert.equal(demo(el, 'squat', 4, 2), null); } finally { delete globalThis.matchMedia; }
-  assert.equal(calls.length, 0);
+  });
+
+  test(`every ${NAME} pose changes the 48 px silhouette, not just the face`, () => {
+    const outline = (s) => s.replace(/data-part="(eyes|lids)" style="[^"]*"/g, '');
+    for (const p of POSES) assert.notEqual(outline(draw('idle', p)), outline(draw('idle')), p);
+  });
+
+  test(`${NAME}'s demo runs every pose for exactly seconds over reps, and stays still under reduced motion`, () => {
+    const calls = [];
+    const part = { animate: (frames, opts) => (calls.push([frames, opts]), 'anim') };
+    const el = { querySelector: () => part };
+    const n = demo(el, POSES[0], 6, 3).length;
+    assert.ok(n >= 7, NAME); // body, torso, head, arms and legs at least
+    for (const p of POSES) {
+      calls.length = 0;
+      const anims = demo(el, p, 6, 3);
+      assert.equal(anims.length, n, p);
+      for (const [frames, opts] of calls) {
+        assert.equal(opts.duration, 2000, p);
+        assert.equal(opts.iterations, 3, p);
+        assert.equal(frames.at(0).transform, frames.at(-1).transform, p); // each rep ends standing
+      }
+      assert.ok(calls.some(([f]) => f[0].transform !== f[1].transform), `${p} moves something`);
+    }
+    assert.equal(demo(el, POSES[0], 4).length, n);
+    assert.equal(calls.at(-1)[1].duration, 4000);
+    assert.equal(demo(el, 'cartwheel', 4, 1), null);
+    calls.length = 0;
+    globalThis.matchMedia = () => ({ matches: true });
+    try { assert.equal(demo(el, POSES[0], 4, 2), null); } finally { delete globalThis.matchMedia; }
+    assert.equal(calls.length, 0);
+  });
+}
+
+test("Mira's slow blink closes her eyes through the lids, held still under reduced motion", () => {
+  assert.match(Mira.mira('guide', 'blink'), /data-part="eyes" style="[^"]*scale\(1, 0\.05\)/);
+  assert.match(Mira.mira('guide', 'blink'), /data-part="lids" style="[^"]*scale\(1, 1\)/);
+  assert.match(Mira.mira('guide'), /data-part="eyes" style="[^"]*scale\(1, 1\)/);
+  assert.match(Mira.mira('guide'), /data-part="lids" style="[^"]*scale\(1, 0\)/);
+});
+
+test('Mira sits tall on a log that only shows when she sits', () => {
+  assert.match(Mira.mira('guide', 'sit-tall'), /data-part="seat" style="[^"]*scale\(1, 1\)/);
+  for (const p of Mira.POSES.filter((x) => x !== 'sit-tall')) assert.match(Mira.mira('guide', p), /data-part="seat" style="[^"]*scale\(1, 0\)/, p);
 });
