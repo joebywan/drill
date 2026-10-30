@@ -80,3 +80,35 @@ test('migrate v7 to v8: older saves gain empty timings; v8 keeps its own; junk i
   const odd = migrate({ ...emptyProgress(), timings: { calm: { inhale: -3 } } });
   assert.equal(breaths(1, odd.timings.calm)[0].seconds, 4);
 });
+
+test('nextUp: the next lesson is the first open one, from the placement start on, else `again`', async () => {
+  const { nextUp, unitsOf } = await import('../src/progress.js');
+  const { subjects } = await import('../src/subjects.js');
+  const calm = subjects.find((s) => s.id === 'calm');
+  const brk = subjects.find((s) => s.id === 'break');
+  const up = (p, s) => nextUp(unitsOf(p, s), s.again);
+  assert.equal(up(emptyProgress(), calm).current.id, 'calm:breathe1');
+  assert.equal(up({ ...emptyProgress(), done: { 'calm:breathe1': 1 } }, calm).current.id, 'calm:breathe2');
+  const chess = subjects.find((s) => s.placement);
+  const placed = { ...emptyProgress(), start: { [chess.id]: chess.units[1].title } };
+  assert.equal(up(placed, chess).current.id, `${chess.id}:${chess.units[1].lessons[0].id}`, 'from the placement start');
+  const allDone = { ...emptyProgress(), done: { 'break:break1': 1, 'break:break2': 1 } };
+  assert.deepEqual([up(allDone, brk).current, up(allDone, brk).repeat.id], [undefined, 'break:break2'], 'a finished path repeats `again`');
+});
+
+test('pathTimings: growing values come from the next lesson, else the nearest one that has them', async () => {
+  const { pathTimings } = await import('../src/practice/timings.js');
+  const calm = (await import('../src/data/calm.json', { with: { type: 'json' } })).default;
+  const lessons = calm.units.flatMap((u) => u.lessons);
+  const at = (id) => lessons.findIndex((l) => l.id === id);
+  const first = pathTimings('calm', lessons, 0);
+  assert.deepEqual(first, { breaths: 3, sighs: 3, scan: 15, taps: 40 }, 'fixed values (inhale) are not here; the rest look ahead');
+  assert.equal(pathTimings('calm', lessons, at('breathe2')).breaths, 5);
+  assert.equal(pathTimings('calm', lessons, at('scan2')).breaths, 6, 'past the breathing lessons: the last one before');
+  assert.equal(pathTimings('calm', lessons, -1).breaths, 3, 'no next lesson reads as the first');
+  const move = pathTimings('move', course.units.flatMap((u) => u.lessons), 0);
+  assert.deepEqual(move, { reps: 8, seconds: 30 }, "Move's live in each routine's set");
+  assert.deepEqual(setTiming({ breaths: 4 }, 'calm', 'breaths', 3, 3), {}, 'stepping back to the growing value keeps it growing');
+  assert.deepEqual(setTiming({}, 'calm', 'breaths', 4, 3), { breaths: 4 });
+  assert.deepEqual(pathTimings('break', [], 0), { seconds: TIMINGS.break.seconds.from }, 'nothing on the path: `from`');
+});

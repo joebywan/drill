@@ -7,6 +7,7 @@ import { award } from '../../src/garden/model.js';
 // The first lesson on the path. Its answers are worked out from the course data with the same
 // item logic the app uses, so the test follows the content when it changes.
 const basics = JSON.parse(readFileSync(new URL('../../src/data/basics.json', import.meta.url)));
+const calmCourse = JSON.parse(readFileSync(new URL('../../src/data/calm.json', import.meta.url)));
 const first = basics.units[0].lessons[0];
 
 // Board squares are SVG with no accessible name, so they're found by cm-chessboard's data-square.
@@ -328,6 +329,20 @@ test('a Calm breathing session keeps its own streak, and asks how you feel', asy
   await expect(page.getByRole('button', { name: `Continue · ${first.title}` })).toBeVisible();
 });
 
+test('your own timings: a growing value shows what the next lesson uses, and + steps from it', async ({ page }) => {
+  await firstVisit(page);
+  await tab(page, 'Calm').click();
+  await page.getByRole('button', { name: 'Your timings' }).click();
+  const first = calmCourse.units[0].lessons[0].items.find((i) => i.type === 'breathe').cycles;
+  const breaths = page.locator('.steppers li[data-k="breaths"]');
+  await expect(breaths.locator('output')).toHaveText(`${first} (grows as you go)`);
+  await breaths.getByRole('button', { name: 'More' }).click();
+  await expect(breaths.locator('output')).toHaveText(`${first + 1} (default grows as you go)`);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')).timings)).toEqual({ calm: { breaths: first + 1 } });
+  await page.getByRole('button', { name: 'Back to defaults' }).click();
+  await expect(breaths.locator('output')).toHaveText(`${first} (grows as you go)`);
+});
+
 test('your own timings: Calm breathes in for 6 when set, saves at once, and goes back to defaults', async ({ page }) => {
   await page.clock.install();
   await firstVisit(page);
@@ -338,7 +353,7 @@ test('your own timings: Calm breathes in for 6 when set, saves at once, and goes
   await expect(page.getByText('If someone has given you timings, set them here.')).toBeVisible();
   const inhale = page.locator('.steppers li[data-k="inhale"]');
   await expect(inhale.locator('output')).toHaveText('4 s (default 4)');
-  await expect(page.locator('.steppers li[data-k="breaths"] output')).toHaveText('As the path goes (default)');
+  await expect(page.locator('.steppers li[data-k="breaths"] output')).toHaveText('3 (grows as you go)');
   await expect(page.getByRole('button', { name: 'Back to defaults' })).toBeDisabled();
   for (let i = 0; i < 2; i++) await inhale.getByRole('button', { name: 'More' }).click();
   await expect(inhale.locator('output')).toHaveText('6 s (default 4)');
