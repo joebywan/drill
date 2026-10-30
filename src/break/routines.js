@@ -1,8 +1,8 @@
 /** The screen break as a timeline (see src/practice/timeline.js, which plays it): about 2 minutes. */
 
 /**
- * Each step: { name, line, seconds, pose, loops, how }. `line` is the short cue Clover says; Clover
- * demonstrates `pose` (src/cast/clover.js) `loops` times over the step (not `reps`, which the count
+ * Each step: { name, line, seconds, pose, loops, how }. `line` is the short cue Mira says; Mira
+ * demonstrates `pose` (src/cast/mira.js) `loops` times over the step (not `reps`, which the count
  * would show as reps); `how` is the plain-words guidance behind "How?". The first is 20 seconds
  * of looking far away (the 20-20-20 idea).
  */
@@ -27,7 +27,7 @@ export const STEPS = [
     'Pause there for a breath, then come back to the middle.',
     'Then the other side. Small is fine.',
   ] },
-  { name: 'Stand and stretch', seconds: 25, pose: 'reach-up', loops: 3, line: 'Stand up if you can, and reach up high. Big bunny stretch.', how: [
+  { name: 'Stand and stretch', seconds: 25, pose: 'reach-up', loops: 3, line: 'Stand up if you can, and reach up high. Big lemur stretch.', how: [
     'Stand up with your feet about hip width apart.',
     'Reach both arms up high, as if picking an apple from a tree.',
     'Staying seated works too: reach up from your chair.',

@@ -80,8 +80,10 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - `src/move/` — the Move practice subject, built like Calm. `routines.js` is pure: a set of
   exercises becomes timed phases with rests between; a rep exercise counts its reps (`countOf()` in
   `src/practice/timeline.js`). `practice.js` mounts it; the coach demonstrates each pose through one
-  `demo()` adapter in `src/practice/kit.js` (Clover, `src/cast/clover.js`), which the screen break
-  shares: Clover demonstrates each of its steps, and "How?" opens the step's guidance (`how` in
+  `demo()` adapter in `src/practice/kit.js`, which calls the subject coach's own `demo` (Clover,
+  `src/cast/clover.js`). The screen break shares it with Mira (`src/cast/mira.js`, a lemur with big
+  amber eyes) demonstrating each of its steps; both are posed with `rig()` in `src/cast/kit.js`.
+  "How?" opens the step's guidance (`how` in
   `src/break/routines.js`) with the routine paused. Course in `src/data/move.json`:
   Wake up, Strength (reps grow 5, 8, 10), Stretch. Guardrails bar pushing and body or weight
   words, and check the safety line is on the first lesson and after "Not really".

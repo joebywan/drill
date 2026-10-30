@@ -174,14 +174,15 @@ export const FEELS = [['calmer', 'Calmer'], ['about the same', 'About the same']
 export const feelsFor = (good = 'calmer') => [[good, good[0].toUpperCase() + good.slice(1)], ...FEELS.slice(1)];
 
 /**
- * Clover, the screen break's coach too: playful and easy, a rabbit who loves a stretch. Plain words,
- * no health claims, no hurry, and never a word about how long you have been on a screen.
+ * Mira, the screen break's coach: a lemur who loves a sunny branch and a long look at the trees.
+ * Playful and easy. Plain words, no health claims, no hurry, and never a word about how long you
+ * have been on a screen.
  */
 export const BREAK_LINES = {
-  paused: ["Paused. I'll keep my ears up while I wait."],
-  tapped: ['Rabbits look far all day. Mostly for carrots.', 'Look far. Further. Is that a carrot?', 'Wiggle allowed. Ears too.'],
+  paused: ["Paused. I'll sit here and look at the trees."],
+  tapped: ['Big eyes, soft gaze. That is the whole trick.', 'Look far. Further. Is that a mango tree?', 'Tail swish allowed.'],
   done: ['Break done. Back to it, nice and loose.', 'That was a good stretch.', 'Eyes rested, shoulders rolled. Lovely.'],
-  'refreshed': ['Nice. A loose bunny is a happy bunny.'],
+  'refreshed': ['Nice. Rested eyes, happy lemur.'],
   'about the same': ['That is fine. A short break still counts.'],
   'no different': ['That is alright. Thanks for telling me.'],
 };

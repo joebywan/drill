@@ -179,14 +179,14 @@ test('a screen break is taught once, plays its six steps on the clock, and keeps
   await expect(page.locator('.day').first().getByRole('listitem')).toHaveText(/^Screen break · \d+ min · felt about the same$/);
 });
 
-test('Clover demonstrates the screen break, and "How?" pauses it for the guidance', async ({ page }) => {
+test('Mira demonstrates the screen break, and "How?" pauses it for the guidance', async ({ page }) => {
   await page.clock.install();
   await placeAtStart(page);
   await tab(page, 'Screen break').click();
   await page.getByRole('button', { name: 'Continue · Why breaks help' }).click();
   await page.getByRole('button', { name: 'Start' }).click();
-  await expect(page.locator('.coach.demonstrates .who')).toHaveAccessibleName('Clover');
-  await expect(page.locator('.who svg.cast-clover')).toBeVisible();
+  await expect(page.locator('.coach.demonstrates .who')).toHaveAccessibleName('Mira');
+  await expect(page.locator('.who svg.cast-mira')).toBeVisible();
   const now = page.locator('.steps li[aria-current="step"]');
   await page.clock.runFor(21_000);
   await expect(now).toHaveText(/^Slow blinks\s*\d+ s$/);

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { STEPS } from '../src/break/routines.js';
 import { phaseAt, total } from '../src/practice/timeline.js';
-import { POSES } from '../src/cast/clover.js';
+import { POSES } from '../src/cast/mira.js';
 import { subjects } from '../src/subjects.js';
 
 const course = JSON.parse(readFileSync('src/data/break.json', 'utf8'));
@@ -14,7 +14,7 @@ test('the screen break is six steps in order, about two minutes', () => {
   for (const s of STEPS) assert.ok(s.seconds >= 10 && s.seconds <= 30 && s.line, s.name);
 });
 
-test('every step has a pose Clover demonstrates, a short cue and a few lines of guidance', () => {
+test('every step has a pose Mira demonstrates, a short cue and a few lines of guidance', () => {
   for (const s of STEPS) {
     assert.ok(POSES.includes(s.pose), s.name);
     assert.ok(Number.isInteger(s.loops) && s.loops >= 1 && s.seconds / s.loops >= 3 && !('reps' in s), `${s.name}: a slow loop`);
@@ -23,7 +23,7 @@ test('every step has a pose Clover demonstrates, a short cue and a few lines of 
   }
   assert.deepEqual(STEPS.map((s) => s.pose), ['look-far', 'blink', 'shoulder-roll', 'neck-tilt', 'reach-up', 'sit-tall']);
   const coach = subjects.find((x) => x.habit === 'break').coach;
-  assert.equal(coach.name, 'Clover');
+  assert.equal(coach.name, 'Mira');
   assert.equal(coach.demonstrates, true);
 });
 

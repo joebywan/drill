@@ -66,8 +66,8 @@ The app's vibe moves from "build knowledge" to "grow yourself", shown as a garde
   it's soft morning light. After a gap, it's evening with the buds closed: resting, never sad.
 - **Streak numbers stay** on the habit tabs and in the habit view. The garden is the picture; the
   numbers are the detail.
-- **Characters are recognisable animals** (Moss the capybara, Clover the rabbit, Lumi the
-  seal). Insects and birds are garden life, not coaches. No owls.
+- **Characters are recognisable animals** (Moss the capybara, Clover the rabbit, Mira the
+  ring-tailed lemur, Lumi the seal). Insects and birds are garden life, not coaches. No owls.
 - Later: seasonal events that change the whole garden (blossom, lanterns), Lumi by a pond,
   and reconsidering the name "Drill".
 

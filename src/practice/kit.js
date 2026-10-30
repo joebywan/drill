@@ -1,7 +1,6 @@
 import { esc } from '../html.js';
 import { countOf, timeline } from './timeline.js';
 import { move, play } from '../feel.js';
-import { clover, demo as act } from '../cast/clover.js';
 
 /**
  * The parts every practice habit's mount reuses, so Calm, Move, Eyes and the rest share one
@@ -26,13 +25,14 @@ export function teach(el, item, { say, done, help }) {
 }
 
 /**
- * The demonstrating coach (Clover) acts out `pose` in `el`, after the mood is set (coach.set
- * redraws), looping `reps` times over `seconds`. Under reduced motion it holds the pose still, so
- * the move still reads. Returns the animations for the routine to pause, or [].
+ * The subject's demonstrating coach (`coach.demo`: Clover for Move, Mira for the screen break)
+ * acts out `pose` in `coachEl`, after the mood is set (coach.set redraws), looping `reps` times over
+ * `seconds`. Under reduced motion it holds the pose still, so the move still reads. Returns the
+ * animations for the routine to pause, or [].
  */
-export function demo(el, pose, seconds, reps) {
-  const anims = act(el, pose, seconds, reps);
-  if (!anims) el.innerHTML = clover('guide', pose); // the next mood change redraws over it
+export function demo({ coach, coachEl }, pose, seconds, reps) {
+  const anims = coach.demo(coachEl, pose, seconds, reps);
+  if (!anims) coachEl.innerHTML = coach.draw('guide', pose); // the next mood change redraws over it
   return anims ?? [];
 }
 
