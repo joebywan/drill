@@ -1,0 +1,132 @@
+{
+  "id": "coding",
+  "title": "Coding",
+  "units": [
+    {
+      "title": "Step by step",
+      "lessons": [
+        {
+          "id": "steps-0",
+          "title": "First steps",
+          "items": [
+            { "id": "steps-0-meet", "type": "teach", "level": ["S..*"],
+              "text": "I'm Fennel. I follow steps, one at a time, in order. Your steps get me to the flower." },
+            { "id": "steps-0-one", "type": "build", "level": [".S*."], "program": [null], "tiles": ["left", "up", "right"],
+              "prompt": "Tap a step to get me to the flower.",
+              "explain": "One step right and I'm there." },
+            { "id": "steps-0-three", "type": "build", "level": ["S..*"], "program": [null, null, null], "tiles": ["up", "right"],
+              "prompt": "Three steps this time. I start as soon as the last one is in.",
+              "explain": "Right, right, right: three steps along the row." },
+            { "id": "steps-0-turn", "type": "build", "level": ["...*", "S..."], "program": [null, null, null, null], "tiles": ["right", "down", "up"],
+              "prompt": "The flower is up a row. Build the steps.",
+              "explain": "Three steps right and one up. Up first works too: there's more than one way." },
+            { "id": "steps-0-where", "type": "predict", "level": ["S...*", "....."], "program": ["right", "right", "down"],
+              "prompt": "Read my steps. Tap the square where I stop.",
+              "explain": "Right, right, then down: two along and one down." }
+          ]
+        },
+        {
+          "id": "steps-1",
+          "title": "Around the rock",
+          "items": [
+            { "id": "steps-1-rock", "type": "teach", "level": ["S#*", "..."],
+              "text": "Rocks are in the way. I can't walk through them, so the steps go around." },
+            { "id": "steps-1-around", "type": "build", "level": ["S#*", "..."], "program": [null, null, null, null], "tiles": ["right", "up", "down"],
+              "prompt": "Get me round the rock to the flower.",
+              "explain": "Down, right, right, up: under the rock and back up." },
+            { "id": "steps-1-wall", "type": "build", "level": ["S#*", ".#.", "..."], "program": [null, null, null, null, null, null], "tiles": ["right", "up", "down"],
+              "prompt": "A taller rock. Six steps.",
+              "explain": "Down twice, right twice, up twice: all the way round." },
+            { "id": "steps-1-bump", "type": "predict", "level": ["S.#.*", "....."], "program": ["right", "right", "down"],
+              "prompt": "A rock is on my way. Tap where I stop.",
+              "explain": "One step right, then the rock blocks the next one, so I stop there. A step into a rock ends the run." }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Loops",
+      "lessons": [
+        {
+          "id": "loops-0",
+          "title": "Repeat",
+          "items": [
+            { "id": "loops-0-meet", "type": "teach", "level": ["S...*"],
+              "text": "A repeat block does what's inside it again and again. Repeat 4 times → is the same as → → → →, with less tapping." },
+            { "id": "loops-0-count", "type": "build", "level": ["S...*"], "program": [{ "repeat": null, "do": ["right"] }], "tiles": [2, 3, 4],
+              "prompt": "How many times should I step right?",
+              "explain": "Four squares to the flower, so repeat 4 times." },
+            { "id": "loops-0-inside", "type": "build", "level": ["S....*"], "program": [{ "repeat": 5, "do": [null] }], "tiles": ["up", "down", "right"],
+              "prompt": "The count is set. Pick the step to repeat.",
+              "explain": "Right, five times over." },
+            { "id": "loops-0-stairs", "type": "build", "level": ["..#*", ".#..", "#...", "S..."], "program": [{ "repeat": 3, "do": [null, null] }], "tiles": ["up", "right"],
+              "prompt": "Stairs! Two steps inside, done three times.",
+              "explain": "Right then up, three times: a staircase. Up first runs into a rock." },
+            { "id": "loops-0-where", "type": "predict", "level": ["S....", ".....", "....*"], "program": [{ "repeat": 2, "do": ["right", "down"] }],
+              "prompt": "Read the loop. Tap where I stop.",
+              "explain": "Right and down, twice over: two along and two down." }
+          ]
+        },
+        {
+          "id": "loops-1",
+          "title": "Two loops",
+          "items": [
+            { "id": "loops-1-long", "type": "build", "level": ["S.....*"], "program": [{ "repeat": null, "do": ["right"] }], "tiles": [4, 5, 6],
+              "prompt": "A long way. How many times?",
+              "explain": "Six squares, so repeat 6 times. Counting the gaps is the trick." },
+            { "id": "loops-1-two", "type": "build", "level": ["S...", "###.", "...*"],
+              "program": [{ "repeat": null, "do": ["right"] }, { "repeat": null, "do": ["down"] }], "tiles": [2, 3, 4],
+              "prompt": "One loop goes right, the next goes down. Set both counts.",
+              "explain": "Right 3 times, then down 2 times. One loop finishes before the next one starts." },
+            { "id": "loops-1-where", "type": "predict", "level": ["*....", ".....", "S...."], "program": [{ "repeat": 3, "do": ["right"] }, "up"],
+              "prompt": "A loop, then one more step. Tap where I stop.",
+              "explain": "Three steps right, then the loop is done and I step up once." }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "If and else",
+      "lessons": [
+        {
+          "id": "if-0",
+          "title": "If there's a rock",
+          "items": [
+            { "id": "if-0-meet", "type": "teach", "level": ["...*.", "...#.", "S.#.."],
+              "text": "An if block looks first. If there's a rock to my right, I do the first step. Else, I do the other one." },
+            { "id": "if-0-climb", "type": "build", "level": ["...*.", "...#.", "S.#.."],
+              "program": [{ "repeat": 5, "do": [{ "if": "rock-right", "then": [null], "else": [null] }] }], "tiles": ["up", "right", "down"],
+              "prompt": "Rock to my right: which way? No rock: which way?",
+              "explain": "If a rock is to my right, step up. Else, step right. The same two blocks climb any rocks like these." },
+            { "id": "if-0-down", "type": "build", "level": ["S..", "...", "#..", ".#*"],
+              "program": [{ "repeat": 5, "do": [{ "if": "rock-down", "then": [null], "else": [null] }] }], "tiles": ["right", "down", "left"],
+              "prompt": "Now I'm going down. Rock below me: which way? No rock: which way?",
+              "explain": "If a rock is below me, step right. Else, step down." },
+            { "id": "if-0-where", "type": "predict", "level": ["S#.*", "...."],
+              "program": [{ "repeat": 3, "do": [{ "if": "rock-right", "then": ["down"], "else": ["right"] }] }],
+              "prompt": "Follow the if each time round. Tap where I stop.",
+              "explain": "A rock to my right, so down. Then no rock, so right, and right again." }
+          ]
+        },
+        {
+          "id": "if-1",
+          "title": "Loops that look",
+          "items": [
+            { "id": "if-1-count", "type": "build", "level": ["..*#", "...#", "S..#"],
+              "program": [{ "repeat": null, "do": [{ "if": "rock-right", "then": ["up"], "else": ["right"] }] }], "tiles": [2, 3, 4],
+              "prompt": "The if is ready. How many times round?",
+              "explain": "Right, right, then rocks, so up, up: 4 times round." },
+            { "id": "if-1-up", "type": "build", "level": [".#*", "#..", "...", "S.."],
+              "program": [{ "repeat": 5, "do": [{ "if": "rock-up", "then": [null], "else": [null] }] }], "tiles": ["up", "right", "left"],
+              "prompt": "Going up. Rock above me: which way? No rock: which way?",
+              "explain": "If a rock is above me, step right. Else, step up." },
+            { "id": "if-1-where", "type": "predict", "level": ["....*", "S.#..", "....."],
+              "program": [{ "repeat": 4, "do": [{ "if": "rock-right", "then": ["down"], "else": ["right"] }] }],
+              "prompt": "One last read. Tap where I stop.",
+              "explain": "Right, then a rock, so down. Then right and right again." }
+          ]
+        }
+      ]
+    }
+  ]
+}

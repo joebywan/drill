@@ -340,7 +340,7 @@ export const INTRO_WORDS = {
   courses: 'Courses',
   habitList: 'Habits',
   soon: 'coming soon',
-  soonCourses: ['Coding'],
+  soonCourses: [],
   done: 'Show my home',
   first: '{name} is first. Start with the button below.',
   change: 'Change what you see',
@@ -527,4 +527,53 @@ export const WIDGET_LINES = {
 export const REMINDER_WORDS = {
   title: 'Daily note',
   toggle: 'One quiet note in the evening, only on days with nothing done',
+};
+
+/**
+ * Fennel, the Coding coach: a fennec fox who loves a plan and follows one to the letter, ears
+ * first. Earnest, a little proud of his ears, fond of digging. The same kinds as LINES, so the
+ * lesson and its end screen read his lines in place of Rosa's (subject `coach.lines`/`headlines`).
+ */
+export const CODING_LINES = {
+  correct: [
+    'Exactly right. I did just what the blocks said.',
+    'Every step in the right order. Lovely plan.',
+    'That works. I can feel it in my ears.',
+    "Yes! You read the grid first. That's the trick.",
+    'Spot on. You followed every block through.',
+  ],
+  wrong: [
+    'Not quite. I only do what the blocks say, so follow along with me.',
+    "Close. Read why, then you'll have it.",
+    'Bump! Steps are fussy about order. Look at where I stopped.',
+    "That's a useful one to try. Now you can see what the blocks did.",
+  ],
+  run3: ['Three plans in a row! My ears are tingling.', 'Three in a row. Neat, tidy plans.'],
+  run5: ['Five in a row! You think like a programmer: one step at a time.', 'Five! Those plans run like clockwork.'],
+  tapped: [
+    'Computers are like me: they do the steps exactly, in order. No guessing.',
+    'My ears hear sand move. They do not hear what you meant, only what you built.',
+    'A loop saves taps. Lazy is good, when it is careful.',
+    'I dig for fun. Then I fill the hole back in. Same steps, other way round.',
+    'Read a program like a recipe: top to bottom, one line at a time.',
+    'Lumi tried to repeat lunch forever. That is called an infinite loop.',
+  ],
+  complete: ['Lesson done. These come back in review, so they stick.', 'That is the lesson. Plan made, plan run.'],
+  perfect: ['Every plan right first time. You followed each step through.', 'Not one bump. You checked every square.'],
+  fast: ['Quick and right, every one. You read the grid first.', 'Fast, and every plan reached the flower.'],
+  struggled: [
+    'Every bump you fixed is a bug you will spot next time.',
+    'Finding where a plan goes wrong is most of coding. You did lots of it.',
+    'The tricky ones come back in review. That is the plan, not a penalty.',
+  ],
+  review: ['Review done. Those ideas are sticking.', 'Recall like that is how the ideas settle in.'],
+  relit: ['That review relit your streak. Welcome back to the grid.'],
+};
+export const CODING_HEADLINES = {
+  complete: ['Lesson done. The flower thanks you.', 'And that is a lesson. My ears approve.'],
+  perfect: ['Flawless! Not a single bump.', 'Every plan perfect. I may frame them.'],
+  fast: ['Done already? I had barely started trotting.', 'Zoom! That was a quick little program.'],
+  struggled: ['Some bumps, then the flower. That is real coding.', 'You debugged your way through. Proper programmer stuff.'],
+  review: ['Look at that recall. The plans are in there.', 'Review done. Steps, loops, ifs: all at home.'],
+  relit: ['Streak relit! Ears up.', 'There it is, the streak is glowing again.'],
 };

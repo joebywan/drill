@@ -8,9 +8,10 @@ import * as Clover from '../src/cast/clover.js';
 import * as Mira from '../src/cast/mira.js';
 import { ada } from '../src/cast/ada.js';
 import * as Hazel from '../src/cast/hazel.js';
+import * as Fennel from '../src/cast/fennel.js';
 
 // The posable characters, each drawn with kit.js rig(): [module, draw].
-const posed = [[Clover, Clover.clover], [Mira, Mira.mira], [Hazel, Hazel.hazel]];
+const posed = [[Clover, Clover.clover], [Mira, Mira.mira], [Hazel, Hazel.hazel], [Fennel, Fennel.fennel]];
 
 const drawings = [
   ...MOODS.map((m) => [`rosa ${m}`, rosa(m)]),
