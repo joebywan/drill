@@ -1,0 +1,332 @@
+{
+"ten-gaps": [
+{"picture":{"frame":1},"sum":"10 - 1","prompt":"How many more dots would fill the frame?","options":["8","9","10"],"explain":"1 dots and 9 gaps: 1 and 9 make 10."},
+{"picture":{"frame":2},"sum":"10 - 2","prompt":"How many more dots would fill the frame?","options":["7","8","9"],"explain":"2 dots and 8 gaps: 2 and 8 make 10."},
+{"picture":{"frame":7},"sum":"10 - 7","prompt":"How many more dots would fill the frame?","options":["2","3","4"],"explain":"7 dots and 3 gaps: 7 and 3 make 10."},
+{"picture":{"frame":8},"sum":"10 - 8","prompt":"How many more dots would fill the frame?","options":["1","2","3"],"explain":"8 dots and 2 gaps: 8 and 2 make 10."},
+{"picture":{"frame":5},"sum":"10 - 5","prompt":"How many more dots would fill the frame?","options":["4","5","6"],"explain":"5 dots and 5 gaps: 5 and 5 make 10."},
+{"picture":{"frame":6},"sum":"10 - 6","prompt":"How many more dots would fill the frame?","options":["3","4","5"],"explain":"6 dots and 4 gaps: 6 and 4 make 10."},
+{"picture":{"frame":4},"sum":"10 - 4","prompt":"How many more dots would fill the frame?","options":["5","6","7"],"explain":"4 dots and 6 gaps: 4 and 6 make 10."},
+{"picture":{"frame":9},"sum":"10 - 9","prompt":"How many more dots would fill the frame?","options":["0","1","2"],"explain":"9 dots and 1 gaps: 9 and 1 make 10."}
+],
+"make-ten": [
+{"make":10,"tiles":["2","7","3","4","8","6"],"prompt":"Tap two numbers that make 10. Clear the lot.","explain":"4 and 6, 2 and 8, 3 and 7. Ten every time."},
+{"make":10,"tiles":["7","8","3","6","2","4"],"prompt":"Tap two numbers that make 10. Clear the lot.","explain":"4 and 6, 2 and 8, 3 and 7. Ten every time."},
+{"make":10,"tiles":["2","9","6","8","1","4"],"prompt":"Tap two numbers that make 10. Clear the lot.","explain":"2 and 8, 4 and 6, 1 and 9. Ten every time."},
+{"make":10,"tiles":["8","6","2","4","1","9"],"prompt":"Tap two numbers that make 10. Clear the lot.","explain":"1 and 9, 2 and 8, 4 and 6. Ten every time."},
+{"make":10,"tiles":["3","9","1","7","2","8"],"prompt":"Tap two numbers that make 10. Clear the lot.","explain":"3 and 7, 1 and 9, 2 and 8. Ten every time."},
+{"make":10,"tiles":["8","2","1","4","9","6"],"prompt":"Tap two numbers that make 10. Clear the lot.","explain":"2 and 8, 4 and 6, 1 and 9. Ten every time."},
+{"make":10,"tiles":["4","6","8","2","3","7"],"prompt":"Tap two numbers that make 10. Clear the lot.","explain":"4 and 6, 2 and 8, 3 and 7. Ten every time."},
+{"make":10,"tiles":["9","1","4","2","6","8"],"prompt":"Tap two numbers that make 10. Clear the lot.","explain":"2 and 8, 1 and 9, 4 and 6. Ten every time."}
+],
+"make-hundred": [
+{"make":100,"tiles":["80","85","25","15","75","20"],"prompt":"Now pairs that make 100.","explain":"20 and 80, 25 and 75, 15 and 85."},
+{"make":100,"tiles":["55","25","45","75","60","40"],"prompt":"Now pairs that make 100.","explain":"45 and 55, 40 and 60, 25 and 75."},
+{"make":100,"tiles":["65","25","35","85","15","75"],"prompt":"Now pairs that make 100.","explain":"25 and 75, 15 and 85, 35 and 65."},
+{"make":100,"tiles":["80","65","35","20","55","45"],"prompt":"Now pairs that make 100.","explain":"20 and 80, 45 and 55, 35 and 65."},
+{"make":100,"tiles":["30","65","60","40","70","35"],"prompt":"Now pairs that make 100.","explain":"35 and 65, 40 and 60, 30 and 70."},
+{"make":100,"tiles":["55","45","65","15","85","35"],"prompt":"Now pairs that make 100.","explain":"35 and 65, 15 and 85, 45 and 55."},
+{"make":100,"tiles":["25","30","35","75","70","65"],"prompt":"Now pairs that make 100.","explain":"25 and 75, 30 and 70, 35 and 65."},
+{"make":100,"tiles":["65","90","30","10","70","35"],"prompt":"Now pairs that make 100.","explain":"10 and 90, 30 and 70, 35 and 65."}
+],
+"give": [
+{"show":"9 + 5","prompt":"Give 1 of the 5 to the 9 to make 10. Then add what is left.","explain":"9 + 1 is 10, with 4 left over: 14."},
+{"show":"8 + 4","prompt":"Give 2 of the 4 to the 8 to make 10. Then add what is left.","explain":"8 + 2 is 10, with 2 left over: 12."},
+{"show":"9 + 6","prompt":"Give 1 of the 6 to the 9 to make 10. Then add what is left.","explain":"9 + 1 is 10, with 5 left over: 15."},
+{"show":"7 + 9","prompt":"Give 3 of the 9 to the 7 to make 10. Then add what is left.","explain":"7 + 3 is 10, with 6 left over: 16."},
+{"show":"8 + 8","prompt":"Give 2 of the 8 to the 8 to make 10. Then add what is left.","explain":"8 + 2 is 10, with 6 left over: 16."},
+{"show":"9 + 4","prompt":"Give 1 of the 4 to the 9 to make 10. Then add what is left.","explain":"9 + 1 is 10, with 3 left over: 13."},
+{"show":"8 + 7","prompt":"Give 2 of the 7 to the 8 to make 10. Then add what is left.","explain":"8 + 2 is 10, with 5 left over: 15."},
+{"show":"9 + 8","prompt":"Give 1 of the 8 to the 9 to make 10. Then add what is left.","explain":"9 + 1 is 10, with 7 left over: 17."}
+],
+"make-first": [
+{"show":"9 + 6","prompt":"Make 10 first, then add the rest.","explain":"9 + 1 is 10, with 5 left over: 15."},
+{"show":"8 + 6","prompt":"Make 10 first, then add the rest.","explain":"8 + 2 is 10, with 4 left over: 14."},
+{"show":"9 + 4","prompt":"Make 10 first, then add the rest.","explain":"9 + 1 is 10, with 3 left over: 13."},
+{"show":"7 + 5","prompt":"Make 10 first, then add the rest.","explain":"7 + 3 is 10, with 2 left over: 12."},
+{"show":"7 + 4","prompt":"Make 10 first, then add the rest.","explain":"7 + 3 is 10, with 1 left over: 11."},
+{"show":"8 + 5","prompt":"Make 10 first, then add the rest.","explain":"8 + 2 is 10, with 3 left over: 13."},
+{"show":"7 + 9","prompt":"Make 10 first, then add the rest.","explain":"7 + 3 is 10, with 6 left over: 16."},
+{"show":"7 + 8","prompt":"Make 10 first, then add the rest.","explain":"7 + 3 is 10, with 5 left over: 15."}
+],
+"add-line": [
+{"show":"7 + 9","min":0,"max":20,"ticks":10,"prompt":"Where does it land? Drag the marker and let go.","explain":"7 + 3 makes 10, and 6 more is 16."},
+{"show":"9 + 7","min":0,"max":20,"ticks":10,"prompt":"Where does it land? Drag the marker and let go.","explain":"9 + 1 makes 10, and 6 more is 16."},
+{"show":"8 + 8","min":0,"max":20,"ticks":10,"prompt":"Where does it land? Drag the marker and let go.","explain":"8 + 2 makes 10, and 6 more is 16."},
+{"show":"9 + 3","min":0,"max":20,"ticks":10,"prompt":"Where does it land? Drag the marker and let go.","explain":"9 + 1 makes 10, and 2 more is 12."},
+{"show":"9 + 9","min":0,"max":20,"ticks":10,"prompt":"Where does it land? Drag the marker and let go.","explain":"9 + 1 makes 10, and 8 more is 18."},
+{"show":"9 + 5","min":0,"max":20,"ticks":10,"prompt":"Where does it land? Drag the marker and let go.","explain":"9 + 1 makes 10, and 4 more is 14."},
+{"show":"8 + 4","min":0,"max":20,"ticks":10,"prompt":"Where does it land? Drag the marker and let go.","explain":"8 + 2 makes 10, and 2 more is 12."},
+{"show":"8 + 6","min":0,"max":20,"ticks":10,"prompt":"Where does it land? Drag the marker and let go.","explain":"8 + 2 makes 10, and 4 more is 14."}
+],
+"hop-up": [
+{"show":"58 + 7","prompt":"Hop to 60 first, then the rest.","explain":"58 + 2 is 60, then 5 more: 65."},
+{"show":"26 + 7","prompt":"Hop to 30 first, then the rest.","explain":"26 + 4 is 30, then 3 more: 33."},
+{"show":"48 + 5","prompt":"Hop to 50 first, then the rest.","explain":"48 + 2 is 50, then 3 more: 53."},
+{"show":"47 + 7","prompt":"Hop to 50 first, then the rest.","explain":"47 + 3 is 50, then 4 more: 54."},
+{"show":"47 + 8","prompt":"Hop to 50 first, then the rest.","explain":"47 + 3 is 50, then 5 more: 55."},
+{"show":"48 + 7","prompt":"Hop to 50 first, then the rest.","explain":"48 + 2 is 50, then 5 more: 55."},
+{"show":"67 + 8","prompt":"Hop to 70 first, then the rest.","explain":"67 + 3 is 70, then 5 more: 75."},
+{"show":"56 + 8","prompt":"Hop to 60 first, then the rest.","explain":"56 + 4 is 60, then 4 more: 64."}
+],
+"hop-up-pick": [
+{"show":"56 + 5","prompt":"Tap the answer.","options":["59","61","63"],"explain":"56 + 4 is 60, then 1 more: 61."},
+{"show":"77 + 8","prompt":"Tap the answer.","options":["83","85","87"],"explain":"77 + 3 is 80, then 5 more: 85."},
+{"show":"46 + 5","prompt":"Tap the answer.","options":["49","51","53"],"explain":"46 + 4 is 50, then 1 more: 51."},
+{"show":"69 + 5","prompt":"Tap the answer.","options":["72","74","76"],"explain":"69 + 1 is 70, then 4 more: 74."},
+{"show":"66 + 8","prompt":"Tap the answer.","options":["72","74","76"],"explain":"66 + 4 is 70, then 4 more: 74."},
+{"show":"76 + 7","prompt":"Tap the answer.","options":["81","83","85"],"explain":"76 + 4 is 80, then 3 more: 83."},
+{"show":"47 + 8","prompt":"Tap the answer.","options":["53","55","57"],"explain":"47 + 3 is 50, then 5 more: 55."},
+{"show":"79 + 6","prompt":"Tap the answer.","options":["83","85","87"],"explain":"79 + 1 is 80, then 5 more: 85."}
+],
+"hop-down": [
+{"show":"53 - 7","prompt":"Taking away works too: hop down to 50 first.","explain":"53 - 3 is 50, then 4 more down: 46."},
+{"show":"51 - 6","prompt":"Taking away works too: hop down to 50 first.","explain":"51 - 1 is 50, then 5 more down: 45."},
+{"show":"42 - 9","prompt":"Taking away works too: hop down to 40 first.","explain":"42 - 2 is 40, then 7 more down: 33."},
+{"show":"33 - 9","prompt":"Taking away works too: hop down to 30 first.","explain":"33 - 3 is 30, then 6 more down: 24."},
+{"show":"71 - 9","prompt":"Taking away works too: hop down to 70 first.","explain":"71 - 1 is 70, then 8 more down: 62."},
+{"show":"65 - 9","prompt":"Taking away works too: hop down to 60 first.","explain":"65 - 5 is 60, then 4 more down: 56."},
+{"show":"62 - 9","prompt":"Taking away works too: hop down to 60 first.","explain":"62 - 2 is 60, then 7 more down: 53."},
+{"show":"71 - 7","prompt":"Taking away works too: hop down to 70 first.","explain":"71 - 1 is 70, then 6 more down: 64."}
+],
+"double": [
+{"show":"38 × 2","prompt":"Double it: the tens, then the ones.","explain":"30 doubled is 60 and 8 doubled is 16: 76."},
+{"show":"39 × 2","prompt":"Double it: the tens, then the ones.","explain":"30 doubled is 60 and 9 doubled is 18: 78."},
+{"show":"28 × 2","prompt":"Double it: the tens, then the ones.","explain":"20 doubled is 40 and 8 doubled is 16: 56."},
+{"show":"15 × 2","prompt":"Double it: the tens, then the ones.","explain":"10 doubled is 20 and 5 doubled is 10: 30."},
+{"show":"46 × 2","prompt":"Double it: the tens, then the ones.","explain":"40 doubled is 80 and 6 doubled is 12: 92."},
+{"show":"27 × 2","prompt":"Double it: the tens, then the ones.","explain":"20 doubled is 40 and 7 doubled is 14: 54."},
+{"show":"49 × 2","prompt":"Double it: the tens, then the ones.","explain":"40 doubled is 80 and 9 doubled is 18: 98."},
+{"show":"37 × 2","prompt":"Double it: the tens, then the ones.","explain":"30 doubled is 60 and 7 doubled is 14: 74."}
+],
+"halve": [
+{"show":"64 ÷ 2","prompt":"Halve it: the tens, then the ones.","explain":"Half of 60 is 30 and half of 4 is 2: 32."},
+{"show":"62 ÷ 2","prompt":"Halve it: the tens, then the ones.","explain":"Half of 60 is 30 and half of 2 is 1: 31."},
+{"show":"82 ÷ 2","prompt":"Halve it: the tens, then the ones.","explain":"Half of 80 is 40 and half of 2 is 1: 41."},
+{"show":"86 ÷ 2","prompt":"Halve it: the tens, then the ones.","explain":"Half of 80 is 40 and half of 6 is 3: 43."},
+{"show":"24 ÷ 2","prompt":"Halve it: the tens, then the ones.","explain":"Half of 20 is 10 and half of 4 is 2: 12."},
+{"show":"68 ÷ 2","prompt":"Halve it: the tens, then the ones.","explain":"Half of 60 is 30 and half of 8 is 4: 34."},
+{"show":"22 ÷ 2","prompt":"Halve it: the tens, then the ones.","explain":"Half of 20 is 10 and half of 2 is 1: 11."},
+{"show":"48 ÷ 2","prompt":"Halve it: the tens, then the ones.","explain":"Half of 40 is 20 and half of 8 is 4: 24."}
+],
+"times-four": [
+{"show":"13 × 4","prompt":"Double, then double again.","explain":"13, 26, 52."},
+{"show":"14 × 4","prompt":"Double, then double again.","explain":"14, 28, 56."},
+{"show":"35 × 4","prompt":"Double, then double again.","explain":"35, 70, 140."},
+{"show":"15 × 4","prompt":"Double, then double again.","explain":"15, 30, 60."},
+{"show":"45 × 4","prompt":"Double, then double again.","explain":"45, 90, 180."},
+{"show":"18 × 4","prompt":"Double, then double again.","explain":"18, 36, 72."},
+{"show":"12 × 4","prompt":"Double, then double again.","explain":"12, 24, 48."},
+{"show":"16 × 4","prompt":"Double, then double again.","explain":"16, 32, 64."}
+],
+"times-eight": [
+{"show":"45 × 8","prompt":"Double three times.","explain":"45, 90, 180, 360."},
+{"show":"11 × 8","prompt":"Double three times.","explain":"11, 22, 44, 88."},
+{"show":"15 × 8","prompt":"Double three times.","explain":"15, 30, 60, 120."},
+{"show":"13 × 8","prompt":"Double three times.","explain":"13, 26, 52, 104."},
+{"show":"14 × 8","prompt":"Double three times.","explain":"14, 28, 56, 112."},
+{"show":"12 × 8","prompt":"Double three times.","explain":"12, 24, 48, 96."},
+{"show":"35 × 8","prompt":"Double three times.","explain":"35, 70, 140, 280."},
+{"show":"75 × 8","prompt":"Double three times.","explain":"75, 150, 300, 600."}
+],
+"halve-double": [
+{"show":"14 × 5","prompt":"Halve one number, double the other. Which has the same answer?","options":["7 × 10","28 × 10","7 × 5"],"explain":"Half of 14 is 7 and double 5 is 10. 7 × 10 is 70, an easy one."},
+{"show":"24 × 5","prompt":"Halve one number, double the other. Which has the same answer?","options":["12 × 10","48 × 10","12 × 5"],"explain":"Half of 24 is 12 and double 5 is 10. 12 × 10 is 120, an easy one."},
+{"show":"22 × 5","prompt":"Halve one number, double the other. Which has the same answer?","options":["11 × 10","44 × 10","11 × 5"],"explain":"Half of 22 is 11 and double 5 is 10. 11 × 10 is 110, an easy one."},
+{"show":"36 × 5","prompt":"Halve one number, double the other. Which has the same answer?","options":["18 × 10","72 × 10","18 × 5"],"explain":"Half of 36 is 18 and double 5 is 10. 18 × 10 is 180, an easy one."},
+{"show":"18 × 5","prompt":"Halve one number, double the other. Which has the same answer?","options":["9 × 10","36 × 10","9 × 5"],"explain":"Half of 18 is 9 and double 5 is 10. 9 × 10 is 90, an easy one."},
+{"show":"26 × 5","prompt":"Halve one number, double the other. Which has the same answer?","options":["13 × 10","52 × 10","13 × 5"],"explain":"Half of 26 is 13 and double 5 is 10. 13 × 10 is 130, an easy one."},
+{"show":"28 × 5","prompt":"Halve one number, double the other. Which has the same answer?","options":["14 × 10","56 × 10","14 × 5"],"explain":"Half of 28 is 14 and double 5 is 10. 14 × 10 is 140, an easy one."},
+{"show":"12 × 5","prompt":"Halve one number, double the other. Which has the same answer?","options":["6 × 10","24 × 10","6 × 5"],"explain":"Half of 12 is 6 and double 5 is 10. 6 × 10 is 60, an easy one."}
+],
+"pct-grid": [
+{"picture":{"grid":10},"prompt":"What percent is shaded?","options":["1%","10%","90%"],"explain":"1 full row of 10 is 10 squares out of 100: 10%."},
+{"picture":{"grid":90},"prompt":"What percent is shaded?","options":["9%","90%","10%"],"explain":"9 full rows of 10 is 90 squares out of 100: 90%."},
+{"picture":{"grid":60},"prompt":"What percent is shaded?","options":["6%","60%","40%"],"explain":"6 full rows of 10 is 60 squares out of 100: 60%."},
+{"picture":{"grid":70},"prompt":"What percent is shaded?","options":["7%","70%","30%"],"explain":"7 full rows of 10 is 70 squares out of 100: 70%."},
+{"picture":{"grid":20},"prompt":"What percent is shaded?","options":["2%","20%","80%"],"explain":"2 full rows of 10 is 20 squares out of 100: 20%."},
+{"picture":{"grid":80},"prompt":"What percent is shaded?","options":["8%","80%","20%"],"explain":"8 full rows of 10 is 80 squares out of 100: 80%."},
+{"picture":{"grid":30},"prompt":"What percent is shaded?","options":["3%","30%","70%"],"explain":"3 full rows of 10 is 30 squares out of 100: 30%."}
+],
+"pct-line-tens": [
+{"sum":"10","min":0,"max":100,"ticks":10,"unit":"%","prompt":"Drag the marker to 10% and let go.","explain":"10% is 10 out of 100: 1 hop of 10."},
+{"sum":"80","min":0,"max":100,"ticks":10,"unit":"%","prompt":"Drag the marker to 80% and let go.","explain":"80% is 80 out of 100: 8 hops of 10."},
+{"sum":"60","min":0,"max":100,"ticks":10,"unit":"%","prompt":"Drag the marker to 60% and let go.","explain":"60% is 60 out of 100: 6 hops of 10."},
+{"sum":"70","min":0,"max":100,"ticks":10,"unit":"%","prompt":"Drag the marker to 70% and let go.","explain":"70% is 70 out of 100: 7 hops of 10."},
+{"sum":"40","min":0,"max":100,"ticks":10,"unit":"%","prompt":"Drag the marker to 40% and let go.","explain":"40% is 40 out of 100: 4 hops of 10."},
+{"sum":"50","min":0,"max":100,"ticks":10,"unit":"%","prompt":"Drag the marker to 50% and let go.","explain":"50% is 50 out of 100: 5 hops of 10."},
+{"sum":"20","min":0,"max":100,"ticks":10,"unit":"%","prompt":"Drag the marker to 20% and let go.","explain":"20% is 20 out of 100: 2 hops of 10."},
+{"sum":"90","min":0,"max":100,"ticks":10,"unit":"%","prompt":"Drag the marker to 90% and let go.","explain":"90% is 90 out of 100: 9 hops of 10."}
+],
+"pct-line-parts": [
+{"sum":"80","min":0,"max":100,"ticks":5,"unit":"%","prompt":"Drag to 80%.","explain":"80% is four hops of five along."},
+{"sum":"60","min":0,"max":100,"ticks":5,"unit":"%","prompt":"Drag to 60%.","explain":"60% is three hops of five along."},
+{"sum":"75","min":0,"max":100,"ticks":4,"unit":"%","prompt":"Drag to 75%.","explain":"75% is three hops of four along."},
+{"sum":"25","min":0,"max":100,"ticks":4,"unit":"%","prompt":"Drag to 25%.","explain":"25% is one hop of four along."},
+{"sum":"50","min":0,"max":100,"ticks":4,"unit":"%","prompt":"Drag to 50%.","explain":"50% is two hops of four along."},
+{"sum":"40","min":0,"max":100,"ticks":5,"unit":"%","prompt":"Drag to 40%.","explain":"40% is two hops of five along."},
+{"sum":"20","min":0,"max":100,"ticks":5,"unit":"%","prompt":"Drag to 20%.","explain":"20% is one hop of five along."}
+],
+"pct-fraction": [
+{"show":"75%","prompt":"Which is the same as 75%?","options":["3/4","1/75","1/2"],"explain":"75 out of 100 is three quarters."},
+{"show":"20%","prompt":"Which is the same as 20%?","options":["1/5","1/20","1/2"],"explain":"20 out of 100 is a fifth."},
+{"show":"50%","prompt":"Which is the same as 50%?","options":["1/2","1/50","1/5"],"explain":"50 out of 100 is a half."},
+{"show":"25%","prompt":"Which is the same as 25%?","options":["1/4","1/25","1/2"],"explain":"25 out of 100 is a quarter."}
+],
+"tenth-of": [
+{"show":"10% of 150","prompt":"A tenth of it.","explain":"A tenth of 150 is 15."},
+{"show":"10% of 320","prompt":"A tenth of it.","explain":"A tenth of 320 is 32."},
+{"show":"10% of 180","prompt":"A tenth of it.","explain":"A tenth of 180 is 18."},
+{"show":"10% of 30","prompt":"A tenth of it.","explain":"A tenth of 30 is 3."},
+{"show":"10% of 240","prompt":"A tenth of it.","explain":"A tenth of 240 is 24."},
+{"show":"10% of 90","prompt":"A tenth of it.","explain":"A tenth of 90 is 9."},
+{"show":"10% of 40","prompt":"A tenth of it.","explain":"A tenth of 40 is 4."},
+{"show":"10% of 450","prompt":"A tenth of it.","explain":"A tenth of 450 is 45."}
+],
+"half-of": [
+{"show":"50% of 94","prompt":"Half of it.","explain":"Half of 94 is 47."},
+{"show":"50% of 24","prompt":"Half of it.","explain":"Half of 24 is 12."},
+{"show":"50% of 64","prompt":"Half of it.","explain":"Half of 64 is 32."},
+{"show":"50% of 36","prompt":"Half of it.","explain":"Half of 36 is 18."},
+{"show":"50% of 32","prompt":"Half of it.","explain":"Half of 32 is 16."},
+{"show":"50% of 86","prompt":"Half of it.","explain":"Half of 86 is 43."},
+{"show":"50% of 28","prompt":"Half of it.","explain":"Half of 28 is 14."},
+{"show":"50% of 58","prompt":"Half of it.","explain":"Half of 58 is 29."}
+],
+"twenty-of": [
+{"show":"20% of 40","prompt":"20% is 10%, doubled.","explain":"10% of 40 is 4, and double that is 8."},
+{"show":"20% of 150","prompt":"20% is 10%, doubled.","explain":"10% of 150 is 15, and double that is 30."},
+{"show":"20% of 50","prompt":"20% is 10%, doubled.","explain":"10% of 50 is 5, and double that is 10."},
+{"show":"20% of 70","prompt":"20% is 10%, doubled.","explain":"10% of 70 is 7, and double that is 14."},
+{"show":"20% of 80","prompt":"20% is 10%, doubled.","explain":"10% of 80 is 8, and double that is 16."},
+{"show":"20% of 60","prompt":"20% is 10%, doubled.","explain":"10% of 60 is 6, and double that is 12."},
+{"show":"20% of 120","prompt":"20% is 10%, doubled.","explain":"10% of 120 is 12, and double that is 24."},
+{"show":"20% of 20","prompt":"20% is 10%, doubled.","explain":"10% of 20 is 2, and double that is 4."}
+],
+"five-of": [
+{"show":"5% of 400","prompt":"5% is half of 10%.","options":["10","20","40"],"explain":"10% of 400 is 40, and half of that is 20."},
+{"show":"5% of 240","prompt":"5% is half of 10%.","options":["6","12","24"],"explain":"10% of 240 is 24, and half of that is 12."},
+{"show":"5% of 320","prompt":"5% is half of 10%.","options":["8","16","32"],"explain":"10% of 320 is 32, and half of that is 16."},
+{"show":"5% of 280","prompt":"5% is half of 10%.","options":["7","14","28"],"explain":"10% of 280 is 28, and half of that is 14."},
+{"show":"5% of 120","prompt":"5% is half of 10%.","options":["3","6","12"],"explain":"10% of 120 is 12, and half of that is 6."},
+{"show":"5% of 160","prompt":"5% is half of 10%.","options":["4","8","16"],"explain":"10% of 160 is 16, and half of that is 8."},
+{"show":"5% of 80","prompt":"5% is half of 10%.","options":["2","4","8"],"explain":"10% of 80 is 8, and half of that is 4."},
+{"show":"5% of 40","prompt":"5% is half of 10%.","options":["1","2","4"],"explain":"10% of 40 is 4, and half of that is 2."}
+],
+"tip": [
+{"show":"15% of $100","prompt":"What is the tip? 10%, plus half of that.","explain":"10% is 10 and half of that is 5: $15."},
+{"show":"15% of $20","prompt":"What is the tip? 10%, plus half of that.","explain":"10% is 2 and half of that is 1: $3."},
+{"show":"15% of $160","prompt":"What is the tip? 10%, plus half of that.","explain":"10% is 16 and half of that is 8: $24."},
+{"show":"15% of $200","prompt":"What is the tip? 10%, plus half of that.","explain":"10% is 20 and half of that is 10: $30."},
+{"show":"15% of $80","prompt":"What is the tip? 10%, plus half of that.","explain":"10% is 8 and half of that is 4: $12."},
+{"show":"15% of $120","prompt":"What is the tip? 10%, plus half of that.","explain":"10% is 12 and half of that is 6: $18."},
+{"show":"15% of $140","prompt":"What is the tip? 10%, plus half of that.","explain":"10% is 14 and half of that is 7: $21."},
+{"show":"15% of $40","prompt":"What is the tip? 10%, plus half of that.","explain":"10% is 4 and half of that is 2: $6."}
+],
+"quarter-off": [
+{"show":"25% off $200","sum":"200 - 25% of 200","prompt":"What do you pay? 25% is a quarter.","explain":"A quarter of 200 is 50 off, so you pay $150."},
+{"show":"25% off $100","sum":"100 - 25% of 100","prompt":"What do you pay? 25% is a quarter.","explain":"A quarter of 100 is 25 off, so you pay $75."},
+{"show":"25% off $40","sum":"40 - 25% of 40","prompt":"What do you pay? 25% is a quarter.","explain":"A quarter of 40 is 10 off, so you pay $30."},
+{"show":"25% off $60","sum":"60 - 25% of 60","prompt":"What do you pay? 25% is a quarter.","explain":"A quarter of 60 is 15 off, so you pay $45."},
+{"show":"25% off $120","sum":"120 - 25% of 120","prompt":"What do you pay? 25% is a quarter.","explain":"A quarter of 120 is 30 off, so you pay $90."},
+{"show":"25% off $240","sum":"240 - 25% of 240","prompt":"What do you pay? 25% is a quarter.","explain":"A quarter of 240 is 60 off, so you pay $180."},
+{"show":"25% off $160","sum":"160 - 25% of 160","prompt":"What do you pay? 25% is a quarter.","explain":"A quarter of 160 is 40 off, so you pay $120."},
+{"show":"25% off $20","sum":"20 - 25% of 20","prompt":"What do you pay? 25% is a quarter.","explain":"A quarter of 20 is 5 off, so you pay $15."}
+],
+"twenty-off": [
+{"show":"20% off $80","sum":"80 - 20% of 80","prompt":"What do you pay?","options":["$54","$64","$69"],"explain":"10% of 80 is 8, so 20% is 16 off: $64."},
+{"show":"20% off $40","sum":"40 - 20% of 40","prompt":"What do you pay?","options":["$22","$32","$37"],"explain":"10% of 40 is 4, so 20% is 8 off: $32."},
+{"show":"20% off $120","sum":"120 - 20% of 120","prompt":"What do you pay?","options":["$86","$96","$101"],"explain":"10% of 120 is 12, so 20% is 24 off: $96."},
+{"show":"20% off $90","sum":"90 - 20% of 90","prompt":"What do you pay?","options":["$62","$72","$77"],"explain":"10% of 90 is 9, so 20% is 18 off: $72."},
+{"show":"20% off $60","sum":"60 - 20% of 60","prompt":"What do you pay?","options":["$38","$48","$53"],"explain":"10% of 60 is 6, so 20% is 12 off: $48."},
+{"show":"20% off $30","sum":"30 - 20% of 30","prompt":"What do you pay?","options":["$14","$24","$29"],"explain":"10% of 30 is 3, so 20% is 6 off: $24."},
+{"show":"20% off $70","sum":"70 - 20% of 70","prompt":"What do you pay?","options":["$46","$56","$61"],"explain":"10% of 70 is 7, so 20% is 14 off: $56."},
+{"show":"20% off $100","sum":"100 - 20% of 100","prompt":"What do you pay?","options":["$70","$80","$85"],"explain":"10% of 100 is 10, so 20% is 20 off: $80."}
+],
+"pct-pairs": [
+{"tiles":["25%","75%","10%","1/4","1/10","3/4"],"prompt":"Match each percent to its fraction.","explain":"25% is a quarter, 10% is a tenth, 75% is three quarters."},
+{"tiles":["1/10","10%","25%","3/4","75%","1/4"],"prompt":"Match each percent to its fraction.","explain":"25% is a quarter, 10% is a tenth, 75% is three quarters."},
+{"tiles":["1/4","50%","1/10","10%","25%","1/2"],"prompt":"Match each percent to its fraction.","explain":"50% is a half, 25% is a quarter, 10% is a tenth."},
+{"tiles":["1/2","1/10","25%","50%","1/4","10%"],"prompt":"Match each percent to its fraction.","explain":"25% is a quarter, 10% is a tenth, 50% is a half."},
+{"tiles":["75%","50%","1/2","20%","3/4","1/5"],"prompt":"Match each percent to its fraction.","explain":"50% is a half, 75% is three quarters, 20% is a fifth."},
+{"tiles":["1/5","3/4","1/2","20%","50%","75%"],"prompt":"Match each percent to its fraction.","explain":"20% is a fifth, 50% is a half, 75% is three quarters."},
+{"tiles":["50%","3/4","1/2","75%","10%","1/10"],"prompt":"Match each percent to its fraction.","explain":"10% is a tenth, 75% is three quarters, 50% is a half."},
+{"tiles":["25%","1/10","1/4","10%","75%","3/4"],"prompt":"Match each percent to its fraction.","explain":"10% is a tenth, 25% is a quarter, 75% is three quarters."}
+],
+"bar-pick": [
+{"picture":{"bar":[2,5]},"prompt":"How much is shaded?","options":["3/5","2/5","5/2"],"explain":"2 of 5 equal parts: 2/5."},
+{"picture":{"bar":[3,8]},"prompt":"How much is shaded?","options":["5/8","3/8","8/3"],"explain":"3 of 8 equal parts: 3/8."},
+{"picture":{"bar":[5,6]},"prompt":"How much is shaded?","options":["1/6","5/6","6/5"],"explain":"5 of 6 equal parts: 5/6."},
+{"picture":{"bar":[1,8]},"prompt":"How much is shaded?","options":["7/8","1/8","8/1"],"explain":"1 of 8 equal parts: 1/8."},
+{"picture":{"bar":[3,5]},"prompt":"How much is shaded?","options":["2/5","3/5","5/3"],"explain":"3 of 5 equal parts: 3/5."},
+{"picture":{"bar":[1,4]},"prompt":"How much is shaded?","options":["3/4","1/4","4/1"],"explain":"1 of 4 equal parts: 1/4."},
+{"picture":{"bar":[1,5]},"prompt":"How much is shaded?","options":["4/5","1/5","5/1"],"explain":"1 of 5 equal parts: 1/5."},
+{"picture":{"bar":[1,6]},"prompt":"How much is shaded?","options":["5/6","1/6","6/1"],"explain":"1 of 6 equal parts: 1/6."}
+],
+"bar-build": [
+{"picture":{"bar":[7,8]},"extra":"1","prompt":"Build the fraction that is shaded.","explain":"7 of 8 equal parts: 7/8."},
+{"picture":{"bar":[2,3]},"extra":"1","prompt":"Build the fraction that is shaded.","explain":"2 of 3 equal parts: 2/3."},
+{"picture":{"bar":[3,8]},"extra":"1","prompt":"Build the fraction that is shaded.","explain":"3 of 8 equal parts: 3/8."},
+{"picture":{"bar":[4,5]},"extra":"1","prompt":"Build the fraction that is shaded.","explain":"4 of 5 equal parts: 4/5."},
+{"picture":{"bar":[1,6]},"extra":"2","prompt":"Build the fraction that is shaded.","explain":"1 of 6 equal parts: 1/6."},
+{"picture":{"bar":[5,6]},"extra":"1","prompt":"Build the fraction that is shaded.","explain":"5 of 6 equal parts: 5/6."},
+{"picture":{"bar":[1,4]},"extra":"2","prompt":"Build the fraction that is shaded.","explain":"1 of 4 equal parts: 1/4."},
+{"picture":{"bar":[1,5]},"extra":"2","prompt":"Build the fraction that is shaded.","explain":"1 of 5 equal parts: 1/5."}
+],
+"same-amount": [
+{"picture":{"bar":[4,10]},"prompt":"Which is the same amount?","options":["2/5","1/10","4/20"],"explain":"4 of 10 parts is the same as 2/5 of the bar."},
+{"picture":{"bar":[2,8]},"prompt":"Which is the same amount?","options":["1/4","1/8","2/16"],"explain":"2 of 8 parts is the same as 1/4 of the bar."},
+{"picture":{"bar":[2,6]},"prompt":"Which is the same amount?","options":["1/3","1/6","2/12"],"explain":"2 of 6 parts is the same as 1/3 of the bar."},
+{"picture":{"bar":[6,8]},"prompt":"Which is the same amount?","options":["3/4","1/8","6/16"],"explain":"6 of 8 parts is the same as 3/4 of the bar."},
+{"picture":{"bar":[3,6]},"prompt":"Which is the same amount?","options":["1/2","1/6","3/12"],"explain":"3 of 6 parts is the same as 1/2 of the bar."},
+{"picture":{"bar":[5,10]},"prompt":"Which is the same amount?","options":["1/2","1/10","5/20"],"explain":"5 of 10 parts is the same as 1/2 of the bar."},
+{"picture":{"bar":[2,10]},"prompt":"Which is the same amount?","options":["1/5","1/10","2/20"],"explain":"2 of 10 parts is the same as 1/5 of the bar."},
+{"picture":{"bar":[4,6]},"prompt":"Which is the same amount?","options":["2/3","1/6","4/12"],"explain":"4 of 6 parts is the same as 2/3 of the bar."}
+],
+"same-pairs": [
+{"tiles":["1/4","4/10","2/8","2/5","1/2","3/6"],"prompt":"Match the fractions that are the same amount.","explain":"2/5 is 4/10, 1/2 is 3/6, 1/4 is 2/8."},
+{"tiles":["3/6","6/8","2/5","3/4","1/2","4/10"],"prompt":"Match the fractions that are the same amount.","explain":"3/4 is 6/8, 1/2 is 3/6, 2/5 is 4/10."},
+{"tiles":["2/8","4/6","1/2","1/4","3/6","2/3"],"prompt":"Match the fractions that are the same amount.","explain":"1/4 is 2/8, 2/3 is 4/6, 1/2 is 3/6."},
+{"tiles":["3/6","2/5","4/10","1/2","2/3","4/6"],"prompt":"Match the fractions that are the same amount.","explain":"2/3 is 4/6, 2/5 is 4/10, 1/2 is 3/6."},
+{"tiles":["1/2","1/4","2/8","1/3","3/6","2/6"],"prompt":"Match the fractions that are the same amount.","explain":"1/4 is 2/8, 1/3 is 2/6, 1/2 is 3/6."},
+{"tiles":["4/6","4/10","1/4","2/3","2/8","2/5"],"prompt":"Match the fractions that are the same amount.","explain":"2/3 is 4/6, 1/4 is 2/8, 2/5 is 4/10."},
+{"tiles":["2/5","6/8","3/4","4/10","4/6","2/3"],"prompt":"Match the fractions that are the same amount.","explain":"3/4 is 6/8, 2/5 is 4/10, 2/3 is 4/6."},
+{"tiles":["6/8","2/5","2/6","4/10","1/3","3/4"],"prompt":"Match the fractions that are the same amount.","explain":"1/3 is 2/6, 2/5 is 4/10, 3/4 is 6/8."}
+],
+"biggest-unit": [
+{"goal":"biggest","picture":{"bars":[[1,2],[1,4],[1,5]]},"prompt":"Which shaded part is biggest?","options":["1/2","1/4","1/5"],"explain":"Fewer parts means bigger parts: 1/2 beats 1/4 and 1/5."},
+{"goal":"biggest","picture":{"bars":[[1,2],[1,3],[1,4]]},"prompt":"Which shaded part is biggest?","options":["1/2","1/3","1/4"],"explain":"Fewer parts means bigger parts: 1/2 beats 1/3 and 1/4."},
+{"goal":"biggest","picture":{"bars":[[1,3],[1,6],[1,8]]},"prompt":"Which shaded part is biggest?","options":["1/3","1/6","1/8"],"explain":"Fewer parts means bigger parts: 1/3 beats 1/6 and 1/8."},
+{"goal":"biggest","picture":{"bars":[[1,3],[1,4],[1,6]]},"prompt":"Which shaded part is biggest?","options":["1/3","1/4","1/6"],"explain":"Fewer parts means bigger parts: 1/3 beats 1/4 and 1/6."},
+{"goal":"biggest","picture":{"bars":[[1,4],[1,6],[1,8]]},"prompt":"Which shaded part is biggest?","options":["1/4","1/6","1/8"],"explain":"Fewer parts means bigger parts: 1/4 beats 1/6 and 1/8."},
+{"goal":"biggest","picture":{"bars":[[1,4],[1,5],[1,6]]},"prompt":"Which shaded part is biggest?","options":["1/4","1/5","1/6"],"explain":"Fewer parts means bigger parts: 1/4 beats 1/5 and 1/6."},
+{"goal":"biggest","picture":{"bars":[[1,3],[1,5],[1,6]]},"prompt":"Which shaded part is biggest?","options":["1/3","1/5","1/6"],"explain":"Fewer parts means bigger parts: 1/3 beats 1/5 and 1/6."},
+{"goal":"biggest","picture":{"bars":[[1,2],[1,5],[1,8]]},"prompt":"Which shaded part is biggest?","options":["1/2","1/5","1/8"],"explain":"Fewer parts means bigger parts: 1/2 beats 1/5 and 1/8."}
+],
+"biggest-bars": [
+{"goal":"biggest","picture":{"bars":[[1,2],[3,5],[1,4]]},"prompt":"Which is biggest? Look at the bars.","options":["1/2","3/5","1/4"],"explain":"3/5 reaches furthest along its bar."},
+{"goal":"biggest","picture":{"bars":[[1,3],[3,4],[2,5]]},"prompt":"Which is biggest? Look at the bars.","options":["1/3","3/4","2/5"],"explain":"3/4 reaches furthest along its bar."},
+{"goal":"biggest","picture":{"bars":[[2,3],[1,2],[1,5]]},"prompt":"Which is biggest? Look at the bars.","options":["2/3","1/2","1/5"],"explain":"2/3 reaches furthest along its bar."},
+{"goal":"biggest","picture":{"bars":[[1,4],[2,5],[1,3]]},"prompt":"Which is biggest? Look at the bars.","options":["1/4","2/5","1/3"],"explain":"2/5 reaches furthest along its bar."},
+{"goal":"biggest","picture":{"bars":[[2,5],[1,3],[1,2]]},"prompt":"Which is biggest? Look at the bars.","options":["2/5","1/3","1/2"],"explain":"1/2 reaches furthest along its bar."},
+{"goal":"biggest","picture":{"bars":[[1,2],[3,4],[3,5]]},"prompt":"Which is biggest? Look at the bars.","options":["1/2","3/4","3/5"],"explain":"3/4 reaches furthest along its bar."},
+{"goal":"biggest","picture":{"bars":[[4,5],[2,3],[1,2]]},"prompt":"Which is biggest? Look at the bars.","options":["4/5","2/3","1/2"],"explain":"4/5 reaches furthest along its bar."}
+],
+"frac-line": [
+{"show":"3/5","min":0,"max":1,"ticks":5,"prompt":"Drag the marker to 3/5.","explain":"Three hops of five."},
+{"show":"5/6","min":0,"max":1,"ticks":6,"prompt":"Drag the marker to 5/6.","explain":"Five hops of six."},
+{"show":"1/2","min":0,"max":1,"ticks":4,"prompt":"Drag the marker to 1/2.","explain":"Two hops of four: halfway."},
+{"show":"1/6","min":0,"max":1,"ticks":6,"prompt":"Drag the marker to 1/6.","explain":"One hop of six."},
+{"show":"2/5","min":0,"max":1,"ticks":5,"prompt":"Drag the marker to 2/5.","explain":"Two hops of five."},
+{"show":"2/3","min":0,"max":1,"ticks":3,"prompt":"Drag the marker to 2/3.","explain":"Two hops of three."},
+{"show":"1/4","min":0,"max":1,"ticks":4,"prompt":"Drag the marker to 1/4.","explain":"One hop of four."},
+{"show":"3/4","min":0,"max":1,"ticks":4,"prompt":"Drag the marker to 3/4.","explain":"Three hops of four."}
+],
+"frac-past": [
+{"show":"4/3","min":0,"max":2,"ticks":6,"prompt":"Past 1 now: drag to 4/3.","explain":"4/3 is one whole and 1/3 more."},
+{"show":"5/4","min":0,"max":2,"ticks":8,"prompt":"Past 1 now: drag to 5/4.","explain":"5/4 is one whole and 1/4 more."},
+{"show":"5/3","min":0,"max":2,"ticks":6,"prompt":"Past 1 now: drag to 5/3.","explain":"5/3 is one whole and 2/3 more."},
+{"show":"7/4","min":0,"max":2,"ticks":8,"prompt":"Past 1 now: drag to 7/4.","explain":"7/4 is one whole and 3/4 more."},
+{"show":"3/2","min":0,"max":2,"ticks":4,"prompt":"Past 1 now: drag to 3/2.","explain":"3/2 is one whole and 1/2 more."}
+]
+}

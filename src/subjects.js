@@ -27,6 +27,7 @@ import japaneseCourse from './data/japanese.json' with { type: 'json' };
 import * as quiz from './quiz/exercise.js';
 import mathsCourse from './data/maths.json' with { type: 'json' };
 import * as maths from './maths/exercise.js';
+import { vary as mathsVary } from './maths/items.js';
 import { ada, NAME as ADA } from './cast/ada.js';
 import { MATHS_HEADLINES, MATHS_LINES } from './cast/lines.js';
 import { kaede, NAME as KAEDE } from './cast/kaede.js';
@@ -138,7 +139,7 @@ const forksUnit = {
   ...forks,
   lessons: [...forks.lessons, ...lichessForks.lessons.map((l) => ({ ...l, title: `Real games: ${l.title}` }))],
 };
-// Worth repeating as written until a course can make fresh versions: a kana, a method.
+// Worth repeating as written until a course can make fresh versions: a kana.
 const asWritten = (item) => item;
 
 export const subjects = [{
@@ -164,7 +165,7 @@ export const subjects = [{
   ...mathsCourse,
   units: mathsCourse.units.map(withCheckpoint),
   mount: maths.mount,
-  vary: asWritten,
+  vary: mathsVary,
   habit: 'learn',
   kind: 'learn',
   coach: { draw: ada, name: ADA, start: 'think', lines: MATHS_LINES, headlines: MATHS_HEADLINES, hello: HELLO.ada },

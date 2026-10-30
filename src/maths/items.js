@@ -1,4 +1,5 @@
 import { problem as quizProblem, shuffle } from '../quiz/items.js';
+import pool from '../data/maths-variants.json' with { type: 'json' };
 
 /**
  * Maths items are written as sums and pictures, then played as the general items in src/quiz/
@@ -115,4 +116,18 @@ export function problem(item) {
   } catch (e) {
     return e.message;
   }
+}
+
+/** What an item comes to: a value, or for pairs the tiles to clear. */
+const outcome = (item) => (item.type === 'pairs' ? [...item.tiles].sort().join() : String(target(item)));
+
+/** The pool entries an item can play as: its family's, as its own type, with a different answer. */
+export const variantsOf = (item) => (pool[item.family] ?? [])
+  .map((e) => ({ id: item.id, type: item.type, family: item.family, ...e }))
+  .filter((e) => outcome(e) !== outcome(item));
+
+/** The Maths subject's `vary` (repeat.js): fresh numbers, or the item as written if it has no family. */
+export function vary(item, random = Math.random) {
+  const fresh = item.type === 'teach' ? [] : variantsOf(item);
+  return fresh.length ? fresh[Math.floor(random() * fresh.length)] : item;
 }

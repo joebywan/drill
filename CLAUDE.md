@@ -303,9 +303,13 @@ after `npm ci` at the root. App id `com.joebywan.drill`, locked.
 - **A missed item comes back once, at the end of the session.** Only the first try is scheduled.
 - **Sessions drill.** `src/repeat.js`: a lesson opens with up to 2 earlier cards (the closest to slipping), ends
   with up to 3 of its own items again ("Once more", not rescheduled), and each unit ends in a Checkpoint mixing
-  it (`mix`). A subject's `vary(item, random)` makes a repeat fresh: Coding flips the map, Chess mirrors a stars
-  puzzle, and returning the item means "worth repeating as written" (Maths, Japanese), null means "don't" (a
-  real-game puzzle). The card key stays the original's. E2E flows set `window.DRILL_PLAIN` (`test/e2e/fixtures.js`).
+  it (`mix`). A subject's `vary(item, random)` makes a repeat fresh: Coding and Maths items with a `family` play a
+  precomputed entry from `src/data/{coding,maths}-variants.json` (written by `npm run variants`, `tools/variants.js`:
+  templates work out level, program, tiles and words, fixed seed, `test/variants.test.js` checks the bytes; never
+  hand-edit a pool), a count item never with the same number, Coding flipped at random too. Without a family, Coding
+  flips the map; Chess mirrors a stars puzzle; returning the item means "worth repeating as written" (Japanese, Maths
+  without a family), null means "don't" (a real-game puzzle). A new read or build item joins a family only if that
+  family uses nothing taught after it. The card key stays the original's. E2E flows set `window.DRILL_PLAIN` (`test/e2e/fixtures.js`).
 - **The streak forgives.** One missed day in any seven is forgiven automatically; a gap of up
   to three days (or a second miss that week) is repaired by a review. A lesson finished in a
   repairable gap leaves the streak waiting for that review. Rules in `progress.js`, tested with

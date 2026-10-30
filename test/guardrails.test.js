@@ -332,6 +332,8 @@ test("Fennel's lines and the Coding course pass the lint, and cover every kind a
   const text = [
     ...[CODING_LINES, CODING_HEADLINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((t) => [kind, t]))),
     ...strings(codingCourse).filter((t) => /\s/.test(t)).map((t) => ['coding.json', t]),
+    ...strings(JSON.parse(readFileSync('src/data/coding-variants.json', 'utf8'))).filter((t) => /\s/.test(t)).map((t) => ['coding-variants.json', t]),
+    ...strings(JSON.parse(readFileSync('src/data/maths-variants.json', 'utf8'))).filter((t) => /\s/.test(t)).map((t) => ['maths-variants.json', t]),
   ];
   assert.ok(text.some(([k]) => k === 'coding.json'));
   for (const [kind, t] of text) for (const rule of [ABILITY, LOSS]) assert.doesNotMatch(t, rule, `${kind}: ${t}`);

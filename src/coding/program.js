@@ -1,3 +1,5 @@
+import pool from '../data/coding-variants.json' with { type: 'json' };
+
 /**
  * Coding's rules, pure: a tiny grid world, the block programs that walk it, and the item checks.
  *
@@ -442,9 +444,37 @@ export function mirrored(item, { x = false, y = false }) {
 
 const FLIPS = [{ x: true }, { y: true }, { x: true, y: true }];
 
-/** The Coding subject's `vary` (repeat.js): a random flip of a marked item's level. */
+const ALL_FLIPS = [...FLIPS, {}];
+const size = (level) => level.length * level[0].length;
+/** The numbers a count item's answer is, or null when nothing it asks for is a number. */
+const counts = (item) => {
+  if (!holes(item.program).includes('count')) return null;
+  return (solve(item) ?? []).filter((v) => typeof v === 'number').join() || null;
+};
+
+/**
+ * The pool entries an item can play as: its family's, as its own type and view, of a similar size,
+ * never itself on a flipped map, and never with the same number to answer when it asks for one.
+ */
+export function variantsOf(item) {
+  const own = counts(item);
+  const plain = { id: item.id, type: item.type, family: item.family, ...(item.view && { view: item.view }) };
+  const same = (e) => ALL_FLIPS.some((f) => {
+    const m = mirrored(e, f);
+    return m.level.join() === item.level.join() && JSON.stringify(m.program) === JSON.stringify(item.program);
+  });
+  return (pool[item.family] ?? []).map((e) => ({ ...plain, ...e })).filter((e) =>
+    Math.abs(parts(e.program).length - parts(item.program).length) <= 2
+    && size(e.level) <= 2 * size(item.level) + 6
+    && !same(e)
+    && (own === null || counts(e) !== own));
+}
+
+/** The Coding subject's `vary` (repeat.js): a fresh pool entry at a random flip, or a flip of the item itself. */
 export function vary(item, random = Math.random) {
   if (item.type === 'teach') return null;
+  const fresh = variantsOf(item);
+  if (fresh.length) return mirrored(fresh[Math.floor(random() * fresh.length)], ALL_FLIPS[Math.floor(random() * ALL_FLIPS.length)]);
   const flipped = mirrored(item, FLIPS[Math.floor(random() * FLIPS.length)]);
   return problem(flipped) ? item : flipped;
 }

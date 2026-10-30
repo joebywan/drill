@@ -1626,6 +1626,7 @@ test('the coach greets home in its own voice, dares once a day, and welcomes a c
 
 // Coding: tap-to-build programs Fennel runs on a grid. Answers come from the same runner the app uses.
 const codingCourse = JSON.parse(readFileSync(new URL('../../src/data/coding.json', import.meta.url)));
+const codingPool = JSON.parse(readFileSync(new URL('../../src/data/coding-variants.json', import.meta.url)));
 const firstCoding = codingCourse.units[0].lessons[0];
 
 /** Plays one Coding item right: a build's tiles in a working order, or a predict's square. */
@@ -2041,6 +2042,7 @@ test('Coding, the new blocks on a real page: a bug fixed by tapping, an endless 
 
 // Each size has its own layout rules, so a tall phone gets the grid at full size: both must fit.
 for (const [width, height] of [[360, 640], [375, 812]]) test(`every Coding item fits a ${width}x${height} phone: no sideways scroll, the program clear of the tiles`, async ({ page }) => {
+  test.setTimeout(120000);
   await page.setViewportSize({ width, height });
   await page.goto('/');
   // The widest font a phone or CI is likely to fall back to, so the fit doesn't depend on the machine's fonts.
@@ -2076,7 +2078,10 @@ for (const [width, height] of [[360, 640], [375, 812]]) test(`every Coding item 
     }
     return out;
   }, [...items.filter((i) => i.type !== 'teach' || i.program),
-    ...items.filter((i) => i.type !== 'teach').flatMap((i) => [{ x: true }, { y: true }, { x: true, y: true }].map((flip) => mirrored(i, flip)))]);
+    ...items.filter((i) => i.type !== 'teach').flatMap((i) => [{ x: true }, { y: true }, { x: true, y: true }].map((flip) => mirrored(i, flip))),
+    // Every fresh version, once as blocks or code however its items show it, and at the flip with the longest words.
+    ...[...new Map(items.filter((i) => i.family).flatMap((i) => codingPool[i.family].map((e) => [JSON.stringify([i.view, e]), { id: i.id, type: i.type, ...(i.view && { view: i.view }), ...e }]))).values()]
+      .flatMap((v) => [v, mirrored(v, { x: true })])]);
   expect(bad).toEqual([]);
 });
 
