@@ -1,3 +1,4 @@
+import { KEEP } from '../adapt.js';
 import { LEARN, migrate, nextStreak } from '../progress.js';
 
 /**
@@ -36,6 +37,7 @@ export function merge(local, remote) {
       .map((h) => [h, { ...b.timings[h], ...a.timings[h] }])),
     ...((a.start || b.start) && { start: { ...b.start, ...a.start } }),
     ...((a.met || b.met) && { met: { ...b.met, ...a.met } }),
+    ...((a.answers || b.answers) && { answers: mergeAnswers(a.answers, b.answers) }),
     ...((a.picked || b.picked) && { picked: a.picked ?? b.picked }),
     ...((a.look || b.look) && { look: latestLook(a.look, b.look) }),
   };
@@ -153,4 +155,10 @@ function mergeTracked(a, b) {
   const out = a.map((t) => ({ ...byId.get(t.id), ...t }));
   for (const t of b) if (!a.some((x) => x.id === t.id)) out.push(t);
   return out;
+}
+
+/** Both devices' answer logs in time order, each answer once, newest KEEP kept. */
+function mergeAnswers(a = [], b = []) {
+  const seen = new Map([...a, ...b].map((x) => [`${x.at} ${x.key}`, x]));
+  return [...seen.values()].sort((x, y) => x.at.localeCompare(y.at)).slice(-KEEP);
 }
