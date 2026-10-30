@@ -19,8 +19,8 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *   cards    { itemKey: FSRS card }  — every item ever answered, scheduled for review
  *   start    { subjectId: unitTitle | null }  — where a subject's optional placement question put
  *            the learner, null once the offer is dismissed, absent while it is still offered
- *   journal  { 'YYYY-MM-DD': { good?, learned?, tomorrow? } }  — Reflect's lines, the learner's
- *            own words. Kept here, not in the log; only the habit view and the file export read them
+ *   journal  { 'YYYY-MM-DD': { good?, learned?, tomorrow?, focus?: [] } }  — Reflect's lines and what
+ *            each Focus session was for, the learner's own words. Kept here, not in the log; only the habit view and the file export read them
  *   garden   { earned: { achievementId: 'YYYY-MM-DD' } }  — what the garden has been given
  *            (src/garden/model.js). Earned once, kept forever: nothing removes an entry
  *   tracked  [{ id, name?, icon?, plant?, hidden? }]  — the self-reported habits the learner added,
@@ -50,9 +50,13 @@ function readStreak(raw) {
   return { ...raw, forgiven };
 }
 
+// Reflect's three lines. Focus keeps a list under `focus`, a line per session (one string before lists).
 const JOURNAL_KEYS = ['good', 'learned', 'tomorrow'];
 const isJournal = (j) => isObject(j) && Object.entries(j).every(([date, day]) =>
-  isDate(date) && isObject(day) && JOURNAL_KEYS.every((k) => day[k] == null || typeof day[k] === 'string'));
+  isDate(date) && isObject(day) && JOURNAL_KEYS.every((k) => day[k] == null || typeof day[k] === 'string')
+  && (day.focus == null || typeof day.focus === 'string' || (Array.isArray(day.focus) && day.focus.every((t) => typeof t === 'string'))));
+/** A journal day's Focus lines as a list, oldest first: a single string from before lists is a list of one. */
+export const focusLines = (day) => [day?.focus ?? []].flat().filter((t) => typeof t === 'string' && t.trim());
 
 const isHour = (h) => Number.isInteger(h) && h >= 0 && h <= 23;
 // `was` is the streak before a one-tap log, kept so the same day's Undo can put it back (unlogToday).
@@ -277,13 +281,16 @@ export function track(progress, entry) {
 
 /**
  * Keeps today's Reflect lines in the journal. Blank lines are left out, and a second visit the
- * same day adds to the first rather than wiping it. Nothing written, nothing kept.
+ * same day adds to the first rather than wiping it. Nothing written, nothing kept. `focus` (a
+ * string or list) is added to the day's Focus lines, so every session's line is kept.
  */
 export function writeJournal(progress, entry, now = new Date()) {
   const lines = Object.fromEntries(JOURNAL_KEYS.filter((k) => entry?.[k]?.trim()).map((k) => [k, entry[k].trim()]));
-  if (!Object.keys(lines).length) return progress;
   const date = today(now);
   const journal = progress.journal || {};
+  const focus = focusLines(entry).map((t) => t.trim());
+  if (focus.length) lines.focus = [...focusLines(journal[date]), ...focus];
+  if (!Object.keys(lines).length) return progress;
   return { ...progress, journal: { ...journal, [date]: { ...journal[date], ...lines } } };
 }
 
@@ -374,4 +381,16 @@ export function unitsOf(progress, subject) {
     });
     return { title: unit.title, nodes, placed: i === start };
   });
+}
+
+/**
+ * A habit's next lesson on its path (`units`, from unitsOf): `current` is the first open one from
+ * the placement question's starting unit on; once the path is done, `repeat` is `again`'s lesson
+ * (the subject's { label, lesson }), if it has one.
+ */
+export function nextUp(units, again) {
+  const from = Math.max(0, units.findIndex((u) => u.placed));
+  const current = [...units.slice(from), ...units].flatMap((u) => u.nodes).find((n) => n.state === 'open');
+  const repeat = !current && again ? units.flatMap((u) => u.nodes).find((n) => n.lesson.id === again.lesson) : undefined;
+  return { current, repeat };
 }

@@ -25,16 +25,25 @@ function write(el, { say, done, reached }) {
     el.innerHTML = `<form class="reflect">
         <p class="topic">${at + 1} of ${prompts.length}</p>
         <h2><label for="reflect-line">${esc(p.prompt)}</label></h2>
-        <input id="reflect-line" type="text" autofocus autocomplete="off" autocapitalize="sentences" enterkeyhint="${at + 1 < prompts.length ? 'next' : 'done'}"
-          placeholder="${esc(p.example)}">
+        <textarea id="reflect-line" rows="1" autofocus autocomplete="off" autocapitalize="sentences" enterkeyhint="${at + 1 < prompts.length ? 'next' : 'done'}"
+          placeholder="${esc(p.example)}"></textarea>
+        ${at ? '' : `<p class="reflect-tip">${esc(course.tip)}</p>`}
         <div class="choices">
           <button type="button" class="choice reflect-skip">Skip</button>
           <button class="next reflect-on">${at + 1 < prompts.length ? 'Next' : 'Finish'}</button>
         </div>
       </form>`;
     say(lumi('write'), 'teach');
-    const input = el.querySelector('input');
+    const input = el.querySelector('textarea');
     if (at) input.focus();
+    // The box grows with what's written (CSS field-sizing, or this where that's missing), up to
+    // its max-height; Enter still moves on, as the keyboard's Next/Done says.
+    if (!CSS.supports('field-sizing', 'content')) {
+      input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = `${input.scrollHeight + 4}px`; });
+    }
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); input.form.requestSubmit(); }
+    });
     el.querySelector('form').addEventListener('submit', (e) => {
       e.preventDefault();
       const text = input.value.trim();

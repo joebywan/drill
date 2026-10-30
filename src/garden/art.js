@@ -1,6 +1,6 @@
 import { move } from '../feel.js';
-import { scene, slots, place, SIZE, visitor } from './scene.js';
-export { scene, slots, place, SIZE, MOODS, visitor, animateVisitor, VISITORS } from './scene.js';
+import { GROUND_Y, pond, scene, slots, place, SIZE, visitor, gust, lean } from './scene.js';
+export { scene, slots, place, SIZE, MOODS, visitor, animateVisitor, animateScene, VISITORS, pond } from './scene.js';
 
 /**
  * The garden's plants, drawn like the cast (src/cast/kit.js): hand-written SVG strings, flat
@@ -147,6 +147,7 @@ function lavender(s) {
 // Move: a sunflower. A striped seed, round seed-leaves, then one tall stalk with big heart leaves
 // and a shut green bud on top, a bud with yellow showing, then the big yellow head.
 const SUN_TOP = [0, 94, 72, 50, 34];
+const SUN_PETAL = '#F7C51E';
 // Heart leaves: [y, angle, size].
 const SUN_LEAVES = [null, [],
   [[96, -78, 1.25], [86, 78, 1.25]],
@@ -166,14 +167,15 @@ function sunflower(s, closed) {
   }
   out += SUN_LEAVES[s].map(([y, a, k], i) => heart(50, y, k, a, i % 2 ? LEAF_DARK : LEAF)).join('');
   if (s === 2) {
-    // A shut green bud, cupped in two sepals.
-    return out + `<ellipse cx="50" cy="${top - 4}" rx="3.6" ry="5.4" fill="${LEAF_DARK}"/>`
+    // A shut green bud, cupped in two sepals, with a hint of yellow at its tip: a sunflower coming.
+    const peek = [-22, 0, 22].map((a) => leaf(50, top - 6, 7, a, 2.2, SUN_PETAL)).join('');
+    return out + peek + `<ellipse cx="50" cy="${top - 4}" rx="3.6" ry="5.4" fill="${LEAF_DARK}"/>`
       + leaf(50, top + 1, 7, -40, 2.4, LEAF) + leaf(50, top + 1, 7, 40, 2.4, LEAF);
   }
   if (s === 3) {
-    // A green bud with yellow just showing.
-    const tips = Array.from({ length: 8 }, (_, i) => leaf(50, top, 9, i * 45 + 22, 2.4, i % 2 ? '#F5C21B' : LEAF_DARK)).join('');
-    return out + tips + `<circle cx="50" cy="${top}" r="6.5" fill="${LEAF}"/>`;
+    // A green bud opening: yellow petal tips past every green sepal.
+    const ring = (len, off, w, fill) => Array.from({ length: 8 }, (_, i) => leaf(50, top, len, i * 45 + off, w, fill)).join('');
+    return out + ring(12, 22.5, 2.8, SUN_PETAL) + ring(9, 0, 2.4, LEAF_DARK) + `<circle cx="50" cy="${top}" r="6.5" fill="${LEAF}"/>`;
   }
   if (s === 4) {
     const cy = 30, petal = closed ? 6 : 12;
@@ -182,7 +184,7 @@ function sunflower(s, closed) {
       const a = (i * 360 / 7) * Math.PI / 180;
       return `<circle cx="${f(50 + Math.cos(a) * 5.5)}" cy="${f(cy + Math.sin(a) * 5.5)}" r="1.2" fill="#8E5A30"/>`;
     }).join('');
-    out += `<g data-part="head">${ring(16, 11, '#F0A92A', petal - 2)}${ring(16, 0, '#F7C51E', petal)}`
+    out += `<g data-part="head">${ring(16, 11, '#F0A92A', petal - 2)}${ring(16, 0, SUN_PETAL, petal)}`
       + `<circle cx="50" cy="${cy}" r="11" fill="#6B3F1F"/>${seeds}<circle cx="50" cy="${cy}" r="2" fill="#8E5A30"/></g>`;
   }
   return out;
@@ -236,6 +238,65 @@ function daisies(s, closed) {
     stem(`M${f(50 + (x - 50) * 0.2)} 104 Q${f(x + (50 - x) * 0.2)} ${f((104 + y) / 2)} ${x} ${y}`, 1.8, LEAF_DARK)
     + daisy(x, y, size, closed || s === 2)).join('');
   return rosette + heads;
+}
+
+// Focus: bamboo. A pointed shoot, one jointed cane, then a grove of canes with sprays of narrow leaves.
+const CANE = '#7AAE45', CANE_DARK = '#4F7E2C', CANE_LIGHT = '#B2D67A';
+function cane(x, top, w) {
+  let out = `<rect x="${f(x - w / 2)}" y="${top}" width="${w}" height="${106 - top}" rx="${f(w / 2)}" fill="${CANE}"/>`
+    + `<rect x="${f(x - w / 2 + 0.9)}" y="${top + 2}" width="${f(w * 0.22)}" height="${104 - top - 2}" rx=".6" fill="${CANE_LIGHT}"/>`;
+  for (let y = 93; y > top + 4; y -= 12) out += `<rect x="${f(x - w / 2 - 0.7)}" y="${y}" width="${f(w + 1.4)}" height="2" rx="1" fill="${CANE_DARK}"/>`;
+  return out;
+}
+/** A spray of `n` narrow leaves from a node at (x, y), fanning out and down to one `side`. */
+const spray = (x, y, side, n, len) => stem(`M${x} ${y} l${side * 6} -3`, 1.2, CANE_DARK)
+  + Array.from({ length: n }, (_, i) => leaf(x + side * 6, y - 3, len - i * 2, side * (50 + i * 28), len * 0.15, i % 2 ? LEAF_DARK : LEAF)).join('');
+// Each stage: canes [x, top, width] and sprays [x, y, side, leaves, length].
+const BAMBOO = [null,
+  { canes: [[50, 80, 4]], sprays: [[50, 82, -1, 2, 12], [50, 82, 1, 2, 12]] },
+  { canes: [[50, 60, 4.5]], sprays: [[50, 62, -1, 3, 14], [50, 62, 1, 2, 14], [50, 82, 1, 2, 11]] },
+  { canes: [[56, 54, 4.5], [44, 38, 5]], sprays: [[44, 40, -1, 3, 15], [44, 40, 1, 2, 14], [56, 56, 1, 3, 14], [44, 70, -1, 2, 12], [56, 80, 1, 2, 11]] },
+  { canes: [[66, 42, 4.5], [32, 52, 4], [56, 28, 5.5], [44, 18, 5.5]], sprays: [[44, 20, -1, 3, 15], [56, 30, 1, 3, 15], [66, 44, 1, 3, 14],
+    [32, 54, -1, 3, 14], [44, 48, -1, 2, 13], [56, 62, 1, 2, 12], [66, 76, 1, 2, 11], [32, 82, -1, 2, 10]] },
+];
+
+function bamboo(s) {
+  if (s === 0) return `<path d="M45 106 Q48 96 50 91 Q52 96 55 106Z" fill="#A8925A"/><path d="M48 98 Q50 93 52 98Z" fill="${CANE}"/>`;
+  const { canes, sprays } = BAMBOO[s];
+  return canes.map(([x, top, w]) => cane(x, top, w)).join('') + sprays.map(([x, y, side, n, len]) => spray(x, y, side, n, len)).join('');
+}
+
+// Wind down: an evening primrose, which opens at dusk. A seed, a low rosette of long leaves, a stem
+// with a slim bud, then pale-yellow four-petal cups up a tall leafy stem, shut to buds at rest.
+const PRIM = '#F4E07A', PRIM_EDGE = '#D9B436', PRIM_EYE = '#E8B92E';
+const PRIM_TOP = [0, 0, 70, 50, 30];
+// Flowers [x, y, r] and slim buds [x, y] per stage.
+const PRIM_FLOWERS = [null, [], [], [[50, 42, 9]], [[50, 22, 10], [31, 46, 8.5], [70, 54, 8.5]]];
+const PRIM_BUDS = [null, [], [[50, 62]], [[60, 56]], [[42, 18], [58, 16], [24, 44]]];
+const slimBud = (x, y, k = 1) => `<path d="M${x} ${f(y - 9 * k)} Q${f(x + 3 * k)} ${f(y - 2 * k)} ${x} ${f(y + 2 * k)} Q${f(x - 3 * k)} ${f(y - 2 * k)} ${x} ${f(y - 9 * k)}Z" fill="${LEAF_LIGHT}"/>`
+  + stem(`M${x} ${f(y - 8 * k)} L${x} ${f(y - 4 * k)}`, 1.2, PRIM);
+
+function cupFlower(x, y, r, closed) {
+  if (closed) return slimBud(x, y + r * 0.4, 1.3);
+  // A darker back ring gives pale petals an edge on a pale page, like the daisy's.
+  const ring = (k, fill) => [45, 135, 225, 315].map((a) =>
+    `<ellipse cx="${x}" cy="${f(y - r * 0.5)}" rx="${f(r * 0.56 * k)}" ry="${f(r * 0.54 * k)}" transform="rotate(${a} ${x} ${y})" fill="${fill}"/>`).join('');
+  return ring(1.12, PRIM_EDGE) + ring(1, PRIM) + `<circle cx="${x}" cy="${y}" r="${f(r * 0.3)}" fill="${PRIM_EYE}"/>`
+    + stem(`M${f(x - r * 0.22)} ${f(y - r * 0.22)} L${f(x + r * 0.22)} ${f(y + r * 0.22)} M${f(x + r * 0.22)} ${f(y - r * 0.22)} L${f(x - r * 0.22)} ${f(y + r * 0.22)}`, 0.9, '#B98A1E');
+}
+
+function primrose(s, closed) {
+  if (s === 0) return [[48, 103], [51.5, 101.5], [52, 104.5]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="1.6" ry="1.1" fill="${SEED}"/>`).join('');
+  const rosette = [-78, 78, -40, 40, 0].slice(0, s === 1 ? 4 : 5).map((a, i) =>
+    leaf(50, 106, s === 1 ? 11 : 13, a, 3, i % 2 ? LEAF_DARK : LEAF)).join('');
+  if (s === 1) return rosette;
+  const top = PRIM_TOP[s];
+  let out = rosette;
+  if (s === 4) out += stem('M50 76 Q36 66 31 50', 1.8, STEM) + stem('M50 84 Q66 74 70 58', 1.8, STEM);
+  out += stem(`M50 106 Q51 ${f((106 + top) / 2)} 50 ${top}`, 1.6 + s * 0.4, STEM);
+  for (let y = 96, i = 0; y > top + 10; y -= 10, i++) out += leaf(50, y, 9 + s, i % 2 ? 62 : -62, 2.4, i % 2 ? LEAF_DARK : LEAF);
+  out += PRIM_BUDS[s].map(([x, y]) => slimBud(x, y)).join('');
+  return out + PRIM_FLOWERS[s].map(([x, y, r]) => cupFlower(x, y, r, closed)).join('');
 }
 
 // --- Plants a self-reported habit can be (subjects.js PRESETS and OWN_PLANTS) ----------------
@@ -356,9 +417,9 @@ function mushrooms(s) {
 
 // --- The public API -------------------------------------------------------------------------
 
-const DRAW = { tree, lavender, sunflower, vine, daisies, tulip, fern, cactus, rose: roses, mushroom: mushrooms };
-export const PLANTS = { learn: 'tree', calm: 'lavender', move: 'sunflower', reflect: 'vine', break: 'daisies' };
-const BLOOM_COLOUR = { tree: '#F4A6C0', lavender: '#F2A7C3', sunflower: '#E8613C', vine: '#C99BEA', daisies: '#F28CB0',
+const DRAW = { tree, lavender, sunflower, vine, daisies, primrose, bamboo, tulip, fern, cactus, rose: roses, mushroom: mushrooms };
+export const PLANTS = { learn: 'tree', calm: 'lavender', move: 'sunflower', reflect: 'vine', break: 'daisies', winddown: 'primrose', focus: 'bamboo' };
+const BLOOM_COLOUR = { tree: '#F4A6C0', lavender: '#F2A7C3', sunflower: '#E8613C', vine: '#C99BEA', daisies: '#F28CB0', primrose: '#9FB7F0', bamboo: '#F2A7C3',
   tulip: '#F5C542', fern: '#F2A7C3', cactus: '#F27BA8', rose: '#F4A6C0', mushroom: '#F2A7C3' };
 /** Every drawing there is: the built-in habits' and the ones a self-reported habit picks from. */
 export const KINDS = Object.keys(DRAW);
@@ -372,6 +433,7 @@ const SPOTS = {
   vine: Object.fromEntries([2, 3, 4].map((s) => [s, Array.from({ length: 6 }, (_, i) =>
     [i % 2 ? 72 : 28, f(100 - (i * (TRELLIS[s] - 8)) / 5)])])),
   daisies: { 3: [[26, 96], [74, 96], [30, 82], [72, 80], [18, 106], [82, 106]], 4: [[16, 90], [86, 92], [34, 96], [68, 96], [22, 106], [80, 108]] },
+  primrose: { 3: [[28, 96], [72, 96], [30, 80], [72, 76], [18, 106], [82, 106]], 4: [[16, 88], [86, 90], [30, 98], [70, 98], [20, 106], [80, 108]] },
 };
 
 // A habit id ('calm') or a drawing's own name ('tulip', for a self-reported habit).
@@ -393,6 +455,8 @@ const GROW = {
   sunflower: [1.6, 1.9, 1.25, 1.08, 1],
   vine: [1.6, 1.2, 1.05, 1, 1],
   daisies: [1.8, 3.4, 1.7, 1.25, 1],
+  primrose: [1.8, 3.4, 1.1, 1.08, 1],
+  bamboo: [1, 1, 1, 1, 1],
   tulip: [1, 1.65, 1, 1, 1],
   fern: [1.6, 1.2, 1, 1, 1],
   cactus: [1.8, 1.35, 1.15, 1, 1],
@@ -417,6 +481,9 @@ export function sway(el) {
   const part = el?.querySelector?.('[data-part="plant"]');
   if (!part) return null;
   Object.assign(part.style, { transformBox: 'view-box', transformOrigin: '50px 106px' });
+  // A plant in a garden leans with the breeze as it passes; one on its own (a card) just sways.
+  const x = Number(el.getAttribute?.('x')) + Number(el.getAttribute?.('width')) / 2;
+  if (x) return gust(part, x, lean(4, (d) => `rotate(${d}deg)`));
   const deg = 1.6;
   return move(part, [{ transform: `rotate(${-deg}deg)` }, { transform: `rotate(${deg}deg)` }],
     { duration: 2600 + Math.random() * 1600, delay: -Math.random() * 3000, direction: 'alternate', iterations: Infinity, easing: 'ease-in-out' });
@@ -434,16 +501,19 @@ export const flower = (habit) =>
 export const BOUNDS = {
   tree: [[3, 84, 97, 118], [3, 68, 97, 118], [3, 56, 97, 118], [22, 35, 78, 113], [7, 8, 92, 113]],
   lavender: [[3, 93, 97, 118], [3, 74, 97, 118], [3, 61, 97, 118], [14, 32, 86, 113], [7, 8, 92, 113]],
-  sunflower: [[3, 87, 97, 118], [3, 72, 97, 118], [3, 50, 97, 118], [11, 35, 89, 113], [7, 6, 92, 113]],
+  sunflower: [[3, 87, 97, 118], [3, 72, 97, 118], [3, 46, 97, 118], [11, 31, 89, 113], [7, 6, 92, 113]],
   vine: [[3, 94, 97, 118], [3, 73, 97, 118], [20, 51, 80, 113], [22, 31, 78, 113], [7, 8, 92, 113]],
   daisies: [[3, 94, 97, 118], [3, 76, 97, 118], [3, 55, 97, 118], [3, 32, 97, 113], [7, 8, 93, 114]],
+  primrose: [[3, 94, 97, 118], [3, 73, 97, 118], [3, 46, 97, 118], [9, 24, 91, 113], [7, 6, 92, 114]],
+  bamboo: [[3, 90, 97, 118], [3, 69, 97, 118], [3, 48, 97, 118], [3, 25, 97, 118], [3, 5, 97, 118]],
   tulip: [[3, 89, 97, 118], [3, 75, 97, 118], [3, 61, 97, 118], [3, 40, 97, 118], [3, 8, 97, 118]],
   fern: [[3, 90, 97, 118], [3, 78, 97, 118], [3, 65, 97, 118], [3, 51, 97, 118], [2, 8, 98, 118]],
   cactus: [[3, 96, 97, 118], [3, 80, 97, 118], [3, 68, 97, 118], [3, 57, 97, 118], [3, 8, 97, 118]],
   rose: [[3, 90, 97, 118], [3, 75, 97, 118], [3, 63, 97, 118], [3, 46, 97, 118], [3, 8, 97, 118]],
   mushroom: [[3, 95, 97, 118], [3, 85, 97, 118], [3, 76, 97, 118], [3, 65, 97, 118], [3, 8, 97, 118]],
 };
-const ASPECT = { butterfly: 1, bee: 1, birds: 56 / 32 };
+const ASPECT = { butterfly: 1, bee: 1, birds: 56 / 32, pond: 80 / 50 };
+const POND = { strip: 26, tall: 46 }; // the pond's height in each shape
 
 /** A plant's drawn box at a slot, in the scene's units { x, y, w, h }. A plant not measured yet is its whole canvas. */
 export function plantBox(habit, stage, { x, y, w }) {
@@ -459,18 +529,19 @@ const overlap = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h 
  * slots(shape, n), one { butterfly, bee, birds } of boxes { x, y, w, h } per plant. Each wants a
  * spot by its own plant (the butterfly above it to the left, the bee above it to the right, the birds
  * on the ground beside it, towards the middle) and takes the nearest one, inside the scene, that is
- * clear of every plant's drawn box and of the visitors placed before it. Pure.
+ * clear of every plant's drawn box and of the visitors placed before it. Pure. The pond goes first,
+ * on the clearest ground nearest the front right, as `.pond` on the result (null if there's none).
  */
 export function perches(plants, shape = 'tall') {
   const [W, H] = SIZE[shape] || SIZE.tall;
   const at = slots(shape, plants.length);
   const taken = plants.map((p, i) => plantBox(p.plant || p.habit, p.stage, at[i]));
   const STEP = 3; // ponytail: a grid scan for the nearest free spot; a few thousand box tests per visitor
-  const place = (kind, cx, bottom, h) => {
+  const place = (kind, cx, bottom, h, anywhere = true, top = 0) => {
     const bw = h * ASPECT[kind];
     const want = { x: cx - bw / 2, y: bottom - h };
     let best = null, bestD = Infinity;
-    for (let y = 0; y <= H - h; y += STEP) {
+    for (let y = top; y <= H - h; y += STEP) {
       for (let x = 0; x <= W - bw; x += STEP) {
         const d = (x - want.x) ** 2 + (y - want.y) ** 2;
         if (d < bestD) {
@@ -480,6 +551,8 @@ export function perches(plants, shape = 'tall') {
       }
     }
     // Nowhere free (never in a real garden; a test checks every layout): stay by the plant.
+    // The pond is a nice-to-have: with no clear ground it isn't drawn.
+    if (!best && !anywhere) return null;
     const b = best || { x: Math.max(0, Math.min(W - bw, want.x)), y: Math.max(0, Math.min(H - h, want.y)), w: bw, h };
     taken.push(b);
     return { x: f(b.x), y: f(b.y), w: f(bw), h: f(h) };
@@ -493,6 +566,8 @@ export function perches(plants, shape = 'tall') {
     };
   };
   const out = plants.map(() => ({}));
+  const ph = POND[shape] || POND.tall;
+  out.pond = place('pond', W * 0.8, H - 2, ph, false, (GROUND_Y[shape] || GROUND_Y.tall) - ph * 0.5);
   // Biggest first, every plant's birds before any butterfly, so the small ones fill the gaps left.
   for (const kind of ['birds', 'butterfly', 'bee']) {
     out.forEach((spot, i) => { spot[kind] = place(kind, ...wants(i)[kind]); });
@@ -503,19 +578,22 @@ export function perches(plants, shape = 'tall') {
 /**
  * The garden as one svg string, drawn once per render: `garden()` from model.js in `shape`
  * ('strip' or 'tall'). Each plant at its stage with its flowers (plant() caps them) and shut
- * buds when resting, then each visitor at its plant's perch. A clear rect under each plant
+ * buds when resting, then each visitor at its plant's perch; one whose id is in `fresh` is marked
+ * data-new, to fly in. A clear rect under each plant
  * makes the whole plant tappable.
  */
-export function drawGarden({ mood, plants: all }, shape = 'tall') {
+export function drawGarden({ mood, plants: all, season }, shape = 'tall', fresh = []) {
   const at = slots(shape, all.length);
   const plants = all.slice(0, at.length); // past MAX_PLANTS, the first ones
   const closed = mood === 'resting';
   const grown = plants.map((p, i) => place(plant(p.habit, p.stage, { flowers: p.flowers.length, closed, kind: p.plant }), at[i])
     .replace(/^(<svg [^>]*>)/, '$1<rect width="100" height="120" fill="transparent"/>')).join('');
   const spots = perches(plants, shape);
-  const life = plants.flatMap((p, i) => p.visitors.map(({ gift }) => {
+  const life = plants.flatMap((p, i) => p.visitors.map(({ id, gift }) => {
     const b = spots[i][gift];
-    return b ? visitor(gift).replace('<svg ', `<svg x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" data-kind="${gift}" `) : '';
+    const isNew = fresh.includes(id) ? ' data-new' : '';
+    return b ? visitor(gift).replace('<svg ', `<svg x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" data-kind="${gift}"${isNew} `) : '';
   })).join('');
-  return scene(mood, shape).replace(/<\/svg>$/, `${grown}${life}</svg>`);
+  const water = spots.pond ? pond().replace('<svg ', `<svg x="${spots.pond.x}" y="${spots.pond.y}" width="${spots.pond.w}" height="${spots.pond.h}" `) : '';
+  return scene(mood, shape, season).replace(/<\/svg>$/, `${water}${grown}${life}</svg>`);
 }

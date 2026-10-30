@@ -1,7 +1,7 @@
 # Drill — working notes for Claude
 
 A Duolingo-style learning app: lessons that teach, a cast of characters, a streak, review.
-Static page, vanilla ES modules, no build step, no server. Chess is live; maths, Japanese,
+Static page, vanilla ES modules, no build step, no server. Chess, maths and Japanese are live;
 JavaScript, TypeScript and TS test-writing are planned.
 
 **Read the cast brief before building anything:** https://claude.ai/artifact/Td5spDrFgAah2w4PtBc2pn
@@ -23,15 +23,19 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 ## Phone testing
 
-`npm run phone -- [scenario...] [--url <base>]` drives Chrome on an Android emulator with real
+`npm run phone -- [scenario...] [--url <base>] [--avd <name>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (learn, calm, move, break, reflect, scan, garden, log, left); a new one is
+No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, focus, scan, garden, log, winddown, left); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
-- With no `--url` it serves this checkout on a free port; Chrome opens `http://10.0.2.2:<port>/`.
-- It boots the AVD (`PHONE_AVD`, default `splendor36`) `-read-only` if no emulator is running and
-  shuts down only one it started. SDK from `ANDROID_HOME` or `~/Android/Sdk`.
+- With no `--url` it serves this checkout on a free port forwarded with `adb reverse`; Chrome opens
+  `http://localhost:<port>/`, a secure context, so Wake Lock and the like work as on the real site.
+- One run at a time, machine-wide: it takes `/tmp/drill-phone.lock` (its PID inside; a lock whose
+  process is gone is taken over) and prints "waiting for the emulator" until it can, and waits the
+  same way while any emulator it didn't start is running. Then it boots the AVD (`--avd`, else
+  `PHONE_AVD`, default `splendor36`; `--avd daybook_tablet` for a tablet) `-read-only`, shuts it down
+  at the end and lets go of the lock, on an error or Ctrl-C too. SDK from `ANDROID_HOME` or `~/Android/Sdk`.
 - Screenshots of the whole screen (keyboard included) go to `test-results/phone/<scenario>/NN-name.png`.
 - It prints page errors, failed requests, sideways overflow, and the device checks: during Calm,
   Chrome's stream is `state:started` in `dumpsys audio` with an active track in
@@ -41,7 +45,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `uiautomator dump`. Taps are real, so the page origin on screen is measured by tapping a blank
   page, not hard-coded. Timed parts run on `page.clock`. The host's PulseAudio may fail to open
   while Android audio still runs, so judge sound by the dumpsys checks. **Only one agent may use
-  the emulator at a time.**
+  the emulator at a time:** `npm run phone` waits its turn by itself.
 
 ## Architecture
 
@@ -63,6 +67,26 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   other side never moves, and kings are optional (chess.js `skipValidation`). A piece's first
   puzzle (`new`, `demo`, `intro`) slides it along a path before input opens. `problem()` proves
   each one solvable in its budget by breadth-first search. Picked-up pieces show legal-move dots.
+- **Courses.** Several Learn subjects share the Learning habit; home shows one course's path at a
+  time (`courseShown`, the switcher under the tabs, remembered in `drill.course`), and reviews that
+  course's cards so its coach runs them. The intro picks courses by course id; `choose()` turns them
+  into the Learning tab. A Learn coach's `lines`/`headlines` replace Rosa's in the runner and end screen.
+- `src/quiz/` — course-free tap-and-match items any course can use: `teach` (a big glyph or word),
+  `pick` (one tap; `listen` plays the sound instead of showing it when there is a voice), `pairs`
+  (match two columns), `build` (tap tiles in order). `items.js` is pure (`problem()`), `exercise.js`
+  mounts them; `ctx.lang` marks text for the system font and picks the voice (`speak()` in feel.js:
+  `speechSynthesis`, and with no voice or Sound muted the reading is shown instead).
+- Japanese: `src/data/japanese.json` (hiragana: vowels, k and s rows, first words), coached by Kaede, a red
+  panda (`src/cast/kaede.js`, rig-posed). `test/quiz.test.js` checks every answer against its own kana
+  table and that no kana is asked before a teach card shows it.
+- `src/quiz/` also has `line` (drag a marker on a number line, snapped to its ticks, answered on
+  release) and takes a `picture` the course draws through the mount's `ctx.art`, plus `ctx.look`
+  for a course's own styling.
+- `src/maths/` — the Maths course (`src/data/maths.json`: mental maths, percentages, fractions you
+  can see, for adults rusty at maths). Items are written as sums and pictures; `items.js` works every
+  answer out (`value()` reads "15% of $60", so 2/4 is right for 1/2) and `toQuiz()` turns each into a
+  src/quiz item; `problem()` checks both. `exercise.js` draws the ten frame, bars and 100 grid. Coach:
+  Ada, an octopus (`src/cast/ada.js`, posed with `rig()`), with `MATHS_LINES` and `MATHS_HEADLINES`.
 - `src/cast/` — the characters (`kit.js`, `rosa.js`, `lumi.js`), `coach.js` (a character that
   reacts in place) and `lines.js` (everything the cast says; the guardrail tests lint it).
   `tools/cast.html` renders every mood at 200/96/48 px, light and dark.
@@ -82,6 +106,11 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `progress.journal` via `writeJournal`, never the log; the habit view shows it through the
   subject's `dayDetail` hook. A subject's `again` ({ label, lesson }, in the course JSON) keeps a
   lesson on home once the path is done: "Reflect today", "Take a break", "Breathe". The learner's text is never linted or sent anywhere (a test checks).
+- `src/winddown/` — Wind down, a bedtime sequence made only of Calm's pieces: kit.js `sequence()`
+  plays a 'sequence' item's parts in turn (its own settle-in steps and goodnight card, then Calm's
+  `practise()` routines) and ends once; Calm's `sounded()` puts the bell and rain round the whole.
+  The subject's `timings: 'calm'` plays the learner's Calm timings, and `night: true` puts the
+  session and end screen in a warm dark palette (`body:has(main.night)` in styles.css).
 - `src/move/` — the Move practice subject, built like Calm. `routines.js` is pure: a set of
   exercises becomes timed phases with rests between; a rep exercise counts its reps (`countOf()` in
   `src/practice/timeline.js`). `practice.js` mounts it; the coach demonstrates each pose through one
@@ -95,6 +124,12 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - **Calm is not therapy.** `test/guardrails.test.js` bars health claims, diagnosis words and urgency
   in Calm's text, and checks the Lifeline help line (13 11 14, as plain text) is on the first Calm
   lesson and after "Not really".
+- `src/focus/` — the Focus practice subject: "What are you focusing on?" (presets or your own words,
+  optional; kept in `progress.journal[date].focus`, never the log, shown by its `dayDetail`), then
+  one long `clock` phase (m:ss, `countOf`) with Hazel the beaver (`src/cast/hazel.js`, posed with
+  `rig()`) holding her stick. Pause and "I'm done" end it like any other; `stayAwake()` in
+  practice/kit.js keeps the screen on. The end screen's question comes from `coach.ask` ("How did it go?").
+  Its garden plant is bamboo. Guardrails bar productivity guilt and distraction counting.
 - `src/practice/timings.js` — the learner's own timings: `TIMINGS` (each practice habit's settable
   values, ranges, fixed defaults) and `timed(habit, defaults, overrides)`, the one merge every routine
   builder (calm, move, break `routines.js`) goes through; a value out of range falls back to the
@@ -105,16 +140,28 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   habit's permanent count of dates practised, never the streak); `RULES` is the achievement table
   (one line of data each), `award()` records what is earned in `progress.garden.earned` and never
   removes it; `mood()` maps the habits' lights; `garden()` is all the garden screen needs.
+- `src/garden/season.js` — pure: `season(date, south)` (meteorological, flipped south) and
+  `southern(timeZone)`, a guess (Australia/* is south). `garden()` carries `season`; app.js reads the
+  hemisphere from the ⋯ screen's "Southern hemisphere seasons" toggle (`pref('south')`), defaulting to the
+  guess. A season only retints the land and adds decoration (`scene(mood, shape, season)`): plants
+  never change with it. Lumi lounges in `pond()`, which `perches()` puts on clear ground first
+  (`.pond`, null when a big strip has no room).
 - `src/garden/art.js` — the garden's drawings, built like the cast: `plant(habit, stage, { flowers,
-  closed })` (tree, lavender, sunflower, vine on a trellis, daisies; five stages, scaled by `GROW` so a
+  closed })` (tree, lavender, sunflower, vine on a trellis, daisies, evening primrose; five stages, scaled by `GROW` so a
   sprout is about a third of full height and a sapling about half; up to 6 blooms that
   never overlap), `sway()`, `visitor()`/`animateVisitor()` (butterfly, bee, birds) and, from
   `scene.js`, `scene(mood, 'strip' | 'tall')`, `slots(shape, n)` and `place()`. Scene colours carry
   their own dark set. `tools/garden.html` renders it all; check it in light and dark.
 - The garden screen: `drawGarden(garden(), 'strip' | 'tall')` (art.js) is the strip at the top of
   home (one button into `gardenView()`) and the full view, plants and visitors at `perches()`;
-  `liven()` in app.js sways them and pauses offscreen or hidden. A plant or its card opens
+  `liven()` in app.js moves them: a gust (`gust()`, scene.js) rolls left to right every few seconds and
+  leans the grass and each plant in turn; `animateScene()` drifts clouds, pulses the sun, twinkles glints
+  and stars and wanders fireflies; flies in visitors that just arrived (`data-new`), and pauses offscreen or hidden. A plant or its card opens
   `habitView(id, back)`. Both end screens list what `award()` brought, three lines at most.
+- Garden sounds are real files, `assets/sounds/*.wav`, made by `node tools/sounds.js` (plucks,
+  bells, chirps, a buzz, all synthesised there, so they are ours to ship). `chime(gift)` in feel.js
+  plays one through an `Audio` element (src/ never calls fetch): `plant` when a habit is added, and
+  the first arrival's own sound (`flower`, `butterfly`, `bee`, `birds`) when something arrives.
 - **Self-reported habits** (kind 'log'): no path, one tap a day ("I walked today"). The habit list is
   `habitsFor(progress)` in subjects.js, never HABITS alone: the built-ins, then PRESETS and the
   learner's own from `progress.tracked`. `logToday`/`unlogToday`/`track` in progress.js; the tab's
@@ -123,7 +170,11 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - Home lists each habit once: one row of tabs (icon, name, streak coloured by `light()`) that
   scrolls inside itself. The bar is just the title, Sound and ⋯, and fits at 360px with every habit.
 - `src/feel.js` — synthesised sounds (mute on the home bar), haptics, and `move()`, which skips
-  animation under reduced motion.
+  animation under reduced motion. Lesson moments go through it: `cue(name)` (sound and buzz; the
+  sound follows the Sound toggle only, reduced motion skips just the animations) for right, run, wrong, done and unlock;
+  `flourish(el, 'pop' | 'shake')` for the answer (under 400 ms, never blocking input); `petals()`,
+  the petal-and-leaf confetti on every finished lesson. On home the next node bobs, and after a
+  lesson `walkTo()` fills the trail's `.fresh` stretch as Lumi hops, then pops the next node open.
 - `src/data/chess.json` — generated by `npm run puzzles` from the Lichess CC0 dump; committed.
   `src/data/basics.json` — Chess from zero (board, moves, capturing, check and mate), first on
   the path; `src/data/forks.json` — the hand-written Forks unit after it. Both hand-written.

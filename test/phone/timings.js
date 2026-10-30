@@ -1,8 +1,14 @@
-// Your timings with real taps: set Calm's breath in to 6, see the orb hold the in-breath for 6 s, then reset.
+// Your timings with real taps: Breaths starts at the first lesson's 3 and + gives 4; set Calm's breath in to 6, see the orb hold the in-breath for 6 s, then reset.
 export default async ({ page, seed, touch, btn, shot, run, check }) => {
   await seed();
   await touch(btn(/^Calm(,|$)/));
   await touch(btn('Your timings')); await shot('timings');
+  const breaths = page.locator('.steppers li[data-k="breaths"]');
+  check('Breaths shows the first lesson\'s count', (await breaths.locator('output').textContent()) === '3 (grows as you go)');
+  await touch(breaths.getByRole('button', { name: 'More' }));
+  check('+ steps from it', (await breaths.locator('output').textContent()) === '4 (default grows as you go)');
+  await touch(breaths.getByRole('button', { name: 'Less' }));
+  check('− back to 3 grows again', (await breaths.locator('output').textContent()) === '3 (grows as you go)');
   const inhale = page.locator('.steppers li[data-k="inhale"]');
   await touch(inhale.getByRole('button', { name: 'More' }));
   await touch(inhale.getByRole('button', { name: 'More' })); await shot('inhale-6');
