@@ -1,0 +1,63 @@
+name: Publish to Google Play
+
+# Uploads the signed bundle from a GitHub release to Play's internal track. Copied from Daybook's approach:
+# the Android release workflow builds and checks it, this fetches it from the release and uploads it.
+#
+# Inert until Joseph has done the steps in docs/TODO.md: by hand only, never on a push, and it fails
+# at the first step while PLAY_SERVICE_ACCOUNT_JSON is missing. Nothing else in the repo calls it.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to upload (defaults to the latest)'
+        required: false
+
+concurrency:
+  group: publish-play
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Is Play configured?
+        env:
+          PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          test -n "$PLAY_JSON" || { echo "::error::PLAY_SERVICE_ACCOUNT_JSON is not set; nothing was uploaded to Play (docs/TODO.md)."; exit 1; }
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Fetch the bundle from the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          mkdir -p play
+          # No tag means the latest release: `gh` takes the latest when no tag is given.
+          gh release download ${TAG:+"$TAG"} --repo "$GITHUB_REPOSITORY" --dir play --pattern '*.aab'
+          ls -la play
+          test "$(ls -1 play/*.aab 2>/dev/null | wc -l)" = 1 || { echo "::error::expected one .aab on release ${TAG:-latest}"; exit 1; }
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # The same check the release ran: refuses an unsigned or wrong-key bundle, or a repo with no pinned key.
+      - name: Verify the bundle
+        run: android/tools/verify-aab.sh play/*.aab
+
+      - name: Upload to Play
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.joebywan.drill
+          releaseFiles: play/*.aab
+          track: internal
+          status: completed
