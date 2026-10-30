@@ -768,6 +768,9 @@ body:has(main.night) {
 .sync h2 { font-size: 1.05rem; margin: 24px 0 8px; }
 .sync .said a { color: inherit; }
 .sync .code { font: 700 2.4rem/1.2 ui-monospace, monospace; letter-spacing: .08em; margin: 16px 0 4px; }
+.sync .pair-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 16px; margin-top: 12px; }
+.sync .pair-row .code { margin: 0; font-size: 1.9rem; width: auto; flex: none; padding: 0; background: none; border: 0; }
+.sync .qr { width: 132px; height: 132px; border-radius: 8px; flex: none; }
 .sync .code.recovery { font-size: 1.15rem; letter-spacing: .04em; padding: 14px 8px; border-radius: 12px; background: var(--card); border: 2px solid var(--line); overflow-wrap: anywhere; }
 .sync .code-input {
   display: block; width: 100%; margin: 8px 0; padding: 14px 16px; border-radius: 12px; border: 2px solid var(--line);

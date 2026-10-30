@@ -245,6 +245,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `shouldRemind()` → boolean, false after a session today or while reminders are thinned or paused;
   `noteReminder(outcome)` with `'opened'` (tapped) or `'cleared'` (swiped away) for every note shown
   → true, or false for any other value (nothing recorded). Nothing leaves the device.
+- **QR pairing** (`src/sync/qr.js`, our own small encoder, no licence to carry): the code beside the 6 digits opens `<page>#pair=<code>`. `openPairLink()` reads the fragment (never sent to a server), clears it and fills in Enter a code; linking takes one tap, unlike typed digits, since anyone can make a QR code.
 - **Sync and friends** (`src/sync/`, `server/`), opt-in and off by default: with it off nothing is sent
   and Drill works with no backend. **Feature-flagged off** until the API is deployed: `SYNC` in
   `config.js` gates `available()` (the ⋯ section, every call) and the sync parts of `privacy.html`;
