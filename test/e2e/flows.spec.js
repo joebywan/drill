@@ -650,7 +650,7 @@ test('a screen break is taught once, plays its six steps on the clock, and keeps
   await page.getByRole('button', { name: 'Start' }).click();
   const now = page.locator('.steps li[aria-current="step"]');
   await expect(now).toHaveText(/^Look far away\s*\d+ s$/);
-  await expect(page.getByText(/at least 6 metres away/)).toBeVisible();
+  await expect(page.locator('.bubble').getByText(/at least 6 metres away/)).toBeVisible();
   await page.clock.runFor(20_000);
   await expect(now).toHaveText(/^Slow blinks\s*\d+ s$/);
   await page.clock.runFor(85_000);
@@ -667,7 +667,7 @@ test('a screen break is taught once, plays its six steps on the clock, and keeps
   await expect(page.locator('.day').first().getByRole('listitem')).toHaveText(/^Screen break · \d+ min · felt about the same$/);
 });
 
-test('Mira demonstrates the screen break, and "How?" pauses it for the guidance', async ({ page }) => {
+test('Mira demonstrates the screen break, with the guidance on screen as it runs', async ({ page }) => {
   await page.clock.install();
   await firstVisit(page);
   await tab(page, 'Screen break').click();
@@ -678,17 +678,14 @@ test('Mira demonstrates the screen break, and "How?" pauses it for the guidance'
   const now = page.locator('.steps li[aria-current="step"]');
   await page.clock.runFor(21_000);
   await expect(now).toHaveText(/^Slow blinks\s*\d+ s$/);
-  await page.getByRole('button', { name: 'How?' }).click();
-  const how = page.getByRole('dialog', { name: 'Slow blinks' });
-  await expect(how).toContainText('Hold them closed for a slow count of two');
+  await expect(page.locator('.how-now')).toContainText('Hold them closed for a slow count of two');
+  await expect(page.locator('.next-step')).toHaveText('Next: Shoulder rolls');
+  await expect(page.getByRole('button', { name: 'How?' })).toHaveCount(0);
   const left = await page.locator('.steps .count').textContent();
-  expect(Number(left)).toBeGreaterThan(10); // seconds left in the 15 s step
-  await page.clock.runFor(30_000); // the clock waits while the guidance is open
-  await expect(now).toHaveText(/^Slow blinks\s*\d+ s$/);
+  await page.getByRole('button', { name: 'Pause' }).click();
+  await page.clock.runFor(30_000); // the clock waits while paused
   await expect(page.locator('.steps .count')).toHaveText(left);
-  await how.getByRole('button', { name: 'Got it' }).click();
-  await expect(how).toBeHidden();
-  await expect(page.getByRole('button', { name: 'Pause' })).toHaveAttribute('aria-pressed', 'false');
+  await page.getByRole('button', { name: 'Carry on' }).click();
   await page.clock.runFor(15_000);
   await expect(now).toHaveText(/^Shoulder rolls\s*\d+ s$/);
   await page.clock.runFor(86_000);
