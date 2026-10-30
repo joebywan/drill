@@ -3,8 +3,9 @@ import { Chessboard, COLOR, INPUT_EVENT_TYPE, POINTER_EVENTS } from 'cm-chessboa
 import { Markers, MARKER_TYPE } from 'cm-chessboard/src/extensions/markers/Markers.js';
 import { Arrows, ARROW_TYPE } from 'cm-chessboard/src/extensions/arrows/Arrows.js';
 import { Accessibility } from 'cm-chessboard/src/extensions/accessibility/Accessibility.js';
-import { startPuzzle, playerColor, tryMove, hint } from './puzzle.js';
-import { answer, explanation, grade, hop, kind, meets, solutions, starPath, starsPrompt, targets } from './items.js';
+import { PromotionDialog } from 'cm-chessboard/src/extensions/promotion-dialog/PromotionDialog.js';
+import { startPuzzle, playerColor, tryMove, hint, needed } from './puzzle.js';
+import { answer, explanation, grade, hop, kind, load, meets, solutions, starPath, starsPrompt, targets } from './items.js';
 import { move as animate, play } from '../feel.js';
 import { reducedMotion } from '../cast/kit.js';
 
@@ -80,7 +81,26 @@ export const withDots = (b, fenNow, input) => (event) => {
 /** What Rosa says about a move the rules don't allow, for a piece of type `p`, `n`... */
 export const cantMove = (type) => `The ${PIECE[type] || 'piece'} can't move like that. Try again.`;
 
-export function board(el, fen, color = fen.split(' ')[1], more = []) {  // seen from `color`, else the side to move; `more`: extra extensions
+/**
+ * The one promotion picker, for every board: a pawn move onto the last row asks which piece, then
+ * `play(piece)`; any other move goes straight to `play()`. Call it from a move-input handler and
+ * return what it returns. If the picker is dismissed, or `play` turns the piece down by returning
+ * false, the board goes back to `fen` and `reopen()` lets the player move again. Input is off while
+ * it asks, so after a piece is played `play` must turn it back on if the game goes on.
+ */
+export function withPromotion(b, fen, from, to, play, reopen) {
+  const pawn = load(fen).moves({ square: from, verbose: true }).find((m) => m.to === to && m.promotion);
+  if (!pawn) return play();
+  b.disableMoveInput();
+  b.showPromotionDialog(to, pawn.color, ({ piece }) => {
+    if (piece && play(piece[1]) !== false) return;
+    b.setPosition(fen);
+    reopen();
+  });
+  return true;
+}
+
+export function board(el, fen, color = fen.split(' ')[1]) {  // seen from `color`, else the side to move
   assets();
   return new Chessboard(el, {
     position: fen,
@@ -96,7 +116,7 @@ export function board(el, fen, color = fen.split(' ')[1], more = []) {  // seen 
     // The board is also read out as a table and piece lists. The typed move form stays off: it
     // would be a focusable field nobody can see.
     extensions: [{ class: Markers, props: { autoMarkers: MARKER_TYPE.frame } }, { class: Arrows },
-      { class: Accessibility, props: { language: 'en', keyboardMoveInput: true, movePieceForm: false } }, ...more],
+      { class: Accessibility, props: { language: 'en', keyboardMoveInput: true, movePieceForm: false } }, { class: PromotionDialog }],
   });
 }
 
@@ -188,9 +208,9 @@ const MOUNTS = {
     const b = board(boardEl, item.fen, item.side);
     const game = new Chess(item.fen);
     let timer;
-    const input = withDots(b, () => item.fen, (event) => {
-      const { squareFrom: from, squareTo: to } = event;
-      const result = meets(item, { from, to, promotion: 'q' });
+    const open = () => b.enableMoveInput(input, b.getOrientation());
+    const input = withDots(b, () => item.fen, ({ squareFrom: from, squareTo: to }) => withPromotion(b, item.fen, from, to, (promotion) => {
+      const result = meets(item, { from, to, promotion });
       if (!result.legal) {
         say(game.inCheck()
           ? 'That leaves your king in check. Try again.'
@@ -214,9 +234,9 @@ const MOUNTS = {
       }, REPLY_DELAY);
       done(result.correct, explanation(item));
       return true;
-    });
+    }, open));
     say(item.prompt, 'think');
-    b.enableMoveInput(input, b.getOrientation());
+    open();
     return () => { clearTimeout(timer); b.destroy(); };
   },
 
@@ -249,8 +269,9 @@ const MOUNTS = {
         letter-spacing:.08em;white-space:nowrap;pointer-events:none">NEW PIECE · ${item.new.toUpperCase()}</span>`);
     }
 
-    const input = withDots(b, () => fen, ({ squareFrom: from, squareTo: to }) => {
-      const result = hop(fen, { from, to, promotion: 'q' });
+    const open = () => b.enableMoveInput(input, b.getOrientation());
+    const input = withDots(b, () => fen, ({ squareFrom: from, squareTo: to }) => withPromotion(b, fen, from, to, (promotion) => {
+      const result = hop(fen, { from, to, promotion });
       if (!result) {
         say(cantMove(b.getPiece(from)?.[1]), 'think');
         return false;
@@ -276,9 +297,10 @@ const MOUNTS = {
         done(false, explanation(item));
       } else {
         say(`${left.size} star${left.size === 1 ? '' : 's'} to go, ${budget} move${budget === 1 ? '' : 's'} left.`, 'think');
+        if (promotion) open();
       }
       return true;
-    });
+    }, open));
 
     (async () => {
       if (item.demo) { // the piece shows how it moves first, then goes back
@@ -296,7 +318,7 @@ const MOUNTS = {
         if (gone) return;
       }
       say(prompt, 'think');
-      b.enableMoveInput(input, b.getOrientation());
+      open();
     })().catch(() => {}); // the board was taken down mid-demo
     return () => { gone = true; clearTimeout(timer); b.destroy(); };
   },
@@ -331,7 +353,15 @@ const MOUNTS = {
     const input = (event) => {
       if (event.type === INPUT_EVENT_TYPE.moveInputStarted) return true;
       if (event.type !== INPUT_EVENT_TYPE.validateMoveInput) return;
-      const result = tryMove(state, event.squareFrom, event.squareTo);
+      return withPromotion(b, state.game.fen(), event.squareFrom, event.squareTo, (promotion) => attempt(event.squareFrom, event.squareTo, promotion), open);
+    };
+    const open = () => b.enableMoveInput(input, b.getOrientation());
+    const attempt = (from, to, promotion) => {
+      const result = tryMove(state, from, to, promotion);
+      if (result === 'piece') {
+        say(`Right move, another piece. This position needs a ${PIECE[needed(state)]}, not a ${PIECE[promotion]}.`, 'think');
+        return false;
+      }
       if (result === 'wrong') {
         mistakes++;
         if (mistakes >= 2) {
@@ -355,7 +385,7 @@ const MOUNTS = {
           else done(mistakes === 0, explanation(item));
         } else {
           say(`Good. Keep going — ${side} to play.`, 'think');
-          b.enableMoveInput(input, b.getOrientation());
+          open();
         }
       }, REPLY_DELAY);
       return true;
@@ -364,7 +394,7 @@ const MOUNTS = {
     say(item.prompt || `${side} to play. Find the best move.`, 'think');
     timer = setTimeout(() => {
       show();
-      b.enableMoveInput(input, b.getOrientation());
+      open();
     }, REPLY_DELAY);
 
     return () => { clearTimeout(timer); b.destroy(); };

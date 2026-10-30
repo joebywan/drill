@@ -162,7 +162,7 @@ export function starPath(item) {
     for (const s of frontier) {
       const game = load(s.fen);
       for (const m of game.moves({ verbose: true })) {
-        if (m.promotion && m.promotion !== 'q') continue; // the board always makes a queen
+        if (m.promotion && m.promotion !== 'q') continue; // one way that works is all this finds, and a queen goes furthest
         game.move(m);
         const fen = handBack(game.fen(), turn);
         game.undo();
