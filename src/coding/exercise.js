@@ -201,7 +201,7 @@ function blocks(program, picks, locked = true, tappable = null) {
   const inner = (list) => `<div class="inner">${walk(list)}</div>`;
   const walk = (list) => list.map((b) => {
     if (b === null || typeof b === 'string' || 'call' in b) return slot('step', b);
-    if ('repeat' in b) return `<div class="block loop"><span class="head">repeat ${slot('count', b.repeat)} times</span>${inner(b.do)}</div>`;
+    if ('repeat' in b) return `<div class="block loop"><span class="head"><i>repeat</i> ${slot('count', b.repeat)} <i>times</i></span>${inner(b.do)}</div>`;
     if ('until' in b) return `<div class="block loop"><span class="head">repeat until ${slot('look', b.until)}</span>${inner(b.do)}</div>`;
     if ('define' in b) return `<div class="block loop def"><span class="head">new block <b>${esc(b.define)}</b></span>${inner(b.do)}</div>`;
     return `<div class="block if"><span class="head">if ${slot('look', b.if)}</span>${inner(b.then)}`
