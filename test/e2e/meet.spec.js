@@ -31,3 +31,26 @@ test('someone already on a course never gets the introduction', async ({ page })
   await page.locator('.node.here').click();
   await expect(page.locator('.who svg')).toHaveClass(/cast-ada/);
 });
+
+const card = { due: '2020-01-01T00:00:00Z', stability: 1, difficulty: 5, elapsed_days: 0, scheduled_days: 1, reps: 1, lapses: 0, state: 2, last_review: '2019-12-31T00:00:00Z' };
+const seeded = (page, done, cards = {}) => page.addInitScript(([d, c]) => {
+  if (localStorage.getItem('drill.progress')) return;
+  localStorage.setItem('drill.course', 'coding');
+  localStorage.setItem('drill.progress', JSON.stringify({ version: 3, picked: [], done: d, cards: c, habits: {}, log: [] }));
+}, [done, cards]);
+
+test('a second lesson opens with an earlier item and ends with its own again', async ({ page }) => {
+  await seeded(page, { 'coding:steps-0': true }, { 'coding:steps-0-one': card });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Around the rock, current' }).click();
+  await expect(page.locator('.topic')).toHaveText('Warm up');
+  // One warm-up, the lesson's five items, three of them again.
+  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '9');
+});
+
+test('a unit ends in a checkpoint that mixes it', async ({ page }) => {
+  await seeded(page, { 'coding:steps-0': true, 'coding:steps-1': true });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Checkpoint, current' }).click();
+  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '7');
+});
