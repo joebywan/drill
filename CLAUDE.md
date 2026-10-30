@@ -25,7 +25,7 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (learn, calm, move, break, reflect, scan); a new one is
+No scenario runs all of `test/phone/*.js` (learn, calm, move, break, reflect, scan, garden, log); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
@@ -102,6 +102,11 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   home (one button into `gardenView()`) and the full view, plants and visitors at `perches()`;
   `liven()` in app.js sways them and pauses offscreen or hidden. A plant or its card opens
   `habitView(id, back)`. Both end screens list what `award()` brought, three lines at most.
+- **Self-reported habits** (kind 'log'): no path, one tap a day ("I walked today"). The habit list is
+  `habitsFor(progress)` in subjects.js, never HABITS alone: the built-ins, then PRESETS and the
+  learner's own from `progress.tracked`. `logToday`/`unlogToday`/`track` in progress.js; the tab's
+  panel, the "+ Habit" sheet and the make-your-own form in app.js (`logPanel`, `addHabit`,
+  `editHabit`). Learners' habit names are never linted and always escaped.
 - Home lists each habit once: one row of tabs (icon, name, streak coloured by `light()`) that
   scrolls inside itself. The bar is just the title, Sound and ⋯, and fits at 360px with every habit.
 - `src/feel.js` — synthesised sounds (mute on the home bar), haptics, and `move()`, which skips

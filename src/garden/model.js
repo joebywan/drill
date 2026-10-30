@@ -1,5 +1,5 @@
 import { LEARN, light, startedHabits, today } from '../progress.js';
-import { HABITS, subjects } from '../subjects.js';
+import { habitsFor, subjects } from '../subjects.js';
 
 /**
  * The garden, read from progress. Pure. Plants grow from days practised (`habits[h].days`), never
@@ -30,27 +30,30 @@ export function stage(days) {
 }
 
 const streak = (p, h) => p.habits[h] || { count: 0, days: 0 };
-const nameOf = (h) => HABITS.find((x) => x.id === h).name;
+// A flower for every finished unit of a habit's course.
+const FLOWERS = subjects.flatMap((s) => s.units.map((u) => ({
+  id: `flower:${s.id}:${u.title}`, habit: s.habit, gift: 'flower', text: `A flower opened for ${u.title}`,
+  test: (p) => u.lessons.every((l) => p.done[`${s.id}:${l.id}`]),
+})));
 
 /**
  * Achievements: { id, habit, gift, text, test(progress) }. `gift` is what arrives: a 'flower'
  * grows on the plant, anything else is a visitor. `text` is the quiet line for the end screen.
- * Adding one is a line of data here.
+ * Adding one is a line of data here. Every habit in habitsFor(progress) gets the same visitors, so
+ * a habit the learner added earns them like any other (hidden ones too: their history is kept).
  */
-export const RULES = [
-  // A flower for every finished unit of a habit's course.
-  ...subjects.flatMap((s) => s.units.map((u) => ({
-    id: `flower:${s.id}:${u.title}`, habit: s.habit, gift: 'flower', text: `A flower opened for ${u.title}`,
-    test: (p) => u.lessons.every((l) => p.done[`${s.id}:${l.id}`]),
-  }))),
-  ...HABITS.flatMap(({ id: h }) => [
+export const rules = (progress) => [
+  ...FLOWERS,
+  ...habitsFor(progress).flatMap(({ id: h }) => [
     { id: `butterfly:${h}`, habit: h, gift: 'butterfly', text: 'A butterfly arrived', test: (p) => streak(p, h).count >= 7 },
     { id: `birds:${h}`, habit: h, gift: 'birds', text: 'Birds came to stay', test: (p) => streak(p, h).days >= 30 },
   ]),
   // A bee for trying something new: the first session of any habit but Learning.
-  ...HABITS.filter((h) => h.id !== LEARN).map(({ id: h }) => (
-    { id: `bee:${h}`, habit: h, gift: 'bee', text: `A bee found ${nameOf(h)}`, test: (p) => streak(p, h).days >= 1 })),
+  ...habitsFor(progress).filter((h) => h.id !== LEARN).map(({ id: h, name }) => (
+    { id: `bee:${h}`, habit: h, gift: 'bee', text: `A bee found ${name}`, test: (p) => streak(p, h).days >= 1 })),
 ];
+/** The built-in habits' achievements, before the learner adds any of their own. */
+export const RULES = rules(null);
 
 /**
  * Adds every achievement now earned to `progress.garden.earned`, dated today, and returns
@@ -59,7 +62,7 @@ export const RULES = [
  */
 export function award(progress, now = new Date()) {
   const earned = progress.garden?.earned || {};
-  const newly = RULES.filter((r) => !earned[r.id] && r.test(progress));
+  const newly = rules(progress).filter((r) => !earned[r.id] && r.test(progress));
   if (!newly.length) return { progress, newly };
   const date = today(now);
   const more = Object.fromEntries(newly.map((r) => [r.id, date]));
@@ -72,7 +75,7 @@ export function award(progress, now = new Date()) {
  * 'morning' otherwise, including before the first session.
  */
 export function mood(progress, now = new Date()) {
-  const lit = startedHabits(progress, HABITS.map((h) => h.id))
+  const lit = startedHabits(progress, habitsFor(progress).map((h) => h.id))
     .filter((h) => progress.habits[h]?.last)
     .map((h) => light(progress, now, h));
   if (lit.includes('bright')) return 'sunlit';
@@ -80,18 +83,21 @@ export function mood(progress, now = new Date()) {
 }
 
 /**
- * Everything the garden screen draws: { mood, plants }, a plant per started habit in HABITS order:
- * { habit, days, stage, name, next, flowers, visitors }. Flowers and visitors are
- * [{ id, gift, text, on }], `on` the date it arrived.
+ * Everything the garden screen draws: { mood, plants }, a plant per started habit in habitsFor
+ * order: { habit, plant, days, stage, name, next, flowers, visitors }. `plant` is the drawing a
+ * self-reported habit chose (undefined for a built-in habit, whose drawing art.js knows). Flowers
+ * and visitors are [{ id, gift, text, on }], `on` the date it arrived.
  */
 export function garden(progress, now = new Date()) {
   const earned = progress.garden?.earned || {};
-  const plants = startedHabits(progress, HABITS.map((h) => h.id)).map((habit) => {
+  const habits = habitsFor(progress);
+  const all = rules(progress);
+  const plants = startedHabits(progress, habits.map((h) => h.id)).map((habit) => {
     const days = streak(progress, habit).days || 0;
-    const got = RULES.filter((r) => r.habit === habit && earned[r.id])
+    const got = all.filter((r) => r.habit === habit && earned[r.id])
       .map(({ id, gift, text }) => ({ id, gift, text, on: earned[id] }));
     return {
-      habit, days, ...stage(days),
+      habit, plant: habits.find((h) => h.id === habit).plant, days, ...stage(days),
       flowers: got.filter((g) => g.gift === 'flower'),
       visitors: got.filter((g) => g.gift !== 'flower'),
     };

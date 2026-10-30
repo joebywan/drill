@@ -231,3 +231,30 @@ test('garden text has no loss, guilt, urgency or ability words', () => {
   for (const text of texts) for (const lint of [LOSS, URGENCY, ABILITY]) assert.doesNotMatch(text, lint, text);
   for (const text of texts) assert.doesNotMatch(text, /\b(missing|locked|wilt\w*|die[sd]?|dying|dead)\b/i, text);
 });
+
+// Self-reported habits: one tap means "yes, today". No nagging, no reminders, no counting toward a
+// target ("8 glasses"), and the preset names and button words get the same lint as everything else.
+// What learners name their own habits is theirs and is never linted.
+import { PRESETS } from '../src/subjects.js';
+import { LOG_WORDS } from '../src/cast/lines.js';
+import { rules as gardenRules } from '../src/garden/model.js';
+const NAGGING = /\b(forg[eo]t\w*|remember to|reminder|don'?t forget|you haven'?t|not yet|still haven'?t|goal\w*|target\w*|glasses|cups|litres?|liters?|steps|\d+ ?(min|minutes|pages|km|times))\b/i;
+
+test('self-reported habit words never nag, count toward a target or judge', () => {
+  const presets = { tracked: PRESETS.map((x) => ({ id: x.id })) };
+  const texts = [
+    ...PRESETS.flatMap((x) => [x.name, x.did, x.title]),
+    ...Object.values(LOG_WORDS),
+    ...gardenRules(presets).map((r) => r.text),
+  ];
+  assert.ok(texts.length > 30);
+  for (const text of texts) for (const lint of [NAGGING, LOSS, ABILITY, URGENCY]) assert.doesNotMatch(text, lint, text);
+  for (const bad of ['Drink 8 glasses', "Don't forget to walk", 'You haven\'t walked yet', '10000 steps', 'Reach your goal']) assert.match(bad, NAGGING, bad);
+});
+
+test('a name the learner gives a habit is never linted, and is escaped wherever it is drawn', () => {
+  // chip() escapes its own arguments; everything else must go through esc().
+  const code = readFileSync('src/app.js', 'utf8').split('\n').filter((l) => !l.includes('chip(')).join('\n');
+  for (const m of code.matchAll(/\$\{(h|shownHabit)\.(name|icon)\b[^}]*\}/g)) assert.fail(`unescaped ${m[0]}`);
+  assert.doesNotMatch(readFileSync('test/guardrails.test.js', 'utf8'), /tracked\.\w*name/);
+});
