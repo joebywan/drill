@@ -804,9 +804,9 @@ function keep(note = '') {
       <button class="choice" data-load>Load from a file</button>
       <input type="file" accept=".json,application/json" hidden>
       <p class="said" role="status">${esc(note)}</p>
+      <button class="choice" data-change>${esc(INTRO_WORDS.change)}</button>
       <h2>Calm sounds</h2>
       ${CALM_SOUNDS.map(([name, label]) => `<button class="choice" data-pref="${name}" aria-pressed="${calmPref(name)}">${esc(label)}</button>`).join('')}
-      <button class="choice" data-change>${esc(INTRO_WORDS.change)}</button>
       <button class="choice" data-back>Back</button>
     </main>`;
   for (const b of app.querySelectorAll('[data-pref]')) {
@@ -952,6 +952,7 @@ function choose(picked) {
   progress = { ...progress, picked };
   save();
   if (picked.length) showHabit(picked[0]);
+  scrollTo(0, 0); // home starts at its top, not where the list was scrolled to
   home();
   focusOn(picked.length ? '.cta .next' : 'h1');
 }
