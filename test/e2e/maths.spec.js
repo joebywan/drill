@@ -150,3 +150,27 @@ for (const colorScheme of ['light', 'dark']) {
     });
   }
 }
+
+test('every fresh Maths version fits a 360x640 phone in a wide font, with its options on screen', async ({ page }) => {
+  const pool = JSON.parse(readFileSync(new URL('../../src/data/maths-variants.json', import.meta.url)));
+  const items = course.units.flatMap((u) => u.lessons.flatMap((l) => l.items)).filter((i) => i.family)
+    .flatMap((i) => pool[i.family].map((e) => ({ id: i.id, type: i.type, ...e })));
+  await page.setViewportSize({ width: 360, height: 640 });
+  await page.goto('/');
+  await page.addStyleTag({ content: 'body, button { font-family: "DejaVu Sans", Verdana, sans-serif; }' });
+  const bad = await page.evaluate(async (items) => {
+    const { mount } = await import('/src/maths/exercise.js');
+    const app = document.getElementById('app');
+    const out = [];
+    for (const item of items) {
+      app.innerHTML = '<header class="bar" style="height:44px"></header><main class="play"><p class="topic">Topic</p><div class="coach"><button class="who"></button><p class="bubble"></p></div><div class="stage"></div></main>';
+      const stop = mount(app.querySelector('.stage'), item, { say(t) { app.querySelector('.bubble').textContent = t; }, done() {} });
+      const wide = document.documentElement.scrollWidth - innerWidth;
+      const bottom = app.querySelector('.stage').getBoundingClientRect().bottom;
+      if (wide > 0 || bottom > innerHeight) out.push(`${item.id} ${item.show ?? ''}: sideways ${wide}, bottom ${Math.round(bottom)}`);
+      stop?.();
+    }
+    return out;
+  }, items);
+  expect(bad).toEqual([]);
+});
