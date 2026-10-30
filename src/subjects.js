@@ -85,7 +85,7 @@ export const subjects = [{
   mount: screenBreak.mount,
   habit: 'break',
   kind: 'practice',
-  coach: { draw: lumi, name: 'Lumi', start: 'teach', lines: BREAK_LINES, help: { text: SAFETY_LINE }, feel: 'refreshed' },
+  coach: { draw: clover, name: CLOVER, start: 'guide', lines: BREAK_LINES, help: { text: SAFETY_LINE }, feel: 'refreshed', demonstrates: true },
 }, {
   ...reflectCourse,
   mount: reflect.mount,

@@ -211,12 +211,12 @@ test('a screen break is taught once, plays its six steps on the clock, and keeps
   await expect(page.getByText('Move gently and stop if anything hurts.')).toBeVisible();
   await page.getByRole('button', { name: 'Start' }).click();
   const now = page.locator('.steps li[aria-current="step"]');
-  await expect(now).toHaveText('Look far away');
+  await expect(now).toHaveText(/^Look far away\s*\d+ s$/);
   await expect(page.getByText(/at least 6 metres away/)).toBeVisible();
   await page.clock.runFor(20_000);
-  await expect(now).toHaveText('Slow blinks');
+  await expect(now).toHaveText(/^Slow blinks\s*\d+ s$/);
   await page.clock.runFor(85_000);
-  await expect(now).toHaveText('Sit tall');
+  await expect(now).toHaveText(/^Sit tall\s*\d+ s$/);
   await page.clock.runFor(16_000);
   await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
   await expect(page.getByText(/^6 steps · \d+ min$/)).toBeVisible();
@@ -228,6 +228,50 @@ test('a screen break is taught once, plays its six steps on the clock, and keeps
   await week(page, 1).click();
   await expect(page.locator('.day').first().getByRole('listitem')).toHaveText(/^Screen break · \d+ min · felt about the same$/);
 });
+
+test('Clover demonstrates the screen break, and "How?" pauses it for the guidance', async ({ page }) => {
+  await page.clock.install();
+  await firstVisit(page);
+  await tab(page, 'Screen break').click();
+  await page.getByRole('button', { name: 'Continue · Why breaks help' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await expect(page.locator('.coach.demonstrates .who')).toHaveAccessibleName('Clover');
+  await expect(page.locator('.who svg.cast-clover')).toBeVisible();
+  const now = page.locator('.steps li[aria-current="step"]');
+  await page.clock.runFor(21_000);
+  await expect(now).toHaveText(/^Slow blinks\s*\d+ s$/);
+  await page.getByRole('button', { name: 'How?' }).click();
+  const how = page.getByRole('dialog', { name: 'Slow blinks' });
+  await expect(how).toContainText('Hold them closed for a slow count of two');
+  const left = await page.locator('.steps .count').textContent();
+  expect(Number(left)).toBeGreaterThan(10); // seconds left in the 15 s step
+  await page.clock.runFor(30_000); // the clock waits while the guidance is open
+  await expect(now).toHaveText(/^Slow blinks\s*\d+ s$/);
+  await expect(page.locator('.steps .count')).toHaveText(left);
+  await how.getByRole('button', { name: 'Got it' }).click();
+  await expect(how).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Pause' })).toHaveAttribute('aria-pressed', 'false');
+  await page.clock.runFor(15_000);
+  await expect(now).toHaveText(/^Shoulder rolls\s*\d+ s$/);
+  await page.clock.runFor(86_000);
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+});
+
+for (const [width, height] of [[412, 780], [360, 740]]) {
+  test(`at ${width}x${height} the screen break's step and its seconds sit clear of the buttons`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await firstVisit(page);
+    await tab(page, 'Screen break').click();
+    await page.getByRole('button', { name: 'Continue · Why breaks help' }).click();
+    await page.getByRole('button', { name: 'Start' }).click();
+    const top = (await page.locator('.choices').boundingBox()).y;
+    for (const el of [page.locator('.steps li[aria-current="step"]'), page.locator('.steps .count')]) {
+      const box = await el.boundingBox();
+      expect(box.y).toBeGreaterThanOrEqual(0);
+      expect(box.y + box.height).toBeLessThanOrEqual(top);
+    }
+  });
+}
 
 test('grounding is tap-to-count, and stopping is one tap with no questions', async ({ page }) => {
   await firstBreathing(page); // grounding opens once breathing has been started
