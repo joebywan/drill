@@ -667,3 +667,49 @@ export function say(coach, state, facts = {}, rng = Math.random, recent = []) {
   const said = line('pool', rng(), { pool: fresh || ranked[0] }, fresh ? recent : recent.slice(-1));
   return { text: said.replace(/\{(\w+)\}/g, (_, k) => facts[k]), line: said, dare };
 }
+
+/** What Rosa says in the chess games (chess/games.js). No notation: moves go through words(). */
+export const GAME_WORDS = {
+  mate: {
+    tier: (n) => `Mate in ${n}`,
+    today: (side, n) => `Today's board. ${side} to move, checkmate in ${n}. I defend as well as I can.`,
+    another: (side, n) => `Another board. ${side} to move, checkmate in ${n}. I defend as well as I can.`,
+    onward: (n) => `Good. Still mate in ${n}.`,
+    back: (n) => `Taken back. Mate in ${n} from here.`,
+    solvedHead: ['Checkmate. Nothing I could do.', 'Mate. I checked every reply, darling.', 'Checkmate. I tried everything in the cardigan.'],
+    solved: (n) => `Forced in ${n} move${n === 1 ? '' : 's'}.`,
+    hint: 'Hint', explain: 'Explain', undo: 'Undo', fresh: 'New board', again: 'Another board',
+    busy: 'One moment, I am checking the lines.',
+  },
+  capture: {
+    title: 'Scramble',
+    ready: 'Take what you can. More keep coming, and they hunt your framed piece. The clock starts on your first move.',
+    hit: 'Got it! Back it goes, and that cost you ten seconds.',
+    taken: ['Mine now.', 'Snatched.', 'Into the bag.', 'Tidy.'],
+    chain: (n) => `${n} in a row, worth ${n > 3 ? 3 : n} times.`,
+    quiet: 'Watch the framed piece.',
+    score: (n) => `Score ${n}`,
+    best: (n) => `Best ${n}`,
+    newBest: (n) => `Your best on this phone. The one before was ${n}.`,
+    oldBest: (n) => `Your best on this phone is ${n}.`,
+    first: 'That is your score to beat now.',
+    time: 'Time. Pieces down.',
+    again: 'Again',
+  },
+  rosa: {
+    title: 'Play Rosa',
+    pick: 'A proper game. Pick how hard I try.',
+    levels: ['Warm-up', 'Club night', 'Serious', 'Cardigan off'],
+    yours: 'Your move.',
+    check: 'Check. Mind your king.',
+    thinking: 'Hm. Let me see.',
+    played: (move) => `${move}. Your move.`,
+    hinting: 'Let me look from your side.',
+    hinted: (move) => `I would try this: ${move}.`,
+    hint: 'Hint', takeBack: 'Take back', resign: 'Resign', sure: 'Sure?', again: 'Play again',
+    won: { head: ['Checkmate. Well played.', 'Mate. You saw it before I did.'], text: 'I demand a rematch. The cardigan demands one too.' },
+    beaten: { head: ['Checkmate, darling.', 'Mate. That one is mine.'], text: 'Set them up again. Now you know that trap.' },
+    resigned: { head: ['We can stop there.'], text: 'A sensible call. Set them up again whenever you like.' },
+    drawn: { head: ['A draw.'], text: 'Nobody could finish it. I have had worse evenings.' },
+  },
+};
