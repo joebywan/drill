@@ -1,6 +1,7 @@
 import { esc } from '../html.js';
 import { subjects } from '../subjects.js';
 import { readRecovery } from './keys.js';
+import { qrSvg } from './qr.js';
 import { ANIMALS, CHEERS, WORDS, displayName } from './presets.js';
 import { available, cheer, claim, forget, friendAction, friends, join, lookOf, pairCode, profile, sync, withLook } from './sync.js';
 
@@ -22,6 +23,21 @@ export const syncMenuHtml = () => (!available() ? '' : `<h2>Other devices and fr
 
 export function openSync(which, ctx) {
   ({ device, recovery, friends: friendsView, delete: deleteView })[which](ctx);
+}
+
+/** What a QR code opens: this page, with the code in the fragment, which browsers never send to a server. */
+export const pairLink = (code, here = location) => `${here.origin}${here.pathname}#pair=${code}`;
+
+/**
+ * Opens "Enter a code" if the page was opened from a QR code, and clears the code from the address
+ * bar and history. Returns whether it did. With sync off it does nothing.
+ */
+export function openPairLink(ctx) {
+  const code = available() && /^#pair=(\d{6})$/.exec(location.hash)?.[1];
+  if (!code) return false;
+  history.replaceState(null, '', location.pathname + location.search);
+  enterCode(ctx, code);
+  return true;
 }
 
 const OFFLINE = "Drill's server can't be reached just now. Everything else works as usual.";
@@ -67,7 +83,7 @@ function device(ctx) {
   const on = !!profile();
   const s = screen(ctx, `
     <h1>Use on another device</h1>
-    <p class="said">Show a code here, then enter it on the other device: ⋯, Use on another device, Enter a code.
+    <p class="said">Show a code here, then scan it with the other device, or enter it there: ⋯, Use on another device, Enter a code.
       Both devices keep everything either one did.</p>
     ${on ? '' : ABOUT}
     <div class="pair" hidden></div>
@@ -82,7 +98,8 @@ function device(ctx) {
       pair.hidden = false;
       s.$('.about')?.remove();
       s.$('[data-show]').textContent = 'Show a new code';
-      pair.innerHTML = `<p class="code" aria-label="Code ${code.split('').join(' ')}">${code.slice(0, 3)} ${code.slice(3)}</p>
+      pair.innerHTML = `<div class="pair-row">${qrSvg(pairLink(code), 'QR code for this pairing code')}
+        <p class="code" aria-label="Code ${code.split('').join(' ')}">${code.slice(0, 3)} ${code.slice(3)}</p></div>
         <p class="said">Works once, for 10 minutes.</p>`;
       s.status('');
     } catch (e) { s.status(say(e)); }
@@ -94,16 +111,23 @@ function autoSubmit(input, ready, go) {
   input.addEventListener('input', () => { if (ready(input.value)) go(input.value); });
 }
 
-function enterCode(ctx) {
+/**
+ * `filled`, from a scanned QR code, waits for one tap instead of linking at once: anyone can make a
+ * QR code, and linking shares this device's progress with whoever holds the other end.
+ */
+function enterCode(ctx, filled = '') {
   const s = screen(ctx, `
     <h1>Enter a code</h1>
-    <p class="said">The 6 digits shown on your other device.</p>
-    <input class="code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="7" aria-label="Code from your other device">
+    <p class="said">${filled ? 'The code from your other device is filled in.' : 'The 6 digits shown on your other device.'}</p>
+    ${filled && !profile() ? ABOUT : ''}
+    <input class="code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="7" aria-label="Code from your other device" value="${filled}">
+    ${filled ? '<button class="next" data-link>Link this device</button>' : ''}
     <button class="link" data-recovery>Use a recovery code instead</button>`, () => device(ctx));
   const input = s.$('input');
-  input.focus();
+  if (!filled) input.focus();
   s.$('[data-recovery]').addEventListener('click', () => enterRecovery(ctx));
-  autoSubmit(input, (v) => /^\d{6}$/.test(v.replace(/\s/g, '')), (v) => busy(ctx, async () => {
+  const ready = (v) => /^\d{6}$/.test(v.replace(/\s/g, ''));
+  const go = (v) => busy(ctx, async () => {
     try {
       s.status('Linking…');
       await turnOn(ctx, await claim(v.replace(/\s/g, '')));
@@ -112,7 +136,9 @@ function enterCode(ctx) {
       s.status(e?.status === 404 || e?.name === 'OperationError' ? "That code didn't work. A code works once, for 10 minutes: show a new one on the other device." : say(e));
       input.value = '';
     }
-  }));
+  });
+  autoSubmit(input, ready, go);
+  s.$('[data-link]')?.addEventListener('click', () => { if (ready(input.value)) go(input.value); });
 }
 
 function enterRecovery(ctx) {
