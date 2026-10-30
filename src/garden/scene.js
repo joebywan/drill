@@ -21,7 +21,7 @@ import { SEASONS } from './season.js';
  *       tall view one row for up to 3 plants, two rows (back row first, smaller) up to 6, then three. Listed back to front,
  *       so drawing them in order layers them right.
  *   place(svg, slot) -> svg string   a plant drawn at a slot, to append inside the scene's svg
- *   VISITORS                ['butterfly', 'bee', 'birds'], the gifts in model.js RULES
+ *   VISITORS                ['butterfly', 'bee', 'birds', 'ladybird'], the gifts in model.js RULES
  *   visitor(kind) -> svg string      32 units tall (birds is a pair, 56 wide)
  *   animateVisitor(el, kind, fresh) -> Animation[] | null   flutter, hover or hop, the butterfly and bee wander,
  *                           and a fresh one flies in first; null under reduced motion
@@ -204,7 +204,7 @@ export const place = (svg, { x, y, w }) =>
 
 // --- Visitors -------------------------------------------------------------------------------
 
-export const VISITORS = ['butterfly', 'bee', 'birds'];
+export const VISITORS = ['butterfly', 'bee', 'birds', 'ladybird'];
 
 const butterfly = () =>
   `<g data-part="wings">`
@@ -240,7 +240,16 @@ const birds = () =>
   bird(0, { body: '#8B6648', wing: '#6B4C33', breast: '#E8743B' })
   + bird(24, { body: '#5E95D6', wing: '#3F6FB0', breast: '#F4CF45', cheek: '#FFFFFF' });
 
-const DRAW = { butterfly, bee, birds };
+// The comeback's visitor (src/fitting.js): a ladybird seen from above, crawling about the plant's foot.
+const ladybird = () =>
+  `<path d="M7 15 L3.5 13.5 M6.5 21 L2.5 21.5 M8 26 L4.5 28.5 M25 15 L28.5 13.5 M25.5 21 L29.5 21.5 M24 26 L27.5 28.5" stroke="${INK}" stroke-width="1.2" stroke-linecap="round"/>`
+  + `<path d="M14 6.5 Q12.5 3 10 2.4 M18 6.5 Q19.5 3 22 2.4" stroke="${INK}" stroke-width="1" fill="none" stroke-linecap="round"/>`
+  + `<circle cx="16" cy="9" r="4.6" fill="${INK}"/><circle cx="14.2" cy="7.8" r="1" fill="#FFFFFF"/><circle cx="17.8" cy="7.8" r="1" fill="#FFFFFF"/>`
+  + `<g data-part="shell"><ellipse cx="16" cy="19.5" rx="10" ry="9.5" fill="#E0412F"/><ellipse cx="13" cy="15" rx="3" ry="2" fill="#F07A68"/>`
+  + `<path d="M16 10.5 L16 29" stroke="${INK}" stroke-width="1.2"/>`
+  + `<circle cx="11.2" cy="17.5" r="1.9" fill="${INK}"/><circle cx="20.8" cy="17.5" r="1.9" fill="${INK}"/><circle cx="11.5" cy="24" r="1.6" fill="${INK}"/><circle cx="20.5" cy="24" r="1.6" fill="${INK}"/></g>`;
+
+const DRAW = { butterfly, bee, birds, ladybird };
 
 export function visitor(kind = 'butterfly') {
   const k = DRAW[kind] ? kind : 'butterfly';
@@ -254,15 +263,17 @@ const MOTION = {
   butterfly: ['[data-part="wings"]', [{ transform: 'scaleX(1)' }, { transform: 'scaleX(.3)', offset: 0.12 }, { transform: 'scaleX(1)', offset: 0.24 }, { transform: 'scaleX(1)' }], { duration: 1400, ...loop }],
   bee: ['[data-part="body"]', [{ transform: 'translate(0, 0) rotate(0deg)' }, { transform: 'translate(0, -2px) rotate(-4deg)' }, { transform: 'translate(0, 0) rotate(0deg)' }], { duration: 1100, ...loop }],
   birds: ['[data-part="bird"]', [{ transform: 'translateY(0)' }, { transform: 'translateY(-4px)', offset: 0.1 }, { transform: 'translateY(0)', offset: 0.2 }, { transform: 'translateY(0)' }], { duration: 2400, ...loop }],
+  ladybird: ['[data-part="shell"]', [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-4deg)', offset: 0.3 }, { transform: 'rotate(3deg)', offset: 0.6 }, { transform: 'rotate(0deg)' }], { duration: 2600, ...loop }],
 };
 
 // The butterfly and the bee also wander about their perch, in the visitor's own units.
 const WANDER = {
   butterfly: [[0, 0], [-18, -10], [-8, -22], [10, -16], [16, -4], [6, 4], [0, 0]],
   bee: [[0, 0], [10, -4], [16, 2], [6, 6], [-8, 0], [-12, -6], [0, 0]],
+  ladybird: [[0, 0], [6, -1], [12, 0], [6, 1], [0, 0]],
 };
 // A visitor that has just arrived flies in from up and to one side.
-const ARRIVE = { butterfly: [-90, -60], bee: [90, -50], birds: [-70, -40] };
+const ARRIVE = { butterfly: [-90, -60], bee: [90, -50], birds: [-70, -40], ladybird: [80, -50] };
 
 /** `fresh` makes it fly in first, from off its perch: for what arrived this session. */
 export function animateVisitor(el, kind, fresh = false) {

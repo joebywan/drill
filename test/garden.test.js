@@ -102,7 +102,7 @@ test('every rule has a unique id, a known gift and a pure test', () => {
   const p = emptyProgress();
   const frozen = JSON.stringify(p);
   for (const r of RULES) {
-    assert.ok(['flower', 'butterfly', 'birds', 'bee'].includes(r.gift), r.id);
+    assert.ok(['flower', 'butterfly', 'birds', 'bee', 'ladybird'].includes(r.gift), r.id);
     assert.equal(r.test(p), false, r.id);
   }
   assert.equal(JSON.stringify(p), frozen);

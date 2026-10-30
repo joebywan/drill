@@ -52,6 +52,9 @@ export const rules = (progress) => [
   // A bee for trying something new: the first session of any habit but Learning.
   ...habitsFor(progress).filter((h) => h.id !== LEARN).map(({ id: h, name }) => (
     { id: `bee:${h}`, habit: h, gift: 'bee', text: `A bee found ${name}`, test: (p) => streak(p, h).days >= 1 })),
+  // A ladybird for answering a comeback (src/fitting.js) with a session of its habit.
+  ...habitsFor(progress).map(({ id: h }) => (
+    { id: `ladybird:${h}`, habit: h, gift: 'ladybird', text: 'A ladybird came to visit', test: (p) => p.comeback?.habit === h && !!p.comeback.done })),
 ];
 /** The built-in habits' achievements, before the learner adds any of their own. */
 export const RULES = rules(null);

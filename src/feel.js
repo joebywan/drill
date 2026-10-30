@@ -50,7 +50,7 @@ export function play(name) {
 
 // The garden's sounds are files in assets/sounds, rendered by tools/sounds.js, loaded on first use.
 // ponytail: wav, about 90 KB each; encode to opus/mp3 if the set grows past a handful.
-export const CHIMES = ['plant', 'flower', 'butterfly', 'bee', 'birds'];
+export const CHIMES = ['plant', 'flower', 'butterfly', 'bee', 'birds', 'ladybird'];
 const chimes = {};
 
 /** Plays a garden sound, if sound is on. Quietly nothing when it can't. */

@@ -39,7 +39,7 @@ jobs:
       - name: Assemble the site
         run: |
           mkdir -p site/node_modules/chess.js/dist site/node_modules/ts-fsrs site/node_modules/cm-chessboard
-          cp -r index.html styles.css src assets site/
+          cp -r index.html privacy.html styles.css src assets site/
           cp -r node_modules/chess.js/dist/esm site/node_modules/chess.js/dist/
           cp -r node_modules/ts-fsrs/dist site/node_modules/ts-fsrs/
           cp -r node_modules/cm-chessboard/src node_modules/cm-chessboard/assets site/node_modules/cm-chessboard/

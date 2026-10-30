@@ -164,11 +164,33 @@ test('journal text is read only by the habit view and the file export, and nothi
   const touch = sources('src').filter((f) => /journal/.test(readFileSync(f, 'utf8'))).sort();
   // progress.js keeps the shape (migrate, writeJournal); reflect/ and focus/practice.js write it and are the
   // habit view's dayDetail; app.js only hands it from the routine to writeJournal.
-  assert.deepEqual(touch, ['src/app.js', 'src/focus/practice.js', 'src/progress.js', 'src/reflect/practice.js']);
+  // sync/merge.js merges two devices' journals; sync/sync.js seals the whole progress before it leaves.
+  assert.deepEqual(touch, ['src/app.js', 'src/focus/practice.js', 'src/progress.js', 'src/reflect/practice.js', 'src/sync/merge.js']);
   assert.doesNotMatch(readFileSync('src/app.js', 'utf8'), /progress\.journal|\.journal\b/, 'app.js never reads the journal itself');
   // The export is the whole progress object, journal included, saved to the learner's own file.
   assert.match(readFileSync('src/app.js', 'utf8'), /new Blob\(\[JSON\.stringify\(progress\)\]/);
-  for (const f of sources('src')) assert.doesNotMatch(readFileSync(f, 'utf8'), /\bfetch\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource/, f);
+  // Only opt-in sync talks to a server, and it sends progress sealed (AES-GCM) and a card of presets and numbers.
+  for (const f of sources('src').filter((f) => f !== 'src/sync/sync.js')) assert.doesNotMatch(readFileSync(f, 'utf8'), /\bfetch\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource/, f);
+  const sync = readFileSync('src/sync/sync.js', 'utf8');
+  assert.equal(sync.match(/\bfetch\(/g).length, 1, 'one fetch, in call()');
+  assert.match(sync, /blob: await seal\(key, merged\)/, 'progress leaves sealed');
+});
+
+// Sync and friends: preset names, animals and cheers only, linted like the cast; the screens' words too.
+import { CHEERS, WORDS, ANIMALS } from '../src/sync/presets.js';
+test('friends see presets only, and the sync screens never nag, hurry or judge', () => {
+  const ui = readFileSync('src/sync/ui.js', 'utf8');
+  // Every string and template in the screens, with tags and ${…} taken out: what the learner reads.
+  const said = [...ui.matchAll(/`([^`]*)`|'([^'\n]*)'|"([^"\n]*)"/g)]
+    .map((m) => (m[1] ?? m[2] ?? m[3]).replace(/\$\{[^}]*\}?/g, ' ').replace(/<[^>]*>/g, ' ').trim()).filter((t) => /[a-z] [a-z]/i.test(t));
+  assert.ok(said.length > 10);
+  for (const text of [...Object.values(CHEERS), ...WORDS, ...Object.values(ANIMALS).map(([, n]) => n), ...said]) {
+    assert.doesNotMatch(text, ABILITY, text);
+    assert.doesNotMatch(text, LOSS, text);
+    assert.doesNotMatch(text, /\b(hurry|now or never|don'?t miss|last chance|before it'?s too late)\b/i, text);
+  }
+  assert.doesNotMatch(ui, /<textarea|contenteditable/, 'no free text goes to friends');
+  assert.ok(!Object.values(ANIMALS).some(([, n]) => /owl/i.test(n)), 'no owls');
 });
 
 // The screen break: no health claims, no urgency, no guilt, and no screen-time shaming.
@@ -358,4 +380,24 @@ test('Wind down makes no sleep or health claims, never hurries and never shames 
   const subject = subjects.find((x) => x.habit === 'winddown');
   assert.equal(subject.coach.help.text, HELP_LINE, 'and after "Not really"');
   for (const kind of Object.keys(WINDDOWN_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
+});
+
+// Fitting the person (src/fitting.js): the comeback invites and never counts what was missed;
+// the reminders line and the habit view's usual hours are plain.
+import { COMEBACK_WORDS, PAUSED_WORDS, usualLine } from '../src/fitting.js';
+test('the comeback card invites, never guilts, and the fitting lines are plain', () => {
+  const card = { title: 'Breathing', hour: 19 };
+  const comeback = [COMEBACK_WORDS.kicker, COMEBACK_WORDS.text(card), COMEBACK_WORDS.text({ ...card, hour: null }), COMEBACK_WORDS.go(card), COMEBACK_WORDS.dismiss];
+  for (const text of comeback) for (const lint of [LOSS, URGENCY, ABILITY, NAGGING]) assert.doesNotMatch(text, lint, text);
+  for (const text of comeback) assert.doesNotMatch(text, /\b(miss\w*|been (a while|away)|back|again|return\w*|lately|haven'?t|stopp\w*|slipp\w*|fell|fall\w*|drop\w*|usual week|only)\b/i, text);
+  const plain = [...Object.values(PAUSED_WORDS), usualLine([7, 19]), 'Try a shorter one: 3 breaths'];
+  for (const text of plain) for (const lint of [LOSS, URGENCY, ABILITY]) assert.doesNotMatch(text, lint, text);
+});
+
+// The Android widget and its once-a-day note: no nagging, no hurry, nothing about a day off.
+import { REMINDER_WORDS, WIDGET_LINES } from '../src/cast/lines.js';
+test('the widget and the daily note never nag, hurry or judge', () => {
+  const texts = [...Object.values(WIDGET_LINES).flat(), ...Object.values(REMINDER_WORDS)];
+  assert.ok(texts.length > 15);
+  for (const text of texts) for (const lint of [NAGGING, LOSS, ABILITY, URGENCY]) assert.doesNotMatch(text, lint, text);
 });

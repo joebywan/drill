@@ -25,14 +25,17 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>] [--avd <name>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, focus, scan, garden, log, winddown); a new one is
+No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, focus, scan, garden, log, winddown, left, fitting, sync); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
 - With no `--url` it serves this checkout on a free port forwarded with `adb reverse`; Chrome opens
   `http://localhost:<port>/`, a secure context, so Wake Lock and the like work as on the real site.
-- It boots the AVD (`--avd`, else `PHONE_AVD`, default `splendor36`; `--avd daybook_tablet` for a tablet) `-read-only` if no emulator is running and
-  shuts down only one it started. SDK from `ANDROID_HOME` or `~/Android/Sdk`.
+- One run at a time, machine-wide: it takes `/tmp/drill-phone.lock` (its PID inside; a lock whose
+  process is gone is taken over) and prints "waiting for the emulator" until it can, and waits the
+  same way while any emulator it didn't start is running. Then it boots the AVD (`--avd`, else
+  `PHONE_AVD`, default `splendor36`; `--avd daybook_tablet` for a tablet) `-read-only`, shuts it down
+  at the end and lets go of the lock, on an error or Ctrl-C too. SDK from `ANDROID_HOME` or `~/Android/Sdk`.
 - Screenshots of the whole screen (keyboard included) go to `test-results/phone/<scenario>/NN-name.png`.
 - It prints page errors, failed requests, sideways overflow, and the device checks: during Calm,
   Chrome's stream is `state:started` in `dumpsys audio` with an active track in
@@ -42,7 +45,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `uiautomator dump`. Taps are real, so the page origin on screen is measured by tapping a blank
   page, not hard-coded. Timed parts run on `page.clock`. The host's PulseAudio may fail to open
   while Android audio still runs, so judge sound by the dumpsys checks. **Only one agent may use
-  the emulator at a time.**
+  the emulator at a time:** `npm run phone` waits its turn by itself.
 
 ## Architecture
 
@@ -52,7 +55,9 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   bright/soft/ember habit display on each habit's tab. `app.js` owns storage
   (one `localStorage` key, every access in try/catch). Each habit has its own streak
   (`habits.learn`, `habits.calm`, …) and every session goes in `log`, which the habit view
-  reads. `finishSession` records Learning, `finishPractice` a practice routine. The object carries `version`; `migrate()`
+  reads, each with its local `hour`. `finishSession` records Learning, `finishPractice` a practice routine.
+  A practice closed part-way goes in `left` instead (`leavePractice`, with the step `ctx.reached`
+  last reported), so nothing that reads the log sees it. The object carries `version`; `migrate()`
   validates and upgrades every older shape, on load and on import (the home bar's ⋯ saves and
   loads a file). Bump `VERSION` and extend `migrate()` whenever the shape changes.
 - `src/chess/puzzle.js` — pure puzzle rules on chess.js. `src/chess/items.js` — the item types
@@ -172,6 +177,39 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `editHabit`). Learners' habit names are never linted and always escaped.
 - Home lists each habit once: one row of tabs (icon, name, streak coloured by `light()`) that
   scrolls inside itself. The bar is just the title, Sound and ⋯, and fits at 360px with every habit.
+- `src/fitting.js` — pure: fitting the person from the on-device log (docs/TODO.md "Fitting the
+  person"). `usualHours`/`reminderHour` (the log's `hour`s; nothing under five sessions);
+  `shouldRemind` thins reminders that are only ever cleared (every other day after 3, every third
+  after 5, none after 8; ⋯ then shows one passive "Reminders are paused" line with "Turn back on");
+  `dropOff` (this week well under their own usual week) starts a comeback (`progress.comeback`): a
+  card on home for a week offering their favourite practice at their usual hour, answered by one
+  session of it, which earns the ladybird (`ladybird:<habit>` in garden RULES); `shorter` offers a
+  shorter one ("Try a shorter one: 3 breaths") for a lesson left at the same step three times,
+  through `timed()` overrides for that session only; `preferred` puts the habits finished most after
+  the intro picks, through `ordered()`. `progress.reminders` and `progress.comeback` are optional
+  (no version of their own), kept by `migrate()` and so in the file export. The habit view shows
+  "You usually practise around 7 pm".
+- **The reminder brain** (`window.drill`, set in app.js over the live progress, before
+  `tellAndroid`/`passNotes` run): plain functions for the Android wrapper (see Android below).
+  `reminderHour()` → 0–23, or null with too little data (then `REMIND_AT`, 18:00, in widget.js);
+  `shouldRemind()` → boolean, false after a session today or while reminders are thinned or paused;
+  `noteReminder(outcome)` with `'opened'` (tapped) or `'cleared'` (swiped away) for every note shown
+  → true, or false for any other value (nothing recorded). Nothing leaves the device.
+- **Sync and friends** (`src/sync/`, `server/`), opt-in and off by default: with it off nothing is sent
+  and Drill works with no backend. `keys.js`: the recovery code is the profile's secret, kept on the
+  device (`drill.sync`); HKDF gives the AES-GCM key progress is sealed with and the bearer token the
+  server knows the profile by (it stores the token's hash). A 6-digit pairing code carries the
+  recovery code to a new device, wrapped with PBKDF2. `merge.js` is pure: cards per card (latest
+  review wins), log/done/journal/garden as unions, streaks replayed from the merged log with
+  `nextStreak`. `sync.js` is the only file in src/ that calls fetch (a guardrails test holds it);
+  `config.js` holds the one API constant. `ui.js` is the four ⋯ screens; friends see a card of presets
+  and numbers only (`presets.js`, which the worker also imports to check them). `server/` is the
+  Cloudflare Worker + D1 (`worker.js`, `migrations/`), tested with Miniflare (`npm test --prefix
+  server`); e2e routes the API host to a local worker. Deploying is `server/DEPLOY.md`. `privacy.html`
+  is the policy, with delete-by-recovery-code for Play. Inside the Android wrapper
+  (`DrillBridge`), which has no internet permission, the ⋯ section is hidden and sync never runs
+  (`available()`). The card's name and animal are `progress.look` ({ word, animal, at }), synced, the
+  latest pick winning.
 - `src/feel.js` — synthesised sounds (mute on the home bar), haptics, and `move()`, which skips
   animation under reduced motion. Lesson moments go through it: `cue(name)` (sound and buzz; the
   sound follows the Sound toggle only, reduced motion skips just the animations) for right, run, wrong, done and unlock;
@@ -181,6 +219,36 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - `src/data/chess.json` — generated by `npm run puzzles` from the Lichess CC0 dump; committed.
   `src/data/basics.json` — Chess from zero (board, moves, capturing, check and mate), first on
   the path; `src/data/forks.json` — the hand-written Forks unit after it. Both hand-written.
+
+## Android
+
+`android/` is a WebView wrapper (Kotlin, AGP 9 with built-in Kotlin, Gradle needs **Java 17**):
+`cd android && JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ANDROID_HOME=~/Android/Sdk ./gradlew assembleDebug`
+after `npm ci` at the root. App id `com.joebywan.drill`, locked.
+
+- The web app is not copied into git: `copyWebAssets` syncs index.html, styles.css, src/, assets/ and
+  the three import-map packages into the APK, served from `https://appassets.androidplatform.net` by
+  WebViewAssetLoader. No INTERNET permission; CI fails the build if one appears.
+- `src/widget.js` makes every choice: `look(light, hour)` → background, Lumi pose, line pool
+  (`WIDGET_LINES`, linted), and `summary()` a schedule of looks over the next days' boundaries
+  (midnight, 5, 12, 18, 22). `save()` passes it to `DrillBridge.summary()`, so Kotlin only renders.
+  The page also sends Lumi's poses as PNGs (`art`). In a browser there is no bridge and nothing runs.
+- `Daily.kt`: the widget, an inexact alarm at the next look and at the note's hour, a 15-minute
+  WorkManager job, `Ticker` re-arming on BOOT_COMPLETED and MY_PACKAGE_REPLACED. The daily note is
+  opt-in on the ⋯ screen, low importance, at most once a day, and posts nothing if anything was done
+  today. The reminder brain (`window.drill`, feature-detected) sets the hour (`reminderHour()`, null
+  → 18:00) and can say not today (`shouldRemind()`), both snapshotted into the summary; whether each
+  note was opened or cleared is queued in Kotlin and handed to `noteReminder()` on load. Logcat tags `DrillBridge`, `DrillDaily`. Test path (debug builds only skip the once-a-day guard):
+  `adb shell am broadcast -n com.joebywan.drill/.Ticker -a com.joebywan.drill.REMIND --ez force true`.
+- The icon is Lumi on the garden green, generated by `node tools/icon.js` from `lumi()`: the adaptive
+  icon's foreground and monochrome layers, `assets/icon.svg` (favicon) and `assets/icon-512.png`
+  (manifest and Play listing). Rerun it when Lumi changes.
+- Releases copy Daybook: `assembleRelease` only, by hand from the **Android release** workflow;
+  `-PrequireSigning=true` fails without the key, and `android/tools/verify-apk.sh` fails an
+  unsigned, wrong-key or debuggable APK. The key is Joseph's, kept offline. To set it up once: create
+  it, put its certificate SHA-256 in `android/release-key.sha256`, and add the repo secrets
+  `DRILL_KEYSTORE_BASE64`, `DRILL_KEYSTORE_PASSWORD`, `DRILL_KEY_ALIAS`, `DRILL_KEY_PASSWORD` (or set
+  `DRILL_KEYSTORE` etc. as env vars or `-P` properties for a local build).
 
 ## Rules
 

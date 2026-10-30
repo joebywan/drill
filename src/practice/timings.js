@@ -68,7 +68,7 @@ export function setTiming(overrides, habit, key, value, usual) {
 }
 
 /** The first value a lesson keeps at `at` ({ type?, field }), looking in its items and their sets. */
-const valueIn = (lesson, at) => lesson.items.flatMap((it) => [it, ...(it.set ?? [])])
+export const valueIn = (lesson, at) => lesson.items.flatMap((it) => [it, ...(it.set ?? [])])
   .find((x) => (!at.type || x.type === at.type) && Number.isInteger(x[at.field]))?.[at.field];
 
 /**
