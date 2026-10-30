@@ -2042,6 +2042,8 @@ test('Coding, the new blocks on a real page: a bug fixed by tapping, an endless 
 test('every Coding item fits a 360px phone: no sideways scroll, the program clear of the tiles', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 640 });
   await page.goto('/');
+  // The widest font a phone or CI is likely to fall back to, so the fit doesn't depend on the machine's fonts.
+  await page.addStyleTag({ content: 'body, button { font-family: "DejaVu Sans", Verdana, sans-serif; }' });
   const items = codingCourse.units.flatMap((u) => u.lessons.flatMap((l) => l.items));
   const bad = await page.evaluate(async (items) => {
     const { mount } = await import('/src/coding/exercise.js');

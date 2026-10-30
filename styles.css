@@ -772,3 +772,12 @@ body:has(main.night) {
 /* ---- end sync and friends ---- */
 .meet h2 { margin: 20px 0 4px; font-size: 1rem; text-align: left; }
 .cast { overflow: visible; } /* a pose may reach past the 100-wide viewBox: Ada's presenting arm */
+/* Short phones: tighter blocks, so a long program stays clear of the tiles in a wide font too. */
+@media (max-height: 700px) {
+  .program { gap: 4px; }
+  .block { min-width: 38px; height: 38px; font-size: 1.15rem; }
+  .block.loop, .block.if { padding: 2px 6px; }
+  .block .head { min-height: 32px; }
+  .block .head b { min-width: 30px; height: 30px; }
+  .block .inner { gap: 4px; margin: 0; }
+}

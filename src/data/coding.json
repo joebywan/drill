@@ -442,7 +442,7 @@
             { "id": "nest-1-times", "type": "predict", "level": ["S.....*"], "program": [{ "repeat": 2, "do": [{ "repeat": 2, "do": ["right"] }] }],
               "prompt": "Two inside two. Tap where I stop.",
               "explain": "Two times two is four steps, two short of the flower." },
-            { "id": "nest-1-after", "type": "build", "level": ["#####", "#####", "S###*", ".#...", "...##"], "program": [{ "repeat": null, "do": ["down"] }, { "repeat": 2, "do": [{ "repeat": null, "do": ["right"] }, "up"] }], "tiles": [2, 3],
+            { "id": "nest-1-after", "type": "build", "level": ["S###*", ".#...", "...##"], "program": [{ "repeat": null, "do": ["down"] }, { "repeat": 2, "do": [{ "repeat": null, "do": ["right"] }, "up"] }], "tiles": [2, 3],
               "prompt": "A loop first, then a nest. Set the counts.",
               "explain": "Down 2 to reach the row, then two right and one up, twice." }
           ]
