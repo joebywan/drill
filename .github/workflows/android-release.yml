@@ -1,6 +1,6 @@
 name: Android release
 
-# Builds, signs and checks the release APK, then publishes it as a GitHub release. Run by hand
+# Builds, signs and checks the release APK and bundle, then publishes them as a GitHub release (Publish to Google Play takes the bundle from there). Run by hand
 # until the Drill key exists: it fails at the first step while the secrets are missing.
 on:
   workflow_dispatch:
@@ -59,7 +59,7 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
           test -s "$RUNNER_TEMP/release.jks" || { echo "::error::decoded keystore is empty"; exit 1; }
 
-      # assembleRelease only, never a debug build. -PrequireSigning turns "no key, so quietly emit
+      # assembleRelease only, never a debug build; the bundle is what Play takes, in the same step with the same key. -PrequireSigning turns "no key, so quietly emit
       # app-release-unsigned.apk" into a failure.
       - name: Build signed release
         env:
@@ -69,18 +69,21 @@ jobs:
           DRILL_KEY_PASSWORD: ${{ secrets.DRILL_KEY_PASSWORD }}
           DRILL_VERSION_CODE: ${{ github.run_number }}
           DRILL_VERSION_NAME: 0.1.${{ github.run_number }}
-        run: ./gradlew assembleRelease -PrequireSigning=true
+        run: ./gradlew assembleRelease bundleRelease -PrequireSigning=true
 
-      # Fails an unsigned, wrong-key or debuggable APK.
-      - name: Verify the APK
-        run: ./tools/verify-apk.sh app/build/outputs/apk/release/app-release.apk
+      # Fails an unsigned, wrong-key or debuggable APK, and an unsigned or wrong-key bundle.
+      - name: Verify the APK and the bundle
+        run: |
+          ./tools/verify-apk.sh app/build/outputs/apk/release/app-release.apk
+          ./tools/verify-aab.sh app/build/outputs/bundle/release/app-release.aab
 
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp app/build/outputs/apk/release/app-release.apk "drill-0.1.${{ github.run_number }}.apk"
-          gh release create "android-v0.1.${{ github.run_number }}" "drill-0.1.${{ github.run_number }}.apk" \
+          cp app/build/outputs/bundle/release/app-release.aab "drill-0.1.${{ github.run_number }}.aab"
+          gh release create "android-v0.1.${{ github.run_number }}" "drill-0.1.${{ github.run_number }}.apk" "drill-0.1.${{ github.run_number }}.aab" \
             --title "Drill for Android 0.1.${{ github.run_number }}" --generate-notes
 
       - name: Clean up the key
