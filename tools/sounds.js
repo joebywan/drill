@@ -50,6 +50,28 @@ function chirp(out, at, len, f, gain = 0.3) {
   }
 }
 
+/** A drop into water: a sine that leaps up in pitch and dies away fast, a bloop. */
+function drop(out, at, freq, gain = 0.4) {
+  const start = Math.round(at * RATE);
+  let phase = 0;
+  for (let i = 0; i < 0.18 * RATE && start + i < out.length; i++) {
+    const t = i / RATE;
+    phase += TAU * freq * (1 + 2.2 * Math.min(1, t / 0.05)) / RATE;
+    out[start + i] += gain * Math.min(1, t / 0.002) * Math.exp(-t / 0.035) * Math.sin(phase);
+  }
+}
+
+/** A soft knock on wood: a short low-passed burst of noise under a low thump. */
+function knock(out, at, gain = 0.35) {
+  const start = Math.round(at * RATE);
+  let lp = 0;
+  for (let i = 0; i < 0.08 * RATE && start + i < out.length; i++) {
+    const t = i / RATE;
+    lp += 0.25 * (rand() * 2 - 1 - lp);
+    out[start + i] += gain * Math.exp(-t / 0.015) * (lp + 0.8 * Math.sin(TAU * 180 * t));
+  }
+}
+
 /** A bee: a soft sawtooth hum with a wavering pitch, low-passed, swelling in and fading away. */
 function buzz(out, at, len, base, gain = 0.2) {
   const start = Math.round(at * RATE);
@@ -132,6 +154,28 @@ const SOUNDS = {
     strike(x, 0.95, hz(76), MARIMBA, 0.5);
     strike(x, 0.95, hz(83), GLASS, 0.12);
     return room(x, 0.2);
+  },
+  // Something built (a path, a bench, a fence): two soft knocks, then wooden notes climbing.
+  build() {
+    const x = track(1.7);
+    knock(x, 0);
+    knock(x, 0.14);
+    [72, 76, 79, 84].forEach((n, i) => strike(x, 0.32 + i * 0.09, hz(n), MARIMBA, 0.35));
+    return room(x, 0.22);
+  },
+  // A pond: three drops of water, low to high, and the ripple of the room.
+  pond() {
+    const x = track(1.5);
+    drop(x, 0, 380);
+    drop(x, 0.22, 520, 0.3);
+    drop(x, 0.36, 700, 0.25);
+    return room(x, 0.35, 1.3);
+  },
+  // Lanterns lit: slow, warm glass notes ringing on, like a wind chime at dusk.
+  lantern() {
+    const x = track(2.6);
+    [81, 85, 88, 93].forEach((n, i) => strike(x, i * 0.22, hz(n - 12), GLASS, 0.3 - i * 0.03));
+    return room(x, 0.4, 1.4);
   },
   // Birds: a robin's little phrase and a blue tit's answer, quick up-sweeps and a trill.
   birds() {

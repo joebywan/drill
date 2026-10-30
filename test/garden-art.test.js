@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MAX_FLOWERS, PLANTS, plant, blooms, sway, MOODS, SIZE, scene, slots, place, VISITORS, visitor, animateVisitor, animateScene } from '../src/garden/art.js';
+import { MAX_FLOWERS, PLANTS, plant, blooms, sway, MOODS, SIZE, scene, slots, place, VISITORS, visitor, animateVisitor, animateScene, landmark } from '../src/garden/art.js';
 import { STAGES } from '../src/garden/model.js';
 import { HABITS } from '../src/subjects.js';
 
@@ -168,15 +168,18 @@ test('past six plants, up to MAX_PLANTS of every kind: no visitor sits on any pl
 
 test('a drawn garden has every plant at its stage, flowers capped at what the art draws, and its visitors', () => {
   const many = Array.from({ length: 9 }, (_, i) => ({ gift: 'flower', on: '2026-10-01', id: `f${i}` }));
-  const all = ['butterfly', 'bee', 'birds'].map((gift) => ({ gift, on: '2026-10-01', id: gift }));
-  const plants = HABITS.map((h, i) => ({ habit: h.id, stage: i % 5, flowers: many, visitors: all }));
+  const plants = HABITS.map((h, i) => ({ habit: h.id, stage: i % 5, flowers: many,
+    visitors: ['butterfly', 'bee'].map((gift) => ({ gift, on: '2026-10-01', id: gift, species: i })) }));
   for (const shape of ['strip', 'tall']) {
     const svg = drawGarden({ mood: 'sunlit', plants }, shape);
     clean(svg, shape);
     for (const p of plants) assert.match(svg, new RegExp(`class="plant plant-\\w+ stage-${p.stage}" data-habit="${p.habit}"`), p.habit);
     assert.equal(svg.match(/data-part="bloom"/g).length, plants.length * MAX_FLOWERS, 'capped');
-    assert.equal(svg.match(/class="visitor /g).length, plants.length * 3);
-    assert.equal(svg.match(/<svg /g).length, 1 + plants.length * 4, 'one scene');
+    assert.equal(svg.match(/class="visitor /g).length, plants.length * 2);
+    assert.equal(svg.match(/<svg /g).length, 1 + plants.length * 3, 'one scene');
+    // Each habit's butterfly is its own species: no two share wing colours.
+    const wings = [...svg.matchAll(/<g data-part="wings"><ellipse [^>]*fill="(#\w+)"/g)].map((m) => m[1]);
+    assert.equal(new Set(wings).size, plants.length, shape);
   }
   const resting = drawGarden({ mood: 'resting', plants: plants.slice(0, 1) });
   assert.equal(resting, drawGarden({ mood: 'resting', plants: plants.slice(0, 1) }), 'the same every time');
@@ -229,7 +232,24 @@ import { existsSync } from 'node:fs';
 import { CHIMES } from '../src/feel.js';
 import { RULES } from '../src/garden/model.js';
 
-test('everything that can arrive, and a new plant, has its own sound file', () => {
-  for (const gift of new Set([...RULES.map((r) => r.gift), 'plant'])) assert.ok(CHIMES.includes(gift), gift);
+test('everything that can arrive, and a new plant, has a sound file', () => {
+  for (const s of new Set([...RULES.map((r) => r.sound || r.gift), 'plant'])) assert.ok(CHIMES.includes(s), s);
   for (const c of CHIMES) assert.ok(existsSync(`assets/sounds/${c}.wav`), c);
+});
+
+import { LANDMARKS } from '../src/garden/model.js';
+
+test('the tall view has room for every landmark and its guests, clear of the plants, with 1–12 plants grown', () => {
+  const gifts = LANDMARKS.map((l) => l.gift);
+  const kinds = Object.values(PLANTS);
+  for (let n = 1; n <= MAX_PLANTS; n++) {
+    const plants = Array.from({ length: n }, (_, i) => ({ habit: kinds[i % kinds.length], stage: 4, flowers: [], visitors: [] }));
+    const svg = drawGarden({ mood: 'sunlit', plants, landmarks: gifts.map((gift) => ({ gift, id: `garden:${gift}` })) }, 'tall');
+    clean(svg, `${n} plants`);
+    for (const g of gifts.filter((g) => g !== 'nest')) assert.match(svg, new RegExp(`data-landmark="${g}"`), `${n} plants: ${g}`);
+    assert.equal((svg.match(/data-landmark="lantern"/g) || []).length, 2, `${n} plants: both lanterns`);
+    assert.equal((svg.match(/class="visitor visitor-birds/g) || []).length, 2, `${n} plants: the birdhouse's birds and the nest's`);
+    assert.equal((svg.match(/class="visitor visitor-bee/g) || []).length, 2, `${n} plants: the hive's bees`);
+  }
+  for (const g of [...gifts, 'nope']) clean(landmark(g), g);
 });

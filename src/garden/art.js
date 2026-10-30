@@ -1,6 +1,8 @@
 import { move } from '../feel.js';
 import { scene, slots, place, SIZE, visitor, gust, lean } from './scene.js';
+import { layout } from './landmarks.js';
 export { scene, slots, place, SIZE, MOODS, visitor, animateVisitor, animateScene, VISITORS } from './scene.js';
+export { landmark, animateLandmarks } from './landmarks.js';
 
 /**
  * The garden's plants, drawn like the cast (src/cast/kit.js): hand-written SVG strings, flat
@@ -497,15 +499,15 @@ const overlap = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h 
 
 /**
  * Where each plant's visitors wait, in the scene's units: for plants [{ habit, stage }] laid out by
- * slots(shape, n), one { butterfly, bee, birds } of boxes { x, y, w, h } per plant. Each wants a
- * spot by its own plant (the butterfly above it to the left, the bee above it to the right, the birds
- * on the ground beside it, towards the middle) and takes the nearest one, inside the scene, that is
- * clear of every plant's drawn box and of the visitors placed before it. Pure.
+ * slots(shape, n), one { butterfly, bee } of boxes { x, y, w, h } per plant. Each wants a spot by its
+ * own plant (the butterfly above it to the left, the bee above it to the right) and takes the nearest
+ * one, inside the scene, that is clear of every plant's drawn box, of `taken` (the landmarks) and of
+ * the visitors placed before it. Pure.
  */
-export function perches(plants, shape = 'tall') {
+export function perches(plants, shape = 'tall', more = []) {
   const [W, H] = SIZE[shape] || SIZE.tall;
   const at = slots(shape, plants.length);
-  const taken = plants.map((p, i) => plantBox(p.plant || p.habit, p.stage, at[i]));
+  const taken = plants.map((p, i) => plantBox(p.plant || p.habit, p.stage, at[i])).concat(more);
   const STEP = 3; // ponytail: a grid scan for the nearest free spot; a few thousand box tests per visitor
   const place = (kind, cx, bottom, h) => {
     const bw = h * ASPECT[kind];
@@ -528,14 +530,13 @@ export function perches(plants, shape = 'tall') {
   const wants = (i) => {
     const { x, y, w } = at[i], top = taken[i].y;
     return {
-      birds: [x + (x > W / 2 ? -1 : 1) * 0.53 * w, y + 0.06 * w, 0.22 * w],
       butterfly: [x - 0.3 * w, top - 0.04 * w, 0.26 * w],
       bee: [x + 0.3 * w, top - 0.1 * w, 0.2 * w],
     };
   };
   const out = plants.map(() => ({}));
-  // Biggest first, every plant's birds before any butterfly, so the small ones fill the gaps left.
-  for (const kind of ['birds', 'butterfly', 'bee']) {
+  // Biggest first, every plant's butterfly before any bee, so the small ones fill the gaps left.
+  for (const kind of ['butterfly', 'bee']) {
     out.forEach((spot, i) => { spot[kind] = place(kind, ...wants(i)[kind]); });
   }
   return out;
@@ -543,22 +544,25 @@ export function perches(plants, shape = 'tall') {
 
 /**
  * The garden as one svg string, drawn once per render: `garden()` from model.js in `shape`
- * ('strip' or 'tall'). Each plant at its stage with its flowers (plant() caps them) and shut
- * buds when resting, then each visitor at its plant's perch; one whose id is in `fresh` is marked
- * data-new, to fly in. A clear rect under each plant
- * makes the whole plant tappable.
+ * ('strip' or 'tall'). The path and fence behind, each plant at its stage with its flowers
+ * (plant() caps them) and shut buds when resting, the other landmarks in the room left, then each
+ * plant's visitors, in its species, at its perches. Anything whose id is in `fresh` is marked
+ * data-new, to fly or fade in. A clear rect under each plant makes the whole plant tappable.
  */
-export function drawGarden({ mood, plants: all }, shape = 'tall', fresh = []) {
+export function drawGarden({ mood, plants: all, landmarks = [] }, shape = 'tall', fresh = []) {
   const at = slots(shape, all.length);
   const plants = all.slice(0, at.length); // past MAX_PLANTS, the first ones
   const closed = mood === 'resting';
   const grown = plants.map((p, i) => place(plant(p.habit, p.stage, { flowers: p.flowers.length, closed, kind: p.plant }), at[i])
     .replace(/^(<svg [^>]*>)/, '$1<rect width="100" height="120" fill="transparent"/>')).join('');
-  const spots = perches(plants, shape);
-  const life = plants.flatMap((p, i) => p.visitors.map(({ id, gift }) => {
+  const taken = plants.map((p, i) => plantBox(p.plant || p.habit, p.stage, at[i]));
+  const n = taken.length;
+  const { back, front, life: guests } = layout(shape, taken, landmarks.map((l) => l.gift), fresh);
+  const spots = perches(plants, shape, taken.slice(n));
+  const life = plants.flatMap((p, i) => p.visitors.map(({ id, gift, species }) => {
     const b = spots[i][gift];
     const isNew = fresh.includes(id) ? ' data-new' : '';
-    return b ? visitor(gift).replace('<svg ', `<svg x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" data-kind="${gift}"${isNew} `) : '';
+    return b ? visitor(gift, species).replace('<svg ', `<svg x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" data-kind="${gift}"${isNew} `) : '';
   })).join('');
-  return scene(mood, shape).replace(/<\/svg>$/, `${grown}${life}</svg>`);
+  return scene(mood, shape).replace(/<\/svg>$/, `${back}${grown}${front}${guests}${life}</svg>`);
 }

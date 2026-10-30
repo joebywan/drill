@@ -960,10 +960,13 @@ for (const colorScheme of ['light', 'dark']) {
       test('the garden strip and the full garden have no sideways scroll', async ({ page }) => {
         await grown(page, ['learn', 'calm', 'move', 'reflect', 'break'], 30, true);
         await firstVisit(page);
-        await expect(strip(page, 5).locator('svg.visitor')).toHaveCount(14); // a bee for each but Learning
+        // A butterfly for each, a bee for each but Learning, and every landmark 150 days bring.
+        await expect(strip(page, 5).locator('svg.visitor-butterfly')).toHaveCount(5);
+        await expect(strip(page, 5).locator('[data-landmark]')).not.toHaveCount(0);
         expect(await overflow(page)).toBe(0);
         await strip(page, 5).click();
-        await expect(page.locator('.plant-card')).toHaveCount(5);
+        await expect(page.locator('.plant-card[data-plant]')).toHaveCount(5);
+        await expect(page.locator('.landmark-card .arrival')).toHaveCount(8);
         expect(await overflow(page)).toBe(0);
       });
 
