@@ -42,7 +42,7 @@
   const visitors = ['v64', 'v32', 'v24'].map((c) => `<div class="row ${c}">${VISITORS.map((k) => fig(k, visitor(k))).join('')}</div>`).join('');
 
   // Sample gardens: every habit at a different stage, some with flowers, and the visitors about.
-  const sample = [[4, 3], [3, 1], [4, 6], [2, 0], [1, 2]];
+  const sample = [[4, 3], [3, 1], [4, 6], [2, 0], [1, 2], [3, 2]];
   const garden = (mood, shape, season) => {
     const at = slots(shape, HABITS.length);
     const [W, H] = shape === 'strip' ? [360, 140] : [360, 560];

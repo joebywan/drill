@@ -1,5 +1,5 @@
 import { move } from '../feel.js';
-import { GROUND_Y, pond, scene, slots, place, SIZE, visitor } from './scene.js';
+import { GROUND_Y, pond, scene, slots, place, SIZE, visitor, gust, lean } from './scene.js';
 export { scene, slots, place, SIZE, MOODS, visitor, animateVisitor, animateScene, VISITORS, pond } from './scene.js';
 
 /**
@@ -240,6 +240,39 @@ function daisies(s, closed) {
   return rosette + heads;
 }
 
+// Wind down: an evening primrose, which opens at dusk. A seed, a low rosette of long leaves, a stem
+// with a slim bud, then pale-yellow four-petal cups up a tall leafy stem, shut to buds at rest.
+const PRIM = '#F4E07A', PRIM_EDGE = '#D9B436', PRIM_EYE = '#E8B92E';
+const PRIM_TOP = [0, 0, 70, 50, 30];
+// Flowers [x, y, r] and slim buds [x, y] per stage.
+const PRIM_FLOWERS = [null, [], [], [[50, 42, 9]], [[50, 22, 10], [31, 46, 8.5], [70, 54, 8.5]]];
+const PRIM_BUDS = [null, [], [[50, 62]], [[60, 56]], [[42, 18], [58, 16], [24, 44]]];
+const slimBud = (x, y, k = 1) => `<path d="M${x} ${f(y - 9 * k)} Q${f(x + 3 * k)} ${f(y - 2 * k)} ${x} ${f(y + 2 * k)} Q${f(x - 3 * k)} ${f(y - 2 * k)} ${x} ${f(y - 9 * k)}Z" fill="${LEAF_LIGHT}"/>`
+  + stem(`M${x} ${f(y - 8 * k)} L${x} ${f(y - 4 * k)}`, 1.2, PRIM);
+
+function cupFlower(x, y, r, closed) {
+  if (closed) return slimBud(x, y + r * 0.4, 1.3);
+  // A darker back ring gives pale petals an edge on a pale page, like the daisy's.
+  const ring = (k, fill) => [45, 135, 225, 315].map((a) =>
+    `<ellipse cx="${x}" cy="${f(y - r * 0.5)}" rx="${f(r * 0.56 * k)}" ry="${f(r * 0.54 * k)}" transform="rotate(${a} ${x} ${y})" fill="${fill}"/>`).join('');
+  return ring(1.12, PRIM_EDGE) + ring(1, PRIM) + `<circle cx="${x}" cy="${y}" r="${f(r * 0.3)}" fill="${PRIM_EYE}"/>`
+    + stem(`M${f(x - r * 0.22)} ${f(y - r * 0.22)} L${f(x + r * 0.22)} ${f(y + r * 0.22)} M${f(x + r * 0.22)} ${f(y - r * 0.22)} L${f(x - r * 0.22)} ${f(y + r * 0.22)}`, 0.9, '#B98A1E');
+}
+
+function primrose(s, closed) {
+  if (s === 0) return [[48, 103], [51.5, 101.5], [52, 104.5]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="1.6" ry="1.1" fill="${SEED}"/>`).join('');
+  const rosette = [-78, 78, -40, 40, 0].slice(0, s === 1 ? 4 : 5).map((a, i) =>
+    leaf(50, 106, s === 1 ? 11 : 13, a, 3, i % 2 ? LEAF_DARK : LEAF)).join('');
+  if (s === 1) return rosette;
+  const top = PRIM_TOP[s];
+  let out = rosette;
+  if (s === 4) out += stem('M50 76 Q36 66 31 50', 1.8, STEM) + stem('M50 84 Q66 74 70 58', 1.8, STEM);
+  out += stem(`M50 106 Q51 ${f((106 + top) / 2)} 50 ${top}`, 1.6 + s * 0.4, STEM);
+  for (let y = 96, i = 0; y > top + 10; y -= 10, i++) out += leaf(50, y, 9 + s, i % 2 ? 62 : -62, 2.4, i % 2 ? LEAF_DARK : LEAF);
+  out += PRIM_BUDS[s].map(([x, y]) => slimBud(x, y)).join('');
+  return out + PRIM_FLOWERS[s].map(([x, y, r]) => cupFlower(x, y, r, closed)).join('');
+}
+
 // --- Plants a self-reported habit can be (subjects.js PRESETS and OWN_PLANTS) ----------------
 
 // A tulip: a papery bulb, two blades, a green bud on a stem, a coloured bud, then the open cup.
@@ -358,9 +391,9 @@ function mushrooms(s) {
 
 // --- The public API -------------------------------------------------------------------------
 
-const DRAW = { tree, lavender, sunflower, vine, daisies, tulip, fern, cactus, rose: roses, mushroom: mushrooms };
-export const PLANTS = { learn: 'tree', calm: 'lavender', move: 'sunflower', reflect: 'vine', break: 'daisies' };
-const BLOOM_COLOUR = { tree: '#F4A6C0', lavender: '#F2A7C3', sunflower: '#E8613C', vine: '#C99BEA', daisies: '#F28CB0',
+const DRAW = { tree, lavender, sunflower, vine, daisies, primrose, tulip, fern, cactus, rose: roses, mushroom: mushrooms };
+export const PLANTS = { learn: 'tree', calm: 'lavender', move: 'sunflower', reflect: 'vine', break: 'daisies', winddown: 'primrose' };
+const BLOOM_COLOUR = { tree: '#F4A6C0', lavender: '#F2A7C3', sunflower: '#E8613C', vine: '#C99BEA', daisies: '#F28CB0', primrose: '#9FB7F0',
   tulip: '#F5C542', fern: '#F2A7C3', cactus: '#F27BA8', rose: '#F4A6C0', mushroom: '#F2A7C3' };
 /** Every drawing there is: the built-in habits' and the ones a self-reported habit picks from. */
 export const KINDS = Object.keys(DRAW);
@@ -374,6 +407,7 @@ const SPOTS = {
   vine: Object.fromEntries([2, 3, 4].map((s) => [s, Array.from({ length: 6 }, (_, i) =>
     [i % 2 ? 72 : 28, f(100 - (i * (TRELLIS[s] - 8)) / 5)])])),
   daisies: { 3: [[26, 96], [74, 96], [30, 82], [72, 80], [18, 106], [82, 106]], 4: [[16, 90], [86, 92], [34, 96], [68, 96], [22, 106], [80, 108]] },
+  primrose: { 3: [[28, 96], [72, 96], [30, 80], [72, 76], [18, 106], [82, 106]], 4: [[16, 88], [86, 90], [30, 98], [70, 98], [20, 106], [80, 108]] },
 };
 
 // A habit id ('calm') or a drawing's own name ('tulip', for a self-reported habit).
@@ -395,6 +429,7 @@ const GROW = {
   sunflower: [1.6, 1.9, 1.25, 1.08, 1],
   vine: [1.6, 1.2, 1.05, 1, 1],
   daisies: [1.8, 3.4, 1.7, 1.25, 1],
+  primrose: [1.8, 3.4, 1.1, 1.08, 1],
   tulip: [1, 1.65, 1, 1, 1],
   fern: [1.6, 1.2, 1, 1, 1],
   cactus: [1.8, 1.35, 1.15, 1, 1],
@@ -419,6 +454,9 @@ export function sway(el) {
   const part = el?.querySelector?.('[data-part="plant"]');
   if (!part) return null;
   Object.assign(part.style, { transformBox: 'view-box', transformOrigin: '50px 106px' });
+  // A plant in a garden leans with the breeze as it passes; one on its own (a card) just sways.
+  const x = Number(el.getAttribute?.('x')) + Number(el.getAttribute?.('width')) / 2;
+  if (x) return gust(part, x, lean(4, (d) => `rotate(${d}deg)`));
   const deg = 1.6;
   return move(part, [{ transform: `rotate(${-deg}deg)` }, { transform: `rotate(${deg}deg)` }],
     { duration: 2600 + Math.random() * 1600, delay: -Math.random() * 3000, direction: 'alternate', iterations: Infinity, easing: 'ease-in-out' });
@@ -439,6 +477,7 @@ export const BOUNDS = {
   sunflower: [[3, 87, 97, 118], [3, 72, 97, 118], [3, 46, 97, 118], [11, 31, 89, 113], [7, 6, 92, 113]],
   vine: [[3, 94, 97, 118], [3, 73, 97, 118], [20, 51, 80, 113], [22, 31, 78, 113], [7, 8, 92, 113]],
   daisies: [[3, 94, 97, 118], [3, 76, 97, 118], [3, 55, 97, 118], [3, 32, 97, 113], [7, 8, 93, 114]],
+  primrose: [[3, 94, 97, 118], [3, 73, 97, 118], [3, 46, 97, 118], [9, 24, 91, 113], [7, 6, 92, 114]],
   tulip: [[3, 89, 97, 118], [3, 75, 97, 118], [3, 61, 97, 118], [3, 40, 97, 118], [3, 8, 97, 118]],
   fern: [[3, 90, 97, 118], [3, 78, 97, 118], [3, 65, 97, 118], [3, 51, 97, 118], [2, 8, 98, 118]],
   cactus: [[3, 96, 97, 118], [3, 80, 97, 118], [3, 68, 97, 118], [3, 57, 97, 118], [3, 8, 97, 118]],

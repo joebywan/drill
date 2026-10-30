@@ -52,8 +52,15 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
    opens the presets and "Make your own" (name, icon, plant: tulip, fern, cactus, rose, mushroom).
    Hiding takes a habit off the tabs and keeps its days and its plant.
 
-Later: Wind down (a bedtime sequence built from Calm's pieces) and Focus (a timed focus
-session with a check-in before and after).
+- [x] **Wind down** (a bedtime sequence built from Calm's pieces). Done: `src/data/winddown.json`
+  and `src/winddown/practice.js`. A 'sequence' item plays settle in (lights low, get comfortable),
+  Calm's breathing, body scan and sigh, then goodnight, through kit.js `sequence()`, with Calm's
+  bell and rain once around it. Plays the learner's Calm timings (`timings: 'calm'`); the path
+  grows 3 breaths and a sigh, then the scan joins. Moss coaches, sleepy, with a small moon. The
+  session and its end screen are in a warm dark palette in either theme (`night: true`). Its plant
+  is an evening primrose. Guardrails add no sleep claims or numbers and no screen-time shaming.
+
+Later: Focus (a timed focus session with a check-in before and after).
 
 ## The garden (agreed 2026-10-30)
 

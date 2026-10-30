@@ -161,7 +161,7 @@ export function scene(mood = 'morning', shape = 'tall', season = 'summer') {
     + `<path class="g-ground" d="M0 ${hy} Q${W / 2} ${f(hy - 8 * k)} ${W} ${hy} L${W} ${H} L0 ${H}Z"/>`
     + Array.from({ length: tall ? 22 : 9 }, () => {
       const x = f(rand() * W), y = f(hy + 10 + rand() * (H - hy - 14));
-      return `<path class="g-shade" d="M${x - 3} ${y} L${x - 1} ${y - 6} L${x} ${y - 1} L${x + 1.5} ${y - 7} L${x + 3} ${y}Z"/>`;
+      return `<path class="g-shade" data-part="tuft" data-x="${x}" d="M${x - 3} ${y} L${x - 1} ${y - 6} L${x} ${y - 1} L${x + 1.5} ${y - 7} L${x + 3} ${y}Z"/>`;
     }).join('');
   // Sunlit is dewy: a few glints on the grass. Resting has fireflies, warm and slow.
   const life = m === 'sunlit'
@@ -258,8 +258,8 @@ const MOTION = {
 
 // The butterfly and the bee also wander about their perch, in the visitor's own units.
 const WANDER = {
-  butterfly: [[0, 0], [-7, -5], [-2, -9], [5, -4], [2, 2], [0, 0]],
-  bee: [[0, 0], [5, -2], [8, 1], [3, 3], [-4, 0], [-6, -3], [0, 0]],
+  butterfly: [[0, 0], [-18, -10], [-8, -22], [10, -16], [16, -4], [6, 4], [0, 0]],
+  bee: [[0, 0], [10, -4], [16, 2], [6, 6], [-8, 0], [-12, -6], [0, 0]],
 };
 // A visitor that has just arrived flies in from up and to one side.
 const ARRIVE = { butterfly: [-90, -60], bee: [90, -50], birds: [-70, -40] };
@@ -276,7 +276,7 @@ export function animateVisitor(el, kind, fresh = false) {
   const drift = el.querySelector('[data-part="drift"]');
   if (WANDER[kind]) {
     anims.push(move(drift, WANDER[kind].map(([x, y]) => ({ transform: `translate(${x}px, ${y}px)` })),
-      { duration: 7000 + Math.random() * 3000, delay: -Math.random() * 7000, iterations: Infinity, easing: 'ease-in-out' }));
+      { duration: 6000 + Math.random() * 3000, delay: -Math.random() * 7000, iterations: Infinity, easing: 'ease-in-out' }));
   }
   if (fresh) {
     const [x, y] = ARRIVE[kind];
@@ -290,8 +290,8 @@ export function animateVisitor(el, kind, fresh = false) {
 // The scene's own life, each part on its own clock so nothing moves in step:
 // [selector, frames, base duration ms, transform origin (null for none)].
 const LIFE = [
-  ['[data-part="cloud"]', [{ transform: 'translateX(-14px)' }, { transform: 'translateX(14px)' }], 22000, null],
-  ['[data-part="halo"]', [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.12)', opacity: 0.75 }], 4000, 'center'],
+  ['[data-part="cloud"]', [{ transform: 'translateX(-45px)' }, { transform: 'translateX(45px)' }], 26000, null],
+  ['[data-part="halo"]', [{ transform: 'scale(.92)', opacity: 1 }, { transform: 'scale(1.2)', opacity: 0.6 }], 3200, 'center'],
   ['[data-part="glint"]', [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: 0.15 }, { transform: 'scale(.2)', opacity: 0, offset: 0.3 }, { transform: 'scale(.2)', opacity: 0 }], 5000, 'center'],
   ['[data-part="star"]', [{ opacity: 1 }, { opacity: 0.25 }], 2600, null],
   ['[data-part="petal"]', [{ transform: 'translate(0, 0) rotate(0deg)', opacity: 0 }, { opacity: 1, offset: 0.15 }, { transform: 'translate(-18px, 46px) rotate(200deg)', opacity: 0 }], 9000, 'center'],
@@ -301,13 +301,27 @@ const LIFE = [
   ['[data-part="firefly"]', [{ transform: 'translate(0, 0)', opacity: 0.2 }, { transform: 'translate(4px, -6px)', opacity: 1 }, { transform: 'translate(-3px, -10px)', opacity: 0.5 }, { transform: 'translate(0, 0)', opacity: 0.2 }], 6000, null],
 ];
 
-/** Moves the backdrop of a drawn scene: clouds drift, the sun glows, dew glints, stars twinkle, fireflies wander. */
+/**
+ * The breeze: one gust every BREEZE ms that rolls across the garden from left to right, so the
+ * grass and every plant lean in turn. `x` is where the part stands, 0 to the scene's width.
+ */
+export const BREEZE = 5200;
+export const gust = (part, x, frames) => move(part, frames,
+  { duration: BREEZE, delay: -BREEZE + (x / SIZE.tall[0]) * 1600, iterations: Infinity, easing: 'ease-in-out' });
+/** A gust's keyframes: lean `k` with it, swing back past upright, settle. `at(v)` is the transform. */
+export const lean = (k, at) => [0, k, -k * 0.4, k * 0.2, 0].map((v, i) => ({ transform: at(v), offset: [0, 0.22, 0.45, 0.62, 1][i] }));
+
+/** Moves the backdrop of a drawn scene: clouds drift, the sun glows, dew glints, stars twinkle, fireflies wander, the grass leans in the breeze. */
 export function animateScene(el) {
   if (!el?.querySelectorAll) return [];
-  return LIFE.flatMap(([sel, frames, ms, origin]) => [...el.querySelectorAll(sel)].map((part) => {
+  const grass = [...el.querySelectorAll('[data-part="tuft"]')].map((t) => {
+    if (t.style) Object.assign(t.style, { transformBox: 'fill-box', transformOrigin: '50% 100%' });
+    return gust(t, Number(t.dataset?.x) || 0, lean(16, (v) => `skewX(${-v}deg)`));
+  });
+  return grass.concat(LIFE.flatMap(([sel, frames, ms, origin]) => [...el.querySelectorAll(sel)].map((part) => {
     if (origin && part.style) Object.assign(part.style, { transformBox: 'fill-box', transformOrigin: origin });
     const duration = ms * (0.8 + Math.random() * 0.5);
     const alternate = frames.length === 2;
     return move(part, frames, { duration, delay: -Math.random() * duration, iterations: Infinity, easing: 'ease-in-out', direction: alternate ? 'alternate' : 'normal' });
-  })).filter(Boolean);
+  }))).filter(Boolean);
 }

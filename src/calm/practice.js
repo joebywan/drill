@@ -16,13 +16,23 @@ const calm = (kind) => line(kind, Math.random(), CALM_LINES);
  */
 export function mount(el, item, ctx) {
   if (item.type === 'teach') return teach(el, item, ctx);
-  // A practice opens and closes on the soft bell, with rain under it, each only if turned on.
+  return sounded(el, item, ctx, practise);
+}
+
+/**
+ * Plays `run(el, item, ctx)` opening and closing on the soft bell, with rain under it, each only if
+ * turned on (the ⋯ screen). Wind down wraps its whole sequence in it, so the bell rings once each end.
+ */
+export function sounded(el, item, ctx, run) {
   const bell = () => { if (calmSound('bell')) play('bell'); };
   bell();
   const quiet = rain();
-  const stop = MOUNTS[item.type](el, item, { ...ctx, done: (...a) => { bell(); ctx.done(...a); } });
+  const stop = run(el, item, { ...ctx, done: (...a) => { bell(); ctx.done(...a); } });
   return () => { quiet(); stop(); };
 }
+
+/** One Calm routine (breathe, sigh, hug, ground, scan) with no bell or rain: for a habit chaining them. */
+export const practise = (el, item, ctx) => MOUNTS[item.type](el, item, ctx);
 
 const MOUNTS = {
   breathe: breathing, sigh: breathing, hug: hugging, ground: grounding, scan: scanning,
@@ -61,7 +71,7 @@ function breathing(el, item, ctx) {
         { duration: p.seconds * 1000, easing: 'ease-in-out', fill: 'forwards' }),
       breathe(ctx.coachEl, p.phase, p.seconds),
     ];
-  }, `${n} ${name.toLowerCase()}s`, calm('paused'));
+  }, `${n} ${name.toLowerCase()}${n === 1 ? '' : 's'}`, calm('paused'));
 }
 
 /** The butterfly hug: arms crossed, one slow tap a second, left then right, as Moss does it. */
