@@ -713,3 +713,5 @@ export const GAME_WORDS = {
     drawn: { head: ['A draw.'], text: 'Nobody could finish it. I have had worse evenings.' },
   },
 };
+/** Said once a missed item has had its goes in a session: it moves on and review brings it back. */
+export const MOVE_ON = "Let's leave this one for a review and move on.";

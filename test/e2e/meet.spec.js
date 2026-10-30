@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { Chess } from 'chess.js';
+import { vary } from '../../src/chess/items.js';
 
 const seed = (page, course, done = {}) => page.addInitScript(([c, d]) => {
   if (localStorage.getItem('drill.progress')) return;
@@ -44,8 +47,8 @@ test('a second lesson opens with an earlier item and ends with its own again', a
   await page.goto('/');
   await page.getByRole('button', { name: 'Around the rock, current' }).click();
   await expect(page.locator('.topic')).toHaveText('Warm up');
-  // One warm-up, the lesson's nine items, three of them again.
-  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '13');
+  // One warm-up, the lesson's nine items, two of them again.
+  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '12');
 });
 
 test('a unit ends in a checkpoint that mixes it', async ({ page }) => {
@@ -66,7 +69,6 @@ test('two misses in a unit bring a second explanation and a smaller step, and th
   await page.getByRole('button', { name: 'Around the rock, current' }).click();
   // Past the teach card to the first marked item, then tap the first tiles until it runs and fails.
   await page.locator('.foot.show .next').click();
-  const before = await page.getByRole('progressbar').getAttribute('aria-valuemax');
   for (let i = 0; i < 12 && !(await page.locator('.foot.show').count()); i++) {
     await page.locator('.tiles').getByRole('button', { name: 'Step up' }).click();
     await page.waitForTimeout(50);
@@ -75,6 +77,63 @@ test('two misses in a unit bring a second explanation and a smaller step, and th
   await page.locator('.foot.show .next').click();
   await expect(page.locator('.topic')).toHaveText('One step back');
   await expect(page.locator('.bubble')).toContainText('one block at a time');
-  // The explanation, the smaller item and the returning miss.
-  expect(+await page.getByRole('progressbar').getAttribute('aria-valuemax')).toBe(+before + 3);
+  // Then the smaller item, and the miss comes back after what's left of the lesson.
+  await page.locator('.foot.show .next').click();
+  await expect(page.locator('.topic')).toHaveText('One step back');
+});
+
+const seedCard = (page, course, key) => page.addInitScript(([c, k, cd]) => {
+  if (localStorage.getItem('drill.progress')) return;
+  localStorage.setItem('drill.course', c);
+  localStorage.setItem('drill.progress', JSON.stringify({ version: 3, picked: [], done: { [`${c}:done-already`]: true }, cards: { [k]: cd }, habits: {}, log: [] }));
+}, [course, key, card]);
+
+test('a Japanese warm-up asks a different question from the one in its lesson', async ({ page }) => {
+  await seedCard(page, 'japanese', 'japanese:v2-which-13');
+  await page.goto('/');
+  await page.locator('.node.here').click();
+  await expect(page.locator('.topic')).toHaveText('Warm up');
+  await expect(page.locator('.bubble')).not.toHaveText('Which kana says "o"?');
+  await expect(page.locator('.quiz .choice').first()).toBeVisible();
+});
+
+test('a chess move item warms up mirrored, and its board and text agree', async ({ page }) => {
+  await seedCard(page, 'chess', 'chess:capture-0-free');
+  await page.goto('/');
+  await page.locator('.node.here').click();
+  await expect(page.locator('.topic')).toHaveText('Warm up');
+  await expect(page.locator('.board g[data-piece="bn"][data-square="h4"]')).toBeVisible(); // a4 in the course
+  await page.locator('.board rect[data-square="e1"]').click(); // the queen, now on e1
+  await page.locator('.board rect[data-square="h4"]').click();
+  await expect(page.locator('.foot.show.right')).toBeVisible();
+  await expect(page.locator('#verdict p')).toContainText('The knight on h4 is free');
+});
+
+test('a puzzle solved after its hint is logged as that, plays as a miss and comes back', async ({ page }) => {
+  const courses = JSON.parse(readFileSync(new URL('../../src/data/chess.json', import.meta.url)));
+  const item = courses.units.flatMap((u) => u.lessons).flatMap((l) => l.items).find((i) => i.moves?.length === 2 && i.fen.split(' ')[2] === '-');
+  const mirror = vary(item);
+  const game = new Chess(mirror.fen);
+  game.move({ from: mirror.moves[0].slice(0, 2), to: mirror.moves[0].slice(2, 4) });
+  const right = mirror.moves[1];
+  const wrong = game.moves({ verbose: true }).filter((m) => m.from + m.to !== right.slice(0, 4) && !m.san.endsWith('#'))[0];
+  await seedCard(page, 'chess', `chess:${item.id}`);
+  await page.goto('/');
+  await page.locator('.node.here').click();
+  await expect(page.locator('.topic')).toHaveText('Warm up');
+  await page.waitForTimeout(600); // the setup move
+  const before = +await page.getByRole('progressbar').getAttribute('aria-valuemax');
+  const play = async (from, to) => {
+    await page.locator(`.board rect[data-square="${from}"]`).click();
+    await page.locator(`.board rect[data-square="${to}"]`).click();
+  };
+  await play(wrong.from, wrong.to);
+  await expect(page.locator('.bubble')).toContainText('Not that one');
+  await play(wrong.from, wrong.to);
+  await expect(page.locator('.bubble')).toContainText('The marked piece');
+  await play(right.slice(0, 2), right.slice(2, 4));
+  await expect(page.locator('.foot.show.wrong')).toBeVisible();
+  const last = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')).answers.at(-1));
+  expect(last).toMatchObject({ key: `chess:${item.id}`, right: true, hinted: true, warm: true });
+  expect(+await page.getByRole('progressbar').getAttribute('aria-valuemax')).toBe(before + 1);
 });

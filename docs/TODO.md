@@ -190,14 +190,12 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 
 **Repetition engine**
 
-- **Japanese repeats as written.** Consider asking the other way round on a repeat (sound to kana).
-- **Chess only varies star puzzles.** Move items and real-game puzzles don't repeat in a session.
-  Mirroring move items is possible; castling and text naming squares need care.
-- **Tune the numbers** from play: `src/repeat.js` (2 warm-ups, 3 echoes, 8 in a checkpoint) and `src/adapt.js`
-  (3 goes, 2 misses in 4, 8 right to cut repeats). Warm-ups can repeat across lessons; check they stay varied.
-- **Adapting further.** The answer log (#97) doesn't record hints yet. A lesson could finish on evidence (two
-  fresh right in a row) rather than a fixed list. Explanations are per unit; go per concept where one doesn't help.
-- **Not played yet:** the "One step back" flow has only run in tests.
+- **Fresh repeats for the rest of chess.** `tap` and `truefalse` items still repeat as written (only stars, move and
+  find mirror). `truefalse` needs its `move` SAN flipped.
+- **A second miss of a mirrored item sees the same mirror.** Chess has only two versions of an item; a third go
+  repeats one. Fine at GOES 4 so far; watch it in play.
+- **Tune the numbers from real play.** `tools/sessions.js` models a fixed miss rate; nobody has played the new limits
+  (2 echoes, 4 goes, 5 repeats a session). "One step back" has only run in tests and an E2E flow.
 
 **Characters**
 

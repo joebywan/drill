@@ -234,14 +234,50 @@ const flipText = (text) => text?.replace(/\b([a-h])([1-8])\b/g, (_, f, r) => fli
   .replace(/\b([a-h])-(file|pawn)\b/g, (_, f, w) => `${flipFile(f)}-${w}`)
   .replace(/\b(right(?! next)|left)\b/gi, (w) => ({ right: 'left', left: 'right', Right: 'Left', Left: 'Right' })[w]);
 
+const flipBoard = (board) => board.split('/').map((rank) =>
+  [...rank.replace(/\d/g, (n) => '.'.repeat(n))].reverse().join('').replace(/\.+/g, (m) => m.length)).join('/');
+const flipUci = (m) => flipSquare(m.slice(0, 2)) + flipSquare(m.slice(2, 4)) + m.slice(4);
+
+// Text a mirror would make untrue: castling and which wing or colour of square something is on.
+const ONE_SIDED = /kingside|queenside|castl|(light|dark|white|black)[- ]squared?/i;
+
+/** Whether a puzzle's line castles anywhere: the one thing that doesn't survive a mirror. */
+const castles = (item) => {
+  const game = new Chess(item.fen);
+  return item.moves.some((m) => game.move(uci(m)).san.startsWith('O-O'));
+};
+
+/** A move item or real-game puzzle mirrored left to right, or null where a mirror wouldn't be safe. */
+function mirror(item) {
+  const [board, turn, rights, ep, ...rest] = item.fen.split(' ');
+  if (ONE_SIDED.test(`${item.prompt} ${item.explain}`)) return null;
+  if (kind(item) === 'move' ? rights !== '-' : castles(item)) return null;
+  const copy = {
+    ...item,
+    fen: [flipBoard(board), turn, '-', ep === '-' ? '-' : flipSquare(ep), ...rest].join(' '),
+    prompt: flipText(item.prompt),
+    explain: flipText(item.explain),
+  };
+  if (item.to) copy.to = flipSquare(item.to);
+  if (item.targets) copy.targets = item.targets.map(flipSquare);
+  if (kind(item) === 'find') copy.moves = item.moves.map(flipUci);
+  return problem(copy) ? null : copy;
+}
+
 /**
  * The Chess subject's `vary` (repeat.js): a stars puzzle mirrored left to right, its piece no longer
- * introduced. A puzzle from a real game has no fresh version, and would just be remembered: null.
+ * introduced; a move item or real-game puzzle mirrored where that's safe. Null for anything else.
  */
 export function vary(item) {
-  if (kind(item) !== 'stars') return null;
-  const [board, ...rest] = item.fen.split(' ');
-  const fen = [board.split('/').map((rank) => [...rank.replace(/\d/g, (n) => '.'.repeat(n))].reverse().join('').replace(/\.+/g, (m) => m.length)).join('/'), rest[0], '-', '-', ...rest.slice(3)].join(' ');
+  const type = kind(item);
+  if (type === 'move' || type === 'find') {
+    try { return mirror(item); } catch { return null; }
+  }
+  if (type !== 'stars') return null;
+  const [board, turn, , , ...rest] = item.fen.split(' ');
   const { new: _new, demo: _demo, intro: _intro, ...plain } = item;
-  return { ...plain, fen, stars: item.stars.map(flipSquare), prompt: flipText(item.prompt), explain: flipText(item.explain) };
+  return { ...plain, fen: [flipBoard(board), turn, '-', '-', ...rest].join(' '), stars: item.stars.map(flipSquare), prompt: flipText(item.prompt), explain: flipText(item.explain) };
 }
+
+/** A real-game puzzle is mirrored for a checkpoint or review, but it's never echoed: too close to the original. */
+export const echoable = (item) => kind(item) !== 'find';
