@@ -1,7 +1,7 @@
 // Calm breathing on the phone, with the sound and haptics checks a desktop browser can't do.
 export default async ({ seed, touch, btn, shot, run, checkSound, vibrations, check }) => {
   await seed();
-  await touch(btn('🌿 Calm')); await shot('calm-home');
+  await touch(btn(/^Calm(,|$)/)); await shot('calm-home');
   await touch(btn('Continue · The long out-breath')); await shot('teach');
   const buzzed = vibrations();
   await touch(btn('Start')); await run(1500); await shot('inhale');

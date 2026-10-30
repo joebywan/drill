@@ -9,6 +9,10 @@ export const REST_DAY = 'A rest day. The streak kept going.';
 export const NO_STREAK = 'Any session starts a streak.';
 export const FIRST_SQUARE = 'Your first session fills the first square.';
 
+/** The line over a habit's path on home, which opens its view: "14-day streak · See your week". */
+export const streakLine = (n, started) => (n ? `${n}-day streak · See your week`
+  : started ? 'Any session starts a streak · See your week' : 'Your first session starts a streak');
+
 /** A YYYY-MM-DD local date as a Date at local midnight, `plus` days on. */
 export const dateOf = (date, plus = 0) => {
   const [y, m, d] = date.split('-').map(Number);

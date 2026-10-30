@@ -1,4 +1,5 @@
 import { move } from '../feel.js';
+import { scene, slots, place, SIZE, visitor } from './scene.js';
 export { scene, slots, place, SIZE, MOODS, visitor, animateVisitor, VISITORS } from './scene.js';
 
 /**
@@ -265,4 +266,53 @@ export function sway(el) {
   const deg = 1.6;
   return move(part, [{ transform: `rotate(${-deg}deg)` }, { transform: `rotate(${deg}deg)` }],
     { duration: 2600 + Math.random() * 1600, delay: -Math.random() * 3000, direction: 'alternate', iterations: Infinity, easing: 'ease-in-out' });
+}
+
+// --- A whole garden, for the garden screen ---------------------------------------------------
+
+/** A single bloom in a habit's colour, drawn small beside "A flower opened" lines. */
+export const flower = (habit) =>
+  `<svg class="flower" viewBox="-5 -5 10 10" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${bloom({ x: 0, y: 0, r: BLOOM_R }, BLOOM_COLOUR[nameOf(habit)], false)}</svg>`;
+
+// The canvas y each stage reaches up to (its twinkles included), so visitors wait above it.
+const TOPS = [94, 86, 64, 40, 10];
+const ASPECT = { butterfly: 1, bee: 1, birds: 56 / 32 };
+
+/**
+ * Where a plant's visitors wait, in the scene's units, as boxes { x, y, w, h }: the butterfly
+ * above the plant to the left, the bee above it to the right, the birds on the ground beside it,
+ * on the side towards the middle of the scene, inside the scene. Never over the plant itself. Pure.
+ */
+export function perches({ x, y, w }, stage, shape = 'tall') {
+  const [W, H] = SIZE[shape] || SIZE.tall;
+  const top = y - ((106 - TOPS[stageOf(stage)]) * w) / 100;
+  // Kept inside the scene: a plant at the edge has its visitor slide in, still above or beside it.
+  const clamp = (v, max) => f(Math.max(0, Math.min(max, v)));
+  const box = (kind, cx, bottom, h) => {
+    const bw = h * ASPECT[kind];
+    return { x: clamp(cx - bw / 2, W - bw), y: clamp(bottom - h, H - h), w: f(bw), h: f(h) };
+  };
+  return {
+    butterfly: box('butterfly', x - 0.3 * w, top - 0.04 * w, 0.26 * w),
+    bee: box('bee', x + 0.3 * w, top - 0.1 * w, 0.2 * w),
+    birds: box('birds', x + (x > W / 2 ? -1 : 1) * 0.53 * w, y + 0.06 * w, 0.22 * w),
+  };
+}
+
+/**
+ * The garden as one svg string, drawn once per render: `garden()` from model.js in `shape`
+ * ('strip' or 'tall'). Each plant at its stage with its flowers (plant() caps them) and shut
+ * buds when resting, then each visitor at its plant's perch. A clear rect under each plant
+ * makes the whole plant tappable.
+ */
+export function drawGarden({ mood, plants }, shape = 'tall') {
+  const at = slots(shape, plants.length);
+  const closed = mood === 'resting';
+  const grown = plants.map((p, i) => place(plant(p.habit, p.stage, { flowers: p.flowers.length, closed }), at[i])
+    .replace(/^(<svg [^>]*>)/, '$1<rect width="100" height="120" fill="transparent"/>')).join('');
+  const life = plants.flatMap((p, i) => p.visitors.map(({ gift }) => {
+    const b = perches(at[i], p.stage, shape)[gift];
+    return b ? visitor(gift).replace('<svg ', `<svg x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" data-kind="${gift}" `) : '';
+  })).join('');
+  return scene(mood, shape).replace(/<\/svg>$/, `${grown}${life}</svg>`);
 }

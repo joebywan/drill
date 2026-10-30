@@ -98,3 +98,18 @@ export function garden(progress, now = new Date()) {
   });
   return { mood: mood(progress, now), plants };
 }
+
+const dayCount = (n, more = '') => `${n} ${more}day${n === 1 ? '' : 's'}`;
+
+/**
+ * The garden screen's words for a plant from garden(): { days: "9 days practised", next: "5 more
+ * days to young" }, each '' when there is nothing to say (no days yet; full grown). Kept here so
+ * the guardrail test lints them.
+ */
+export const plantWords = (p) => ({
+  days: p.days ? `${dayCount(p.days)} practised` : '',
+  next: p.next ? `${dayCount(p.next.in, 'more ')} to ${p.next.name}` : '',
+});
+
+/** After three arrival lines on an end screen, the rest in one. */
+export const moreArrived = (n) => `and ${n} more in your garden`;

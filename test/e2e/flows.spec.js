@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { answer, kind, starPath } from '../../src/chess/items.js';
+import { emptyProgress, finishPractice, finishSession } from '../../src/progress.js';
+import { award } from '../../src/garden/model.js';
 
 // The first lesson on the path. Its answers are worked out from the course data with the same
 // item logic the app uses, so the test follows the content when it changes.
@@ -19,6 +21,11 @@ async function play(page, { from, to }) {
   await tap(page, from);
   await tap(page, to);
 }
+
+/** A habit's tab on home: "Calm", or "Calm, 3-day streak" once it has had a session. */
+const tab = (page, name) => page.getByRole('button', { name: new RegExp(`^${name}(, \\d+-day streak)?$`) });
+/** The line over the path that opens the shown habit's view. */
+const week = (page, n) => page.getByRole('button', { name: `${n}-day streak · See your week` });
 
 const continueButton = (page) => page.getByRole('button', { name: 'Continue', exact: true });
 
@@ -56,7 +63,7 @@ test('first visit asks where to start, then shows the path', async ({ page }) =>
 
 test('finishing the first lesson shows the summary, starts the streak, and survives a reload', async ({ page }) => {
   await placeAtStart(page);
-  await expect(page.getByTitle('Day streak')).toHaveText('🔥 0');
+  await expect(tab(page, 'Learning')).toHaveAccessibleName('Learning');
   await finishFirstLesson(page);
 
   const marked = first.items.filter((i) => kind(i) !== 'teach').length;
@@ -64,12 +71,13 @@ test('finishing the first lesson shows the summary, starts the streak, and survi
   await expect(page.getByText('100%')).toBeVisible();
   await continueButton(page).click();
 
-  const streak = page.getByTitle('Day streak');
-  await expect(streak).toHaveText('🔥 1');
+  const streak = tab(page, 'Learning');
+  await expect(streak).toHaveAccessibleName('Learning, 1-day streak');
+  await expect(streak.locator('b')).toHaveText('1');
   await expect(page.getByRole('button', { name: `${first.title}, done` })).toBeVisible();
 
   await page.reload();
-  await expect(streak).toHaveText('🔥 1');
+  await expect(streak).toHaveAccessibleName('Learning, 1-day streak');
   await expect(page.getByRole('button', { name: `${first.title}, done` })).toBeVisible();
 });
 
@@ -78,21 +86,26 @@ test("a habit's chip opens its view, with today's session listed", async ({ page
   await finishFirstLesson(page);
   await continueButton(page).click();
 
-  await page.getByRole('button', { name: 'Learning: 1-day streak' }).click();
+  await week(page, 1).click();
   await expect(page.getByRole('heading', { name: 'Learning' })).toBeFocused();
   await expect(page.locator('.day').first()).toContainText('Today');
   await expect(page.locator('.day').first().getByRole('listitem')).toContainText(`${first.title} · `);
   await expect(page.getByText('1 of the last 14 days')).toBeVisible();
 
   await page.getByRole('button', { name: 'Back' }).click();
-  await expect(page.getByRole('button', { name: 'Learning: 1-day streak' })).toBeFocused();
+  await expect(week(page, 1)).toBeFocused();
 });
 
 /** Switches home to Calm and does the first breathing lesson, on a fake clock: 3 breaths, 36 s. */
 async function firstBreathing(page) {
   await page.clock.install();
   await placeAtStart(page);
-  await page.getByRole('button', { name: '🌿 Calm', exact: true }).click();
+  await breathe(page);
+}
+
+/** From home, the first breathing lesson on Calm's path, played on the installed fake clock. */
+async function breathe(page) {
+  await tab(page, 'Calm').click();
   await expect(page.getByRole('heading', { name: 'Breathing' })).toBeVisible();
   await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
   await expect(page.getByText('Lifeline is 13 11 14')).toBeVisible(); // real help, on the first Calm lesson
@@ -118,18 +131,18 @@ test('a Calm breathing session keeps its own streak, and asks how you feel', asy
   await continueButton(page).click();
 
   // Home remembers Calm, the next breathing lesson is open, and Learning's streak is untouched.
-  await expect(page.getByRole('button', { name: '🌿 Calm', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(tab(page, 'Calm')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('button', { name: 'The long out-breath, done' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Continue · Five slow breaths' })).toBeVisible();
-  await expect(page.getByTitle('Day streak')).toHaveText('🔥 0');
+  await expect(tab(page, 'Learning')).toHaveAccessibleName('Learning');
 
-  await page.getByRole('button', { name: 'Calm: 1-day streak' }).click();
+  await week(page, 1).click();
   await expect(page.locator('.day').first().getByRole('listitem')).toHaveText(/^Breathing · \d+ min · felt calmer$/);
   await page.getByRole('button', { name: 'Back' }).click();
 
   await page.reload();
-  await expect(page.getByRole('button', { name: '🌿 Calm', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await page.getByRole('button', { name: '🔥 Learning', exact: true }).click();
+  await expect(tab(page, 'Calm')).toHaveAttribute('aria-pressed', 'true');
+  await tab(page, 'Learning').click();
   await expect(page.getByRole('button', { name: `Continue · ${first.title}` })).toBeVisible();
 });
 
@@ -143,7 +156,7 @@ test('"Not really" gets a kind line and the help line', async ({ page }) => {
 test('a screen break is taught once, plays its six steps on the clock, and keeps its own streak', async ({ page }) => {
   await page.clock.install();
   await placeAtStart(page);
-  await page.getByRole('button', { name: '👀 Screen break', exact: true }).click();
+  await tab(page, 'Screen break').click();
   await page.getByRole('button', { name: 'Continue · Why breaks help' }).click();
   await expect(page.getByText('Move gently and stop if anything hurts.')).toBeVisible();
   await page.getByRole('button', { name: 'Start' }).click();
@@ -162,7 +175,7 @@ test('a screen break is taught once, plays its six steps on the clock, and keeps
   await expect(page.getByRole('status')).not.toBeEmpty();
   await continueButton(page).click();
   await expect(page.getByRole('button', { name: 'Continue · Take a break' })).toBeVisible();
-  await page.getByRole('button', { name: 'Screen break: 1-day streak' }).click();
+  await week(page, 1).click();
   await expect(page.locator('.day').first().getByRole('listitem')).toHaveText(/^Screen break · \d+ min · felt about the same$/);
 });
 
@@ -177,15 +190,15 @@ test('grounding is tap-to-count, and stopping is one tap with no questions', asy
   await page.getByRole('button', { name: 'Next' }).click(); // moving on with none tapped is fine
   await expect(page.getByRole('heading', { name: '3 things you can touch' })).toBeVisible();
   await page.getByRole('button', { name: 'Stop' }).click();
-  await expect(page.getByRole('button', { name: '🌿 Calm', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(tab(page, 'Calm')).toHaveAttribute('aria-pressed', 'true');
   // Stopping logs nothing: today still shows just the breathing.
-  await page.getByRole('button', { name: 'Calm: 1-day streak' }).click();
+  await week(page, 1).click();
   await expect(page.locator('.day').first().getByRole('listitem')).toHaveCount(1);
 });
 
 test('Reflect keeps two lines and a skip, on its own streak, and shows them back in the habit view', async ({ page }) => {
   await placeAtStart(page);
-  await page.getByRole('button', { name: '📓 Reflect', exact: true }).click();
+  await tab(page, 'Reflect').click();
   await page.getByRole('button', { name: 'Continue · Three small lines' }).click();
   await page.getByRole('button', { name: 'Start' }).click();
   // One prompt at a time, typed into one line; nothing is ever counted or judged.
@@ -202,9 +215,9 @@ test('Reflect keeps two lines and a skip, on its own streak, and shows them back
   await page.getByRole('button', { name: 'About the same' }).click();
   await expect(page.locator('.chip.reflect')).toContainText('📓 1');
   await continueButton(page).click();
-  await expect(page.getByTitle('Day streak')).toHaveText('🔥 0');
+  await expect(tab(page, 'Learning')).toHaveAccessibleName('Learning');
 
-  await page.getByRole('button', { name: 'Reflect: 1-day streak' }).click();
+  await week(page, 1).click();
   const todayLines = page.locator('.day').first();
   await expect(todayLines.locator('ul').first().getByRole('listitem')).toHaveText(/^Reflect · 1 min · felt about the same$/);
   await expect(todayLines.getByRole('list', { name: 'Your lines' }).getByRole('listitem')).toHaveText(['Good Tea in the sun', 'Tomorrow Call Sam']);
@@ -212,7 +225,7 @@ test('Reflect keeps two lines and a skip, on its own streak, and shows them back
 
 test('once the short Reflect path is done, "Reflect today" stays on home', async ({ page }) => {
   await placeAtStart(page);
-  await page.getByRole('button', { name: '📓 Reflect', exact: true }).click();
+  await tab(page, 'Reflect').click();
   for (const title of ['Three small lines', 'Another day', 'Making it yours']) {
     await page.getByRole('button', { name: `Continue · ${title}` }).click();
     if (title === 'Three small lines') await page.getByRole('button', { name: 'Start' }).click();
@@ -226,7 +239,7 @@ test('once the short Reflect path is done, "Reflect today" stays on home', async
 test('a Move session plays timed exercises with rests, and keeps its own streak', async ({ page }) => {
   await page.clock.install();
   await placeAtStart(page);
-  await page.getByRole('button', { name: '🌱 Move', exact: true }).click();
+  await tab(page, 'Move').click();
   await expect(page.getByRole('heading', { name: 'Wake up' })).toBeVisible();
   await page.getByRole('button', { name: 'Continue · Loosen up' }).click();
   // Safety first, on the first Move lesson.
@@ -252,9 +265,9 @@ test('a Move session plays timed exercises with rests, and keeps its own streak'
 
   // The next Wake up lesson is open; Calm and Learning are untouched.
   await expect(page.getByRole('button', { name: 'Continue · A bit longer' })).toBeVisible();
-  await expect(page.getByTitle('Day streak')).toHaveText('🔥 0');
-  await expect(page.getByRole('button', { name: /^Calm: / })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Move: 1-day streak' }).click();
+  await expect(tab(page, 'Learning')).toHaveAccessibleName('Learning');
+  await expect(tab(page, 'Calm')).toHaveAccessibleName('Calm');
+  await week(page, 1).click();
   await expect(page.locator('.day').first().getByRole('listitem')).toHaveText(/^Wake up · \d+ min · felt no different$/);
 });
 
@@ -281,7 +294,7 @@ test('progress saved to a file loads back', async ({ page }) => {
   // A browser that lost everything: start over, then load the file back.
   await page.evaluate(() => localStorage.clear());
   await placeAtStart(page);
-  await expect(page.getByTitle('Day streak')).toHaveText('🔥 0');
+  await expect(tab(page, 'Learning')).toHaveAccessibleName('Learning');
   await page.getByRole('button', { name: 'Your progress' }).click();
   const chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Load from a file' }).click();
@@ -289,8 +302,101 @@ test('progress saved to a file loads back', async ({ page }) => {
   await expect(page.getByText('The file has 1 lesson done, a 1-day streak')).toBeVisible();
   await page.getByRole('button', { name: 'Use this file' }).click();
 
-  await expect(page.getByTitle('Day streak')).toHaveText('🔥 1');
+  await expect(tab(page, 'Learning')).toHaveAccessibleName('Learning, 1-day streak');
   await expect(page.getByRole('button', { name: `${first.title}, done` })).toBeVisible();
+});
+
+/**
+ * Progress with `habits` each practised on the `days` days before today, loaded before the page.
+ * `earned` gives it what that has earned, as if every session had been in the app.
+ */
+async function grown(page, habits, days, earned = false) {
+  let p = { ...emptyProgress(), start: basics.units[0].title };
+  for (const h of habits) {
+    for (let i = days; i >= 1; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      p = h === 'learn' ? finishSession(p, null, [], d) : finishPractice(p, h, null, d);
+    }
+  }
+  if (earned) p = award(p).progress;
+  await page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
+}
+
+const strip = (page, n) => page.getByRole('button', { name: `Your garden: ${n} plant${n === 1 ? '' : 's'}` });
+
+test('a fresh garden is one seed; the first lesson grows a sprout and opens a flower', async ({ page }) => {
+  await placeAtStart(page);
+  await expect(strip(page, 1).locator('svg.plant')).toHaveCount(1);
+  await expect(strip(page, 1).locator('svg.plant-tree.stage-0')).toBeVisible();
+  await finishFirstLesson(page);
+  // The first unit is one lesson long, so finishing it is a finished unit: a flower opens.
+  await expect(page.locator('.arrivals li')).toHaveText([`A flower opened for ${basics.units[0].title}`]);
+  await continueButton(page).click();
+  await expect(strip(page, 1).locator('svg.plant-tree.stage-1')).toBeVisible();
+  await expect(strip(page, 1).locator('[data-part="bloom"]')).toHaveCount(1);
+});
+
+test('a 7-day Calm streak brings a butterfly, shown on the end screen and in the garden', async ({ page }) => {
+  await grown(page, ['calm'], 7);
+  await page.clock.install();
+  await page.goto('/');
+  await expect(strip(page, 2).locator('svg.visitor')).toHaveCount(0);
+  await breathe(page);
+  await expect(page.locator('.arrivals')).toContainText('A butterfly arrived');
+  await expect(page.locator('.arrivals svg.visitor-butterfly')).toBeVisible();
+  await continueButton(page).click();
+
+  await expect(strip(page, 2).locator('svg.visitor-butterfly')).toHaveCount(1);
+  await strip(page, 2).click();
+  await expect(page.getByRole('heading', { name: 'Your garden' })).toBeFocused();
+  const calm = page.locator('.plant-card[data-plant="calm"]');
+  await expect(calm).toContainText('Lavender · sapling');
+  await expect(calm).toContainText('8 days practised');
+  await expect(calm).toContainText('6 more days to young');
+  await expect(calm).toContainText(/A butterfly arrived · \d+ \w{3}/);
+
+  // A card opens that habit's view; Back comes to the garden, then home to the strip.
+  await calm.click();
+  await expect(page.getByRole('heading', { name: 'Calm' })).toBeFocused();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(calm).toBeFocused();
+  await page.locator('.garden-view svg.plant-tree').click();
+  await expect(page.getByRole('heading', { name: 'Learning' })).toBeFocused();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(strip(page, 2)).toBeFocused();
+});
+
+test('a backlog of arrivals shows three lines, then the rest in one', async ({ page }) => {
+  await grown(page, ['calm', 'move', 'break'], 30);
+  await page.clock.install();
+  await page.goto('/');
+  await breathe(page);
+  await expect(page.locator('.arrivals li')).toHaveCount(4);
+  await expect(page.locator('.arrivals li').last()).toHaveText(/^and \d+ more in your garden$/);
+});
+
+test('with all five habits started, the bar fits at 360px and the tabs are one row that scrolls inside itself', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await grown(page, ['learn', 'calm', 'move', 'reflect', 'break'], 14);
+  await page.goto('/');
+  for (const name of ['Sound', 'Your progress']) {
+    const box = await page.getByRole('button', { name }).boundingBox();
+    expect(box.x >= 0 && box.x + box.width <= 360, name).toBe(true);
+  }
+  const tabs = page.getByRole('navigation', { name: 'Show the path for' });
+  const rows = await tabs.getByRole('button').evaluateAll((els) => new Set(els.map((e) => e.offsetTop)).size);
+  expect(rows).toBe(1);
+  expect(await overflow(page)).toBe(0);
+  // The last tab, once picked, is scrolled into view within the row.
+  await tab(page, 'Move').click();
+  await expect(tab(page, 'Move')).toHaveAccessibleName('Move, 14-day streak');
+  await expect(tab(page, 'Move')).toBeFocused();
+  const box = await tab(page, 'Move').boundingBox();
+  expect(box.x >= 0 && box.x + box.width <= 360).toBe(true);
+  await expect(week(page, 14)).toBeVisible();
+  expect(await overflow(page)).toBe(0);
 });
 
 const overflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -302,14 +408,24 @@ for (const colorScheme of ['light', 'dark']) {
 
       test('home has no sideways scroll', async ({ page }) => {
         await placeAtStart(page);
-        await expect(page.getByTitle('Day streak')).toBeVisible();
+        await expect(tab(page, 'Learning')).toBeVisible();
         expect(await overflow(page)).toBe(0);
       });
 
       test('the habit view has no sideways scroll', async ({ page }) => {
         await placeAtStart(page);
-        await page.getByTitle('Day streak').click();
+        await page.getByRole('button', { name: 'Your first session starts a streak' }).click();
         await expect(page.getByRole('heading', { name: 'Learning' })).toBeVisible();
+        expect(await overflow(page)).toBe(0);
+      });
+
+      test('the garden strip and the full garden have no sideways scroll', async ({ page }) => {
+        await grown(page, ['learn', 'calm', 'move', 'reflect', 'break'], 30, true);
+        await page.goto('/');
+        await expect(strip(page, 5).locator('svg.visitor')).toHaveCount(14); // a bee for each but Learning
+        expect(await overflow(page)).toBe(0);
+        await strip(page, 5).click();
+        await expect(page.locator('.plant-card')).toHaveCount(5);
         expect(await overflow(page)).toBe(0);
       });
 

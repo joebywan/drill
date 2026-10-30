@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY } from '../src/habitview.js';
+import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, streakLine } from '../src/habitview.js';
 import { helpHtml } from '../src/practice/kit.js';
 import { subjects } from '../src/subjects.js';
 import { ACCURACY, BREAK_LINES, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
@@ -11,7 +11,7 @@ const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intel
 const LOSS = /\b(lose|losing|lost|gone|we miss you|missed you|sad|disappoint\w*|abandon\w*|forg[eo]t\w*|broke(n)?|break(ing)? your|come back (soon|to us|tomorrow)|where were you|absen\w*|guilt\w*|shame)\b/i;
 
 const lines = [LINES, HEADLINES, CALM_LINES, BREAK_LINES, REFLECT_LINES, MOVE_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
-const labels = [...ACCURACY, ...PACE].map(([, label]) => label).concat(STREAK_LABEL, QUIET_DAY, REST_DAY, NO_STREAK, FIRST_SQUARE);
+const labels = [...ACCURACY, ...PACE].map(([, label]) => label).concat(STREAK_LABEL, QUIET_DAY, REST_DAY, NO_STREAK, FIRST_SQUARE, streakLine(0, false), streakLine(0, true), streakLine(14, true));
 
 test('end-screen headlines and chip labels pass the same lint', () => {
   for (const [kind, list] of Object.entries(HEADLINES)) {
@@ -222,10 +222,12 @@ test('every practice habit answers each "How do you feel?" reply in its own coac
 });
 
 // The garden: every achievement line and stage name is gentle. Nothing is lost, nothing is owed.
-import { RULES as GARDEN_RULES, STAGES as GARDEN_STAGES } from '../src/garden/model.js';
+import { RULES as GARDEN_RULES, STAGES as GARDEN_STAGES, moreArrived, plantWords, stage as gardenStage } from '../src/garden/model.js';
 
 test('garden text has no loss, guilt, urgency or ability words', () => {
-  const texts = [...GARDEN_RULES.map((r) => r.text), ...GARDEN_STAGES.map((s) => s.name)];
+  const screen = [0, 1, 4, 13, 29, 30, 400].flatMap((d) => Object.values(plantWords({ days: d, ...gardenStage(d) })));
+  const texts = [...GARDEN_RULES.map((r) => r.text), ...GARDEN_STAGES.map((s) => s.name), ...screen, moreArrived(4), 'Your garden'];
   assert.ok(texts.length > 10);
   for (const text of texts) for (const lint of [LOSS, URGENCY, ABILITY]) assert.doesNotMatch(text, lint, text);
+  for (const text of texts) assert.doesNotMatch(text, /\b(missing|locked|wilt\w*|die[sd]?|dying|dead)\b/i, text);
 });

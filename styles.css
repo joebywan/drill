@@ -50,7 +50,6 @@ html { scroll-padding-bottom: 160px; }
   padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top));
 }
 .bar h1 { font-size: 1.3rem; margin: 0; flex: 1; }
-.stat { font-weight: 600; }
 .close, .sound, .menu, .back { background: none; border: 0; font-size: 1.3rem; padding: 4px 8px; }
 .meter { flex: 1; height: 12px; border-radius: 6px; background: var(--line); overflow: hidden; }
 .fill { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
@@ -262,7 +261,6 @@ html { scroll-padding-bottom: 160px; }
 @media (prefers-reduced-motion: reduce) { .meter[data-heat="2"] .fill { animation: none; } .fill { transition: none; } }
 
 /* ---- Habit chips and the habit view ---- */
-.bar .stat { background: none; border: 0; padding: 6px; border-radius: 999px; white-space: nowrap; }
 .habit { padding: 0 16px 40px; }
 .habit h1 { margin: 0 0 2px; font-size: 1.6rem; }
 .habit .said { margin: 0; }
@@ -289,7 +287,18 @@ html { scroll-padding-bottom: 160px; }
 @media (prefers-color-scheme: dark) {
   :root { --calm: #8CC487; --calm-soft: #22331F; --chip-calm: #8CC487; }
 }
-.paths { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 4px 0 0; }
+.paths {
+  display: flex; gap: 8px; margin: 4px -16px 0; padding: 2px 16px 4px;
+  overflow-x: auto; scrollbar-width: none; position: relative; /* offsetLeft is measured from here */
+}
+.paths::-webkit-scrollbar { display: none; }
+/* A tab's streak, in a small pill so today's light reads on the pressed tab too. */
+.path-tab b { display: inline-block; min-width: 1.6em; margin-left: 2px; padding: 0 6px; border-radius: 999px; background: var(--card); color: var(--text); }
+.path-tab b.streak-bright { color: var(--streak); }
+.streak-line {
+  display: block; margin: 10px auto 0; padding: 6px 12px; border: 0; border-radius: 999px; background: none;
+  color: var(--muted); font-size: .9rem; text-decoration: underline; text-underline-offset: 3px;
+}
 .path-tab {
   padding: 8px 16px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); font-weight: 600; white-space: nowrap;
 }
@@ -371,3 +380,24 @@ html { scroll-padding-bottom: 160px; }
 .exercise .tally { margin: 16px 0 0; color: var(--muted); font-weight: 600; }
 .exercise .tally .count { color: var(--text); }
 .exercise[data-kind="rest"] h2 { color: var(--muted); }
+
+/* ---- The garden: a strip on home, the full view, and what arrived on an end screen ---- */
+.garden-link { display: block; width: 100%; margin: 0 0 12px; padding: 0; border: 0; border-radius: 16px; overflow: hidden; background: none; }
+.garden-link svg.garden-scene, .garden-view svg.garden-scene { display: block; width: 100%; height: auto; }
+.garden-page { padding: 0 16px 40px; }
+.garden-page h1 { margin: 0 0 12px; font-size: 1.6rem; }
+.garden-view { border-radius: 16px; overflow: hidden; }
+.garden-view svg.plant { cursor: pointer; }
+.plant-cards { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 10px; }
+.plant-card {
+  display: block; width: 100%; text-align: left; padding: 12px 14px; border-radius: 14px;
+  border: 1px solid var(--line); background: var(--card);
+}
+.plant-card > span { display: block; }
+.plant-card .kicker { margin: 0; font-size: .75rem; }
+.plant-card b { display: block; font-size: 1.1rem; margin: 2px 0; }
+.plant-card .hint { color: var(--muted); font-size: .9rem; }
+.plant-card .arrival { margin-top: 6px; font-size: .9rem; }
+.arrival { display: flex; align-items: center; gap: 8px; }
+.arrival svg { height: 22px; width: auto; flex: none; }
+.arrivals { list-style: none; margin: 14px auto 0; padding: 0; display: grid; gap: 6px; justify-content: center; color: var(--muted); font-size: .95rem; }
