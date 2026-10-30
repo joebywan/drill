@@ -30,17 +30,18 @@
   import { NAME, MOODS as CALM, moss, breathe } from '../src/cast/moss.js';
   import * as clover from '../src/cast/clover.js';
   import * as mira from '../src/cast/mira.js';
+  import * as fennel from '../src/cast/fennel.js';
 
   const cast = [
     ['Rosa', MOODS.map((m) => [m, rosa(m)])],
     ['Lumi', MOODS.map((m) => [m, lumi(m)])],
     [NAME, CALM.map((m) => [m, moss(m)])],
-    ...[[clover, clover.clover], [mira, mira.mira]].flatMap(([c, draw]) => [
+    ...[[clover, clover.clover], [mira, mira.mira], [fennel, fennel.fennel]].flatMap(([c, draw]) => [
       [c.NAME, c.MOODS.map((m) => [m, draw(m)])],
       [`${c.NAME} poses`, c.POSES.map((p) => [p, draw('guide', p)])],
     ]),
   ];
-  const demos = { clover: clover.demo, mira: mira.demo };
+  const demos = { clover: clover.demo, mira: mira.demo, fennel: fennel.demo };
   const fig = ([label, svg]) => `<figure>${svg}<figcaption>${label}</figcaption></figure>`;
   const panel = (theme) => `<div class="panel ${theme}">` + cast.map(([name, items]) => `
     <h2>${name} (${theme})</h2>

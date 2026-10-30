@@ -6,9 +6,10 @@ import { lumi } from '../src/cast/lumi.js';
 import { MOODS as CALM, moss, breathe } from '../src/cast/moss.js';
 import * as Clover from '../src/cast/clover.js';
 import * as Mira from '../src/cast/mira.js';
+import * as Fennel from '../src/cast/fennel.js';
 
 // The posable characters, each drawn with kit.js rig(): [module, draw].
-const posed = [[Clover, Clover.clover], [Mira, Mira.mira]];
+const posed = [[Clover, Clover.clover], [Mira, Mira.mira], [Fennel, Fennel.fennel]];
 
 const drawings = [
   ...MOODS.map((m) => [`rosa ${m}`, rosa(m)]),

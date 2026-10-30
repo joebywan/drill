@@ -66,6 +66,15 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `tools/cast.html` renders every mood at 200/96/48 px, light and dark.
 - `src/habitview.js` — pure helpers and the wording for the habit view (`habitView()` in app.js),
   opened from the "N-day streak · See your week" line over home's path (or a plant). Days without a session are plain, never missed.
+- `src/coding/` — the Coding learn subject, beside chess on the Learning habit. `program.js` is pure: a
+  level is rows of text ('S' Fennel, '*' the flower, '#' a rock), a program is blocks (steps,
+  `{ repeat, do }`, `{ if: 'rock-right', then, else }`), `run()` walks it, and `problem()` proves each
+  item answerable. Items: teach, build (tap tiles into the holes; it runs when the last is filled, and
+  any program that reaches the flower is right), predict (tap where Fennel stops). `exercise.js` draws
+  the grid, the blocks and the tiles, and Fennel (`src/cast/fennel.js`, a fennec fox posed with
+  `rig()`) walks it. His lines are `CODING_LINES`/`CODING_HEADLINES`, read through the subject's
+  `coach.lines`/`coach.headlines`. With several learn courses, home shows one at a time (a Chess /
+  Coding row, remembered in `drill.course`), and the intro picks courses by subject id (`habitOfPick`).
 - `src/calm/` — the Calm practice subject. `routines.js` is pure: each routine is a list of timed
   phases (breathing 4 in, 8 out; the sigh 3 in, 1 top-up, 6 out; the butterfly hug's taps; the body scan feet to head), and `timeline()` plays one on a
   pausable clock. `practice.js` mounts teach cards and the routines with Moss (`src/cast/moss.js`)

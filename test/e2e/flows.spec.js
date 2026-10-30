@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { answer, kind, starPath } from '../../src/chess/items.js';
 import { emptyProgress, finishPractice, finishSession } from '../../src/progress.js';
 import { award } from '../../src/garden/model.js';
+import { answer as stopsAt, solve as oneWay } from '../../src/coding/program.js';
 
 // The first lesson on the path. Its answers are worked out from the course data with the same
 // item logic the app uses, so the test follows the content when it changes.
@@ -71,18 +72,20 @@ async function toStepTwo(page) {
   await expect(page.getByRole('heading', { name: 'What would you like out of Drill?' })).toBeFocused();
 }
 
-test('intro, learn only: Learn something picks chess, the others are coming soon, and home starts on Learning', async ({ page }) => {
+test('intro, learn only: Learn something lists the live courses, the others are coming soon, and home starts on Learning', async ({ page }) => {
   await toStepTwo(page);
   await expect(pick(page, 'Chess')).toBeHidden();
   await pick(page, 'Learn something').click();
   await expect(pick(page, 'Learn something')).toHaveAttribute('aria-pressed', 'true');
-  await expect(pick(page, 'Chess')).toHaveAttribute('aria-pressed', 'true'); // the one live course
-  for (const name of ['Maths', 'Japanese', 'Coding']) await expect(page.getByRole('button', { name: `${name} · coming soon` })).toBeDisabled();
+  await expect(pick(page, 'Coding')).toHaveAttribute('aria-pressed', 'false'); // two live courses: nothing picked for you
+  await pick(page, 'Chess').click();
+  await expect(pick(page, 'Chess')).toHaveAttribute('aria-pressed', 'true');
+  for (const name of ['Maths', 'Japanese']) await expect(page.getByRole('button', { name: `${name} · coming soon` })).toBeDisabled();
   await expect(page.getByRole('heading', { name: 'Have you played chess before?' })).toHaveCount(0); // no placement questions
   await page.getByRole('button', { name: 'Show my home' }).click();
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
   expect((await tabOrder(page))[0]).toBe('learn');
-  await expect(page.getByText('Learning is first. Start with the button below.')).toBeVisible();
+  await expect(page.getByText('Chess is first. Start with the button below.')).toBeVisible();
   await expect(offer(page)).toBeVisible(); // the placement offer is still there, as it was
   await expect(page.locator('.cta .next')).toBeFocused();
   await page.reload();
@@ -964,6 +967,19 @@ for (const colorScheme of ['light', 'dark']) {
         await expect(page.locator('.board svg')).toBeVisible();
         expect(await overflow(page)).toBe(0);
       });
+
+      test('a Coding if-block and its tiles have no sideways scroll, and the program clears the tiles', async ({ page }) => {
+        await page.addInitScript((p) => { localStorage.setItem('drill.progress', p); localStorage.setItem('drill.course', 'coding'); },
+          JSON.stringify({ ...emptyProgress(), picked: [], start: { coding: 'If and else' } }));
+        await page.goto('/');
+        await page.getByRole('button', { name: 'Continue · If there\'s a rock' }).click();
+        await continueButton(page).click(); // the teach card
+        await expect(page.locator('.block.if')).toBeVisible();
+        expect(await overflow(page)).toBe(0);
+        const program = await page.locator('.program').boundingBox();
+        const tiles = await page.locator('.tiles').boundingBox();
+        expect(program.y + program.height).toBeLessThanOrEqual(tiles.y);
+      });
     });
   }
 }
@@ -1081,4 +1097,83 @@ test('under reduced motion Calm stays quiet: no bell, no rain', async ({ page })
   await page.getByRole('button', { name: 'Continue · Five slow breaths' }).click();
   await expect(page.getByText('Breath 1 of 5')).toBeVisible();
   expect(await page.evaluate(() => [window.heard.tones.includes(528), window.heard.noise])).toEqual([false, 0]);
+});
+
+// Coding: tap-to-build programs Fennel runs on a grid. Answers come from the same runner the app uses.
+const codingCourse = JSON.parse(readFileSync(new URL('../../src/data/coding.json', import.meta.url)));
+const firstCoding = codingCourse.units[0].lessons[0];
+
+/** Plays one Coding item right: a build's tiles in a working order, or a predict's square. */
+async function solveCoding(page, item) {
+  if (item.type === 'build') {
+    for (const t of oneWay(item)) await page.locator('.tiles').getByRole('button', { name: typeof t === 'number' ? `${t} times` : `Step ${t}`, exact: true }).click();
+  }
+  if (item.type === 'predict') {
+    const [x, y] = stopsAt(item);
+    await page.getByRole('button', { name: `Column ${x + 1}, row ${y + 1}` }).click();
+  }
+  await expect(continueButton(page), item.id).toBeInViewport();
+}
+
+test('intro: Coding is a live course; picking it puts Learning first, showing Coding', async ({ page }) => {
+  await toStepTwo(page);
+  await pick(page, 'Learn something').click();
+  await expect(page.getByRole('button', { name: 'Coding · coming soon' })).toHaveCount(0);
+  await pick(page, 'Coding').click();
+  await expect(pick(page, 'Coding')).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Show my home' }).click();
+  await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
+  await expect(page.getByText('Coding is first. Start with the button below.')).toBeVisible();
+  await expect(page.locator('[data-course="coding"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: `Continue · ${firstCoding.title}` })).toBeVisible();
+  await page.locator('[data-course="chess"]').click();
+  await expect(page.getByRole('button', { name: `Continue · ${first.title}` })).toBeVisible();
+  await page.reload();
+  await expect(page.locator('[data-course="chess"]')).toHaveAttribute('aria-pressed', 'true'); // remembered
+});
+
+test('Coding: a full first lesson with Fennel, a wrong run shown and replayed, then a review', async ({ page }) => {
+  await firstVisit(page);
+  await page.getByRole('button', { name: 'Coding', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Done some coding already? Skip ahead' })).toBeVisible();
+  await page.getByRole('button', { name: `Continue · ${firstCoding.title}` }).click();
+  await expect(page.locator('.who svg.cast-fennel')).toBeVisible();
+  const [teach, one, ...rest] = firstCoding.items;
+  await solveCoding(page, teach);
+  await continueButton(page).click();
+  // The first build, wrong on purpose: it runs the moment the hole is filled, and one way is shown.
+  await page.locator('.tiles').getByRole('button', { name: 'Step left', exact: true }).click();
+  await expect(page.locator('.foot.wrong')).toBeVisible();
+  await expect(page.locator('.program.shown')).toBeVisible();
+  await expect(page.locator('.tiles button:not(:disabled)')).toHaveCount(0);
+  await continueButton(page).click();
+  for (const item of rest) {
+    await solveCoding(page, item);
+    await continueButton(page).click();
+  }
+  await solveCoding(page, one); // the missed one comes back once, at the end
+  await continueButton(page).click();
+  const marked = firstCoding.items.filter((i) => i.type !== 'teach').length;
+  await expect(page.getByText(`${marked - 1} of ${marked} right first try`)).toBeVisible();
+  await expect(page.locator('.summary svg.cast-fennel')).toBeVisible();
+  await continueButton(page).click();
+  await expect(tab(page, 'Learning')).toHaveAccessibleName('Learning, 1-day streak');
+  await expect(page.getByRole('button', { name: `${firstCoding.title}, done` })).toBeVisible();
+
+  // Ten days on, the lesson's cards are due: a review plays them with the same runner.
+  await page.clock.install({ time: new Date(Date.now() + 10 * 86400e3) });
+  await page.reload();
+  await page.getByRole('button', { name: /to review/ }).click();
+  const keys = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('drill.progress')).cards));
+  expect(keys.length).toBe(marked);
+  expect(keys.every((k) => k.startsWith('coding:'))).toBe(true);
+  for (let i = 0; i < marked; i++) {
+    await expect(page.locator('.topic')).toHaveText(codingCourse.units[0].title);
+    // Which item is on screen: its prompt is in Fennel's bubble.
+    const said = await page.locator('.bubble').textContent();
+    await solveCoding(page, firstCoding.items.find((x) => x.prompt === said));
+    await continueButton(page).click();
+  }
+  await expect(page.locator('.kicker')).toHaveText('Review done');
+  await expect(page.getByText(`${marked} of ${marked} recalled`)).toBeVisible();
 });

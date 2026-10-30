@@ -16,6 +16,10 @@ import moveCourse from './data/move.json' with { type: 'json' };
 import * as move from './move/practice.js';
 import { clover, demo as cloverDemo, NAME as CLOVER } from './cast/clover.js';
 import { mira, demo as miraDemo, NAME as MIRA } from './cast/mira.js';
+import codingCourse from './data/coding.json' with { type: 'json' };
+import * as coding from './coding/exercise.js';
+import { fennel, NAME as FENNEL } from './cast/fennel.js';
+import { CODING_HEADLINES, CODING_LINES } from './cast/lines.js';
 
 /**
  * The contract. A subject is a course plus one `mount(el, item, { say, done })` that plays a
@@ -40,6 +44,10 @@ import { mira, demo as miraDemo, NAME as MIRA } from './cast/mira.js';
  * in the habit view (Reflect's own lines); `placement`, { offer, question, options: [[label, unitTitle]] }:
  * an optional question home offers by the subject's path (`offer` is the link) to start further on.
  * It never stands in the way: answering opens the path at that unit, dismissing it hides the offer.
+ * A learn subject's coach may bring its own `headlines` for the end screen (default: Rosa's HEADLINES).
+ *
+ * Several subjects can feed one habit (Learning has chess and coding): home shows one of them at a
+ * time, with a row to switch, and the intro picks courses by subject id (see `ordered`).
  */
 /** The built-in habits, in the order the home bar shows them. `habitsFor(progress)` adds the learner's own. */
 export const HABITS = [
@@ -89,10 +97,12 @@ export function habitsFor(progress) {
  * `list` (habitsFor's) with the ids the learner picked in the intro first, in the order picked, then
  * the rest as they were. An id no longer in the list is passed over. The one place home is ordered.
  */
-export const ordered = (list, picked = []) => [
-  ...picked.map((id) => list.find((h) => h.id === id)).filter(Boolean),
-  ...list.filter((h) => !picked.includes(h.id)),
-];
+export function ordered(list, picked = []) {
+  const ids = [...new Set(picked.map(habitOfPick))];
+  return [...ids.map((id) => list.find((h) => h.id === id)).filter(Boolean), ...list.filter((h) => !ids.includes(h.id))];
+}
+/** A pick is a habit id, or a course's subject id ('coding'), which stands for that course's habit. */
+export const habitOfPick = (id) => subjects.find((s) => s.id === id && s.kind === 'learn')?.habit ?? id;
 
 // Chess from zero comes first (the board, how pieces move, capturing, check and mate), then the
 // hand-written Forks unit, whose Lichess puzzles join it as its last lessons; the other Lichess
@@ -117,6 +127,21 @@ export const subjects = [{
       ['I know how the pieces move', 'Capturing'],
       ['I play now and then', 'Forks'],
       ['I play often and know some tactics', 'Mate in one'],
+    ],
+  },
+}, {
+  ...codingCourse,
+  mount: coding.mount,
+  habit: 'learn',
+  kind: 'learn',
+  coach: { draw: fennel, name: FENNEL, start: 'think', lines: CODING_LINES, headlines: CODING_HEADLINES },
+  placement: {
+    offer: 'Done some coding already? Skip ahead',
+    question: 'Have you made a program before?',
+    options: [
+      ["I've never coded", 'Step by step'],
+      ['I know steps run in order', 'Loops'],
+      ['I know loops too', 'If and else'],
     ],
   },
 }, {

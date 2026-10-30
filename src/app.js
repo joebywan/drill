@@ -1,10 +1,9 @@
-import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
+import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitOfPick, habitsFor, ordered, subjects } from './subjects.js';
 import { award, garden, moreArrived, plantWords } from './garden/model.js';
 import { PLANTS, animateScene, animateVisitor, drawGarden, flower, plant, sway, visitor } from './garden/art.js';
 import { emptyProgress, unitsOf, finishPractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
-import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
 import { reducedMotion } from './cast/kit.js';
 import { CALM_SOUNDS, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
@@ -73,6 +72,22 @@ function showHabit(id) {
   try { localStorage.setItem(HABIT_KEY, id); } catch { /* lasts the visit */ }
 }
 
+// The course home shows when a habit has several (Learning: chess, coding). Remembered like the habit;
+// with none chosen, the first course picked in the intro, else the first.
+const COURSE_KEY = 'drill.course';
+let courseShown = (() => { try { return localStorage.getItem(COURSE_KEY); } catch { return null; } })();
+function showCourse(id) {
+  courseShown = id;
+  try { localStorage.setItem(COURSE_KEY, id); } catch { /* lasts the visit */ }
+}
+/** The subjects on `habit`'s path: all of them, or the one course shown when there are several. */
+function pathOf(habit) {
+  const all = subjects.filter((s) => s.habit === habit);
+  if (all.length < 2) return { all, shown: all };
+  const id = courseShown ?? progress.picked?.find((p) => all.some((s) => s.id === p));
+  return { all, shown: [all.find((s) => s.id === id) || all[0]] };
+}
+
 const ROW = 112; // px from one node to the next; the drawn path assumes it
 const SWAY = 70; // px a node sits off centre at most
 
@@ -92,17 +107,19 @@ function home(arrived = null, newly = []) {
   // A repair needs a review even when nothing is due yet: then the soonest cards stand in.
   const repair = learning && needsRepair(progress);
   const reviewKeys = (due.length ? due : repair ? soonestKeys(progress).filter((k) => items.has(k)) : []).slice(0, REVIEW_SIZE);
-  const units = subjects.filter((s) => s.habit === habitShown).flatMap((s) => unitsOf(progress, s));
+  const path = pathOf(habitShown);
+  const units = path.shown.flatMap((s) => unitsOf(progress, s));
   // The next lesson, from the placement question's starting unit on.
   const from = Math.max(0, units.findIndex((u) => u.placed));
   // A subject's optional placement question, offered by its path until answered or dismissed.
-  const offer = subjects.find((s) => s.habit === habitShown && offersPlacement(progress, s));
+  const offer = path.shown.find((s) => offersPlacement(progress, s));
   const brandNew = !progress.log.length && !Object.keys(progress.done).length;
   // After the intro, Lumi's welcome names the first thing picked.
-  const firstPick = brandNew && habitOf(progress.picked?.[0]);
+  const firstCourse = subjects.find((s) => s.id === progress.picked?.[0] && s.kind === 'learn');
+  const firstPick = brandNew && (firstCourse ? firstCourse.title : habitOf(progress.picked?.[0])?.name);
   const current = [...units.slice(from), ...units].flatMap((u) => u.nodes).find((n) => n.state === 'open');
   // A finished path whose subject has `again` ("Reflect today") keeps one of its lessons one tap away.
-  const again = !current && subjects.find((s) => s.habit === habitShown)?.again;
+  const again = !current && path.shown[0]?.again;
   const repeat = again && units.flatMap((u) => u.nodes).find((n) => n.lesson.id === again.lesson);
   const minutes = `about ${Math.max(1, Math.round(reviewKeys.length * 0.4))} min`;
   const dueChip = !reviewKeys.length ? ''
@@ -150,9 +167,10 @@ function home(arrived = null, newly = []) {
         ${habits().filter((h) => !h.hidden).map(habitTab).join('')}
         <button class="path-tab add-tab" data-add aria-label="Add a habit">${esc(LOG_WORDS.addTab)}</button>
       </nav>
-      ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick.name) : line('welcome'))}</p>` : ''}
+      ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : ''}
       ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
         : TIMINGS[habitShown] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
+      ${path.all.length > 1 ? `<nav class="courses" aria-label="Course">${path.all.map((s) => `<button class="course-tab" data-course="${esc(s.id)}" aria-pressed="${s === path.shown[0]}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
       ${offer ? `<p class="offer"><button data-place>${esc(offer.placement.offer)}</button><button class="dismiss" data-dismiss aria-label="Dismiss">×</button></p>` : ''}
       ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly) : ''}
       ${units.map((u) => `
@@ -213,6 +231,9 @@ function home(arrived = null, newly = []) {
   tabs.addEventListener('scroll', edges, { passive: true });
   for (const b of app.querySelectorAll('[data-path]')) {
     b.addEventListener('click', () => { showHabit(b.dataset.path); home(); focusOn(`[data-path="${b.dataset.path}"]`); });
+  }
+  for (const b of app.querySelectorAll('[data-course]')) {
+    b.addEventListener('click', () => { showCourse(b.dataset.course); home(); focusOn(`[data-course="${b.dataset.course}"]`); });
   }
   app.querySelector('[data-add]').addEventListener('click', addHabit);
   app.querySelector('[data-log]')?.addEventListener('click', () => {
@@ -645,7 +666,7 @@ function run(lessonId, queue, title) {
         meter();
         shine();
         foot.className = `foot show ${correct === null ? 'plain' : correct ? 'right' : 'wrong'}`;
-        foot.querySelector('strong').textContent = kind === 'plain' ? '' : line(kind);
+        foot.querySelector('strong').textContent = kind === 'plain' ? '' : line(kind, Math.random(), who.lines);
         foot.querySelector('p').textContent = text;
         // Focus moves to Continue, which reads out the verdict (a teach card: Rosa's line). The
         // banner is fixed over the bottom, so nothing on the page moves.
@@ -742,8 +763,8 @@ function run(lessonId, queue, title) {
           <p class="cheer">${esc(line('lumi'))}</p>
         </div>
         <p class="kicker">${esc(lessonId ? title : 'Review done')}</p>
-        <h1>${esc(headline(kind))}</h1>
-        <p class="said">${esc(line(kind))}</p>
+        <h1>${esc(headline(kind, Math.random(), who.headlines))}</h1>
+        <p class="said">${esc(line(kind, Math.random(), who.lines))}</p>
         <div class="chips">
           ${percent === null ? '' : chip('acc', accuracyLabel(percent), `${percent}%`)}
           ${chip('time', pace, clock)}
@@ -754,7 +775,7 @@ function run(lessonId, queue, title) {
       </main>
       <footer class="cta"><button class="next">Continue</button></footer>`;
     const [rosaEl, lumiEl] = app.querySelectorAll('.duo .hero');
-    const cast = [coach(rosaEl, rosa), coach(lumiEl, lumi)];
+    const cast = [coach(rosaEl, who.draw), coach(lumiEl, lumi)];
     let left = false;
     for (const c of cast) c.set('correct');
     // The high five: both lean in and hop, a spark where the hands meet, then a proud bounce.
@@ -968,8 +989,9 @@ function intro() {
 function want(change = false) {
   const courses = subjects.filter((s) => s.kind === 'learn');
   const list = [...HABITS.filter((h) => !courses.some((s) => s.habit === h.id)), ...PRESETS];
-  const branch = { learn: courses.map((s) => s.habit), habits: list.map((h) => h.id) };
-  let picked = (progress.picked || []).filter((id) => branch.learn.includes(id) || branch.habits.includes(id));
+  const branch = { learn: courses.map((s) => s.id), habits: list.map((h) => h.id) };
+  // Picks from before courses were picked by id said 'learn': that was chess, the first course.
+  let picked = (progress.picked || []).map((id) => (id === 'learn' ? courses[0].id : id)).filter((id) => branch.learn.includes(id) || branch.habits.includes(id));
   const on = (id) => picked.includes(id);
   const toggle = (attr, id, pressed, label) => `<button class="choice" ${attr}="${esc(id)}" aria-pressed="${pressed}">${label}</button>`;
   const open = (b) => branch[b].some(on);
@@ -980,8 +1002,8 @@ function want(change = false) {
       ${toggle('data-want', 'learn', open('learn'), esc(INTRO_WORDS.learn))}
       <section class="branch" data-branch="learn"${open('learn') ? '' : ' hidden'}>
         <h2>${esc(INTRO_WORDS.courses)}</h2>
-        ${courses.map((s) => toggle('data-pick', s.habit, on(s.habit), esc(s.title))).join('')}
-        ${INTRO_WORDS.soonCourses.map((n) => `<button class="choice" disabled>${esc(n)} <small>· ${esc(INTRO_WORDS.soon)}</small></button>`).join('')}
+        ${courses.map((s) => toggle('data-pick', s.id, on(s.id), esc(s.title))).join('')}
+        ${INTRO_WORDS.soonCourses.filter((n) => !courses.some((s) => s.title === n)).map((n) => `<button class="choice" disabled>${esc(n)} <small>· ${esc(INTRO_WORDS.soon)}</small></button>`).join('')}
       </section>
       ${toggle('data-want', 'habits', open('habits'), esc(INTRO_WORDS.habits))}
       <section class="branch" data-branch="habits"${open('habits') ? '' : ' hidden'}>
@@ -1026,7 +1048,9 @@ function choose(picked) {
   for (const id of picked) if (PRESETS.some((p) => p.id === id)) progress = track(progress, { id, hidden: false });
   progress = { ...progress, picked };
   save();
-  if (picked.length) showHabit(picked[0]);
+  if (picked.length) showHabit(habitOfPick(picked[0]));
+  const course = picked.find((id) => subjects.some((s) => s.id === id && s.kind === 'learn'));
+  if (course) showCourse(course);
   scrollTo(0, 0); // home starts at its top, not where the list was scrolled to
   home();
   focusOn(picked.length ? '.cta .next' : 'h1');
