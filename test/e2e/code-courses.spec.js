@@ -17,7 +17,11 @@ async function solve(page, item) {
     for (const w of wordsFor(item)) await chip(page, w).click();
     await page.getByRole('button', { name: 'Run', exact: true }).click();
   }
-  if (item.type === 'predict') await page.locator('.choices .choice').filter({ hasText: new RegExp(`^${optionsOf(item).answer.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\n/g, '\\s*')}$`) }).first().click();
+  if (item.type === 'predict') {
+    const { answer } = optionsOf(item);
+    const texts = await page.locator('.choices .choice').allTextContents(); // exact: "one two" is not "one\ntwo"
+    await page.locator('.choices .choice').nth(texts.indexOf(answer)).click();
+  }
   await expect(continueButton(page), item.id).toBeInViewport({ timeout: 15000 });
 }
 
