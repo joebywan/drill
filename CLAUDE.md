@@ -71,6 +71,13 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   time (`courseShown`, the switcher under the tabs, remembered in `drill.course`), and reviews that
   course's cards so its coach runs them. The intro picks courses by course id; `choose()` turns them
   into the Learning tab. A Learn coach's `lines`/`headlines` replace Rosa's in the runner and end screen.
+- **Chess games** (`src/chess/games.js`, the "Games" row on chess's home, a subject's `games`): replayable modes, each a one-entry session
+  for `run()` whose mount never calls `done`, so nothing is scored, scheduled or logged; a `.foot` banner ends a game and its button remounts it.
+  **Mate** (`mate.js`, `prover.js`, `prover-worker.js`): Daybook's game. `prover.js` is a port of its mate search on its own small
+  board, because chess.js is far too slow to prove a mate in 4; it has no imports so it can run in a Worker (import maps don't reach workers).
+  `src/data/mate.json` comes from `node tools/mate-positions.js`, Lichess CC0 (`docs/chess-positions/NOTICE.md`). Lazy-loaded. **Scramble** (`capture.js`): our own
+  capture game; pure rules on chess.js, the best on the device in `drill.capture.best`. **Play Rosa** (`engine.js`): alpha-beta on chess.js as a
+  generator, run in timer slices so the page stays live; `LEVELS` is its four levels. Words in `GAME_WORDS`, linted.
 - `src/quiz/` — course-free tap-and-match items any course can use: `teach` (a big glyph or word),
   `pick` (one tap; `listen` plays the sound instead of showing it when there is a voice), `pairs`
   (match two columns), `build` (tap tiles in order). `items.js` is pure (`problem()`), `exercise.js`
@@ -151,8 +158,8 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `demo()` adapter in `src/practice/kit.js`, which calls the subject coach's own `demo` (Clover,
   `src/cast/clover.js`). The screen break shares it with Mira (`src/cast/mira.js`, a lemur with big
   amber eyes) demonstrating each of its steps; both are posed with `rig()` in `src/cast/kit.js`.
-  "How?" opens the step's guidance (`how` in
-  `src/break/routines.js`) with the routine paused. Course in `src/data/move.json`:
+  Both play through `coached()` in kit.js: the step and its time, how to do it (`how`), what's next, and
+  a first-step room check, with no tap needed. Every timed routine's pause (`pauseButton`) is round and beside the coach. Course in `src/data/move.json`:
   Wake up, Strength (reps grow 5, 8, 10), Stretch. Guardrails bar pushing and body or weight
   words, and check the safety line is on the first lesson and after "Not really".
 - **Calm is not therapy.** `test/guardrails.test.js` bars health claims, diagnosis words and urgency
@@ -211,6 +218,8 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   learner's own from `progress.tracked`. `logToday`/`unlogToday`/`track` in progress.js; the tab's
   panel, the "+ Habit" sheet and the make-your-own form in app.js (`logPanel`, `addHabit`,
   `editHabit`). Learners' habit names are never linted and always escaped.
+- Home's top is kept short so the next lesson's node shows without scrolling at 360x640 (`layouts.spec.js`):
+  a cropped garden strip, the courses in one row, and "Skip ahead" in the footer, under Continue.
 - Home lists each habit once: one row of tabs (icon, name, streak coloured by `light()`) that
   scrolls inside itself. The bar is just the title, Sound and ⋯, and fits at 360px with every habit.
 - `src/fitting.js` — pure: fitting the person from the on-device log (docs/TODO.md "Fitting the
@@ -248,6 +257,10 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   (`DrillBridge`), which has no internet permission, the ⋯ section is hidden and sync never runs
   (`available()`). The card's name and animal are `progress.look` ({ word, animal, at }), synced, the
   latest pick winning.
+- `src/nav.js` — the phone's back button, on web and in the wrapper with no Kotlin. It watches #app, so
+  every screen change goes through it with nothing to call: a screen needs only a back control `BACK`
+  matches (`.close`, `.back`, `[data-back]`…), which back presses; a screen with none counts as home,
+  and back there leaves the app. An open `<dialog>` closes first. A new screen that isn't home must have one.
 - `src/feel.js` — synthesised sounds (mute on the home bar), haptics, and `move()`, which skips
   animation under reduced motion. Lesson moments go through it: `cue(name)` (sound and buzz; the
   sound follows the Sound toggle only, reduced motion skips just the animations) for right, run, wrong, done and unlock;
@@ -307,19 +320,28 @@ after `npm ci` at the root. App id `com.joebywan.drill`, locked.
 - **Every shipped puzzle is replayed in a test.** If the data or `tryMove` drift, it fails.
 - **Every shipped item passes `problem()` and has an explanation.** Tap and true/false answers
   are computed from the position, never stored.
-- **Sessions adapt.** `src/adapt.js` reads `progress.answers` (each answer: key, right, ms, on the device, last 400). A miss
-  comes back up to `GOES` times, fresh; two misses in a unit's last four answers inserts that unit's second explanation
-  (`src/data/help.json`, every Learn unit has one) and a smaller earlier item, once a session; repeats favour what was
-  missed; 8 right in a row in a course cuts echoes to 1. Only the first try schedules a card.
-- **Sessions drill.** `src/repeat.js`: a lesson opens with up to 2 earlier cards (the closest to slipping), ends
-  with up to 3 of its own items again ("Once more", not rescheduled), and each unit ends in a Checkpoint mixing
-  it (`mix`). A subject's `vary(item, random)` makes a repeat fresh: Coding and Maths items with a `family` play a
-  precomputed entry from `src/data/{coding,maths}-variants.json` (written by `npm run variants`, `tools/variants.js`:
-  templates work out level, program, tiles and words, fixed seed, `test/variants.test.js` checks the bytes; never
-  hand-edit a pool), a count item never with the same number, Coding flipped at random too. Without a family, Coding
-  flips the map; Chess mirrors a stars puzzle; returning the item means "worth repeating as written" (Japanese, Maths
-  without a family), null means "don't" (a real-game puzzle). A new read or build item joins a family only if that
-  family uses nothing taught after it. The card key stays the original's. E2E flows set `window.DRILL_PLAIN` (`test/e2e/fixtures.js`).
+- **Sessions adapt.** `src/adapt.js` reads `progress.answers` (each answer: key, right, ms, `hinted?`, `warm?`, on the device,
+  last 400). A session finishes on evidence (`nextGo`, `comeBack` in repeat.js): a missed item, echoes included, comes back
+  fresh until one right lands it, two in a row if it was missed more than once, within `GOES` (4) goes and `RETRIES` (5)
+  repeats a session, then it is left for review with a kind line (`MOVE_ON`). Right first time adds nothing. A miss drops
+  that item's pending echo. Two misses in a unit's last four answers (a right after a hint, reported through `done`'s
+  `{ hinted }`, counts as a miss and otherwise plays as one) inserts a second explanation (`helpFor`:
+  `src/data/lesson-help.json` where a lesson has its own, else `src/data/help.json`, every Learn unit has one) and a smaller
+  earlier item, once a session, and drops the remaining echoes; repeats favour what was missed; 8 clean rights in a row in
+  a course cuts echoes to 1. Only the first try schedules a card.
+- **Sessions drill.** `src/repeat.js`: a lesson opens with up to 2 earlier cards (the closest to slipping, never the ones that
+  opened the last lesson, read from the log's `warm`), ends with up to 2 of its own items again ("Once more", not
+  rescheduled), and each unit ends in a Checkpoint mixing it (`mix`). A subject's `vary(item, random)` makes a repeat fresh:
+  Coding and Maths items with a `family` play a precomputed entry from `src/data/{coding,maths}-variants.json` (written by
+  `npm run variants`, `tools/variants.js`: templates work out level, program, tiles and words, fixed seed,
+  `test/variants.test.js` checks the bytes; never hand-edit a pool), a count item never with the same number, Coding flipped
+  at random too. Without a family, Coding flips the map. Japanese (`src/quiz/vary.js`, works for any script course) asks the
+  other way round or by ear, with decoys only from kana taught by that point on the path. Chess mirrors stars, and `move`
+  and `find` items where safe (no castling; never text naming a wing or square colour; `problem()` must pass, else null):
+  `echoable` keeps a real-game puzzle out of its own session. Returning the item means "worth repeating as written", null
+  means "don't". A new read or build item joins a family only if that family uses nothing taught after it. The card key
+  stays the original's. `node tools/sessions.js` prints how long sessions get; `test/sessions.test.js` holds the bound.
+  E2E flows set `window.DRILL_PLAIN` (`test/e2e/fixtures.js`).
 - **The streak forgives.** One missed day in any seven is forgiven automatically; a gap of up
   to three days (or a second miss that week) is repaired by a review. A lesson finished in a
   repairable gap leaves the streak waiting for that review. Rules in `progress.js`, tested with
@@ -364,6 +386,6 @@ What is still open: `docs/TODO.md` ("Still open") and `docs/HABITS.md`.
   `ordered()` in subjects.js; picked one-tap habits are switched on with `track()`. Skip is today's
   home (Lumi's welcome line, the garden, every habit). Shown once (`showsIntro`); saves from before
   v7 never see it. The ⋯ menu's "Change what you see" reopens the second step. It never asks placement. Placement is an optional part of a subject: its `placement` (chess has one) shows as a
-  "Skip ahead" link by its path; the question then suggests a starting unit, or the learner starts
+  "Skip ahead" link under Continue; the question then suggests a starting unit, or the learner starts
   from the beginning. Answering or dismissing (×) hides the offer for good (`progress.start`, per
   subject), and so does finishing the subject's first unit; starting a lesson never asks. Units before the start stay open.

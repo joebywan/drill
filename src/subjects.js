@@ -5,7 +5,8 @@ import tactics from './data/tactics.json' with { type: 'json' };
 import calmCourse from './data/calm.json' with { type: 'json' };
 import reflectCourse from './data/reflect.json' with { type: 'json' };
 import * as chess from './chess/exercise.js';
-import { vary as chessVary } from './chess/items.js';
+import { CHESS_GAMES } from './chess/games.js';
+import { echoable as chessEchoable, vary as chessVary } from './chess/items.js';
 import { vary as codingVary } from './coding/program.js';
 import { withCheckpoint } from './repeat.js';
 import { rosa } from './cast/rosa.js';
@@ -25,6 +26,7 @@ import { clover, demo as cloverDemo, NAME as CLOVER } from './cast/clover.js';
 import { mira, demo as miraDemo, NAME as MIRA } from './cast/mira.js';
 import japaneseCourse from './data/japanese.json' with { type: 'json' };
 import * as quiz from './quiz/exercise.js';
+import { varier } from './quiz/vary.js';
 import mathsCourse from './data/maths.json' with { type: 'json' };
 import * as maths from './maths/exercise.js';
 import { vary as mathsVary } from './maths/items.js';
@@ -58,7 +60,7 @@ import { CODING_HEADLINES, CODING_LINES, HELLO } from './cast/lines.js';
  * question in the habit's own words (Focus: "How did it go?"),
  * and `demonstrates`, for a coach the learner copies, which is drawn large above their line.
  * A Learn coach's `lines` and `headlines` stand in for Rosa's LINES and HEADLINES (same kinds).
- * `vary(item, random)`: a fresh version of an item for a repeat (see src/repeat.js).
+ * `vary(item, random)`: a fresh version of an item for a repeat, `echoable(item)`: whether it may echo (see src/repeat.js).
  * `hello`, { line, expect, go }: a Learn coach's one-time introduction before the course's first lesson.
  * Sessions and both end screens read everything subject-specific from here.
  *
@@ -66,6 +68,7 @@ import { CODING_HEADLINES, CODING_LINES, HELLO } from './cast/lines.js';
  * which runs that lesson again ("Reflect today", "Breathe"); `dayDetail(progress, date)`, extra html under a day's sessions
  * in the habit view (Reflect's own lines); `placement`, { offer, question, options: [[label, unitTitle]] }:
  * an optional question home offers by the subject's path (`offer` is the link) to start further on;
+ * `games`, [{ id, label, entry }]: replayable modes in a small row on the course's home, each `entry` run as a session (chess/games.js);
  * `varied`, { key: [values] }: a timing marked `varies` in TIMINGS, as the routine has it per step.
  * It never stands in the way: answering opens the path at that unit, dismissing it hides the offer.
  * `timings`, another habit's id whose own timings this subject plays by (Wind down plays Calm's);
@@ -139,14 +142,13 @@ const forksUnit = {
   ...forks,
   lessons: [...forks.lessons, ...lichessForks.lessons.map((l) => ({ ...l, title: `Real games: ${l.title}` }))],
 };
-// Worth repeating as written until a course can make fresh versions: a kana.
-const asWritten = (item) => item;
-
 export const subjects = [{
   ...chessCourse,
   units: [...basics.units, forksUnit, ...chessCourse.units.filter((u) => u.title !== 'Forks').map(taught)].map(withCheckpoint),
   mount: chess.mount,
   vary: chessVary,
+  games: CHESS_GAMES,
+  echoable: chessEchoable,
   habit: 'learn',
   kind: 'learn',
   coach: { draw: rosa, name: 'Rosa', start: 'think', hello: HELLO.rosa },
@@ -182,7 +184,7 @@ export const subjects = [{
   // Hiragana from zero, played with the generic tap-and-match items in src/quiz/.
   ...japaneseCourse,
   units: japaneseCourse.units.map(withCheckpoint),
-  vary: asWritten,
+  vary: varier(japaneseCourse),
   mount: (el, item, ctx) => quiz.mount(el, item, { ...ctx, lang: japaneseCourse.lang }),
   habit: 'learn',
   kind: 'learn',

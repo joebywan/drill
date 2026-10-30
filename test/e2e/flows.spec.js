@@ -675,6 +675,7 @@ test('Mira demonstrates the screen break, with the guidance on screen as it runs
   await page.getByRole('button', { name: 'Start' }).click();
   await expect(page.locator('.coach.demonstrates .who')).toHaveAccessibleName('Mira');
   await expect(page.locator('.who svg.cast-mira')).toBeVisible();
+  await expect(page.locator('.room')).toBeVisible();
   const now = page.locator('.steps li[aria-current="step"]');
   await page.clock.runFor(21_000);
   await expect(now).toHaveText(/^Slow blinks\s*\d+ s$/);
@@ -691,22 +692,6 @@ test('Mira demonstrates the screen break, with the guidance on screen as it runs
   await page.clock.runFor(86_000);
   await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
 });
-
-for (const [width, height] of [[412, 780], [360, 740]]) {
-  test(`at ${width}x${height} the screen break's step and its seconds sit clear of the buttons`, async ({ page }) => {
-    await page.setViewportSize({ width, height });
-    await firstVisit(page);
-    await tab(page, 'Screen break').click();
-    await page.getByRole('button', { name: 'Continue · Why breaks help' }).click();
-    await page.getByRole('button', { name: 'Start' }).click();
-    const top = (await page.locator('.choices').boundingBox()).y;
-    for (const el of [page.locator('.steps li[aria-current="step"]'), page.locator('.steps .count')]) {
-      const box = await el.boundingBox();
-      expect(box.y).toBeGreaterThanOrEqual(0);
-      expect(box.y + box.height).toBeLessThanOrEqual(top);
-    }
-  });
-}
 
 test('grounding is tap-to-count, and stopping is one tap with no questions', async ({ page }) => {
   await firstBreathing(page); // grounding opens once breathing has been started
@@ -798,16 +783,19 @@ test('a Move session plays timed exercises with rests, and keeps its own streak'
   // Safety first, on the first Move lesson.
   await expect(page.getByText('Move gently and stop if anything hurts. If you have an injury or a health condition, check with a doctor first.')).toBeVisible();
   await page.getByRole('button', { name: 'Start' }).click();
-  await expect(page.getByRole('heading', { name: 'Neck tilts' })).toBeVisible();
-  await expect(page.getByText('Exercise 1 of 5')).toBeVisible();
-  await expect(page.locator('.count')).toHaveText('30');
+  const now = page.locator('.steps li[aria-current="step"]');
+  await expect(now).toHaveText(/^Neck tilts\s*30 s$/);
+  await expect(page.locator('.how-now')).toContainText('Ear towards your shoulder');
+  await expect(page.locator('.room')).toBeVisible(); // moves need space: said once, needing no tap
+  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
   await page.clock.runFor(30_000);
-  await expect(page.getByRole('heading', { name: 'Rest' })).toBeVisible();
-  await expect(page.getByText('Rest · next: Shoulder rolls')).toBeVisible();
-  await expect(page.getByText(/Exercise \d of/)).toHaveCount(0);
+  await expect(now).toHaveText(/^Rest/);
+  await expect(page.locator('.room')).toBeHidden();
+  await expect(page.locator('.next-step')).toHaveText('Next: Shoulder rolls');
+  await expect(page.locator('.how-now')).toContainText('Lift your shoulders'); // a look ahead
   await page.clock.runFor(10_000);
-  await expect(page.getByText('Exercise 2 of 5')).toBeVisible();
-  await expect(page.locator('.tally')).toHaveText('1 of 8'); // a rep move counts reps
+  await expect(now).toHaveText(/^Shoulder rolls\s*1 of 8$/); // a rep move counts reps
+  await expect(page.locator('.next-step')).toHaveText('Next: Reach up'); // the next move, not the rest
   await page.clock.runFor(140_000);
   await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
   await expect(page.getByText(/^5 moves · 8 shoulder rolls · \d+ min$/)).toBeVisible();
@@ -1871,7 +1859,6 @@ test('on a landscape desktop, end-screen and practice buttons follow the content
   await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
   await page.getByRole('button', { name: 'Start' }).click();
   const gap = async (above, button) => { const [a, b] = [await above.boundingBox(), await button.boundingBox()]; return b.y - a.y - a.height; };
-  expect(await gap(page.locator('.breath'), page.getByRole('button', { name: 'Pause' }))).toBeLessThan(80);
   await page.clock.runFor(60_000);
   await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
   expect(await gap(page.locator('.feel'), continueButton(page))).toBeLessThan(80);

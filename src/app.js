@@ -6,10 +6,9 @@ import { emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { lumi } from './cast/lumi.js';
-import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, echoes, fresh, warmUps } from './repeat.js';
-import { GOES, easier, flying, misses, noteAnswer, struggling } from './adapt.js';
-import unitHelp from './data/help.json' with { type: 'json' };
-import { CALM_SOUNDS, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
+import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, comeBack, dropEchoes, echoes, fresh, warmUps } from './repeat.js';
+import { GOES, easier, flying, helpFor, misses, noteAnswer, struggling, warmedLast } from './adapt.js';
+import { CALM_SOUNDS, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, setSound, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
 import { moment } from './cast/voice.js';
@@ -19,6 +18,7 @@ import { TIMINGS, TIMING_WORDS, pathTimings, setTiming, spread, timed } from './
 import { bridge, passNotes, sendArt, tellAndroid } from './widget.js';
 import { profile as syncProfile, sync } from './sync/sync.js';
 import { merge } from './sync/merge.js';
+import { navigation } from './nav.js';
 import { currentUnit, openSync, syncMenuHtml } from './sync/ui.js';
 
 const STORE = 'drill.progress';
@@ -82,8 +82,8 @@ function adopt(synced) {
 const items = new Map();
 for (const s of subjects)
   for (const u of s.units)
-    for (const l of u.lessons)
-      for (const item of l.items) items.set(`${s.id}:${item.id}`, { subject: s, item, topic: u.title });
+    for (const l of u.lessons.filter((x) => !x.mix)) // a checkpoint only repeats its unit's items
+      for (const item of l.items) items.set(`${s.id}:${item.id}`, { subject: s, item, topic: u.title, lesson: l.id });
 
 /**
  * A new screen replaces the page, so focus would fall back to the top of the document. This puts
@@ -238,11 +238,11 @@ function home(arrived = null, newly = []) {
       </div><div class="pane">
       ${learning && courses.length > 1 ? `<nav class="courses" aria-label="Course">${courses.map((s) =>
         `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === courseShown}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
+      ${learning && courseShown.games ? `<nav class="courses games" aria-label="Games"><span>Games</span>${courseShown.games.map((g) => `<button class="course" data-game="${g.id}">${esc(g.label)}</button>`).join('')}</nav>` : ''}
       ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : invite ? '' : greeting(shownHabit)}
       ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
         : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
       ${invite ? comebackCard(invite) : ''}
-      ${offer ? `<p class="offer"><button data-place>${esc(offer.placement.offer)}</button><button class="dismiss" data-dismiss aria-label="Dismiss">×</button></p>` : ''}
       ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly) : ''}
       ${units.map((u) => `
         <section class="street">
@@ -257,6 +257,7 @@ function home(arrived = null, newly = []) {
         : current ? `<button class="next" data-lesson="${current.id}">Continue · ${esc(current.lesson.title)}</button>`
         : repeat ? `<button class="next" data-lesson="${repeat.id}">${esc(again.label)}</button>` : ''}
       ${short ? `<button class="link short" data-short>${esc(short.words)}</button>` : ''}
+      ${offer ? `<p class="offer"><button data-place>${esc(offer.placement.offer)}</button><button class="dismiss" data-dismiss aria-label="Dismiss">×</button></p>` : ''}
     </footer>`;
 
   const stopGarden = liven(app.querySelector('.garden-link'));
@@ -311,6 +312,9 @@ function home(arrived = null, newly = []) {
   for (const b of app.querySelectorAll('[data-course]')) {
     b.addEventListener('click', () => { showCourse(b.dataset.course); home(); focusOn(`[data-course="${b.dataset.course}"]`); });
   }
+  for (const b of app.querySelectorAll('[data-game]')) {
+    b.addEventListener('click', () => run(null, [courseShown.games.find((g) => g.id === b.dataset.game).entry]));
+  }
   app.querySelector('[data-log]')?.addEventListener('click', () => {
     progress = logToday(progress, habitShown, shownHabit.title);
     let got;
@@ -364,8 +368,8 @@ function lessonQueue({ subject, lesson: l }) {
   const missed = misses(progress.answers);
   const weight = (item) => missed[`${subject.id}:${item.id}`] ?? 0;
   const inCourse = (k) => items.get(k)?.subject === subject;
-  const warm = warmUps(progress.cards, inCourse, keys, WARM_UPS, missed)
-    .map((k) => ({ ...items.get(k), key: k, item: fresh(subject, items.get(k).item), topic: 'Warm up' }));
+  const warm = warmUps(progress.cards, inCourse, keys, WARM_UPS, missed, warmedLast(progress.answers, inCourse, WARM_UPS))
+    .map((k) => ({ ...items.get(k), key: k, item: fresh(subject, items.get(k).item), topic: 'Warm up', warm: true }));
   return [...warm, ...own, ...echoes(subject, l.items, Math.random, flying(progress.answers, inCourse) ? 1 : ECHOES, weight).map(({ item, source }) => ({ ...entry(item, source), topic: 'Once more', echo: true }))];
 }
 
@@ -829,19 +833,20 @@ function run(lessonId, queue, title, extra = null) {
       help: who.help,
       timings: extra ? { ...progress.timings?.[timingsOf(entry.subject.habit)], ...extra } : progress.timings?.[timingsOf(entry.subject.habit)],
       reached: (step, of) => { reached = { step, of }; },
-      done: (correct, text = '', kept = null) => {
+      done: (answered, text = '', kept = null) => {
         // A practice item goes straight on: its own buttons were the Continue.
         if (practice) { if (text) did.push(text); if (kept) journal = kept; at++; return step(); }
+        // Right after a hint is logged as that, but plays as a miss: it doesn't schedule or land.
+        const hinted = !!kept?.hinted;
+        const correct = hinted ? false : answered;
         // Only the first try schedules a card, and an echo is a second go at something just learned.
         if (correct !== null && !entry.retry && !entry.echo) results.push({ key: entry.key, correct });
-        const goes = entry.goes ?? 1;
         const plain = window.DRILL_PLAIN;
         // A miss comes back at the end, fresh where it can be, until it lands or runs out of goes.
-        if (correct === false && !entry.echo && goes < (plain ? 2 : GOES)) {
-          queue.push({ ...entry, retry: true, goes: goes + 1, item: plain ? entry.item : fresh(entry.subject, items.get(entry.key)?.item ?? entry.item) });
-        }
+        const leftForReview = comeBack(queue, at, entry, correct,
+          () => (plain ? entry.item : fresh(entry.subject, items.get(entry.key)?.item ?? entry.item)), plain ? 2 : GOES);
         if (correct !== null && entry.key) {
-          progress = noteAnswer(progress, { key: entry.key, right: correct, ms: Date.now() - shownAt });
+          progress = noteAnswer(progress, { key: entry.key, right: answered, ms: Date.now() - shownAt, hinted, warm: entry.warm && !entry.retry });
           save();
         }
         at++;
@@ -865,7 +870,7 @@ function run(lessonId, queue, title, extra = null) {
         shine();
         foot.className = `foot show ${correct === null ? 'plain' : correct ? 'right' : 'wrong'}`;
         foot.querySelector('strong').textContent = kind === 'plain' ? '' : line(kind, Math.random(), who.lines);
-        foot.querySelector('p').textContent = text;
+        foot.querySelector('p').textContent = leftForReview ? `${text} ${MOVE_ON}` : text;
         // The answer tapped (or, on a board, the verdict) pops when right and gives a small shake when
         // not, unless the item already gave it its own (a quiz's cheer).
         const hit = correct === null ? null : stage.querySelector(correct ? '.choice.right' : '.choice.wrong') || foot.querySelector('strong');
@@ -945,10 +950,11 @@ function run(lessonId, queue, title, extra = null) {
     eased.add(known.topic);
     const list = subject.units.find((u) => u.title === known.topic).lessons.filter((l) => !l.mix).flatMap((l) => l.items);
     const smaller = easier(list, known.item);
-    const text = unitHelp[subject.id]?.[known.topic];
+    const text = helpFor(subject.id, known.topic, known.lesson);
+    dropEchoes(queue, at); // the step back and the repeats are plenty
     queue.splice(at, 0, ...[
       text && { subject, topic: 'One step back', item: { id: 'help', type: 'teach', text } },
-      smaller && { subject, key: `${subject.id}:${smaller.id}`, topic: 'One step back', item: smaller, echo: true },
+      smaller && { subject, key: `${subject.id}:${smaller.id}`, topic: 'One step back', item: smaller, echo: true, once: true },
     ].filter(Boolean));
   };
 
@@ -1068,6 +1074,7 @@ function suggest(subject, unit) {
       <p class="said">That's where Lumi suggests you begin. The lessons before it stay open, if you want a refresher.</p>
       <button class="next" data-start>Start at ${esc(unit)}</button>
       <button class="choice" data-first>Start from the beginning</button>
+      <button class="link" data-back>Back</button>
     </main>`;
   const guide = coach(app.querySelector('.hero'), lumi);
   guide.set('correct');
@@ -1075,6 +1082,7 @@ function suggest(subject, unit) {
   focusOn('h1');
   app.querySelector('[data-start]').addEventListener('click', () => { guide.stop(); place(subject, unit); });
   app.querySelector('[data-first]').addEventListener('click', () => { guide.stop(); place(subject, first); });
+  app.querySelector('[data-back]').addEventListener('click', () => { guide.stop(); survey(subject); });
 }
 
 function place(subject, unit) {
@@ -1207,6 +1215,7 @@ function want(change = false) {
   const toggle = (attr, id, pressed, label) => `<button class="choice" ${attr}="${esc(id)}" aria-pressed="${pressed}">${label}</button>`;
   const open = (b) => branch[b].some(on);
   app.innerHTML = `
+    ${change ? '' : '<header class="bar"><button class="back" aria-label="Back">←</button></header>'}
     <main class="survey intro">
       <h1>${esc(INTRO_WORDS.want)}</h1>
       <p class="said">${esc(INTRO_WORDS.wantSaid)}</p>
@@ -1224,7 +1233,7 @@ function want(change = false) {
     </main>
     <footer class="cta">
       <button class="next" data-done>${esc(INTRO_WORDS.done)}</button>
-      <button class="link" data-skip>${esc(change ? INTRO_WORDS.back : INTRO_WORDS.skip)}</button>
+      ${change ? `<button class="link" data-back>${esc(INTRO_WORDS.back)}</button>` : `<button class="link" data-skip>${esc(INTRO_WORDS.skip)}</button>`}
     </footer>`;
   focusOn('h1');
   const press = (b, pressed) => b.setAttribute('aria-pressed', pressed);
@@ -1248,7 +1257,9 @@ function want(change = false) {
     });
   }
   app.querySelector('[data-done]').addEventListener('click', () => choose(picked));
-  app.querySelector('[data-skip]').addEventListener('click', () => (change ? (home(), focusOn('.menu')) : choose([])));
+  app.querySelector('[data-skip]')?.addEventListener('click', () => choose([]));
+  app.querySelector('[data-back]')?.addEventListener('click', () => { home(); focusOn('.menu'); });
+  app.querySelector('.back')?.addEventListener('click', intro);
 }
 
 /**
@@ -1288,5 +1299,6 @@ tellAndroid(progress); // the widget catches up with a new day even when nothing
 sendArt().catch(console.warn);
 passNotes();
 addEventListener('visibilitychange', () => document.hidden || passNotes()); // a note tapped while the app was open
+navigation(app);
 if (showsIntro(progress)) intro(); else home();
 syncSoon(0);

@@ -5,7 +5,8 @@ import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, streakLine } from '../src
 import { helpHtml } from '../src/practice/kit.js';
 import { subjects } from '../src/subjects.js';
 import unitHelp from '../src/data/help.json' with { type: 'json' };
-import { HELLO, ACCURACY, BREAK_LINES, FOCUS_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, KAEDE_LINES, KAEDE_HEADLINES, MATHS_LINES, MATHS_HEADLINES, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
+import lessonHelp from '../src/data/lesson-help.json' with { type: 'json' };
+import { GAME_WORDS, MOVE_ON, HELLO, ACCURACY, BREAK_LINES, FOCUS_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, KAEDE_LINES, KAEDE_HEADLINES, MATHS_LINES, MATHS_HEADLINES, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
 // Praise the process, never the person: no ability words. No absence, loss or guilt either.
 const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intelligen\w*|born to)\b/i;
@@ -14,6 +15,8 @@ const LOSS = /\b(lose|losing|lost|gone|we miss you|missed you|sad|disappoint\w*|
 const hellos = [
   ...Object.entries(HELLO).flatMap(([who, h]) => [h.line, ...h.expect, h.go].map((text) => [`hello ${who}`, text])),
   ...Object.entries(unitHelp).flatMap(([course, units]) => Object.entries(units).map(([unit, text]) => [`help ${course} ${unit}`, text])),
+  ...Object.entries(lessonHelp).flatMap(([course, all]) => Object.entries(all).map(([id, text]) => [`help ${course} ${id}`, text])),
+  ['move on', MOVE_ON],
 ];
 const lines = [...hellos, ...[LINES, HEADLINES, KAEDE_LINES, KAEDE_HEADLINES, MATHS_LINES, MATHS_HEADLINES, CALM_LINES, BREAK_LINES, REFLECT_LINES, MOVE_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])))];
 const labels = [...ACCURACY, ...PACE].map(([, label]) => label).concat(STREAK_LABEL, QUIET_DAY, REST_DAY, NO_STREAK, FIRST_SQUARE, streakLine(0, false), streakLine(0, true), streakLine(14, true));
@@ -78,6 +81,18 @@ test('what Rosa says mid-puzzle passes the same lint', () => {
   for (const text of said) {
     assert.doesNotMatch(text, ABILITY, text);
     assert.doesNotMatch(text, LOSS, text);
+  }
+});
+
+test("what Rosa says in the chess games passes the same lint", () => {
+  const all = (v) => (typeof v === 'string' ? [v] : typeof v === 'function' ? [v(3, 'A move')] : Object.values(v).flatMap(all));
+  const said = all(GAME_WORDS);
+  assert.ok(said.length > 30);
+  for (const text of said) {
+    assert.doesNotMatch(text, ABILITY, text);
+    assert.doesNotMatch(text, LOSS, text);
+    assert.doesNotMatch(text, /\b(xp|hearts?|league|oscar|stockfish)\b/i, text);
+    assert.doesNotMatch(text, /\b[KQRBN][a-h]?x?[a-h][1-8]\b/, `no notation: ${text}`);
   }
 });
 
@@ -465,4 +480,11 @@ test('dares are a bet in character, never guilt, loss or pressure', () => {
   for (const bad of ["Bet you can't keep your streak", "I dare you to stop being lazy", "You haven't done it, I bet you won't", "Bet you'll give up", 'Dare you, or else', "Don't let me down"])
     assert.ok([DARE_BAD, LOSS, PRESSURE].some((lint) => lint.test(bad)), bad);
   assert.match("Moss bets you can't do three slow breaths before lunch.", DARE_WORD);
+});
+
+test("a practice coach names themselves on the path's first card", () => {
+  for (const s of subjects.filter((x) => x.kind === 'practice')) {
+    const first = s.units[0].lessons[0].items[0];
+    assert.ok(first.say.includes(`I'm ${s.coach.name}`), `${s.id}: ${first.say}`);
+  }
 });

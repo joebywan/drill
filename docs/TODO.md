@@ -175,40 +175,16 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 
 **Repetition engine**
 
-- **Japanese repeats as written.** Consider asking the other way round on a repeat (sound to kana).
-- **Chess only varies star puzzles.** Move items and real-game puzzles don't repeat in a session.
-  Mirroring move items is possible; castling and text naming squares need care.
-- **Tune the numbers** from play: `src/repeat.js` (2 warm-ups, 3 echoes, 8 in a checkpoint) and `src/adapt.js`
-  (3 goes, 2 misses in 4, 8 right to cut repeats). Warm-ups can repeat across lessons; check they stay varied.
-- **Adapting further.** The answer log (#97) doesn't record hints yet. A lesson could finish on evidence (two
-  fresh right in a row) rather than a fixed list. Explanations are per unit; go per concept where one doesn't help.
-- **Not played yet:** the "One step back" flow has only run in tests.
-
-**Chess modes** (order to decide; Mate suggested first, as it exists)
-
-- **Mate:** port Daybook's game (`puzzles/Chess*.kt`, on its origin/main) to JS: mate in 2, 3 or 4 against a best
-  defender, with its proven Lichess positions.
-- **Capture game:** our own design. Reports of Duolingo's, unconfirmed: 90 seconds, one or two pieces, no king,
-  Black hunts your best piece, new pieces can appear. Check in the app before settling on the rules.
-- **Play Rosa:** full games at a few levels, with a small engine on chess.js. Not Stockfish (GPL), not Oscar.
-
-**Characters**
-
-- **Practice coaches' first card should name them.** Not a whole "Meet" screen, as a tap before a breathing
-  exercise is the wrong friction: one line ("I'm Moss. Breathe in for 4...").
+- **Fresh repeats for the rest of chess.** `tap` and `truefalse` items still repeat as written (only stars, move and
+  find mirror). `truefalse` needs its `move` SAN flipped.
+- **A second miss of a mirrored item sees the same mirror.** Chess has only two versions of an item; a third go
+  repeats one. Fine at GOES 4 so far; watch it in play.
+- **Tune the numbers from real play.** `tools/sessions.js` models a fixed miss rate; nobody has played the new limits
+  (2 echoes, 4 goes, 5 repeats a session). "One step back" has only run in tests and an E2E flow.
 
 **Layouts from phone testing**
 
-- **Move** got the Screen break's X and header change, but keeps its full-width Pause and has no on-screen how.
-  Check whether it should match. Other timed practices too.
-- **Screen break on a phone:** check the new layout there. Later sessions have no room-check card, only
-  "Next: Stand and stretch".
-- **Dark board's ledge shadow** is faint, and a very fast second tap as a piece lands can be dropped.
+- **The timed practice layout on a real phone:** Move, Calm, Wind down, Focus and the Screen break were only
+  checked in a desktop browser at phone size.
+- **A very fast second tap** as a piece lands can be dropped.
 - **Cast brief** (the Claude Doc) still describes lamps and predates quest markers, the garden and no XP.
-
-**Phone back button**
-
-- Drill has no browser history, so on the web phone's back button leaves the site, and in the wrapper
-  `web.canGoBack()` is false, so it closes the app, even mid-lesson. It should step back one screen, as the X
-  and ← do. Noted 2026-10-30; to be done with the Android packaging, using `pushState` and `popstate`, so
-  the web gets it too.

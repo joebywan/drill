@@ -13,7 +13,7 @@
               "id": "wake-teach",
               "type": "teach",
               "help": true,
-              "say": "Hi, I'm here to move with you. Copy me, nice and easy.",
+              "say": "Hi, I'm Clover. Copy me, nice and easy.",
               "text": [
                 "A few gentle moves to wake your body up: neck, shoulders, arms and sides.",
                 "Each move has a little timer. Go at your own pace, and make the moves as small as feels good.",
@@ -126,15 +126,15 @@
   ],
   "again": { "label": "Move", "lesson": "wake3" },
   "moves": {
-    "neck-tilt": { "pose": "neck-tilt", "name": "Neck tilts", "cue": "Ear towards your shoulder, slowly, one side then the other. Shoulders stay low." },
-    "shoulder-roll": { "pose": "shoulder-roll", "name": "Shoulder rolls", "cue": "Lift your shoulders up, roll them back, let them drop.", "pace": 4, "unit": "shoulder rolls" },
-    "reach-up": { "pose": "reach-up", "name": "Reach up", "cue": "Arms up high, like you're picking fruit from a tall tree. Breathe out and lower." },
-    "side-bend-left": { "pose": "side-bend-left", "name": "Side bend, left", "cue": "Right arm up and over, lean gently to the left. Feel the stretch along your side." },
-    "side-bend-right": { "pose": "side-bend-right", "name": "Side bend, right", "cue": "Left arm up and over, lean gently to the right." },
-    "march": { "pose": "march", "name": "March on the spot", "cue": "Lift your knees at an easy pace and let your arms swing." },
-    "wall-push": { "pose": "wall-push", "name": "Wall push-ups", "cue": "Hands on the wall at shoulder height. Bend your elbows, lean in, push back.", "pace": 4, "unit": "wall push-ups" },
-    "squat": { "pose": "squat", "name": "Squats", "cue": "Feet hip-width, sit back like there's a chair, then stand tall.", "pace": 4, "unit": "squats" },
-    "lunge-left": { "pose": "lunge", "name": "Lunge stretch, left leg", "cue": "Step your left foot forward and bend that knee a little. Feel the stretch in the back leg's hip." },
-    "lunge-right": { "pose": "lunge", "name": "Lunge stretch, right leg", "cue": "Now the right foot forward. Easy does it." }
+    "neck-tilt": { "pose": "neck-tilt", "name": "Neck tilts", "how": ["Ear towards your shoulder, slowly.", "Pause for a breath, then over to the other side.", "Shoulders stay low. Small is fine."] },
+    "shoulder-roll": { "pose": "shoulder-roll", "name": "Shoulder rolls", "how": ["Lift your shoulders up towards your ears.", "Roll them back, then let them drop.", "Arms hang loose."], "pace": 4, "unit": "shoulder rolls" },
+    "reach-up": { "pose": "reach-up", "name": "Reach up", "how": ["Arms up high, like you're picking fruit from a tall tree.", "Breathe out and lower.", "Staying seated works too."] },
+    "side-bend-left": { "pose": "side-bend-left", "name": "Side bend, left", "how": ["Right arm up and over.", "Lean gently to the left.", "Feel the stretch along your side."] },
+    "side-bend-right": { "pose": "side-bend-right", "name": "Side bend, right", "how": ["Left arm up and over.", "Lean gently to the right.", "Feel the stretch along your side."] },
+    "march": { "pose": "march", "name": "March on the spot", "how": ["Lift your knees at an easy pace.", "Let your arms swing.", "Low knees are fine."] },
+    "wall-push": { "pose": "wall-push", "name": "Wall push-ups", "how": ["Hands on the wall at shoulder height.", "Bend your elbows and lean in.", "Push back to the start."], "pace": 4, "unit": "wall push-ups" },
+    "squat": { "pose": "squat", "name": "Squats", "how": ["Feet hip-width.", "Sit back like there's a chair behind you.", "Stand tall."], "pace": 4, "unit": "squats" },
+    "lunge-left": { "pose": "lunge", "name": "Lunge stretch, left leg", "how": ["Step your left foot forward.", "Bend that knee a little.", "Feel the stretch in the back leg's hip."] },
+    "lunge-right": { "pose": "lunge", "name": "Lunge stretch, right leg", "how": ["Step your right foot forward.", "Bend that knee a little.", "Easy does it."] }
   }
 }
