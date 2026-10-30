@@ -1,7 +1,7 @@
 // Coding's first lesson with real touches: the course row on Learning, tap-to-build tiles in the
 // thumb zone, Fennel walking the grid, a predict tap on a grid square, then the end screen.
 import { readFileSync } from 'node:fs';
-import { answer, solve } from '../../src/coding/program.js';
+import { answer, parse, solve } from '../../src/coding/program.js';
 
 const first = JSON.parse(readFileSync(new URL('../../src/data/coding.json', import.meta.url))).units[0].lessons[0];
 
@@ -23,7 +23,8 @@ export default async ({ page, seed, touch, btn, shot, check }) => {
       await shot(`item${i}-done`);
       check(`${item.id}: right first time`, await page.locator('.foot.right').count() === 1);
       const moved = await page.locator('.walker').evaluate((el) => el.style.transform);
-      check(`${item.id}: Fennel walked off the start`, moved !== 'translate(0%, 0%)', moved);
+      const [x, y] = parse(item.level).start;
+      check(`${item.id}: Fennel walked off the start`, moved !== `translate(${x * 100}%, ${y * 100}%)`, moved);
     }
     await touch(btn('Continue', { exact: true }));
   }

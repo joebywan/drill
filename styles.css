@@ -691,7 +691,7 @@ body:has(main.night) {
 /* --- Courses on the Learning tab, and the tap-and-match quiz items (src/quiz/) --- */
 /* One row that scrolls inside itself once there are more courses than fit. */
 .courses { display: flex; gap: 6px; justify-content: safe center; margin: 0 -16px -4px; padding: 6px 16px; overflow-x: auto; scrollbar-width: none; }
-.course::after { content: ''; position: absolute; inset: -4px 0; } /* a 44px target; the row keeps its height */
+.course::after { content: ''; position: absolute; inset: -6px 0; } /* a 44px target; the row keeps its height */
 .course { position: relative; flex: none; min-height: 36px; padding: 4px 10px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); font-weight: 600; font-size: .85rem; white-space: nowrap; }
 .course[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 /* Japanese uses the system's own font for it (Noto Sans JP on Android): nothing is downloaded. */
