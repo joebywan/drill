@@ -1,5 +1,5 @@
 import { esc } from '../html.js';
-import { buzz, move, play, speak, voice } from '../feel.js';
+import { cue, flourish, move, play, speak, voice } from '../feel.js';
 import { nextTile, paired, picked, shuffle, tilesOf } from './items.js';
 
 /**
@@ -32,7 +32,7 @@ export function mount(el, item, ctx) {
 
 /** The right tap's juice: a pop, and a star off the card. Both skip under reduced motion. */
 function cheer(btn, card) {
-  move(btn, [{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: 260, easing: 'ease-out' });
+  flourish(btn, 'pop');
   if (!card?.isConnected) return;
   const star = Object.assign(document.createElement('i'), { className: 'quiz-star', textContent: '★', ariaHidden: 'true' });
   card.append(star);
@@ -95,9 +95,8 @@ const TYPES = {
         if (--left === 0) done(!slipped, item.explain); else play('tap');
       } else {
         slipped = true;
-        play('wrong');
-        buzz('wrong');
-        for (const x of pair) x.classList.add('wrong');
+        cue('wrong');
+        for (const x of pair) { x.classList.add('wrong'); flourish(x, 'shake'); }
         timers.push(setTimeout(() => { for (const x of pair) x.classList.remove('wrong'); }, 600));
       }
     });

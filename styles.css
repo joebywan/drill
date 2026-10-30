@@ -76,7 +76,7 @@ html { scroll-padding-bottom: 160px; }
 .node.here { background: #F5A524; color: #1E1B2E; box-shadow: 0 5px 0 #B9741A; animation: beckon 1.8s ease-in-out infinite; }
 .node.locked { background: var(--line); color: var(--locked); box-shadow: 0 5px 0 var(--locked); cursor: default; }
 .node:active:not(:disabled) { transform: translateY(4px); box-shadow: none; }
-@keyframes beckon { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes beckon { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-5px) scale(1.05); } } /* the next node gently bobs */
 @media (prefers-reduced-motion: reduce) { .node.here { animation: none; } }
 .path .label { margin-top: 10px; max-width: 120px; padding: 1px 6px; border-radius: 6px; background: var(--bg); font-size: .8rem; color: var(--muted); text-align: center; }
 .path li:has(.here) .label { color: var(--text); font-weight: 700; }
@@ -158,8 +158,10 @@ html { scroll-padding-bottom: 160px; }
 .kicker { margin: 8px 0 0; font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
 .summary h1 { margin: 2px 0 4px; }
 .said { color: var(--muted); margin: 0 0 20px; }
-.confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
-.confetti i { position: absolute; top: -14px; width: 8px; height: 12px; border-radius: 2px; }
+/* ---- Feel: petal-and-leaf confetti (petals() in feel.js) ---- */
+.petals { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
+.petals i { position: absolute; top: -16px; width: 11px; height: 9px; border-radius: 60% 60% 50% 50% / 80% 80% 30% 30%; opacity: .9; }
+.petals i.leaf { width: 9px; height: 14px; border-radius: 0 100% 0 100%; }
 
 /* ---- Board skin: Drill's board, pieces (assets/pieces/drill.svg) and markers ---- */
 :root {
