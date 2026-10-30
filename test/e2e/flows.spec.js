@@ -231,7 +231,7 @@ test('a screen break is taught once, plays its six steps on the clock, and keeps
 
 test('Clover demonstrates the screen break, and "How?" pauses it for the guidance', async ({ page }) => {
   await page.clock.install();
-  await placeAtStart(page);
+  await firstVisit(page);
   await tab(page, 'Screen break').click();
   await page.getByRole('button', { name: 'Continue · Why breaks help' }).click();
   await page.getByRole('button', { name: 'Start' }).click();
@@ -260,7 +260,7 @@ test('Clover demonstrates the screen break, and "How?" pauses it for the guidanc
 for (const [width, height] of [[412, 780], [360, 740]]) {
   test(`at ${width}x${height} the screen break's step and its seconds sit clear of the buttons`, async ({ page }) => {
     await page.setViewportSize({ width, height });
-    await placeAtStart(page);
+    await firstVisit(page);
     await tab(page, 'Screen break').click();
     await page.getByRole('button', { name: 'Continue · Why breaks help' }).click();
     await page.getByRole('button', { name: 'Start' }).click();
