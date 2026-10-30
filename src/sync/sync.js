@@ -2,7 +2,7 @@ import { currentStreak } from '../progress.js';
 import { derive, newPairCode, newRecovery, open, readRecovery, seal, unwrap, wrap } from './keys.js';
 import { merge } from './merge.js';
 import { ANIMALS, WORDS } from './presets.js';
-import { API } from './config.js';
+import { API, SYNC } from './config.js';
 import { bridge } from '../widget.js';
 
 /**
@@ -13,10 +13,10 @@ import { bridge } from '../widget.js';
 const KEY = 'drill.sync'; // { recovery, code }: this device's copy of the profile
 
 /**
- * Sync runs in the web app only. The Android wrapper (DrillBridge) has no internet permission, so
- * there the ⋯ section is hidden and nothing here runs.
+ * Sync runs only with the SYNC flag on (config.js), and in the web app only: the Android wrapper
+ * (DrillBridge) has no internet permission. Otherwise the ⋯ section is hidden and nothing here runs.
  */
-export const available = () => !bridge();
+export const available = () => SYNC && !bridge();
 let keys = null; // { recovery, key, token }, derived once a visit
 
 export function profile() {

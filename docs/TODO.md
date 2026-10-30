@@ -122,8 +122,9 @@ permission, and the pool stays the fallback even then.
 
 ## Still open
 
-- **Joseph's steps.** Deploy the sync API (`server/DEPLOY.md`: Cloudflare account, the DNS move to
-  Cloudflare, D1, one deploy). Create the Android release key once, put its SHA-256 in
+- **Joseph's steps.** Sync is built but flagged off (`SYNC` in `src/sync/config.js`) with no
+  backend planned for now. To turn it on: deploy the sync API (`server/DEPLOY.md`: Cloudflare account, the DNS move to
+  Cloudflare, D1, one deploy), then set `SYNC` to true. Create the Android release key once, put its SHA-256 in
   `android/release-key.sha256` and add the four `DRILL_KEY*` repo secrets (CLAUDE.md, Android).
 - **Play publishing.** A workflow that uploads the signed `assembleRelease` AAB/APK to a Play
   track; today the **Android release** workflow only builds and verifies it.
