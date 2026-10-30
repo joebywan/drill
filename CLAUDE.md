@@ -31,8 +31,11 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 
 - With no `--url` it serves this checkout on a free port forwarded with `adb reverse`; Chrome opens
   `http://localhost:<port>/`, a secure context, so Wake Lock and the like work as on the real site.
-- It boots the AVD (`--avd`, else `PHONE_AVD`, default `splendor36`; `--avd daybook_tablet` for a tablet) `-read-only` if no emulator is running and
-  shuts down only one it started. SDK from `ANDROID_HOME` or `~/Android/Sdk`.
+- One run at a time, machine-wide: it takes `/tmp/drill-phone.lock` (its PID inside; a lock whose
+  process is gone is taken over) and prints "waiting for the emulator" until it can, and waits the
+  same way while any emulator it didn't start is running. Then it boots the AVD (`--avd`, else
+  `PHONE_AVD`, default `splendor36`; `--avd daybook_tablet` for a tablet) `-read-only`, shuts it down
+  at the end and lets go of the lock, on an error or Ctrl-C too. SDK from `ANDROID_HOME` or `~/Android/Sdk`.
 - Screenshots of the whole screen (keyboard included) go to `test-results/phone/<scenario>/NN-name.png`.
 - It prints page errors, failed requests, sideways overflow, and the device checks: during Calm,
   Chrome's stream is `state:started` in `dumpsys audio` with an active track in
@@ -42,7 +45,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `uiautomator dump`. Taps are real, so the page origin on screen is measured by tapping a blank
   page, not hard-coded. Timed parts run on `page.clock`. The host's PulseAudio may fail to open
   while Android audio still runs, so judge sound by the dumpsys checks. **Only one agent may use
-  the emulator at a time.**
+  the emulator at a time:** `npm run phone` waits its turn by itself.
 
 ## Architecture
 

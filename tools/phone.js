@@ -3,14 +3,18 @@
  *   npm run phone -- [scenario...] [--url <base>] [--avd <name>]   (no scenario: all of test/phone/*.js)
  * With no --url it serves this checkout on a free port, forwarded with `adb reverse`, and Chrome opens
  * http://localhost:<port>/: a secure context, so APIs such as Wake Lock are there as on the real site.
- * It boots the AVD (--avd, else PHONE_AVD, default splendor36; e.g. --avd daybook_tablet) read-only if no emulator is running, and shuts
- * down only an emulator it started. Screenshots: test-results/phone/<scenario>/NN-name.png.
- * Exits non-zero on page errors or a failed device check. One agent on the emulator at a time.
+ * One run on the emulator at a time, machine-wide: a run takes the lock file `/tmp/drill-phone.lock`
+ * (created with 'wx', holding its PID, so a lock left by a process that is gone is taken over) and
+ * prints "waiting for the emulator" until it can. An emulator already running that no run started
+ * (someone driving it by hand) is waited for the same way. Holding the lock, it boots the AVD (--avd,
+ * else PHONE_AVD, default splendor36; e.g. --avd daybook_tablet) read-only and shuts it down at the
+ * end, then lets go of the lock, on error and Ctrl-C too. Screenshots: test-results/phone/<scenario>/NN-name.png.
+ * Exits non-zero on page errors or a failed device check.
  */
 import { execFileSync, spawn } from 'node:child_process';
-import { mkdirSync, readdirSync, rmSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
-import { homedir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { _android as android } from 'playwright';
 
 const ROOT = new URL('..', import.meta.url).pathname;
@@ -27,9 +31,48 @@ const names = args.length ? args : all;
 const unknown = names.filter((n) => !all.includes(n));
 if (unknown.length) { console.error(`unknown scenario: ${unknown.join(', ')} (have: ${all.join(', ')})`); process.exit(2); }
 
+// --- One run at a time --------------------------------------------------------------------
+// /tmp, not tmpdir(): a sandboxed agent may have its own TMPDIR, and the lock must be one for the machine.
+const LOCK = `${process.platform === 'win32' ? tmpdir() : '/tmp'}/drill-phone.lock`;
+const alive = (pid) => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
+const holder = () => { try { return readFileSync(LOCK, 'utf8').trim(); } catch { return null; } };
+// Any emulator up or booting: one adb lists, or a qemu process (adb doesn't list it until it is up).
+const emulatorUp = () => {
+  if (/^emulator-\S+\s/m.test(adb('devices'))) return true;
+  try { execFileSync('pgrep', ['-x', 'qemu-system-x86'], { stdio: 'ignore' }); return true; } catch { return false; }
+};
+/** Waits until this run holds the lock and no emulator is running; then it is ours to boot. */
+async function takeLock() {
+  let said = false;
+  for (;;) {
+    try {
+      writeFileSync(LOCK, String(process.pid), { flag: 'wx' });
+      if (!emulatorUp()) return;
+      rmSync(LOCK, { force: true }); // someone else's emulator: let go and wait, as agents do by hand
+    } catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+      const pid = Number(holder());
+      // A holder that is gone (killed outright) left its lock: take it over. An empty file is a run
+      // between creating it and writing its PID, unless it has been empty for a while.
+      // ponytail: two waiters breaking the same stale lock at once could both go; it needs a crash, then a tie.
+      const stale = pid ? !alive(pid) : Date.now() - (statSync(LOCK, { throwIfNoEntry: false })?.mtimeMs ?? 0) > 10_000;
+      if (stale) { rmSync(LOCK, { force: true }); continue; }
+    }
+    if (!said) { console.log('waiting for the emulator…'); said = true; }
+    await sleep(5000);
+  }
+}
+const release = () => { if (holder() === String(process.pid)) rmSync(LOCK, { force: true }); };
+process.on('exit', release); // the last word, whatever happens
+
 const cleanup = [];
 let failed = false;
+let tidying = null;
+const tidy = async () => { for (const f of cleanup.splice(0)) await Promise.resolve().then(f).catch((e) => console.error('cleanup:', e.message)); };
+// Ctrl-C (or a kill) still shuts down the emulator and the server, then lets go of the lock.
+for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, async () => { console.log(`\n${sig}: cleaning up`); await (tidying ??= tidy()); process.exit(130); });
 try {
+  await takeLock();
   // Serve this checkout unless told where to go.
   let served = null; // the local port, forwarded to the phone once it is up
   if (!base) {
@@ -39,8 +82,8 @@ try {
     served = port;
   }
 
-  // Boot the emulator only if none is running; then it's ours to shut down.
-  if (!/^emulator-\S+\tdevice/m.test(adb('devices'))) {
+  // Holding the lock with no emulator running, this run boots one and shuts it down.
+  {
     console.log(`booting ${AVD}…`);
     const emu = spawn(`${SDK}/emulator/emulator`, ['-avd', AVD, '-read-only', '-no-window', '-no-boot-anim', '-gpu', 'swiftshader_indirect'], { stdio: 'ignore' });
     cleanup.push(async () => {
@@ -176,6 +219,7 @@ try {
   console.error(e);
   failed = true;
 } finally {
-  for (const f of cleanup) await Promise.resolve().then(f).catch((e) => console.error('cleanup:', e.message));
+  await (tidying ??= tidy());
+  release();
 }
 process.exit(failed ? 1 : 0);
