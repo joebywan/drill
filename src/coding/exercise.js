@@ -1,4 +1,4 @@
-import { ARROW, answer, changed, fill, fixBug, holes, jsFace, kind, parse, punch, run, solve, tileKind, tileName, toJS } from './program.js';
+import { ARROW, answer, changed, fill, fixBug, holes, isStep, jsFace, kind, listKind, names, parse, punch, reached, runItem, solve, tileKind, tileName, toJS, writeLook } from './program.js';
 import { fennel, demo } from '../cast/fennel.js';
 import { flower } from '../garden/art.js';
 import { dragTile } from '../drag.js';
@@ -21,15 +21,29 @@ const afterFail = (result) => (result.end === 'endless' ? 'That loop never ends,
 export function mount(el, item, { say, done }) {
   const g = parse(item.level || ['S']);
   el.innerHTML = `<div class="grid-world" style="--w:${g.w};--h:${g.h}" role="img" aria-label="${esc(describe(g))}">
-      ${g.rows.flatMap((row, y) => row.map((c, x) => `<span class="cell" data-x="${x}" data-y="${y}">${c === '#' ? ROCK : c === '*' ? flower('learn') : ''}</span>`)).join('')}
+      ${g.rows.flatMap((row, y) => row.map((c, x) => `<span class="cell${c === 'o' || (c === 'S' && g.shape) ? ' target' : ''}" data-x="${x}" data-y="${y}">${c === '#' ? ROCK : c === '*' ? flower('learn') : ''}</span>`)).join('')}
       <div class="walker" aria-hidden="true">${fennel('think')}</div>
     </div>
+    ${item.program && names(item.program, item.tiles).length ? '<p class="vars" aria-label="Values"></p>' : ''}
     <div class="program" aria-label="Program"></div>
     <div class="choices tiles"></div>`;
   const world = el.querySelector('.grid-world');
   const walker = world.querySelector('.walker');
   const programEl = el.querySelector('.program');
   const tilesEl = el.querySelector('.tiles');
+  const varsEl = el.querySelector('.vars');
+  const showValues = (now = {}) => {
+    if (varsEl) varsEl.innerHTML = names(item.program, item.tiles).map((n) => `<span class="var"><i>${esc(n)}</i> <b>${esc(String(now[n] ?? '?'))}</b></span>`).join('');
+  };
+  showValues();
+  const cellAt = ([x, y]) => world.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
+  /** What standing on a square does: a value updates, a drawing grows, one of several flowers is picked. */
+  const arrive = (result, i) => {
+    showValues(result.values[i]);
+    const cell = cellAt(result.path[i]);
+    if (g.shape) cell.classList.add('trail');
+    if (g.flowers.length > 1) cell.classList.add('picked');
+  };
   let gone = false;
   const anims = [];
   const place = ([x, y]) => `translate(${x * 100}%, ${y * 100}%)`;
@@ -43,13 +57,15 @@ export function mount(el, item, { say, done }) {
     const steps = result.path.length - 1;
     const trot = demo(walker.firstElementChild, 'walk', Math.max(steps, 1) * STEP_MS / 1000, Math.max(steps, 1));
     if (trot) anims.push(...trot);
+    arrive(result, 0);
     for (let i = 1; i <= steps && !off(); i++) {
       const a = move(walker, [{ transform: place(result.path[i - 1]) }, { transform: place(result.path[i]) }], { duration: STEP_MS, easing: 'ease-in-out' });
       walker.style.transform = place(result.path[i]);
-      if (a) { anims.push(a); await a.finished.catch(() => {}); play('tap'); }
+      if (a) { anims.push(a); await a.finished.catch(() => {}); if (off()) return; play('tap'); }
+      arrive(result, i); // on landing: a count made before this step has been showing since it set off
     }
     if (off()) return;
-    walker.innerHTML = fennel(result.end === 'flower' ? 'correct' : 'wrong');
+    walker.innerHTML = fennel(reached(result) ? 'correct' : 'wrong');
     if (result.end === 'bump') {
       const [x, y] = result.path.at(-1), [bx, by] = result.bumped;
       const nudge = `translate(${(x + (bx - x) * 0.25) * 100}%, ${(y + (by - y) * 0.25) * 100}%)`;
@@ -63,6 +79,8 @@ export function mount(el, item, { say, done }) {
     anims.splice(0).forEach((a) => a.cancel());
     walker.style.transform = place(g.start);
     walker.innerHTML = fennel('think');
+    for (const c of world.querySelectorAll('.trail, .picked')) c.classList.remove('trail', 'picked');
+    showValues();
   };
   const show = (program, picks = [], locked = true, tappable = null) => (item.view === 'js' ? '' : blocks(program, picks, locked, tappable))
     + (item.view ? code(program, picks, locked) : '');
@@ -73,7 +91,7 @@ export function mount(el, item, { say, done }) {
     if (!item.level) world.remove();
     if (item.program) {
       programEl.innerHTML = show(item.program);
-      const wait = setTimeout(() => walk(run(item.level, item.program)), DEMO_WAIT_MS);
+      const wait = setTimeout(() => walk(runItem(item)), DEMO_WAIT_MS);
       say(item.text, 'teach');
       done(null);
       return () => { clearTimeout(wait); cleanup(); };
@@ -98,9 +116,9 @@ export function mount(el, item, { say, done }) {
         for (const o of world.querySelectorAll('.cell-pick')) o.disabled = true;
         const right = +c.dataset.x === want[0] && +c.dataset.y === want[1];
         c.classList.add(right ? 'right' : 'wrong');
-        await walk(run(item.level, item.program));
+        await walk(runItem(item));
         if (gone) return;
-        world.querySelector(`.cell[data-x="${want[0]}"][data-y="${want[1]}"]`).classList.add('right');
+        cellAt(want).classList.add('right');
         flourish(c, right ? 'pop' : 'shake'); // the runner cues the sound and buzz
         done(right, item.explain);
       });
@@ -119,7 +137,7 @@ export function mount(el, item, { say, done }) {
   let picks = Array(kinds.length).fill(null);
   const firstFor = (t) => kinds.findIndex((k, n) => k === tileKind(t) && picks[n] === null);
   const face = (t) => (item.view ? jsFace(t) : tileFace(t));
-  tilesEl.innerHTML = item.tiles.map((t, i) => `<button class="choice tile${item.view ? ' code-tile' : t.call || tileKind(t) === 'look' ? ' word' : ''}" data-tile="${i}" aria-label="${esc(tileName(t))}">${esc(face(t))}</button>`).join('');
+  tilesEl.innerHTML = item.tiles.map((t, i) => `<button class="choice tile${item.view ? ' code-tile' : typeof t === 'object' || tileKind(t) === 'look' || (tileKind(t) === 'count' && typeof t === 'string') ? ' word' : ''}" data-tile="${i}" aria-label="${esc(tileName(t))}">${esc(face(t))}</button>`).join('');
   let watch = null;
   const paint = (shown = picks, locked = false) => {
     programEl.innerHTML = show(program, shown, locked, locked ? null : offered);
@@ -145,11 +163,11 @@ export function mount(el, item, { say, done }) {
     flourish(b, 'pop');
     if (picks.includes(null)) { paint(); return; }
     paint(picks, true);
-    const result = run(item.level, fill(program, picks));
-    say(result.end === 'flower' ? 'Here I go!' : 'Here I go...', 'think');
+    const result = runItem(item, fill(program, picks));
+    say(reached(result) ? 'Here I go!' : 'Here I go...', 'think');
     await walk(result);
     if (gone) return;
-    const right = result.end === 'flower';
+    const right = reached(result);
     if (!right) {
       const fix = isBug ? fixBug(item) : null;
       programEl.innerHTML = isBug ? show(punch(item.program, fix.part), [fix.tile]) : show(item.program, solve(item));
@@ -169,14 +187,24 @@ export function mount(el, item, { say, done }) {
   });
   paint();
   say(item.prompt, 'think');
-  if (isBug) watch = setTimeout(() => walk(run(item.level, item.program)), DEMO_WAIT_MS);
+  if (isBug) watch = setTimeout(() => walk(runItem(item)), DEMO_WAIT_MS);
   return () => { clearTimeout(watch); stops.forEach((stop) => stop()); cleanup(); };
 }
 
-const tileFace = (t) => (typeof t === 'number' ? `${t}×`
-  : t.call ?? (t === 'flower' ? 'flower' : t.startsWith('rock-') ? `rock ${ARROW[t.slice(5)]}` : ARROW[t]));
-const slotFace = (t) => (typeof t === 'number' ? String(t) : tileFace(t));
-const slotClass = (kind, t) => (kind === 'step' ? `go${t?.call ? ' call' : ''}` : kind);
+const lookFace = (l) => (l === 'flower' ? 'flower' : `rock ${ARROW[l.slice(5)]}`);
+const FACE_LOOK = { look: lookFace, op: String, n: String, not: 'not ', and: ' and ', or: ' or ' };
+const tileFace = (t) => {
+  if (typeof t === 'number') return String(t);
+  if (typeof t === 'object') {
+    if (t.call) return `${t.call}${t.args ? `(${t.args.join(', ')})` : ''}`;
+    if (t.go) return `go ${t.go}`;
+    if (t.change) return `${t.change} ${t.by < 0 ? '-' : '+'} ${Math.abs(t.by)}`;
+    return writeLook(t, FACE_LOOK);
+  }
+  const k = tileKind(t);
+  return k === 'look' ? lookFace(t) : k === 'step' ? ARROW[t] : t;
+};
+const slotClass = (kind, t) => (kind === 'step' ? `go${typeof t === 'object' && t ? ' call' : ''}` : kind);
 
 /** One hole: a gap to fill, or its pick (a button that empties it). `faceOf` is how the pick reads. */
 function holeHtml(n, kind, pick, picks, locked, faceOf) {
@@ -194,18 +222,23 @@ function blocks(program, picks, locked = true, tappable = null) {
   let part = 0;
   const slot = (kind, v) => {
     const n = part++;
-    if (v === null) { const h = hole++; return holeHtml(h, kind, picks[h], picks, locked, slotFace); }
-    if (tappable?.has(kind)) return `<button class="block ${slotClass(kind, v)}" data-part="${n}" aria-label="Change: ${esc(tileName(v))}">${esc(slotFace(v))}</button>`;
-    return kind === 'step' ? `<span role="img" class="block ${slotClass(kind, v)}" aria-label="${esc(tileName(v))}">${esc(slotFace(v))}</span>` : `<b>${esc(slotFace(v))}</b>`;
+    if (v === null) { const h = hole++; return holeHtml(h, kind, picks[h], picks, locked, tileFace); }
+    if (tappable?.has(kind)) return `<button class="block ${slotClass(kind, v)}" data-part="${n}" aria-label="Change: ${esc(tileName(v))}">${esc(tileFace(v))}</button>`;
+    return kind === 'step' ? `<span role="img" class="block ${slotClass(kind, v)}" aria-label="${esc(tileName(v))}">${esc(tileFace(v))}</span>` : `<b>${esc(tileFace(v))}</b>`;
   };
+  const look = (c) => writeLook(c, { look: (l) => slot('look', l), op: (o) => slot('op', o), n: (v) => slot('count', v), not: 'not ', and: ' and ', or: ' or ' });
   const inner = (list) => `<div class="inner">${walk(list)}</div>`;
   const walk = (list) => list.map((b) => {
-    if (b === null || typeof b === 'string' || 'call' in b) return slot('step', b);
+    if (isStep(b)) return slot('step', b);
+    if ('call' in b) return `<div class="block stmt"><span class="head">${esc(b.call)}(${b.args.map((a) => slot('count', a)).join(', ')})</span></div>`;
+    if ('set' in b) return `<div class="block stmt"><span class="head">set ${esc(b.set)} to ${slot('count', b.to)}</span></div>`;
+    if ('change' in b) return `<div class="block stmt"><span class="head">change ${esc(b.change)} by ${slot('count', b.by)}</span></div>`;
+    if ('each' in b) return `<div class="block loop"><span class="head">for each ${esc(b.each)} in <span class="list">${b.in.map((v) => slot(listKind(b), v)).join('')}</span></span>${inner(b.do)}</div>`;
     if ('repeat' in b) return `<div class="block loop"><span class="head"><i>repeat</i> ${slot('count', b.repeat)} <i>times</i></span>${inner(b.do)}</div>`;
-    if ('until' in b) return `<div class="block loop"><span class="head">repeat until ${slot('look', b.until)}</span>${inner(b.do)}</div>`;
-    if ('define' in b) return `<div class="block loop def"><span class="head">new block <b>${esc(b.define)}</b></span>${inner(b.do)}</div>`;
-    return `<div class="block if"><span class="head">if ${slot('look', b.if)}</span>${inner(b.then)}`
-      + `<span class="head">else</span>${inner(b.else)}</div>`;
+    if ('until' in b) return `<div class="block loop"><span class="head">repeat until ${look(b.until)}</span>${inner(b.do)}</div>`;
+    if ('define' in b) return `<div class="block loop def"><span class="head">new block <b>${esc(b.define)}${b.params ? `(${b.params.map(esc).join(', ')})` : ''}</b></span>${inner(b.do)}</div>`;
+    return `<div class="block if"><span class="head">if ${look(b.if)}</span>${inner(b.then)}`
+      + (b.else.length ? `<span class="head">else</span>${inner(b.else)}` : '') + '</div>';
   }).join('');
   return walk(program);
 }
@@ -221,6 +254,7 @@ function code(program, picks, locked = true) {
 function describe(g) {
   const at = ([x, y]) => `column ${x + 1}, row ${y + 1}`;
   const rocks = g.rows.flatMap((r, y) => r.map((c, x) => (c === '#' ? at([x, y]) : null))).filter(Boolean);
-  return `A grid ${g.w} wide and ${g.h} high. Fennel at ${at(g.start)}${g.flower ? `, the flower at ${at(g.flower)}` : ''}`
+  return `A grid ${g.w} wide and ${g.h} high. Fennel at ${at(g.start)}${g.flowers.length ? `, ${g.flowers.length > 1 ? 'flowers' : 'the flower'} at ${g.flowers.map(at).join('; ')}` : ''}`
+    + `${g.shape ? `, the shape to draw on ${g.shape.map(at).join('; ')}` : ''}`
     + `${rocks.length ? `, rocks at ${rocks.join('; ')}` : ''}.`;
 }

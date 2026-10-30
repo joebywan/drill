@@ -536,6 +536,13 @@ html { scroll-padding-bottom: 160px; }
 .grid-world .cell > svg { width: 68%; }
 .grid-world .cell.right { box-shadow: inset 0 0 0 4px var(--accent); }
 .grid-world .cell.wrong { box-shadow: inset 0 0 0 4px var(--wrong); }
+.grid-world .cell.target { background: color-mix(in srgb, var(--code) 22%, transparent); }
+.grid-world .cell.target.trail, .grid-world .cell.trail { background: var(--code); }
+.grid-world .cell.picked > svg { opacity: .25; }
+.vars { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; min-height: 1.5em; margin: 0 0 6px; font-size: .95rem; line-height: 1.5; }
+.var i { font-style: normal; color: var(--muted); }
+.var i::after { content: ' ='; }
+.var b { font-variant-numeric: tabular-nums; }
 .cell-pick { position: absolute; inset: 0; border: 0; background: none; cursor: pointer; }
 .walker { position: absolute; left: 0; top: 0; width: calc(100% / var(--w)); aspect-ratio: 1; pointer-events: none; }
 .walker svg { display: block; width: 100%; height: 100%; }
@@ -548,12 +555,14 @@ html { scroll-padding-bottom: 160px; }
 .block.hole.fill-next { border-color: var(--code); }
 .drop-target, .block[data-hole].drop-target { border-style: solid; border-color: var(--code); background: color-mix(in srgb, var(--code) 35%, transparent); }
 /* A block sits on one row when it fits: heads beside what they hold, so long programs stay above the tiles. */
-.block.loop, .block.if { display: flex; flex-wrap: wrap; align-items: center; column-gap: 8px; height: auto; padding: 4px 8px; background: var(--card); color: var(--text); font-size: 1rem; }
-.block .head { display: flex; align-items: center; gap: 6px; min-height: 40px; font-weight: 700; white-space: nowrap; }
+.block.loop, .block.if, .block.stmt { display: flex; flex-wrap: wrap; align-items: center; column-gap: 8px; height: auto; padding: 4px 8px; background: var(--card); color: var(--text); font-size: 1rem; }
+.block .head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 40px; font-weight: 700; }
+.block .head .list { display: inline-flex; flex-wrap: wrap; gap: 3px; }
+.block .head .list .block { min-width: 30px; height: 30px; padding: 0 4px; font-size: 1rem; border-radius: 7px; }
 .block .head b { display: inline-grid; place-items: center; min-width: 36px; height: 36px; border-radius: 8px; background: var(--code); color: var(--code-text); }
 .block .head b { padding: 0 6px; }
 .block.go.call { font-size: 1rem; }
-.block.look, .block.count { font-size: 1rem; }
+.block.look, .block.count, .block.op { font-size: 1rem; }
 .block.loop.def { border-style: dashed; }
 .block .inner { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0; padding-left: 8px; border-left: 3px solid var(--code); }
 /* Several small repeats side by side: the number alone says it, the words stay for a screen reader. */
@@ -775,9 +784,11 @@ body:has(main.night) {
 /* Short phones: tighter blocks, so a long program stays clear of the tiles in a wide font too. */
 @media (max-height: 700px) {
   .program { gap: 4px; }
-  .block { min-width: 38px; height: 38px; font-size: 1.15rem; }
-  .block.loop, .block.if { padding: 2px 6px; }
-  .block .head { min-height: 32px; }
-  .block .head b { min-width: 30px; height: 30px; }
+  .block { min-width: 36px; height: 36px; font-size: 1.15rem; }
+  .block.loop, .block.if, .block.stmt { padding: 1px 5px; font-size: .95rem; }
+  .block .head { min-height: 28px; gap: 4px; }
+  .block .head b { min-width: 26px; height: 26px; }
+  .block .head .block { min-width: 28px; height: 28px; }
   .block .inner { gap: 4px; margin: 0; }
+  .vars { min-height: 1.3em; margin-bottom: 2px; font-size: .85rem; line-height: 1.3; }
 }

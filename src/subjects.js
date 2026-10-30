@@ -211,7 +211,8 @@ export const subjects = [{
       ['I know steps run in order', 'Loops'],
       ['I know loops too', 'If and else'],
       ['I know if and else', 'Nested loops'],
-      ['I know while loops and functions', 'Find the bug'],
+      ['I know while loops and functions', 'Parameters'],
+      ['I know variables and lists', 'Find the bug'],
     ],
   },
 }, {
