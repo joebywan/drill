@@ -1,0 +1,35 @@
+{
+  "id": "focus",
+  "title": "Focus",
+  "units": [
+    {
+      "title": "Focus",
+      "lessons": [
+        {
+          "id": "focus1",
+          "title": "Ten minutes, one thing",
+          "items": [
+            {
+              "id": "focus-teach",
+              "type": "teach",
+              "say": "Hi, I'm Hazel. I build slowly, one stick at a time. Let's do one thing together.",
+              "text": [
+                "Pick one thing, then give it a set stretch of time. We start with ten minutes, and the time grows along the path.",
+                "Your screen stays on while the timer runs. Pause whenever you like, and finish whenever you're done. Stopping early is fine.",
+                "If your mind wanders, that's normal. Notice it, then come back to your one thing. That's all focus is."
+              ]
+            },
+            { "id": "focus-10", "type": "session", "minutes": 10 }
+          ]
+        },
+        { "id": "focus2", "title": "Fifteen minutes", "items": [{ "id": "focus-15", "type": "session", "minutes": 15 }] },
+        { "id": "focus3", "title": "Twenty-five minutes", "items": [{ "id": "focus-25", "type": "session", "minutes": 25 }] }
+      ]
+    }
+  ],
+  "again": { "label": "Focus for a while", "lesson": "focus3" },
+  "ask": "What are you focusing on?",
+  "own": "Or type your own",
+  "presets": ["Work", "Study", "Reading", "Writing", "Tidying up"],
+  "early": "I'm done"
+}

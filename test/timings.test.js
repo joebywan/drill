@@ -69,10 +69,10 @@ test('Move and the screen break go through the same overrides', () => {
 });
 
 test('migrate v7 to v8: older saves gain empty timings; v8 keeps its own; junk is none', () => {
-  assert.equal(VERSION, 8);
+  assert.ok(VERSION >= 8);
   const v7 = { version: 7, habits: { learn: { count: 0, last: null, forgiven: [], days: 0 } }, log: [], done: {}, cards: {},
     journal: {}, garden: { earned: {} }, tracked: [], picked: [] };
-  assert.deepEqual(migrate(roundTrip(v7)), { ...v7, version: VERSION, timings: {} });
+  assert.deepEqual(migrate(roundTrip(v7)), { ...v7, version: VERSION, timings: {}, left: [] });
   const mine = { ...emptyProgress(), timings: { calm: { inhale: 6 }, move: { reps: 12 } } };
   assert.deepEqual(migrate(roundTrip(mine)), mine);
   for (const bad of [null, 5, 'x', [1]]) assert.deepEqual(migrate({ ...emptyProgress(), timings: bad }).timings, {}, JSON.stringify(bad));

@@ -1,0 +1,14 @@
+{
+  "name": "drill-sync",
+  "private": true,
+  "type": "module",
+  "description": "Drill's sync API: a Cloudflare Worker with D1. See DEPLOY.md.",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "dev": "node dev.js",
+    "deploy": "npx wrangler@4.156.0 deploy"
+  },
+  "devDependencies": {
+    "miniflare": "4.20260730.0"
+  }
+}

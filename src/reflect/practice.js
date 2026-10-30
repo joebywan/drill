@@ -15,12 +15,13 @@ export function mount(el, item, ctx) {
   return item.type === 'teach' ? teach(el, item, ctx) : write(el, ctx);
 }
 
-function write(el, { say, done }) {
+function write(el, { say, done, reached }) {
   const { prompts } = course;
   const entry = {};
   let at = 0;
   const show = () => {
     const p = prompts[at];
+    reached?.(at, prompts.length);
     el.innerHTML = `<form class="reflect">
         <p class="topic">${at + 1} of ${prompts.length}</p>
         <h2><label for="reflect-line">${esc(p.prompt)}</label></h2>

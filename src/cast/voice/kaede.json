@@ -1,0 +1,88 @@
+{
+  "name": "Kaede",
+  "voice": {
+    "personality": "A red panda named for the maple, with attitude: a show-off with a soft centre. Rears up on her hind legs when pleased, takes a little credit, and talks about bamboo more than is strictly necessary.",
+    "encourages": "Loudly and a bit vainly: she is proud of the reading, the looking at the shape, saying it out loud. Never the person's brain.",
+    "dares": "A cheeky bet about kana and bamboo: read three before she finishes a snack, say a word out loud, beat her pose.",
+    "never": ["lazy", "stupid", "obviously", "disappointed", "easy"]
+  },
+  "lines": [
+    { "when": {}, "lines": [
+      "Kana time? My ears are up.",
+      "One lesson, one bamboo snack. That is the deal.",
+      "The shapes are waiting. So am I, standing tall.",
+      "Shall we read something? I brought a maple leaf."
+    ] },
+    { "when": { "first": true }, "lines": [
+      "Hi, I'm Kaede. Red panda. The original panda, actually.",
+      "New to kana? Lovely. Each shape is one sound. We go one at a time.",
+      "Hello. First lesson, first shapes. I'll stand on my back legs when you get one."
+    ] },
+    { "when": { "comeback": true }, "lines": [
+      "Oh, hello. The kana kept your seat.",
+      "There you are. I saved you some bamboo. Some.",
+      "Welcome. We'll start with a shape you know."
+    ] },
+    { "when": { "light": "done" }, "lines": [
+      "Lesson done today. Tail up, ears up.",
+      "That's today's Japanese. I'm doing my big pose.",
+      "Done. I'm off to celebrate with bamboo. Mine, sorry."
+    ] },
+    { "when": { "light": "done", "hour": "night" }, "lines": [
+      "Done, and it's late. Oyasumi. That means goodnight."
+    ] },
+    { "when": { "light": "done", "streak": "week" }, "lines": [
+      "Another day of kana. The shapes are moving in."
+    ] },
+    { "when": { "light": "done", "streak": "month" }, "lines": [
+      "Done again. A month of this. I'm up on my hind legs and staying here.",
+      "{days} days of Japanese so far. The kana know your name now."
+    ] },
+    { "when": { "light": "resting" }, "lines": [
+      "A rest day. Red pandas nap up to fifteen hours. I'm just saying.",
+      "The kana can sit a day. I'll tidy my tail."
+    ] },
+    { "when": { "light": "not yet" }, "lines": [
+      "A lesson is here when you want it. I'm stretching.",
+      "Fancy a few shapes? I picked pretty ones.",
+      "Your usual {usualHour} kana? I'm warmed up."
+    ] },
+    { "when": { "light": "not yet", "hour": "morning" }, "lines": [
+      "Ohayou. That's good morning. You just learned something.",
+      "Morning. Kana with breakfast. Very civilised."
+    ] },
+    { "when": { "light": "not yet", "hour": "afternoon" }, "lines": [
+      "Konnichiwa. Afternoon is a fine time for a shape or two.",
+      "Afternoon. My bamboo and I are ready."
+    ] },
+    { "when": { "light": "not yet", "hour": "evening" }, "lines": [
+      "Konbanwa. That's good evening. Two words in already.",
+      "Evening. A few kana while the light goes orange, like me."
+    ] },
+    { "when": { "light": "not yet", "hour": "night" }, "lines": [
+      "A late one? One small lesson, then bed. I insist, politely.",
+      "Night owl hours. Red panda hours, I mean."
+    ] },
+    { "when": { "light": "not yet", "streak": "week" }, "lines": [
+      "{count} days of kana in a row. My tail is fluffed.",
+      "A week of Japanese. I've been telling the other pandas."
+    ] },
+    { "when": { "light": "not yet", "streak": "month" }, "lines": [
+      "A month of kana. I'm framing a maple leaf for you.",
+      "{count} days in a row. This calls for a pose."
+    ] }
+  ],
+  "dares": [
+    { "when": {}, "lines": [
+      "I bet you can't read three kana before I finish this bamboo.",
+      "Dare you to say one new word out loud. Loudly. Like me.",
+      "Bet you can't stand up taller than me after this lesson. I'm very tall when I try."
+    ] },
+    { "when": { "hour": "morning" }, "lines": [
+      "Bet you can't say ohayou to someone before lunch."
+    ] },
+    { "when": { "hour": "evening" }, "lines": [
+      "I dare you to read one shape before dinner and tell me its sound."
+    ] }
+  ]
+}

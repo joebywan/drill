@@ -13,8 +13,9 @@ const pools = (coach, pick) => VOICES[coach].lines.filter(({ when }) => pick(whe
 
 test('every coach in a subject has a voice, with the same layout for all', () => {
   for (const s of subjects) assert.ok(VOICES[s.coach.name.toLowerCase()], s.coach.name);
+  for (const s of subjects) assert.equal(VOICES[coachOf(s.habit)].name, s.habit === 'learn' ? 'Rosa' : s.coach.name, s.habit);
   for (const [id, v] of Object.entries(VOICES)) {
-    assert.equal(v.name.toLowerCase(), id);
+    assert.ok(v.name.toLowerCase() === id || subjects.some((s) => s.habit === id && s.coach.name === v.name), id);
     for (const key of ['personality', 'encourages', 'dares']) assert.ok(v.voice[key].length > 20, `${id}.${key}`);
     assert.ok(v.voice.never.length >= 3, `${id} never`);
     const all = [...v.lines, ...v.dares].flatMap((p) => p.lines);
@@ -25,6 +26,7 @@ test('every coach in a subject has a voice, with the same layout for all', () =>
   assert.equal(coachOf('calm'), 'moss');
   assert.equal(coachOf('learn'), 'rosa');
   assert.equal(coachOf('walk'), 'lumi', 'one-tap habits get Lumi');
+  assert.equal(coachOf('winddown'), 'winddown', "Wind down has Moss's bedtime voice");
 });
 
 test('every coach has a line for every state, without any facts', () => {
@@ -150,6 +152,7 @@ test('moment reads the state and facts from progress', () => {
   assert.equal(moment(old, calm, day(4)).facts.usualHour, null);
   // One-tap habits work the same way, with Lumi.
   const walk = logToday(track(emptyProgress(), { id: 'walk' }), 'walk', 'Walked', day(1, 7));
+  assert.equal(moment(walk, { id: 'learn', name: 'Learning' }, day(1, 9), 'kaede').coach, 'kaede', 'the course shown speaks');
   const m = moment(walk, { id: 'walk', name: 'Walk' }, day(1, 9));
   assert.equal(m.coach, 'lumi');
   assert.equal(m.state.light, 'done');

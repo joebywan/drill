@@ -4,13 +4,13 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, streakLine } from '../src/habitview.js';
 import { helpHtml } from '../src/practice/kit.js';
 import { subjects } from '../src/subjects.js';
-import { ACCURACY, BREAK_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
+import { ACCURACY, BREAK_LINES, FOCUS_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, KAEDE_LINES, KAEDE_HEADLINES, MATHS_LINES, MATHS_HEADLINES, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
 // Praise the process, never the person: no ability words. No absence, loss or guilt either.
 const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intelligen\w*|born to)\b/i;
 const LOSS = /\b(lose|losing|lost|gone|we miss you|missed you|sad|disappoint\w*|abandon\w*|forg[eo]t\w*|broke(n)?|break(ing)? your|come back (soon|to us|tomorrow)|where were you|absen\w*|guilt\w*|shame)\b/i;
 
-const lines = [LINES, HEADLINES, CALM_LINES, BREAK_LINES, REFLECT_LINES, MOVE_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
+const lines = [LINES, HEADLINES, KAEDE_LINES, KAEDE_HEADLINES, MATHS_LINES, MATHS_HEADLINES, CALM_LINES, BREAK_LINES, REFLECT_LINES, MOVE_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])));
 const labels = [...ACCURACY, ...PACE].map(([, label]) => label).concat(STREAK_LABEL, QUIET_DAY, REST_DAY, NO_STREAK, FIRST_SQUARE, streakLine(0, false), streakLine(0, true), streakLine(14, true));
 
 test('end-screen headlines and chip labels pass the same lint', () => {
@@ -40,12 +40,31 @@ test('every way a session ends has a headline, and chip bands cover every value'
   assert.equal(paceLabel(600), 'STEADY');
 });
 
+test("a Learn coach's own lines cover every kind the lesson runner and end screen ask for", () => {
+  for (const [kind, list] of Object.entries(LINES)) if (!['repair', 'welcome', 'lumi'].includes(kind)) assert.ok(KAEDE_LINES[kind]?.length, `Kaede: ${kind}`);
+  for (const kind of Object.keys(HEADLINES)) assert.ok(KAEDE_HEADLINES[kind]?.length, `Kaede headline: ${kind}`);
+  for (const s of subjects.filter((x) => x.kind === 'learn' && x.coach.lines))
+    for (const kind of [...CELEBRATIONS, 'correct', 'wrong', 'tapped']) assert.ok(s.coach.lines[kind]?.length, `${s.id}: ${kind}`);
+});
+
 test('no character line praises ability', () => {
   for (const [kind, text] of lines) assert.doesNotMatch(text, ABILITY, `${kind}: ${text}`);
 });
 
 test('no character line mentions absence, loss or guilt', () => {
   for (const [kind, text] of lines) assert.doesNotMatch(text, LOSS, `${kind}: ${text}`);
+});
+
+test("Ada's lines cover every kind the runner asks for, and the maths course passes the lint", () => {
+  for (const kind of Object.keys(LINES).filter((k) => !['repair', 'welcome', 'lumi'].includes(k))) assert.ok(MATHS_LINES[kind]?.length, kind);
+  for (const kind of Object.keys(HEADLINES)) assert.ok(MATHS_HEADLINES[kind]?.length, kind);
+  const all = (v) => (typeof v === 'string' ? [v] : v && typeof v === 'object' ? Object.values(v).flatMap(all) : []);
+  const maths = all(JSON.parse(readFileSync('src/data/maths.json', 'utf8'))).filter((t) => /\s/.test(t));
+  assert.ok(maths.length > 50);
+  for (const text of maths) {
+    assert.doesNotMatch(text, ABILITY, text);
+    assert.doesNotMatch(text, LOSS, text);
+  }
 });
 
 test('what Rosa says mid-puzzle passes the same lint', () => {
@@ -145,13 +164,35 @@ const sources = (dir) => readdirSync(dir, { withFileTypes: true, recursive: true
 
 test('journal text is read only by the habit view and the file export, and nothing is sent anywhere', () => {
   const touch = sources('src').filter((f) => /journal/.test(readFileSync(f, 'utf8'))).sort();
-  // progress.js keeps the shape (migrate, writeJournal); reflect/practice.js writes it and is the
+  // progress.js keeps the shape (migrate, writeJournal); reflect/ and focus/practice.js write it and are the
   // habit view's dayDetail; app.js only hands it from the routine to writeJournal.
-  assert.deepEqual(touch, ['src/app.js', 'src/progress.js', 'src/reflect/practice.js']);
+  // sync/merge.js merges two devices' journals; sync/sync.js seals the whole progress before it leaves.
+  assert.deepEqual(touch, ['src/app.js', 'src/focus/practice.js', 'src/progress.js', 'src/reflect/practice.js', 'src/sync/merge.js']);
   assert.doesNotMatch(readFileSync('src/app.js', 'utf8'), /progress\.journal|\.journal\b/, 'app.js never reads the journal itself');
   // The export is the whole progress object, journal included, saved to the learner's own file.
   assert.match(readFileSync('src/app.js', 'utf8'), /new Blob\(\[JSON\.stringify\(progress\)\]/);
-  for (const f of sources('src')) assert.doesNotMatch(readFileSync(f, 'utf8'), /\bfetch\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource/, f);
+  // Only opt-in sync talks to a server, and it sends progress sealed (AES-GCM) and a card of presets and numbers.
+  for (const f of sources('src').filter((f) => f !== 'src/sync/sync.js')) assert.doesNotMatch(readFileSync(f, 'utf8'), /\bfetch\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource/, f);
+  const sync = readFileSync('src/sync/sync.js', 'utf8');
+  assert.equal(sync.match(/\bfetch\(/g).length, 1, 'one fetch, in call()');
+  assert.match(sync, /blob: await seal\(key, merged\)/, 'progress leaves sealed');
+});
+
+// Sync and friends: preset names, animals and cheers only, linted like the cast; the screens' words too.
+import { CHEERS, WORDS, ANIMALS } from '../src/sync/presets.js';
+test('friends see presets only, and the sync screens never nag, hurry or judge', () => {
+  const ui = readFileSync('src/sync/ui.js', 'utf8');
+  // Every string and template in the screens, with tags and ${…} taken out: what the learner reads.
+  const said = [...ui.matchAll(/`([^`]*)`|'([^'\n]*)'|"([^"\n]*)"/g)]
+    .map((m) => (m[1] ?? m[2] ?? m[3]).replace(/\$\{[^}]*\}?/g, ' ').replace(/<[^>]*>/g, ' ').trim()).filter((t) => /[a-z] [a-z]/i.test(t));
+  assert.ok(said.length > 10);
+  for (const text of [...Object.values(CHEERS), ...WORDS, ...Object.values(ANIMALS).map(([, n]) => n), ...said]) {
+    assert.doesNotMatch(text, ABILITY, text);
+    assert.doesNotMatch(text, LOSS, text);
+    assert.doesNotMatch(text, /\b(hurry|now or never|don'?t miss|last chance|before it'?s too late)\b/i, text);
+  }
+  assert.doesNotMatch(ui, /<textarea|contenteditable/, 'no free text goes to friends');
+  assert.ok(!Object.values(ANIMALS).some(([, n]) => /owl/i.test(n)), 'no owls');
 });
 
 // The screen break: no health claims, no urgency, no guilt, and no screen-time shaming.
@@ -281,6 +322,69 @@ test('the timings screen makes no claims, never hurries and never pushes', () =>
   assert.match(TIMING_WORDS.intro, /^If someone has given you timings, set them here\./);
 });
 
+// Focus: a calm timer, never a productivity tool. No hurry, no claims, no guilt, and nothing that
+// counts distraction or calls time wasted. Stopping early is fine, so nothing hints otherwise.
+const focusCourse = JSON.parse(readFileSync('src/data/focus.json', 'utf8'));
+const GRIND = /\b(distract\w*|productiv\w*|wast\w*|lazy|procrastinat\w*|fail\w*|unfocused|lost focus|give up|quit\w*|didn'?t finish|only|just \d+|should|must|better|best|score\w*)\b/i;
+const focusText = [
+  ...Object.entries(FOCUS_LINES).flatMap(([kind, list]) => list.map((text) => [kind, text])),
+  ...strings(focusCourse).filter((t) => /\s/.test(t)).map((text) => ['focus.json', text]),
+  ...feelsFor(subjects.find((x) => x.habit === 'focus').coach.feel).map(([, label]) => ['feel', label]),
+  ['ask', subjects.find((x) => x.habit === 'focus').coach.ask],
+];
+
+test('Focus never hurries, claims, shames or keeps count', () => {
+  assert.ok(focusText.length > 20);
+  for (const [kind, text] of focusText) {
+    for (const rule of [CLAIMS, URGENCY, ABILITY, LOSS, GRIND]) assert.doesNotMatch(text, rule, `${kind}: ${text}`);
+  }
+  for (const bad of ['You got distracted 3 times', 'Be more productive', 'Time wasted', 'You only did 4 minutes']) assert.match(bad, GRIND, bad);
+  for (const kind of Object.keys(FOCUS_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
+});
+
+// Wind down: Calm's lint, plus no sleep claims or sleep numbers, no screen-time shaming, and the
+// help line on the first lesson.
+import { WINDDOWN_LINES, INTRO_WORDS as INTRO } from '../src/cast/lines.js';
+const SLEEP = /\b(sleep\w*|asleep|insomnia|melatonin|blue light|hours?|\d+ ?(h|hrs?|min(ute)?s?)|deep(er)? rest|better nights?|wake (up )?refreshed|tracked?|tracking)\b/i;
+const windCourse = JSON.parse(readFileSync('src/data/winddown.json', 'utf8'));
+const windText = [
+  ...Object.entries(WINDDOWN_LINES).flatMap(([kind, list]) => list.map((text) => [kind, text])),
+  ...strings(windCourse).filter((t) => /\s/.test(t)).map((text) => ['winddown.json', text]),
+  ['intro', INTRO.does.winddown],
+];
+
+test('Wind down makes no sleep or health claims, never hurries and never shames screen time', () => {
+  assert.ok(windText.length > 20);
+  for (const [kind, text] of windText) {
+    for (const lint of [CLAIMS, SLEEP, URGENCY, SHAMING, ABILITY, LOSS]) assert.doesNotMatch(text, lint, `${kind}: ${text}`);
+  }
+  for (const bad of ['Sleep better tonight', 'Fall asleep in 10 minutes', 'Helps with insomnia', 'Get 8 hours', 'No blue light']) assert.match(bad, SLEEP, bad);
+  assert.equal(windCourse.units[0].lessons[0].items[0].help, true, 'the help line is on the first lesson');
+  const subject = subjects.find((x) => x.habit === 'winddown');
+  assert.equal(subject.coach.help.text, HELP_LINE, 'and after "Not really"');
+  for (const kind of Object.keys(WINDDOWN_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
+});
+
+// Fitting the person (src/fitting.js): the comeback invites and never counts what was missed;
+// the reminders line and the habit view's usual hours are plain.
+import { COMEBACK_WORDS, PAUSED_WORDS, usualLine } from '../src/fitting.js';
+test('the comeback card invites, never guilts, and the fitting lines are plain', () => {
+  const card = { title: 'Breathing', hour: 19 };
+  const comeback = [COMEBACK_WORDS.kicker, COMEBACK_WORDS.text(card), COMEBACK_WORDS.text({ ...card, hour: null }), COMEBACK_WORDS.go(card), COMEBACK_WORDS.dismiss];
+  for (const text of comeback) for (const lint of [LOSS, URGENCY, ABILITY, NAGGING]) assert.doesNotMatch(text, lint, text);
+  for (const text of comeback) assert.doesNotMatch(text, /\b(miss\w*|been (a while|away)|back|again|return\w*|lately|haven'?t|stopp\w*|slipp\w*|fell|fall\w*|drop\w*|usual week|only)\b/i, text);
+  const plain = [...Object.values(PAUSED_WORDS), usualLine([7, 19]), 'Try a shorter one: 3 breaths'];
+  for (const text of plain) for (const lint of [LOSS, URGENCY, ABILITY]) assert.doesNotMatch(text, lint, text);
+});
+
+// The Android widget and its once-a-day note: no nagging, no hurry, nothing about a day off.
+import { REMINDER_WORDS, WIDGET_LINES } from '../src/cast/lines.js';
+test('the widget and the daily note never nag, hurry or judge', () => {
+  const texts = [...Object.values(WIDGET_LINES).flat(), ...Object.values(REMINDER_WORDS)];
+  assert.ok(texts.length > 15);
+  for (const text of texts) for (const lint of [NAGGING, LOSS, ABILITY, URGENCY]) assert.doesNotMatch(text, lint, text);
+});
+
 // Coach voice (src/cast/voice/*.json): every pool line and dare gets the lint for the habits its
 // coach runs, plus the words its own voice sheet says it never uses. Lines are linted with their
 // slots filled. Comebacks welcome without counting the time away; dares are a playful bet in
@@ -297,6 +401,11 @@ const VOICE_LINTS = {
   mira: [CLAIMS, BREAK_CLAIMS, URGENCY, SHAMING],
   clover: [PUSHING, BODY, CALORIE_NUMBERS],
   lumi: [CLAIMS, URGENCY, JUDGE, NAGGING],
+  kaede: [],
+  ada: [],
+  fennel: [],
+  hazel: [CLAIMS, URGENCY, GRIND],
+  winddown: [CLAIMS, SLEEP, URGENCY, SHAMING],
 };
 const FACTS = { habit: 'Screen break', usualHour: 'evening', count: 12, days: 40 };
 const filled = (text) => text.replace(/\{(\w+)\}/g, (_, k) => FACTS[k]);

@@ -4,6 +4,10 @@ Not MVP. Ideas agreed in principle, to pick up later.
 
 ## Cross-device profiles and friends
 
+Built 2026-10-30 (src/sync/, server/, privacy.html; see CLAUDE.md). Left: deploy it
+(server/DEPLOY.md: Cloudflare account, D1, DNS move), a QR code beside the 6-digit code, and the
+Android wrapper's internet permission if the app should sync.
+
 Decided 2026-10-29 as the shape to build, when it's time:
 
 - **No accounts.** A profile is a secret key held on the device. A new device joins with a
@@ -36,7 +40,8 @@ and a self-hosted PocketBase (~€6/month, own backups) were the alternatives.
 
 ## Feel
 
-- More animation and sound throughout lessons and the path.
+- More animation and sound throughout lessons and the path. Done: answer pop and shake, petal confetti, the
+  path filling as Lumi hops, the next node bobbing, and generated cues for each (`cue()` in feel.js).
 
 ## Android wrapper
 
@@ -77,6 +82,9 @@ the Android wrapper for anything about notifications.
 - **Adjust what's offered.** A practice often left at the same step gets a shorter version
   offered; the ones they finish most come first on the path.
 - Everything stays on the device, can be seen in the habit view, and goes in the file export.
+
+Built in `src/fitting.js` (see CLAUDE.md): the reminders themselves are the Android wrapper's,
+which calls `window.drill.reminderHour()`, `shouldRemind()` and `noteReminder(outcome)`.
 
 ## Coach voice
 

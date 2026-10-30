@@ -1,11 +1,13 @@
 import { currentStreak, light, today } from '../progress.js';
 import { subjects } from '../subjects.js';
+import { VOICES } from './lines.js';
 
 /**
  * The state and facts a coach's line is picked by (say() in lines.js), read from progress. Pure.
- * The coach is the habit's subject's coach; a one-tap habit's is Lumi.
+ * The coach is the habit's own voice if it has one (Wind down's Moss), else its subject's coach;
+ * a one-tap habit's is Lumi.
  */
-export const coachOf = (habit) => subjects.find((s) => s.habit === habit)?.coach.name.toLowerCase() || 'lumi';
+export const coachOf = (habit) => (VOICES[habit] ? habit : subjects.find((s) => s.habit === habit)?.coach.name.toLowerCase() || 'lumi');
 export const hourBand = (h) => (h >= 5 && h < 12 ? 'morning' : h >= 12 && h < 17 ? 'afternoon' : h >= 17 && h < 21 ? 'evening' : 'night');
 export const streakBand = (n) => (n >= 30 ? 'month' : n >= 7 ? 'week' : n >= 1 ? 'short' : 'none');
 const LIGHTS = { bright: 'done', soft: 'not yet', ember: 'resting' };
@@ -20,14 +22,17 @@ function usualHour(progress, habit) {
   return bands.reduce((best, b) => (count(b) > count(best) ? b : best));
 }
 
-/** { coach, state, facts } for `habit` ({ id, name }) at `now`. A fact that isn't known is null. */
-export function moment(progress, habit, now = new Date()) {
+/**
+ * { coach, state, facts } for `habit` ({ id, name }) at `now`. A fact that isn't known is null.
+ * `coach` picks one where a habit has several (Learning's courses: the course shown).
+ */
+export function moment(progress, habit, now = new Date(), coach = coachOf(habit.id)) {
   const date = today(now);
   const last = progress.habits[habit.id]?.last;
   const count = currentStreak(progress, now, habit.id);
   const days = progress.habits[habit.id]?.days || 0;
   return {
-    coach: coachOf(habit.id),
+    coach,
     state: {
       habit: habit.id,
       today: date,

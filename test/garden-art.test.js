@@ -90,8 +90,8 @@ test('sway and visitors move, and stay still under reduced motion', () => {
   const el = { querySelector: () => part(), querySelectorAll: () => [part(), part()] };
   assert.equal(sway(el), 'anim');
   assert.equal(calls[0][1].iterations, Infinity);
-  // Two parts each; the butterfly and bee also wander; a fresh one also flies in, on top.
-  const wander = { butterfly: 1, bee: 1, birds: 0 };
+  // Two parts each; the butterfly, bee and ladybird also wander; a fresh one also flies in, on top.
+  const wander = { butterfly: 1, bee: 1, birds: 0, ladybird: 1 };
   for (const k of VISITORS) assert.equal(animateVisitor(el, k).length, 2 + wander[k], k);
   calls.length = 0;
   for (const k of VISITORS) assert.equal(animateVisitor(el, k, true).length, 3 + wander[k], k);
@@ -99,8 +99,10 @@ test('sway and visitors move, and stay still under reduced motion', () => {
   assert.equal(animateVisitor(el, 'owl'), null);
   // The scene: every living part moves forever, from a real scene's markup.
   const svg = scene('sunlit') + scene('resting');
-  for (const p of ['cloud', 'halo', 'glint', 'star', 'firefly']) assert.match(svg, new RegExp(`data-part="${p}"`), p);
-  assert.equal(animateScene(el).length, 10, 'two of each of the five parts');
+  for (const p of ['cloud', 'halo', 'glint', 'star', 'firefly', 'tuft']) assert.match(svg, new RegExp(`data-part="${p}"`), p);
+  const seasons = scene('sunlit', 'tall', 'spring') + scene('sunlit', 'tall', 'autumn') + scene('sunlit', 'tall', 'winter') + drawGarden({ mood: 'sunlit', plants: [] });
+  for (const p of ['petal', 'leaf', 'lantern', 'lounge']) assert.match(seasons, new RegExp(`data-part="${p}"`), p);
+  assert.equal(animateScene(el).length, 20, 'two of each of the ten parts');
   calls.length = 0;
   globalThis.matchMedia = () => ({ matches: true });
   try {
@@ -117,9 +119,19 @@ test('no visitor sits on any plant: every plant, every stage, 1–6 plants, both
   const hit = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
   const check = (plants, shape, name) => {
     const [W, H] = SIZE[shape];
+    const n = plants.length;
     const at = slots(shape, plants.length);
     const boxes = plants.map((p, i) => plantBox(p.habit, p.stage, at[i]));
-    perches(plants, shape).forEach((spot, i) => {
+    const spots = perches(plants, shape);
+    // Lumi's pond, when there's room: on the ground, in the scene, clear of plants and visitors.
+    if (spots.pond) {
+      const b = spots.pond;
+      assert.ok(b.x >= 0 && b.y + b.h > SIZE[shape][1] / 3 && b.x + b.w <= W && b.y + b.h <= H, `${name} pond on the ground`);
+      boxes.forEach((p, j) => assert.ok(!hit(b, p), `${name} pond on plant ${j}`));
+      spots.forEach((spot) => Object.values(spot).forEach((v) => assert.ok(!hit(b, v), `${name} a visitor in the pond`)));
+    }
+    if (n <= 3) assert.ok(spots.pond, `${name}: a small garden always has its pond`);
+    spots.forEach((spot, i) => {
       for (const [kind, b] of Object.entries(spot)) {
         const where = `${name} plant ${i} ${kind}`;
         assert.ok(b.x >= 0 && b.y >= 0 && b.x + b.w <= W && b.y + b.h <= H, `${where} in the scene`);
@@ -176,7 +188,8 @@ test('a drawn garden has every plant at its stage, flowers capped at what the ar
     for (const p of plants) assert.match(svg, new RegExp(`class="plant plant-\\w+ stage-${p.stage}" data-habit="${p.habit}"`), p.habit);
     assert.equal(svg.match(/data-part="bloom"/g).length, plants.length * MAX_FLOWERS, 'capped');
     assert.equal(svg.match(/class="visitor /g).length, plants.length * 3);
-    assert.equal(svg.match(/<svg /g).length, 1 + plants.length * 4, 'one scene');
+    assert.match(svg, /class="pond"/, `Lumi's pond fits the ${shape} beside every plant`);
+    assert.equal(svg.match(/<svg /g).length, 1 + plants.length * 4 + 2, 'one scene, and the pond with Lumi');
   }
   const resting = drawGarden({ mood: 'resting', plants: plants.slice(0, 1) });
   assert.equal(resting, drawGarden({ mood: 'resting', plants: plants.slice(0, 1) }), 'the same every time');
