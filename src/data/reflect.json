@@ -28,6 +28,7 @@
     }
   ],
   "again": { "label": "Reflect today", "lesson": "reflect3" },
+  "tip": "Rather talk? Tap the mic on your keyboard.",
   "prompts": [
     { "key": "good", "label": "Good", "prompt": "One good thing", "example": "A warm cup of tea after lunch" },
     { "key": "learned", "label": "Learned", "prompt": "One thing you learned", "example": "Honey never goes off" },

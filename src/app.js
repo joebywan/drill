@@ -204,6 +204,13 @@ function home(arrived = null, newly = []) {
   const tabs = app.querySelector('.paths');
   const shown = tabs.querySelector('[aria-pressed="true"]');
   tabs.scrollLeft = shown.offsetLeft - (tabs.clientWidth - shown.offsetWidth) / 2;
+  // An edge fades only when there are more tabs that way.
+  const edges = () => {
+    tabs.classList.toggle('more-start', tabs.scrollLeft > 1);
+    tabs.classList.toggle('more-end', tabs.scrollLeft < tabs.scrollWidth - tabs.clientWidth - 1);
+  };
+  edges();
+  tabs.addEventListener('scroll', edges, { passive: true });
   for (const b of app.querySelectorAll('[data-path]')) {
     b.addEventListener('click', () => { showHabit(b.dataset.path); home(); focusOn(`[data-path="${b.dataset.path}"]`); });
   }
@@ -576,18 +583,21 @@ function run(lessonId, queue, title) {
     meterEl.setAttribute('aria-valuenow', at);
   };
   const shine = () => move($('.shine'), [{ transform: 'translateX(-100%)' }, { transform: 'translateX(350%)' }], { duration: 650, easing: 'ease-out' });
+  // The flare is hidden (visibility, not just opacity) except while it plays. Easing goes per
+  // keyframe: an overall ease-out stretched the fade into a faint pill that lingered onto the next item.
+  const flareEl = $('.flare');
   const flare = (text) => {
-    const el = $('.flare');
-    el.textContent = text;
-    move(el, [
-      { opacity: 0, transform: 'translate(-50%, 6px) scale(.6)' },
-      { opacity: 1, transform: 'translate(-50%, 0) scale(1.1)', offset: 0.2 },
-      { opacity: 1, transform: 'translate(-50%, 0) scale(1)', offset: 0.8 },
-      { opacity: 0, transform: 'translate(-50%, -4px) scale(1)' },
-    ], { duration: 1600, easing: 'ease-out' });
+    flareEl.textContent = text;
+    move(flareEl, [
+      { visibility: 'visible', opacity: 0, transform: 'translate(-50%, 6px) scale(.6)', easing: 'ease-out' },
+      { visibility: 'visible', opacity: 1, transform: 'translate(-50%, 0) scale(1.1)', offset: 0.15 },
+      { visibility: 'visible', opacity: 1, transform: 'translate(-50%, 0) scale(1)', offset: 0.85, easing: 'ease-in' },
+      { visibility: 'visible', opacity: 0, transform: 'translate(-50%, -4px) scale(1)' },
+    ], { duration: 1400 });
   };
   const step = () => {
     cleanup();
+    flareEl.getAnimations().forEach((a) => a.finish()); // a flare belongs to its answer, never the next item
     meter();
     foot.className = 'foot';
     if (at === queue.length) { sessionCoach.stop(); return practice ? finishRoutine() : finish(); }
