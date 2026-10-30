@@ -9,8 +9,11 @@ import { moss, NAME as MOSS } from './cast/moss.js';
 import * as calm from './calm/practice.js';
 import breakCourse from './data/break.json' with { type: 'json' };
 import * as screenBreak from './break/practice.js';
+import { STEPS as BREAK_STEPS } from './break/routines.js';
 import { lumi } from './cast/lumi.js';
-import { BREAK_LINES, CALM_HELP, CALM_LINES, MOVE_LINES, MOVE_SAFETY, REFLECT_LINES, SAFETY_LINE } from './cast/lines.js';
+import { BREAK_LINES, CALM_HELP, CALM_LINES, MOVE_LINES, MOVE_SAFETY, REFLECT_LINES, SAFETY_LINE, WINDDOWN_LINES } from './cast/lines.js';
+import winddownCourse from './data/winddown.json' with { type: 'json' };
+import * as winddown from './winddown/practice.js';
 import * as reflect from './reflect/practice.js';
 import moveCourse from './data/move.json' with { type: 'json' };
 import * as move from './move/practice.js';
@@ -38,8 +41,11 @@ import { mira, demo as miraDemo, NAME as MIRA } from './cast/mira.js';
  * Optional: `again`, { label, lesson }: once the path is done, home keeps a button with that label
  * which runs that lesson again ("Reflect today", "Breathe"); `dayDetail(progress, date)`, extra html under a day's sessions
  * in the habit view (Reflect's own lines); `placement`, { offer, question, options: [[label, unitTitle]] }:
- * an optional question home offers by the subject's path (`offer` is the link) to start further on.
+ * an optional question home offers by the subject's path (`offer` is the link) to start further on;
+ * `varied`, { key: [values] }: a timing marked `varies` in TIMINGS, as the routine has it per step.
  * It never stands in the way: answering opens the path at that unit, dismissing it hides the offer.
+ * `timings`, another habit's id whose own timings this subject plays by (Wind down plays Calm's);
+ * `night`, the session and its end screen in the dim night palette whatever the theme.
  */
 /** The built-in habits, in the order the home bar shows them. `habitsFor(progress)` adds the learner's own. */
 export const HABITS = [
@@ -48,6 +54,7 @@ export const HABITS = [
   { id: 'break', name: 'Screen break', icon: '👀' },
   { id: 'reflect', name: 'Reflect', icon: '📓' },
   { id: 'move', name: 'Move', icon: '🌱' },
+  { id: 'winddown', name: 'Wind down', icon: '🌙' },
 ];
 
 /**
@@ -129,6 +136,7 @@ export const subjects = [{
   ...breakCourse,
   mount: screenBreak.mount,
   habit: 'break',
+  varied: { seconds: BREAK_STEPS.map((s) => s.seconds) },
   kind: 'practice',
   coach: { draw: mira, demo: miraDemo, name: MIRA, start: 'guide', lines: BREAK_LINES, help: { text: SAFETY_LINE }, feel: 'refreshed', demonstrates: true },
 }, {
@@ -144,4 +152,12 @@ export const subjects = [{
   habit: 'move',
   kind: 'practice',
   coach: { draw: clover, demo: cloverDemo, name: CLOVER, start: 'guide', lines: MOVE_LINES, help: { text: MOVE_SAFETY }, feel: 'better', demonstrates: true },
+}, {
+  ...winddownCourse,
+  mount: winddown.mount,
+  habit: 'winddown',
+  kind: 'practice',
+  timings: 'calm',
+  night: true,
+  coach: { draw: moss, name: MOSS, start: 'sleepy', lines: WINDDOWN_LINES, help: CALM_HELP, feel: 'settled' },
 }];
