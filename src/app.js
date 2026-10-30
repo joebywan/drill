@@ -4,10 +4,9 @@ import { PLANTS, animateScene, animateVisitor, drawGarden, flower, plant, sway, 
 import { emptyProgress, nextUp, unitsOf, finishPractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
-import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
 import { reducedMotion } from './cast/kit.js';
-import { CALM_SOUNDS, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
+import { CALM_SOUNDS, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer } from './cast/lines.js';
 import { buzz, calmPref, chime, move, play, setPref, setSound, soundOn } from './feel.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
@@ -75,6 +74,20 @@ function showHabit(id) {
   try { localStorage.setItem(HABIT_KEY, id); } catch { /* lasts the visit */ }
 }
 
+// The courses (Learn subjects) share the Learning tab; it shows one course's path at a time,
+// remembered like the habit shown.
+const COURSE_KEY = 'drill.course';
+const courses = subjects.filter((s) => s.kind === 'learn');
+let courseShown = (() => {
+  let c = null;
+  try { c = localStorage.getItem(COURSE_KEY); } catch { /* private mode */ }
+  return courses.find((s) => s.id === c) || courses[0];
+})();
+function showCourse(id) {
+  courseShown = courses.find((s) => s.id === id) || courses[0];
+  try { localStorage.setItem(COURSE_KEY, courseShown.id); } catch { /* lasts the visit */ }
+}
+
 const ROW = 112; // px from one node to the next; the drawn path assumes it
 const SWAY = 70; // px a node sits off centre at most
 
@@ -90,18 +103,21 @@ function home(arrived = null, newly = []) {
   // A self-reported habit has no path: one big button instead (logPanel).
   const logged = shownHabit.kind === 'log' && light(progress, new Date(), habitShown) === 'bright';
   const learning = habitShown === 'learn';
-  const due = learning ? dueKeys(progress).filter((k) => items.has(k)) : [];
+  // Learning shows one course at a time, and reviews that course's cards, so its coach runs them.
+  const shownSubjects = learning ? [courseShown] : subjects.filter((s) => s.habit === habitShown);
+  const ofCourse = (k) => items.get(k)?.subject === courseShown;
+  const due = learning ? dueKeys(progress).filter(ofCourse) : [];
   // A repair needs a review even when nothing is due yet: then the soonest cards stand in.
   const repair = learning && needsRepair(progress);
-  const reviewKeys = (due.length ? due : repair ? soonestKeys(progress).filter((k) => items.has(k)) : []).slice(0, REVIEW_SIZE);
-  const units = subjects.filter((s) => s.habit === habitShown).flatMap((s) => unitsOf(progress, s));
+  const reviewKeys = (due.length ? due : repair ? soonestKeys(progress).filter(ofCourse) : []).slice(0, REVIEW_SIZE);
+  const units = shownSubjects.flatMap((s) => unitsOf(progress, s));
   // A subject's optional placement question, offered by its path until answered or dismissed.
-  const offer = subjects.find((s) => s.habit === habitShown && offersPlacement(progress, s));
+  const offer = shownSubjects.find((s) => offersPlacement(progress, s));
   const brandNew = !progress.log.length && !Object.keys(progress.done).length;
   // After the intro, Lumi's welcome names the first thing picked.
   const firstPick = brandNew && habitOf(progress.picked?.[0]);
   // The next lesson; a finished path whose subject has `again` ("Reflect today") keeps one of its lessons one tap away.
-  const again = subjects.find((s) => s.habit === habitShown)?.again;
+  const again = shownSubjects[0]?.again;
   const { current, repeat } = nextUp(units, again);
   const minutes = `about ${Math.max(1, Math.round(reviewKeys.length * 0.4))} min`;
   const dueChip = !reviewKeys.length ? ''
@@ -151,6 +167,8 @@ function home(arrived = null, newly = []) {
         <button class="path-tab add-tab" data-add aria-label="Add a habit">${esc(LOG_WORDS.addTab)}</button>
       </nav>
       </div><div class="pane">
+      ${learning && courses.length > 1 ? `<nav class="courses" aria-label="Course">${courses.map((s) =>
+        `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === courseShown}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
       ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick.name) : line('welcome'))}</p>` : ''}
       ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
         : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
@@ -217,6 +235,9 @@ function home(arrived = null, newly = []) {
     b.addEventListener('click', () => { showHabit(b.dataset.path); home(); focusOn(`[data-path="${b.dataset.path}"]`); });
   }
   app.querySelector('[data-add]').addEventListener('click', addHabit);
+  for (const b of app.querySelectorAll('[data-course]')) {
+    b.addEventListener('click', () => { showCourse(b.dataset.course); home(); focusOn(`[data-course="${b.dataset.course}"]`); });
+  }
   app.querySelector('[data-log]')?.addEventListener('click', () => {
     progress = logToday(progress, habitShown, shownHabit.title);
     let got;
@@ -658,7 +679,7 @@ function run(lessonId, queue, title) {
         meter();
         shine();
         foot.className = `foot show ${correct === null ? 'plain' : correct ? 'right' : 'wrong'}`;
-        foot.querySelector('strong').textContent = kind === 'plain' ? '' : line(kind);
+        foot.querySelector('strong').textContent = kind === 'plain' ? '' : line(kind, Math.random(), who.lines);
         foot.querySelector('p').textContent = text;
         // Focus moves to Continue, which reads out the verdict (a teach card: Rosa's line). The
         // banner is fixed over the bottom, so nothing on the page moves.
@@ -755,8 +776,8 @@ function run(lessonId, queue, title) {
           <p class="cheer">${esc(line('lumi'))}</p>
         </div>
         <p class="kicker">${esc(lessonId ? title : 'Review done')}</p>
-        <h1>${esc(headline(kind))}</h1>
-        <p class="said">${esc(line(kind))}</p>
+        <h1>${esc(line(kind, Math.random(), who.headlines || HEADLINES))}</h1>
+        <p class="said">${esc(line(kind, Math.random(), who.lines))}</p>
         <div class="chips">
           ${percent === null ? '' : chip('acc', accuracyLabel(percent), `${percent}%`)}
           ${chip('time', pace, clock)}
@@ -767,7 +788,7 @@ function run(lessonId, queue, title) {
       </main>
       <footer class="cta"><button class="next">Continue</button></footer>`;
     const [rosaEl, lumiEl] = app.querySelectorAll('.duo .hero');
-    const cast = [coach(rosaEl, rosa), coach(lumiEl, lumi)];
+    const cast = [coach(rosaEl, who.draw), coach(lumiEl, lumi)];
     let left = false;
     for (const c of cast) c.set('correct');
     // The high five: both lean in and hop, a spark where the hands meet, then a proud bounce.
@@ -979,10 +1000,11 @@ function intro() {
  * opening its own list. Picks are kept in the order tapped; home shows them first (ordered()).
  */
 function want(change = false) {
-  const courses = subjects.filter((s) => s.kind === 'learn');
   const list = [...HABITS.filter((h) => !courses.some((s) => s.habit === h.id)), ...PRESETS];
-  const branch = { learn: courses.map((s) => s.habit), habits: list.map((h) => h.id) };
-  let picked = (progress.picked || []).filter((id) => branch.learn.includes(id) || branch.habits.includes(id));
+  // Courses are picked by course id; choose() turns them into the Learning tab.
+  const branch = { learn: courses.map((s) => s.id), habits: list.map((h) => h.id) };
+  let picked = (progress.picked || []).map((id) => (id === courses[0].habit ? courseShown.id : id))
+    .filter((id) => branch.learn.includes(id) || branch.habits.includes(id));
   const on = (id) => picked.includes(id);
   const toggle = (attr, id, pressed, label) => `<button class="choice" ${attr}="${esc(id)}" aria-pressed="${pressed}">${label}</button>`;
   const open = (b) => branch[b].some(on);
@@ -993,7 +1015,7 @@ function want(change = false) {
       ${toggle('data-want', 'learn', open('learn'), esc(INTRO_WORDS.learn))}
       <section class="branch" data-branch="learn"${open('learn') ? '' : ' hidden'}>
         <h2>${esc(INTRO_WORDS.courses)}</h2>
-        ${courses.map((s) => toggle('data-pick', s.habit, on(s.habit), esc(s.title))).join('')}
+        ${courses.map((s) => toggle('data-pick', s.id, on(s.id), esc(s.title))).join('')}
         ${INTRO_WORDS.soonCourses.map((n) => `<button class="choice" disabled>${esc(n)} <small>· ${esc(INTRO_WORDS.soon)}</small></button>`).join('')}
       </section>
       ${toggle('data-want', 'habits', open('habits'), esc(INTRO_WORDS.habits))}
@@ -1036,6 +1058,9 @@ function want(change = false) {
  * switched on the way + Habit does (track). [] is a skip: today's default home.
  */
 function choose(picked) {
+  const course = picked.find((id) => courses.some((s) => s.id === id));
+  if (course) showCourse(course);
+  picked = [...new Set(picked.map((id) => (courses.some((s) => s.id === id) ? courses[0].habit : id)))];
   for (const id of picked) if (PRESETS.some((p) => p.id === id)) progress = track(progress, { id, hidden: false });
   progress = { ...progress, picked };
   save();
