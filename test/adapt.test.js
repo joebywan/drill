@@ -61,15 +61,15 @@ test('every Learn unit has a second explanation, and no explanation is for a uni
   }
 });
 
-test('a hinted right answer is logged, and counts as half a miss', () => {
+test('a hinted right answer is logged, and counts as a miss', () => {
   const hinted = { key: 'c:h', right: true, hinted: true };
   const p = noteAnswer(emptyProgress(), { key: 'c:h', right: true, ms: 1, hinted: true, warm: false });
   assert.equal(p.answers[0].hinted, true);
   assert.equal('warm' in p.answers[0], false);
   assert.equal(struggling([hinted], all), false);
-  assert.equal(struggling([hinted, hinted], all), false);
+  assert.equal(struggling([hinted, hinted], all), true);
   assert.equal(struggling([hinted, hinted, ...log(false)], all), true);
-  assert.equal(struggling([...log(false), hinted], all), false);
+  assert.equal(struggling([...log(false), hinted], all), true);
   assert.equal(flying([...log(...Array(7).fill(true)), hinted], all), false);
   assert.deepEqual(misses([hinted]), { 'c:h': 1 });
 });

@@ -13,7 +13,7 @@ export const GOES = 4; // how many goes a missed item gets in one session; then 
 const LOOK_BACK = 4;
 const SHAKY = 2; // this many misses in the last LOOK_BACK answers of a unit
 const FLYING = 8; // this many right in a row in a course
-const HINTED = 0.5; // a right answer after a hint, against SHAKY: weak evidence, half a miss
+const HINTED = 1; // a hint comes after two mistakes, so it is at least as weak as one miss
 
 export const noteAnswer = (progress, { key, right, ms, hinted, warm }, now = new Date()) => ({
   ...progress,

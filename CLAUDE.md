@@ -305,7 +305,7 @@ after `npm ci` at the root. App id `com.joebywan.drill`, locked.
   fresh until one right lands it, two in a row if it was missed more than once, within `GOES` (4) goes and `RETRIES` (5)
   repeats a session, then it is left for review with a kind line (`MOVE_ON`). Right first time adds nothing. A miss drops
   that item's pending echo. Two misses in a unit's last four answers (a right after a hint, reported through `done`'s
-  `{ hinted }`, counts as half a miss and otherwise plays as one) inserts a second explanation (`helpFor`:
+  `{ hinted }`, counts as a miss and otherwise plays as one) inserts a second explanation (`helpFor`:
   `src/data/lesson-help.json` where a lesson has its own, else `src/data/help.json`, every Learn unit has one) and a smaller
   earlier item, once a session, and drops the remaining echoes; repeats favour what was missed; 8 clean rights in a row in
   a course cuts echoes to 1. Only the first try schedules a card.
