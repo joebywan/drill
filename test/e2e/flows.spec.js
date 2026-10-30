@@ -124,6 +124,21 @@ test("intro, skipped at either step: today's default home, and the intro never c
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
 });
 
+for (const [width, height] of [[360, 640], [412, 800], [412, 915]]) {
+  test(`intro at ${width}x${height}: the last line scrolls fully clear of the button bar`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    const last = page.getByText('Everything stays on this device');
+    await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+    const line = await last.boundingBox();
+    const bar = await page.locator('.cta').boundingBox();
+    const next = await page.getByRole('button', { name: 'Next' }).boundingBox();
+    expect(line.y + line.height).toBeLessThanOrEqual(bar.y);
+    expect(line.y + line.height).toBeLessThanOrEqual(next.y);
+    expect(await page.locator('.cta').evaluate((el) => getComputedStyle(el).backgroundImage)).toBe('none'); // solid, nothing shows through
+  });
+}
+
 test('someone who used Drill before the intro existed never sees it', async ({ page }) => {
   const v6 = { version: 6, habits: { learn: { count: 0, last: null, forgiven: [], days: 0 } }, log: [], done: {}, cards: {},
     journal: {}, garden: { earned: {} }, tracked: [], start: { chess: null } };

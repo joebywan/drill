@@ -478,7 +478,9 @@ html { scroll-padding-bottom: 160px; }
 .survey .link { display: block; margin: 16px auto 0; }
 
 /* The first-visit intro (app.js intro, want): a list of what Drill does, then two branches of picks. */
-.intro { padding-bottom: 150px; }
+.intro { padding-bottom: 150px; } /* room to scroll the last line above the button bar */
+/* A solid bar, so a long list scrolls under it instead of showing through the fade. */
+.intro + .cta { padding-top: 12px; background: var(--bg); border-top: 1px solid var(--line); }
 .does { margin: 0; padding: 0; list-style: none; text-align: left; }
 .does li { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
 .does li:last-child { border: 0; }
