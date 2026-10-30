@@ -112,3 +112,15 @@ test('pathTimings: growing values come from the next lesson, else the nearest on
   assert.deepEqual(setTiming({}, 'calm', 'breaths', 4, 3), { breaths: 4 });
   assert.deepEqual(pathTimings('break', [], 0), { seconds: TIMINGS.break.seconds.from }, 'nothing on the path: `from`');
 });
+
+test('a `varies` value starts from the middle of the routine\'s own values, and setting it is always kept', async () => {
+  const { pathTimings, spread } = await import('../src/practice/timings.js');
+  const { subjects } = await import('../src/subjects.js');
+  const brk = subjects.find((s) => s.habit === 'break');
+  assert.ok(TIMINGS.break.seconds.varies);
+  assert.deepEqual(brk.varied.seconds, STEPS.map((s) => s.seconds), 'the subject hands over the routine\'s own seconds');
+  assert.deepEqual(spread(brk.varied.seconds), [15, 25]);
+  assert.equal(pathTimings('break', [], 0, brk.varied).seconds, 20);
+  assert.equal(pathTimings('break', [], 0, { seconds: [10, 25] }).seconds, 20, 'the middle lands on the step (17.5 → 20)');
+  assert.deepEqual(setTiming({}, 'break', 'seconds', 20, 20), { seconds: 20 }, '20 for every step is not the steps as written');
+});

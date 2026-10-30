@@ -343,6 +343,19 @@ test('your own timings: a growing value shows what the next lesson uses, and + s
   await expect(breaths.locator('output')).toHaveText(`${first} (grows as you go)`);
 });
 
+test('your own timings: a value that differs per step reads as written, and + sets one time for every step', async ({ page }) => {
+  await firstVisit(page);
+  await tab(page, 'Screen break').click();
+  await page.getByRole('button', { name: 'Your timings' }).click();
+  const each = page.locator('.steppers li[data-k="seconds"]');
+  await expect(each.locator('output')).toHaveText('As written (15–25 s)');
+  await each.getByRole('button', { name: 'More' }).click();
+  await expect(each.locator('output')).toHaveText('25 s (default as written, 15–25 s)');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')).timings)).toEqual({ break: { seconds: 25 } });
+  await page.getByRole('button', { name: 'Back to defaults' }).click();
+  await expect(each.locator('output')).toHaveText('As written (15–25 s)');
+});
+
 test('your own timings: Calm breathes in for 6 when set, saves at once, and goes back to defaults', async ({ page }) => {
   await page.clock.install();
   await firstVisit(page);

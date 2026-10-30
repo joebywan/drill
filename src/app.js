@@ -11,7 +11,7 @@ import { CALM_SOUNDS, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLa
 import { buzz, calmPref, chime, move, play, setPref, setSound, soundOn } from './feel.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
-import { TIMINGS, TIMING_WORDS, pathTimings, setTiming, timed } from './practice/timings.js';
+import { TIMINGS, TIMING_WORDS, pathTimings, setTiming, spread, timed } from './practice/timings.js';
 
 const STORE = 'drill.progress';
 const REVIEW_SIZE = 8;
@@ -306,9 +306,10 @@ function timingsView(id, back) {
   const fmt = (v, r) => `${v}${r.unit ? ` ${r.unit}` : ''}`;
   // A growing value starts from what the next session's lesson uses.
   const units = subjects.filter((s) => s.habit === id).flatMap((s) => unitsOf(progress, s));
-  const { current, repeat } = nextUp(units, subjects.find((s) => s.habit === id)?.again);
+  const subject = subjects.find((s) => s.habit === id);
+  const { current, repeat } = nextUp(units, subject?.again);
   const nodes = units.flatMap((u) => u.nodes);
-  const usual = pathTimings(id, nodes.map((n) => n.lesson), nodes.indexOf(current ?? repeat));
+  const usual = pathTimings(id, nodes.map((n) => n.lesson), nodes.indexOf(current ?? repeat), subject?.varied);
   app.innerHTML = `
     <header class="bar"><button class="back" aria-label="Back">←</button></header>
     <main class="habit timings">
@@ -328,8 +329,13 @@ function timingsView(id, back) {
       const r = all[li.dataset.k];
       const set = timed(id, { [li.dataset.k]: undefined }, own())[li.dataset.k];
       const v = set ?? r.def ?? usual[li.dataset.k];
-      const note = r.def != null ? `default ${r.def}` : set != null ? `default ${TIMING_WORDS.path}` : TIMING_WORDS.path;
-      li.querySelector('output').innerHTML = `<b>${esc(fmt(v, r))}</b> <small>(${esc(note)})</small>`;
+      // A value that differs per step reads "As written (15–25 s)" until it is set.
+      const steps = r.varies && subject?.varied?.[li.dataset.k];
+      const written = steps && `${spread(steps).join('–')}${r.unit ? ` ${r.unit}` : ''}`;
+      const note = r.def != null ? `default ${r.def}` : written ? `default ${TIMING_WORDS.written.toLowerCase()}, ${written}`
+        : set != null ? `default ${TIMING_WORDS.path}` : TIMING_WORDS.path;
+      li.querySelector('output').innerHTML = written && set == null ? `<b>${esc(TIMING_WORDS.written)}</b> <small>(${esc(written)})</small>`
+        : `<b>${esc(fmt(v, r))}</b> <small>(${esc(note)})</small>`;
       li.querySelector('[data-d="-1"]').disabled = v <= r.min;
       li.querySelector('[data-d="1"]').disabled = v >= r.max;
       li.classList.toggle('own', set != null);
