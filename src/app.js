@@ -1,13 +1,13 @@
-import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, subjects } from './subjects.js';
+import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
 import { award, garden, moreArrived, plantWords } from './garden/model.js';
 import { PLANTS, animateVisitor, drawGarden, flower, plant, sway, visitor } from './garden/art.js';
-import { emptyProgress, finishPractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, soonestKeys, today } from './progress.js';
+import { emptyProgress, finishPractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
 import { reducedMotion } from './cast/kit.js';
-import { feelsFor, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
+import { feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
 import { buzz, move, play, setSound, soundOn } from './feel.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
@@ -17,8 +17,8 @@ const REVIEW_SIZE = 8;
 const app = document.getElementById('app');
 
 let progress = load();
-/** Every habit this learner has (built in, then their own), and one of them by id. */
-const habits = () => habitsFor(progress);
+/** Every habit this learner has (built in, then their own; what the intro picked first), and one of them by id. */
+const habits = () => ordered(habitsFor(progress), progress.picked);
 const habitOf = (id) => habits().find((h) => h.id === id);
 
 function load() {
@@ -97,6 +97,8 @@ function home(arrived = null, newly = []) {
   // A subject's optional placement question, offered by its path until answered or dismissed.
   const offer = subjects.find((s) => s.habit === habitShown && offersPlacement(progress, s));
   const brandNew = !progress.log.length && !Object.keys(progress.done).length;
+  // After the intro, Lumi's welcome names the first thing picked.
+  const firstPick = brandNew && habitOf(progress.picked?.[0]);
   const current = [...units.slice(from), ...units].flatMap((u) => u.nodes).find((n) => n.state === 'open');
   // A finished path whose subject has `again` ("Reflect today") keeps one of its lessons one tap away.
   const again = !current && subjects.find((s) => s.habit === habitShown)?.again;
@@ -147,7 +149,7 @@ function home(arrived = null, newly = []) {
         ${habits().filter((h) => !h.hidden).map(habitTab).join('')}
         <button class="path-tab add-tab" data-add aria-label="Add a habit">${esc(LOG_WORDS.addTab)}</button>
       </nav>
-      ${brandNew ? `<p class="said welcome">${esc(line('welcome'))}</p>` : ''}
+      ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick.name) : line('welcome'))}</p>` : ''}
       ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>` : ''}
       ${offer ? `<p class="offer"><button data-place>${esc(offer.placement.offer)}</button><button class="dismiss" data-dismiss aria-label="Dismiss">×</button></p>` : ''}
       ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly) : ''}
@@ -824,12 +826,14 @@ function keep(note = '') {
       <button class="choice" data-load>Load from a file</button>
       <input type="file" accept=".json,application/json" hidden>
       <p class="said" role="status">${esc(note)}</p>
+      <button class="choice" data-change>${esc(INTRO_WORDS.change)}</button>
       <button class="choice" data-back>Back</button>
     </main>`;
   const status = app.querySelector('[role="status"]');
   const input = app.querySelector('input');
   focusOn('h1');
   app.querySelector('[data-back]').addEventListener('click', () => { home(); focusOn('.menu'); });
+  app.querySelector('[data-change]').addEventListener('click', () => want(true));
   app.querySelector('[data-save]').addEventListener('click', () => {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([JSON.stringify(progress)], { type: 'application/json' }));
@@ -866,4 +870,102 @@ function confirmLoad(p) {
   app.querySelector('[data-keep]').addEventListener('click', () => keep('Nothing changed.'));
 }
 
-home();
+/**
+ * The first-visit intro, step 1: what Drill can do, one plain line each, with Lumi. Shown once
+ * (`progress.picked` records it); Skip leaves the default home.
+ */
+function intro() {
+  const row = (icon, text) => `<li><span aria-hidden="true">${esc(icon)}</span><span>${esc(text)}</span></li>`;
+  app.innerHTML = `
+    <main class="survey intro">
+      <div class="hero"></div>
+      <h1>${esc(INTRO_WORDS.title)}</h1>
+      <ul class="does">
+        ${HABITS.filter((h) => INTRO_WORDS.does[h.id]).map((h) => row(h.icon, INTRO_WORDS.does[h.id])).join('')}
+        ${row('👆', INTRO_WORDS.does.track)}
+        ${row('🌻', INTRO_WORDS.garden)}
+        ${row('🔒', INTRO_WORDS.privacy)}
+      </ul>
+    </main>
+    <footer class="cta">
+      <button class="next" data-next>${esc(INTRO_WORDS.next)}</button>
+      <button class="link" data-skip>${esc(INTRO_WORDS.skip)}</button>
+    </footer>`;
+  const guide = coach(app.querySelector('.hero'), lumi);
+  guide.set('teach');
+  focusOn('h1');
+  app.querySelector('[data-next]').addEventListener('click', () => { guide.stop(); want(); });
+  app.querySelector('[data-skip]').addEventListener('click', () => { guide.stop(); choose([]); });
+}
+
+/**
+ * Step 2, and the ⋯ menu's "Change what you see" (`change`): Learn something and Build habits, each
+ * opening its own list. Picks are kept in the order tapped; home shows them first (ordered()).
+ */
+function want(change = false) {
+  const courses = subjects.filter((s) => s.kind === 'learn');
+  const list = [...HABITS.filter((h) => !courses.some((s) => s.habit === h.id)), ...PRESETS];
+  const branch = { learn: courses.map((s) => s.habit), habits: list.map((h) => h.id) };
+  let picked = (progress.picked || []).filter((id) => branch.learn.includes(id) || branch.habits.includes(id));
+  const on = (id) => picked.includes(id);
+  const toggle = (attr, id, pressed, label) => `<button class="choice" ${attr}="${esc(id)}" aria-pressed="${pressed}">${label}</button>`;
+  const open = (b) => branch[b].some(on);
+  app.innerHTML = `
+    <main class="survey intro">
+      <h1>${esc(INTRO_WORDS.want)}</h1>
+      <p class="said">${esc(INTRO_WORDS.wantSaid)}</p>
+      ${toggle('data-want', 'learn', open('learn'), esc(INTRO_WORDS.learn))}
+      <section class="branch" data-branch="learn"${open('learn') ? '' : ' hidden'}>
+        <h2>${esc(INTRO_WORDS.courses)}</h2>
+        ${courses.map((s) => toggle('data-pick', s.habit, on(s.habit), esc(s.title))).join('')}
+        ${INTRO_WORDS.soonCourses.map((n) => `<button class="choice" disabled>${esc(n)} <small>· ${esc(INTRO_WORDS.soon)}</small></button>`).join('')}
+      </section>
+      ${toggle('data-want', 'habits', open('habits'), esc(INTRO_WORDS.habits))}
+      <section class="branch" data-branch="habits"${open('habits') ? '' : ' hidden'}>
+        <h2>${esc(INTRO_WORDS.habitList)}</h2>
+        ${list.map((h) => toggle('data-pick', h.id, on(h.id), `<span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}`)).join('')}
+      </section>
+    </main>
+    <footer class="cta">
+      <button class="next" data-done>${esc(INTRO_WORDS.done)}</button>
+      <button class="link" data-skip>${esc(change ? INTRO_WORDS.back : INTRO_WORDS.skip)}</button>
+    </footer>`;
+  focusOn('h1');
+  const press = (b, pressed) => b.setAttribute('aria-pressed', pressed);
+  for (const b of app.querySelectorAll('[data-pick]')) {
+    b.addEventListener('click', () => {
+      picked = on(b.dataset.pick) ? picked.filter((id) => id !== b.dataset.pick) : [...picked, b.dataset.pick];
+      press(b, on(b.dataset.pick));
+    });
+  }
+  // Opening a branch shows its list; with one live course, Learn picks it straight away. Closing
+  // one drops its picks.
+  for (const b of app.querySelectorAll('[data-want]')) {
+    b.addEventListener('click', () => {
+      const id = b.dataset.want;
+      const opening = b.getAttribute('aria-pressed') !== 'true';
+      press(b, opening);
+      app.querySelector(`[data-branch="${id}"]`).hidden = !opening;
+      if (opening && id === 'learn' && branch.learn.length === 1 && !on(branch.learn[0])) picked = [...picked, branch.learn[0]];
+      if (!opening) picked = picked.filter((x) => !branch[id].includes(x));
+      for (const p of app.querySelectorAll(`[data-branch="${id}"] [data-pick]`)) press(p, on(p.dataset.pick));
+    });
+  }
+  app.querySelector('[data-done]').addEventListener('click', () => choose(picked));
+  app.querySelector('[data-skip]').addEventListener('click', () => (change ? (home(), focusOn('.menu')) : choose([])));
+}
+
+/**
+ * Home after the intro: the picks come first and the first is shown; picked one-tap habits are
+ * switched on the way + Habit does (track). [] is a skip: today's default home.
+ */
+function choose(picked) {
+  for (const id of picked) if (PRESETS.some((p) => p.id === id)) progress = track(progress, { id, hidden: false });
+  progress = { ...progress, picked };
+  save();
+  if (picked.length) showHabit(picked[0]);
+  home();
+  focusOn(picked.length ? '.cta .next' : 'h1');
+}
+
+if (showsIntro(progress)) intro(); else home();

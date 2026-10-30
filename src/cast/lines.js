@@ -258,3 +258,36 @@ export const LOG_WORDS = {
   hide: 'Hide this habit',
   hideNote: 'Hiding keeps its days and its plant. Add it again any time from + Habit.',
 };
+
+/**
+ * The first-visit intro (app.js intro): what Drill does, then what the learner would like out of
+ * it. Plain words, every step skippable, and linted like the rest. `does` is keyed by habit id,
+ * plus `track` for the one-tap habits.
+ */
+export const INTRO_WORDS = {
+  title: 'What can Drill do for you?',
+  does: {
+    learn: 'Learn: short lessons, one course at a time.',
+    calm: 'Calm: slow breathing and a body scan.',
+    move: 'Move: gentle exercises, a few minutes long.',
+    reflect: 'Reflect: three lines about your day.',
+    break: 'Screen break: rest your eyes and stretch.',
+    track: 'Track: one tap for a walk, a book, water or time outside.',
+  },
+  garden: 'Your habits grow plants in a garden, and nothing ever wilts.',
+  privacy: 'Everything stays on this device.',
+  next: 'Next',
+  skip: 'Skip',
+  back: 'Back',
+  want: 'What would you like out of Drill?',
+  wantSaid: 'Pick as many as you like. You can change this any time from the ⋯ menu.',
+  learn: 'Learn something',
+  habits: 'Build habits',
+  courses: 'Courses',
+  habitList: 'Habits',
+  soon: 'coming soon',
+  soonCourses: ['Maths', 'Japanese', 'Coding'],
+  done: 'Show my home',
+  first: '{name} is first. Start with the button below.',
+  change: 'Change what you see',
+};

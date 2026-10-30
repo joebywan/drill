@@ -12,6 +12,7 @@ const continueButton = (page) => page.getByRole('button', { name: 'Continue', ex
 /** A first visit lands on home; Learning's Continue goes straight into the first lesson. */
 async function start(page) {
   await page.goto('/');
+  await page.getByRole('button', { name: 'Skip', exact: true }).click(); // the first-visit intro
   await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
 }
 
@@ -46,6 +47,7 @@ test.describe('on a touch phone', () => {
 
 test('a keyboard player tabs to the board and walks the cursor with the arrows', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('button', { name: 'Skip', exact: true }).click(); // the first-visit intro
   await page.getByRole('button', { name: `Continue · ${first.title}` }).focus();
   await page.keyboard.press('Enter');
   await continueButton(page).focus(); // the teach card: on to "Tap the square e4."

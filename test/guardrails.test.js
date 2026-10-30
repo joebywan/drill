@@ -258,3 +258,12 @@ test('a name the learner gives a habit is never linted, and is escaped wherever 
   for (const m of code.matchAll(/\$\{(h|shownHabit)\.(name|icon)\b[^}]*\}/g)) assert.fail(`unescaped ${m[0]}`);
   assert.doesNotMatch(readFileSync('test/guardrails.test.js', 'utf8'), /tracked\.\w*name/);
 });
+
+// The first-visit intro gets the same lint as the habit words: plain, no nagging, no urgency.
+import { INTRO_WORDS } from '../src/cast/lines.js';
+
+test('the first-visit intro never nags, hurries or judges', () => {
+  const texts = strings(INTRO_WORDS);
+  assert.ok(texts.length > 20);
+  for (const text of texts) for (const lint of [NAGGING, LOSS, ABILITY, URGENCY]) assert.doesNotMatch(text, lint, text);
+});

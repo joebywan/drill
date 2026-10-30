@@ -40,8 +40,11 @@ async function solve(page, item) {
   await expect(continueButton(page), item.id).toBeInViewport();
 }
 
+/** Opens home. A first visit starts on the intro, which is skipped here (its own tests are below). */
 async function firstVisit(page) {
   await page.goto('/');
+  const skip = page.getByRole('button', { name: 'Skip', exact: true });
+  if (await skip.count()) await skip.click();
 }
 
 async function finishFirstLesson(page) {
@@ -54,8 +57,106 @@ async function finishFirstLesson(page) {
 
 const offer = (page) => page.getByRole('button', { name: 'Know some chess already? Skip ahead' });
 
-test('a first visit lands on home with a welcome and no questions; Learning starts straight in', async ({ page }) => {
+// The first-visit intro: what Drill does, then what you'd like out of it; home puts that first.
+const tabOrder = (page) => page.locator('.path-tab[data-path]').evaluateAll((tabs) => tabs.map((t) => t.dataset.path));
+const pressedTab = (page) => page.locator('.path-tab[aria-pressed="true"]');
+const pick = (page, name) => page.getByRole('button', { name, exact: true });
+
+async function toStepTwo(page) {
   await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'What can Drill do for you?' })).toBeFocused();
+  for (const text of ['Calm: slow breathing', 'Track: one tap', 'nothing ever wilts', 'Everything stays on this device'])
+    await expect(page.getByText(text)).toBeVisible();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByRole('heading', { name: 'What would you like out of Drill?' })).toBeFocused();
+}
+
+test('intro, learn only: Learn something picks chess, the others are coming soon, and home starts on Learning', async ({ page }) => {
+  await toStepTwo(page);
+  await expect(pick(page, 'Chess')).toBeHidden();
+  await pick(page, 'Learn something').click();
+  await expect(pick(page, 'Learn something')).toHaveAttribute('aria-pressed', 'true');
+  await expect(pick(page, 'Chess')).toHaveAttribute('aria-pressed', 'true'); // the one live course
+  for (const name of ['Maths', 'Japanese', 'Coding']) await expect(page.getByRole('button', { name: `${name} · coming soon` })).toBeDisabled();
+  await expect(page.getByRole('heading', { name: 'Have you played chess before?' })).toHaveCount(0); // no placement questions
+  await page.getByRole('button', { name: 'Show my home' }).click();
+  await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
+  expect((await tabOrder(page))[0]).toBe('learn');
+  await expect(page.getByText('Learning is first. Start with the button below.')).toBeVisible();
+  await expect(offer(page)).toBeVisible(); // the placement offer is still there, as it was
+  await expect(page.locator('.cta .next')).toBeFocused();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'What can Drill do for you?' })).toHaveCount(0);
+});
+
+test('intro, habits only: the picks come first in the order tapped, and a tracker is switched on', async ({ page }) => {
+  await toStepTwo(page);
+  await pick(page, 'Build habits').click();
+  await pick(page, 'Walk').click();
+  await pick(page, 'Calm').click();
+  await pick(page, 'Read').click();
+  await pick(page, 'Read').click(); // changed my mind
+  await expect(pick(page, 'Read')).toHaveAttribute('aria-pressed', 'false');
+  await page.getByRole('button', { name: 'Show my home' }).click();
+  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move']);
+  await expect(pressedTab(page)).toHaveAttribute('data-path', 'walk');
+  await expect(page.getByText('Walk is first. Start with the button below.')).toBeVisible();
+  await page.getByRole('button', { name: 'I walked today' }).click();
+  await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
+  await page.reload();
+  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move']);
+});
+
+test("intro, skipped at either step: today's default home, and the intro never comes back", async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Skip' }).click();
+  await expect(page.getByText("Hi, I'm Lumi. Pick something to grow")).toBeVisible();
+  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move']);
+  await page.reload();
+  await expect(page.getByText("Hi, I'm Lumi. Pick something to grow")).toBeVisible();
+
+  await page.evaluate(() => localStorage.clear());
+  await toStepTwo(page);
+  await pick(page, 'Build habits').click();
+  await pick(page, 'Move').click();
+  await page.getByRole('button', { name: 'Skip' }).click(); // a skip drops what was tapped
+  expect(await tabOrder(page)).toEqual(['learn', 'calm', 'break', 'reflect', 'move']);
+  await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
+});
+
+test('someone who used Drill before the intro existed never sees it', async ({ page }) => {
+  const v6 = { version: 6, habits: { learn: { count: 0, last: null, forgiven: [], days: 0 } }, log: [], done: {}, cards: {},
+    journal: {}, garden: { earned: {} }, tracked: [], start: { chess: null } };
+  await page.addInitScript((p) => localStorage.setItem('drill.progress', p), JSON.stringify(v6));
+  await page.goto('/');
+  await expect(tab(page, 'Learning')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'What can Drill do for you?' })).toHaveCount(0);
+});
+
+test('"Change what you see" in the ⋯ menu reopens step 2 with the picks, and Back changes nothing', async ({ page }) => {
+  await toStepTwo(page);
+  await pick(page, 'Build habits').click();
+  await pick(page, 'Calm').click();
+  await page.getByRole('button', { name: 'Show my home' }).click();
+  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Change what you see' }).click();
+  await expect(page.getByRole('heading', { name: 'What would you like out of Drill?' })).toBeFocused();
+  await expect(pick(page, 'Calm')).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Back' }).click();
+  expect((await tabOrder(page))[0]).toBe('calm');
+
+  await page.getByRole('button', { name: 'Your progress' }).click();
+  await page.getByRole('button', { name: 'Change what you see' }).click();
+  await pick(page, 'Calm').click();
+  await pick(page, 'Screen break').click();
+  await pick(page, 'Learn something').click();
+  await page.getByRole('button', { name: 'Show my home' }).click();
+  expect(await tabOrder(page)).toEqual(['break', 'learn', 'calm', 'reflect', 'move']);
+  await expect(pressedTab(page)).toHaveAttribute('data-path', 'break');
+});
+
+test('skipping the intro lands on home with a welcome and no questions; Learning starts straight in', async ({ page }) => {
+  await firstVisit(page);
   await expect(page.getByText("Hi, I'm Lumi. Pick something to grow")).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Have you played chess before?' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: /streak/ })).toHaveCount(0); // no streak line before a first session
@@ -67,7 +168,7 @@ test('a first visit lands on home with a welcome and no questions; Learning star
 });
 
 test('Calm never offers or asks a placement question', async ({ page }) => {
-  await page.goto('/');
+  await firstVisit(page);
   await tab(page, 'Calm').click();
   await expect(page.getByRole('heading', { name: 'Breathing' })).toBeVisible();
   await expect(offer(page)).toHaveCount(0);
@@ -77,7 +178,7 @@ test('Calm never offers or asks a placement question', async ({ page }) => {
 });
 
 test('the skip-ahead offer is optional: taking it starts the path further on, and it never comes back', async ({ page }) => {
-  await page.goto('/');
+  await firstVisit(page);
   await offer(page).click();
   await expect(page.getByRole('heading', { name: 'Have you played chess before?' })).toBeFocused();
   await page.getByRole('button', { name: 'Back' }).click();
@@ -97,13 +198,13 @@ test('the skip-ahead offer is optional: taking it starts the path further on, an
 test('the skip-ahead offer stops once the first unit is finished', async ({ page }) => {
   const done = Object.fromEntries(basics.units[0].lessons.map((l) => [`chess:${l.id}`, true]));
   await page.addInitScript((p) => localStorage.setItem('drill.progress', p), JSON.stringify({ ...emptyProgress(), done }));
-  await page.goto('/');
+  await firstVisit(page);
   await expect(page.getByRole('heading', { name: basics.units[0].title })).toBeVisible();
   await expect(offer(page)).toHaveCount(0);
 });
 
 test('dismissing the skip-ahead offer hides it for good', async ({ page }) => {
-  await page.goto('/');
+  await firstVisit(page);
   await page.getByRole('button', { name: 'Dismiss' }).click();
   await expect(offer(page)).toHaveCount(0);
   await page.reload();
@@ -435,7 +536,7 @@ test('a fresh garden is one seed; the first lesson grows a sprout and opens a fl
 test('a 7-day Calm streak brings a butterfly, shown on the end screen and in the garden', async ({ page }) => {
   await grown(page, ['calm'], 7);
   await page.clock.install();
-  await page.goto('/');
+  await firstVisit(page);
   await expect(strip(page, 2).locator('svg.visitor')).toHaveCount(0);
   await breathe(page);
   await expect(page.locator('.arrivals')).toContainText('A butterfly arrived');
@@ -466,7 +567,7 @@ test('a 7-day Calm streak brings a butterfly, shown on the end screen and in the
 test('a backlog of arrivals shows three lines, then the rest in one', async ({ page }) => {
   await grown(page, ['calm', 'move', 'break'], 30);
   await page.clock.install();
-  await page.goto('/');
+  await firstVisit(page);
   await breathe(page);
   await expect(page.locator('.arrivals li')).toHaveCount(4);
   await expect(page.locator('.arrivals li').last()).toHaveText(/^and \d+ more in your garden$/);
@@ -475,7 +576,7 @@ test('a backlog of arrivals shows three lines, then the rest in one', async ({ p
 test('with all five habits started, the bar fits at 360px and the tabs are one row that scrolls inside itself', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 800 });
   await grown(page, ['learn', 'calm', 'move', 'reflect', 'break'], 14);
-  await page.goto('/');
+  await firstVisit(page);
   for (const name of ['Sound', 'Your progress']) {
     const box = await page.getByRole('button', { name }).boundingBox();
     expect(box.x >= 0 && box.x + box.width <= 360, name).toBe(true);
@@ -495,7 +596,7 @@ test('with all five habits started, the bar fits at 360px and the tabs are one r
 });
 
 test('every plant grows visibly stage to stage, and a sprout and a sapling read at a glance', async ({ page }) => {
-  await page.goto('/');
+  await firstVisit(page);
   const heights = await page.evaluate(async () => {
     const { PLANTS, plant } = await import('/src/garden/art.js');
     return Object.fromEntries(Object.keys(PLANTS).map((h) => [h, [0, 1, 2, 3, 4].map((s) => {
@@ -516,7 +617,7 @@ test('every plant grows visibly stage to stage, and a sprout and a sapling read 
 });
 
 test('BOUNDS in art.js is what each plant really draws (re-measure and paste if this fails)', async ({ page }) => {
-  await page.goto('/');
+  await firstVisit(page);
   const { measured, table } = await page.evaluate(async () => {
     const { KINDS, plant, MAX_FLOWERS, BOUNDS } = await import('/src/garden/art.js');
     const box = (svg) => {
@@ -540,7 +641,7 @@ test('BOUNDS in art.js is what each plant really draws (re-measure and paste if 
 });
 
 test('young plants have shapes of their own, whatever their size', async ({ page }) => {
-  await page.goto('/');
+  await firstVisit(page);
   const pairs = await page.evaluate(async () => {
     const { PLANTS, plant } = await import('/src/garden/art.js');
     // A plant's silhouette without its mound, cropped and fitted into a small square (sitting on its
@@ -580,7 +681,7 @@ test('young plants have shapes of their own, whatever their size', async ({ page
 test('on a phone, the first plant card shows above the fold under the full garden', async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 780 });
   await grown(page, ['learn', 'calm', 'move', 'reflect', 'break'], 5, true);
-  await page.goto('/');
+  await firstVisit(page);
   await strip(page, 5).click();
   const card = await page.locator('.plant-card').first().boundingBox();
   // A browser's own bars take about 100px of a 780px phone screen: the whole first card is above them.
@@ -677,7 +778,7 @@ test('with many habits, the tab row stays one row that scrolls inside itself, an
   const tracked = [...['walk', 'read', 'water', 'outside'].map((id) => ({ id })),
     ...['Stretch', 'Floss', 'Guitar practice, slow and easy'].map((name, i) => ({ id: `own-${i + 1}`, name, plant: 'mushroom' }))];
   await grown(page, ['learn', 'calm', 'move', 'reflect', 'break', ...tracked.map((t) => t.id)], 9, true, { tracked });
-  await page.goto('/');
+  await firstVisit(page);
   const tabs = page.getByRole('navigation', { name: 'Show the path for' });
   await expect(tabs.getByRole('button')).toHaveCount(13);
   expect(await tabs.getByRole('button').evaluateAll((els) => new Set(els.map((e) => e.offsetTop)).size)).toBe(1);
@@ -704,7 +805,7 @@ for (const colorScheme of ['light', 'dark']) {
 
       test('the habit view has no sideways scroll', async ({ page }) => {
         await grown(page, ['learn'], 1);
-        await page.goto('/');
+        await firstVisit(page);
         await page.getByRole('button', { name: /See your week$/ }).click();
         await expect(page.getByRole('heading', { name: 'Learning' })).toBeVisible();
         expect(await overflow(page)).toBe(0);
@@ -712,7 +813,7 @@ for (const colorScheme of ['light', 'dark']) {
 
       test('the garden strip and the full garden have no sideways scroll', async ({ page }) => {
         await grown(page, ['learn', 'calm', 'move', 'reflect', 'break'], 30, true);
-        await page.goto('/');
+        await firstVisit(page);
         await expect(strip(page, 5).locator('svg.visitor')).toHaveCount(14); // a bee for each but Learning
         expect(await overflow(page)).toBe(0);
         await strip(page, 5).click();
@@ -723,7 +824,7 @@ for (const colorScheme of ['light', 'dark']) {
       test('a log habit, the + Habit sheet and the make-your-own form have no sideways scroll', async ({ page }) => {
         const tracked = [{ id: 'walk' }, { id: 'water' }, { id: 'own-1', name: 'A very long name for a habit!!', plant: 'rose' }];
         await grown(page, ['learn', 'calm', 'walk', 'water', 'own-1'], 3, true, { tracked });
-        await page.goto('/');
+        await firstVisit(page);
         await tab(page, 'A very long name for a habit!!').click();
         await page.getByRole('button', { name: 'Done today' }).click();
         await expect(page.getByText('Done for today.')).toBeVisible();

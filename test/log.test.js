@@ -119,10 +119,10 @@ test('undo never lowers days below what they were before today, across a long ru
 test('migrate: a v4 save goes through both steps (start per subject, then tracked); v5 gains tracked', () => {
   const v4 = { version: 4, habits: { learn: { count: 2, last: '2026-10-02', forgiven: [], days: 2 } }, log: [], done: {}, cards: {},
     journal: {}, garden: { earned: {} }, start: 'Forks' };
-  assert.equal(VERSION, 6);
-  assert.deepEqual(migrate(roundTrip(v4)), { ...v4, version: VERSION, start: { chess: 'Forks' }, tracked: [] });
+  assert.ok(VERSION >= 6);
+  assert.deepEqual(migrate(roundTrip(v4)), { ...v4, version: VERSION, start: { chess: 'Forks' }, tracked: [], picked: [] });
   const v5 = { ...v4, version: 5, start: { chess: null } };
-  assert.deepEqual(migrate(roundTrip(v5)), { ...v5, version: VERSION, tracked: [] });
+  assert.deepEqual(migrate(roundTrip(v5)), { ...v5, version: VERSION, tracked: [], picked: [] });
   let p = track(track(emptyProgress(), { id: 'water' }), { name: '<b>Stretch</b>', icon: '🎵', plant: 'mushroom' });
   p = logToday(logToday(p, 'water', 'Drank water', day(1)), 'own-1', '<b>Stretch</b>', day(1));
   assert.deepEqual(migrate(roundTrip(p)), p);

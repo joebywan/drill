@@ -21,9 +21,11 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *   tracked  [{ id, name?, icon?, plant?, hidden? }]  — the self-reported habits the learner added,
  *            in order: a preset is just its id ('walk'); one of their own ('own-1') carries its name,
  *            icon and plant. `hidden` takes it off the tabs and keeps everything else (subjects.js habitsFor)
+ *   picked   [habitId]  — what the first-visit intro was asked for, in the order picked: home puts
+ *            these first (subjects.js ordered). Absent until the intro is answered or skipped ([])
  *   version  the shape's version; `migrate()` brings any older shape up to VERSION
  */
-export const VERSION = 6;
+export const VERSION = 7;
 export const LEARN = 'learn';
 const emptyStreak = () => ({ count: 0, last: null, forgiven: [], days: 0 });
 export const emptyProgress = () => ({ version: VERSION, habits: { [LEARN]: emptyStreak() }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, tracked: [] });
@@ -63,7 +65,8 @@ const isTracked = (t) => isObject(t) && typeof t.id === 'string' && /^[a-z0-9-]{
  * version 3 no garden, and no `days` on a streak, which is counted from the log's dates and is never
  * less than the streak's count (the log may have started after the streak); up to version 4 `start`
  * was one string, chess's (the only subject that asked), and becomes { chess: it }; up to version 5
- * nothing was `tracked`, which starts empty.
+ * nothing was `tracked`, which starts empty; up to version 6 there was no first-visit intro, so
+`picked` becomes [] and someone who already used Drill never sees it.
  * Unknown fields are kept, so a file from a newer build loses nothing.
  */
 export function migrate(raw) {
@@ -98,7 +101,10 @@ export function migrate(raw) {
   // Version 6: the self-reported habits the learner tracks (none before).
   const tracked = raw.tracked ?? [];
   if (!Array.isArray(tracked) || !tracked.every(isTracked) || new Set(tracked.map((t) => t.id)).size !== tracked.length) return null;
-  return { ...kept, ...(start && { start }), version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal, garden, tracked };
+  // Version 7: what the intro was asked for. Older saves come from people who never saw it, and never will.
+  const picked = (Number(raw.version) || 0) < 7 ? raw.picked ?? [] : raw.picked;
+  if (picked != null && !(Array.isArray(picked) && picked.every((id) => typeof id === 'string' && /^[a-z0-9-]{1,40}$/.test(id)) && new Set(picked).size === picked.length)) return null;
+  return { ...kept, ...(start && { start }), ...(picked && { picked }), version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal, garden, tracked };
 }
 
 /**
@@ -110,6 +116,9 @@ export const offersPlacement = (progress, subject) => !!subject.placement && !(s
 
 /** Progress with a subject's placement answered (its path starts at `unit`) or dismissed (`unit` null). */
 export const placeAt = (progress, subjectId, unit) => ({ ...progress, start: { ...progress.start, [subjectId]: unit } });
+
+/** True for a first visit: the intro is neither answered nor skipped, and nothing has been done yet. */
+export const showsIntro = (progress) => !progress.picked && !progress.log.length && !Object.keys(progress.done).length && !progress.tracked?.length;
 
 const scheduler = fsrs();
 
