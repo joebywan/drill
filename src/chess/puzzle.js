@@ -15,21 +15,24 @@ export function startPuzzle(puzzle) {
 export const playerColor = (state) => state.game.turn();
 
 /**
- * Plays the player's move. Returns 'wrong' (board untouched), 'next' (correct, opponent
+ * Plays the player's move. Returns 'wrong' (board untouched), 'piece' (the right promotion but
+ * not the piece the line needs, board untouched: see `needed`), 'next' (correct, opponent
  * replied, more to find) or 'solved'.
  *
  * Correct means the stored move, or any legal move that checkmates — Lichess accepts every
  * mate, so a validator decides success rather than a comparison with one stored answer.
+ * `chosen` is the piece a pawn promotes to; left out, the stored one (or a queen).
  */
-export function tryMove(state, from, to) {
+export function tryMove(state, from, to, chosen) {
   const expected = state.puzzle.moves[state.ply];
-  // ponytail: promotion always uses the stored piece; add a picker if underpromotion
-  // alternatives ever need to be judged on their own.
-  const promotion = expected.slice(2, 4) === to ? expected[4] : 'q';
+  const promotion = chosen ?? (expected.slice(2, 4) === to ? expected[4] : 'q');
   const probe = new Chess(state.game.fen());
   let move;
   try { move = probe.move({ from, to, promotion }); } catch { return 'wrong'; }
-  if (from + to !== expected.slice(0, 4) && !probe.isCheckmate()) return 'wrong';
+  if (!probe.isCheckmate()) {
+    if (from + to !== expected.slice(0, 4)) return 'wrong';
+    if (move.promotion && move.promotion !== expected[4]) return 'piece';
+  }
 
   state.game.move(move);
   state.lastMove = [from, to];
@@ -40,6 +43,9 @@ export function tryMove(state, from, to) {
   state.ply++;
   return 'next';
 }
+
+/** The piece the line's promotion needs now: 'q', 'r', 'b' or 'n'. */
+export const needed = (state) => state.puzzle.moves[state.ply][4];
 
 /** The move the player should make now, as [from, to]. Used to show the answer. */
 export const hint = (state) => {

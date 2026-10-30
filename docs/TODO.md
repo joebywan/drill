@@ -136,7 +136,6 @@ permission, and the pool stays the fallback even then.
 - **Garden seasonal events** that change the whole garden (HABITS.md).
 - **More courses:** JavaScript, TypeScript and TS test-writing are planned (CLAUDE.md); the
   test-writing one must grade code independently.
-- **Chess promotion picker** (the board always makes a queen; `puzzle.js`).
 - **From the 2026-10-30 integration walkthrough** (a design call, not a bug): above a new course's
   path sit five layers: the garden strip, habit tabs, course switcher, the welcome line and the
   "Skip ahead" offer. Nothing overlaps, but the path starts halfway down.

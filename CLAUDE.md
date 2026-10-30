@@ -63,6 +63,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - `src/chess/puzzle.js` — pure puzzle rules on chess.js. `src/chess/items.js` — the item types
   (teach, tap, move, true/false, stars, find), their answers and explanations, and `problem()`, the
   rules check every shipped item passes. `src/chess/exercise.js` — the board and buttons.
+- **Promotion:** `withPromotion()` in exercise.js is the one picker (cm-chessboard's dialog, on every `board()`), used by puzzles, move items, stars, Mate and Play Rosa; Scramble has no pawns of yours. `tryMove()` returns `'piece'` for the right square with a piece the line doesn't need, explained and free; any mate still counts.
 - **Stars** teach pieces by play: move your piece onto every gold star within a move budget; the
   other side never moves, and kings are optional (chess.js `skipValidation`). A piece's first
   puzzle (`new`, `demo`, `intro`) slides it along a path before input opens. `problem()` proves
