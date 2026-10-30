@@ -175,8 +175,12 @@ Promotion picker; accessibility. Backlog (sync, friends, Android): `docs/TODO.md
 
 - **Beginners play, they don't pick notation.** Answers are moves on the board or taps on squares;
   text says "Knight to c7", never "Nc7+" (`words()` turns SAN into words). Boards show coordinates.
-- **No questions in the way.** A first visit lands on home (Lumi's welcome line, the garden, every
-  habit). Placement is an optional part of a subject: its `placement` (chess has one) shows as a
+- **No questions in the way.** A first visit opens a short, skippable intro (`intro()`/`want()` in
+  app.js, words in `INTRO_WORDS`): what Drill does, then Learn something / Build habits, each opening
+  its list. The picks go in `progress.picked` and home orders its tabs by them through ONE function,
+  `ordered()` in subjects.js; picked one-tap habits are switched on with `track()`. Skip is today's
+  home (Lumi's welcome line, the garden, every habit). Shown once (`showsIntro`); saves from before
+  v7 never see it. The ⋯ menu's "Change what you see" reopens the second step. It never asks placement. Placement is an optional part of a subject: its `placement` (chess has one) shows as a
   "Skip ahead" link by its path; the question then suggests a starting unit, or the learner starts
   from the beginning. Answering or dismissing (×) hides the offer for good (`progress.start`, per
   subject), and so does finishing the subject's first unit; starting a lesson never asks. Units before the start stay open.

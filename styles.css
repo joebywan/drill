@@ -476,3 +476,21 @@ html { scroll-padding-bottom: 160px; }
 .offer button { min-height: 40px; padding: 0; border: 0; background: none; color: var(--muted); font-size: .9rem; }
 .offer .dismiss { width: 44px; min-height: 44px; margin: -2px 0; font-size: 1.2rem; } /* a 44px target in a 40px pill */
 .survey .link { display: block; margin: 16px auto 0; }
+
+/* The first-visit intro (app.js intro, want): a list of what Drill does, then two branches of picks. */
+.intro { padding-bottom: 150px; } /* room to scroll the last line above the button bar */
+/* A solid bar, so a long list scrolls under it instead of showing through the fade. */
+.intro + .cta { padding-top: 12px; background: var(--bg); border-top: 1px solid var(--line); }
+.does { margin: 0; padding: 0; list-style: none; text-align: left; }
+.does li { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.does li:last-child { border: 0; }
+.branch { margin: 0 0 12px 16px; text-align: left; }
+.branch h2 { margin: 10px 0 0; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.intro .choice[aria-pressed] { position: relative; padding-right: 48px; }
+.intro .choice[aria-pressed]::after {
+  content: ''; position: absolute; right: 14px; top: calc(50% - 12px); width: 20px; height: 20px; border-radius: 6px;
+  border: 2px solid var(--line); display: grid; place-items: center; font-size: .8rem; line-height: 1;
+}
+.intro .choice[aria-pressed="true"] { border-color: var(--accent); }
+.intro .choice[aria-pressed="true"]::after { content: '✓' / ''; background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.branch .choice:disabled { color: var(--muted); border-style: dashed; }

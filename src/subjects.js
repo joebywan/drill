@@ -85,6 +85,15 @@ export function habitsFor(progress) {
   return [...HABITS, ...own.map((h) => ({ ...h, kind: 'log' }))];
 }
 
+/**
+ * `list` (habitsFor's) with the ids the learner picked in the intro first, in the order picked, then
+ * the rest as they were. An id no longer in the list is passed over. The one place home is ordered.
+ */
+export const ordered = (list, picked = []) => [
+  ...picked.map((id) => list.find((h) => h.id === id)).filter(Boolean),
+  ...list.filter((h) => !picked.includes(h.id)),
+];
+
 // Chess from zero comes first (the board, how pieces move, capturing, check and mate), then the
 // hand-written Forks unit, whose Lichess puzzles join it as its last lessons; the other Lichess
 // themes follow.
