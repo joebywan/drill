@@ -308,10 +308,11 @@ test('progress saved to a file loads back', async ({ page }) => {
 
 /**
  * Progress with `habits` each practised on the `days` days before today, loaded before the page.
- * `earned` gives it what that has earned, as if every session had been in the app.
+ * `earned` gives it what that has earned, as if every session had been in the app; `extra` is merged
+ * in first (`tracked`, for self-reported habits).
  */
-async function grown(page, habits, days, earned = false) {
-  let p = { ...emptyProgress(), start: basics.units[0].title };
+async function grown(page, habits, days, earned = false, extra = {}) {
+  let p = { ...emptyProgress(), start: basics.units[0].title, ...extra };
   for (const h of habits) {
     for (let i = days; i >= 1; i--) {
       const d = new Date();
@@ -430,6 +431,108 @@ test('on a phone, the first plant card shows above the fold under the full garde
   expect(card.y + card.height).toBeLessThan(680);
 });
 
+test('a self-reported habit: add Walk, one tap, its streak and plant, and Undo takes the tap back', async ({ page }) => {
+  await placeAtStart(page);
+  await page.getByRole('button', { name: 'Add a habit' }).click();
+  await expect(page.getByRole('heading', { name: 'Add a habit' })).toBeFocused();
+  for (const name of ['Walk', 'Read', 'Water', 'Outside', 'Make your own']) await expect(page.getByRole('button', { name: new RegExp(name) })).toBeVisible();
+  await page.getByRole('button', { name: /Walk/ }).click();
+
+  await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk');
+  await expect(tab(page, 'Walk')).toBeFocused();
+  await expect(page.locator('.street')).toHaveCount(0); // no path
+  await expect(strip(page, 1).locator('svg.plant[data-habit="walk"]')).toHaveCount(0);
+  const walked = page.getByRole('button', { name: 'I walked today' });
+  const box = await walked.boundingBox();
+  expect(box.y + box.height).toBeGreaterThan(915 - 160); // in the thumb zone
+  await walked.click();
+
+  await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
+  await expect(page.getByText('Done for today.')).toBeFocused();
+  await expect(page.locator('.chip.log')).toContainText('1');
+  await expect(page.locator('.arrivals li')).toHaveText(['A bee found Walk']);
+  await expect(walked).toHaveCount(0);
+  await expect(page.getByText('How do you feel?')).toHaveCount(0);
+  await expect(strip(page, 2).locator('svg.plant-tulip[data-habit="walk"]')).toBeVisible();
+  await expect(week(page, 1)).toBeVisible();
+  await page.reload();
+  await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
+
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk');
+  await expect(walked).toBeFocused();
+  await expect(strip(page, 1).locator('svg.plant[data-habit="walk"]')).toHaveCount(0);
+  // Tapped again: the streak is back at one, and the bee, already earned, does not arrive twice.
+  await walked.click();
+  await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
+  await expect(page.locator('.arrivals')).toHaveCount(0);
+});
+
+test('a habit of your own: name, icon and plant; log it, rename it, and its name is only ever text', async ({ page }) => {
+  await placeAtStart(page);
+  await page.getByRole('button', { name: 'Add a habit' }).click();
+  await page.getByRole('button', { name: 'Make your own' }).click();
+  await expect(page.getByRole('textbox', { name: 'Name' })).toBeFocused();
+  await page.getByRole('textbox', { name: 'Name' }).fill('   ');
+  await page.getByRole('button', { name: 'Add habit' }).click();
+  await expect(page.getByRole('heading', { name: 'Make your own' })).toBeVisible(); // a blank name is not a habit
+  await page.getByRole('textbox', { name: 'Name' }).fill('Stretch');
+  await page.getByRole('radio', { name: '🧘' }).check();
+  await page.getByRole('radio', { name: 'Cactus' }).check();
+  await page.getByRole('button', { name: 'Add habit' }).click();
+
+  await expect(tab(page, 'Stretch')).toBeFocused();
+  await page.getByRole('button', { name: 'Done today' }).click();
+  await expect(tab(page, 'Stretch')).toHaveAccessibleName('Stretch, 1-day streak');
+  await expect(page.locator('.arrivals li')).toHaveText(['A bee found Stretch']);
+  await expect(strip(page, 2).locator('svg.plant-cactus[data-habit="own-1"]')).toBeVisible();
+
+  const name = '<img src=x onerror=hacked=1>&'; // within the 30-letter name
+  await page.getByRole('button', { name: 'Edit' }).click();
+  await expect(page.getByRole('textbox', { name: 'Name' })).toHaveValue('Stretch');
+  await expect(page.getByRole('radio', { name: 'Cactus' })).toBeChecked();
+  await page.getByRole('textbox', { name: 'Name' }).fill(name);
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.locator('.log-habit h2')).toHaveText(`🧘 ${name}`);
+  await expect(page.locator('.path-tab[data-path="own-1"]')).toContainText(name);
+  await expect(page.locator('#app img')).toHaveCount(0);
+  await strip(page, 2).click();
+  await expect(page.locator('.plant-card[data-plant="own-1"]')).toContainText(`A bee found ${name}`);
+  await expect(page.locator('.plant-card[data-plant="own-1"]')).toContainText('Cactus · sprout');
+  await page.locator('.plant-card[data-plant="own-1"]').click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(`🧘 ${name}`);
+  await expect(page.getByText('Stretch', { exact: true })).toBeVisible(); // the log keeps what it was called that day
+  expect(await page.evaluate(() => window.hacked)).toBeUndefined();
+
+  // Hiding takes it off the tabs and keeps its days; + Habit brings it back.
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.locator('.path-tab[data-path="own-1"]').click();
+  await page.getByRole('button', { name: 'Edit' }).click();
+  await page.getByRole('button', { name: 'Hide this habit' }).click();
+  await expect(page.locator('.path-tab[data-path="own-1"]')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Add a habit' }).click();
+  await page.locator('[data-track="own-1"]').click();
+  await expect(page.locator('.path-tab[data-path="own-1"]')).toHaveAccessibleName(`${name}, 1-day streak`);
+});
+
+test('with many habits, the tab row stays one row that scrolls inside itself, and + Habit is last', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  const tracked = [...['walk', 'read', 'water', 'outside'].map((id) => ({ id })),
+    ...['Stretch', 'Floss', 'Guitar practice, slow and easy'].map((name, i) => ({ id: `own-${i + 1}`, name, plant: 'mushroom' }))];
+  await grown(page, ['learn', 'calm', 'move', 'reflect', 'break', ...tracked.map((t) => t.id)], 9, true, { tracked });
+  await page.goto('/');
+  const tabs = page.getByRole('navigation', { name: 'Show the path for' });
+  await expect(tabs.getByRole('button')).toHaveCount(13);
+  expect(await tabs.getByRole('button').evaluateAll((els) => new Set(els.map((e) => e.offsetTop)).size)).toBe(1);
+  await expect(tabs.getByRole('button').last()).toHaveAccessibleName('Add a habit');
+  expect(await overflow(page)).toBe(0);
+  await expect(strip(page, 12).locator('svg.plant')).toHaveCount(12);
+  await tab(page, 'Guitar practice, slow and easy').click();
+  await expect(page.getByRole('button', { name: 'Done today' })).toBeVisible();
+  expect(await overflow(page)).toBe(0);
+});
+
 const overflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
 for (const colorScheme of ['light', 'dark']) {
@@ -457,6 +560,25 @@ for (const colorScheme of ['light', 'dark']) {
         expect(await overflow(page)).toBe(0);
         await strip(page, 5).click();
         await expect(page.locator('.plant-card')).toHaveCount(5);
+        expect(await overflow(page)).toBe(0);
+      });
+
+      test('a log habit, the + Habit sheet and the make-your-own form have no sideways scroll', async ({ page }) => {
+        const tracked = [{ id: 'walk' }, { id: 'water' }, { id: 'own-1', name: 'A very long name for a habit!!', plant: 'rose' }];
+        await grown(page, ['learn', 'calm', 'walk', 'water', 'own-1'], 3, true, { tracked });
+        await page.goto('/');
+        await tab(page, 'A very long name for a habit!!').click();
+        await page.getByRole('button', { name: 'Done today' }).click();
+        await expect(page.getByText('Done for today.')).toBeVisible();
+        expect(await overflow(page)).toBe(0);
+        await page.getByRole('button', { name: 'Add a habit' }).click();
+        expect(await overflow(page)).toBe(0);
+        await page.getByRole('button', { name: 'Make your own' }).click();
+        await expect(page.getByRole('radio', { name: 'Mushroom' })).toBeAttached();
+        expect(await overflow(page)).toBe(0);
+        await page.getByRole('button', { name: 'Back' }).click();
+        await page.getByRole('button', { name: 'Back' }).click();
+        await strip(page, 5).click();
         expect(await overflow(page)).toBe(0);
       });
 

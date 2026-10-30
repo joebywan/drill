@@ -232,3 +232,27 @@ export const MOVE_LINES = {
 
 /** Safety, shown as plain text on the first Move lesson and after "Not really". */
 export const MOVE_SAFETY = 'Move gently and stop if anything hurts. If you have an injury or a health condition, check with a doctor first.';
+
+/**
+ * Self-reported habits ("I walked today"): one tap says yes, today. The words stay plain and
+ * calm: no counting toward a target, no reminders, nothing about a day it didn't happen. The
+ * names learners give their own habits are theirs and are never linted; these words are.
+ */
+export const LOG_WORDS = {
+  hint: 'One tap when it happens. That is all.',
+  done: 'Done for today.',
+  undo: 'Undo',
+  edit: 'Edit',
+  add: 'Pick one to keep track of. Each one grows its own plant in your garden.',
+  addTab: '+ Habit',
+  own: 'Make your own',
+  ownTitle: 'Make your own',
+  editTitle: 'Edit habit',
+  name: 'Name',
+  icon: 'Icon',
+  plant: 'Plant',
+  create: 'Add habit',
+  save: 'Save',
+  hide: 'Hide this habit',
+  hideNote: 'Hiding keeps its days and its plant. Add it again any time from + Habit.',
+};

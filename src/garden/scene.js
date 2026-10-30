@@ -11,10 +11,10 @@ import { move } from '../feel.js';
  *       sky, sun or moon, two rows of hills and the ground. Resting is a warm evening with a moon
  *       and fireflies. Colours come from palette constants written into the svg as CSS, with a
  *       `prefers-color-scheme: dark` set, so one string works in both themes.
- *   slots(shape, n = 6) -> [{ x, y, w }]
- *       Where n plants go (1–6), in the scene's viewBox: (x, y) is the base of the plant and w its
- *       width. A scalable layout: one row spaced evenly across the strip, or in the tall view one
- *       row for up to 3 plants and two rows (back row first, smaller) for more. Listed back to front,
+ *   slots(shape, n = 6) -> [{ x, y, w }]   up to MAX_PLANTS
+ *       Where n plants go (1–12), in the scene's viewBox: (x, y) is the base of the plant and w its
+ *       width. A scalable layout: one row spaced evenly across the strip (two past six), or in the
+ *       tall view one row for up to 3 plants, two rows (back row first, smaller) up to 6, then three. Listed back to front,
  *       so drawing them in order layers them right.
  *   place(svg, slot) -> svg string   a plant drawn at a slot, to append inside the scene's svg
  *   VISITORS                ['butterfly', 'bee', 'birds'], the gifts in model.js RULES
@@ -23,6 +23,8 @@ import { move } from '../feel.js';
  */
 export const MOODS = ['sunlit', 'morning', 'resting'];
 export const SIZE = { strip: [360, 124], tall: [360, 390] };
+/** The most plants a garden draws. A learner with more habits than this sees the first ones. */
+export const MAX_PLANTS = 12;
 
 // One palette per mood and theme. Plants keep their own colours; grounds stay mid-tone so a
 // plant reads on both.
@@ -106,14 +108,24 @@ export function scene(mood = 'morning', shape = 'tall') {
 }
 
 export function slots(shape = 'tall', n = 6) {
-  const count = Math.max(1, Math.min(6, Math.floor(n) || 1));
+  const count = Math.max(1, Math.min(MAX_PLANTS, Math.floor(n) || 1));
   const [W] = SIZE.tall;
   const row = (k, y, wMax) => Array.from({ length: k }, (_, i) => ({ x: f((W * (i + 0.5)) / k), y, w: f(Math.min(wMax, W / k)) }));
-  if (shape === 'strip') return row(count, 112, 80);
+  // Past six, plants go in rows from back to front; a back row takes any extra plant, so the
+  // front row's fewer plants can be bigger.
+  const rows = (ys, wMax) => {
+    const out = [];
+    let left = count;
+    ys.forEach((y, i) => {
+      const k = Math.ceil(left / (ys.length - i));
+      out.push(...row(k, y, wMax[i]));
+      left -= k;
+    });
+    return out;
+  };
+  if (shape === 'strip') return count <= 6 ? row(count, 112, 80) : rows([84, 120], [56, 64]);
   if (count <= 3) return row(count, 360, 150);
-  // The back row takes the extra plant, so the front row's fewer plants can be bigger.
-  const back = Math.ceil(count / 2);
-  return [...row(back, 250, 120), ...row(count - back, 372, 150)];
+  return count <= 6 ? rows([250, 372], [120, 150]) : rows([196, 290, 384], [90, 105, 120]);
 }
 
 /** Draws a plant svg (100 x 120, base at 50, 106) at a slot, as a nested svg. */

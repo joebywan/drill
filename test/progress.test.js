@@ -69,14 +69,14 @@ test('migrate brings every older shape up to the current one', () => {
   assert.deepEqual(p.cards, roundTrip(first.cards));
   // Today's unversioned shape, without xp, keeps its placement.
   const v0 = { streak: { count: 0, last: null, forgiven: [] }, done: {}, cards: {}, start: 'Forks' };
-  assert.deepEqual(migrate(v0), { version: VERSION, habits: { learn: { ...v0.streak, days: 0 } }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, start: 'Forks' });
+  assert.deepEqual(migrate(v0), { version: VERSION, habits: { learn: { ...v0.streak, days: 0 } }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, tracked: [], start: 'Forks' });
   // Version 1: the one streak becomes Learning's, and there is no log yet.
   const v1 = { ...v0, version: 1, streak: { count: 4, last: '2026-10-29', forgiven: [] } };
   assert.deepEqual(migrate(v1).habits, { learn: { ...v1.streak, days: 4 } });
   // Version 2: habits and a log, but no journal yet; it gains an empty one and keeps the rest.
   const v2 = { version: 2, habits: { learn: v1.streak, calm: { count: 1, last: '2026-10-29', forgiven: [] } },
     log: [{ date: '2026-10-29', habit: 'calm', title: 'Breathing', mins: 2 }], done: { 'calm:breathe1': true }, cards: {} };
-  assert.deepEqual(migrate(roundTrip(v2)), { ...v2, version: VERSION, journal: {}, garden: { earned: {} },
+  assert.deepEqual(migrate(roundTrip(v2)), { ...v2, version: VERSION, journal: {}, garden: { earned: {} }, tracked: [],
     habits: { learn: { ...v1.streak, days: 4 }, calm: { ...v2.habits.calm, days: 1 } } });
   // The current shape passes through unchanged, and so does one from a newer build.
   assert.deepEqual(migrate(roundTrip(p)), p);

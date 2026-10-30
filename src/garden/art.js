@@ -12,7 +12,9 @@ export { scene, slots, place, SIZE, MOODS, visitor, animateVisitor, VISITORS } f
  *
  * API:
  *   PLANTS                       { habit id: plant name }; every habit in HABITS has one
- *   plant(habit, stage, { flowers = 0, closed = false }) -> svg string
+ *   KINDS                        every drawing's name, those in PLANTS and the ones a self-reported habit picks
+ *   plant(habit, stage, { flowers = 0, closed = false, kind }) -> svg string   (`kind`: the drawing, when
+ *       the habit's own choice rather than PLANTS; `habit` may also be a drawing's name)
  *       stage 0–4 (seed, sprout, sapling, young, full grown; see STAGES in model.js). `flowers` small
  *       blooms sit on the plant (on the ground around it while it is small), capped at MAX_FLOWERS
  *       and never overlapping. `closed` draws buds shut for the 'resting' mood.
@@ -224,11 +226,130 @@ function daisies(s, closed) {
   return rosette + heads;
 }
 
+// --- Plants a self-reported habit can be (subjects.js PRESETS and OWN_PLANTS) ----------------
+
+// A tulip: a papery bulb, two blades, a green bud on a stem, a coloured bud, then the open cup.
+const TULIP = '#E2506A', TULIP_DARK = '#B83350';
+const TULIP_TOP = [0, 0, 74, 58, 44];
+const cup = (y, open) => (open
+  ? `<path d="M40 ${y - 15} Q44 ${y - 9} 45 ${y - 11} L50 ${y - 19} L55 ${y - 11} Q56 ${y - 9} 60 ${y - 15} Q62 ${y - 1} 50 ${y + 1} Q38 ${y - 1} 40 ${y - 15}Z" fill="${TULIP}"/>`
+    + `<path d="M45 ${y - 11} L50 ${y - 19} L55 ${y - 11} Q55 ${y - 2} 50 ${y} Q45 ${y - 2} 45 ${y - 11}Z" fill="${TULIP_DARK}"/>`
+  : `<path d="M50 ${y - 17} Q57 ${y - 10} 55 ${y - 2} Q50 ${y + 2} 45 ${y - 2} Q43 ${y - 10} 50 ${y - 17}Z" fill="${TULIP}"/>`
+    + `<path d="M50 ${y - 17} Q53 ${y - 8} 50 ${y}" stroke="${TULIP_DARK}" stroke-width="1.4" fill="none"/>`);
+
+function tulip(s, closed) {
+  if (s === 0) return `<path d="M50 93 Q57 100 54.5 105 Q50 107 45.5 105 Q43 100 50 93Z" fill="#C9A27A"/>${stem('M50 93 L50 90', 1.6, LEAF)}`;
+  if (s === 1) return leaf(49, 106, 18, -12, 3.6, LEAF) + leaf(51, 106, 14, 20, 3.2, LEAF_DARK);
+  const top = TULIP_TOP[s];
+  const len = [0, 0, 26, 32, 36][s];
+  let out = stem(`M50 106 Q51 ${f((106 + top) / 2)} 50 ${top}`, 2.4, STEM)
+    + leaf(49, 106, len, -22, len * 0.24, LEAF) + leaf(51, 106, len * 0.85, 26, len * 0.24, LEAF_DARK);
+  if (s === 2) out += `<ellipse cx="50" cy="${top - 5}" rx="4" ry="7" fill="${LEAF_LIGHT}"/>`;
+  else out += cup(top, s === 4 && !closed);
+  return out;
+}
+
+// A fern: a spore case, one fiddlehead uncurling, then more and longer fronds fanning out.
+const FERN = '#4F9A55';
+const fiddle = (x, y, r) => stem(`M${x} ${y} Q${x - r * 1.6} ${y - r * 0.4} ${x - r} ${y - r * 1.6} Q${x} ${y - r * 2.4} ${x + r * 0.6} ${y - r * 1.4} Q${x} ${y - r} ${x - r * 0.2} ${y - r * 1.5}`, 2, FERN);
+function frond(len, ang, fill) {
+  const n = Math.max(3, Math.round(len / 9));
+  const leaflets = Array.from({ length: n }, (_, i) => {
+    const t = (i + 1) / (n + 1), y = -len * t, size = (1 - t) * len * 0.3 + 2.5;
+    return leaf(0, y, size, -64, size * 0.4, fill) + leaf(0, y, size, 64, size * 0.4, fill);
+  }).join('');
+  return `<g transform="translate(50 106) rotate(${ang})">${stem(`M0 0 Q${f(len * 0.12)} ${f(-len * 0.5)} 0 ${-len}`, 1.6, LEAF_DARK)}${leaflets}</g>`;
+}
+const FRONDS = [null, [], [[34, -28], [40, 0], [32, 28]],
+  [[40, -52], [48, -24], [54, 0], [46, 26], [38, 50]],
+  [[46, -66], [56, -42], [64, -18], [68, 4], [60, 26], [54, 48], [44, 68]]];
+
+function fern(s) {
+  if (s === 0) return `<ellipse cx="50" cy="103" rx="3.6" ry="2.6" fill="#8A6A3A"/>${fiddle(50, 101, 2)}`;
+  if (s === 1) return stem('M50 106 Q48 98 50 92', 2, FERN) + fiddle(50, 92, 4);
+  return FRONDS[s].map(([len, ang], i) => frond(len, ang, i % 2 ? LEAF_DARK : FERN)).join('') + (s === 2 ? fiddle(56, 104, 3) : '');
+}
+
+// A cactus: a seed, a round nub, a ribbed column, an arm, then two arms and a pink flower on top.
+const CACTUS = '#4E9A6A', CACTUS_DARK = '#3B7A53', CACTUS_LIGHT = '#79BE8C', SPINE = '#F4EBC8', CACTUS_FLOWER = '#F27BA8';
+const column = (x, w, top, bottom) => `<rect x="${x - w / 2}" y="${top}" width="${w}" height="${bottom - top}" rx="${w / 2}" fill="${CACTUS}"/>`
+  + `<rect x="${x - 1}" y="${top + 4}" width="2" height="${bottom - top - 6}" rx="1" fill="${CACTUS_DARK}"/>`
+  + `<rect x="${f(x - w / 4 - 0.8)}" y="${top + 5}" width="1.6" height="${bottom - top - 9}" rx=".8" fill="${CACTUS_LIGHT}"/>`;
+const spines = (pts) => pts.map(([x, y]) => `<path d="M${x} ${y} l2.2 -1.2 M${x} ${y} l-2.2 -1.2" stroke="${SPINE}" stroke-width=".8" stroke-linecap="round"/>`).join('');
+const arm = (side, y, out, up) => {
+  const x = 50 + side * 9;
+  return `<path d="M${x} ${y} H${x + side * out}" stroke="${CACTUS}" stroke-width="9" stroke-linecap="round"/>`
+    + column(x + side * out, 9, y - up, y + 4);
+};
+
+function cactus(s, closed) {
+  if (s === 0) return `<ellipse cx="50" cy="103" rx="2.8" ry="2" fill="${SEED}"/>`;
+  if (s === 1) return `<ellipse cx="50" cy="97" rx="8" ry="9.5" fill="${CACTUS}"/><ellipse cx="47" cy="94" rx="2.4" ry="4" fill="${CACTUS_LIGHT}"/>` + spines([[50, 90], [44, 98], [56, 98]]);
+  const top = [0, 0, 74, 58, 44][s];
+  let out = (s >= 3 ? arm(1, 86, 7, 16) : '') + (s === 4 ? arm(-1, 78, 7, 18) : '') + column(50, 18, top, 107);
+  out += spines([[45, top + 10], [55, top + 16], [45, top + 26], [55, top + 32], ...(s >= 3 ? [[45, top + 42]] : [])]);
+  if (s === 4) {
+    out += closed
+      ? `<ellipse cx="50" cy="${top - 2}" rx="3" ry="4.6" fill="${CACTUS_FLOWER}"/>`
+      : Array.from({ length: 6 }, (_, i) => leaf(50, top, 8, i * 60, 3, CACTUS_FLOWER)).join('') + `<circle cx="50" cy="${top}" r="2.2" fill="${GOLD}"/>`;
+  }
+  return out;
+}
+
+// A rose: a hip, a thorny shoot, a green bud, a red bud, then a bush of three roses.
+const ROSE = '#D9405A', ROSE_DARK = '#A92A44', ROSE_LIGHT = '#F07A8C';
+const roseLeaf = (x, y, side) => leaf(x, y, 9, side * 62, 3.4, LEAF_DARK) + leaf(x + side * 4, y - 3, 7, side * 30, 2.8, LEAF);
+const thorns = (x, ys) => ys.map((y, i) => `<path d="M${x} ${y} l${i % 2 ? 3 : -3} -1.5 l0 3Z" fill="${STEM}"/>`).join('');
+function rose(x, y, r, open) {
+  if (!open) {
+    return `<path d="M${x} ${y - r * 1.4} Q${x + r} ${y - r * 0.4} ${x} ${y + r * 0.4} Q${x - r} ${y - r * 0.4} ${x} ${y - r * 1.4}Z" fill="${ROSE}"/>`
+      + leaf(x, y + r * 0.5, r * 0.9, -40, r * 0.3, LEAF_DARK) + leaf(x, y + r * 0.5, r * 0.9, 40, r * 0.3, LEAF);
+  }
+  return `<circle cx="${x}" cy="${y}" r="${r}" fill="${ROSE}"/>`
+    + `<path d="M${f(x - r * 0.6)} ${f(y + r * 0.1)} Q${x} ${f(y + r * 0.8)} ${f(x + r * 0.6)} ${f(y + r * 0.1)}" stroke="${ROSE_DARK}" stroke-width="1.3" fill="none"/>`
+    + `<circle cx="${x}" cy="${f(y - r * 0.1)}" r="${f(r * 0.5)}" fill="${ROSE_DARK}"/>`
+    + `<path d="M${f(x - r * 0.3)} ${f(y - r * 0.1)} Q${x} ${f(y - r * 0.55)} ${f(x + r * 0.3)} ${f(y - r * 0.1)}" stroke="${ROSE_LIGHT}" stroke-width="1.2" fill="none"/>`;
+}
+
+function roses(s, closed) {
+  if (s === 0) return `<ellipse cx="50" cy="102" rx="3" ry="4" fill="#D9663A"/><path d="M48 98.5 L50 97 L52 98.5" stroke="${LEAF_DARK}" stroke-width="1" fill="none"/>`;
+  if (s === 1) return stem('M50 106 Q49 98 50 88', 2, STEM) + roseLeaf(50, 94, -1) + roseLeaf(50, 90, 1);
+  const top = [0, 0, 72, 56, 40][s];
+  let out = stem(`M50 106 Q52 ${f((106 + top) / 2)} 50 ${top}`, 2.4, STEM) + thorns(50, [96, 84, 72].filter((y) => y > top + 6));
+  out += [[96, -1], [88, 1], [80, -1], [70, 1], [60, -1]].filter(([y]) => y > top + 8).map(([y, side]) => roseLeaf(50, y, side)).join('');
+  if (s === 2) return out + `<ellipse cx="50" cy="${top - 3}" rx="3.4" ry="5" fill="${LEAF_LIGHT}"/>`;
+  if (s === 3) return out + rose(50, top - 2, 5, false);
+  return stem('M50 100 Q36 84 30 64', 2, STEM) + stem('M50 98 Q64 82 70 62', 2, STEM) + roseLeaf(36, 82, -1) + roseLeaf(64, 80, 1)
+    + out + rose(30, 60, 7, !closed) + rose(70, 58, 7, !closed) + rose(50, top - 4, 9, !closed);
+}
+
+// Mushrooms: spores, a button, one mushroom, then a ring of them round a tall red-capped one.
+const CAP = '#D8453A', CAP_BROWN = '#B7774A', STALK = '#EFE3CB', GILL = '#C9B591';
+function mushroom(x, stalk, w, h, cap, spots) {
+  const y = 106 - stalk;
+  return `<rect x="${f(x - w * 0.28)}" y="${y}" width="${f(w * 0.56)}" height="${stalk}" rx="${f(w * 0.2)}" fill="${STALK}"/>`
+    + `<ellipse cx="${x}" cy="${y}" rx="${f(w * 0.8)}" ry="${f(h * 0.18)}" fill="${GILL}"/>`
+    + `<path d="M${f(x - w)} ${y} A${w} ${h} 0 0 1 ${f(x + w)} ${y}Z" fill="${cap}"/>`
+    + (spots ? [[-0.45, 0.4, 0.14], [0.2, 0.65, 0.17], [0.55, 0.3, 0.11]].map(([dx, dy, r]) =>
+      `<circle cx="${f(x + dx * w)}" cy="${f(y - dy * h)}" r="${f(r * w)}" fill="${WHITE}"/>`).join('') : '');
+}
+
+function mushrooms(s) {
+  if (s === 0) return [[47, 103], [52, 101.5], [54, 104]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.4" fill="${SEED}"/>`).join('');
+  if (s === 1) return mushroom(50, 6, 6, 6, CAP_BROWN, false);
+  if (s === 2) return mushroom(50, 14, 10, 10, CAP, true);
+  if (s === 3) return mushroom(38, 8, 7, 6, CAP_BROWN, false) + mushroom(54, 24, 13, 12, CAP, true);
+  return mushroom(30, 10, 8, 7, CAP_BROWN, false) + mushroom(72, 14, 9, 8, CAP_BROWN, false) + mushroom(50, 38, 17, 15, CAP, true);
+}
+
 // --- The public API -------------------------------------------------------------------------
 
-const DRAW = { tree, lavender, sunflower, vine, daisies };
+const DRAW = { tree, lavender, sunflower, vine, daisies, tulip, fern, cactus, rose: roses, mushroom: mushrooms };
 export const PLANTS = { learn: 'tree', calm: 'lavender', move: 'sunflower', reflect: 'vine', break: 'daisies' };
-const BLOOM_COLOUR = { tree: '#F4A6C0', lavender: '#F2A7C3', sunflower: '#E8613C', vine: '#C99BEA', daisies: '#F28CB0' };
+const BLOOM_COLOUR = { tree: '#F4A6C0', lavender: '#F2A7C3', sunflower: '#E8613C', vine: '#C99BEA', daisies: '#F28CB0',
+  tulip: '#F5C542', fern: '#F2A7C3', cactus: '#F27BA8', rose: '#F4A6C0', mushroom: '#F2A7C3' };
+/** Every drawing there is: the built-in habits' and the ones a self-reported habit picks from. */
+export const KINDS = Object.keys(DRAW);
 
 // Where blooms go, per plant and stage. Small plants keep theirs on the ground round the mound.
 const GROUND = [[18, 104], [82, 104], [28, 112], [72, 112], [9, 111], [91, 111]];
@@ -241,11 +362,12 @@ const SPOTS = {
   daisies: { 3: [[26, 96], [74, 96], [30, 82], [72, 80], [18, 106], [82, 106]], 4: [[16, 90], [86, 92], [34, 96], [68, 96], [22, 106], [80, 108]] },
 };
 
-const nameOf = (habit) => PLANTS[habit] || 'tree';
+// A habit id ('calm') or a drawing's own name ('tulip', for a self-reported habit).
+const nameOf = (habit) => PLANTS[habit] || (DRAW[habit] ? habit : 'tree');
 const stageOf = (stage) => Math.max(0, Math.min(4, Math.floor(stage) || 0));
 
 export function blooms(habit, stage, flowers = 0) {
-  const spots = SPOTS[nameOf(habit)][stageOf(stage)] || GROUND;
+  const spots = SPOTS[nameOf(habit)]?.[stageOf(stage)] || GROUND;
   const n = Math.max(0, Math.min(MAX_FLOWERS, Math.floor(flowers) || 0));
   return spots.slice(0, n).map(([x, y]) => ({ x, y, r: BLOOM_R }));
 }
@@ -259,17 +381,22 @@ const GROW = {
   sunflower: [1.6, 1.9, 1.25, 1.08, 1],
   vine: [1.6, 1.2, 1.05, 1, 1],
   daisies: [1.8, 3.4, 1.7, 1.25, 1],
+  tulip: [1, 1.65, 1, 1, 1],
+  fern: [1.6, 1.2, 1, 1, 1],
+  cactus: [1.8, 1.35, 1.15, 1, 1],
+  rose: [1.6, 1.15, 1, 1, 1],
+  mushroom: [1.6, 1.6, 1.2, 1.1, 1],
 };
 const grown = (k, svg) => (k === 1 ? svg : `<g transform="translate(50 106) scale(${k}) translate(-50 -106)">${svg}</g>`);
 
-export function plant(habit, stage = 0, { flowers = 0, closed = false } = {}) {
-  const name = nameOf(habit), s = stageOf(stage);
+export function plant(habit, stage = 0, { flowers = 0, closed = false, kind } = {}) {
+  const name = DRAW[kind] ? kind : nameOf(habit), s = stageOf(stage);
   const k = GROW[name][s];
   const mound = `<ellipse data-part="mound" cx="50" cy="107" rx="${14 + s * 3}" ry="4.5" fill="${SOIL}"/>`;
   const shine = s === 4 ? `<g data-part="twinkle">${twinkle(12, 18, 4)}${twinkle(88, 12, 3)}</g>` : '';
-  const flowerSvg = blooms(habit, s, flowers).map((b) => bloom(b, BLOOM_COLOUR[name], closed)).join('');
+  const flowerSvg = blooms(name, s, flowers).map((b) => bloom(b, BLOOM_COLOUR[name], closed)).join('');
   return `<svg class="plant plant-${name} stage-${s}" data-habit="${habit}" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">`
-    + `${mound}<g data-part="plant">${SPOTS[name][s]
+    + `${mound}<g data-part="plant">${SPOTS[name]?.[s]
       ? grown(k, `${DRAW[name](s, closed)}<g data-part="blooms">${flowerSvg}</g>`)
       : `${grown(k, DRAW[name](s, closed))}<g data-part="blooms">${flowerSvg}</g>`}</g>${shine}</svg>`;
 }
@@ -320,10 +447,11 @@ export function perches({ x, y, w }, stage, shape = 'tall') {
  * buds when resting, then each visitor at its plant's perch. A clear rect under each plant
  * makes the whole plant tappable.
  */
-export function drawGarden({ mood, plants }, shape = 'tall') {
-  const at = slots(shape, plants.length);
+export function drawGarden({ mood, plants: all }, shape = 'tall') {
+  const at = slots(shape, all.length);
+  const plants = all.slice(0, at.length); // past MAX_PLANTS, the first ones
   const closed = mood === 'resting';
-  const grown = plants.map((p, i) => place(plant(p.habit, p.stage, { flowers: p.flowers.length, closed }), at[i])
+  const grown = plants.map((p, i) => place(plant(p.habit, p.stage, { flowers: p.flowers.length, closed, kind: p.plant }), at[i])
     .replace(/^(<svg [^>]*>)/, '$1<rect width="100" height="120" fill="transparent"/>')).join('');
   const life = plants.flatMap((p, i) => p.visitors.map(({ gift }) => {
     const b = perches(at[i], p.stage, shape)[gift];
