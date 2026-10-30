@@ -510,3 +510,10 @@ test("a practice coach names themselves on the path's first card", () => {
     assert.ok(first.say.includes(`I'm ${s.coach.name}`), `${s.id}: ${first.say}`);
   }
 });
+
+test('the wrapper can buzz and speak, and stays offline', () => {
+  const manifest = readFileSync(new URL('../android/app/src/main/AndroidManifest.xml', import.meta.url), 'utf8');
+  assert.match(manifest, /android\.permission\.VIBRATE/); // or the WebView drops navigator.vibrate
+  assert.match(manifest, /android\.intent\.action\.TTS_SERVICE/); // or Android 11+ hides the TTS engine
+  assert.doesNotMatch(manifest, /permission\.INTERNET/);
+});

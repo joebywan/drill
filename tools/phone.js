@@ -113,6 +113,7 @@ try {
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('response', (r) => r.status() >= 400 && requests.push(`${r.status()} ${r.url()}`));
   page.on('requestfailed', (r) => requests.push(`${r.failure()?.errorText} ${r.url()}`));
+  await page.addInitScript(() => { window.DRILL_PLAIN = true; }); // scenarios walk a lesson's own items: no warm-ups or echoes
   await page.clock.install(); // timed routines run on page.clock, so minutes take seconds
   await page.goto(base, { waitUntil: 'networkidle' });
 
@@ -176,7 +177,7 @@ try {
   /** Starts from the home path, skipping placement, with `patch` merged into the saved progress. */
   const seed = async (patch = {}) => {
     await page.evaluate((patch) => localStorage.setItem('drill.progress', JSON.stringify({
-      version: 2, habits: { learn: { count: 0, last: null, forgiven: [] } }, log: [], done: {}, cards: {}, start: 'x', ...patch,
+      version: 2, habits: { learn: { count: 0, last: null, forgiven: [] } }, log: [], done: {}, cards: {}, start: 'x', met: Object.fromEntries(['chess', 'maths', 'japanese', 'coding', 'javascript', 'typescript', 'testing'].map((c) => [c, true])), ...patch,
     })), patch);
     await page.reload({ waitUntil: 'networkidle' }); await run(800);
   };

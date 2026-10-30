@@ -2084,6 +2084,9 @@ for (const [width, height] of [[360, 640], [375, 812]]) test(`every Coding item 
         lay(item.way, []);
         const step = item.chips.findIndex((c) => typeof c === 'string');
         for (let n = 0; item.limit && step >= 0 && n < item.limit && !tiles.querySelector(`[data-chip="${step}"]`).disabled; n++) tiles.querySelector(`[data-chip="${step}"]`).click();
+        // Room to work in: what's placed scrolls inside, but never down to a sliver.
+        const room = parseFloat(prog.style.maxHeight);
+        if (room < 84) out.push(`${item.id}: the answer has only ${Math.round(room)}px`);
         const small = [...prog.querySelectorAll('button')].filter((b) => b.getBoundingClientRect().height < 26);
         if (small.length) out.push(`${item.id}: a placed block is under 26px tall`);
       }

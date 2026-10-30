@@ -7,7 +7,7 @@ export default async ({ page, seed, touch, btn, shot, run, check }) => {
   await touch(btn('Continue · Why breaks help')); await shot('teach');
   await touch(btn('Start')); await run(5000); await shot('step1');
   check('nothing needs a scroll', await page.evaluate(() => document.querySelector('.next-step').getBoundingClientRect().bottom <= innerHeight));
-  const held = await left(); await touch(btn('Pause')); await run(5000);
+  await touch(btn('Pause')); const held = await left(); await run(5000);
   check('the countdown holds while paused', (await left()) === held, `${held} s`);
   await touch(btn('Carry on')); await run(3000);
   check('Carry on carries on', (await left()) !== held, `${held} → ${await left()} s`);

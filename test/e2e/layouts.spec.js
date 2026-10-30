@@ -20,6 +20,34 @@ test.describe('at 360x640', () => {
     expect(new Set(ys).size).toBe(1);
   });
 
+  test('a course pill and the ✕ answer a thumb that lands just outside them', async ({ page }) => {
+    await seed(page);
+    await page.goto('/');
+    const at = (sel, x, y) => page.locator(sel).first().evaluate((el, [x, y]) => {
+      const r = el.getBoundingClientRect();
+      return document.elementFromPoint(r.left + r.width * x, r.top + y)?.closest('button') === el;
+    }, [x, y]);
+    const pill = await page.locator('.courses .course').first().boundingBox();
+    expect(pill.height).toBe(36); // the row keeps its height; only the target grows
+    expect(await at('.courses .course', 0.5, -3)).toBe(true);
+    expect(await at('.courses .course', 0.5, pill.height + 3)).toBe(true);
+    await page.getByRole('button', { name: /^Continue/ }).click();
+    expect(await at('.close', 0.5, -3)).toBe(true);
+  });
+
+  test('in the wrapper, where WebView has no speechSynthesis, speech goes through the bridge', async ({ page }) => {
+    await seed(page);
+    await page.addInitScript(() => {
+      window.said = [];
+      window.DrillBridge = { summary() {}, art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]', hasVoice: (l) => l === 'ja-JP', speak: (t, l) => window.said.push([t, l]) };
+    });
+    await page.goto('/');
+    await page.locator('[data-course="japanese"]').click();
+    await page.getByRole('button', { name: /^Continue/ }).click();
+    await page.getByRole('button', { name: 'Hear it again' }).click();
+    expect((await page.evaluate(() => window.said)).at(-1)).toEqual(['あ', 'ja-JP']);
+  });
+
   for (const habit of ['calm', 'winddown', 'break', 'move', 'focus']) {
     test(`${habit}: the round pause sits beside the coach, and nothing needs a scroll`, async ({ page }) => {
       await page.clock.install();
