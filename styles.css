@@ -543,7 +543,7 @@ html { scroll-padding-bottom: 160px; }
     max-width: none; margin: 0; padding-left: 0;
   }
   /* A lesson: a bigger board and coach, the board kept clear of the buttons at the bottom. */
-  div.board { width: min(100%, max(240px, 100dvh - 260px)); margin-inline: auto; }
+  div.board { width: min(100%, max(240px, 100dvh - 320px)); margin-inline: auto; }
   .who { width: 84px; }
   .coach.demonstrates .who { width: min(220px, 26dvh); }
   .orb { width: min(36dvh, 300px); }
@@ -559,7 +559,7 @@ html { scroll-padding-bottom: 160px; }
    the content instead of sitting far below it. A lesson's answer buttons and banner stay put. */
 @media (min-width: 1024px) and (orientation: landscape) {
   .summary { padding-bottom: 0; }
-  .summary + .cta { position: static; padding: 8px 16px 32px; background: none; }
+  .summary + .cta { position: static; width: 100%; padding: 8px 16px 32px; background: none; }
   .play:not(:has(div.board)) { padding-bottom: 32px; }
   .play:not(:has(div.board)) .choices { position: static; padding: 24px 0 0; background: none; }
 }
