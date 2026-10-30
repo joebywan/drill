@@ -85,7 +85,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - `src/maths/` — the Maths course (`src/data/maths.json`: mental maths, percentages, fractions you
   can see, for adults rusty at maths). Items are written as sums and pictures; `items.js` works every
   answer out (`value()` reads "15% of $60", so 2/4 is right for 1/2) and `toQuiz()` turns each into a
-  src/quiz item; `problem()` checks both. `exercise.js` draws the ten frame, bars and 100 grid. Coach:
+  src/quiz item; `problem()` checks both. `exercise.js` draws the ten frame, bars, 100 grid and a teach card's number line. Coach:
   Ada, an octopus (`src/cast/ada.js`, posed with `rig()`), with `MATHS_LINES` and `MATHS_HEADLINES`.
 - `src/cast/` — the characters (`kit.js`, `rosa.js`, `lumi.js`), `coach.js` (a character that
   reacts in place) and `lines.js` (everything the cast says; the guardrail tests lint it).

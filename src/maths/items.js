@@ -6,7 +6,8 @@ import { problem as quizProblem, shuffle } from '../quiz/items.js';
  *   show     what is written big above the answer: "38 + 5"
  *   sum      what is worked out, when it isn't `show` ("10 - 7" for "How many more make 10?")
  *   picture  { frame: n } n dots in a ten frame; { bar: [n, d] } n of d parts shaded;
- *            { grid: n } n of 100 squares shaded; { bars: [[n, d], ...] } bars one above another
+ *            { grid: n } n of 100 squares shaded; { bars: [[n, d], ...] } bars one above another;
+ *            { line: [min, max, hops] } a number line to look at, on a teach card
  *   tiles    for pairs: the numbers to pair off, in any order
  *   extra    for build: decoy tiles (default: two digits not in the answer)
  *   make     for pairs: two tiles go together when they add up to this. Without it, when they are

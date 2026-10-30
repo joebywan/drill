@@ -692,6 +692,9 @@ body:has(main.night) {
 .pic .cell { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
 .pic .cell.on { fill: var(--maths); }
 .pic .dot { fill: var(--maths); }
+.pic .track { stroke: var(--line); stroke-width: 3; }
+.pic .hop { stroke: var(--muted); stroke-width: 2; }
+.pic text { fill: var(--muted); font-size: 13px; font-weight: 700; }
 .numline { align-self: stretch; position: relative; min-height: 96px; margin-top: 16px; padding: 30px 16px 0; touch-action: none; cursor: pointer; }
 .numline:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 12px; }
 .track { position: relative; height: 6px; border-radius: 3px; background: var(--line); }
