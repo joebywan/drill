@@ -131,6 +131,31 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `src/data/basics.json` — Chess from zero (board, moves, capturing, check and mate), first on
   the path; `src/data/forks.json` — the hand-written Forks unit after it. Both hand-written.
 
+## Android
+
+`android/` is a WebView wrapper (Kotlin, AGP 9 with built-in Kotlin, Gradle needs **Java 17**):
+`cd android && JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ANDROID_HOME=~/Android/Sdk ./gradlew assembleDebug`
+after `npm ci` at the root. App id `com.joebywan.drill`, locked.
+
+- The web app is not copied into git: `copyWebAssets` syncs index.html, styles.css, src/, assets/ and
+  the three import-map packages into the APK, served from `https://appassets.androidplatform.net` by
+  WebViewAssetLoader. No INTERNET permission; CI fails the build if one appears.
+- `src/widget.js` makes every choice: `look(light, hour)` → background, Lumi pose, line pool
+  (`WIDGET_LINES`, linted), and `summary()` a schedule of looks over the next days' boundaries
+  (midnight, 5, 12, 18, 22). `save()` passes it to `DrillBridge.summary()`, so Kotlin only renders.
+  The page also sends Lumi's poses as PNGs (`art`). In a browser there is no bridge and nothing runs.
+- `Daily.kt`: the widget, an inexact alarm at the next look and at the note's hour, a 15-minute
+  WorkManager job, `Ticker` re-arming on BOOT_COMPLETED and MY_PACKAGE_REPLACED. The daily note is
+  opt-in on the ⋯ screen, low importance, at most once a day, and posts nothing if anything was done
+  today. Logcat tags `DrillBridge`, `DrillDaily`. Test path (debug builds only skip the once-a-day guard):
+  `adb shell am broadcast -n com.joebywan.drill/.Ticker -a com.joebywan.drill.REMIND --ez force true`.
+- Releases copy Daybook: `assembleRelease` only, by hand from the **Android release** workflow;
+  `-PrequireSigning=true` fails without the key, and `android/tools/verify-apk.sh` fails an
+  unsigned, wrong-key or debuggable APK. The key is Joseph's, kept offline. To set it up once: create
+  it, put its certificate SHA-256 in `android/release-key.sha256`, and add the repo secrets
+  `DRILL_KEYSTORE_BASE64`, `DRILL_KEYSTORE_PASSWORD`, `DRILL_KEY_ALIAS`, `DRILL_KEY_PASSWORD` (or set
+  `DRILL_KEYSTORE` etc. as env vars or `-P` properties for a local build).
+
 ## Rules
 
 - **Reuse before you add.** Daybook bloated from copied code; Drill must not. Before writing a

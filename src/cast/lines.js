@@ -301,3 +301,21 @@ export const INTRO_WORDS = {
   first: '{name} is first. Start with the button below.',
   change: 'Change what you see',
 };
+
+/**
+ * The Android home-screen widget and its once-a-day note (src/widget.js picks the pool). Lumi
+ * says hello; nothing counts down, nothing is owed, and a day off is just a day.
+ */
+export const WIDGET_LINES = {
+  done: ['Done for today. Nice.', 'That was a good one.', 'All set. Enjoy the rest of the day.'],
+  morning: ['Morning. Fancy a lesson?', 'A new day. Pick anything you like.', 'Good morning from Lumi.'],
+  day: ['Got a few minutes? I have a puzzle.', 'Lumi is around if you want a lesson.', 'Something small today?'],
+  evening: ['A calm few minutes before bed?', 'Evening. One small thing, if you like.', 'Lumi saved you a puzzle.'],
+  night: ['Sleep well. See you tomorrow.', 'Lumi is dozing.', 'Rest is good too.'],
+  // The once-a-day note, opted into on the ⋯ screen. Posted only on a day with nothing done.
+  remind: ['Lumi has a puzzle for you, if you fancy one.', 'A few calm minutes are here when you want them.', 'Something small today? Lumi is around.'],
+};
+export const REMINDER_WORDS = {
+  title: 'Daily note',
+  toggle: 'One quiet note in the evening, only on days with nothing done',
+};

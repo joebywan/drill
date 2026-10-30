@@ -1082,3 +1082,37 @@ test('under reduced motion Calm stays quiet: no bell, no rain', async ({ page })
   await expect(page.getByText('Breath 1 of 5')).toBeVisible();
   expect(await page.evaluate(() => [window.heard.tones.includes(528), window.heard.noise])).toEqual([false, 0]);
 });
+
+// The Android wrapper's bridge, faked: the app tells it about each save and offers the daily note.
+test('with the Android bridge, a finished lesson sends a summary and the ⋯ screen offers the note', async ({ page }) => {
+  await page.addInitScript(() => {
+    const calls = (window.bridgeCalls = []);
+    let on = false;
+    window.DrillBridge = {
+      summary: (json) => calls.push(['summary', JSON.parse(json)]),
+      art: (pose, png) => calls.push(['art', pose, png.length]),
+      remindersOn: () => on,
+      reminders: (v) => { on = v; calls.push(['reminders', v]); },
+    };
+  });
+  await firstVisit(page);
+  await expect.poll(() => page.evaluate(() => bridgeCalls.filter((c) => c[0] === 'art').map((c) => c[1]))).toEqual(['teach', 'sleepy', 'complete']);
+  await finishFirstLesson(page);
+  const last = await page.evaluate(() => bridgeCalls.filter((c) => c[0] === 'summary').at(-1)[1]);
+  expect(last.looks[0]).toMatchObject({ light: 'bright', streak: 1, pose: 'complete' });
+  expect(last.doneOn).toMatch(/^\d{4}-\d\d-\d\d$/);
+  await continueButton(page).click();
+  await page.getByRole('button', { name: 'Your progress' }).click();
+  const note = page.getByRole('button', { name: /One quiet note/ });
+  await expect(note).toHaveAttribute('aria-pressed', 'false');
+  await note.click();
+  await expect(note).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.evaluate(() => bridgeCalls.at(-1))).toEqual(['reminders', true]);
+});
+
+test('without the bridge, the ⋯ screen has no note toggle', async ({ page }) => {
+  await firstVisit(page);
+  await page.getByRole('button', { name: 'Your progress' }).click();
+  await expect(page.getByRole('heading', { name: 'Your progress' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /One quiet note/ })).toHaveCount(0);
+});

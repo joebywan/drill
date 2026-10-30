@@ -278,3 +278,11 @@ test('the timings screen makes no claims, never hurries and never pushes', () =>
   for (const text of words) for (const bad of [CLAIMS, URGENCY, PUSHING, BODY, ABILITY, LOSS]) assert.doesNotMatch(text, bad, text);
   assert.match(TIMING_WORDS.intro, /^If someone has given you timings, set them here\./);
 });
+
+// The Android widget and its once-a-day note: no nagging, no hurry, nothing about a day off.
+import { REMINDER_WORDS, WIDGET_LINES } from '../src/cast/lines.js';
+test('the widget and the daily note never nag, hurry or judge', () => {
+  const texts = [...Object.values(WIDGET_LINES).flat(), ...Object.values(REMINDER_WORDS)];
+  assert.ok(texts.length > 15);
+  for (const text of texts) for (const lint of [NAGGING, LOSS, ABILITY, URGENCY]) assert.doesNotMatch(text, lint, text);
+});
