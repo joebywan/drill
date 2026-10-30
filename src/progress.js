@@ -30,6 +30,8 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            these first (subjects.js ordered). Absent until the intro is answered or skipped ([])
  *   timings  { habitId: { key: value } }  — the learner's own practice timings (practice/timings.js),
  *            over the path's defaults. Untrusted like the rest: `timed()` ignores a value out of range
+ *   reminders, comeback  — optional, what src/fitting.js learns about fitting the person (see there);
+ *            read leniently: a bad reminder record or comeback is dropped, never the whole file
  *   version  the shape's version; `migrate()` brings any older shape up to VERSION
  */
 export const VERSION = 9;
@@ -65,6 +67,10 @@ const isEntry = (e) => isObject(e) && isDate(e.date) && typeof e.habit === 'stri
 const isLeft = (e) => isObject(e) && isDate(e.date) && isHour(e.hour) && typeof e.habit === 'string' && typeof e.title === 'string'
   && (e.lessonId === null || typeof e.lessonId === 'string') && (e.of === null || (Number.isInteger(e.of) && e.of > 0))
   && Number.isInteger(e.step) && e.step >= 0 && e.step <= (e.of ?? 0);
+
+const isReminder = (r) => isObject(r) && isDate(r.date) && isHour(r.hour) && ['opened', 'cleared', 'on'].includes(r.outcome);
+const isComeback = (c) => isObject(c) && isDate(c.date) && typeof c.habit === 'string' && typeof c.title === 'string'
+  && (c.hour === null || isHour(c.hour)) && (c.done == null || isDate(c.done)) && (c.dismissed == null || typeof c.dismissed === 'boolean');
 
 // Ids go into attributes and storage keys, so they are plain; names are the learner's own text.
 const NAME_MAX = 30;
@@ -126,7 +132,14 @@ export function migrate(raw) {
   // Version 9: practices closed part-way (none before).
   const left = raw.left ?? [];
   if (!Array.isArray(left) || !left.every(isLeft)) return null;
-  return { ...kept, ...(start && { start }), ...(picked && { picked }), version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal, garden, tracked, timings, left };
+  // Fitting (src/fitting.js): optional, so no version of their own; a bad record is dropped, not the file.
+  delete kept.reminders;
+  delete kept.comeback;
+  const fitting = {
+    ...(Array.isArray(raw.reminders) && { reminders: raw.reminders.filter(isReminder) }),
+    ...(isComeback(raw.comeback) && { comeback: raw.comeback }),
+  };
+  return { ...kept, ...fitting, ...(start && { start }), ...(picked && { picked }), version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal, garden, tracked, timings, left };
 }
 
 /**

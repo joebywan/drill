@@ -512,7 +512,7 @@ export const BOUNDS = {
   rose: [[3, 90, 97, 118], [3, 75, 97, 118], [3, 63, 97, 118], [3, 46, 97, 118], [3, 8, 97, 118]],
   mushroom: [[3, 95, 97, 118], [3, 85, 97, 118], [3, 76, 97, 118], [3, 65, 97, 118], [3, 8, 97, 118]],
 };
-const ASPECT = { butterfly: 1, bee: 1, birds: 56 / 32, pond: 80 / 50 };
+const ASPECT = { butterfly: 1, bee: 1, birds: 56 / 32, ladybird: 1, pond: 80 / 50 };
 const POND = { strip: 26, tall: 46 }; // the pond's height in each shape
 
 /** A plant's drawn box at a slot, in the scene's units { x, y, w, h }. A plant not measured yet is its whole canvas. */
@@ -526,7 +526,7 @@ const overlap = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h 
 
 /**
  * Where each plant's visitors wait, in the scene's units: for plants [{ habit, stage }] laid out by
- * slots(shape, n), one { butterfly, bee, birds } of boxes { x, y, w, h } per plant. Each wants a
+ * slots(shape, n), one { butterfly, bee, birds, ladybird } of boxes { x, y, w, h } per plant. Each wants a
  * spot by its own plant (the butterfly above it to the left, the bee above it to the right, the birds
  * on the ground beside it, towards the middle) and takes the nearest one, inside the scene, that is
  * clear of every plant's drawn box and of the visitors placed before it. Pure. The pond goes first,
@@ -563,13 +563,14 @@ export function perches(plants, shape = 'tall') {
       birds: [x + (x > W / 2 ? -1 : 1) * 0.53 * w, y + 0.06 * w, 0.22 * w],
       butterfly: [x - 0.3 * w, top - 0.04 * w, 0.26 * w],
       bee: [x + 0.3 * w, top - 0.1 * w, 0.2 * w],
+      ladybird: [x + (x > W / 2 ? 1 : -1) * 0.4 * w, y + 0.02 * w, 0.13 * w], // on the ground, the outer side
     };
   };
   const out = plants.map(() => ({}));
   const ph = POND[shape] || POND.tall;
   out.pond = place('pond', W * 0.8, H - 2, ph, false, (GROUND_Y[shape] || GROUND_Y.tall) - ph * 0.5);
   // Biggest first, every plant's birds before any butterfly, so the small ones fill the gaps left.
-  for (const kind of ['birds', 'butterfly', 'bee']) {
+  for (const kind of ['birds', 'butterfly', 'bee', 'ladybird']) {
     out.forEach((spot, i) => { spot[kind] = place(kind, ...wants(i)[kind]); });
   }
   return out;

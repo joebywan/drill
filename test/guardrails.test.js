@@ -341,6 +341,18 @@ test('Wind down makes no sleep or health claims, never hurries and never shames 
   for (const kind of Object.keys(WINDDOWN_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
 });
 
+// Fitting the person (src/fitting.js): the comeback invites and never counts what was missed;
+// the reminders line and the habit view's usual hours are plain.
+import { COMEBACK_WORDS, PAUSED_WORDS, usualLine } from '../src/fitting.js';
+test('the comeback card invites, never guilts, and the fitting lines are plain', () => {
+  const card = { title: 'Breathing', hour: 19 };
+  const comeback = [COMEBACK_WORDS.kicker, COMEBACK_WORDS.text(card), COMEBACK_WORDS.text({ ...card, hour: null }), COMEBACK_WORDS.go(card), COMEBACK_WORDS.dismiss];
+  for (const text of comeback) for (const lint of [LOSS, URGENCY, ABILITY, NAGGING]) assert.doesNotMatch(text, lint, text);
+  for (const text of comeback) assert.doesNotMatch(text, /\b(miss\w*|been (a while|away)|back|again|return\w*|lately|haven'?t|stopp\w*|slipp\w*|fell|fall\w*|drop\w*|usual week|only)\b/i, text);
+  const plain = [...Object.values(PAUSED_WORDS), usualLine([7, 19]), 'Try a shorter one: 3 breaths'];
+  for (const text of plain) for (const lint of [LOSS, URGENCY, ABILITY]) assert.doesNotMatch(text, lint, text);
+});
+
 // The Android widget and its once-a-day note: no nagging, no hurry, nothing about a day off.
 import { REMINDER_WORDS, WIDGET_LINES } from '../src/cast/lines.js';
 test('the widget and the daily note never nag, hurry or judge', () => {
