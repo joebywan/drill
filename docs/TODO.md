@@ -218,10 +218,3 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
   "Next: Stand and stretch".
 - **Dark board's ledge shadow** is faint, and a very fast second tap as a piece lands can be dropped.
 - **Cast brief** (the Claude Doc) still describes lamps and predates quest markers, the garden and no XP.
-
-**Phone back button**
-
-- Drill has no browser history, so on the web phone's back button leaves the site, and in the wrapper
-  `web.canGoBack()` is false, so it closes the app, even mid-lesson. It should step back one screen, as the X
-  and ← do. Noted 2026-10-30; to be done with the Android packaging, using `pushState` and `popstate`, so
-  the web gets it too.

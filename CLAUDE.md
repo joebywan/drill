@@ -241,6 +241,10 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   (`DrillBridge`), which has no internet permission, the ⋯ section is hidden and sync never runs
   (`available()`). The card's name and animal are `progress.look` ({ word, animal, at }), synced, the
   latest pick winning.
+- `src/nav.js` — the phone's back button, on web and in the wrapper with no Kotlin. It watches #app, so
+  every screen change goes through it with nothing to call: a screen needs only a back control `BACK`
+  matches (`.close`, `.back`, `[data-back]`…), which back presses; a screen with none counts as home,
+  and back there leaves the app. An open `<dialog>` closes first. A new screen that isn't home must have one.
 - `src/feel.js` — synthesised sounds (mute on the home bar), haptics, and `move()`, which skips
   animation under reduced motion. Lesson moments go through it: `cue(name)` (sound and buzz; the
   sound follows the Sound toggle only, reduced motion skips just the animations) for right, run, wrong, done and unlock;
