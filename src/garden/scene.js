@@ -19,7 +19,9 @@ import { move } from '../feel.js';
  *   place(svg, slot) -> svg string   a plant drawn at a slot, to append inside the scene's svg
  *   VISITORS                ['butterfly', 'bee', 'birds'], the gifts in model.js RULES
  *   visitor(kind) -> svg string      32 units tall (birds is a pair, 56 wide)
- *   animateVisitor(el, kind) -> Animation[] | null   flutter, hover or hop; null under reduced motion
+ *   animateVisitor(el, kind, fresh) -> Animation[] | null   flutter, hover or hop, the butterfly and bee wander,
+ *                           and a fresh one flies in first; null under reduced motion
+ *   animateScene(el) -> Animation[]  clouds drift, the sun glows, dew glints, stars twinkle, fireflies wander
  */
 export const MOODS = ['sunlit', 'morning', 'resting'];
 export const SIZE = { strip: [360, 124], tall: [360, 390] };
@@ -59,12 +61,12 @@ const hills = (W, H, y, amp, waves, phase, cls) => {
   return `<path class="g-${cls}" d="${d} L${W} ${H}Z"/>`;
 };
 
-const cloud = (x, y, s) => `<g class="g-cloud">`
+const cloud = (x, y, s) => `<g class="g-cloud" data-part="cloud">`
   + `<circle cx="${x}" cy="${y}" r="${7 * s}"/><circle cx="${x + 9 * s}" cy="${y - 4 * s}" r="${9 * s}"/>`
   + `<circle cx="${x + 19 * s}" cy="${y}" r="${7 * s}"/><rect x="${x}" y="${y}" width="${19 * s}" height="${7 * s}"/></g>`;
 
 const spark = (x, y, s) =>
-  `<path class="g-dot" d="M${x} ${y - s} L${f(x + s * 0.25)} ${f(y - s * 0.25)} L${x + s} ${y} L${f(x + s * 0.25)} ${f(y + s * 0.25)} L${x} ${y + s} L${f(x - s * 0.25)} ${f(y + s * 0.25)} L${x - s} ${y} L${f(x - s * 0.25)} ${f(y - s * 0.25)}Z"/>`;
+  `<path class="g-dot" data-part="glint" d="M${x} ${y - s} L${f(x + s * 0.25)} ${f(y - s * 0.25)} L${x + s} ${y} L${f(x + s * 0.25)} ${f(y + s * 0.25)} L${x} ${y + s} L${f(x - s * 0.25)} ${f(y + s * 0.25)} L${x - s} ${y} L${f(x - s * 0.25)} ${f(y - s * 0.25)}Z"/>`;
 
 export function scene(mood = 'morning', shape = 'tall') {
   const m = PALETTE[mood] ? mood : 'morning';
@@ -75,18 +77,18 @@ export function scene(mood = 'morning', shape = 'tall') {
   const rand = seeded(tall ? 7 : 3);
   let sky = `<rect class="g-sky" width="${W}" height="${H}"/><rect class="g-band" y="${f(hy - 50 * k)}" width="${W}" height="${f(60 * k)}"/>`;
   if (m === 'sunlit') {
-    sky += `<circle class="g-halo" cx="${W - 56}" cy="${f(30 * k)}" r="${f(22 * k)}"/><circle class="g-sun" cx="${W - 56}" cy="${f(30 * k)}" r="${f(14 * k)}"/>`
+    sky += `<circle class="g-halo" data-part="halo" cx="${W - 56}" cy="${f(30 * k)}" r="${f(22 * k)}"/><circle class="g-sun" cx="${W - 56}" cy="${f(30 * k)}" r="${f(14 * k)}"/>`
       + cloud(40, f(26 * k), k * 0.9) + cloud(150, f(44 * k), k * 0.7);
   } else if (m === 'morning') {
     // A low sun just over the far hills, and a little mist.
-    sky += `<circle class="g-halo" cx="80" cy="${f(hy - 22 * k)}" r="${f(26 * k)}"/><circle class="g-sun" cx="80" cy="${f(hy - 22 * k)}" r="${f(17 * k)}"/>`
+    sky += `<circle class="g-halo" data-part="halo" cx="80" cy="${f(hy - 22 * k)}" r="${f(26 * k)}"/><circle class="g-sun" cx="80" cy="${f(hy - 22 * k)}" r="${f(17 * k)}"/>`
       + cloud(220, f(hy - 54 * k), k * 0.7);
   } else {
     // Evening: a crescent moon and a few early stars.
     const mx = W - 64, my = f(28 * k);
     sky += `<circle class="g-sun" cx="${mx}" cy="${my}" r="${f(12 * k)}"/>`
       + `<circle class="g-sky" cx="${f(mx + 6 * k)}" cy="${f(my - 4 * k)}" r="${f(10 * k)}"/>`
-      + Array.from({ length: tall ? 12 : 6 }, () => `<circle class="g-cloud" cx="${f(rand() * W)}" cy="${f(rand() * (hy - 60 * k))}" r="${f(0.8 + rand())}"/>`).join('');
+      + Array.from({ length: tall ? 12 : 6 }, () => `<circle class="g-cloud" data-part="star" cx="${f(rand() * W)}" cy="${f(rand() * (hy - 60 * k))}" r="${f(0.8 + rand())}"/>`).join('');
   }
   const land = hills(W, H, hy - 26 * k, 8 * k, 3, 0.6, 'far') + hills(W, H, hy - 10 * k, 7 * k, 2, 2.2, 'near')
     + `<path class="g-ground" d="M0 ${hy} Q${W / 2} ${f(hy - 8 * k)} ${W} ${hy} L${W} ${H} L0 ${H}Z"/>`
@@ -175,7 +177,7 @@ const DRAW = { butterfly, bee, birds };
 export function visitor(kind = 'butterfly') {
   const k = DRAW[kind] ? kind : 'butterfly';
   const w = k === 'birds' ? 56 : 32;
-  return `<svg class="visitor visitor-${k}" viewBox="0 0 ${w} 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${DRAW[k]()}</svg>`;
+  return `<svg class="visitor visitor-${k}" viewBox="0 0 ${w} 32" overflow="visible" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g data-part="drift">${DRAW[k]()}</g></svg>`;
 }
 
 const loop = { iterations: Infinity, easing: 'ease-in-out' };
@@ -186,13 +188,54 @@ const MOTION = {
   birds: ['[data-part="bird"]', [{ transform: 'translateY(0)' }, { transform: 'translateY(-4px)', offset: 0.1 }, { transform: 'translateY(0)', offset: 0.2 }, { transform: 'translateY(0)' }], { duration: 2400, ...loop }],
 };
 
-export function animateVisitor(el, kind) {
+// The butterfly and the bee also wander about their perch, in the visitor's own units.
+const WANDER = {
+  butterfly: [[0, 0], [-7, -5], [-2, -9], [5, -4], [2, 2], [0, 0]],
+  bee: [[0, 0], [5, -2], [8, 1], [3, 3], [-4, 0], [-6, -3], [0, 0]],
+};
+// A visitor that has just arrived flies in from up and to one side.
+const ARRIVE = { butterfly: [-90, -60], bee: [90, -50], birds: [-70, -40] };
+
+/** `fresh` makes it fly in first, from off its perch: for what arrived this session. */
+export function animateVisitor(el, kind, fresh = false) {
   if (!MOTION[kind] || !el?.querySelectorAll) return null;
   const [sel, frames, opts] = MOTION[kind];
   const anims = [...el.querySelectorAll(sel)].map((part, i) => {
     if (part.style) Object.assign(part.style, { transformBox: 'fill-box', transformOrigin: 'center' });
     // The second bird hops a little after the first.
     return move(part, frames, { ...opts, delay: i * 700 });
-  }).filter(Boolean);
-  return anims.length ? anims : null;
+  });
+  const drift = el.querySelector('[data-part="drift"]');
+  if (WANDER[kind]) {
+    anims.push(move(drift, WANDER[kind].map(([x, y]) => ({ transform: `translate(${x}px, ${y}px)` })),
+      { duration: 7000 + Math.random() * 3000, delay: -Math.random() * 7000, iterations: Infinity, easing: 'ease-in-out' }));
+  }
+  if (fresh) {
+    const [x, y] = ARRIVE[kind];
+    anims.push(move(drift, [{ transform: `translate(${x}px, ${y}px)`, opacity: 0 }, { opacity: 1, offset: 0.2 }, { transform: 'translate(0, 0)', opacity: 1 }],
+      { duration: 1800, delay: 300, easing: 'cubic-bezier(.2, .7, .3, 1)', fill: 'backwards', composite: 'add' }));
+  }
+  const live = anims.filter(Boolean);
+  return live.length ? live : null;
+}
+
+// The scene's own life, each part on its own clock so nothing moves in step:
+// [selector, frames, base duration ms, transform origin (null for none)].
+const LIFE = [
+  ['[data-part="cloud"]', [{ transform: 'translateX(-14px)' }, { transform: 'translateX(14px)' }], 22000, null],
+  ['[data-part="halo"]', [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.12)', opacity: 0.75 }], 4000, 'center'],
+  ['[data-part="glint"]', [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: 0.15 }, { transform: 'scale(.2)', opacity: 0, offset: 0.3 }, { transform: 'scale(.2)', opacity: 0 }], 5000, 'center'],
+  ['[data-part="star"]', [{ opacity: 1 }, { opacity: 0.25 }], 2600, null],
+  ['[data-part="firefly"]', [{ transform: 'translate(0, 0)', opacity: 0.2 }, { transform: 'translate(4px, -6px)', opacity: 1 }, { transform: 'translate(-3px, -10px)', opacity: 0.5 }, { transform: 'translate(0, 0)', opacity: 0.2 }], 6000, null],
+];
+
+/** Moves the backdrop of a drawn scene: clouds drift, the sun glows, dew glints, stars twinkle, fireflies wander. */
+export function animateScene(el) {
+  if (!el?.querySelectorAll) return [];
+  return LIFE.flatMap(([sel, frames, ms, origin]) => [...el.querySelectorAll(sel)].map((part) => {
+    if (origin && part.style) Object.assign(part.style, { transformBox: 'fill-box', transformOrigin: origin });
+    const duration = ms * (0.8 + Math.random() * 0.5);
+    const alternate = frames.length === 2;
+    return move(part, frames, { duration, delay: -Math.random() * duration, iterations: Infinity, easing: 'ease-in-out', direction: alternate ? 'alternate' : 'normal' });
+  })).filter(Boolean);
 }

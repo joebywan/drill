@@ -1,6 +1,6 @@
 import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
 import { award, garden, moreArrived, plantWords } from './garden/model.js';
-import { PLANTS, animateVisitor, drawGarden, flower, plant, sway, visitor } from './garden/art.js';
+import { PLANTS, animateScene, animateVisitor, drawGarden, flower, plant, sway, visitor } from './garden/art.js';
 import { emptyProgress, unitsOf, finishPractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
@@ -8,7 +8,7 @@ import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
 import { reducedMotion } from './cast/kit.js';
 import { CALM_SOUNDS, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
-import { buzz, calmPref, move, play, setPref, setSound, soundOn } from './feel.js';
+import { buzz, calmPref, chime, move, play, setPref, setSound, soundOn } from './feel.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
 import { TIMINGS, TIMING_WORDS, setTiming, timed } from './practice/timings.js';
@@ -145,7 +145,7 @@ function home(arrived = null, newly = []) {
       <button class="menu" aria-label="Your progress">⋯</button>
     </header>
     <main class="home">
-      <button class="garden-link" aria-label="Your garden: ${g.plants.length} plant${g.plants.length === 1 ? '' : 's'}">${drawGarden(g, 'strip')}</button>
+      <button class="garden-link" aria-label="Your garden: ${g.plants.length} plant${g.plants.length === 1 ? '' : 's'}">${drawGarden(g, 'strip', newly.map((r) => r.id))}</button>
       <nav class="paths" aria-label="Show the path for">
         ${habits().filter((h) => !h.hidden).map(habitTab).join('')}
         <button class="path-tab add-tab" data-add aria-label="Add a habit">${esc(LOG_WORDS.addTab)}</button>
@@ -220,7 +220,7 @@ function home(arrived = null, newly = []) {
     let got;
     ({ progress, newly: got } = award(progress));
     save();
-    play('tap');
+    if (got.length) arrive(got); else play('tap');
     buzz('right');
     home(null, got);
     focusOn('.log-habit [role="status"]');
@@ -348,13 +348,14 @@ function timingsView(id, back) {
 }
 
 /**
- * The garden's plants sway and its visitors move, each on the Web Animations API, so the svg is
+ * The garden's plants sway, its visitors move (new ones fly in) and its sky and grass live, each on the Web Animations API, so the svg is
  * drawn once. Paused while it is off screen or the tab is hidden; nothing moves under reduced
  * motion. Returns the stop.
  */
 function liven(el) {
   const anims = [...el.querySelectorAll('svg.plant')].map(sway)
-    .concat([...el.querySelectorAll('svg.visitor')].flatMap((v) => animateVisitor(v, v.dataset.kind) || []))
+    .concat([...el.querySelectorAll('svg.visitor')].flatMap((v) => animateVisitor(v, v.dataset.kind, 'new' in v.dataset) || []))
+    .concat(animateScene(el))
     .filter(Boolean);
   if (!anims.length) return () => {};
   let seen = true;
@@ -370,6 +371,9 @@ const shortDate = (date) => dateOf(date).toLocaleDateString('en-GB', { day: 'num
 /** One thing that arrived, drawn small beside its line: "A butterfly arrived · 12 Oct". */
 const arrival = ({ gift, text, on }, habit) =>
   `<span class="arrival">${gift === 'flower' ? flower(habit) : visitor(gift)}<span>${esc(text)}${on ? ` · ${shortDate(on)}` : ''}</span></span>`;
+
+/** What arrived in the garden is heard: the first thing's own sound, after `wait` ms. */
+const arrive = (newly, wait = 0) => { if (newly.length) setTimeout(() => chime(newly[0].gift), wait); };
 
 /** What a session brought to the garden, quietly: three lines at most, then "and N more". */
 const arrivals = (newly) => (!newly.length ? '' : `<ul class="arrivals">
@@ -457,6 +461,7 @@ function addHabit() {
     b.addEventListener('click', () => {
       progress = track(progress, { id: b.dataset.track, hidden: false });
       save();
+      chime('plant');
       homeOn(b.dataset.track);
     });
   }
@@ -493,6 +498,7 @@ function editHabit(h) {
     const data = new FormData(e.target);
     progress = track(progress, { id: h?.id, name: data.get('name'), icon: data.get('icon'), plant: data.get('plant') });
     save();
+    if (!h) chime('plant');
     homeOn(h?.id || progress.tracked.at(-1).id);
   });
   app.querySelector('[data-hide]')?.addEventListener('click', () => {
@@ -685,6 +691,7 @@ function run(lessonId, queue, title) {
       <footer class="cta"><button class="next">Continue</button></footer>`;
     const endCoach = coach(app.querySelector('.hero'), who.draw);
     endCoach.set('done');
+    arrive(newly, 400);
     focusOn('h1');
     for (const b of app.querySelectorAll('[data-feel]')) {
       b.addEventListener('click', () => {
@@ -776,6 +783,7 @@ function run(lessonId, queue, title) {
     if (leanIn) leanIn.finished.then(settle, () => {}); else settle();
     focusOn('h1');
     play('done');
+    arrive(newly, 900);
     buzz('done');
     const stopParty = perfect ? confetti() : () => {};
     app.querySelector('.summary').addEventListener('click', stopParty);
