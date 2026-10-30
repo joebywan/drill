@@ -39,6 +39,21 @@ export const HELLO = {
     expect: ['No typing. You tap blocks to build a program, and I walk it. Later you lay out whole programs yourself and press Run.', 'Steps first, then loops, ifs, your own blocks, counting, lists, drawing, bug hunts, and real JavaScript to read.', 'If I end up in the wrong place, we try that one again at the end of the lesson.'],
     go: "Let's build",
   },
+  javascript: {
+    line: "Fennel again. Real JavaScript this time, and I still do exactly what it says.",
+    expect: ['No typing. You tap words into place, like a sentence, and press Run.', 'Printing and variables first, then ifs, loops, functions, lists and objects.', 'It really runs, so any code that does the job is right.'],
+    go: "Let's run it",
+  },
+  typescript: {
+    line: "Same me, same chips. Now a checker reads your code before I even set off.",
+    expect: ['You add labels saying what each name may hold.', 'Then unions, interfaces and generics, a little at a time.', 'Know some JavaScript first: this course builds on it.'],
+    go: "Let's check it",
+  },
+  testing: {
+    line: "I have made some faulty copies of good code. Your tests have to catch them.",
+    expect: ['You build tests from chips, in TypeScript.', 'They must pass on the real code and fail on every faulty copy.', 'If a copy gets through, I say which one, in plain words.'],
+    go: "Let's catch them",
+  },
 };
 
 export const LINES = {
@@ -616,6 +631,46 @@ export const CODING_HEADLINES = {
   fast: ['Done already? I had barely started trotting.', 'Zoom! That was a quick little program.'],
   struggled: ['Some bumps, then the flower. That is real coding.', 'You debugged your way through. Proper programmer stuff.'],
   review: ['Look at that recall. The plans are in there.', 'Review done. Steps, loops, ifs: all at home.'],
+  relit: ['Streak relit! Ears up.', 'There it is, the streak is glowing again.'],
+};
+
+/** Fennel on real code: the JavaScript, TypeScript and test-writing courses. */
+export const CODE_LINES = {
+  correct: [
+    'It runs, and it does the job.',
+    'Every word in its place. Off I trot.',
+    'That works. I read it twice to be sure.',
+    'Yes! You read it line by line.',
+    'Neat. The computer has no complaints, and neither do I.',
+  ],
+  wrong: [
+    'Not that time. Code does what it says, not what it meant, so read why.',
+    'Close. One word changes everything in code.',
+    'Good thing it was only a run. Read what happened.',
+    "That's what running it is for. Now you know what it did.",
+  ],
+  run3: ['Three that ran first go! My ears are tingling.', 'Three in a row. Tidy code.'],
+  run5: ['Five in a row. You are reading it like the computer does.', 'Five! Those lines run like clockwork.'],
+  tapped: [
+    'Semicolons are like my paw prints: small, and they show where each step ended.',
+    'Words on chips, no typing. My paws approve.',
+    'A computer reads every word. It has no idea what you hoped.',
+    'Counting from 0 is odd. I have been doing it for ages and it is still odd.',
+    'Read it out loud. If it sounds wrong to you, it is wrong to me.',
+  ],
+  complete: ['That is another piece of the language.', 'Words you can read now, and use.'],
+  perfect: ['Not one error. You read before you ran.', 'No error messages today. They can have the day off.'],
+  fast: ['Quick, and it all still ran.', 'Reading code gets faster. There it is.'],
+  struggled: ['Errors are how code talks back. You listened.', 'Every miss came back and landed.'],
+  review: ['Those lines stayed with you.', 'Old code, still making sense to you.'],
+  relit: ['Good to run some code.', 'Back at it. The code was waiting right here.'],
+};
+export const CODE_HEADLINES = {
+  complete: ['Lesson done. It all ran.', 'And that is a lesson. Nothing left to run.'],
+  perfect: ['Every line ran first time.', 'First go, all of it. I may frame this.'],
+  fast: ['Done already? You read fast.', 'Zoom! That ran quickly.'],
+  struggled: ['Some errors, then it ran. That is real coding.', 'You read the errors and got there. That is the job.'],
+  review: ['Look at that recall. The code is in there.', 'Review done. It all still runs.'],
   relit: ['Streak relit! Ears up.', 'There it is, the streak is glowing again.'],
 };
 

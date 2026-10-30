@@ -43,5 +43,32 @@
     "Drawing": "Every square I stand on gets painted. Find the shape's repeating part first: that is the inside of your loop.",
     "Find the bug": "Watch where I go wrong. The bug is usually the block just before that spot. Change only that one, then follow the plan again.",
     "From blocks to code": "It's the same plan in different clothes. A for line is a repeat, its braces hold the inside, and each line ending in a semicolon is one step."
+  },
+  "javascript": {
+    "Printing": "console.log prints what is in its brackets. Text goes in quote marks, numbers and sums don't. A comparison prints true or false.",
+    "Variables": "A name holds a value. let makes one that can change, const one that can't. Reading a name gives its newest value, line by line from the top.",
+    "Text": "+ glues text with no space added. .length counts letters, and places start at 0, so the first letter is [0].",
+    "Conditions": "Read the test on its own first: is it true right now? True runs the first { }, false runs the else if there is one. && needs both sides, || needs one.",
+    "Loops": "Say each round out loud: what is i, does the test hold, what prints? A for starts at 0 and stops before the number, so i < 3 is three rounds.",
+    "Functions": "Writing a function runs nothing. A call runs it, with the inputs filled in. return hands one value back to where the call was.",
+    "Arrays": "A list counts from 0, so the last place is one less than .length. .push adds to the end and for...of visits each in turn.",
+    "Objects": "An object holds values under names. A dot reads one. With a list of objects, first find the one in the list, then the part.",
+    "Array methods": ".map changes each and gives a new list. .filter keeps those your test says true to. .forEach only does something, and gives nothing back.",
+    "Callbacks": "Pass a function by its name with no brackets. With brackets it runs right now. The function you passed to runs it when the time comes."
+  },
+  "typescript": {
+    "Annotations": "The label after the colon says what a name may hold: number, string, boolean, or a list like number[]. With no label, the first value decides.",
+    "Typed functions": "Label every input, and what comes back after the brackets. The checker then tests every call and every return against those labels.",
+    "Unions": "A | means either. You may only use what both sides have, until a typeof or === check tells the checker which it is.",
+    "Interfaces": "An interface lists the parts an object must have and what each holds. A ? part may be missing, so check it before using it.",
+    "Generics": "T is a label filled in by the call. Whatever goes in decides what comes out. Read T off the argument, then read the rest with it."
+  },
+  "testing": {
+    "Your first test": "test gives it a name, expect holds what the code gave, toBe says what it should be. Work the answer out from what the function is for.",
+    "Catching bugs": "Ask: would a wrong version give the same answer for these values? If it would, pick others. 2 and 2 can't tell adding from multiplying.",
+    "Edges": "Bugs gather at lines. If the code says >= 18, test exactly 18 and just under. Try empty lists and zero too.",
+    "Lists and objects": "toBe asks if it is the very same thing, so two equal lists fail it. toEqual compares the insides. toContain asks if one thing is in there.",
+    "Errors": "expect gets a plan to run, () => pos(-1), so the error happens where toThrow can watch. Test the good road as well as the refusal.",
+    "A full suite": "List the roads through the code, then write one check for each, at its edge. When a faulty version gets through, the message says just what to add."
   }
 }

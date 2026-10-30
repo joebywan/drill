@@ -6,7 +6,8 @@ import { entry } from '../../src/chess/mate.js';
 
 const tap = (page, sq) => page.locator(`.board rect[data-square="${sq}"]`).click();
 const hop = async (page, from, to) => { await tap(page, from); await tap(page, to); };
-const pieceAt = (page, sq) => page.locator(`div.board g[data-piece][data-square="${sq}"]`).getAttribute('data-piece');
+// The newest piece on a square: while a capture animates, the old one is still there beside it, so poll this.
+const pieceAt = (page, sq) => page.locator(`div.board g[data-piece][data-square="${sq}"]`).evaluateAll((all) => all.at(-1)?.getAttribute('data-piece'));
 const picker = (page) => page.locator('.promotion-dialog-button-group');
 const choose = (page, piece) => page.locator(`.promotion-dialog-button-group[data-piece="${piece}"]`).click();
 
