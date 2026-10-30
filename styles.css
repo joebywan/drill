@@ -680,3 +680,33 @@ body:has(main.night) {
 .habit .usual { margin: 4px 0 0; color: var(--muted); }
 .paused { margin-top: 16px; }
 .home:has(~ .cta .short) { padding-bottom: 170px; } /* room for the offer under Continue */
+
+/* ---- Sync and friends (src/sync/ui.js): pairing and recovery codes, the friend list. ---- */
+.survey.sync { text-align: left; }
+.sync h1, .sync .code { text-align: center; }
+.sync h2 { font-size: 1.05rem; margin: 24px 0 8px; }
+.sync .said a { color: inherit; }
+.sync .code { font: 700 2.4rem/1.2 ui-monospace, monospace; letter-spacing: .08em; margin: 16px 0 4px; }
+.sync .code.recovery { font-size: 1.15rem; letter-spacing: .04em; padding: 14px 8px; border-radius: 12px; background: var(--card); border: 2px solid var(--line); overflow-wrap: anywhere; }
+.sync .code-input {
+  display: block; width: 100%; margin: 8px 0; padding: 14px 16px; border-radius: 12px; border: 2px solid var(--line);
+  background: var(--card); color: var(--text); font: 600 1.3rem ui-monospace, monospace; letter-spacing: .12em; text-align: center; text-transform: uppercase;
+}
+.sync .code-input:focus { outline: none; border-color: var(--accent); }
+.sync .me { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.15rem; margin: 8px 0; }
+.sync .avatar { font-size: 2rem; line-height: 1; flex: none; }
+.sync .look { margin: 0 0 16px; }
+.sync .look summary { text-align: center; color: var(--muted); cursor: pointer; padding: 6px; }
+.sync .opts { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.sync .opt { min-height: 44px; padding: 8px 12px; border-radius: 999px; border: 2px solid var(--line); background: var(--card); }
+.sync .opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
+.sync .friend-code { font-family: ui-monospace, monospace; letter-spacing: .08em; color: var(--text); user-select: all; }
+.sync .friend { padding: 12px; margin: 10px 0; border-radius: 14px; background: var(--card); border: 2px solid var(--line); }
+.sync .friend > p, .sync .cheers li { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }
+.sync .friend small { color: var(--muted); }
+.sync .friend .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sync .friend .row .next, .sync .friend .row .choice { flex: 1; margin: 0; width: auto; text-align: center; }
+.sync .friend .row .link { margin: 0; }
+.sync .cheers { list-style: none; padding: 0; margin: 0; }
+.sync .danger { background: var(--wrong); color: var(--bg); }
+/* ---- end sync and friends ---- */

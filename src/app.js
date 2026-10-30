@@ -13,6 +13,9 @@ import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
 import { TIMINGS, TIMING_WORDS, pathTimings, setTiming, spread, timed } from './practice/timings.js';
 import { bridge, passNotes, sendArt, tellAndroid } from './widget.js';
+import { profile as syncProfile, sync } from './sync/sync.js';
+import { merge } from './sync/merge.js';
+import { currentUnit, openSync, syncMenuHtml } from './sync/ui.js';
 
 const STORE = 'drill.progress';
 const REVIEW_SIZE = 8;
@@ -36,13 +39,37 @@ function load() {
   return p || emptyProgress();
 }
 let persistAsked = false;
-function save() {
+function save(synced = false) {
   try { localStorage.setItem(STORE, JSON.stringify(progress)); } catch { /* private mode: progress lasts the visit */ }
   tellAndroid(progress);
+  if (!synced) syncSoon();
   // Ask the browser, quietly and once a visit, not to evict progress (Safari clears it after a week away).
   if (persistAsked) return;
   persistAsked = true;
   try { navigator.storage?.persisted?.().then((kept) => kept || navigator.storage.persist()).catch(() => {}); } catch { /* unsupported */ }
+}
+
+/**
+ * Sync (src/sync/), only once turned on from ⋯: a moment after each save, and on opening, what
+ * other devices did is merged in and the result uploaded. Offline it waits for the next save.
+ * What came in while it ran is merged again, so a session finished meanwhile is kept.
+ */
+let syncTimer;
+function syncSoon(wait = 2000) {
+  if (!syncProfile()) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    const synced = await sync(progress, currentUnit(progress)).catch(() => null);
+    if (synced) adopt(synced);
+  }, wait);
+}
+/** Takes progress merged with another device's, and redraws home if that's where the learner is. */
+function adopt(synced) {
+  const next = merge(progress, synced) ?? progress;
+  if (JSON.stringify(next) === JSON.stringify(progress)) return;
+  progress = next;
+  save(true);
+  if (app.querySelector('.menu')) home();
 }
 
 // Every item by key, so a review can find what it is reviewing.
@@ -954,6 +981,7 @@ function keep(note = '') {
       <input type="file" accept=".json,application/json" hidden>
       <p class="said" role="status">${esc(note)}</p>
       <button class="choice" data-change>${esc(INTRO_WORDS.change)}</button>
+      ${syncMenuHtml()}
       <h2>Calm sounds</h2>
       ${CALM_SOUNDS.map(([name, label]) => `<button class="choice" data-pref="${name}" aria-pressed="${calmPref(name)}">${esc(label)}</button>`).join('')}
       <h2>Garden</h2>
@@ -982,6 +1010,8 @@ function keep(note = '') {
   app.querySelector('[data-back]').addEventListener('click', () => { home(); focusOn('.menu'); });
   app.querySelector('[data-change]').addEventListener('click', () => want(true));
   app.querySelector('[data-remind-on]')?.addEventListener('click', () => { progress = noteReminder(progress, 'on'); save(); keep(PAUSED_WORDS.back); });
+  const ctx = { app, progress: () => progress, adopt, back: () => keep(), focusOn };
+  for (const b of app.querySelectorAll('[data-sync]')) b.addEventListener('click', () => openSync(b.dataset.sync, ctx));
   app.querySelector('[data-save]').addEventListener('click', () => {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([JSON.stringify(progress)], { type: 'application/json' }));
@@ -1142,3 +1172,4 @@ sendArt().catch(console.warn);
 passNotes();
 addEventListener('visibilitychange', () => document.hidden || passNotes()); // a note tapped while the app was open
 if (showsIntro(progress)) intro(); else home();
+syncSoon(0);

@@ -4,6 +4,10 @@ Not MVP. Ideas agreed in principle, to pick up later.
 
 ## Cross-device profiles and friends
 
+Built 2026-10-30 (src/sync/, server/, privacy.html; see CLAUDE.md). Left: deploy it
+(server/DEPLOY.md: Cloudflare account, D1, DNS move), a QR code beside the 6-digit code, and the
+Android wrapper's internet permission if the app should sync.
+
 Decided 2026-10-29 as the shape to build, when it's time:
 
 - **No accounts.** A profile is a secret key held on the device. A new device joins with a

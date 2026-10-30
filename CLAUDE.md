@@ -25,7 +25,7 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>] [--avd <name>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, focus, scan, garden, log, winddown, left, fitting); a new one is
+No scenario runs all of `test/phone/*.js` (learn, japanese, calm, move, break, reflect, focus, scan, garden, log, winddown, left, fitting, sync); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
@@ -187,6 +187,21 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `shouldRemind()` → boolean, false after a session today or while reminders are thinned or paused;
   `noteReminder(outcome)` with `'opened'` (tapped) or `'cleared'` (swiped away) for every note shown
   → true, or false for any other value (nothing recorded). Nothing leaves the device.
+- **Sync and friends** (`src/sync/`, `server/`), opt-in and off by default: with it off nothing is sent
+  and Drill works with no backend. `keys.js`: the recovery code is the profile's secret, kept on the
+  device (`drill.sync`); HKDF gives the AES-GCM key progress is sealed with and the bearer token the
+  server knows the profile by (it stores the token's hash). A 6-digit pairing code carries the
+  recovery code to a new device, wrapped with PBKDF2. `merge.js` is pure: cards per card (latest
+  review wins), log/done/journal/garden as unions, streaks replayed from the merged log with
+  `nextStreak`. `sync.js` is the only file in src/ that calls fetch (a guardrails test holds it);
+  `config.js` holds the one API constant. `ui.js` is the four ⋯ screens; friends see a card of presets
+  and numbers only (`presets.js`, which the worker also imports to check them). `server/` is the
+  Cloudflare Worker + D1 (`worker.js`, `migrations/`), tested with Miniflare (`npm test --prefix
+  server`); e2e routes the API host to a local worker. Deploying is `server/DEPLOY.md`. `privacy.html`
+  is the policy, with delete-by-recovery-code for Play. Inside the Android wrapper
+  (`DrillBridge`), which has no internet permission, the ⋯ section is hidden and sync never runs
+  (`available()`). The card's name and animal are `progress.look` ({ word, animal, at }), synced, the
+  latest pick winning.
 - `src/feel.js` — synthesised sounds (mute on the home bar), haptics, and `move()`, which skips
   animation under reduced motion. Lesson moments go through it: `cue(name)` (sound and buzz; the
   sound follows the Sound toggle only, reduced motion skips just the animations) for right, run, wrong, done and unlock;
