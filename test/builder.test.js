@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { canPlace, listAt, moveTo, newState, place, placed, takeOut } from '../src/builder.js';
+import { canPlace, listAt, moveTo, newState, place, placed, takeOut, wordsOf } from '../src/builder.js';
 
 // Word chips and a chip with arms: nothing here knows what a chip means.
 const chips = [{ face: 'a' }, { face: 'b', uses: 1 }, { face: 'loop', arms: [''] }, { face: 'if', arms: ['', 'else'] }];
@@ -45,4 +45,17 @@ test('taking out a chip with arms takes what it holds, and the limits read the w
   assert.deepEqual(s.tree, []);
   assert.deepEqual(s.cursor, { path: [], at: 0 });
   assert.equal(canPlace(s, chips, 1), true);
+});
+
+test('a part-written answer: chips fill the holes in order, tapping one empties it, fixed text stays', () => {
+  const s = newState([{ text: 'let' }, { hole: true }, { text: '=' }, { hole: true }]);
+  place(s, chips, 0);
+  place(s, chips, 1);
+  assert.deepEqual(wordsOf(s.tree, chips), ['let', 'a', '=', 'b']);
+  assert.equal(canPlace(s, chips, 0), false, 'no hole left');
+  takeOut(s, [], 1);
+  assert.deepEqual(wordsOf(s.tree, chips, '___'), ['let', '___', '=', 'b']);
+  assert.equal(canPlace(s, chips, 0), true);
+  place(s, chips, 0);
+  assert.deepEqual(placed(s.tree), [0, 1]);
 });

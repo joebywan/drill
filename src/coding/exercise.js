@@ -1,14 +1,11 @@
 import { ARROW, answer, armsOf, fill, fixBug, fromTree, holes, isBuilt, isStep, jsFace, kind, listKind, names, parse, punch, reached, runItem, solve, tileKind, tileName, toJS, writeLook } from './program.js';
 import { builder } from '../builder.js';
-import { fennel, demo } from '../cast/fennel.js';
-import { flower } from '../garden/art.js';
+import { gridHtml, walkerOn } from './grid.js';
 import { dragTile } from '../drag.js';
-import { flourish, move, play } from '../feel.js';
+import { flourish, play } from '../feel.js';
 import { esc } from '../html.js';
 
-const STEP_MS = 380;
 const DEMO_WAIT_MS = 900; // long enough to see the grid before a teach card's program plays
-const ROCK = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1.2 8.6 Q.6 5.2 3 3.6 Q4.4 1.6 6.6 2.6 Q9 3.4 8.9 6.4 Q9.2 8.6 7.4 8.8 Z" fill="var(--rock)"/><path d="M3.2 4.4 Q4.6 3 6.4 3.6" fill="none" stroke="var(--rock-shine)" stroke-width=".7" stroke-linecap="round"/></svg>';
 
 /** The bubble's line for a failed run: a loop that never ends is said out loud, or it just looks stuck. */
 const afterFail = (result) => (result.end === 'endless' ? 'That loop never ends, so I stopped it. Here is one way that works.'
@@ -23,15 +20,11 @@ const afterFail = (result) => (result.end === 'endless' ? 'That loop never ends,
  */
 export function mount(el, item, { say, done }) {
   const g = parse(item.level || ['S']);
-  el.innerHTML = `<div class="grid-world" style="--w:${g.w};--h:${g.h}" role="img" aria-label="${esc(describe(g))}">
-      ${g.rows.flatMap((row, y) => row.map((c, x) => `<span class="cell${c === 'o' || (c === 'S' && g.shape) ? ' target' : ''}" data-x="${x}" data-y="${y}">${c === '#' ? ROCK : c === '*' ? flower('learn') : ''}</span>`)).join('')}
-      <div class="walker" aria-hidden="true">${fennel('think')}</div>
-    </div>
+  el.innerHTML = `${gridHtml(g)}
     ${(item.program || item.way) && names(item.program ?? item.way, item.tiles, item.chips).length ? '<p class="vars" aria-label="Values"></p>' : ''}
     <div class="program" aria-label="Program"></div>
     <div class="choices tiles"></div>`;
   const world = el.querySelector('.grid-world');
-  const walker = world.querySelector('.walker');
   const programEl = el.querySelector('.program');
   const tilesEl = el.querySelector('.tiles');
   const varsEl = el.querySelector('.vars');
@@ -39,56 +32,12 @@ export function mount(el, item, { say, done }) {
     if (varsEl) varsEl.innerHTML = names(item.program ?? item.way, item.tiles, item.chips).map((n) => `<span class="var"><i>${esc(n)}</i> <b>${esc(String(now[n] ?? '?'))}</b></span>`).join('');
   };
   showValues();
-  const cellAt = ([x, y]) => world.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
-  /** What standing on a square does: a value updates, a drawing grows, one of several flowers is picked. */
-  const arrive = (result, i) => {
-    showValues(result.values[i]);
-    const cell = cellAt(result.path[i]);
-    if (g.shape) cell.classList.add('trail');
-    if (g.flowers.length > 1) cell.classList.add('picked');
-  };
-  let gone = false;
-  const anims = [];
-  const place = ([x, y]) => `translate(${x * 100}%, ${y * 100}%)`;
-  walker.style.transform = place(g.start);
-
-  let walkId = 0;
-  /** Fennel walks `path` square by square, trotting, then reacts to how it ended. */
-  const walk = async (result) => {
-    const id = ++walkId;
-    const off = () => gone || id !== walkId;
-    const steps = result.path.length - 1;
-    const trot = demo(walker.firstElementChild, 'walk', Math.max(steps, 1) * STEP_MS / 1000, Math.max(steps, 1));
-    if (trot) anims.push(...trot);
-    arrive(result, 0);
-    for (let i = 1; i <= steps && !off(); i++) {
-      const a = move(walker, [{ transform: place(result.path[i - 1]) }, { transform: place(result.path[i]) }], { duration: STEP_MS, easing: 'ease-in-out' });
-      walker.style.transform = place(result.path[i]);
-      if (a) { anims.push(a); await a.finished.catch(() => {}); if (off()) return; play('tap'); }
-      arrive(result, i); // on landing: a count made before this step has been showing since it set off
-    }
-    if (off()) return;
-    walker.innerHTML = fennel(reached(result) ? 'correct' : 'wrong');
-    if (result.end === 'bump') {
-      const [x, y] = result.path.at(-1), [bx, by] = result.bumped;
-      const nudge = `translate(${(x + (bx - x) * 0.25) * 100}%, ${(y + (by - y) * 0.25) * 100}%)`;
-      const a = move(walker, [{ transform: place([x, y]) }, { transform: nudge }, { transform: place([x, y]) }], { duration: 300 });
-      if (a) { anims.push(a); await a.finished.catch(() => {}); }
-    }
-  };
-  /** Stops a run part-way and stands Fennel back at the start. */
-  const backToStart = () => {
-    walkId++;
-    anims.splice(0).forEach((a) => a.cancel());
-    walker.style.transform = place(g.start);
-    walker.innerHTML = fennel('think');
-    for (const c of world.querySelectorAll('.trail, .picked')) c.classList.remove('trail', 'picked');
-    showValues();
-  };
+  const { walk, backToStart, cellAt, stop } = walkerOn(world, g, showValues);
   const show = (program, picks = [], locked = true, tappable = null) => (item.view === 'js' ? '' : blocks(program, picks, locked, tappable))
     + (item.view ? code(program, picks, locked) : '');
 
-  const cleanup = () => { gone = true; anims.forEach((a) => a.cancel()); };
+  let gone = false;
+  const cleanup = () => { gone = true; stop(); };
 
   if (kind(item) === 'teach') {
     if (!item.level) world.remove();
@@ -298,13 +247,4 @@ function code(program, picks, locked = true) {
   const kinds = holes(program);
   const html = toJS(program).split('___').map(esc).reduce((all, text, i) => `${all}${holeHtml(i - 1, kinds[i - 1], picks[i - 1], picks, locked, jsFace)}${text}`);
   return `<pre class="code" aria-label="The program as JavaScript">${html}</pre>`;
-}
-
-/** The grid in words, for a screen reader. */
-function describe(g) {
-  const at = ([x, y]) => `column ${x + 1}, row ${y + 1}`;
-  const rocks = g.rows.flatMap((r, y) => r.map((c, x) => (c === '#' ? at([x, y]) : null))).filter(Boolean);
-  return `A grid ${g.w} wide and ${g.h} high. Fennel at ${at(g.start)}${g.flowers.length ? `, ${g.flowers.length > 1 ? 'flowers' : 'the flower'} at ${g.flowers.map(at).join('; ')}` : ''}`
-    + `${g.shape ? `, the shape to draw on ${g.shape.map(at).join('; ')}` : ''}`
-    + `${rocks.length ? `, rocks at ${rocks.join('; ')}` : ''}.`;
 }
