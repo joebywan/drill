@@ -9,9 +9,9 @@ const first = basics.units[0].lessons[0];
 const cursor = (page) => page.locator('.keyboard-focus-indicator rect').filter({ visible: true });
 const continueButton = (page) => page.getByRole('button', { name: 'Continue', exact: true });
 
+/** A first visit lands on home; Learning's Continue goes straight into the first lesson. */
 async function start(page) {
   await page.goto('/');
-  await page.getByRole('button', { name: "I've never played" }).click();
   await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
 }
 
@@ -46,8 +46,6 @@ test.describe('on a touch phone', () => {
 
 test('a keyboard player tabs to the board and walks the cursor with the arrows', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: "I've never played" }).focus();
-  await page.keyboard.press('Enter');
   await page.getByRole('button', { name: `Continue · ${first.title}` }).focus();
   await page.keyboard.press('Enter');
   await continueButton(page).focus(); // the teach card: on to "Tap the square e4."
