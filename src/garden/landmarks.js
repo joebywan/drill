@@ -36,6 +36,15 @@ const ART = {
   beehive: [34, 40, `<rect x="2" y="30" width="30" height="4" fill="${DARK}"/><rect x="5" y="34" width="3" height="6" fill="${DARK}"/><rect x="26" y="34" width="3" height="6" fill="${DARK}"/>`
     + [0, 1, 2, 3, 4].map((i) => `<ellipse cx="17" cy="${f(26 - i * 5.2)}" rx="${f(15 - i * 2.2)}" ry="4.2" fill="${i % 2 ? '#E2B04E' : '#D29A35'}"/>`).join('')
     + `<ellipse cx="17" cy="27" rx="4" ry="3" fill="${INK}"/>`],
+  // Seasonal events' gifts (events.js), which stay all year.
+  stall: [44, 42, `<rect x="3" y="10" width="3" height="32" fill="${DARK}"/><rect x="38" y="10" width="3" height="32" fill="${DARK}"/><rect x="1" y="26" width="42" height="12" fill="${WOOD}"/>`
+    + [0, 1, 2, 3].map((i) => `<rect x="${i * 11}" y="0" width="11" height="11" fill="${i % 2 ? '#FFF8E8' : '#E8743B'}"/>`).join('')
+    + `<circle cx="11" cy="24" r="3.4" fill="#D9532F"/><circle cx="20" cy="24" r="3.4" fill="#F5C230"/><circle cx="31" cy="24" r="3.4" fill="#8E5BB5"/>`],
+  pennant: [30, 56, `<rect x="3" y="0" width="3" height="56" fill="${DARK}"/><path d="M6 3 L30 11 L6 19Z" fill="#E8743B"/><path d="M6 9 L18 11 L6 14Z" fill="#FFF8E8"/><circle cx="4.5" cy="1.5" r="2.5" fill="#F5C230"/>`],
+  scarecrow: [36, 56, `<rect x="16.5" y="12" width="3" height="44" fill="${DARK}"/><rect x="2" y="22" width="32" height="3" fill="${DARK}"/><path d="M9 20 h18 l2 18 h-22Z" fill="#C8553D"/>`
+    + `<circle cx="18" cy="11" r="7" fill="#E9C46A"/><path d="M6 7 h24 l-5 -2 l-2 -5 h-10 l-2 5Z" fill="#7E5432"/><circle cx="15.5" cy="11" r="1" fill="${INK}"/><circle cx="20.5" cy="11" r="1" fill="${INK}"/>`],
+  snowman: [32, 48, `<circle cx="16" cy="35" r="13" fill="#FFFFFF" stroke="#C7D7E2"/><circle cx="16" cy="16" r="9" fill="#FFFFFF" stroke="#C7D7E2"/><rect x="9" y="0" width="14" height="8" fill="${INK}"/><rect x="6" y="7" width="20" height="2.4" fill="${INK}"/>`
+    + `<circle cx="13" cy="14" r="1.1" fill="${INK}"/><circle cx="19" cy="14" r="1.1" fill="${INK}"/><path d="M16 16 L23 17.5 L16 18.6Z" fill="#E8743B"/><path d="M8 24 q8 4 16 0 v3.4 q-8 4 -16 0Z" fill="#D9532F"/><circle cx="16" cy="33" r="1.1" fill="${INK}"/><circle cx="16" cy="39" r="1.1" fill="${INK}"/>`],
 };
 // Small stand-ins for the pieces that are drawn across the whole scene, for arrival lines.
 const ICON = {
@@ -53,7 +62,7 @@ export function landmark(gift) {
 
 const hit = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 // Where each piece would like to stand, as fractions of the scene.
-const WANT = { lumi: [0.8, 0.86], bench: [0.15, 0.36], birdhouse: [0.86, 0.33], beehive: [0.88, 0.62], lantern: [0.05, 0.45], lantern2: [0.95, 0.5] };
+const WANT = { lumi: [0.8, 0.86], bench: [0.15, 0.36], birdhouse: [0.86, 0.33], beehive: [0.88, 0.62], lantern: [0.05, 0.45], lantern2: [0.95, 0.5], stall: [0.5, 0.42], pennant: [0.32, 0.33], scarecrow: [0.68, 0.36], snowman: [0.1, 0.62] };
 
 export function layout(shape, taken, gifts, fresh = []) {
   const [W, H] = SIZE[shape] || SIZE.tall;
@@ -143,6 +152,7 @@ export function layout(shape, taken, gifts, fresh = []) {
       for (const [dx, dy, sp] of [[-0.06, -0.06, 6], [0.07, -0.09, 7]]) life += guest('bee', sp, fit([(b.x + 17 * b.z) / W + dx, b.y / H + dy], 18 * k, 18 * k, tall), gift);
     }
   }
+  for (const gift of ['stall', 'pennant', 'scarecrow', 'snowman']) if (has.has(gift)) place(gift);
   if (has.has('lantern')) { place('lantern'); place('lantern', WANT.lantern2); }
   if (has.has('nest')) life += guest('birds', 1, fit([0.3, 0.55], 34 * k, 19 * k, tall), 'nest');
   return { back: far + back + hidden, front, life };

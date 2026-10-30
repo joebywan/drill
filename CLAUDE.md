@@ -63,6 +63,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - `src/chess/puzzle.js` — pure puzzle rules on chess.js. `src/chess/items.js` — the item types
   (teach, tap, move, true/false, stars, find), their answers and explanations, and `problem()`, the
   rules check every shipped item passes. `src/chess/exercise.js` — the board and buttons.
+- **Promotion:** `withPromotion()` in exercise.js is the one picker (cm-chessboard's dialog, on every `board()`), used by puzzles, move items, stars, Mate and Play Rosa; Scramble has no pawns of yours. `tryMove()` returns `'piece'` for the right square with a piece the line doesn't need, explained and free; any mate still counts.
 - **Stars** teach pieces by play: move your piece onto every gold star within a move budget; the
   other side never moves, and kings are optional (chess.js `skipValidation`). A piece's first
   puzzle (`new`, `demo`, `intro`) slides it along a path before input opens. `problem()` proves
@@ -206,6 +207,10 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   guess. A season only retints the land and adds decoration (`scene(mood, shape, season)`): plants
   never change with it. Lumi lounges in `pond()`, which landmarks.js `layout()` places before any
   landmark (left out when a crowded strip has no room); the pond landmark is a frog joining Lumi.
+- `src/garden/events.js` — pure: seasonal events, `eventOn(date, south)`, the 8th to the 21st of its season's middle month, six months apart by hemisphere
+  (the same `south` as the season, so Sydney's winter festival is in July). `scene(mood, shape, season, event)` repaints sky and land and dresses the whole scene; the garden
+  screen has a card and home's strip a small tag, neither saying when it ends. Its set (`src/data/events.json`) plays as an ordinary session of its subject, lesson id `event:<id>`,
+  with no item keys so no review cards; a rule in model.js grants the gift, a landmark kept all year. Nothing is lost for missing one: it returns every year.
 - `src/garden/art.js` — the garden's drawings, built like the cast: `plant(habit, stage, { flowers,
   closed })` (tree, lavender, sunflower, vine on a trellis, daisies, evening primrose; five stages, scaled by `GROW` so a
   sprout is about a third of full height and a sapling about half; up to 6 blooms that
@@ -253,6 +258,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `shouldRemind()` → boolean, false after a session today or while reminders are thinned or paused;
   `noteReminder(outcome)` with `'opened'` (tapped) or `'cleared'` (swiped away) for every note shown
   → true, or false for any other value (nothing recorded). Nothing leaves the device.
+- **QR pairing** (`src/sync/qr.js`, our own small encoder, no licence to carry): the code beside the 6 digits opens `<page>#pair=<code>`. `openPairLink()` reads the fragment (never sent to a server), clears it and fills in Enter a code; linking takes one tap, unlike typed digits, since anyone can make a QR code.
 - **Sync and friends** (`src/sync/`, `server/`), opt-in and off by default: with it off nothing is sent
   and Drill works with no backend. **Feature-flagged off** until the API is deployed: `SYNC` in
   `config.js` gates `available()` (the ⋯ section, every call) and the sync parts of `privacy.html`;

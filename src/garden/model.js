@@ -1,6 +1,7 @@
 import { LEARN, light, startedHabits, today } from '../progress.js';
 import { habitsFor, subjects } from '../subjects.js';
 import { season } from './season.js';
+import { EVENTS, eventOn, lessonOf } from './events.js';
 
 /**
  * The garden, read from progress. Pure. Plants grow from days practised (`habits[h].days`), never
@@ -75,6 +76,8 @@ export const rules = (progress) => [
   ...habitsFor(progress).map(({ id: h }) => (
     { id: `ladybird:${h}`, habit: h, gift: 'ladybird', text: 'A ladybird came to visit', test: (p) => p.comeback?.habit === h && !!p.comeback.done })),
   ...LANDMARKS.map(({ at, gift, sound, text }) => ({ id: `garden:${gift}`, habit: null, gift, sound, text, test: (p) => gardenDays(p) >= at })),
+  // A seasonal event's gift (events.js), for finishing its set in any year.
+  ...EVENTS.map((e) => ({ id: `garden:${e.gift}`, habit: null, gift: e.gift, sound: e.sound, text: e.text, test: (p) => !!p.done[lessonOf(e)] })),
 ];
 // ponytail: 'birds:<habit>' (30 days) was retired for the birdhouse, which any such garden has long
 // earned; old saves keep the id in `earned`, and garden() draws only what a rule still names.
@@ -109,7 +112,7 @@ export function mood(progress, now = new Date()) {
 }
 
 /**
- * Everything the garden screen draws: { mood, season, plants, landmarks } (`south` flips the season),
+ * Everything the garden screen draws: { mood, season, event, plants, landmarks } (`south` flips the season; `event` is events.js's, or null),
  * a plant per started habit in habitsFor order: { habit, plant, days, stage, name, next, flowers,
  * visitors }. `plant` is the drawing a self-reported habit chose (undefined for a built-in habit,
  * whose drawing art.js knows). Flowers and visitors are [{ id, gift, text, on, species }], `on` the
@@ -132,7 +135,7 @@ export function garden(progress, now = new Date(), south = false) {
     };
   });
   const landmarks = all.filter((r) => r.habit === null && earned[r.id]).map(({ id, gift, text }) => ({ id, gift, text, on: earned[id] }));
-  return { mood: mood(progress, now), season: season(now, south), plants, landmarks };
+  return { mood: mood(progress, now), season: season(now, south), event: eventOn(now, south), plants, landmarks };
 }
 
 const dayCount = (n, more = '') => `${n} ${more}day${n === 1 ? '' : 's'}`;
