@@ -131,6 +131,31 @@ test('no visitor sits on any plant: every plant, every stage, 1–6 plants, both
   for (const name of Object.values(PLANTS)) assert.equal(BOUNDS[name]?.length, 5, `${name} is measured`);
 });
 
+test('past six plants, up to MAX_PLANTS of every kind: no visitor sits on any plant, no plants overlap in a row', async () => {
+  const { KINDS: kinds } = await import('../src/garden/art.js');
+  const { MAX_PLANTS: most } = await import('../src/garden/scene.js');
+  for (const name of kinds) assert.equal(BOUNDS[name]?.length, 5, `${name} is measured`);
+  const hit = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+  for (const shape of Object.keys(SIZE)) {
+    const [W, H] = SIZE[shape];
+    for (let n = 7; n <= most; n++) {
+      for (const s of STAGE_IDS) {
+        // Own habits by their chosen drawing, mixed with built-ins, each a stage on from the last.
+        const plants = Array.from({ length: n }, (_, i) => ({ habit: `own-${i}`, plant: kinds[(i + s) % kinds.length], stage: (s + i) % 5 }));
+        const at = slots(shape, n);
+        const boxes = plants.map((p, i) => plantBox(p.plant, p.stage, at[i]));
+        perches(plants, shape).forEach((spot, i) => {
+          for (const [kind, b] of Object.entries(spot)) {
+            const where = `${shape} ${n} ${s} plant ${i} ${kind}`;
+            assert.ok(b.x >= 0 && b.y >= 0 && b.x + b.w <= W && b.y + b.h <= H, `${where} in the scene`);
+            boxes.forEach((p, j) => assert.ok(!hit(b, p), `${where} on plant ${j}`));
+          }
+        });
+      }
+    }
+  }
+});
+
 test('a drawn garden has every plant at its stage, flowers capped at what the art draws, and its visitors', () => {
   const many = Array.from({ length: 9 }, (_, i) => ({ gift: 'flower', on: '2026-10-01', id: `f${i}` }));
   const all = ['butterfly', 'bee', 'birds'].map((gift) => ({ gift, on: '2026-10-01', id: gift }));
@@ -148,4 +173,44 @@ test('a drawn garden has every plant at its stage, flowers capped at what the ar
   assert.match(resting, /garden-resting/);
   assert.doesNotMatch(drawGarden({ mood: 'sunlit', plants: [] }, 'strip'), /class="plant /, 'nothing unearned is drawn');
   for (const h of HABITS) clean(flower(h.id), h.id);
+});
+
+import { KINDS } from '../src/garden/art.js';
+import { MAX_PLANTS } from '../src/garden/scene.js';
+
+test('the plants a self-reported habit picks draw every stage, differ by stage, sway, and keep blooms apart', () => {
+  const extra = KINDS.filter((k) => !Object.values(PLANTS).includes(k));
+  assert.deepEqual(extra, ['tulip', 'fern', 'cactus', 'rose', 'mushroom']);
+  for (const k of extra) {
+    for (const s of STAGE_IDS) {
+      for (const opts of [{}, { flowers: 3 }, { flowers: 6, closed: true }]) clean(plant(k, s, opts), `${k} ${s}`);
+      const b = blooms(k, s, MAX_FLOWERS);
+      for (let i = 0; i < b.length; i++) for (let j = i + 1; j < b.length; j++) assert.ok(Math.hypot(b[i].x - b[j].x, b[i].y - b[j].y) >= b[i].r + b[j].r);
+    }
+    assert.equal(new Set(STAGE_IDS.map((s) => plant(k, s))).size, STAGES.length, k);
+    // A plant with a flower of its own shuts it at rest.
+    if (['tulip', 'cactus', 'rose'].includes(k)) assert.notEqual(plant(k, 4), plant(k, 4, { closed: true }), `${k} rests`);
+    clean(flower(k), k);
+  }
+  // `kind` draws a habit as the plant it chose, and the tap still finds the habit.
+  const own = plant('own-1', 2, { kind: 'cactus' });
+  assert.match(own, /class="plant plant-cactus stage-2" data-habit="own-1"/);
+  const part = { style: {}, animate: () => 'anim' };
+  assert.equal(sway({ querySelector: () => part }), 'anim');
+});
+
+test('past six plants the garden takes more rows, up to MAX_PLANTS, and draws no more than fit', () => {
+  for (const shape of Object.keys(SIZE)) {
+    const [W, H] = SIZE[shape];
+    for (let n = 7; n <= MAX_PLANTS; n++) {
+      const at = slots(shape, n);
+      assert.equal(at.length, n);
+      for (const s of at) assert.ok(s.x - s.w / 2 >= 0 && s.x + s.w / 2 <= W && s.y - s.w * 1.06 >= 0 && s.y <= H, `${shape} ${n}`);
+      for (const a of at) for (const b of at) if (a !== b && a.y === b.y) assert.ok(Math.abs(a.x - b.x) >= (a.w + b.w) / 2, `${shape} ${n} row overlap`);
+      assert.deepEqual([...at].sort((a, b) => a.y - b.y), at, 'back to front');
+    }
+    assert.equal(slots(shape, 40).length, MAX_PLANTS);
+  }
+  const many = Array.from({ length: 15 }, (_, i) => ({ habit: `own-${i}`, plant: KINDS[i % KINDS.length], stage: 2, flowers: [], visitors: [] }));
+  assert.equal(drawGarden({ mood: 'sunlit', plants: many }, 'strip').match(/class="plant /g).length, MAX_PLANTS);
 });

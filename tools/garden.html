@@ -24,14 +24,16 @@
 <body>
 <div id="sheet"></div>
 <script type="module">
-  import { PLANTS, plant, sway, MOODS, scene, slots, place, VISITORS, visitor, animateVisitor } from '../src/garden/art.js';
+  import { KINDS, PLANTS, plant, sway, MOODS, scene, slots, place, VISITORS, visitor, animateVisitor } from '../src/garden/art.js';
   // Names only: model.js and subjects.js pull in the app's dependencies. The tests check every
   // habit in HABITS has a plant.
   const STAGES = ['seed', 'sprout', 'sapling', 'young', 'full grown'].map((name) => ({ name }));
   const HABITS = Object.keys(PLANTS).map((id) => ({ id, name: id }));
 
   const fig = (label, svg) => `<figure>${svg}<figcaption>${label}</figcaption></figure>`;
-  const plants = HABITS.map((h) => `<h2>${h.name}: ${PLANTS[h.id]}</h2><div class="row plants">`
+  // Every drawing: the built-in habits' and the ones a self-reported habit picks (tulip, fern…).
+  const OWN = KINDS.filter((k) => !Object.values(PLANTS).includes(k)).map((k) => ({ id: k, name: 'own' }));
+  const plants = [...HABITS, ...OWN].map((h) => `<h2>${h.name}: ${PLANTS[h.id] || h.id}</h2><div class="row plants">`
     + STAGES.map((s, i) => fig(s.name, plant(h.id, i))).join('')
     + [2, 3, 4].map((i) => fig(`${STAGES[i].name} +6`, plant(h.id, i, { flowers: 6 }))).join('')
     + fig('full +3', plant(h.id, 4, { flowers: 3 })) + fig('resting', plant(h.id, 4, { flowers: 6, closed: true }))

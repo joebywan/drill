@@ -3,9 +3,14 @@ import { reducedMotion } from './cast/kit.js';
 /**
  * Sound, haptics and motion. Each fails quietly: a lesson works silent, still and unbuzzed.
  */
-const KEY = 'drill.sound';
-export const soundOn = () => { try { return localStorage.getItem(KEY) !== 'off'; } catch { return true; } };
-export const setSound = (on) => { try { localStorage.setItem(KEY, on ? 'on' : 'off'); } catch { /* lasts the visit */ } };
+// On/off preferences kept per device: 'sound' (the home bar's mute), Calm's 'bell' and 'rain'.
+export const pref = (name, dflt) => { try { const v = localStorage.getItem(`drill.${name}`); return v ? v === 'on' : dflt; } catch { return dflt; } };
+export const setPref = (name, on) => { try { localStorage.setItem(`drill.${name}`, on ? 'on' : 'off'); } catch { /* lasts the visit */ } };
+export const soundOn = () => pref('sound', true);
+export const setSound = (on) => setPref('sound', on);
+/** Calm's bell and rain, each off until turned on, and never when muted or under reduced motion. */
+export const calmPref = (name) => pref(name, false);
+export const calmSound = (name) => soundOn() && !reducedMotion() && calmPref(name);
 
 // Synthesised, so there are no audio files: [frequency Hz, start s, length s, wave].
 const SOUNDS = {
@@ -17,6 +22,8 @@ const SOUNDS = {
   // Calm's breath cues: low, long and quiet (the fifth value is the peak volume).
   inhale: [[392, 0, 1.2, 'sine', 0.04]],
   exhale: [[294, 0, 1.6, 'sine', 0.04]],
+  // A soft bell to open and close a Calm practice: a low tone and a faint overtone, ringing out.
+  bell: [[528, 0, 4, 'sine', 0.05], [1330, 0, 2.5, 'sine', 0.012]],
 };
 let audio;
 
@@ -38,6 +45,36 @@ export function play(name) {
       osc.stop(t0 + start + len + 0.02);
     }
   } catch { /* no audio */ }
+}
+
+/**
+ * Soft rain under a Calm practice, if turned on: looped brown noise, low-passed and quiet. It
+ * holds while the page is hidden. Returns the function that fades it out.
+ */
+export function rain() {
+  if (!calmSound('rain')) return () => {};
+  try {
+    audio ??= new AudioContext();
+    const buf = audio.createBuffer(1, audio.sampleRate * 4, audio.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0, last = 0; i < d.length; i++) d[i] = last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+    const src = audio.createBufferSource();
+    const filter = audio.createBiquadFilter();
+    const gain = audio.createGain();
+    Object.assign(src, { buffer: buf, loop: true });
+    filter.frequency.value = 1000;
+    gain.gain.setValueAtTime(0.0001, audio.currentTime);
+    gain.gain.linearRampToValueAtTime(0.25, audio.currentTime + 2);
+    src.connect(filter).connect(gain).connect(audio.destination);
+    src.start();
+    const hidden = () => (document.hidden ? audio.suspend() : audio.resume());
+    document.addEventListener('visibilitychange', hidden);
+    return () => {
+      document.removeEventListener('visibilitychange', hidden);
+      gain.gain.setTargetAtTime(0.0001, audio.currentTime, 0.3);
+      src.stop(audio.currentTime + 1.5);
+    };
+  } catch { return () => {}; }
 }
 
 const BUZZ = { right: 12, wrong: [20, 60, 20], done: [15, 50, 15, 50, 30], inhale: 8, exhale: [6, 80, 6] };

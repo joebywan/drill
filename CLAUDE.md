@@ -25,7 +25,7 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (learn, calm, move, break, reflect, scan); a new one is
+No scenario runs all of `test/phone/*.js` (learn, calm, move, break, reflect, scan, garden, log); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
@@ -67,11 +67,14 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - `src/habitview.js` — pure helpers and the wording for the habit view (`habitView()` in app.js),
   opened from the "N-day streak · See your week" line over home's path (or a plant). Days without a session are plain, never missed.
 - `src/calm/` — the Calm practice subject. `routines.js` is pure: each routine is a list of timed
-  phases (breathing 4 in, 8 out; the body scan feet to head), and `timeline()` plays one on a
+  phases (breathing 4 in, 8 out; the sigh 3 in, 1 top-up, 6 out; the butterfly hug's taps; the body scan feet to head), and `timeline()` plays one on a
   pausable clock. `practice.js` mounts teach cards and the routines with Moss (`src/cast/moss.js`)
   breathing along. `run()` in `app.js` skips meter, runs and review for kind 'practice', and ends on
   a calm screen with an optional "How do you feel?". Course in `src/data/calm.json`. Home shows one
-  habit's path at a time (the switcher under the bar, remembered in `drill.habit`).
+  habit's path at a time (the switcher under the bar, remembered in `drill.habit`). A Calm routine
+  opens and closes on a soft bell and can have soft rain under it (`calmSound()`, `rain()` in
+  feel.js, both generated): set on the ⋯ screen, both off until turned on, and both silent
+  when Sound is muted or under reduced motion.
 - `src/reflect/` — the Reflect practice subject: three prompts (good, learned, tomorrow), each
   skippable, self-paced like grounding, with Lumi coaching. What is written goes to
   `progress.journal` via `writeJournal`, never the log; the habit view shows it through the
@@ -104,6 +107,11 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   home (one button into `gardenView()`) and the full view, plants and visitors at `perches()`;
   `liven()` in app.js sways them and pauses offscreen or hidden. A plant or its card opens
   `habitView(id, back)`. Both end screens list what `award()` brought, three lines at most.
+- **Self-reported habits** (kind 'log'): no path, one tap a day ("I walked today"). The habit list is
+  `habitsFor(progress)` in subjects.js, never HABITS alone: the built-ins, then PRESETS and the
+  learner's own from `progress.tracked`. `logToday`/`unlogToday`/`track` in progress.js; the tab's
+  panel, the "+ Habit" sheet and the make-your-own form in app.js (`logPanel`, `addHabit`,
+  `editHabit`). Learners' habit names are never linted and always escaped.
 - Home lists each habit once: one row of tabs (icon, name, streak coloured by `light()`) that
   scrolls inside itself. The bar is just the title, Sound and ⋯, and fits at 360px with every habit.
 - `src/feel.js` — synthesised sounds (mute on the home bar), haptics, and `move()`, which skips

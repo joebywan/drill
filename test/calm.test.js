@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 // node's mock clock moves Date to the end of a tick() before firing timers, so step a second at a time.
 const run = (ms) => { for (let i = 0; i < ms; i += 1000) mock.timers.tick(Math.min(1000, ms - i)); };
-import { EXHALE, INHALE, breaths, scan } from '../src/calm/routines.js';
+import { EXHALE, INHALE, breaths, hugTaps, scan, sighs } from '../src/calm/routines.js';
 import { phaseAt, timeline, total } from '../src/practice/timeline.js';
 
 const course = JSON.parse(readFileSync('src/data/calm.json', 'utf8'));
@@ -21,9 +21,25 @@ test('breathing is 4 in and 8 out, and the cycles grow along the path: 3, 5, 6',
 
 test('every session is short: 1 to 4 minutes', () => {
   for (const i of items) {
-    const s = i.type === 'breathe' ? total(breaths(i.cycles)) : i.type === 'scan' ? total(scan(course.zones, i.seconds)) : null;
+    const s = { breathe: () => total(breaths(i.cycles)), sigh: () => total(sighs(i.cycles)), hug: () => total(hugTaps(i.taps)),
+      scan: () => total(scan(course.zones, i.seconds)) }[i.type]?.() ?? null;
     if (s != null) assert.ok(s >= 30 && s <= 240, `${i.id}: ${s}s`);
   }
+});
+
+test('the sigh is a long breath in, a short top-up and a long sigh out; cycles grow 3, 5', () => {
+  assert.deepEqual(sighs(2).map((x) => `${x.phase}${x.seconds}`), ['in3', 'top1', 'sigh6', 'in3', 'top1', 'sigh6']);
+  assert.deepEqual(items.filter((i) => i.type === 'sigh').map((i) => i.cycles), [3, 5]);
+});
+
+test('the butterfly hug taps left, right, left… once a second; taps grow 40, 60', () => {
+  assert.deepEqual(hugTaps(4).map((x) => x.side), ['left', 'right', 'left', 'right']);
+  assert.equal(total(hugTaps(40)), 40);
+  assert.deepEqual(items.filter((i) => i.type === 'hug').map((i) => i.taps), [40, 60]);
+});
+
+test('the Calm path: breathing, grounding, the body scan, then sighing and the butterfly hug', () => {
+  assert.deepEqual(course.units.map((u) => u.title), ['Breathing', 'Grounding', 'Body scan', 'Sighing', 'Butterfly hug']);
 });
 
 test('the body scan goes feet to head, 15-20 s a zone', () => {
@@ -98,5 +114,20 @@ test('a timeline paused mid-phase picks up where it was', () => {
     assert.equal(ended, true);
   } finally {
     mock.timers.reset();
+  }
+});
+
+test('new Calm units only go on the end, so a saved progress never loses an open lesson', async () => {
+  const { emptyProgress, unitsOf } = await import('../src/progress.js');
+  const ADDED = ['Sighing', 'Butterfly hug']; // units added after learners already had Calm
+  const now = { id: 'calm', units: course.units };
+  const before = { id: 'calm', units: course.units.filter((u) => !ADDED.includes(u.title)) };
+  const ids = before.units.flatMap((u) => u.lessons.map((l) => `calm:${l.id}`));
+  const state = (subject, p) => Object.fromEntries(unitsOf(p, subject).flatMap((u) => u.nodes).map((n) => [n.id, n.state]));
+  // Every combination of lessons done in the course as it was.
+  for (let mask = 0; mask < 2 ** ids.length; mask++) {
+    const p = { ...emptyProgress(), done: Object.fromEntries(ids.filter((_, i) => mask & (1 << i)).map((id) => [id, '2026-10-01'])) };
+    const was = state(before, p), is = state(now, p);
+    for (const id of ids) assert.equal(is[id], was[id], `${id} with ${Object.keys(p.done)}`);
   }
 });

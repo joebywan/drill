@@ -31,7 +31,9 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
 4. [x] **Calm.** Its own coach character; 4-in-8-out breathing, 5-4-3-2-1 grounding and the
    bottom-to-top body scan, each taught once then practised, with cycles growing along the
    path. Guardrail tests: no claims to be therapy, no urgency, and a line pointing to real
-   help (Lifeline 13 11 14).
+   help (Lifeline 13 11 14). Later, from Fizz: the double-inhale sigh, the butterfly hug,
+   and an optional bell and soft rain (⋯ screen). Fizz's "already practised today" quick
+   log waits for task 8's one-tap logging.
 5. [x] **Move.** Stretching, mobility and bodyweight sets with reps growing along the path.
    Needs a character who demonstrates moves. Guardrails: stop if anything hurts, check with a
    doctor for injuries, never push to do more. Clover demonstrates each move.
@@ -41,8 +43,14 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
    export read them.
 7. [x] **Eyes and posture break.** A two-minute screen break: look far away, roll the
    shoulders, stand up.
-8. [ ] **Self-reported habits.** One tap to log things Drill can't guide (walked, read, drank
+8. [x] **Self-reported habits.** One tap to log things Drill can't guide (walked, read, drank
    water, went outside), then "add your own habit".
+   Done: a third kind, 'log', with no path. `habitsFor(progress)` (subjects.js) is the habit list
+   everywhere: the built-in HABITS, then the presets and the learner's own from progress v5's
+   `tracked`. `logToday()` records a tap through `finishPractice`; `unlogToday()` undoes it the same
+   day only, from the streak the entry kept (`was`), and never touches `earned`. The "+ Habit" tab
+   opens the presets and "Make your own" (name, icon, plant: tulip, fern, cactus, rose, mushroom).
+   Hiding takes a habit off the tabs and keeps its days and its plant.
 
 Later: Wind down (a bedtime sequence built from Calm's pieces) and Focus (a timed focus
 session with a check-in before and after).
