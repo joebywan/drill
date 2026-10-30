@@ -322,6 +322,25 @@ test('the timings screen makes no claims, never hurries and never pushes', () =>
   assert.match(TIMING_WORDS.intro, /^If someone has given you timings, set them here\./);
 });
 
+// Coding: Fennel's lines and the course's words get the same lint as Rosa's, and his lines cover
+// every kind a learn session and its end screen ask for.
+import { CODING_HEADLINES, CODING_LINES } from '../src/cast/lines.js';
+import codingCourse from '../src/data/coding.json' with { type: 'json' };
+
+test("Fennel's lines and the Coding course pass the lint, and cover every kind a lesson uses", () => {
+  const text = [
+    ...[CODING_LINES, CODING_HEADLINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((t) => [kind, t]))),
+    ...strings(codingCourse).filter((t) => /\s/.test(t)).map((t) => ['coding.json', t]),
+  ];
+  assert.ok(text.some(([k]) => k === 'coding.json'));
+  for (const [kind, t] of text) for (const rule of [ABILITY, LOSS]) assert.doesNotMatch(t, rule, `${kind}: ${t}`);
+  for (const kind of ['correct', 'wrong', 'run3', 'run5', 'tapped', ...Object.keys(HEADLINES)]) assert.ok(CODING_LINES[kind]?.length, kind);
+  for (const kind of Object.keys(HEADLINES)) assert.ok(CODING_HEADLINES[kind]?.length, kind);
+  const coach = subjects.find((s) => s.id === 'coding').coach;
+  assert.equal(coach.lines, CODING_LINES);
+  assert.equal(coach.headlines, CODING_HEADLINES);
+});
+
 // Focus: a calm timer, never a productivity tool. No hurry, no claims, no guilt, and nothing that
 // counts distraction or calls time wasted. Stopping early is fine, so nothing hints otherwise.
 const focusCourse = JSON.parse(readFileSync('src/data/focus.json', 'utf8'));

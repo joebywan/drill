@@ -169,7 +169,9 @@ function home(arrived = null, newly = []) {
   const offer = shownSubjects.find((s) => offersPlacement(progress, s));
   const brandNew = !progress.log.length && !Object.keys(progress.done).length;
   // After the intro, Lumi's welcome names the first thing picked.
-  const firstPick = brandNew && habitOf(progress.picked?.[0]);
+  // A course pick is kept as the Learning habit; the course it named is the one shown, so that names it.
+  const first = progress.picked?.[0];
+  const firstPick = brandNew && first && (first === courseShown.habit ? courseShown.title : habitOf(first)?.name);
   // The next lesson; a finished path whose subject has `again` ("Reflect today") keeps one of its lessons one tap away.
   const again = shownSubjects[0]?.again;
   const { current, repeat } = nextUp(units, again);
@@ -231,7 +233,7 @@ function home(arrived = null, newly = []) {
       </div><div class="pane">
       ${learning && courses.length > 1 ? `<nav class="courses" aria-label="Course">${courses.map((s) =>
         `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === courseShown}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
-      ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick.name) : line('welcome'))}</p>` : invite ? '' : greeting(shownHabit)}
+      ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : invite ? '' : greeting(shownHabit)}
       ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
         : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
       ${invite ? comebackCard(invite) : ''}
