@@ -4,7 +4,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, streakLine } from '../src/habitview.js';
 import { helpHtml } from '../src/practice/kit.js';
 import { subjects } from '../src/subjects.js';
-import { ACCURACY, BREAK_LINES, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
+import { ACCURACY, BREAK_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
 // Praise the process, never the person: no ability words. No absence, loss or guilt either.
 const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intelligen\w*|born to)\b/i;
@@ -86,6 +86,7 @@ const calmText = [
   ...strings(calmCourse).filter((t) => /\s/.test(t)).map((text) => ['calm.json', text]),
   ...subjects.filter((x) => x.kind === 'practice').flatMap((x) => feelsFor(x.coach.feel).map(([, label]) => ['feel', label])),
   ['help', HELP_LINE],
+  ...CALM_SOUNDS.map(([name, label]) => [name, label]),
 ];
 
 test('Calm makes no health claims and never hurries', () => {

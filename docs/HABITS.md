@@ -31,7 +31,9 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
 4. [x] **Calm.** Its own coach character; 4-in-8-out breathing, 5-4-3-2-1 grounding and the
    bottom-to-top body scan, each taught once then practised, with cycles growing along the
    path. Guardrail tests: no claims to be therapy, no urgency, and a line pointing to real
-   help (Lifeline 13 11 14).
+   help (Lifeline 13 11 14). Later, from Fizz: the double-inhale sigh, the butterfly hug,
+   and an optional bell and soft rain (⋯ screen). Fizz's "already practised today" quick
+   log waits for task 8's one-tap logging.
 5. [x] **Move.** Stretching, mobility and bodyweight sets with reps growing along the path.
    Needs a character who demonstrates moves. Guardrails: stop if anything hurts, check with a
    doctor for injuries, never push to do more. Clover demonstrates each move.

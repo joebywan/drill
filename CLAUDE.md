@@ -67,11 +67,14 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - `src/habitview.js` — pure helpers and the wording for the habit view (`habitView()` in app.js),
   opened from the "N-day streak · See your week" line over home's path (or a plant). Days without a session are plain, never missed.
 - `src/calm/` — the Calm practice subject. `routines.js` is pure: each routine is a list of timed
-  phases (breathing 4 in, 8 out; the body scan feet to head), and `timeline()` plays one on a
+  phases (breathing 4 in, 8 out; the sigh 3 in, 1 top-up, 6 out; the butterfly hug's taps; the body scan feet to head), and `timeline()` plays one on a
   pausable clock. `practice.js` mounts teach cards and the routines with Moss (`src/cast/moss.js`)
   breathing along. `run()` in `app.js` skips meter, runs and review for kind 'practice', and ends on
   a calm screen with an optional "How do you feel?". Course in `src/data/calm.json`. Home shows one
-  habit's path at a time (the switcher under the bar, remembered in `drill.habit`).
+  habit's path at a time (the switcher under the bar, remembered in `drill.habit`). A Calm routine
+  opens and closes on a soft bell and can have soft rain under it (`calmSound()`, `rain()` in
+  feel.js, both generated): set on the ⋯ screen, both off until turned on, and both silent
+  when Sound is muted or under reduced motion.
 - `src/reflect/` — the Reflect practice subject: three prompts (good, learned, tomorrow), each
   skippable, self-paced like grounding, with Lumi coaching. What is written goes to
   `progress.journal` via `writeJournal`, never the log; the habit view shows it through the

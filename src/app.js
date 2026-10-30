@@ -1,14 +1,14 @@
 import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
 import { award, garden, moreArrived, plantWords } from './garden/model.js';
 import { PLANTS, animateVisitor, drawGarden, flower, plant, sway, visitor } from './garden/art.js';
-import { emptyProgress, finishPractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
+import { emptyProgress, unitsOf, finishPractice, logToday, track, unlogToday, writeJournal, finishSession, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { rosa } from './cast/rosa.js';
 import { lumi } from './cast/lumi.js';
 import { reducedMotion } from './cast/kit.js';
-import { feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
-import { buzz, move, play, setSound, soundOn } from './feel.js';
+import { CALM_SOUNDS, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, headline, line, paceLabel, rightAnswer } from './cast/lines.js';
+import { buzz, calmPref, move, play, setPref, setSound, soundOn } from './feel.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
 
@@ -91,7 +91,7 @@ function home(arrived = null, newly = []) {
   // A repair needs a review even when nothing is due yet: then the soonest cards stand in.
   const repair = learning && needsRepair(progress);
   const reviewKeys = (due.length ? due : repair ? soonestKeys(progress).filter((k) => items.has(k)) : []).slice(0, REVIEW_SIZE);
-  const units = subjects.filter((s) => s.habit === habitShown).flatMap(unitsOf);
+  const units = subjects.filter((s) => s.habit === habitShown).flatMap((s) => unitsOf(progress, s));
   // The next lesson, from the placement question's starting unit on.
   const from = Math.max(0, units.findIndex((u) => u.placed));
   // A subject's optional placement question, offered by its path until answered or dismissed.
@@ -463,28 +463,6 @@ function walkTo(guide, fromNode, toNode) {
 }
 
 /**
- * One subject's units, each lesson marked done, open or locked. A unit opens when the previous
- * unit's first lesson is done, so a beginner can move across topics without first clearing every
- * hard tier; within a unit, lessons open in order. Units before the placement question's starting
- * point are open all through, to go back to.
- */
-function unitsOf(subject) {
-  const start = subject.units.findIndex((u) => u.title === progress.start?.[subject.id]);
-  let unitOpen = true;
-  return subject.units.map((unit, i) => {
-    let open = unitOpen || i <= start;
-    unitOpen = !!progress.done[`${subject.id}:${unit.lessons[0].id}`];
-    const nodes = unit.lessons.map((lesson) => {
-      const id = `${subject.id}:${lesson.id}`;
-      const state = progress.done[id] ? 'done' : open ? 'open' : 'locked';
-      if (state !== 'done' && i >= start) open = false;
-      return { id, subject, lesson, state };
-    });
-    return { title: unit.title, nodes, placed: i === start };
-  });
-}
-
-/**
  * Plays a session: a lesson (lessonId set) or a review (null). An item missed the first time
  * comes back once at the end; only the first try counts toward review scheduling.
  */
@@ -826,9 +804,19 @@ function keep(note = '') {
       <button class="choice" data-load>Load from a file</button>
       <input type="file" accept=".json,application/json" hidden>
       <p class="said" role="status">${esc(note)}</p>
+      <h2>Calm sounds</h2>
+      ${CALM_SOUNDS.map(([name, label]) => `<button class="choice" data-pref="${name}" aria-pressed="${calmPref(name)}">${esc(label)}</button>`).join('')}
       <button class="choice" data-change>${esc(INTRO_WORDS.change)}</button>
       <button class="choice" data-back>Back</button>
     </main>`;
+  for (const b of app.querySelectorAll('[data-pref]')) {
+    b.addEventListener('click', () => {
+      const on = b.getAttribute('aria-pressed') !== 'true';
+      setPref(b.dataset.pref, on);
+      b.setAttribute('aria-pressed', on);
+      if (on && b.dataset.pref === 'bell') play('bell');
+    });
+  }
   const status = app.querySelector('[role="status"]');
   const input = app.querySelector('input');
   focusOn('h1');
