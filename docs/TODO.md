@@ -194,3 +194,10 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 
 - **Practice habits have no "Meet" screen.** Calm, Move, Focus and the rest only got their coach on
   the path. Add `hello` to them if the first session feels abrupt.
+
+**Phone back button**
+
+- Drill has no browser history, so on the web phone's back button leaves the site, and in the wrapper
+  `web.canGoBack()` is false, so it closes the app, even mid-lesson. It should step back one screen, as the X
+  and ← do. Noted 2026-10-30; to be done with the Android packaging, using `pushState` and `popstate`, so
+  the web gets it too.

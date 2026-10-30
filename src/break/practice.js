@@ -5,30 +5,20 @@ import { esc } from '../html.js';
 
 /**
  * Mounts one screen-break item: the teach card, or the routine with Mira saying each step's cue
- * and demonstrating it. "How?" opens the step's guidance and pauses the routine (its own Pause)
- * until it is closed.
+ * and demonstrating it. The step's guidance stays on screen beside the timer, with what's next
+ * under it, so nobody has to stop and tap to find out how.
  */
 export function mount(el, item, ctx) {
   if (item.type === 'teach') return teach(el, item, ctx);
   const all = breakSteps(ctx.timings);
-  let now = all[0];
-  const stop = steps(el, all, ctx, {
+  return steps(el, all, ctx, {
     label: 'Screen break steps', mood: 'guide', tone: 'break', inline: true,
     summary: `${all.length} steps`, paused: line('paused', Math.random(), BREAK_LINES),
-    act: (p) => { now = p; return demo(ctx, p.pose, p.seconds, p.loops); },
+    act: (p, i) => {
+      el.querySelector('.how-now').innerHTML = p.how.map((t) => `<li>${esc(t)}</li>`).join('');
+      el.querySelector('.next-step').textContent = all[i + 1] ? `Next: ${all[i + 1].name}` : 'Last one';
+      return demo(ctx, p.pose, p.seconds, p.loops);
+    },
+    detail: '<ul class="how-now"></ul><p class="next-step"></p>',
   });
-  const pause = el.querySelector('.practice-pause');
-  pause.insertAdjacentHTML('beforebegin', '<button class="choice practice-how">How?</button>');
-  el.insertAdjacentHTML('beforeend', '<dialog class="how" aria-labelledby="how-title"><h2 id="how-title"></h2><div></div><form method="dialog"><button class="next">Got it</button></form></dialog>');
-  const how = el.querySelector('.how');
-  let held = false; // whether opening "How?" paused the routine, so closing it carries on
-  el.querySelector('.practice-how').addEventListener('click', () => {
-    how.querySelector('h2').textContent = now.name;
-    how.querySelector('div').innerHTML = now.how.map((t) => `<p>${esc(t)}</p>`).join('');
-    held = pause.getAttribute('aria-pressed') === 'false';
-    if (held) pause.click();
-    how.showModal();
-  });
-  how.addEventListener('close', () => { if (held) pause.click(); held = false; });
-  return () => { how.close(); stop(); };
 }

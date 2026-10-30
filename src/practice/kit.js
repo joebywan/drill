@@ -72,6 +72,11 @@ export function stayAwake() {
 /** The Pause button a timed routine sits above, in the thumb zone. Put it after the routine's own markup. */
 export const pauseBar = '<div class="choices"><button class="choice practice-pause" aria-pressed="false">Pause</button></div>';
 
+/** A pause button's face: its word, or for a small round one, an icon named by the word. */
+const pauseFace = (button, word, icon) => {
+  if (button.classList.contains('icon')) { button.textContent = icon; button.setAttribute('aria-label', word); } else button.textContent = word;
+};
+
 /**
  * Runs a timed routine in `el` (which already holds the routine's markup and `pauseBar`). Leaving
  * the page pauses it too, so it never finishes unattended, unless `hidden: 'run'` (Focus, whose
@@ -98,12 +103,12 @@ export function routine(el, phases, ctx, draw, summary, paused, { hidden: away =
   const hold = () => {
     clock.pause();
     for (const a of anims) a.pause();
-    pause.textContent = 'Carry on';
+    pauseFace(pause, 'Carry on', '▶\uFE0E');
     pause.setAttribute('aria-pressed', 'true');
     ctx.say(paused); // no mood change: the coach holds where it was
   };
   const carryOn = () => {
-    pause.textContent = 'Pause';
+    pauseFace(pause, 'Pause', '❚❚');
     pause.setAttribute('aria-pressed', 'false');
     ctx.say(said);
     for (const a of anims) a.play();
@@ -146,17 +151,23 @@ export function sequence(el, parts, ctx, play) {
  * `rising` lists the steps bottom to top (the body scan), and `tone` is a class for the
  * habit's colours. `act(phase, index)` adds the step's own animations (the screen break's demos).
  * `inline` shows the seconds left in the current row, for a screen with a large coach above.
+ * `detail` is html under the list; with it, only the current step's row shows, to leave it room.
  * Calm's body scan and the screen break both use it.
  */
-export function steps(el, phases, ctx, { label, summary, paused, mood, rising = false, tone = '', act = () => [], inline = false }) {
+export function steps(el, phases, ctx, { label, summary, paused, mood, rising = false, tone = '', act = () => [], inline = false, detail = '' }) {
   const left = '<span class="count"></span> s';
-  el.innerHTML = `<div class="scan ${tone}${inline ? ' inline' : ''}">
+  el.innerHTML = `<div class="scan ${tone}${inline ? ' inline' : ''}${detail ? ' detailed' : ''}">
       <ol class="steps${rising ? ' rising' : ''}" aria-label="${esc(label)}">${phases.map((p) => `<li>${esc(p.name)}</li>`).join('')}</ol>
-      ${inline ? '' : `<p class="scan-left" aria-hidden="true">${left}</p>`}
+      ${inline ? '' : `<p class="scan-left" aria-hidden="true">${left}</p>`}${detail}
     </div>${pauseBar}`;
   const rows = [...el.querySelectorAll('.steps li')];
   const inRow = Object.assign(document.createElement('span'), { className: 'step-left', innerHTML: left });
   inRow.setAttribute('aria-hidden', 'true');
+  if (detail) {
+    const pause = el.querySelector('.practice-pause');
+    pause.classList.add('icon');
+    pauseFace(pause, 'Pause', '❚❚');
+  }
   return routine(el, phases, ctx, (p, i, say) => {
     if (inline) rows[i].append(inRow);
     rows.forEach((r, j) => {
