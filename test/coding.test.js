@@ -53,6 +53,20 @@ test('right is decided by running: any filling that reaches the flower is right'
   assert.deepEqual(answer({ level, program: ['down', 'right'] }), [1, 1]);
 });
 
+test('the bump rule is shown before it is asked, and the demos do what their cards say', () => {
+  const items = course.units.flatMap((u) => u.lessons.flatMap((l) => l.items));
+  const bumps = (i) => i.program && run(i.level, i.program).end === 'bump';
+  const shown = items.findIndex((i) => i.type === 'teach' && bumps(i));
+  const asked = items.findIndex((i) => i.type === 'predict' && bumps(i));
+  assert.ok(shown >= 0 && shown < asked, 'a teach card plays a bump before a predict needs one');
+  const stop = items.find((i) => i.id === 'steps-1-stop');
+  assert.deepEqual(run(stop.level, stop.program).path, [[0, 0]], 'the step after the bump never runs');
+  for (const id of ['loops-0-order', 'if-0-again']) {
+    const i = items.find((x) => x.id === id);
+    assert.equal(run(i.level, i.program).end, 'flower', id);
+  }
+});
+
 test('every shipped Coding item passes problem(), and ids are unique', () => {
   const items = course.units.flatMap((u) => u.lessons.flatMap((l) => l.items));
   assert.ok(items.length >= 20);
