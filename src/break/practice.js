@@ -12,7 +12,7 @@ export function mount(el, item, ctx) {
   if (item.type === 'teach') return teach(el, item, ctx);
   let now = STEPS[0];
   const stop = steps(el, STEPS, ctx, {
-    label: 'Screen break steps', mood: 'guide', tone: 'break',
+    label: 'Screen break steps', mood: 'guide', tone: 'break', inline: true,
     summary: `${STEPS.length} steps`, paused: line('paused', Math.random(), BREAK_LINES),
     act: (p) => { now = p; return demo(ctx.coachEl, p.pose, p.seconds, p.loops); },
   });

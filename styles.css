@@ -351,6 +351,11 @@ html { scroll-padding-bottom: 160px; }
 }
 .scan.break { --calm: var(--break); --calm-soft: var(--break-soft); }
 .chip.break { --c: var(--chip-break); flex: 0 1 180px; margin: 0 auto; }
+/* Under a demonstrating coach the list is compact and the seconds sit in the current row. */
+.scan.inline .steps { gap: 4px; }
+.scan.inline .steps li { display: flex; padding: 5px 12px; }
+.step-left { margin-left: auto; font-weight: 700; }
+.step-left .count { font-size: inherit; }
 /* "How?": a step's guidance, a sheet over the thumb zone while the routine waits. */
 .how {
   width: calc(100% - 32px); max-width: 488px; margin: auto auto 16px; padding: 16px 16px 4px;

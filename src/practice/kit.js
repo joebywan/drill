@@ -86,15 +86,20 @@ export function routine(el, phases, ctx, draw, summary, paused) {
  * `label` names the list for screen readers, `mood` is the coach's while it reads each line,
  * `rising` lists the steps bottom to top (the body scan), and `tone` is a class for the
  * habit's colours. `act(phase, index)` adds the step's own animations (the screen break's demos).
+ * `inline` shows the seconds left in the current row, for a screen with a large coach above.
  * Calm's body scan and the screen break both use it.
  */
-export function steps(el, phases, ctx, { label, summary, paused, mood, rising = false, tone = '', act = () => [] }) {
-  el.innerHTML = `<div class="scan ${tone}">
+export function steps(el, phases, ctx, { label, summary, paused, mood, rising = false, tone = '', act = () => [], inline = false }) {
+  const left = '<span class="count"></span> s';
+  el.innerHTML = `<div class="scan ${tone}${inline ? ' inline' : ''}">
       <ol class="steps${rising ? ' rising' : ''}" aria-label="${esc(label)}">${phases.map((p) => `<li>${esc(p.name)}</li>`).join('')}</ol>
-      <p class="scan-left" aria-hidden="true"><span class="count"></span> s</p>
+      ${inline ? '' : `<p class="scan-left" aria-hidden="true">${left}</p>`}
     </div>${pauseBar}`;
   const rows = [...el.querySelectorAll('.steps li')];
+  const inRow = Object.assign(document.createElement('span'), { className: 'step-left', innerHTML: left });
+  inRow.setAttribute('aria-hidden', 'true');
   return routine(el, phases, ctx, (p, i, say) => {
+    if (inline) rows[i].append(inRow);
     rows.forEach((r, j) => {
       r.className = j < i ? 'past' : j === i ? 'now' : '';
       if (j === i) r.setAttribute('aria-current', 'step'); else r.removeAttribute('aria-current');
