@@ -26,7 +26,7 @@ test('a second gap in the same week needs a review, and a lesson waits for it', 
   let p = finishSession(finishSession(emptyProgress(), 'a', [], day(1)), 'b', [], day(3)); // day 2 forgiven
   assert.equal(needsRepair(p, day(5)), true, 'day 4 missed, the allowance is used');
   const lessonOnly = finishSession(p, 'c', [], day(5));
-  assert.deepEqual(lessonOnly.habits.learn, p.habits.learn, 'a lesson leaves it waiting');
+  assert.deepEqual(lessonOnly.habits.learn, { ...p.habits.learn, days: 3 }, 'a lesson leaves it waiting, though the day counts');
   assert.equal(light(lessonOnly, day(5)), 'ember');
   p = finishSession(lessonOnly, null, [], day(5));
   assert.equal(p.habits.learn.count, 3);
@@ -64,19 +64,20 @@ test('migrate brings every older shape up to the current one', () => {
   const p = migrate(roundTrip(first));
   assert.equal(p.version, VERSION);
   assert.equal('xp' in p, false, 'old points are dropped');
-  assert.deepEqual(p.habits.learn, { count: 3, last: '2026-10-01', forgiven: [] });
+  assert.deepEqual(p.habits.learn, { count: 3, last: '2026-10-01', forgiven: [], days: 3 });
   assert.deepEqual(p.done, first.done);
   assert.deepEqual(p.cards, roundTrip(first.cards));
   // Today's unversioned shape, without xp, keeps its placement.
   const v0 = { streak: { count: 0, last: null, forgiven: [] }, done: {}, cards: {}, start: 'Forks' };
-  assert.deepEqual(migrate(v0), { version: VERSION, habits: { learn: v0.streak }, log: [], done: {}, cards: {}, journal: {}, start: 'Forks' });
+  assert.deepEqual(migrate(v0), { version: VERSION, habits: { learn: { ...v0.streak, days: 0 } }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, start: 'Forks' });
   // Version 1: the one streak becomes Learning's, and there is no log yet.
   const v1 = { ...v0, version: 1, streak: { count: 4, last: '2026-10-29', forgiven: [] } };
-  assert.deepEqual(migrate(v1).habits, { learn: v1.streak });
+  assert.deepEqual(migrate(v1).habits, { learn: { ...v1.streak, days: 4 } });
   // Version 2: habits and a log, but no journal yet; it gains an empty one and keeps the rest.
   const v2 = { version: 2, habits: { learn: v1.streak, calm: { count: 1, last: '2026-10-29', forgiven: [] } },
     log: [{ date: '2026-10-29', habit: 'calm', title: 'Breathing', mins: 2 }], done: { 'calm:breathe1': true }, cards: {} };
-  assert.deepEqual(migrate(roundTrip(v2)), { ...v2, version: VERSION, journal: {} });
+  assert.deepEqual(migrate(roundTrip(v2)), { ...v2, version: VERSION, journal: {}, garden: { earned: {} },
+    habits: { learn: { ...v1.streak, days: 4 }, calm: { ...v2.habits.calm, days: 1 } } });
   // The current shape passes through unchanged, and so does one from a newer build.
   assert.deepEqual(migrate(roundTrip(p)), p);
   assert.deepEqual(migrate({ ...p, version: VERSION + 1, extra: 1 }), { ...p, version: VERSION + 1, extra: 1 });
@@ -106,6 +107,11 @@ test('migrate refuses anything that is not progress, so an import never replaces
     { ...good, journal: { today: { good: 'x' } } },
     { ...good, journal: { '2026-10-30': 'x' } },
     { ...good, journal: { '2026-10-30': { good: 3 } } },
+    { ...good, habits: { learn: { count: 1, last: null, days: -1 } } },
+    { ...good, habits: { learn: { count: 1, last: null, days: 'many' } } },
+    { ...good, garden: [] },
+    { ...good, garden: { earned: [] } },
+    { ...good, garden: { earned: { bee: 'today' } } },
   ];
   for (const b of bad) assert.equal(migrate(b), null, JSON.stringify(b));
   assert.deepEqual(migrate(good), good);
@@ -177,4 +183,34 @@ test('Reflect lines are kept by day, blanks left out, and a second visit adds to
   assert.deepEqual(done.log, [{ date: '2026-10-30', habit: 'reflect', title: 'Reflect', mins: 1 }]);
   assert.equal(done.habits.reflect.count, 1);
   assert.deepEqual(migrate(roundTrip(done)), done);
+});
+
+test('days practised counts each date once, never resets, and outlives the year-long log', () => {
+  let p = finishPractice(emptyProgress(), 'calm', null, day(1));
+  p = finishPractice(p, 'calm', null, day(1, 20));
+  assert.equal(p.habits.calm.days, 1, 'twice in a day is one day');
+  p = finishSession(finishSession(p, 'a', [], day(1)), 'b', [], day(1, 21));
+  assert.equal(p.habits.learn.days, 1);
+  p = finishPractice(p, 'calm', null, day(20)); // the streak starts again
+  assert.equal(p.habits.calm.count, 1);
+  assert.equal(p.habits.calm.days, 2);
+  p = finishPractice(p, 'calm', null, new Date(2028, 0, 1));
+  assert.deepEqual(p.log.filter((e) => e.habit === 'calm').length, 1, 'the log has trimmed');
+  assert.equal(p.habits.calm.days, 3, 'the count has not');
+});
+
+test('migrate counts days from the log, never fewer than the streak', () => {
+  const v3 = { version: 3, done: {}, cards: {}, journal: {}, log: [
+    { date: '2026-10-01', habit: 'calm', title: 'x' }, { date: '2026-10-01', habit: 'calm', title: 'y' },
+    { date: '2026-10-02', habit: 'calm', title: 'x' }, { date: '2026-10-02', habit: 'learn', title: 'x' },
+  ], habits: {
+    calm: { count: 1, last: '2026-10-02', forgiven: [] },
+    learn: { count: 9, last: '2026-10-02', forgiven: [] }, // the streak is older than the log
+  } };
+  const p = migrate(roundTrip(v3));
+  assert.equal(p.habits.calm.days, 2);
+  assert.equal(p.habits.learn.days, 9);
+  assert.deepEqual(p.garden, { earned: {} });
+  // A v4 count is kept as it is, even when the log is shorter.
+  assert.equal(migrate({ ...p, habits: { learn: { ...p.habits.learn, days: 40 } } }).habits.learn.days, 40);
 });

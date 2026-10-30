@@ -4,9 +4,10 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  * Everything the learner has done, as one plain JSON-able object. Pure functions only; the
  * app decides where it is stored.
  *
- *   habits   { habitId: { count, last, forgiven } }  — one streak per habit ('learn', 'calm', …).
+ *   habits   { habitId: { count, last, forgiven, days } }  — one streak per habit ('learn', 'calm', …).
  *            `last` is the local date (YYYY-MM-DD) of the habit's last finished session;
- *            `forgiven` lists the dates a missed day was forgiven
+ *            `forgiven` lists the dates a missed day was forgiven; `days` counts every date with a
+ *            session, ever (the log only keeps a year), and only goes up: the garden grows from it
  *   log      [{ date, habit, title, mins, right?, of?, feel? }]  — every finished session,
  *            oldest first, for the habit view: what was done each day
  *   done     { lessonId: true }
@@ -14,12 +15,14 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *   start    unit title the placement survey chose, absent until it is answered
  *   journal  { 'YYYY-MM-DD': { good?, learned?, tomorrow? } }  — Reflect's lines, the learner's
  *            own words. Kept here, not in the log; only the habit view and the file export read them
+ *   garden   { earned: { achievementId: 'YYYY-MM-DD' } }  — what the garden has been given
+ *            (src/garden/model.js). Earned once, kept forever: nothing removes an entry
  *   version  the shape's version; `migrate()` brings any older shape up to VERSION
  */
-export const VERSION = 3;
+export const VERSION = 4;
 export const LEARN = 'learn';
-const emptyStreak = () => ({ count: 0, last: null, forgiven: [] });
-export const emptyProgress = () => ({ version: VERSION, habits: { [LEARN]: emptyStreak() }, log: [], done: {}, cards: {}, journal: {} });
+const emptyStreak = () => ({ count: 0, last: null, forgiven: [], days: 0 });
+export const emptyProgress = () => ({ version: VERSION, habits: { [LEARN]: emptyStreak() }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} } });
 
 const isObject = (v) => v != null && typeof v === 'object' && !Array.isArray(v);
 const isDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
@@ -30,6 +33,7 @@ function readStreak(raw) {
   const { count, last, forgiven = [] } = raw;
   if (!Number.isInteger(count) || count < 0 || !(last === null || isDate(last))) return null;
   if (!Array.isArray(forgiven) || !forgiven.every(isDate)) return null;
+  if (raw.days != null && !(Number.isInteger(raw.days) && raw.days >= 0)) return null;
   return { ...raw, forgiven };
 }
 
@@ -42,7 +46,9 @@ const isEntry = (e) => isObject(e) && isDate(e.date) && typeof e.habit === 'stri
 /**
  * Any stored or imported progress, brought to the current shape, or null when it isn't progress
  * at all (so the caller keeps what it has). Unversioned is version 0; up to version 1 there was
- * one `streak`, which becomes Learning's, and no log; up to version 2 there was no journal.
+ * one `streak`, which becomes Learning's, and no log; up to version 2 there was no journal; up to
+ * version 3 no garden, and no `days` on a streak, which is counted from the log's dates and is never
+ * less than the streak's count (the log may have started after the streak).
  * Unknown fields are kept, so a file from a newer build loses nothing.
  */
 export function migrate(raw) {
@@ -66,7 +72,14 @@ export function migrate(raw) {
   if (!Array.isArray(log) || !log.every(isEntry)) return null;
   const journal = raw.journal ?? {};
   if (!isJournal(journal)) return null;
-  return { ...kept, version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal };
+  for (const [id, h] of Object.entries(habits)) {
+    if (h.days != null) continue;
+    const dates = new Set(log.filter((e) => e.habit === id).map((e) => e.date));
+    habits[id] = { ...h, days: Math.max(dates.size, h.count) };
+  }
+  const garden = raw.garden ?? { earned: {} };
+  if (!isObject(garden) || !isObject(garden.earned) || !Object.values(garden.earned).every(isDate)) return null;
+  return { ...kept, version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal, garden };
 }
 
 const scheduler = fsrs();
@@ -104,6 +117,14 @@ function logged(progress, entry, now) {
 
 const habitStreak = (progress, habit) => progress.habits[habit] || emptyStreak();
 
+/** The habit's streak after a session today, with `days` counting today once, however many sessions. */
+function practised(progress, habit, now, review) {
+  const date = today(now);
+  const before = habitStreak(progress, habit);
+  const first = !(progress.log || []).some((e) => e.habit === habit && e.date === date);
+  return { ...nextStreak(before, date, review), days: (before.days || 0) + (first ? 1 : 0) };
+}
+
 /**
  * Records a finished Learning session. `results` is [{ key, correct }] — `correct` means right
  * first time. `lessonId` is null for a review session, which unlocks nothing but is the one thing
@@ -123,7 +144,7 @@ export function finishSession(progress, lessonId, results, now = new Date(), abo
   };
   return {
     ...progress,
-    habits: { ...progress.habits, [LEARN]: nextStreak(habitStreak(progress, LEARN), today(now), !lessonId) },
+    habits: { ...progress.habits, [LEARN]: practised(progress, LEARN, now, !lessonId) },
     log: logged(progress, entry, now),
     done: lessonId ? { ...progress.done, [lessonId]: true } : progress.done,
     cards,
@@ -138,7 +159,7 @@ export function finishSession(progress, lessonId, results, now = new Date(), abo
 export function finishPractice(progress, habit, lessonId, now = new Date(), about = {}) {
   return {
     ...progress,
-    habits: { ...progress.habits, [habit]: nextStreak(habitStreak(progress, habit), today(now), true) },
+    habits: { ...progress.habits, [habit]: practised(progress, habit, now, true) },
     log: logged(progress, { habit, title: about.title || 'Practice', mins: about.mins || 0 }, now),
     done: lessonId ? { ...progress.done, [lessonId]: true } : progress.done,
   };
