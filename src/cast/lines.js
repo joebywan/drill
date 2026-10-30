@@ -36,7 +36,7 @@ export const HELLO = {
   },
   fennel: {
     line: "I'm Fennel. Give me a plan and I follow it to the letter, even a bad one.",
-    expect: ['No typing. You tap blocks to build a program, and I walk it.', 'Steps first, then loops, then if and else.', 'If I end up in the wrong place, we try that one again at the end of the lesson.'],
+    expect: ['No typing. You tap blocks to build a program, and I walk it.', 'Steps first, then loops, ifs, blocks of your own, bug hunts, and real JavaScript to read.', 'If I end up in the wrong place, we try that one again at the end of the lesson.'],
     go: "Let's build",
   },
 };

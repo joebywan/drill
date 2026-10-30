@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { answer, kind, starPath } from '../../src/chess/items.js';
 import { emptyProgress, finishPractice, finishSession, leavePractice } from '../../src/progress.js';
 import { award } from '../../src/garden/model.js';
-import { answer as stopsAt, solve as oneWay } from '../../src/coding/program.js';
+import { answer as stopsAt, fixBug, mirrored, solve as oneWay, tileName } from '../../src/coding/program.js';
 
 // The first lesson on the path. Its answers are worked out from the course data with the same
 // item logic the app uses, so the test follows the content when it changes.
@@ -1631,7 +1631,12 @@ const firstCoding = codingCourse.units[0].lessons[0];
 /** Plays one Coding item right: a build's tiles in a working order, or a predict's square. */
 async function solveCoding(page, item) {
   if (item.type === 'build') {
-    for (const t of oneWay(item)) await page.locator('.tiles').getByRole('button', { name: typeof t === 'number' ? `${t} times` : `Step ${t}`, exact: true }).click();
+    for (const t of oneWay(item)) await page.locator('.tiles').getByRole('button', { name: tileName(t), exact: true }).click();
+  }
+  if (item.type === 'bug') {
+    const { part, tile } = fixBug(item);
+    await page.locator(`.program [data-part="${part}"]`).click();
+    await page.locator('.tiles').getByRole('button', { name: tileName(tile), exact: true }).click();
   }
   if (item.type === 'predict') {
     const [x, y] = stopsAt(item);
@@ -1984,4 +1989,113 @@ test('tiles drag into any slot, by default: a Coding hole and a word slot', asyn
   await expect(page.locator('.slot').nth(0)).toBeEmpty();
   await pick('1').click();
   await expect.poll(() => page.evaluate(() => window.result)).toBe(true);
+});
+
+test('Coding, the new blocks on a real page: a bug fixed by tapping, an endless loop explained, JavaScript from the blocks', async ({ page }) => {
+  await page.goto('/');
+  const mount = (item) => page.evaluate(async (item) => {
+    const { mount } = await import('/src/coding/exercise.js');
+    document.body.innerHTML = '<div id="t" class="quiz"></div><p id="said"></p>';
+    window.result = null;
+    window.drill = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right) { window.result = right; } });
+  }, item);
+  const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
+  const result = () => page.evaluate(() => window.result);
+
+  // A bug: no tile works until a block is tapped, and changing your mind is free.
+  const bug = { id: 'b', type: 'bug', level: ['S..*'], program: ['right', { repeat: 1, do: ['up'] }, 'right'], tiles: ['right', 'down'], prompt: 'p', explain: 'e' };
+  await mount(bug);
+  await expect(tile('Step right')).toBeDisabled();
+  await expect(page.locator('.program [data-part]')).toHaveCount(3); // the count isn't offered: no number tile
+  await page.getByRole('button', { name: 'Change: Step right' }).first().click();
+  await page.getByRole('button', { name: 'Change: Step up' }).click();
+  await expect(page.locator('.block.hole')).toHaveCount(1);
+  await expect(page.locator('.program').getByRole('img', { name: 'Step right' })).toHaveCount(0);
+  await tile('Step right').click();
+  await expect.poll(result).toBe(true);
+
+  // The wrong block: the run fails and one fix that works is shown.
+  await mount(bug);
+  await page.locator('.program [data-part="0"]').click();
+  await tile('Step down').click();
+  await expect.poll(result).toBe(false);
+  await expect(page.locator('.program.shown .block.filled')).toHaveAccessibleName('Step right');
+
+  // A loop that never ends is stopped and said out loud.
+  await mount({ id: 'e', type: 'build', level: ['S.*'], program: [{ until: 'flower', do: [null, null] }], tiles: ['right', 'left'], prompt: 'p', explain: 'e' });
+  await tile('Step right').click();
+  await tile('Step left').click();
+  await expect.poll(result).toBe(false);
+  await expect(page.locator('#said')).toHaveText(/never ends/);
+
+  // JavaScript: the code is the blocks' code, holes fill from tiles and a call is a tile.
+  await mount({ id: 'j', type: 'build', view: 'js', level: ['..*', '...', 'S..'], program: [{ define: 'hop', do: ['right', 'up'] }, null, null], tiles: [{ call: 'hop' }, 'left'], prompt: 'p', explain: 'e' });
+  await expect(page.locator('.block.go')).toHaveCount(0);
+  await expect(page.locator('pre.code')).toContainText('function hop() {\n  right();\n  up();\n}');
+  await expect(tile('Block hop')).toHaveText('hop();');
+  await tile('Block hop').click();
+  await tile('Block hop').click();
+  await expect.poll(result).toBe(true);
+  await expect(page.locator('pre.code')).toContainText('hop();\nhop();');
+});
+
+test('every Coding item fits a 360px phone: no sideways scroll, the program clear of the tiles', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 640 });
+  await page.goto('/');
+  // The widest font a phone or CI is likely to fall back to, so the fit doesn't depend on the machine's fonts.
+  await page.addStyleTag({ content: 'body, button { font-family: "DejaVu Sans", Verdana, sans-serif; }' });
+  const items = codingCourse.units.flatMap((u) => u.lessons.flatMap((l) => l.items));
+  const bad = await page.evaluate(async (items) => {
+    const { mount } = await import('/src/coding/exercise.js');
+    const app = document.getElementById('app');
+    const out = [];
+    for (const item of items) {
+      app.innerHTML = `<header class="bar" style="height:44px"></header><main class="play"><p class="topic">Topic</p>
+        <div class="coach"><button class="who"></button><p class="bubble"></p></div><div class="stage"></div></main>`;
+      const bubble = app.querySelector('.bubble');
+      const stop = mount(app.querySelector('.stage'), item, { say(t) { bubble.textContent = t; }, done() {} });
+      const prog = app.querySelector('.program');
+      const tiles = app.querySelector('.tiles');
+      const limit = tiles?.children.length ? tiles.getBoundingClientRect().top : innerHeight - 90; // Continue's height
+      const wide = document.documentElement.scrollWidth - innerWidth;
+      const code = app.querySelector('.code');
+      const clipped = code && code.scrollWidth > code.clientWidth;
+      const bottom = prog ? prog.getBoundingClientRect().bottom : 0;
+      const reserved = parseFloat(getComputedStyle(bubble).minHeight);
+      const fail = 'That loop never ends, so I stopped it. Here is one way that works.';
+      if (item.type !== 'teach') {
+        const said = bubble.textContent;
+        bubble.textContent = fail;
+        if (bubble.offsetHeight > reserved) out.push(`the failed-run line outgrows the bubble`);
+        bubble.textContent = said;
+        if (bubble.offsetHeight > reserved) out.push(`${item.id}: prompt outgrows the bubble, so feedback would move the grid`);
+      }
+      if (wide > 0 || clipped || bottom > limit) out.push(`${item.id}: sideways ${wide}, program bottom ${Math.round(bottom)} over ${Math.round(limit)}${clipped ? ', code clipped' : ''}`);
+      stop?.();
+    }
+    return out;
+  }, [...items.filter((i) => i.type !== 'teach' || i.program),
+    ...items.filter((i) => i.type !== 'teach').flatMap((i) => [{ x: true }, { y: true }, { x: true, y: true }].map((flip) => mirrored(i, flip)))]);
+  expect(bad).toEqual([]);
+});
+
+test('the first lesson of each new Coding unit plays through as a real session', async ({ page }) => {
+  for (const unit of codingCourse.units.slice(3)) {
+    const lesson = unit.lessons[0];
+    await page.goto('/');
+    await page.evaluate((start) => {
+      localStorage.setItem('drill.course', 'coding');
+      localStorage.setItem('drill.progress', JSON.stringify({ ...JSON.parse(localStorage.getItem('drill.progress') || '{}'), version: 3, picked: [], done: {}, cards: {}, habits: {}, log: [], start: { coding: start } }));
+    }, unit.title);
+    await page.reload();
+    await page.getByRole('button', { name: `Continue · ${lesson.title}` }).click();
+    for (const item of lesson.items) {
+      await solveCoding(page, item);
+      await expect(page.locator('.foot.wrong'), item.id).toHaveCount(0);
+      await continueButton(page).click();
+    }
+    await expect(page.locator('.summary')).toBeVisible();
+    const marked = lesson.items.filter((i) => i.type !== 'teach').length;
+    await expect(page.getByText(`${marked} of ${marked} right first try`)).toBeVisible();
+  }
 });

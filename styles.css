@@ -526,9 +526,11 @@ html { scroll-padding-bottom: 160px; }
 @media (prefers-color-scheme: dark) {
   :root { --grass: #22301F; --grass-line: #2D3E29; --rock: #7C8190; --rock-shine: #A9AEBA; --code: #B4A3F4; --code-text: #19122E; }
 }
+/* Reserved for the longest thing Fennel says while a plan runs: feedback must not move the grid. */
+.play:has(.grid-world) .bubble { min-height: 6.5em; }
 .grid-world {
   position: relative; display: grid; grid-template-columns: repeat(var(--w), 1fr);
-  width: min(100%, calc(var(--w) * 64px), calc(var(--w) * 30vh / var(--h))); margin: 0 auto 14px; border-radius: 12px; overflow: hidden; background: var(--grass);
+  width: min(100%, calc(var(--w) * 52px), calc(var(--w) * 30vh / var(--h))); margin: 0 auto 10px; border-radius: 12px; overflow: hidden; background: var(--grass);
 }
 .grid-world .cell { position: relative; aspect-ratio: 1; display: grid; place-items: center; box-shadow: inset 0 0 0 1px var(--grass-line); }
 .grid-world .cell > svg { width: 68%; }
@@ -545,17 +547,35 @@ html { scroll-padding-bottom: 160px; }
 .block.hole { border-style: dashed; border-color: var(--muted); background: transparent; }
 .block.hole.fill-next { border-color: var(--code); }
 .drop-target, .block[data-hole].drop-target { border-style: solid; border-color: var(--code); background: color-mix(in srgb, var(--code) 35%, transparent); }
-.block.loop, .block.if { display: flex; flex-direction: column; align-items: flex-start; height: auto; padding: 6px 10px; background: var(--card); color: var(--text); font-size: 1rem; }
-.block .head { display: flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 700; }
+/* A block sits on one row when it fits: heads beside what they hold, so long programs stay above the tiles. */
+.block.loop, .block.if { display: flex; flex-wrap: wrap; align-items: center; column-gap: 8px; height: auto; padding: 4px 8px; background: var(--card); color: var(--text); font-size: 1rem; }
+.block .head { display: flex; align-items: center; gap: 6px; min-height: 40px; font-weight: 700; white-space: nowrap; }
 .block .head b { display: inline-grid; place-items: center; min-width: 36px; height: 36px; border-radius: 8px; background: var(--code); color: var(--code-text); }
-.block .inner { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 4px 4px; padding-left: 12px; border-left: 3px solid var(--code); }
-/* If and else sit as two short rows, each condition beside its block, so the program stays above the tiles. */
-.block.if { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: 8px; }
-.block.if .inner { margin: 2px 0; padding-left: 0; border-left: 0; }
+.block .head b { padding: 0 6px; }
+.block.go.call { font-size: 1rem; }
+.block.look, .block.count { font-size: 1rem; }
+.block.loop.def { border-style: dashed; }
+.block .inner { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0; padding-left: 8px; border-left: 3px solid var(--code); }
+/* Several small repeats side by side: the number alone says it, the words stay for a screen reader. */
+.inner:has(> .loop ~ .loop) .loop > .head > i { position: absolute; clip-path: inset(50%); }
+.block .head > i { font-style: normal; }
+.block.if .inner { padding-left: 0; border-left: 0; }
 .program.shown .block.filled { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
 .tiles .tile { font-size: 1.5rem; padding: 10px 4px; color: var(--text); }
 .tiles .tile:disabled { opacity: .4; }
+.tiles .tile.word { font-size: 1.05rem; }
+.tiles .tile.code-tile { font: 600 .85rem ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+.code {
+  width: 100%; margin: 0; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--line); background: var(--card); color: var(--text);
+  font: 600 .875rem/1.5 ui-monospace, Menlo, Consolas, monospace; text-align: left; white-space: pre; overflow: hidden;
+}
+.code .block { display: inline-grid; vertical-align: middle; height: 28px; min-width: 52px; padding: 0 6px; border-radius: 6px; font: inherit; line-height: 1; }
 .tile-ghost { user-select: none; position: fixed; left: 0; top: 0; z-index: 50; margin: 0; pointer-events: none; opacity: .9; }
+
+@media (max-height: 700px) {
+  .grid-world { width: min(100%, calc(var(--w) * 52px), calc(var(--w) * 23vh / var(--h))); }
+  .play:has(.grid-world) .bubble { margin-bottom: 8px; }
+}
 
 /* ---- Focus: what it's for, then a calm timer that fills a ring ---- */
 :root { --chip-focus: #7A5230; --focus-ring: #9A6038; --focus-soft: #F1E4D3; }
@@ -752,3 +772,12 @@ body:has(main.night) {
 /* ---- end sync and friends ---- */
 .meet h2 { margin: 20px 0 4px; font-size: 1rem; text-align: left; }
 .cast { overflow: visible; } /* a pose may reach past the 100-wide viewBox: Ada's presenting arm */
+/* Short phones: tighter blocks, so a long program stays clear of the tiles in a wide font too. */
+@media (max-height: 700px) {
+  .program { gap: 4px; }
+  .block { min-width: 38px; height: 38px; font-size: 1.15rem; }
+  .block.loop, .block.if { padding: 2px 6px; }
+  .block .head { min-height: 32px; }
+  .block .head b { min-width: 30px; height: 30px; }
+  .block .inner { gap: 4px; margin: 0; }
+}
