@@ -297,3 +297,26 @@ test("Fennel's lines and the Coding course pass the lint, and cover every kind a
   assert.equal(coach.lines, CODING_LINES);
   assert.equal(coach.headlines, CODING_HEADLINES);
 });
+
+// Wind down: Calm's lint, plus no sleep claims or sleep numbers, no screen-time shaming, and the
+// help line on the first lesson.
+import { WINDDOWN_LINES, INTRO_WORDS as INTRO } from '../src/cast/lines.js';
+const SLEEP = /\b(sleep\w*|asleep|insomnia|melatonin|blue light|hours?|\d+ ?(h|hrs?|min(ute)?s?)|deep(er)? rest|better nights?|wake (up )?refreshed|tracked?|tracking)\b/i;
+const windCourse = JSON.parse(readFileSync('src/data/winddown.json', 'utf8'));
+const windText = [
+  ...Object.entries(WINDDOWN_LINES).flatMap(([kind, list]) => list.map((text) => [kind, text])),
+  ...strings(windCourse).filter((t) => /\s/.test(t)).map((text) => ['winddown.json', text]),
+  ['intro', INTRO.does.winddown],
+];
+
+test('Wind down makes no sleep or health claims, never hurries and never shames screen time', () => {
+  assert.ok(windText.length > 20);
+  for (const [kind, text] of windText) {
+    for (const lint of [CLAIMS, SLEEP, URGENCY, SHAMING, ABILITY, LOSS]) assert.doesNotMatch(text, lint, `${kind}: ${text}`);
+  }
+  for (const bad of ['Sleep better tonight', 'Fall asleep in 10 minutes', 'Helps with insomnia', 'Get 8 hours', 'No blue light']) assert.match(bad, SLEEP, bad);
+  assert.equal(windCourse.units[0].lessons[0].items[0].help, true, 'the help line is on the first lesson');
+  const subject = subjects.find((x) => x.habit === 'winddown');
+  assert.equal(subject.coach.help.text, HELP_LINE, 'and after "Not really"');
+  for (const kind of Object.keys(WINDDOWN_LINES)) assert.ok(!CELEBRATIONS.includes(kind), kind);
+});

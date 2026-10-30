@@ -23,14 +23,14 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 ## Phone testing
 
-`npm run phone -- [scenario...] [--url <base>]` drives Chrome on an Android emulator with real
+`npm run phone -- [scenario...] [--url <base>] [--avd <name>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (learn, calm, move, break, reflect, scan, garden, log); a new one is
+No scenario runs all of `test/phone/*.js` (learn, calm, move, break, reflect, scan, garden, log, winddown); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `type`,
 `shot`, `run`, `check`).
 
 - With no `--url` it serves this checkout on a free port; Chrome opens `http://10.0.2.2:<port>/`.
-- It boots the AVD (`PHONE_AVD`, default `splendor36`) `-read-only` if no emulator is running and
+- It boots the AVD (`--avd`, else `PHONE_AVD`, default `splendor36`; `--avd daybook_tablet` for a tablet) `-read-only` if no emulator is running and
   shuts down only one it started. SDK from `ANDROID_HOME` or `~/Android/Sdk`.
 - Screenshots of the whole screen (keyboard included) go to `test-results/phone/<scenario>/NN-name.png`.
 - It prints page errors, failed requests, sideways overflow, and the device checks: during Calm,
@@ -89,6 +89,11 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `progress.journal` via `writeJournal`, never the log; the habit view shows it through the
   subject's `dayDetail` hook. A subject's `again` ({ label, lesson }, in the course JSON) keeps a
   lesson on home once the path is done: "Reflect today", "Take a break", "Breathe". The learner's text is never linted or sent anywhere (a test checks).
+- `src/winddown/` — Wind down, a bedtime sequence made only of Calm's pieces: kit.js `sequence()`
+  plays a 'sequence' item's parts in turn (its own settle-in steps and goodnight card, then Calm's
+  `practise()` routines) and ends once; Calm's `sounded()` puts the bell and rain round the whole.
+  The subject's `timings: 'calm'` plays the learner's Calm timings, and `night: true` puts the
+  session and end screen in a warm dark palette (`body:has(main.night)` in styles.css).
 - `src/move/` — the Move practice subject, built like Calm. `routines.js` is pure: a set of
   exercises becomes timed phases with rests between; a rep exercise counts its reps (`countOf()` in
   `src/practice/timeline.js`). `practice.js` mounts it; the coach demonstrates each pose through one
@@ -113,15 +118,16 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   (one line of data each), `award()` records what is earned in `progress.garden.earned` and never
   removes it; `mood()` maps the habits' lights; `garden()` is all the garden screen needs.
 - `src/garden/art.js` — the garden's drawings, built like the cast: `plant(habit, stage, { flowers,
-  closed })` (tree, lavender, sunflower, vine on a trellis, daisies; five stages, scaled by `GROW` so a
+  closed })` (tree, lavender, sunflower, vine on a trellis, daisies, evening primrose; five stages, scaled by `GROW` so a
   sprout is about a third of full height and a sapling about half; up to 6 blooms that
   never overlap), `sway()`, `visitor()`/`animateVisitor()` (butterfly, bee, birds) and, from
   `scene.js`, `scene(mood, 'strip' | 'tall')`, `slots(shape, n)` and `place()`. Scene colours carry
   their own dark set. `tools/garden.html` renders it all; check it in light and dark.
 - The garden screen: `drawGarden(garden(), 'strip' | 'tall')` (art.js) is the strip at the top of
   home (one button into `gardenView()`) and the full view, plants and visitors at `perches()`;
-  `liven()` in app.js sways them, moves the sky and grass (`animateScene()`: clouds, sun, glints, stars,
-  fireflies), flies in visitors that just arrived (`data-new`), and pauses offscreen or hidden. A plant or its card opens
+  `liven()` in app.js moves them: a gust (`gust()`, scene.js) rolls left to right every few seconds and
+  leans the grass and each plant in turn; `animateScene()` drifts clouds, pulses the sun, twinkles glints
+  and stars and wanders fireflies; flies in visitors that just arrived (`data-new`), and pauses offscreen or hidden. A plant or its card opens
   `habitView(id, back)`. Both end screens list what `award()` brought, three lines at most.
 - Garden sounds are real files, `assets/sounds/*.wav`, made by `node tools/sounds.js` (plucks,
   bells, chirps, a buzz, all synthesised there, so they are ours to ship). `chime(gift)` in feel.js

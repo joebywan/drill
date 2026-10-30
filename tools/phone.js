@@ -1,8 +1,8 @@
 /**
  * Phone tests: drives Chrome on an Android emulator with real touches. Not part of `npm test` or CI.
- *   npm run phone -- [scenario...] [--url <base>]      (no scenario: all of test/phone/*.js)
+ *   npm run phone -- [scenario...] [--url <base>] [--avd <name>]   (no scenario: all of test/phone/*.js)
  * With no --url it serves this checkout on a free port and Chrome opens http://10.0.2.2:<port>/.
- * It boots the AVD (PHONE_AVD, default splendor36) read-only if no emulator is running, and shuts
+ * It boots the AVD (--avd, else PHONE_AVD, default splendor36; e.g. --avd daybook_tablet) read-only if no emulator is running, and shuts
  * down only an emulator it started. Screenshots: test-results/phone/<scenario>/NN-name.png.
  * Exits non-zero on page errors or a failed device check. One agent on the emulator at a time.
  */
@@ -14,13 +14,13 @@ import { _android as android } from 'playwright';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const SDK = process.env.ANDROID_HOME || `${homedir()}/Android/Sdk`;
-const AVD = process.env.PHONE_AVD || 'splendor36';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const adb = (...a) => execFileSync(`${SDK}/platform-tools/adb`, a, { encoding: 'utf8' });
 
 const args = process.argv.slice(2);
-const urlAt = args.indexOf('--url');
-let base = urlAt >= 0 ? args.splice(urlAt, 2)[1] : null;
+const option = (name) => { const at = args.indexOf(name); return at >= 0 ? args.splice(at, 2)[1] : null; };
+let base = option('--url');
+const AVD = option('--avd') || process.env.PHONE_AVD || 'splendor36';
 const all = readdirSync(`${ROOT}test/phone`).filter((f) => f.endsWith('.js')).map((f) => f.slice(0, -3));
 const names = args.length ? args : all;
 const unknown = names.filter((n) => !all.includes(n));
