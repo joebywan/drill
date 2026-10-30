@@ -5,6 +5,7 @@ import tactics from './data/tactics.json' with { type: 'json' };
 import calmCourse from './data/calm.json' with { type: 'json' };
 import reflectCourse from './data/reflect.json' with { type: 'json' };
 import * as chess from './chess/exercise.js';
+import { CHESS_GAMES } from './chess/games.js';
 import { echoable as chessEchoable, vary as chessVary } from './chess/items.js';
 import { vary as codingVary } from './coding/program.js';
 import { withCheckpoint } from './repeat.js';
@@ -67,6 +68,7 @@ import { CODING_HEADLINES, CODING_LINES, HELLO } from './cast/lines.js';
  * which runs that lesson again ("Reflect today", "Breathe"); `dayDetail(progress, date)`, extra html under a day's sessions
  * in the habit view (Reflect's own lines); `placement`, { offer, question, options: [[label, unitTitle]] }:
  * an optional question home offers by the subject's path (`offer` is the link) to start further on;
+ * `games`, [{ id, label, entry }]: replayable modes in a small row on the course's home, each `entry` run as a session (chess/games.js);
  * `varied`, { key: [values] }: a timing marked `varies` in TIMINGS, as the routine has it per step.
  * It never stands in the way: answering opens the path at that unit, dismissing it hides the offer.
  * `timings`, another habit's id whose own timings this subject plays by (Wind down plays Calm's);
@@ -145,6 +147,7 @@ export const subjects = [{
   units: [...basics.units, forksUnit, ...chessCourse.units.filter((u) => u.title !== 'Forks').map(taught)].map(withCheckpoint),
   mount: chess.mount,
   vary: chessVary,
+  games: CHESS_GAMES,
   echoable: chessEchoable,
   habit: 'learn',
   kind: 'learn',

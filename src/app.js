@@ -18,6 +18,7 @@ import { TIMINGS, TIMING_WORDS, pathTimings, setTiming, spread, timed } from './
 import { bridge, passNotes, sendArt, tellAndroid } from './widget.js';
 import { profile as syncProfile, sync } from './sync/sync.js';
 import { merge } from './sync/merge.js';
+import { navigation } from './nav.js';
 import { currentUnit, openSync, syncMenuHtml } from './sync/ui.js';
 
 const STORE = 'drill.progress';
@@ -237,6 +238,7 @@ function home(arrived = null, newly = []) {
       </div><div class="pane">
       ${learning && courses.length > 1 ? `<nav class="courses" aria-label="Course">${courses.map((s) =>
         `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === courseShown}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
+      ${learning && courseShown.games ? `<nav class="courses games" aria-label="Games"><span>Games</span>${courseShown.games.map((g) => `<button class="course" data-game="${g.id}">${esc(g.label)}</button>`).join('')}</nav>` : ''}
       ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : invite ? '' : greeting(shownHabit)}
       ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
         : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
@@ -309,6 +311,9 @@ function home(arrived = null, newly = []) {
   app.querySelector('[data-add]').addEventListener('click', addHabit);
   for (const b of app.querySelectorAll('[data-course]')) {
     b.addEventListener('click', () => { showCourse(b.dataset.course); home(); focusOn(`[data-course="${b.dataset.course}"]`); });
+  }
+  for (const b of app.querySelectorAll('[data-game]')) {
+    b.addEventListener('click', () => run(null, [courseShown.games.find((g) => g.id === b.dataset.game).entry]));
   }
   app.querySelector('[data-log]')?.addEventListener('click', () => {
     progress = logToday(progress, habitShown, shownHabit.title);
@@ -1069,6 +1074,7 @@ function suggest(subject, unit) {
       <p class="said">That's where Lumi suggests you begin. The lessons before it stay open, if you want a refresher.</p>
       <button class="next" data-start>Start at ${esc(unit)}</button>
       <button class="choice" data-first>Start from the beginning</button>
+      <button class="link" data-back>Back</button>
     </main>`;
   const guide = coach(app.querySelector('.hero'), lumi);
   guide.set('correct');
@@ -1076,6 +1082,7 @@ function suggest(subject, unit) {
   focusOn('h1');
   app.querySelector('[data-start]').addEventListener('click', () => { guide.stop(); place(subject, unit); });
   app.querySelector('[data-first]').addEventListener('click', () => { guide.stop(); place(subject, first); });
+  app.querySelector('[data-back]').addEventListener('click', () => { guide.stop(); survey(subject); });
 }
 
 function place(subject, unit) {
@@ -1208,6 +1215,7 @@ function want(change = false) {
   const toggle = (attr, id, pressed, label) => `<button class="choice" ${attr}="${esc(id)}" aria-pressed="${pressed}">${label}</button>`;
   const open = (b) => branch[b].some(on);
   app.innerHTML = `
+    ${change ? '' : '<header class="bar"><button class="back" aria-label="Back">←</button></header>'}
     <main class="survey intro">
       <h1>${esc(INTRO_WORDS.want)}</h1>
       <p class="said">${esc(INTRO_WORDS.wantSaid)}</p>
@@ -1225,7 +1233,7 @@ function want(change = false) {
     </main>
     <footer class="cta">
       <button class="next" data-done>${esc(INTRO_WORDS.done)}</button>
-      <button class="link" data-skip>${esc(change ? INTRO_WORDS.back : INTRO_WORDS.skip)}</button>
+      ${change ? `<button class="link" data-back>${esc(INTRO_WORDS.back)}</button>` : `<button class="link" data-skip>${esc(INTRO_WORDS.skip)}</button>`}
     </footer>`;
   focusOn('h1');
   const press = (b, pressed) => b.setAttribute('aria-pressed', pressed);
@@ -1249,7 +1257,9 @@ function want(change = false) {
     });
   }
   app.querySelector('[data-done]').addEventListener('click', () => choose(picked));
-  app.querySelector('[data-skip]').addEventListener('click', () => (change ? (home(), focusOn('.menu')) : choose([])));
+  app.querySelector('[data-skip]')?.addEventListener('click', () => choose([]));
+  app.querySelector('[data-back]')?.addEventListener('click', () => { home(); focusOn('.menu'); });
+  app.querySelector('.back')?.addEventListener('click', intro);
 }
 
 /**
@@ -1289,5 +1299,6 @@ tellAndroid(progress); // the widget catches up with a new day even when nothing
 sendArt().catch(console.warn);
 passNotes();
 addEventListener('visibilitychange', () => document.hidden || passNotes()); // a note tapped while the app was open
+navigation(app);
 if (showsIntro(progress)) intro(); else home();
 syncSoon(0);

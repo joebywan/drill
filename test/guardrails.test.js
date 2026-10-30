@@ -6,7 +6,7 @@ import { helpHtml } from '../src/practice/kit.js';
 import { subjects } from '../src/subjects.js';
 import unitHelp from '../src/data/help.json' with { type: 'json' };
 import lessonHelp from '../src/data/lesson-help.json' with { type: 'json' };
-import { MOVE_ON, HELLO, ACCURACY, BREAK_LINES, FOCUS_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, KAEDE_LINES, KAEDE_HEADLINES, MATHS_LINES, MATHS_HEADLINES, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
+import { GAME_WORDS, MOVE_ON, HELLO, ACCURACY, BREAK_LINES, FOCUS_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, KAEDE_LINES, KAEDE_HEADLINES, MATHS_LINES, MATHS_HEADLINES, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
 // Praise the process, never the person: no ability words. No absence, loss or guilt either.
 const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intelligen\w*|born to)\b/i;
@@ -81,6 +81,18 @@ test('what Rosa says mid-puzzle passes the same lint', () => {
   for (const text of said) {
     assert.doesNotMatch(text, ABILITY, text);
     assert.doesNotMatch(text, LOSS, text);
+  }
+});
+
+test("what Rosa says in the chess games passes the same lint", () => {
+  const all = (v) => (typeof v === 'string' ? [v] : typeof v === 'function' ? [v(3, 'A move')] : Object.values(v).flatMap(all));
+  const said = all(GAME_WORDS);
+  assert.ok(said.length > 30);
+  for (const text of said) {
+    assert.doesNotMatch(text, ABILITY, text);
+    assert.doesNotMatch(text, LOSS, text);
+    assert.doesNotMatch(text, /\b(xp|hearts?|league|oscar|stockfish)\b/i, text);
+    assert.doesNotMatch(text, /\b[KQRBN][a-h]?x?[a-h][1-8]\b/, `no notation: ${text}`);
   }
 });
 

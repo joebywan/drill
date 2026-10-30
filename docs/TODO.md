@@ -197,24 +197,9 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 - **Tune the numbers from real play.** `tools/sessions.js` models a fixed miss rate; nobody has played the new limits
   (2 echoes, 4 goes, 5 repeats a session). "One step back" has only run in tests and an E2E flow.
 
-**Chess modes** (order to decide; Mate suggested first, as it exists)
-
-- **Mate:** port Daybook's game (`puzzles/Chess*.kt`, on its origin/main) to JS: mate in 2, 3 or 4 against a best
-  defender, with its proven Lichess positions.
-- **Capture game:** our own design. Reports of Duolingo's, unconfirmed: 90 seconds, one or two pieces, no king,
-  Black hunts your best piece, new pieces can appear. Check in the app before settling on the rules.
-- **Play Rosa:** full games at a few levels, with a small engine on chess.js. Not Stockfish (GPL), not Oscar.
-
 **Layouts from phone testing**
 
 - **The timed practice layout on a real phone:** Move, Calm, Wind down, Focus and the Screen break were only
   checked in a desktop browser at phone size.
 - **A very fast second tap** as a piece lands can be dropped.
 - **Cast brief** (the Claude Doc) still describes lamps and predates quest markers, the garden and no XP.
-
-**Phone back button**
-
-- Drill has no browser history, so on the web phone's back button leaves the site, and in the wrapper
-  `web.canGoBack()` is false, so it closes the app, even mid-lesson. It should step back one screen, as the X
-  and ← do. Noted 2026-10-30; to be done with the Android packaging, using `pushState` and `popstate`, so
-  the web gets it too.

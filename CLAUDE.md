@@ -71,6 +71,13 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   time (`courseShown`, the switcher under the tabs, remembered in `drill.course`), and reviews that
   course's cards so its coach runs them. The intro picks courses by course id; `choose()` turns them
   into the Learning tab. A Learn coach's `lines`/`headlines` replace Rosa's in the runner and end screen.
+- **Chess games** (`src/chess/games.js`, the "Games" row on chess's home, a subject's `games`): replayable modes, each a one-entry session
+  for `run()` whose mount never calls `done`, so nothing is scored, scheduled or logged; a `.foot` banner ends a game and its button remounts it.
+  **Mate** (`mate.js`, `prover.js`, `prover-worker.js`): Daybook's game. `prover.js` is a port of its mate search on its own small
+  board, because chess.js is far too slow to prove a mate in 4; it has no imports so it can run in a Worker (import maps don't reach workers).
+  `src/data/mate.json` comes from `node tools/mate-positions.js`, Lichess CC0 (`docs/chess-positions/NOTICE.md`). Lazy-loaded. **Scramble** (`capture.js`): our own
+  capture game; pure rules on chess.js, the best on the device in `drill.capture.best`. **Play Rosa** (`engine.js`): alpha-beta on chess.js as a
+  generator, run in timer slices so the page stays live; `LEVELS` is its four levels. Words in `GAME_WORDS`, linted.
 - `src/quiz/` — course-free tap-and-match items any course can use: `teach` (a big glyph or word),
   `pick` (one tap; `listen` plays the sound instead of showing it when there is a voice), `pairs`
   (match two columns), `build` (tap tiles in order). `items.js` is pure (`problem()`), `exercise.js`
@@ -243,6 +250,10 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   (`DrillBridge`), which has no internet permission, the ⋯ section is hidden and sync never runs
   (`available()`). The card's name and animal are `progress.look` ({ word, animal, at }), synced, the
   latest pick winning.
+- `src/nav.js` — the phone's back button, on web and in the wrapper with no Kotlin. It watches #app, so
+  every screen change goes through it with nothing to call: a screen needs only a back control `BACK`
+  matches (`.close`, `.back`, `[data-back]`…), which back presses; a screen with none counts as home,
+  and back there leaves the app. An open `<dialog>` closes first. A new screen that isn't home must have one.
 - `src/feel.js` — synthesised sounds (mute on the home bar), haptics, and `move()`, which skips
   animation under reduced motion. Lesson moments go through it: `cue(name)` (sound and buzz; the
   sound follows the Sound toggle only, reduced motion skips just the animations) for right, run, wrong, done and unlock;

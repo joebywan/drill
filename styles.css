@@ -801,3 +801,25 @@ body:has(main.night) {
 .play:has(.practice-pause) .coach:not(.demonstrates) .bubble { min-height: 5.8em; }
 .play:has(.practice-pause) .coach.demonstrates .bubble { min-height: 4.4em; } /* a longer line must not move what's under it */
 .room { margin: 4px 0 0; color: var(--muted); font-size: .9rem; }
+/* Its pause is a small round button level with the X, on the other side of the coach. */
+.practice-pause.icon {
+  position: absolute; top: max(12px, env(safe-area-inset-top)); right: 16px; z-index: 1; width: 44px; height: 44px; margin: 0; padding: 0; border-radius: 50%; font-size: 1rem;
+}
+.choices:has(> .practice-pause.icon) { position: static; padding: 0; border: 0; background: none; }
+
+/* Chess games (chess/games.js): a small row on chess's home, then the session frame. */
+.games { align-items: center; }
+.games > span { font-size: .8rem; font-weight: 700; color: var(--muted); }
+.play:has(.game-note) .bubble, .play:has(.hud) .bubble { min-height: 7.4em; }
+.cm-chessboard.drill .markers .marker.marker-frame-danger { stroke: var(--wrong); stroke-width: 3px; opacity: 1; } /* Scramble's hunted piece */
+.game-tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 10px; }
+.game-tabs .course { padding: 4px 12px; }
+.hud { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; font-weight: 700; color: var(--muted); }
+.hud-clock { min-width: 4em; font-variant-numeric: tabular-nums; font-size: 1.15rem; color: var(--text); }
+.hud-score { font-size: 1.6rem; font-variant-numeric: tabular-nums; color: var(--accent); }
+.hud-best { min-width: 4em; text-align: right; font-size: .9rem; }
+.game-actions { flex-direction: row; flex-wrap: nowrap; }
+.game-actions .choice { flex: 1; padding-inline: 4px; }
+.game-actions.game-levels { flex-wrap: wrap; }
+.game-actions.game-levels .choice { flex: 1 1 40%; }
+.game-note { margin: 10px 0 0; min-height: 4.2em; font-size: .95rem; }

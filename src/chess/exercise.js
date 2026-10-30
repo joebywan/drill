@@ -39,11 +39,11 @@ function assets() {
   document.body.insertAdjacentHTML('beforeend', `<svg id="drill-star" aria-hidden="true" style="position:absolute;width:0;height:0">
     <defs><g id="markerStar"><polygon points="${starPoints}" fill="#f7c02b" stroke="#b9800a" stroke-width="2" stroke-linejoin="round"/></g>
     <g id="markerStarOn"><use href="#markerStar" transform="translate(21 -2) scale(.5)"/></g></defs></svg>`);
-  document.head.insertAdjacentHTML('beforeend', `<link rel="stylesheet" href="${ASSETS}extensions/arrows/arrows.css">`);
+  document.head.insertAdjacentHTML('beforeend', `<link rel="stylesheet" href="${ASSETS}extensions/arrows/arrows.css"><link rel="stylesheet" href="${ASSETS}extensions/promotion-dialog/promotion-dialog.css">`);
 }
 
-/** A star that bursts and fades where it was collected. Under reduced motion it just goes. */
-function pop(b, square) {
+/** A star that bursts and fades where it was collected (or a piece taken). Under reduced motion it just goes. */
+export function pop(b, square) {
   const { x, y } = b.view.squareToPoint(square);
   const ns = 'http://www.w3.org/2000/svg';
   const outer = document.createElementNS(ns, 'g');
@@ -61,7 +61,7 @@ function pop(b, square) {
  * Legal-move dots: a picked-up piece shows where it can go. Returns the move-input handler
  * wrapper, which adds dots on pick-up and clears them on any drop, then calls `input`.
  */
-const withDots = (b, fenNow, input) => (event) => {
+export const withDots = (b, fenNow, input) => (event) => {
   if (event.type === INPUT_EVENT_TYPE.moveInputStarted) {
     b.removeMarkers(MARKER_TYPE.dot);
     const to = targets(fenNow(), event.squareFrom);
@@ -77,7 +77,10 @@ const withDots = (b, fenNow, input) => (event) => {
   }
 };
 
-function board(el, fen, color = fen.split(' ')[1]) {  // seen from `color`, else the side to move
+/** What Rosa says about a move the rules don't allow, for a piece of type `p`, `n`... */
+export const cantMove = (type) => `The ${PIECE[type] || 'piece'} can't move like that. Try again.`;
+
+export function board(el, fen, color = fen.split(' ')[1], more = []) {  // seen from `color`, else the side to move; `more`: extra extensions
   assets();
   return new Chessboard(el, {
     position: fen,
@@ -93,7 +96,7 @@ function board(el, fen, color = fen.split(' ')[1]) {  // seen from `color`, else
     // The board is also read out as a table and piece lists. The typed move form stays off: it
     // would be a focusable field nobody can see.
     extensions: [{ class: Markers, props: { autoMarkers: MARKER_TYPE.frame } }, { class: Arrows },
-      { class: Accessibility, props: { language: 'en', keyboardMoveInput: true, movePieceForm: false } }],
+      { class: Accessibility, props: { language: 'en', keyboardMoveInput: true, movePieceForm: false } }, ...more],
   });
 }
 
@@ -191,7 +194,7 @@ const MOUNTS = {
       if (!result.legal) {
         say(game.inCheck()
           ? 'That leaves your king in check. Try again.'
-          : `The ${PIECE[game.get(from)?.type] || 'piece'} can't move like that. Try again.`, 'think');
+          : cantMove(game.get(from)?.type), 'think');
         return false;
       }
       b.disableMoveInput();
@@ -249,7 +252,7 @@ const MOUNTS = {
     const input = withDots(b, () => fen, ({ squareFrom: from, squareTo: to }) => {
       const result = hop(fen, { from, to, promotion: 'q' });
       if (!result) {
-        say(`The ${PIECE[b.getPiece(from)?.[1]] || 'piece'} can't move like that. Try again.`, 'think');
+        say(cantMove(b.getPiece(from)?.[1]), 'think');
         return false;
       }
       fen = result.fen;
