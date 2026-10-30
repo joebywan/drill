@@ -54,3 +54,27 @@ test('a unit ends in a checkpoint that mixes it', async ({ page }) => {
   await page.getByRole('button', { name: 'Checkpoint, current' }).click();
   await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '8');
 });
+
+test('two misses in a unit bring a second explanation and a smaller step, and the miss comes back', async ({ page }) => {
+  await seeded(page, { 'coding:steps-0': true });
+  await page.addInitScript(() => {
+    const p = JSON.parse(localStorage.getItem('drill.progress'));
+    p.answers = [{ key: 'coding:steps-0-one', right: false, ms: 1, at: '2026-01-01T00:00:00.000Z' }];
+    localStorage.setItem('drill.progress', JSON.stringify(p));
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Around the rock, current' }).click();
+  // Past the teach card to the first marked item, then tap the first tiles until it runs and fails.
+  await page.locator('.foot.show .next').click();
+  const before = await page.getByRole('progressbar').getAttribute('aria-valuemax');
+  for (let i = 0; i < 12 && !(await page.locator('.foot.show').count()); i++) {
+    await page.locator('.tiles').getByRole('button', { name: 'Step up' }).click();
+    await page.waitForTimeout(50);
+  }
+  await expect(page.locator('.foot.show.wrong')).toBeVisible();
+  await page.locator('.foot.show .next').click();
+  await expect(page.locator('.topic')).toHaveText('One step back');
+  await expect(page.locator('.bubble')).toContainText('one block at a time');
+  // The explanation, the smaller item and the returning miss.
+  expect(+await page.getByRole('progressbar').getAttribute('aria-valuemax')).toBe(+before + 3);
+});

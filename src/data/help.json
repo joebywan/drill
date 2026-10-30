@@ -1,0 +1,47 @@
+{
+  "chess": {
+    "The board": "Find the letter along the bottom first, then count up the numbers on the side. e4 is column e, row 4.",
+    "How pieces move": "Rooks go straight, bishops go diagonally, a queen does both, a king steps one square, and a knight jumps in an L. Pick a piece up and the dots show where it can go.",
+    "Capturing": "A piece takes by landing on an enemy square, along the way it normally moves. Pawns are the exception: they move straight but take one square diagonally forward.",
+    "Check and checkmate": "Check means the king is attacked. There are three ways out: move the king, block the line, or take the attacker. If none of them works, that is checkmate.",
+    "Forks": "A fork is one piece attacking two at once. Look for a square your piece can reach that touches both targets. Knights are especially good at this.",
+    "Mate in one": "List every check you can give, then test each one: can the king step away, can anything block, can anything take the checker? If all three are no, that's the move.",
+    "Free pieces": "Before taking, count who guards the piece. If nothing defends it, it is free. If it is defended, compare what you win with what you give up.",
+    "Pins": "A pin holds a piece in place because moving it would expose something bigger behind it. Look along straight lines and diagonals for two enemy pieces in a row.",
+    "Skewers": "A skewer is a pin the other way round: the big piece is in front, has to move, and the one behind it falls. Look for lines through the king or queen.",
+    "Back-rank mates": "A king behind its own pawns has no way out. A rook or queen landing on that back row can be checkmate, if nothing can block or take it.",
+    "Mate in two": "Start with the move that forces a reply: usually a check. Then ask what the only answer is, and find the mate after it.",
+    "Discovered attacks": "Move one piece out of the way and the piece behind it attacks along the opened line. The piece that moved gets a free threat of its own.",
+    "Double check": "Two pieces give check at once. Nothing can block both or take both, so the king has to move, which makes the king very easy to chase.",
+    "Trapped pieces": "Look at where the enemy piece can go. If every square it can reach is covered, it can't escape, so attack it and it falls.",
+    "Deflection": "Find the piece doing an important job, like guarding a square. Force it to move away, then use the job it left behind.",
+    "Attraction": "Offer something on a square that drags a piece, often the king, to where you want it. Then the follow-up works because of where it now stands.",
+    "Promotion": "Clear the way for your pawn. Often a sacrifice or a check gains the one move it needs to reach the last row and become a queen.",
+    "Mate in three": "Work forwards with forcing moves only: checks first, then captures. After each one, ask what replies are possible. Few replies means an easy line to follow."
+  },
+  "maths": {
+    "Mental maths": "Make the sum easier first. Round one number to a ten, work that out, then fix up what you changed. 38 + 5 is 40 + 3.",
+    "Percentages": "Percent means out of 100. 10% is dividing by 10, 50% is halving, and 25% is halving twice. Build other percentages from those.",
+    "Fractions you can see": "The bottom number says how many equal parts there are. The top says how many you have. Picture the bar, then compare the shaded parts."
+  },
+  "japanese": {
+    "Vowels": "There are five to learn: a, i, u, e, o. Each kana has one sound. Say it out loud and picture its story, then try the kana again.",
+    "K and S": "Each row is one consonant in front of the five vowels: ka ki ku ke ko, sa shi su se so. Find the vowel you know, then add the consonant.",
+    "First words": "Read one kana at a time, then join the sounds together. Each kana is one beat, so a word's length tells you how many sounds it has."
+  },
+  "coding": {
+    "Step by step": "I do one block at a time, in order. Put your finger on me and walk the steps yourself. Where do you end up?",
+    "Loops": "Count the squares in one straight run. That's the number of repeats. Blocks inside the repeat all run, in order, once each time round.",
+    "If and else": "I check the look before each step. If it's true I do the first part, and if it isn't I do the else part. Try it one square at a time.",
+    "Nested loops": "Work from the inside out. Do the inner loop in full, then count that as one go of the outer loop. Inner times outer is the total.",
+    "Repeat until": "Before each round I check the condition. When it's true, I stop. If nothing inside gets me closer to it, I'd go round for ever.",
+    "Your own block": "A new block is a plan with a name. Writing the plan doesn't run it: calling its name does. Read the plan first, then follow each call.",
+    "Parameters": "A parameter is a gap in your block that gets filled when you call it. hop(3) puts 3 wherever the plan says n.",
+    "Variables": "A variable is a named number. Set puts a value in it and change adds to it. Keep your own running count as you follow me.",
+    "Comparisons and logic": "A comparison is a question with a yes or no answer. And needs both parts to be yes. Or needs just one. Not swaps the answer.",
+    "Lists": "A loop over a list runs once per value, in order. Each time round, its name holds the next value. Say each value as you go.",
+    "Drawing": "Every square I stand on gets painted. Find the shape's repeating part first: that is the inside of your loop.",
+    "Find the bug": "Watch where I go wrong. The bug is usually the block just before that spot. Change only that one, then follow the plan again.",
+    "From blocks to code": "It's the same plan in different clothes. A for line is a repeat, its braces hold the inside, and each line ending in a semicolon is one step."
+  }
+}
