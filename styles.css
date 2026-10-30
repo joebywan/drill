@@ -234,7 +234,7 @@ html { scroll-padding-bottom: 160px; }
 }
 /* "3 in a row" rides just under the front of the fill, then fades. */
 .flare {
-  position: absolute; top: 16px; left: clamp(3em, var(--at, 0), calc(100% - 3em)); z-index: 2; opacity: 0;
+  position: absolute; top: 16px; left: clamp(3em, var(--at, 0), calc(100% - 3em)); z-index: 2; opacity: 0; visibility: hidden;
   transform: translateX(-50%); padding: 2px 8px; border-radius: 999px; white-space: nowrap; pointer-events: none;
   font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
   background: var(--heat-gold); color: #1E1B2E;

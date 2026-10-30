@@ -247,6 +247,22 @@ test('finishing the first lesson shows the summary, starts the streak, and survi
   await expect(page.getByRole('button', { name: `${first.title}, done` })).toBeVisible();
 });
 
+test('the "5 in a row" flare plays, then leaves nothing behind', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' }); // the flare only plays with motion on
+  await firstVisit(page);
+  await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
+  const flare = page.locator('.flare');
+  const marked = first.items.filter((i) => kind(i) !== 'teach');
+  for (const item of first.items.slice(0, first.items.indexOf(marked[4]) + 1)) {
+    await expect(flare).toBeHidden(); // Playwright counts opacity 0 as visible; a ghost would fail here
+    await solve(page, item);
+    if (item !== marked[4]) await continueButton(page).click();
+  }
+  await expect(flare).toHaveText('5 in a row');
+  await expect(flare).toBeVisible();
+  await expect(flare).toBeHidden({ timeout: 3000 });
+});
+
 test("a habit's chip opens its view, with today's session listed", async ({ page }) => {
   await firstVisit(page);
   await finishFirstLesson(page);
