@@ -44,13 +44,13 @@ test('a second lesson opens with an earlier item and ends with its own again', a
   await page.goto('/');
   await page.getByRole('button', { name: 'Around the rock, current' }).click();
   await expect(page.locator('.topic')).toHaveText('Warm up');
-  // One warm-up, the lesson's five items, three of them again.
-  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '9');
+  // One warm-up, the lesson's nine items, three of them again.
+  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '13');
 });
 
 test('a unit ends in a checkpoint that mixes it', async ({ page }) => {
-  await seeded(page, { 'coding:steps-0': true, 'coding:steps-1': true });
+  await seeded(page, { 'coding:steps-0': true, 'coding:steps-1': true, 'coding:steps-2': true, 'coding:steps-3': true });
   await page.goto('/');
   await page.getByRole('button', { name: 'Checkpoint, current' }).click();
-  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '7');
+  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '8');
 });

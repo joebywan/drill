@@ -163,3 +163,58 @@ test('toJS writes every block as JavaScript, the one source of code text', () =>
   assert.equal(tileName({ call: 'hop' }), 'Block hop');
   assert.equal(tileName('rock-up'), 'Look for rock up');
 });
+
+const units = course.units;
+const lessons = units.flatMap((u) => u.lessons);
+const allItems = lessons.flatMap((l) => l.items);
+const uses = (item, key) => JSON.stringify(item.program ?? []).includes(`"${key}"`);
+
+test('the course is long, and each lesson is a proper session', () => {
+  assert.ok(lessons.length >= 25 && lessons.length <= 30, `${lessons.length} lessons`);
+  for (const l of lessons) assert.ok(l.items.length >= 8 && l.items.length <= 10, `${l.id}: ${l.items.length}`);
+  for (const l of lessons) assert.ok(l.items.some((i) => i.type === 'predict'), `${l.id} has something to read`);
+  for (const u of units) assert.ok(u.lessons.length >= 3 && u.lessons.length <= 4, u.title);
+});
+
+test('saved progress still points somewhere: every first-course id is kept', () => {
+  const old = { 'steps-0': 'meet one three turn where', 'steps-1': 'rock around wall stop bump', 'loops-0': 'meet count inside order stairs where', 'loops-1': 'long two where', 'if-0': 'meet again climb down where', 'if-1': 'count up where' };
+  for (const [id, items] of Object.entries(old)) {
+    const lesson = lessons.find((l) => l.id === id);
+    assert.ok(lesson, id);
+    for (const i of items.split(' ')) assert.ok(lesson.items.some((x) => x.id === `${id}-${i}`), `${id}-${i}`);
+  }
+});
+
+test('every new rule is shown on a teach card before anything asks it', () => {
+  const first = (test) => allItems.findIndex(test);
+  const rules = {
+    nesting: (i) => /"repeat":[^}]*"do":\[[^\]]*"repeat"/.test(JSON.stringify(i.program ?? [])),
+    until: (i) => uses(i, 'until'),
+    'never ending': (i) => i.program && !JSON.stringify(i.program).includes('null') && run(i.level, i.program).end === 'endless',
+    'your own block': (i) => uses(i, 'define'),
+    'a block in a block': (i) => i.program?.some((b) => b?.define && JSON.stringify(b.do).includes('call')),
+    'bug hunting': (i) => i.type === 'bug' || (i.type === 'teach' && i.id === 'bug-0-meet'),
+    'if with holes in its look': (i) => i.id === 'if-2-meet' || i.program?.some((b) => JSON.stringify(b ?? '').includes('"if":null')),
+    javascript: (i) => !!i.view,
+  };
+  for (const [name, test] of Object.entries(rules)) {
+    const at = first(test);
+    assert.ok(at >= 0, name);
+    assert.equal(allItems[at].type, 'teach', `${name} first appears on ${allItems[at].id}`);
+  }
+});
+
+test('every level fits a phone, and every flip of every item still works', () => {
+  for (const i of allItems.filter((x) => x.level)) {
+    assert.ok(i.level[0].length <= 7 && i.level.length <= 5, `${i.id} is too big for 360px`);
+  }
+  for (const i of allItems.filter((x) => x.type === 'bug')) {
+    assert.notEqual(run(i.level, i.program).end, 'flower', i.id);
+    assert.equal(run(i.level, changed(i, fixBug(i))).end, 'flower', i.id);
+  }
+});
+
+test('words a flip would turn into nonsense stay out of what is said', () => {
+  const idiom = /\b(times over|twice over|over and|all over|start over|is over|right (away|now|answer|one|choice)|that's right|is right\b(?!\()|set up|pick up|look up|left over|blocks? left|what's left)\b/i;
+  for (const i of allItems) for (const t of [i.prompt, i.explain]) if (t) assert.doesNotMatch(t, idiom, `${i.id}: ${t}`);
+});

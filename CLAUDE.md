@@ -104,9 +104,13 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   opened from the "N-day streak · See your week" line over home's path (or a plant). Days without a session are plain, never missed.
 - `src/coding/` — the Coding learn subject, beside chess on the Learning habit. `program.js` is pure: a
   level is rows of text ('S' Fennel, '*' the flower, '#' a rock), a program is blocks (steps,
-  `{ repeat, do }`, `{ if: 'rock-right', then, else }`), `run()` walks it, and `problem()` proves each
+  `{ repeat, do }`, `{ if: 'rock-right', then, else }`, `{ until, do }`, `{ define, do }`, `{ call }`),
+  `run()` walks it (a loop back on a square it looped from ends as 'endless'), and `problem()` proves each
   item answerable. Items: teach, build (tap tiles into the holes; it runs when the last is filled, and
-  any program that reaches the flower is right), predict (tap where Fennel stops). `exercise.js` draws
+  any program that reaches the flower is right), predict (tap where Fennel stops), bug (a whole program
+  that fails: tap a block, a tile replaces it, graded by running). `view: 'js' | 'both'` shows a program as
+  JavaScript from `toJS()`; code text is never stored. A new block goes through `slots()`. Words in prompts
+  and explanations get swapped on a flip, so "right" means a direction only. `exercise.js` draws
   the grid, the blocks and the tiles, and Fennel (`src/cast/fennel.js`, a fennec fox posed with
   `rig()`) walks it. His lines are `CODING_LINES`/`CODING_HEADLINES`, read through the subject's
   `coach.lines`/`coach.headlines`. Home's course switcher (shared with Japanese) shows it.

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { answer, kind, starPath } from '../../src/chess/items.js';
 import { emptyProgress, finishPractice, finishSession, leavePractice } from '../../src/progress.js';
 import { award } from '../../src/garden/model.js';
-import { answer as stopsAt, fixBug, solve as oneWay, tileName } from '../../src/coding/program.js';
+import { answer as stopsAt, fixBug, mirrored, solve as oneWay, tileName } from '../../src/coding/program.js';
 
 // The first lesson on the path. Its answers are worked out from the course data with the same
 // item logic the app uses, so the test follows the content when it changes.
@@ -2037,4 +2037,63 @@ test('Coding, the new blocks on a real page: a bug fixed by tapping, an endless 
   await tile('Block hop').click();
   await expect.poll(result).toBe(true);
   await expect(page.locator('pre.code')).toContainText('hop();\nhop();');
+});
+
+test('every Coding item fits a 360px phone: no sideways scroll, the program clear of the tiles', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 640 });
+  await page.goto('/');
+  const items = codingCourse.units.flatMap((u) => u.lessons.flatMap((l) => l.items));
+  const bad = await page.evaluate(async (items) => {
+    const { mount } = await import('/src/coding/exercise.js');
+    const app = document.getElementById('app');
+    const out = [];
+    for (const item of items) {
+      app.innerHTML = `<header class="bar" style="height:44px"></header><main class="play"><p class="topic">Topic</p>
+        <div class="coach"><button class="who"></button><p class="bubble"></p></div><div class="stage"></div></main>`;
+      const bubble = app.querySelector('.bubble');
+      const stop = mount(app.querySelector('.stage'), item, { say(t) { bubble.textContent = t; }, done() {} });
+      const prog = app.querySelector('.program');
+      const tiles = app.querySelector('.tiles');
+      const limit = tiles?.children.length ? tiles.getBoundingClientRect().top : innerHeight - 90; // Continue's height
+      const wide = document.documentElement.scrollWidth - innerWidth;
+      const code = app.querySelector('.code');
+      const clipped = code && code.scrollWidth > code.clientWidth;
+      const bottom = prog ? prog.getBoundingClientRect().bottom : 0;
+      const reserved = parseFloat(getComputedStyle(bubble).minHeight);
+      const fail = 'That loop never ends, so I stopped it. Here is one way that works.';
+      if (item.type !== 'teach') {
+        const said = bubble.textContent;
+        bubble.textContent = fail;
+        if (bubble.offsetHeight > reserved) out.push(`the failed-run line outgrows the bubble`);
+        bubble.textContent = said;
+        if (bubble.offsetHeight > reserved) out.push(`${item.id}: prompt outgrows the bubble, so feedback would move the grid`);
+      }
+      if (wide > 0 || clipped || bottom > limit) out.push(`${item.id}: sideways ${wide}, program bottom ${Math.round(bottom)} over ${Math.round(limit)}${clipped ? ', code clipped' : ''}`);
+      stop?.();
+    }
+    return out;
+  }, [...items.filter((i) => i.type !== 'teach' || i.program),
+    ...items.filter((i) => i.type !== 'teach').flatMap((i) => [{ x: true }, { y: true }, { x: true, y: true }].map((flip) => mirrored(i, flip)))]);
+  expect(bad).toEqual([]);
+});
+
+test('the first lesson of each new Coding unit plays through as a real session', async ({ page }) => {
+  for (const unit of codingCourse.units.slice(3)) {
+    const lesson = unit.lessons[0];
+    await page.goto('/');
+    await page.evaluate((start) => {
+      localStorage.setItem('drill.course', 'coding');
+      localStorage.setItem('drill.progress', JSON.stringify({ ...JSON.parse(localStorage.getItem('drill.progress') || '{}'), version: 3, picked: [], done: {}, cards: {}, habits: {}, log: [], start: { coding: start } }));
+    }, unit.title);
+    await page.reload();
+    await page.getByRole('button', { name: `Continue · ${lesson.title}` }).click();
+    for (const item of lesson.items) {
+      await solveCoding(page, item);
+      await expect(page.locator('.foot.wrong'), item.id).toHaveCount(0);
+      await continueButton(page).click();
+    }
+    await expect(page.locator('.summary')).toBeVisible();
+    const marked = lesson.items.filter((i) => i.type !== 'teach').length;
+    await expect(page.getByText(`${marked} of ${marked} right first try`)).toBeVisible();
+  }
 });
