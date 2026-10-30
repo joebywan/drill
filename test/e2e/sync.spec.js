@@ -15,6 +15,7 @@ test.afterAll(() => worker?.mf.dispose());
 
 async function device(browser) {
   const context = await browser.newContext();
+  await context.addInitScript(() => { window.DRILL_SYNC = true; });
   await context.route(`${API}/**`, async (route) => {
     const response = await route.fetch({ url: route.request().url().replace(API, worker.url) });
     await route.fulfill({ response });
@@ -38,7 +39,22 @@ const menu = async (page, item) => {
 };
 const stored = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
 
+test('the flag is off as shipped: no sync in Settings or the privacy page, and nothing is sent', async ({ page }) => {
+  const calls = [];
+  page.on('request', (r) => { if (!r.url().startsWith('http://127.0.0.1')) calls.push(r.url()); });
+  await open(page, finishPractice(emptyProgress(), 'calm', null, new Date(), { title: 'Breathe', mins: 2 }));
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await expect(page.getByRole('button', { name: 'Save to a file' })).toBeVisible();
+  for (const name of ['Use on another device', 'Recovery code', 'Friends', 'Delete my data'])
+    await expect(page.getByRole('button', { name })).toHaveCount(0);
+  await page.goto('/privacy.html');
+  await expect(page.getByRole('heading', { name: 'The short version' })).toBeVisible();
+  await expect(page.locator('main')).not.toContainText(/sync|recovery code|friends|server/i, { useInnerText: true });
+  expect(calls).toEqual([]);
+});
+
 test('sync is off until turned on: nothing is sent', async ({ page }) => {
+  await page.addInitScript(() => { window.DRILL_SYNC = true; });
   const calls = [];
   page.on('request', (r) => { if (!r.url().startsWith('http://127.0.0.1')) calls.push(r.url()); });
   await open(page, finishPractice(emptyProgress(), 'calm', null, new Date(), { title: 'Breathe', mins: 2 }));

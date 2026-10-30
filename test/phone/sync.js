@@ -8,6 +8,7 @@ export default async ({ page, seed, touch, btn, type, shot, check, run }) => {
   const { start } = await import('../../server/dev.js');
   const worker = await start({ port: 0 });
   try {
+    await page.addInitScript(() => { window.DRILL_SYNC = true; });
     await page.route(`${API}/**`, async (route) => route.fulfill({ response: await route.fetch({ url: route.request().url().replace(API, worker.url) }) }));
     const as = async (recovery) => {
       const { token } = await derive(recovery);

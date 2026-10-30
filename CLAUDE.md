@@ -206,7 +206,9 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `noteReminder(outcome)` with `'opened'` (tapped) or `'cleared'` (swiped away) for every note shown
   → true, or false for any other value (nothing recorded). Nothing leaves the device.
 - **Sync and friends** (`src/sync/`, `server/`), opt-in and off by default: with it off nothing is sent
-  and Drill works with no backend. `keys.js`: the recovery code is the profile's secret, kept on the
+  and Drill works with no backend. **Feature-flagged off** until the API is deployed: `SYNC` in
+  `config.js` gates `available()` (the ⋯ section, every call) and the sync parts of `privacy.html`;
+  tests set `window.DRILL_SYNC = true` before load. `keys.js`: the recovery code is the profile's secret, kept on the
   device (`drill.sync`); HKDF gives the AES-GCM key progress is sealed with and the bearer token the
   server knows the profile by (it stores the token's hash). A 6-digit pairing code carries the
   recovery code to a new device, wrapped with PBKDF2. `merge.js` is pure: cards per card (latest
