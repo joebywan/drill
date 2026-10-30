@@ -629,7 +629,7 @@ export const CODING_HEADLINES = {
   complete: ['Lesson done. The flower thanks you.', 'And that is a lesson. My ears approve.'],
   perfect: ['Flawless! Not a single bump.', 'Every plan perfect. I may frame them.'],
   fast: ['Done already? I had barely started trotting.', 'Zoom! That was a quick little program.'],
-  struggled: ['Some bumps, then the flower. That is real coding.', 'You debugged your way through. Proper programmer stuff.'],
+  struggled: ['Plenty of bumps. That is how a plan gets better.', 'A bumpy walk, and I saw every step of it. We go again.'],
   review: ['Look at that recall. The plans are in there.', 'Review done. Steps, loops, ifs: all at home.'],
   relit: ['Streak relit! Ears up.', 'There it is, the streak is glowing again.'],
 };

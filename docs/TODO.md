@@ -201,7 +201,6 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 - **Wind down in the wrapper with the phone in light mode:** the page is the night palette, the system bars stay light. A bridge
   call or `<meta name="theme-color">` handling would fix it.
 - **Back twice quickly from a routine** closes the app: the second press lands on home, as designed. Decide if a double press deserves a guard.
-- **Fennel's end lines on an all-wrong lesson:** "Some bumps, then the flower. That is real coding" after no right answers, and "Proper
   programmer stuff" reads close to ability praise, though the guardrail lint passes.
 - **A phone with no Japanese voice in the wrapper:** it falls back to the written reading, and nothing offers to install one.
 - **Play Rosa's top level** answers in about 3.3 s at any CPU speed (its budget): usable, but whether it still plays well throttled wasn't measured.
