@@ -71,13 +71,15 @@ async function toStepTwo(page) {
   await expect(page.getByRole('heading', { name: 'What would you like out of Drill?' })).toBeFocused();
 }
 
-test('intro, learn only: Learn something picks chess, the others are coming soon, and home starts on Learning', async ({ page }) => {
+test('intro, learn only: Learn something lists the live courses, the others are coming soon, and home starts on Learning', async ({ page }) => {
   await toStepTwo(page);
   await expect(pick(page, 'Chess')).toBeHidden();
   await pick(page, 'Learn something').click();
   await expect(pick(page, 'Learn something')).toHaveAttribute('aria-pressed', 'true');
-  await expect(pick(page, 'Chess')).toHaveAttribute('aria-pressed', 'true'); // the one live course
-  for (const name of ['Maths', 'Japanese', 'Coding']) await expect(page.getByRole('button', { name: `${name} · coming soon` })).toBeDisabled();
+  await expect(pick(page, 'Japanese')).toBeEnabled(); // live
+  await pick(page, 'Chess').click();
+  await expect(pick(page, 'Chess')).toHaveAttribute('aria-pressed', 'true');
+  for (const name of ['Maths', 'Coding']) await expect(page.getByRole('button', { name: `${name} · coming soon` })).toBeDisabled();
   await expect(page.getByRole('heading', { name: 'Have you played chess before?' })).toHaveCount(0); // no placement questions
   await page.getByRole('button', { name: 'Show my home' }).click();
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
@@ -261,6 +263,138 @@ test('the "5 in a row" flare plays, then leaves nothing behind', async ({ page }
   await expect(flare).toHaveText('5 in a row');
   await expect(flare).toBeVisible();
   await expect(flare).toBeHidden({ timeout: 3000 });
+});
+
+// Japanese: a second course on the Learning tab, played with the tap-and-match items in src/quiz/.
+const japanese = JSON.parse(readFileSync(new URL('../../src/data/japanese.json', import.meta.url)));
+const kanaFirst = japanese.units[0].lessons[0];
+const quizChoice = (page, text) => page.locator('.quiz .choices .choice:not(:disabled)', { hasText: new RegExp(`^${text}$`) }).first();
+
+/** Answers one quiz item correctly by tapping, then waits for the answer banner. */
+async function solveQuiz(page, item) {
+  if (item.type === 'pick') await quizChoice(page, item.answer).click();
+  if (item.type === 'pairs') for (const [l, r] of item.pairs) { await quizChoice(page, l).click(); await quizChoice(page, r).click(); }
+  if (item.type === 'build') for (const t of item.answer) await quizChoice(page, t).click();
+  await expect(continueButton(page), item.id).toBeInViewport();
+}
+
+async function toJapanese(page) {
+  await firstVisit(page);
+  await page.getByRole('button', { name: 'Japanese', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Japanese', exact: true })).toHaveAttribute('aria-pressed', 'true');
+}
+
+test('intro: picking Japanese opens Learning on the Japanese path', async ({ page }) => {
+  await toStepTwo(page);
+  await pick(page, 'Learn something').click();
+  await pick(page, 'Japanese').click();
+  await page.getByRole('button', { name: 'Show my home' }).click();
+  await expect(pressedTab(page)).toHaveAttribute('data-path', 'learn');
+  await expect(page.getByRole('heading', { name: 'Vowels' })).toBeVisible();
+  await expect(page.getByRole('button', { name: `Continue · ${kanaFirst.title}` })).toBeVisible();
+});
+
+test('a full Japanese lesson: teach, pick, listen, pairs; Kaede ends it, and the course is remembered', async ({ page }) => {
+  await toJapanese(page);
+  await expect(page.getByRole('heading', { name: 'Vowels' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Know some chess already? Skip ahead' })).toHaveCount(0);
+  await page.getByRole('button', { name: `Continue · ${kanaFirst.title}` }).click();
+  await expect(page.locator('.quiz .glyph')).toHaveText('あ');
+  await expect(page.locator('.quiz')).toHaveAttribute('lang', 'ja-JP');
+  await expect(page.locator('.who svg')).toHaveClass(/cast-kaede/);
+  for (const item of kanaFirst.items) {
+    // No voice in headless Chromium: a listening item shows its reading instead, and still plays.
+    if (item.listen) await expect(page.locator('.quiz .glyph')).toHaveText(item.show);
+    await solveQuiz(page, item);
+    await continueButton(page).click();
+  }
+  const marked = kanaFirst.items.filter((i) => i.type !== 'teach').length;
+  await expect(page.getByText(`${marked} of ${marked} right first try`)).toBeVisible();
+  await expect(page.locator('.duo .hero svg').first()).toHaveClass(/cast-kaede/);
+  await continueButton(page).click();
+  await expect(page.getByRole('button', { name: `${kanaFirst.title}, done` })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Japanese', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Chess', exact: true }).click();
+  await expect(page.getByRole('heading', { name: basics.units[0].title })).toBeVisible();
+});
+
+test('a wrong tap is judged at once, comes back at the end, and a mismatched pair flashes and lets go', async ({ page }) => {
+  await toJapanese(page);
+  await page.getByRole('button', { name: `Continue · ${kanaFirst.title}` }).click();
+  const [pickItem] = kanaFirst.items.filter((i) => i.type === 'pick');
+  for (const item of kanaFirst.items.slice(0, kanaFirst.items.indexOf(pickItem))) { await solveQuiz(page, item); await continueButton(page).click(); }
+  await quizChoice(page, pickItem.options.find((o) => o !== pickItem.answer)).click();
+  await expect(page.locator('.foot.wrong')).toBeVisible();
+  await expect(page.locator('.quiz .choice.right')).toHaveText(pickItem.answer);
+  await continueButton(page).click();
+  for (const item of kanaFirst.items.slice(kanaFirst.items.indexOf(pickItem) + 1)) {
+    if (item.type === 'pairs') {
+      const [[l1], [, r2]] = item.pairs;
+      await quizChoice(page, l1).click();
+      await quizChoice(page, r2).click();
+      await expect(page.locator('.quiz .choice.wrong')).toHaveCount(2);
+      await expect(page.locator('.quiz .choice.wrong')).toHaveCount(0); // lets go
+    }
+    await solveQuiz(page, item);
+    await continueButton(page).click();
+  }
+  await expect(page.locator('.quiz .glyph')).toHaveText(pickItem.show); // the missed one, once more
+  await solveQuiz(page, pickItem);
+  await continueButton(page).click();
+  await solveQuiz(page, kanaFirst.items.find((i) => i.type === 'pairs')); // and the pairs, which had a slip
+  await continueButton(page).click();
+  const marked = kanaFirst.items.filter((i) => i.type !== 'teach').length;
+  await expect(page.getByText(`${marked - 2} of ${marked} right first try`)).toBeVisible();
+});
+
+test('a Japanese review: due kana come back on the Japanese path, with Kaede', async ({ page }) => {
+  const lesson = japanese.units[0].lessons[2]; // has a build item
+  const results = lesson.items.filter((i) => i.type !== 'teach').map((i) => ({ key: `japanese:${i.id}`, correct: true }));
+  const then = new Date(Date.now() - 30 * 86400000);
+  const p = finishSession(emptyProgress(), `japanese:${lesson.id}`, results, then);
+  await page.addInitScript(([p, course]) => { localStorage.setItem('drill.progress', p); localStorage.setItem('drill.course', course); }, [JSON.stringify(p), 'japanese']);
+  await firstVisit(page);
+  await page.locator('[data-review]').click();
+  await expect(page.locator('.who svg')).toHaveClass(/cast-kaede/);
+  for (let n = 0; n < results.length; n++) {
+    const id = await page.evaluate(() => document.querySelector('.quiz .glyph, .quiz .meaning, .quiz .choices')?.textContent);
+    const item = lesson.items.find((i) => i.type !== 'teach' && (i.show === id || (i.type === 'pairs' && i.pairs.every(([l]) => id.includes(l)))));
+    await solveQuiz(page, item);
+    await continueButton(page).click();
+  }
+  await expect(page.getByText('Review done')).toBeVisible();
+  await expect(page.getByText(`${results.length} of ${results.length} recalled`)).toBeVisible();
+});
+
+test('Japanese skip-ahead: someone who reads the vowels starts at K and S', async ({ page }) => {
+  await toJapanese(page);
+  await page.getByRole('button', { name: 'Read some kana already? Skip ahead' }).click();
+  await expect(page.getByRole('heading', { name: 'Can you read hiragana?' })).toBeFocused();
+  await page.getByRole('button', { name: 'I know あいうえお' }).click();
+  await page.getByRole('button', { name: 'Start at K and S' }).click();
+  await expect(page.locator('.street', { has: page.getByRole('heading', { name: 'K and S' }) }).locator('.here')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Read some kana already? Skip ahead' })).toHaveCount(0);
+});
+
+test('with a ja-JP voice, a listening item plays the sound and hides the reading', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.spoken = [];
+    const voice = { lang: 'ja-JP', name: 'Test JP' };
+    speechSynthesis.getVoices = () => [voice];
+    speechSynthesis.speak = (u) => window.spoken.push(u.text);
+    speechSynthesis.cancel = () => {};
+    window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } }; // a real one only takes a real voice
+  });
+  await toJapanese(page);
+  await page.getByRole('button', { name: `Continue · ${kanaFirst.title}` }).click();
+  await expect.poll(() => page.evaluate(() => window.spoken)).toEqual(['あ']); // the teach card says it
+  const listen = kanaFirst.items.find((i) => i.listen);
+  for (const item of kanaFirst.items.slice(0, kanaFirst.items.indexOf(listen))) { await solveQuiz(page, item); await continueButton(page).click(); }
+  await expect(page.locator('.quiz .glyph')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Hear it again' })).toBeVisible();
+  expect((await page.evaluate(() => window.spoken)).at(-1)).toBe(listen.speak);
+  await solveQuiz(page, listen);
 });
 
 test("a habit's chip opens its view, with today's session listed", async ({ page }) => {

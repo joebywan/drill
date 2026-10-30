@@ -16,6 +16,10 @@ import moveCourse from './data/move.json' with { type: 'json' };
 import * as move from './move/practice.js';
 import { clover, demo as cloverDemo, NAME as CLOVER } from './cast/clover.js';
 import { mira, demo as miraDemo, NAME as MIRA } from './cast/mira.js';
+import japaneseCourse from './data/japanese.json' with { type: 'json' };
+import * as quiz from './quiz/exercise.js';
+import { kaede, NAME as KAEDE } from './cast/kaede.js';
+import { KAEDE_HEADLINES, KAEDE_LINES } from './cast/lines.js';
 
 /**
  * The contract. A subject is a course plus one `mount(el, item, { say, done })` that plays a
@@ -33,13 +37,17 @@ import { mira, demo as miraDemo, NAME as MIRA } from './cast/mira.js';
  * shown on a teach card that asks for it and after "Not really" (rendered by practice/kit.js helpHtml),
  * `feel`, the good answer to "How do you feel?" (default 'calmer'; its reply is a key in `lines`),
  * and `demonstrates`, for a coach the learner copies, which is drawn large above their line.
- * Sessions and the practice end screen read everything subject-specific from here.
+ * A Learn coach's `lines` and `headlines` stand in for Rosa's LINES and HEADLINES (same kinds).
+ * Sessions and both end screens read everything subject-specific from here.
  *
  * Optional: `again`, { label, lesson }: once the path is done, home keeps a button with that label
  * which runs that lesson again ("Reflect today", "Breathe"); `dayDetail(progress, date)`, extra html under a day's sessions
  * in the habit view (Reflect's own lines); `placement`, { offer, question, options: [[label, unitTitle]] }:
  * an optional question home offers by the subject's path (`offer` is the link) to start further on.
  * It never stands in the way: answering opens the path at that unit, dismissing it hides the offer.
+ *
+ * Several Learn subjects (courses) share the Learning habit: home shows one course's path at a
+ * time, with a switcher between them (app.js).
  */
 /** The built-in habits, in the order the home bar shows them. `habitsFor(progress)` adds the learner's own. */
 export const HABITS = [
@@ -117,6 +125,22 @@ export const subjects = [{
       ['I know how the pieces move', 'Capturing'],
       ['I play now and then', 'Forks'],
       ['I play often and know some tactics', 'Mate in one'],
+    ],
+  },
+}, {
+  // Hiragana from zero, played with the generic tap-and-match items in src/quiz/.
+  ...japaneseCourse,
+  mount: (el, item, ctx) => quiz.mount(el, item, { ...ctx, lang: japaneseCourse.lang }),
+  habit: 'learn',
+  kind: 'learn',
+  coach: { draw: kaede, name: KAEDE, start: 'think', lines: KAEDE_LINES, headlines: KAEDE_HEADLINES },
+  placement: {
+    offer: 'Read some kana already? Skip ahead',
+    question: 'Can you read hiragana?',
+    options: [
+      ['Not a single one', 'Vowels'],
+      ['I know あいうえお', 'K and S'],
+      ['I can read the k and s rows', 'First words'],
     ],
   },
 }, {
