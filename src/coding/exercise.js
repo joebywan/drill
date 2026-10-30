@@ -1,4 +1,4 @@
-import { ARROW, answer, fill, holes, kind, parse, run, solve, tileKind } from './program.js';
+import { ARROW, answer, changed, fill, fixBug, holes, jsFace, kind, parse, punch, run, solve, tileKind, tileName, toJS } from './program.js';
 import { fennel, demo } from '../cast/fennel.js';
 import { flower } from '../garden/art.js';
 import { dragTile } from '../drag.js';
@@ -9,10 +9,14 @@ const STEP_MS = 380;
 const DEMO_WAIT_MS = 900; // long enough to see the grid before a teach card's program plays
 const ROCK = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1.2 8.6 Q.6 5.2 3 3.6 Q4.4 1.6 6.6 2.6 Q9 3.4 8.9 6.4 Q9.2 8.6 7.4 8.8 Z" fill="var(--rock)"/><path d="M3.2 4.4 Q4.6 3 6.4 3.6" fill="none" stroke="var(--rock-shine)" stroke-width=".7" stroke-linecap="round"/></svg>';
 
+/** The bubble's line for a failed run: a loop that never ends is said out loud, or it just looks stuck. */
+const afterFail = (result) => (result.end === 'endless' ? 'That loop never ends, so I stopped it. Here is one way that works.' : 'Here is one way that works.');
+
 /**
  * Mounts one Coding item in `el` (the subject contract: see src/subjects.js). The grid sits on
  * top with Fennel standing on it, the program under it, and the tiles in the thumb zone where
  * Continue will appear. A build item runs the moment its last hole is filled: no Check button.
+ * A bug item plays its failing run, then the same tile flow fills the block the learner taps.
  */
 export function mount(el, item, { say, done }) {
   const g = parse(item.level || ['S']);
@@ -31,17 +35,20 @@ export function mount(el, item, { say, done }) {
   const place = ([x, y]) => `translate(${x * 100}%, ${y * 100}%)`;
   walker.style.transform = place(g.start);
 
+  let walkId = 0;
   /** Fennel walks `path` square by square, trotting, then reacts to how it ended. */
   const walk = async (result) => {
+    const id = ++walkId;
+    const off = () => gone || id !== walkId;
     const steps = result.path.length - 1;
     const trot = demo(walker.firstElementChild, 'walk', Math.max(steps, 1) * STEP_MS / 1000, Math.max(steps, 1));
     if (trot) anims.push(...trot);
-    for (let i = 1; i <= steps && !gone; i++) {
+    for (let i = 1; i <= steps && !off(); i++) {
       const a = move(walker, [{ transform: place(result.path[i - 1]) }, { transform: place(result.path[i]) }], { duration: STEP_MS, easing: 'ease-in-out' });
       walker.style.transform = place(result.path[i]);
       if (a) { anims.push(a); await a.finished.catch(() => {}); play('tap'); }
     }
-    if (gone) return;
+    if (off()) return;
     walker.innerHTML = fennel(result.end === 'flower' ? 'correct' : 'wrong');
     if (result.end === 'bump') {
       const [x, y] = result.path.at(-1), [bx, by] = result.bumped;
@@ -50,13 +57,22 @@ export function mount(el, item, { say, done }) {
       if (a) { anims.push(a); await a.finished.catch(() => {}); }
     }
   };
+  /** Stops a run part-way and stands Fennel back at the start. */
+  const backToStart = () => {
+    walkId++;
+    anims.splice(0).forEach((a) => a.cancel());
+    walker.style.transform = place(g.start);
+    walker.innerHTML = fennel('think');
+  };
+  const show = (program, picks = [], locked = true, tappable = null) => (item.view === 'js' ? '' : blocks(program, picks, locked, tappable))
+    + (item.view ? code(program, picks, locked) : '');
 
   const cleanup = () => { gone = true; anims.forEach((a) => a.cancel()); };
 
   if (kind(item) === 'teach') {
     if (!item.level) world.remove();
     if (item.program) {
-      programEl.innerHTML = blocks(item.program, []);
+      programEl.innerHTML = show(item.program);
       const wait = setTimeout(() => walk(run(item.level, item.program)), DEMO_WAIT_MS);
       say(item.text, 'teach');
       done(null);
@@ -69,7 +85,7 @@ export function mount(el, item, { say, done }) {
   }
 
   if (kind(item) === 'predict') {
-    programEl.innerHTML = blocks(item.program, []);
+    programEl.innerHTML = show(item.program);
     tilesEl.remove();
     const want = answer(item);
     const cells = [...world.querySelectorAll('.cell')];
@@ -95,15 +111,32 @@ export function mount(el, item, { say, done }) {
   }
 
   // build: tap a tile into the first hole it fits, or drag it into any; tap a filled hole to empty it.
-  const kinds = holes(item.program);
-  const picks = Array(kinds.length).fill(null);
+  // bug: the same, once the block to change has been tapped. Until then there is no hole to fill.
+  const isBug = kind(item) === 'bug';
+  const offered = isBug ? new Set(item.tiles.map(tileKind)) : null;
+  let program = item.program;
+  let kinds = holes(program);
+  let picks = Array(kinds.length).fill(null);
   const firstFor = (t) => kinds.findIndex((k, n) => k === tileKind(t) && picks[n] === null);
-  tilesEl.innerHTML = item.tiles.map((t, i) => `<button class="choice tile" data-tile="${i}" aria-label="${esc(tileName(t))}">${esc(tileFace(t))}</button>`).join('');
+  const face = (t) => (item.view ? jsFace(t) : tileFace(t));
+  tilesEl.innerHTML = item.tiles.map((t, i) => `<button class="choice tile${item.view ? ' code-tile' : t.call || tileKind(t) === 'look' ? ' word' : ''}" data-tile="${i}" aria-label="${esc(tileName(t))}">${esc(face(t))}</button>`).join('');
+  let watch = null;
   const paint = (shown = picks, locked = false) => {
-    programEl.innerHTML = blocks(item.program, shown, locked);
+    programEl.innerHTML = show(program, shown, locked, locked ? null : offered);
     for (const b of tilesEl.children) b.disabled = locked || firstFor(item.tiles[b.dataset.tile]) < 0;
     for (const b of programEl.querySelectorAll('button[data-hole]')) {
       b.addEventListener('click', () => { picks[b.dataset.hole] = null; play('tap'); paint(); });
+    }
+    for (const b of programEl.querySelectorAll('button[data-part]')) {
+      b.addEventListener('click', () => {
+        clearTimeout(watch);
+        backToStart();
+        program = punch(item.program, +b.dataset.part);
+        kinds = holes(program);
+        picks = [null];
+        play('tap');
+        paint();
+      });
     }
   };
   const put = async (n, tile, b) => {
@@ -112,16 +145,17 @@ export function mount(el, item, { say, done }) {
     flourish(b, 'pop');
     if (picks.includes(null)) { paint(); return; }
     paint(picks, true);
-    const result = run(item.level, fill(item.program, picks));
+    const result = run(item.level, fill(program, picks));
     say(result.end === 'flower' ? 'Here I go!' : 'Here I go...', 'think');
     await walk(result);
     if (gone) return;
     const right = result.end === 'flower';
     if (!right) {
-      programEl.innerHTML = blocks(item.program, solve(item), true);
+      const fix = isBug ? fixBug(item) : null;
+      programEl.innerHTML = isBug ? show(punch(item.program, fix.part), [fix.tile]) : show(item.program, solve(item));
       programEl.classList.add('shown');
+      say(afterFail(result), 'wrong');
     }
-    if (!right) say('Here is one way that works.', 'wrong');
     flourish(programEl, right ? 'pop' : 'shake'); // the runner cues the sound and buzz
     done(right, item.explain);
   };
@@ -135,35 +169,52 @@ export function mount(el, item, { say, done }) {
   });
   paint();
   say(item.prompt, 'think');
-  return () => { stops.forEach((stop) => stop()); cleanup(); };
+  if (isBug) watch = setTimeout(() => walk(run(item.level, item.program)), DEMO_WAIT_MS);
+  return () => { clearTimeout(watch); stops.forEach((stop) => stop()); cleanup(); };
 }
 
-const tileFace = (t) => (typeof t === 'number' ? `${t}×` : ARROW[t]);
-const tileName = (t) => (typeof t === 'number' ? `${t} times` : `Step ${t}`);
+const tileFace = (t) => (typeof t === 'number' ? `${t}×`
+  : t.call ?? (t === 'flower' ? 'flower' : t.startsWith('rock-') ? `rock ${ARROW[t.slice(5)]}` : ARROW[t]));
+const slotFace = (t) => (typeof t === 'number' ? String(t) : tileFace(t));
+const slotClass = (kind, t) => (kind === 'step' ? `go${t?.call ? ' call' : ''}` : kind);
 
-/** The program as nested blocks. Holes show their pick (a button that empties it) or a gap to fill. */
-function blocks(program, picks, locked = true) {
-  let i = 0;
-  const hole = (k) => {
-    const n = i++;
-    const v = picks[n];
-    if (v == null) return `<span role="img" class="block hole${n === picks.indexOf(null) && !locked ? ' fill-next' : ''}"${locked ? '' : ` data-hole="${n}"`} aria-label="Empty ${k === 'count' ? 'count' : 'step'}"></span>`;
-    const face = k === 'count' ? String(v) : ARROW[v];
-    return locked ? `<span role="img" class="block ${k === 'step' ? 'go' : k} filled" aria-label="${esc(tileName(v))}">${esc(face)}</span>`
-      : `<button class="block ${k === 'step' ? 'go' : k} filled" data-hole="${n}" aria-label="${esc(tileName(v))}, tap to take out">${esc(face)}</button>`;
+/** One hole: a gap to fill, or its pick (a button that empties it). `faceOf` is how the pick reads. */
+function holeHtml(n, kind, pick, picks, locked, faceOf) {
+  if (pick == null) return `<span role="img" class="block hole${n === picks.indexOf(null) && !locked ? ' fill-next' : ''}"${locked ? '' : ` data-hole="${n}"`} aria-label="Empty ${kind}"></span>`;
+  return locked ? `<span role="img" class="block ${slotClass(kind, pick)} filled" aria-label="${esc(tileName(pick))}">${esc(faceOf(pick))}</span>`
+    : `<button class="block ${slotClass(kind, pick)} filled" data-hole="${n}" aria-label="${esc(tileName(pick))}, tap to take out">${esc(faceOf(pick))}</button>`;
+}
+
+/**
+ * The program as nested blocks. Holes show their pick or a gap to fill. With `tappable` (a set of
+ * slot kinds), a filled slot of those kinds is a button that picks it as the block to change.
+ */
+function blocks(program, picks, locked = true, tappable = null) {
+  let hole = 0;
+  let part = 0;
+  const slot = (kind, v) => {
+    const n = part++;
+    if (v === null) { const h = hole++; return holeHtml(h, kind, picks[h], picks, locked, slotFace); }
+    if (tappable?.has(kind)) return `<button class="block ${slotClass(kind, v)}" data-part="${n}" aria-label="Change: ${esc(tileName(v))}">${esc(slotFace(v))}</button>`;
+    return kind === 'step' ? `<span role="img" class="block ${slotClass(kind, v)}" aria-label="${esc(tileName(v))}">${esc(slotFace(v))}</span>` : `<b>${esc(slotFace(v))}</b>`;
   };
+  const inner = (list) => `<div class="inner">${walk(list)}</div>`;
   const walk = (list) => list.map((b) => {
-    if (b === null) return hole('step');
-    if (typeof b === 'string') return `<span role="img" class="block go" aria-label="${esc(tileName(b))}">${ARROW[b]}</span>`;
-    if ('repeat' in b) {
-      const count = b.repeat === null ? hole('count') : `<b>${b.repeat}</b>`;
-      return `<div class="block loop"><span class="head">repeat ${count} times</span><div class="inner">${walk(b.do)}</div></div>`;
-    }
-    const way = b.if.replace('rock-', '');
-    return `<div class="block if"><span class="head">if rock ${ARROW[way]}</span><div class="inner">${walk(b.then)}</div>`
-      + `<span class="head">else</span><div class="inner">${walk(b.else)}</div></div>`;
+    if (b === null || typeof b === 'string' || 'call' in b) return slot('step', b);
+    if ('repeat' in b) return `<div class="block loop"><span class="head">repeat ${slot('count', b.repeat)} times</span>${inner(b.do)}</div>`;
+    if ('until' in b) return `<div class="block loop"><span class="head">repeat until ${slot('look', b.until)}</span>${inner(b.do)}</div>`;
+    if ('define' in b) return `<div class="block loop def"><span class="head">new block <b>${esc(b.define)}</b></span>${inner(b.do)}</div>`;
+    return `<div class="block if"><span class="head">if ${slot('look', b.if)}</span>${inner(b.then)}`
+      + `<span class="head">else</span>${inner(b.else)}</div>`;
   }).join('');
   return walk(program);
+}
+
+/** The program as read-only JavaScript from `toJS`, with its holes as the same gaps the blocks use. */
+function code(program, picks, locked = true) {
+  const kinds = holes(program);
+  const html = toJS(program).split('___').map(esc).reduce((all, text, i) => `${all}${holeHtml(i - 1, kinds[i - 1], picks[i - 1], picks, locked, jsFace)}${text}`);
+  return `<pre class="code" aria-label="The program as JavaScript">${html}</pre>`;
 }
 
 /** The grid in words, for a screen reader. */

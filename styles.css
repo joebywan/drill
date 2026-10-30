@@ -548,6 +548,10 @@ html { scroll-padding-bottom: 160px; }
 .block.loop, .block.if { display: flex; flex-direction: column; align-items: flex-start; height: auto; padding: 6px 10px; background: var(--card); color: var(--text); font-size: 1rem; }
 .block .head { display: flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 700; }
 .block .head b { display: inline-grid; place-items: center; min-width: 36px; height: 36px; border-radius: 8px; background: var(--code); color: var(--code-text); }
+.block .head b { padding: 0 6px; }
+.block.go.call { font-size: 1rem; }
+.block.look, .block.count { font-size: 1rem; }
+.block.loop.def { border-style: dashed; }
 .block .inner { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 4px 4px; padding-left: 12px; border-left: 3px solid var(--code); }
 /* If and else sit as two short rows, each condition beside its block, so the program stays above the tiles. */
 .block.if { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: 8px; }
@@ -555,6 +559,13 @@ html { scroll-padding-bottom: 160px; }
 .program.shown .block.filled { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
 .tiles .tile { font-size: 1.5rem; padding: 10px 4px; color: var(--text); }
 .tiles .tile:disabled { opacity: .4; }
+.tiles .tile.word { font-size: 1.05rem; }
+.tiles .tile.code-tile { font: 600 .85rem ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+.code {
+  width: 100%; margin: 0; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--line); background: var(--card); color: var(--text);
+  font: 600 .875rem/1.65 ui-monospace, Menlo, Consolas, monospace; text-align: left; white-space: pre; overflow: hidden;
+}
+.code .block { display: inline-grid; vertical-align: middle; height: 28px; min-width: 52px; padding: 0 6px; border-radius: 6px; font: inherit; line-height: 1; }
 .tile-ghost { user-select: none; position: fixed; left: 0; top: 0; z-index: 50; margin: 0; pointer-events: none; opacity: .9; }
 
 /* ---- Focus: what it's for, then a calm timer that fills a ring ---- */
