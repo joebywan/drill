@@ -111,8 +111,9 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   their own dark set. `tools/garden.html` renders it all; check it in light and dark.
 - The garden screen: `drawGarden(garden(), 'strip' | 'tall')` (art.js) is the strip at the top of
   home (one button into `gardenView()`) and the full view, plants and visitors at `perches()`;
-  `liven()` in app.js sways them, moves the sky and grass (`animateScene()`: clouds, sun, glints, stars,
-  fireflies), flies in visitors that just arrived (`data-new`), and pauses offscreen or hidden. A plant or its card opens
+  `liven()` in app.js moves them: a gust (`gust()`, scene.js) rolls left to right every few seconds and
+  leans the grass and each plant in turn; `animateScene()` drifts clouds, pulses the sun, twinkles glints
+  and stars and wanders fireflies; flies in visitors that just arrived (`data-new`), and pauses offscreen or hidden. A plant or its card opens
   `habitView(id, back)`. Both end screens list what `award()` brought, three lines at most.
 - Garden sounds are real files, `assets/sounds/*.wav`, made by `node tools/sounds.js` (plucks,
   bells, chirps, a buzz, all synthesised there, so they are ours to ship). `chime(gift)` in feel.js

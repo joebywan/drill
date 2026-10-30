@@ -1,5 +1,5 @@
 import { move } from '../feel.js';
-import { scene, slots, place, SIZE, visitor } from './scene.js';
+import { scene, slots, place, SIZE, visitor, gust, lean } from './scene.js';
 export { scene, slots, place, SIZE, MOODS, visitor, animateVisitor, animateScene, VISITORS } from './scene.js';
 
 /**
@@ -419,6 +419,9 @@ export function sway(el) {
   const part = el?.querySelector?.('[data-part="plant"]');
   if (!part) return null;
   Object.assign(part.style, { transformBox: 'view-box', transformOrigin: '50px 106px' });
+  // A plant in a garden leans with the breeze as it passes; one on its own (a card) just sways.
+  const x = Number(el.getAttribute?.('x')) + Number(el.getAttribute?.('width')) / 2;
+  if (x) return gust(part, x, lean(4, (d) => `rotate(${d}deg)`));
   const deg = 1.6;
   return move(part, [{ transform: `rotate(${-deg}deg)` }, { transform: `rotate(${deg}deg)` }],
     { duration: 2600 + Math.random() * 1600, delay: -Math.random() * 3000, direction: 'alternate', iterations: Infinity, easing: 'ease-in-out' });
