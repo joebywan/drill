@@ -158,7 +158,7 @@ const breakCourse = JSON.parse(readFileSync('src/data/break.json', 'utf8'));
 const breakText = [
   ...Object.entries(BREAK_LINES).flatMap(([kind, list]) => list.map((text) => [kind, text])),
   ...strings(breakCourse).filter((t) => /\s/.test(t)).map((text) => ['break.json', text]),
-  ...STEPS.map((s) => ['step', `${s.name}: ${s.line}`]),
+  ...STEPS.flatMap((s) => [['step', `${s.name}: ${s.line}`], ...s.how.map((text) => [`how ${s.name}`, text])]),
   ['safety', SAFETY_LINE],
 ];
 

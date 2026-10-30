@@ -1,8 +1,8 @@
-import { face, limb, shadow, svg } from './kit.js';
+import { INK, face, limb, shadow, svg } from './kit.js';
 import { move } from '../feel.js';
 
 /**
- * Clover, the Move coach: a garden rabbit, all spring and stretch. Silhouette hook: two long
+ * Clover, the Move and screen break coach: a garden rabbit, all spring and stretch. Silhouette hook: two long
  * ears on one chunky mass, plus a cotton tail and big feet. Long round-capped limbs, darker than
  * the body, end in raspberry sweatband hands, so every arm reads at 96 px. Owned colour: fawn
  * and raspberry.
@@ -11,11 +11,12 @@ import { move } from '../feel.js';
  * about a fixed joint. Moods and poses only change those transforms, so a pose is never a redraw
  * and the Web Animations API can tween any part between any two poses.
  *
- * API (for the Move practice engine):
+ * API (for the practice kit's demo(), which Move and the screen break share):
  *   NAME                       the display name; renaming the character is this one line
  *   MOODS                      ['guide', 'cheer', 'done', 'idle', 'tapped', 'rest']
  *   POSES                      ['squat', 'reach-up', 'side-bend-left', 'side-bend-right',
- *                               'shoulder-roll', 'march', 'lunge', 'wall-push', 'neck-tilt']
+ *                               'shoulder-roll', 'march', 'lunge', 'wall-push', 'neck-tilt',
+ *                               'look-far', 'blink', 'sit-tall']
  *                              left and right are the learner's, as in a mirror (screen left).
  *   clover(mood, pose?) -> svg string
  *       draw a mood; works with coach(el, clover) like Moss. With `pose`, the limbs hold that
@@ -58,7 +59,9 @@ const J = {
 };
 const ARM = 29, LEG = 18;
 
-// A pose: per part [rotate, dx, dy]; `body` moves the whole upper body. Unset parts stand still.
+// A pose: per part [rotate, dx, dy, scaleY]; `body` moves the whole upper body and `eyes` the
+// face's eyes about their own centre (scaleY closes them). `lids` are the closed eyes, two ink
+// curves drawn at scaleY 0 until a pose opens them out. Unset parts stand still.
 const STAND = { armL: [16], armR: [-16] };
 const ARMS = {
   guide:  { armL: [16], armR: [-64] },          // right hand out, presenting
@@ -69,7 +72,9 @@ const ARMS = {
   rest:   { armL: [-8], armR: [8], body: [0, 2] },   // hands in, a breather
 };
 
-// Each pose is a list of phases; a demo rep goes stand -> phases -> stand.
+// Each pose is a list of phases; a demo rep goes stand -> phases -> stand, each step the same length.
+const SHADE = { head: [-8, -2, -2], eyes: [0, -2, -1], armR: [166, -2, -1] };
+const CLOSED = { head: [0, 0, 1], eyes: [0, 0, 0, 0.05], lids: [0, 0, 0, 1] };
 const POSE = {
   'squat': [{ body: [0, 9], armL: [58], armR: [-58], legL: [58, -11, 3], legR: [-58, 11, 3] }],
   'reach-up': [{ body: [0, -3], armL: [162, 0, -8], armR: [-162, 0, -8], head: [0, 0, -1] }],
@@ -90,18 +95,28 @@ const POSE = {
     { torso: [18], body: [-2, 1], armL: [-108, 24, -8], armR: [-92, -4, 6], legL: [42, -5, 0] },
   ],
   'neck-tilt': [{ head: [-14] }, { head: [14] }],
+  // A paw goes straight to the brow and shades the eyes while the head turns and lifts to look
+  // into the distance; the held phases keep it there for most of the loop (phases share time evenly).
+  'look-far': [...Array(3).fill(SHADE), ...Array(4).fill({ ...SHADE, eyes: [0, -3, -2] })],
+  // Slow blink: the lids close to a line, stay shut, open, and stay open before the next one.
+  'blink': [CLOSED, CLOSED, CLOSED, {}, {}],
+  // Tall: up through the crown, arms long and easy at the sides, held.
+  'sit-tall': [
+    { body: [0, -4], head: [0, 0, -2], armL: [5, 1, -1], armR: [-5, -1, -1] },
+    { body: [0, -4], head: [0, 0, -2], armL: [5, 1, -1], armR: [-5, -1, -1] },
+  ],
 };
 export const POSES = Object.keys(POSE);
 
-const PARTS = ['body', 'torso', 'head', 'armL', 'armR', 'legL', 'legR'];
+const PARTS = ['body', 'torso', 'head', 'eyes', 'lids', 'armL', 'armR', 'legL', 'legR'];
 const DATA = { armL: 'arm-left', armR: 'arm-right', legL: 'leg-left', legR: 'leg-right' };
 const sel = (part) => `[data-part="${DATA[part] || part}"]`;
 
 // One transform shape for every part and pose, so any two poses interpolate cleanly.
 function transform(part, pose) {
-  const [r = 0, dx = 0, dy = 0] = part === 'body' ? [0, ...(pose.body || [])] : pose[part] || [];
-  const [px, py] = J[part] || [0, 0];
-  return `translate(${dx}px, ${dy}px) translate(${px}px, ${py}px) rotate(${r}deg) translate(${-px}px, ${-py}px)`;
+  const [r = 0, dx = 0, dy = 0, sy = part === 'lids' ? 0 : 1] = part === 'body' ? [0, ...(pose.body || [])] : pose[part] || [];
+  const [px, py] = J[part] || [0, 0]; // the eyes have no joint: kit's blink() centres them (fill-box)
+  return `translate(${dx}px, ${dy}px) translate(${px}px, ${py}px) rotate(${r}deg) scale(1, ${sy}) translate(${-px}px, ${-py}px)`;
 }
 const at = (part, pose) => `data-part="${DATA[part] || part}" style="transform: ${transform(part, pose)}"`;
 
@@ -125,8 +140,11 @@ export function clover(mood = 'guide', pose) {
       <g ${at('head', p)}>
         <g data-part="ears">${ear(-1)}${ear(1)}</g>
         <ellipse cx="45" cy="56" rx="6" ry="4.5" fill="${BELLY}"/><ellipse cx="56" cy="56" rx="6" ry="4.5" fill="${BELLY}"/>
-        ${face(FACES[m], { cx: 50, cy: 42, skin: SKIN, mouthY: 16 })}
+        ${face(FACES[m], { cx: 50, cy: 42, skin: SKIN, mouthY: 16 }).replace('data-part="eyes"',
+          `data-part="eyes" style="transform-box: fill-box; transform-origin: center; transform: ${transform('eyes', p)}"`)}
         <ellipse cx="50.5" cy="52.5" rx="3.6" ry="2.6" fill="${NOSE}"/>
+        <g data-part="lids" style="transform-box: fill-box; transform-origin: center; transform: ${transform('lids', p)}">${[39, 61].map((x) =>
+          `<path d="M${x - 6} 41 Q${x} 46 ${x + 6} 41" fill="${SKIN}" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>`).join('')}</g>
       </g>
       <g data-part="arms"><g ${at('armL', p)}>${arm(J.armL)}</g><g ${at('armR', p)}>${arm(J.armR)}</g></g>
     </g></g>`).replace('<svg ', `<svg data-pose="${POSE[pose] ? pose : ''}" `);

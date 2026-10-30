@@ -101,24 +101,56 @@ test('sway and visitors move, and stay still under reduced motion', () => {
   assert.equal(calls.length, 0);
 });
 
-import { perches, drawGarden, flower } from '../src/garden/art.js';
+import { perches, drawGarden, flower, plantBox, BOUNDS } from '../src/garden/art.js';
 
-test('visitors perch inside the scene and never over their plant', () => {
-  for (const shape of ['strip', 'tall']) {
+test('no visitor sits on any plant: every plant, every stage, 1–6 plants, both shapes', () => {
+  const hit = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+  const check = (plants, shape, name) => {
     const [W, H] = SIZE[shape];
+    const at = slots(shape, plants.length);
+    const boxes = plants.map((p, i) => plantBox(p.habit, p.stage, at[i]));
+    perches(plants, shape).forEach((spot, i) => {
+      for (const [kind, b] of Object.entries(spot)) {
+        const where = `${name} plant ${i} ${kind}`;
+        assert.ok(b.x >= 0 && b.y >= 0 && b.x + b.w <= W && b.y + b.h <= H, `${where} in the scene`);
+        boxes.forEach((p, j) => assert.ok(!hit(b, p), `${where} on plant ${j}`));
+      }
+    });
+  };
+  for (const shape of Object.keys(SIZE)) {
     for (let n = 1; n <= 6; n++) {
-      for (const slot of slots(shape, n)) {
-        for (const s of STAGE_IDS) {
-          const { x, y, w } = slot;
-          for (const [kind, b] of Object.entries(perches(slot, s, shape))) {
-            const at = `${shape} ${n} ${s} ${kind}`;
-            assert.ok(b.x >= 0 && b.y >= 0 && b.x + b.w <= W && b.y + b.h <= H, `${at} in the scene`);
-            // The plant's body: the middle of its canvas, from the top of its stage down to the base.
-            const top = y - ((106 - [84, 72, 52, 32, 6][s]) * w) / 100;
-            const overlaps = b.x < x + 0.3 * w && b.x + b.w > x - 0.3 * w && b.y < y && b.y + b.h > top;
-            assert.ok(!overlaps, `${at} off the plant`);
+      for (const h of HABITS) {
+        for (const s of STAGE_IDS) check(Array(n).fill({ habit: h.id, stage: s }), shape, `${shape} ${n}× ${h.id} ${s}`);
+      }
+      // Mixed gardens: each plant at a different stage, the stages turning round.
+      for (const s of STAGE_IDS) {
+        check(Array.from({ length: n }, (_, i) => ({ habit: HABITS[i % HABITS.length].id, stage: (s + i) % 5 })), shape, `${shape} ${n} mixed ${s}`);
+      }
+    }
+  }
+  for (const name of Object.values(PLANTS)) assert.equal(BOUNDS[name]?.length, 5, `${name} is measured`);
+});
+
+test('past six plants, up to MAX_PLANTS of every kind: no visitor sits on any plant, no plants overlap in a row', async () => {
+  const { KINDS: kinds } = await import('../src/garden/art.js');
+  const { MAX_PLANTS: most } = await import('../src/garden/scene.js');
+  for (const name of kinds) assert.equal(BOUNDS[name]?.length, 5, `${name} is measured`);
+  const hit = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+  for (const shape of Object.keys(SIZE)) {
+    const [W, H] = SIZE[shape];
+    for (let n = 7; n <= most; n++) {
+      for (const s of STAGE_IDS) {
+        // Own habits by their chosen drawing, mixed with built-ins, each a stage on from the last.
+        const plants = Array.from({ length: n }, (_, i) => ({ habit: `own-${i}`, plant: kinds[(i + s) % kinds.length], stage: (s + i) % 5 }));
+        const at = slots(shape, n);
+        const boxes = plants.map((p, i) => plantBox(p.plant, p.stage, at[i]));
+        perches(plants, shape).forEach((spot, i) => {
+          for (const [kind, b] of Object.entries(spot)) {
+            const where = `${shape} ${n} ${s} plant ${i} ${kind}`;
+            assert.ok(b.x >= 0 && b.y >= 0 && b.x + b.w <= W && b.y + b.h <= H, `${where} in the scene`);
+            boxes.forEach((p, j) => assert.ok(!hit(b, p), `${where} on plant ${j}`));
           }
-        }
+        });
       }
     }
   }

@@ -80,7 +80,9 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - `src/move/` — the Move practice subject, built like Calm. `routines.js` is pure: a set of
   exercises becomes timed phases with rests between; a rep exercise counts its reps (`countOf()` in
   `src/practice/timeline.js`). `practice.js` mounts it; the coach demonstrates each pose through one
-  `demo()` adapter (Clover, `src/cast/clover.js`). Course in `src/data/move.json`:
+  `demo()` adapter in `src/practice/kit.js` (Clover, `src/cast/clover.js`), which the screen break
+  shares: Clover demonstrates each of its steps, and "How?" opens the step's guidance (`how` in
+  `src/break/routines.js`) with the routine paused. Course in `src/data/move.json`:
   Wake up, Strength (reps grow 5, 8, 10), Stretch. Guardrails bar pushing and body or weight
   words, and check the safety line is on the first lesson and after "Not really".
 - **Calm is not therapy.** `test/guardrails.test.js` bars health claims, diagnosis words and urgency
@@ -168,5 +170,8 @@ Promotion picker; accessibility. Backlog (sync, friends, Android): `docs/TODO.md
 
 - **Beginners play, they don't pick notation.** Answers are moves on the board or taps on squares;
   text says "Knight to c7", never "Nc7+" (`words()` turns SAN into words). Boards show coordinates.
-- **First visit asks one placement question** (`PLACEMENT` in `app.js`) and suggests a starting
-  unit; the learner can take it or start from the beginning. Units before the start stay open.
+- **No questions in the way.** A first visit lands on home (Lumi's welcome line, the garden, every
+  habit). Placement is an optional part of a subject: its `placement` (chess has one) shows as a
+  "Skip ahead" link by its path; the question then suggests a starting unit, or the learner starts
+  from the beginning. Answering or dismissing (×) hides the offer for good (`progress.start`, per
+  subject), and so does finishing the subject's first unit; starting a lesson never asks. Units before the start stay open.

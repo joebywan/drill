@@ -12,7 +12,8 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            oldest first, for the habit view: what was done each day
  *   done     { lessonId: true }
  *   cards    { itemKey: FSRS card }  — every item ever answered, scheduled for review
- *   start    unit title the placement survey chose, absent until it is answered
+ *   start    { subjectId: unitTitle | null }  — where a subject's optional placement question put
+ *            the learner, null once the offer is dismissed, absent while it is still offered
  *   journal  { 'YYYY-MM-DD': { good?, learned?, tomorrow? } }  — Reflect's lines, the learner's
  *            own words. Kept here, not in the log; only the habit view and the file export read them
  *   garden   { earned: { achievementId: 'YYYY-MM-DD' } }  — what the garden has been given
@@ -22,7 +23,7 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            icon and plant. `hidden` takes it off the tabs and keeps everything else (subjects.js habitsFor)
  *   version  the shape's version; `migrate()` brings any older shape up to VERSION
  */
-export const VERSION = 5;
+export const VERSION = 6;
 export const LEARN = 'learn';
 const emptyStreak = () => ({ count: 0, last: null, forgiven: [], days: 0 });
 export const emptyProgress = () => ({ version: VERSION, habits: { [LEARN]: emptyStreak() }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, tracked: [] });
@@ -60,14 +61,16 @@ const isTracked = (t) => isObject(t) && typeof t.id === 'string' && /^[a-z0-9-]{
  * at all (so the caller keeps what it has). Unversioned is version 0; up to version 1 there was
  * one `streak`, which becomes Learning's, and no log; up to version 2 there was no journal; up to
  * version 3 no garden, and no `days` on a streak, which is counted from the log's dates and is never
- * less than the streak's count (the log may have started after the streak); up to version 4 nothing
- * was `tracked`.
+ * less than the streak's count (the log may have started after the streak); up to version 4 `start`
+ * was one string, chess's (the only subject that asked), and becomes { chess: it }; up to version 5
+ * nothing was `tracked`, which starts empty.
  * Unknown fields are kept, so a file from a newer build loses nothing.
  */
 export function migrate(raw) {
   if (!isObject(raw) || !isObject(raw.done) || !isObject(raw.cards)) return null;
   if (!Object.values(raw.cards).every((c) => isObject(c) && !Number.isNaN(Date.parse(c.due)))) return null;
-  if (raw.start != null && typeof raw.start !== 'string') return null;
+  const start = typeof raw.start === 'string' ? { chess: raw.start } : raw.start;
+  if (start != null && !(isObject(start) && Object.values(start).every((u) => u === null || typeof u === 'string'))) return null;
   const { xp, ...kept } = raw; // points from earlier builds are dropped
   delete kept.streak; // version 1's one streak becomes Learning's, below
   let habits;
@@ -92,10 +95,21 @@ export function migrate(raw) {
   }
   const garden = raw.garden ?? { earned: {} };
   if (!isObject(garden) || !isObject(garden.earned) || !Object.values(garden.earned).every(isDate)) return null;
+  // Version 6: the self-reported habits the learner tracks (none before).
   const tracked = raw.tracked ?? [];
   if (!Array.isArray(tracked) || !tracked.every(isTracked) || new Set(tracked.map((t) => t.id)).size !== tracked.length) return null;
-  return { ...kept, version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal, garden, tracked };
+  return { ...kept, ...(start && { start }), version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal, garden, tracked };
 }
+
+/**
+ * True while `subject` offers its optional placement question: it has one, neither answered nor
+ * dismissed, and the subject's first unit isn't finished yet (after that, skipping ahead is moot).
+ */
+export const offersPlacement = (progress, subject) => !!subject.placement && !(subject.id in (progress.start ?? {}))
+  && !subject.units[0].lessons.every((l) => progress.done[`${subject.id}:${l.id}`]);
+
+/** Progress with a subject's placement answered (its path starts at `unit`) or dismissed (`unit` null). */
+export const placeAt = (progress, subjectId, unit) => ({ ...progress, start: { ...progress.start, [subjectId]: unit } });
 
 const scheduler = fsrs();
 

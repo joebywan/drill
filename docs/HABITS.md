@@ -90,6 +90,15 @@ The app's vibe moves from "build knowledge" to "grow yourself", shown as a garde
     Done: `drawGarden()` and `perches()` in art.js draw the whole garden once per render;
     `gardenView()` in app.js; both end screens show `award()`'s `newly` (three lines, then
     "and N more"). Wording (`plantWords`, `moreArrived`) is in model.js and linted.
+12. [ ] **Your own timings.** Agreed 2026-10-30. Each practice's timings can be changed (breath
+    in and out seconds, cycles, seconds per grounding step or scan zone, reps), for example to
+    match what a therapist prescribed. Kept in progress (a new version with `migrate()`), reset
+    to the path's defaults with one tap. Calm's `breaths()` already takes `inhale` and `exhale`.
+    Fizz has setters for this but never wired them to its "Therapist Exercise Settings" card;
+    do it properly here.
+13. [ ] **Log when and how far.** Groundwork for "Fitting the person" in `TODO.md`: each logged
+    session also records its local hour, and a practice left part-way is logged as left, with
+    the step it reached. Stays on the device like the rest of the log.
 
 ## Kept out
 

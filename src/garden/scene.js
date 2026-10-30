@@ -124,8 +124,8 @@ export function slots(shape = 'tall', n = 6) {
     return out;
   };
   if (shape === 'strip') return count <= 6 ? row(count, 112, 80) : rows([84, 120], [56, 64]);
-  if (count <= 3) return row(count, 360, 150);
-  return count <= 6 ? rows([250, 372], [120, 150]) : rows([196, 290, 384], [90, 105, 120]);
+  if (count <= 3) return row(count, 350, 150);
+  return count <= 6 ? rows([232, 364], [120, 150]) : rows([180, 272, 364], [90, 105, 120]);
 }
 
 /** Draws a plant svg (100 x 120, base at 50, 106) at a slot, as a nested svg. */
