@@ -1,13 +1,17 @@
 import { test, expect } from './fixtures.js';
 import { readFileSync } from 'node:fs';
 import { emptyProgress, finishPractice, finishSession } from '../../src/progress.js';
-import { API } from '../../src/sync/config.js';
+import { API, SYNC } from '../../src/sync/config.js';
+
+// Off as shipped, so only the check that it stays off runs. Flipping SYNC brings the rest back, here and in CI.
+const live = SYNC ? test : test.skip;
 
 // Sync and friends against the real worker, run locally (server/dev.js: Miniflare with an
 // in-memory D1). The app keeps its one API constant; each browser context routes that host to
 // the local worker. Needs `npm ci --prefix server` (CI does it).
 let worker;
 test.beforeAll(async () => {
+  if (!SYNC) return;
   const { start } = await import('../../server/dev.js');
   worker = await start({ port: 0 });
 });
@@ -39,7 +43,7 @@ const menu = async (page, item) => {
 };
 const stored = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
 
-test('the flag is off as shipped: no sync in Settings or the privacy page, and nothing is sent', async ({ page }) => {
+(SYNC ? test.skip : test)('the flag is off as shipped: no sync in Settings or the privacy page, and nothing is sent', async ({ page }) => {
   const calls = [];
   page.on('request', (r) => { if (!r.url().startsWith('http://127.0.0.1')) calls.push(r.url()); });
   await open(page, finishPractice(emptyProgress(), 'calm', null, new Date(), { title: 'Breathe', mins: 2 }));
@@ -53,7 +57,7 @@ test('the flag is off as shipped: no sync in Settings or the privacy page, and n
   expect(calls).toEqual([]);
 });
 
-test('sync is off until turned on: nothing is sent', async ({ page }) => {
+live('sync is off until turned on: nothing is sent', async ({ page }) => {
   await page.addInitScript(() => { window.DRILL_SYNC = true; });
   const calls = [];
   page.on('request', (r) => { if (!r.url().startsWith('http://127.0.0.1')) calls.push(r.url()); });
@@ -67,7 +71,7 @@ test('sync is off until turned on: nothing is sent', async ({ page }) => {
   expect(calls).toEqual([]);
 });
 
-test('pair a second device, see progress arrive, make a friend, cheer, then delete my data', async ({ browser }) => {
+live('pair a second device, see progress arrive, make a friend, cheer, then delete my data', async ({ browser }) => {
   // Device A: a lesson and a Calm session done, then sync on and a pairing code shown.
   let progressA = finishSession(emptyProgress(), `chess:${first.id}`, first.items.map((i) => ({ key: `chess:${i.id}`, correct: true })), new Date(), { title: first.title, mins: 3 });
   progressA = finishPractice(progressA, 'calm', null, new Date(), { title: 'Breathe', mins: 2 });
@@ -149,7 +153,7 @@ test('pair a second device, see progress arrive, make a friend, cheer, then dele
 
 // The Android wrapper has no internet permission: with its bridge there, the section is hidden
 // and sync never runs, even on a device that turned it on in a browser before.
-test('inside the Android wrapper, sync and friends are hidden and nothing is sent', async ({ page }) => {
+live('inside the Android wrapper, sync and friends are hidden and nothing is sent', async ({ page }) => {
   const calls = [];
   page.on('request', (r) => { if (!r.url().startsWith('http://127.0.0.1')) calls.push(r.url()); });
   await page.addInitScript(() => {
