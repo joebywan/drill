@@ -27,6 +27,17 @@ test("a course's own coach waits on its path and introduces themselves once, bef
   await expect(page.getByRole('heading', { name: 'Meet Fennel' })).toHaveCount(0);
 });
 
+test('the introduction opens at its top, however far home was scrolled', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 560 });
+  await seed(page, 'javascript');
+  await page.goto('/');
+  await page.evaluate(() => scrollTo(0, 80));
+  await page.locator('.node.here').click();
+  await expect(page.getByRole('heading', { name: 'Meet Fennel' })).toBeVisible();
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+  await expect(page.locator('.back')).toBeInViewport({ ratio: 1 });
+});
+
 test('someone already on a course never gets the introduction', async ({ page }) => {
   await seed(page, 'maths', { 'maths:done-already': true });
   await page.goto('/');

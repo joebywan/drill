@@ -397,6 +397,7 @@ function meetCoach({ subject }, then) {
       <ul class="does">${hello.expect.map(row).join('')}</ul>
     </main>
     <footer class="cta"><button class="next" data-go>${esc(hello.go)}</button></footer>`;
+  scrollTo(0, 0); // it opens at its top, not where home was scrolled to
   const who = coach(app.querySelector('.hero'), draw);
   who.set('teach');
   who.hop();
