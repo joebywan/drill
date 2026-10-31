@@ -6,8 +6,7 @@ TypeScript and TS test-writing are live.
 
 **Read the cast brief before building anything:** https://claude.ai/artifact/Td5spDrFgAah2w4PtBc2pn
 (a Claude Doc: read it with the docs tools). It holds the cast, the character states, the
-guardrails, events/widgets/notifications, and the **First build** plan — the Forks unit as a
-complete pilot — which is the next piece of work.
+guardrails, and events/widgets/notifications. What's left is in `docs/TODO.md`.
 
 The product is a Duolingo-*style* course, not a Daybook-style puzzle app. Daybook supplies repo
 conventions only. Learn Duolingo's functions, never copy its characters: "Oscar" is Duolingo's
