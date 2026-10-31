@@ -147,6 +147,7 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 
 **Test by playing**
 
+- **Blank button label in Firefox for Android.** Joseph has seen it a few times, on the Meet screen at least: the green button at full height with no text. The text and colour are right, so it isn't being drawn. Not reproduced: 39 runs of the old code in Firefox 159 on the emulator, which renders in software, including scrolling during the entrance and a shorter screen. If it recurs, note the screen and whether the text comes back on its own.
 - **Coding end to end, for pacing.** All 51 lessons have never been played through. Later lessons
   have only had automated fit and solvability checks.
 - **Session length.** Warm-ups, "Once more" and checkpoints make every Learn session longer. Check
