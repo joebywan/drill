@@ -95,9 +95,6 @@ html { scroll-padding-bottom: 160px; }
 .cta {
   position: fixed; left: 0; right: 0; bottom: 0; max-width: 520px; margin: 0 auto;
   padding: 24px 16px max(12px, env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--bg) 40%);
-  /* ponytail: a real phone once drew this button without its label; not reproduced on the emulator.
-     Its own layer is the usual cure for a fixed bar losing text. If it comes back, this wasn't it. */
-  will-change: transform;
 }
 .cta .next { margin: 0; }
 
