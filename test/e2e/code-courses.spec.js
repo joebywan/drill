@@ -26,7 +26,7 @@ async function solve(page, item) {
 }
 
 // The widest font a phone is likely to fall back to, as the Coding fit test has it, at both layouts' sizes.
-for (const [width, height] of [[360, 640], [375, 812]]) test(`every code item fits a ${width}x${height} phone`, async ({ page }) => {
+for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every code item fits a ${width}x${height} phone`, async ({ page }) => {
   test.setTimeout(240000);
   await page.setViewportSize({ width, height });
   await page.goto('/');

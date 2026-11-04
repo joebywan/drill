@@ -31,4 +31,23 @@ export default async ({ page, seed, touch, btn, shot, check }) => {
   await shot('summary');
   check('Fennel is on the end screen', await page.locator('.summary svg.cast-fennel').count() === 1);
   await touch(btn('Continue', { exact: true })); await shot('home-after');
+
+  // The tallest programs and maps as they mount, and a compact value to change answering a finger
+  // that lands just above it: a pin with no pointer events marks the spot the real tap goes to.
+  const items = JSON.parse(readFileSync(new URL('../../src/data/coding.json', import.meta.url))).units.flatMap((u) => u.lessons.flatMap((l) => l.items));
+  for (const id of ['var-3-grow', 'bug-3-draw', 'draw-3-comb', 'bug-3-list']) {
+    await page.evaluate(async (item) => {
+      const { mount } = await import('/src/coding/exercise.js');
+      const app = document.getElementById('app');
+      app.innerHTML = '<header class="bar" style="height:44px"></header><main class="play"><div class="coach"><button class="who"></button><p class="bubble"></p></div><div class="stage"></div></main>';
+      window.stopItem?.();
+      window.stopItem = mount(app.querySelector('.stage'), item, { say(t) { app.querySelector('.bubble').textContent = t; }, done() {} });
+    }, items.find((i) => i.id === id));
+    await shot(id);
+  }
+  const b = await page.getByRole('button', { name: 'Change: Step up' }).boundingBox();
+  await page.evaluate(([x, y]) => document.body.insertAdjacentHTML('beforeend', `<i id="pin" style="position:fixed;left:${x}px;top:${y}px;width:1px;height:1px;pointer-events:none"></i>`), [b.x + b.width / 2, b.y - 5]);
+  await touch(page.locator('#pin'));
+  await shot('changed-from-above');
+  check(`a tap 5px above a ${Math.round(b.height)}px value picks it to change`, await page.locator('.program .block.hole').count() === 1);
 };

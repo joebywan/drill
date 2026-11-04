@@ -190,10 +190,5 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 
 **Layouts from phone testing**
 
-- **Inner values in bug programs on short phones are 26-28px** (`.block .head b`, `.block .head .block`), under a comfortable
-  tap. Find-the-bug's "Change:" targets are 30px on a normal phone's list blocks too.
-- **Tall programs still reach under the tray at 360x582**, a 360x640 phone in the wrapper (Chrome's toolbar takes more): `var-3-grow`
-  and `bug-3-draw` end 25-35px below the top of the tiles. The page scrolls to them, but it's a reach. `layouts`/fit tests use 360x640 of page.
-- **A tall map in a laid-out item gets tiny on short phones:** `draw-3-comb` squares are 16px, Fennel with them, as the map gives way to the answer.
 - **Play Rosa's top level** answers in about 3.3 s at any CPU speed (its budget): usable, but whether it still plays well throttled wasn't measured.
 - **A very fast second tap** as a piece lands can be dropped.
