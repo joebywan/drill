@@ -2048,8 +2048,9 @@ test('Coding, the new blocks on a real page: a bug fixed by tapping, an endless 
   await expect(page.locator('pre.code')).toContainText('hop();\nhop();');
 });
 
-// Each size has its own layout rules, so a tall phone gets the grid at full size: both must fit.
-for (const [width, height] of [[360, 640], [375, 812]]) test(`every Coding item fits a ${width}x${height} phone: no sideways scroll, the program clear of the tiles`, async ({ page }) => {
+// Each size has its own layout rules, so a tall phone gets the grid at full size: all must fit. 360x582 is a
+// 360x640 phone in the Android wrapper, where Chrome's toolbar takes more.
+for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every Coding item fits a ${width}x${height} phone: no sideways scroll, the program clear of the tiles`, async ({ page }) => {
   test.setTimeout(120000);
   await page.setViewportSize({ width, height });
   await page.goto('/');
@@ -2089,6 +2090,20 @@ for (const [width, height] of [[360, 640], [375, 812]]) test(`every Coding item 
         if (room < 84) out.push(`${item.id}: the answer has only ${Math.round(room)}px`);
         const small = [...prog.querySelectorAll('button')].filter((b) => b.getBoundingClientRect().height < 26);
         if (small.length) out.push(`${item.id}: a placed block is under 26px tall`);
+      }
+      // A map stays big enough to see Fennel on, however tall it is.
+      const square = app.querySelector('.grid-world .cell')?.getBoundingClientRect().width;
+      if (square < 24) out.push(`${item.id}: the map's squares are ${Math.round(square)}px`);
+      // Every block to tap answers a thumb across 44px of height, however compact it looks.
+      const seen = prog.getBoundingClientRect();
+      const scrolls = getComputedStyle(prog).overflowY !== 'visible';
+      for (const b of prog.querySelectorAll('button.block')) {
+        const r = b.getBoundingClientRect();
+        if (scrolls && (r.top < seen.top + 22 || r.bottom > seen.bottom - 22)) continue; // at the edge of the answer's own space
+        const reach = Math.min(0, (r.height - 44) / 2) + 1;
+        // Where two blocks' areas meet one of them takes the tap: what matters is no dead space.
+        const hits = [r.top + reach, r.bottom - reach].map((y) => prog.contains(document.elementFromPoint(r.left + r.width / 2, y)?.closest('button')));
+        if (hits.includes(false)) { out.push(`${item.id}: ${b.getAttribute('aria-label')} is ${Math.round(r.height)}px to tap`); break; }
       }
       if (item.type === 'predict') {
         const cell = app.querySelector('.cell-pick').getBoundingClientRect();

@@ -191,11 +191,6 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 
 **Layouts from phone testing**
 
-- **Inner values in bug programs on short phones are 26-28px** (`.block .head b`, `.block .head .block`), under a comfortable
-  tap. Find-the-bug's "Change:" targets are 30px on a normal phone's list blocks too.
-- **Tall programs still reach under the tray at 360x582**, a 360x640 phone in the wrapper (Chrome's toolbar takes more): `var-3-grow`
-  and `bug-3-draw` end 25-35px below the top of the tiles. The page scrolls to them, but it's a reach. `layouts`/fit tests use 360x640 of page.
-- **A tall map in a laid-out item gets tiny on short phones:** `draw-3-comb` squares are 16px, Fennel with them, as the map gives way to the answer.
 - **Wind down in the wrapper with the phone in light mode:** the page is the night palette, the system bars stay light. A bridge
   call or `<meta name="theme-color">` handling would fix it.
 - **Back twice quickly from a routine** closes the app: the second press lands on home, as designed. Decide if a double press deserves a guard.
