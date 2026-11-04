@@ -554,6 +554,9 @@ html { scroll-padding-bottom: 160px; }
 .block .head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 40px; font-weight: 700; }
 .block .head .list { display: inline-flex; flex-wrap: wrap; gap: 3px; }
 .block .head .list .block { min-width: 30px; height: 30px; padding: 0 4px; font-size: 1rem; border-radius: 7px; }
+/* A value to tap stays compact in its line, but answers a thumb anywhere in the 44px around it. */
+.program button.block { position: relative; }
+.program button.block::after { content: ''; position: absolute; inset: min(0px, calc(50% - 22px)) 0; }
 .block .head b { display: inline-grid; place-items: center; min-width: 36px; height: 36px; border-radius: 8px; background: var(--code); color: var(--code-text); }
 .block .head b { padding: 0 6px; }
 .block.go.call { font-size: 1rem; }
@@ -593,7 +596,7 @@ html { scroll-padding-bottom: 160px; }
 .tile-ghost { user-select: none; position: fixed; left: 0; top: 0; z-index: 50; margin: 0; pointer-events: none; opacity: .9; }
 
 @media (max-height: 700px) {
-  .grid-world { width: min(100%, calc(var(--w) * 52px), calc(var(--w) * 23vh / var(--h))); }
+  .grid-world { width: min(100%, calc(var(--w) * 52px), calc(var(--w) * max(28px, 23vh / var(--h)))); }
   /* A square to tap keeps a thumb-sized target, whatever the map's height. */
   .grid-world.picking { width: min(100%, calc(var(--w) * 52px), calc(var(--w) * max(36px, 23vh / var(--h)))); }
   .play:has(.grid-world) .bubble { margin-bottom: 8px; }
@@ -807,12 +810,19 @@ body:has(main.night) {
   .answer { gap: 4px; min-height: 36px; }
   .answer .head { min-height: 30px; }
   .code { line-height: 1.35; }
-  /* Laying out takes the map, a tall tray and the answer: the coach gives way, or the answer has no room. */
-  .play:has(.answer) .grid-world { width: min(100%, calc(var(--w) * 44px), calc(var(--w) * 14vh / var(--h))); }
-  .play:has(.answer) .topic { position: absolute; clip-path: inset(50%); }
-  .play:has(.answer) .who { width: 44px; }
-  .play:has(.answer) .bubble { min-height: 80px; margin-bottom: 6px; padding: 6px 10px; font-size: .9rem; }
+  /* A map and a program, or laying out with its tall tray: the coach gives way, or the program has no room.
+     A tall map shrinks before the answer does, but its squares stay big enough to see Fennel on. */
+  .play:has(.answer) .grid-world { width: min(100%, calc(var(--w) * 44px), calc(var(--w) * max(24px, 14vh / var(--h)))); margin-bottom: 2px; }
+  .play:is(:has(.answer), :has(.grid-world)) .topic { position: absolute; clip-path: inset(50%); }
+  .play:is(:has(.answer), :has(.grid-world)) .who { width: 44px; }
+  .play:is(:has(.answer), :has(.grid-world)) .coach { margin-bottom: 4px; }
+  .play:is(:has(.answer), :has(.grid-world)) .bubble { min-height: 80px; margin-bottom: 6px; padding: 6px 10px; font-size: .9rem; }
   .tray .tile { min-height: 38px; }
+  /* The count of blocks shares Run's row, so the answer keeps the room. */
+  .choices.tray:has(> .meter-line)::after { content: ''; order: 1; flex-basis: 100%; margin-top: -6px; }
+  .tray > .meter-line, .tray:has(> .meter-line) .run { order: 2; }
+  .tray > .meter-line { flex: none; align-self: center; }
+  .tray:has(> .meter-line) .run { flex: 1 1 0; }
   .block .head { min-height: 28px; gap: 4px; }
   .block .head b { min-width: 26px; height: 26px; }
   .block .head .block { min-width: 28px; height: 28px; }

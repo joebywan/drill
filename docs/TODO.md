@@ -182,24 +182,14 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 
 **Repetition engine**
 
-- **Fresh repeats for the rest of chess.** `tap` and `truefalse` items still repeat as written (only stars, move and
-  find mirror). `truefalse` needs its `move` SAN flipped.
 - **A second miss of a mirrored item sees the same mirror.** Chess has only two versions of an item; a third go
-  repeats one. Fine at GOES 4 so far; watch it in play.
+  repeats one. Fine at GOES 4 so far; watch it in play. A colour flip as a third was looked at and left: 30 of 55
+  authored chess items name a colour, rank or direction (White, up, back rank), so it means rewriting text, not squares.
 - **Tune the numbers from real play.** `tools/sessions.js` models a fixed miss rate; nobody has played the new limits
   (2 echoes, 4 goes, 5 repeats a session). "One step back" has only run in tests and an E2E flow.
 
 **Layouts from phone testing**
 
-- **Inner values in bug programs on short phones are 26-28px** (`.block .head b`, `.block .head .block`), under a comfortable
-  tap. Find-the-bug's "Change:" targets are 30px on a normal phone's list blocks too.
-- **Tall programs still reach under the tray at 360x582**, a 360x640 phone in the wrapper (Chrome's toolbar takes more): `var-3-grow`
-  and `bug-3-draw` end 25-35px below the top of the tiles. The page scrolls to them, but it's a reach. `layouts`/fit tests use 360x640 of page.
-- **A tall map in a laid-out item gets tiny on short phones:** `draw-3-comb` squares are 16px, Fennel with them, as the map gives way to the answer.
-- **Wind down in the wrapper with the phone in light mode:** the page is the night palette, the system bars stay light. A bridge
-  call or `<meta name="theme-color">` handling would fix it.
-- **Back twice quickly from a routine** closes the app: the second press lands on home, as designed. Decide if a double press deserves a guard.
-- **A phone with no Japanese voice in the wrapper:** it falls back to the written reading, and nothing offers to install one.
 - **Play Rosa's top level gets shallower on a slow CPU.** It always answers in its 3 s budget and the page stays live (worst frame
   gap 28 ms), but the depth it finishes falls (CDP `Emulation.setCPUThrottlingRate`, desktop Chromium): unthrottled it completes depth 3
   in the opening and middlegame (depth 4 takes 15-46 s there, so "depth 4" is only reached in simple endgames); at 4x and 6x

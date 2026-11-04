@@ -237,6 +237,7 @@ const flipText = (text) => text?.replace(/\b([a-h])([1-8])\b/g, (_, f, r) => fli
 const flipBoard = (board) => board.split('/').map((rank) =>
   [...rank.replace(/\d/g, (n) => '.'.repeat(n))].reverse().join('').replace(/\.+/g, (m) => m.length)).join('/');
 const flipUci = (m) => flipSquare(m.slice(0, 2)) + flipSquare(m.slice(2, 4)) + m.slice(4);
+const flipSan = (san) => san.replace(/[a-h]/g, flipFile); // pieces are capitals; castling never gets here
 
 // Text a mirror would make untrue: castling and which wing or colour of square something is on.
 const ONE_SIDED = /kingside|queenside|castl|(light|dark|white|black)[- ]squared?/i;
@@ -247,11 +248,11 @@ const castles = (item) => {
   return item.moves.some((m) => game.move(uci(m)).san.startsWith('O-O'));
 };
 
-/** A move item or real-game puzzle mirrored left to right, or null where a mirror wouldn't be safe. */
+/** A move, tap, true/false item or real-game puzzle mirrored left to right, or null where a mirror wouldn't be safe. */
 function mirror(item) {
   const [board, turn, rights, ep, ...rest] = item.fen.split(' ');
   if (ONE_SIDED.test(`${item.prompt} ${item.explain}`)) return null;
-  if (kind(item) === 'move' ? rights !== '-' : castles(item)) return null;
+  if (kind(item) === 'find' ? castles(item) : rights !== '-') return null;
   const copy = {
     ...item,
     fen: [flipBoard(board), turn, '-', ep === '-' ? '-' : flipSquare(ep), ...rest].join(' '),
@@ -260,17 +261,20 @@ function mirror(item) {
   };
   if (item.to) copy.to = flipSquare(item.to);
   if (item.targets) copy.targets = item.targets.map(flipSquare);
+  if (item.square) copy.square = flipSquare(item.square);
+  if (item.move) copy.move = flipSan(item.move);
   if (kind(item) === 'find') copy.moves = item.moves.map(flipUci);
   return problem(copy) ? null : copy;
 }
 
 /**
  * The Chess subject's `vary` (repeat.js): a stars puzzle mirrored left to right, its piece no longer
- * introduced; a move item or real-game puzzle mirrored where that's safe. Null for anything else.
+ * introduced; a move, tap, true/false item or real-game puzzle mirrored where that's safe. Null for
+ * anything else, and for a tap that names its square: its words teach where that square is.
  */
 export function vary(item) {
   const type = kind(item);
-  if (type === 'move' || type === 'find') {
+  if (['move', 'find', 'truefalse'].includes(type) || (type === 'tap' && item.rule !== 'name')) {
     try { return mirror(item); } catch { return null; }
   }
   if (type !== 'stars') return null;
