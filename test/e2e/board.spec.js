@@ -43,6 +43,21 @@ test.describe('on a touch phone', () => {
       await continueButton(page).tap();
     }
   });
+
+  test.describe('with motion', () => {
+    test.use({ reducedMotion: 'no-preference' }); // the slide is the window the tap used to fall into
+    test('a quick tap as the piece lands is kept, not dropped', async ({ page }) => {
+      await page.goto('/');
+      await page.evaluate(async () => {
+        const { mount } = await import('/src/chess/exercise.js');
+        document.body.innerHTML = '<p id="ended"></p><div id="stage" style="width:360px"></div>';
+        mount(document.getElementById('stage'), { id: 's', type: 'stars', side: 'w', fen: '8/8/8/8/8/8/8/R7 w - - 0 1', stars: ['a4', 'h4'], moves: 3, prompt: 'Go.', explain: 'Done.' },
+          { say() {}, done: (right) => { document.getElementById('ended').textContent = String(right); } });
+      });
+      for (const sq of ['a1', 'a4', 'a4', 'h4']) await touch(page, sq); // no waiting for the rook to land on a4
+      await expect(page.locator('#ended')).toHaveText('true');
+    });
+  });
 });
 
 test('a keyboard player tabs to the board and walks the cursor with the arrows', async ({ page }) => {

@@ -190,5 +190,9 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 
 **Layouts from phone testing**
 
-- **Play Rosa's top level** answers in about 3.3 s at any CPU speed (its budget): usable, but whether it still plays well throttled wasn't measured.
-- **A very fast second tap** as a piece lands can be dropped.
+- **Play Rosa's top level gets shallower on a slow CPU.** It always answers in its 3 s budget and the page stays live (worst frame
+  gap 28 ms), but the depth it finishes falls (CDP `Emulation.setCPUThrottlingRate`, desktop Chromium): unthrottled it completes depth 3
+  in the opening and middlegame (depth 4 takes 15-46 s there, so "depth 4" is only reached in simple endgames); at 4x and 6x
+  depth 3 takes 5-9 s, so it plays its depth-2 move (after 1 e4 it plays d5 instead of e5; at 6x a middlegame's depth 2 took 3.3 s,
+  so it fell back to depth 1). Throttled, the top level plays about like level 2. Not broken; if slow phones need it, search
+  on fewer positions per node (chess.js `moves()` is the cost) or run it in a Worker, rather than raising the budget.
