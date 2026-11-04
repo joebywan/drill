@@ -48,6 +48,43 @@ test.describe('at 360x640', () => {
     expect((await page.evaluate(() => window.said)).at(-1)).toEqual(['あ', 'ja-JP']);
   });
 
+  test('in the wrapper with no Japanese voice, a teach card offers to get one, once; a browser never sees it', async ({ page }) => {
+    await seed(page);
+    await page.goto('/');
+    await page.locator('[data-course="japanese"]').click();
+    await page.getByRole('button', { name: /^Continue/ }).click();
+    await expect(page.locator('.reading')).toBeVisible();
+    await expect(page.locator('.get-voice')).toHaveCount(0);
+    await page.addInitScript(() => {
+      window.installs = 0;
+      window.DrillBridge = { summary() {}, art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]', hasVoice: () => false, speak() {}, installVoice: () => window.installs++ };
+    });
+    await page.goto('/');
+    await page.locator('[data-course="japanese"]').click();
+    await page.getByRole('button', { name: /^Continue/ }).click();
+    await page.getByRole('button', { name: 'Get a Japanese voice' }).click();
+    expect(await page.evaluate(() => window.installs)).toBe(1);
+    await page.goto('/');
+    await page.locator('[data-course="japanese"]').click();
+    await page.getByRole('button', { name: /^Continue/ }).click();
+    await expect(page.locator('.reading')).toBeVisible();
+    await expect(page.locator('.get-voice')).toHaveCount(0);
+  });
+
+  test('the bars follow the page: Wind down is dark even in light mode', async ({ page }) => {
+    await seed(page);
+    await page.addInitScript(() => {
+      window.bars = [];
+      window.DrillBridge = { summary() {}, art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]', bars: (c, light) => window.bars.push([c, light]) };
+    });
+    await page.goto('/');
+    expect((await page.evaluate(() => window.bars)).at(-1)).toEqual(['#f6f7f9', true]);
+    await page.locator('[data-path="winddown"]').click();
+    await page.locator('.cta .next').click();
+    await expect.poll(async () => (await page.evaluate(() => window.bars)).at(-1)).toEqual(['#18140f', false]);
+    expect(await page.locator('meta[name="theme-color"]').getAttribute('content')).toBe('#18140f');
+  });
+
   for (const habit of ['calm', 'winddown', 'break', 'move', 'focus']) {
     test(`${habit}: the round pause sits beside the coach, and nothing needs a scroll`, async ({ page }) => {
       await page.clock.install();

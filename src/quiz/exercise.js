@@ -1,6 +1,6 @@
 import { dragTile } from '../drag.js';
 import { esc } from '../html.js';
-import { cue, flourish, move, play, speak, voice } from '../feel.js';
+import { cue, flourish, installVoice, move, offerVoice, play, speak, voice } from '../feel.js';
 import { nearestTick, nextTile, onLine, paired, picked, shuffle, tick, tilesOf } from './items.js';
 
 /**
@@ -25,11 +25,13 @@ export function mount(el, item, ctx) {
   el.innerHTML = `<div class="quiz ${esc(ctx.look || '')}" lang="${esc(lang)}">
     <div class="card">${art}${item.type === 'build' ? `${item.show ? `<p class="meaning">${esc(item.show)}</p>` : ''}<p class="slots">${item.answer.map(() => '<span class="slot"></span>').join('')}</p>`
       : item.type === 'pairs' || listening || !item.show ? '' : glyph(item.show)}
-      ${item.type === 'teach' && item.read ? `<p class="reading" lang="en">${esc(item.read)}</p>` : ''}${item.type === 'pairs' ? '' : speaker}</div>
+      ${item.type === 'teach' && item.read ? `<p class="reading" lang="en">${esc(item.read)}</p>` : ''}${item.type === 'pairs' ? '' : speaker}
+      ${item.type === 'teach' && item.speak && offerVoice(lang) ? `<button class="link get-voice" lang="en">Get a ${esc(new Intl.DisplayNames(['en'], { type: 'language' }).of(lang.split('-')[0]))} voice</button>` : ''}</div>
     <div class="choices quiz-${item.type}"></div></div>`;
   const card = el.querySelector('.card');
   const choices = el.querySelector('.choices');
   el.querySelector('.hear')?.addEventListener('click', () => hear(item.speak));
+  el.querySelector('.get-voice')?.addEventListener('click', installVoice);
   if (item.type === 'pairs' && !art) card.remove();
   return TYPES[item.type]({ card, choices, item, hear, ...ctx });
 }
