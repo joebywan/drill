@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { RETRIES, checkpoint, comeBack, dropEchoes, echoes, fresh, marked, warmUps, withCheckpoint } from '../src/repeat.js';
 import { Chess } from 'chess.js';
 import { subjects } from '../src/subjects.js';
-import { kind, line, problem as chessProblem, solutions } from '../src/chess/items.js';
+import { answer, kind, line, problem as chessProblem, solutions } from '../src/chess/items.js';
 import { problem as quizProblem } from '../src/quiz/items.js';
 
 const chess = subjects.find((s) => s.id === 'chess');
@@ -70,6 +70,32 @@ test('every shipped move item mirrors into the same question, its goal squares a
   }
   assert.equal(chess.vary({ ...moves[0], fen: moves[0].fen.replace(' - - ', ' K - ') }), null, 'castling rights');
   assert.equal(chess.vary({ ...moves[0], prompt: 'Castle kingside.' }), null, 'a one-sided word');
+});
+
+test('every shipped tap and true/false item mirrors into the same answer, flipped, or names its square and stays', () => {
+  const items = shipped(chess).filter((i) => ['tap', 'truefalse'].includes(i.type));
+  let mirrored = 0;
+  for (const item of items) {
+    const m = chess.vary(item);
+    if (item.rule === 'name') { assert.equal(m, null, `${item.id}: its words teach where the square is`); continue; }
+    assert.ok(m, `${item.id} has a mirror`);
+    mirrored++;
+    assert.equal(chessProblem(m), null, item.id);
+    assert.notEqual(m.fen, item.fen, item.id);
+    const a = answer(item);
+    assert.deepEqual(answer(m), Array.isArray(a) ? a.map(flip).sort() : a, item.id);
+    if (item.move) assert.equal(m.move.replace(/[a-h]/g, (f) => flip(`${f}1`)[0]), item.move);
+    for (const key of ['prompt', 'explain']) {
+      const squares = (t) => [...t.matchAll(/\b[a-h][1-8]\b/g)].map(([x]) => x);
+      assert.deepEqual(squares(m[key]), squares(item[key]).map(flip), `${item.id} ${key}`);
+      assert.doesNotMatch(item[key], /\b[a-h]-(?!file|pawn)\w/, `${item.id} names a file the mirror can't flip`);
+    }
+  }
+  assert.ok(mirrored >= 10, `${mirrored} of ${items.length}`);
+  const tf = items.find((i) => i.move);
+  assert.equal(chess.vary({ ...tf, fen: tf.fen.replace(' - - ', ' K - ') }), null, 'castling rights');
+  assert.equal(chess.vary({ ...tf, explain: 'The knight sits on a light square.' }), null, 'a square colour');
+  assert.equal(chess.vary({ ...tf, move: 'Nf8' }), null, 'a mirror that fails problem() falls back');
 });
 
 test('every real-game puzzle that does not castle mirrors into a line that replays, and never echoes', () => {

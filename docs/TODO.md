@@ -182,18 +182,13 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 
 **Repetition engine**
 
-- **Fresh repeats for the rest of chess.** `tap` and `truefalse` items still repeat as written (only stars, move and
-  find mirror). `truefalse` needs its `move` SAN flipped.
 - **A second miss of a mirrored item sees the same mirror.** Chess has only two versions of an item; a third go
-  repeats one. Fine at GOES 4 so far; watch it in play.
+  repeats one. Fine at GOES 4 so far; watch it in play. A colour flip as a third was looked at and left: 30 of 55
+  authored chess items name a colour, rank or direction (White, up, back rank), so it means rewriting text, not squares.
 - **Tune the numbers from real play.** `tools/sessions.js` models a fixed miss rate; nobody has played the new limits
   (2 echoes, 4 goes, 5 repeats a session). "One step back" has only run in tests and an E2E flow.
 
 **Layouts from phone testing**
 
-- **Wind down in the wrapper with the phone in light mode:** the page is the night palette, the system bars stay light. A bridge
-  call or `<meta name="theme-color">` handling would fix it.
-- **Back twice quickly from a routine** closes the app: the second press lands on home, as designed. Decide if a double press deserves a guard.
-- **A phone with no Japanese voice in the wrapper:** it falls back to the written reading, and nothing offers to install one.
 - **Play Rosa's top level** answers in about 3.3 s at any CPU speed (its budget): usable, but whether it still plays well throttled wasn't measured.
 - **A very fast second tap** as a piece lands can be dropped.
