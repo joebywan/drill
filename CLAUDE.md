@@ -357,8 +357,8 @@ after `npm ci` at the root. App id `com.joebywan.drill`, locked.
   `npm run variants`, `tools/variants.js`: templates work out level, program, tiles and words, fixed seed,
   `test/variants.test.js` checks the bytes; never hand-edit a pool), a count item never with the same number, Coding flipped
   at random too. Without a family, Coding flips the map. Japanese (`src/quiz/vary.js`, works for any script course) asks the
-  other way round or by ear, with decoys only from kana taught by that point on the path. Chess mirrors stars, and `move`
-  and `find` items where safe (no castling; never text naming a wing or square colour; `problem()` must pass, else null):
+  other way round or by ear, with decoys only from kana taught by that point on the path. Chess mirrors stars, and `move`,
+  `find`, `tap` and `truefalse` items where safe (no castling, nor a `name` tap, whose words teach where the square is; never text naming a wing or square colour; `problem()` must pass, else null):
   `echoable` keeps a real-game puzzle out of its own session. Returning the item means "worth repeating as written", null
   means "don't". A new read or build item joins a family only if that family uses nothing taught after it. The card key
   stays the original's. `node tools/sessions.js` prints how long sessions get; `test/sessions.test.js` holds the bound.
