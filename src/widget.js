@@ -74,6 +74,20 @@ export const REMIND_AT = 18;
 /** The bridge the Android wrapper adds to the page. In a browser it is absent and nothing here runs. */
 export const bridge = () => globalThis.DrillBridge;
 
+/**
+ * The bars follow the page: `rgb` is the body's background ('rgb(24, 20, 15)'), so Wind down's night
+ * palette or the phone's dark mode reach `<meta name="theme-color">` (Chrome) and the wrapper's
+ * system bars, with dark icons on a light page.
+ */
+export function tellBars(rgb) {
+  const [r, g, b] = rgb.match(/\d+/g).map(Number);
+  const hex = `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+  let meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) document.head.append(meta = Object.assign(document.createElement('meta'), { name: 'theme-color' }));
+  meta.content = hex;
+  bridge()?.bars?.(hex, 0.299 * r + 0.587 * g + 0.114 * b > 140);
+}
+
 export const tellAndroid = (progress) => bridge()?.summary(JSON.stringify(summary(progress)));
 
 /**

@@ -3,8 +3,11 @@ package com.joebywan.drill
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.speech.tts.TextToSpeech
 import android.util.Base64
 import android.util.Log
@@ -16,6 +19,7 @@ import android.webkit.WebView
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
@@ -70,9 +74,14 @@ class MainActivity : ComponentActivity() {
             v.requestLayout()
             insets
         }
+        // Back on home leaves the app, but not within a second of a back that landed there: a quick
+        // double press out of a routine stops on home.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            private var backAt = 0L
             override fun handleOnBackPressed() {
-                if (web.canGoBack()) web.goBack() else { isEnabled = false; onBackPressedDispatcher.onBackPressed() }
+                val now = SystemClock.uptimeMillis()
+                if (web.canGoBack()) { backAt = now; web.goBack() }
+                else if (now - backAt > 1000) { isEnabled = false; onBackPressedDispatcher.onBackPressed(); isEnabled = true }
             }
         })
         noteOpened(intent)
@@ -110,6 +119,25 @@ class MainActivity : ComponentActivity() {
             t.language = Locale.forLanguageTag(lang)
             t.setSpeechRate(rate)
             t.speak(text, TextToSpeech.QUEUE_FLUSH, null, "drill")
+        }
+
+        /** The page's background behind the system bars, and whether their icons go dark (src/widget.js tellBars). */
+        @JavascriptInterface
+        fun bars(color: String, light: Boolean) {
+            val c = runCatching { Color.parseColor(color) }.getOrNull() ?: return
+            runOnUiThread {
+                window.setBackgroundDrawable(ColorDrawable(c))
+                WindowCompat.getInsetsController(window, window.decorView).run {
+                    isAppearanceLightStatusBars = light
+                    isAppearanceLightNavigationBars = light
+                }
+            }
+        }
+
+        /** The TTS engine's own screen for fetching a voice (feel.js offers it once). It has the internet; we don't. */
+        @JavascriptInterface
+        fun installVoice() {
+            runCatching { startActivity(Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA)) }
         }
 
         /** What became of the notes since last asked, as a JSON array, for `window.drill.noteReminder`. */

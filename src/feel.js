@@ -165,6 +165,16 @@ export const voice = (lang) => {
     return voices.find((v) => norm(v.lang) === lang.toLowerCase()) || voices.find((v) => norm(v.lang).startsWith(lang.slice(0, 2).toLowerCase())) || null;
   } catch { return null; }
 };
+/**
+ * With no voice for `lang` in the wrapper, the phone's TTS engine can fetch one (`installVoice`).
+ * True the first time only, so the offer is made once; never in a browser, or with Sound muted.
+ */
+export function offerVoice(lang) {
+  if (!soundOn() || !bridge()?.installVoice || voice(lang) || !pref('voice-offer', true)) return false;
+  setPref('voice-offer', false);
+  return true;
+}
+export const installVoice = () => bridge()?.installVoice();
 /** Says `text` in `lang`, slowly. False when there is no voice for it: show the reading instead. */
 export function speak(text, lang) {
   const v = voice(lang);

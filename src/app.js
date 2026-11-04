@@ -16,7 +16,7 @@ import { moment } from './cast/voice.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
 import { TIMINGS, TIMING_WORDS, pathTimings, setTiming, spread, timed } from './practice/timings.js';
-import { bridge, passNotes, sendArt, tellAndroid } from './widget.js';
+import { bridge, passNotes, sendArt, tellAndroid, tellBars } from './widget.js';
 import { profile as syncProfile, sync } from './sync/sync.js';
 import { merge } from './sync/merge.js';
 import { navigation } from './nav.js';
@@ -1318,6 +1318,11 @@ sendArt().catch(console.warn);
 passNotes();
 addEventListener('visibilitychange', () => document.hidden || passNotes()); // a note tapped while the app was open
 navigation(app);
+// Every screen replaces #app's children; Wind down's night palette rides on one of them.
+const bars = () => tellBars(getComputedStyle(document.body).backgroundColor);
+new MutationObserver(bars).observe(app, { childList: true });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', bars);
+bars();
 const start = () => { if (showsIntro(progress)) intro(); else home(); };
 if (!openPairLink({ app, progress: () => progress, adopt, back: start, focusOn })) start();
 syncSoon(0);

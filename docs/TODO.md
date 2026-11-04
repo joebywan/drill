@@ -195,9 +195,5 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 - **Tall programs still reach under the tray at 360x582**, a 360x640 phone in the wrapper (Chrome's toolbar takes more): `var-3-grow`
   and `bug-3-draw` end 25-35px below the top of the tiles. The page scrolls to them, but it's a reach. `layouts`/fit tests use 360x640 of page.
 - **A tall map in a laid-out item gets tiny on short phones:** `draw-3-comb` squares are 16px, Fennel with them, as the map gives way to the answer.
-- **Wind down in the wrapper with the phone in light mode:** the page is the night palette, the system bars stay light. A bridge
-  call or `<meta name="theme-color">` handling would fix it.
-- **Back twice quickly from a routine** closes the app: the second press lands on home, as designed. Decide if a double press deserves a guard.
-- **A phone with no Japanese voice in the wrapper:** it falls back to the written reading, and nothing offers to install one.
 - **Play Rosa's top level** answers in about 3.3 s at any CPU speed (its budget): usable, but whether it still plays well throttled wasn't measured.
 - **A very fast second tap** as a piece lands can be dropped.
