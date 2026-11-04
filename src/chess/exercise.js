@@ -100,9 +100,42 @@ export function withPromotion(b, fen, from, to, play, reopen) {
   return true;
 }
 
+/**
+ * cm-chessboard ignores a press while a played move is still sliding into place: its move input
+ * stays 'moveDone' until movePiece() resolves, so a quick tap as the piece lands was lost. Hold
+ * that press (and its release, if it comes first) and replay it the moment the input is idle again.
+ */
+function keepFastTaps(b) {
+  const input = b.view.visualMoveInput;
+  const down = input.onPointerDown.bind(input);
+  const set = input.setMoveInputState.bind(input);
+  const held = [];
+  let touched = false; // after a touch, a mouse press is the browser's copy of it: leave that one dropped
+  const press = (tap) => {
+    if (input.moveInputState === 'moveDone') return held.push(tap); // the replay played a move: wait again
+    down(tap.down);
+    if (tap.up) input.pointerUpListener?.(tap.up);
+  };
+  input.onPointerDown = (e) => {
+    if (e.type === 'touchstart') touched = true;
+    if (input.moveInputState !== 'moveDone' || (touched && e.type !== 'touchstart')) return down(e);
+    if (e.cancelable) e.preventDefault();
+    const tap = { down: e, up: null };
+    held.push(tap);
+    addEventListener(e.type === 'touchstart' ? 'touchend' : 'mouseup', (u) => { tap.up = u; }, { once: true });
+  };
+  input.setMoveInputState = (state, params) => {
+    set(state, params);
+    if (state === 'reset') held.splice(0).forEach(press);
+  };
+  const destroy = b.destroy.bind(b);
+  b.destroy = () => { held.length = 0; destroy(); }; // its teardown resets the input: replay nothing then
+  return b;
+}
+
 export function board(el, fen, color = fen.split(' ')[1]) {  // seen from `color`, else the side to move
   assets();
-  return new Chessboard(el, {
+  return keepFastTaps(new Chessboard(el, {
     position: fen,
     orientation: color === 'w' ? COLOR.white : COLOR.black,
     assetsUrl: ASSETS,
@@ -117,7 +150,7 @@ export function board(el, fen, color = fen.split(' ')[1]) {  // seen from `color
     // would be a focusable field nobody can see.
     extensions: [{ class: Markers, props: { autoMarkers: MARKER_TYPE.frame } }, { class: Arrows },
       { class: Accessibility, props: { language: 'en', keyboardMoveInput: true, movePieceForm: false } }, { class: PromotionDialog }],
-  });
+  }));
 }
 
 /** The square the keyboard cursor is on, from the Accessibility extension. */
