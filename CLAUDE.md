@@ -176,8 +176,12 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   tapping it opens the habit view) and `readBack` (end screen: "Read back your week" once three of
   the last seven days have lines) return html and are the only other readers; our words around the
   lines are `REFLECT_WORDS` in `cast/lines.js`. No prompt asks about a bad feeling, and nothing
-  interprets what was written. A subject's `again` ({ label, lesson }, in the course JSON) keeps a
-  lesson on home once the path is done: "Reflect today", "Take a break", "Breathe". The learner's text is never linted or sent anywhere (a test checks).
+  interprets what was written. A subject's `again` ({ label, lesson } or { label, lessons }, in the course JSON) keeps a
+  lesson on home once the path is done: "Reflect today", "Take a break". With `lessons` (Calm's longer routines, Move's last of each unit) `nextUp(units, again, log)`
+  suggests the one done least recently, never-done first, ties in path order, read from the `lesson` that `finishPractice` puts on each log entry: "Breathe · A slower scan".
+  Under that button, "Something else" (`chooseView`) lists every finished routine by unit, and for the guided habits but Reflect ends with "I did it away from the app":
+  `logToday(…, 'Away from the app')` through `awayToday()`, so streak, day and wing count and nothing unlocks; once a day, home says so quietly (no count) with an Undo (`unlogToday`).
+  Before any routine is finished the link reads "Did it away from the app?" and counts directly. Words: `CHOOSE_WORDS`. The learner's text is never linted or sent anywhere (a test checks).
 - `src/winddown/` — Wind down, a bedtime sequence made only of Calm's pieces: kit.js `sequence()`
   plays a 'sequence' item's parts in turn (its own settle-in steps and goodnight card, then Calm's
   `practise()` routines) and ends once; Calm's `sounded()` puts the bell and rain round the whole.

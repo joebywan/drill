@@ -78,7 +78,7 @@
           { "move": "squat", "reps": 8 },
           { "move": "march", "seconds": 40 }
         ] }] },
-        { "id": "strength3", "title": "Two rounds", "items": [{ "id": "strength-c", "type": "routine", "set": [
+        { "id": "strength3", "title": "Strength, two rounds", "items": [{ "id": "strength-c", "type": "routine", "set": [
           { "move": "march", "seconds": 40 },
           { "move": "wall-push", "reps": 10 },
           { "move": "squat", "reps": 10 },
@@ -247,7 +247,7 @@
           { "move": "heel-raise", "reps": 5 },
           { "move": "side-leg-lift", "reps": 4 }
         ] }] },
-        { "id": "balance3", "title": "Two rounds", "items": [{ "id": "balance-c", "type": "routine", "set": [
+        { "id": "balance3", "title": "Balance, two rounds", "items": [{ "id": "balance-c", "type": "routine", "set": [
           { "move": "heel-raise", "reps": 10 },
           { "move": "side-leg-lift", "reps": 5 },
           { "move": "one-leg-stand", "seconds": 30 },
@@ -258,7 +258,7 @@
       ]
     }
   ],
-  "again": { "label": "Move", "lesson": "wake3" },
+  "again": { "label": "Move", "lessons": ["wake3", "strength3", "stretch2", "back3", "seated3", "balance3"] },
   "moves": {
     "neck-tilt": { "pose": "neck-tilt", "name": "Neck tilts", "how": ["Ear towards your shoulder, slowly.", "Pause for a breath, then over to the other side.", "Shoulders stay low. Small is fine."] },
     "shoulder-roll": { "pose": "shoulder-roll", "name": "Shoulder rolls", "how": ["Lift your shoulders up towards your ears.", "Roll them back, then let them drop.", "Arms hang loose."], "pace": 4, "unit": "shoulder rolls" },
