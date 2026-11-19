@@ -1,6 +1,7 @@
 import { move } from '../feel.js';
 import { scene, slots, place, SIZE, visitor, gust, lean } from './scene.js';
 import { layout } from './landmarks.js';
+import { BOX, lifeArt } from '../cast/butterfly.js';
 export { scene, slots, place, SIZE, MOODS, visitor, animateVisitor, animateScene, VISITORS, pond } from './scene.js';
 export { landmark, animateLandmarks } from './landmarks.js';
 
@@ -24,6 +25,8 @@ export { landmark, animateLandmarks } from './landmarks.js';
  *   sway(el) -> Animation | null   a slow idle sway about the base; null under reduced motion
  */
 export const MAX_FLOWERS = 6;
+// Where emerged butterflies settle about Lumi, in her pond's own 80 x 50 units (top left of each).
+const POND_SPOTS = [[66, 0], [22, 6], [52, -12], [4, 22], [32, -16], [70, 22]];
 const BLOOM_R = 4.5;
 
 const SOIL = '#7A4E32';
@@ -576,8 +579,9 @@ export function perches(plants, shape = 'tall', more = []) {
  * The garden as one svg string, drawn once per render: `garden()` from model.js in `shape`
  * ('strip' or 'tall'). The path and fence behind, each plant at its stage with its flowers
  * (plant() caps them) and shut buds when resting, the other landmarks in the room left, then each
- * plant's visitors, in its species, at its perches. Anything whose id is in `fresh` is marked
- * data-new, to fly or fade in. A clear rect under each plant makes the whole plant tappable.
+ * plant's visitors, in its species, at its perches; on the tall view each plant's eggs, caterpillars
+ * and chrysalises (`creatures`) on it, and in both every emerged butterfly, by its plant or by Lumi.
+ * Anything whose id is in `fresh` is marked data-new, to fly or fade in. A clear rect under each plant makes the whole plant tappable.
  */
 export function drawGarden({ mood, plants: all, landmarks = [], season, event }, shape = 'tall', fresh = []) {
   const at = slots(shape, all.length);
@@ -587,12 +591,31 @@ export function drawGarden({ mood, plants: all, landmarks = [], season, event },
     .replace(/^(<svg [^>]*>)/, '$1<rect width="100" height="120" fill="transparent"/>')).join('');
   const taken = plants.map((p, i) => plantBox(p.plant || p.habit, p.stage, at[i]));
   const n = taken.length;
-  const { back, front, life: guests } = layout(shape, taken, landmarks.map((l) => l.gift), fresh);
+  const { back, front, life: guests, pond } = layout(shape, taken, landmarks.map((l) => l.gift), fresh);
   const spots = perches(plants, shape, taken.slice(n));
-  const life = plants.flatMap((p, i) => p.visitors.map(({ id, gift, species }) => {
-    const b = spots[i][gift];
-    const isNew = fresh.includes(id) ? ' data-new' : '';
-    return b ? visitor(gift, species).replace('<svg ', `<svg x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" data-kind="${gift}"${isNew} `) : '';
-  })).join('');
-  return scene(mood, shape, season, event?.id).replace(/<\/svg>$/, `${back}${grown}${front}${guests}${life}</svg>`);
+  const fly = (gift, species, b, id) => (b ? visitor(gift, species).replace('<svg ', `<svg x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" data-kind="${gift}"${fresh.includes(id) ? ' data-new' : ''} `) : '');
+  const life = plants.flatMap((p, i) => p.visitors.map(({ id, gift, species }) => fly(gift, species, spots[i][gift], id))).join('');
+  // Emerged butterflies, in the order they arrived: every other one settles by Lumi at her pond
+  // (POND_SPOTS, in the pond's own units), the rest fly at their plant's butterfly perch.
+  const emerged = plants.flatMap((p, i) => (p.creatures || []).filter((c) => c.k === 3).map((c) => ({ c, i })))
+    .sort((a, b) => (a.c.on || '').localeCompare(b.c.on || ''));
+  const perched = new Set();
+  let byPond = 0;
+  const flock = emerged.map(({ c, i }, j) => {
+    const atPond = () => {
+      const s = pond && POND_SPOTS[byPond++];
+      return s && { x: f(pond.x + s[0] * pond.z), y: f(pond.y + s[1] * pond.z), w: f(20 * pond.z), h: f(20 * pond.z) };
+    };
+    const atPerch = () => !perched.has(i) && perched.add(i) && spots[i].butterfly;
+    const b = j % 2 ? atPond() || atPerch() : atPerch() || atPond();
+    return fly('butterfly', c.species, b, `emerged:${c.id}`);
+  }).join('');
+  // On the tall view, eggs, caterpillars and chrysalises sit on their plant, side by side.
+  const young = shape === 'strip' ? '' : plants.map((p, i) => {
+    const on = (p.creatures || []).filter((c) => c.k < 3);
+    const box = taken[i];
+    const w = Math.min(at[i].w * 0.5, (box.w * 1.2) / Math.max(1, on.length));
+    return on.map((c, j) => `<svg class="creature" data-stage="${c.stage}" x="${f(box.x + (box.w * (j + 0.5)) / on.length - w / 2)}" y="${f(box.y + box.h * 0.5 - w * 0.6)}" width="${f(w)}" height="${f(w * 0.83)}" viewBox="${BOX}"${fresh.some((id) => id.endsWith(`:${c.id}`)) ? ' data-new' : ''} aria-hidden="true">${lifeArt(c.species, c.stage, c.growth)}</svg>`).join('');
+  }).join('');
+  return scene(mood, shape, season, event?.id).replace(/<\/svg>$/, `${back}${grown}${young}${front}${guests}${life}${flock}</svg>`);
 }

@@ -1,5 +1,6 @@
 import { INK } from '../cast/kit.js';
 import { lumi } from '../cast/lumi.js';
+import { SPECIES, open } from '../cast/butterfly.js';
 import { move } from '../feel.js';
 import { SEASONS } from './season.js';
 
@@ -22,7 +23,8 @@ import { SEASONS } from './season.js';
  *       so drawing them in order layers them right.
  *   place(svg, slot) -> svg string   a plant drawn at a slot, to append inside the scene's svg
  *   VISITORS                ['butterfly', 'bee', 'birds', 'ladybird'], the gifts in model.js RULES
- *   visitor(kind, species) -> svg string   32 units tall (birds is a pair, 56 wide), in that species' colours
+ *   visitor(kind, species) -> svg string   32 units tall (birds is a pair, 56 wide), in that species' colours;
+ *                           a butterfly's species is the kit's (SPECIES in src/cast/butterfly.js)
  *   animateVisitor(el, kind, fresh) -> Animation[] | null   flutter, hover or hop, the butterfly and bee wander,
  *                           and a fresh one flies in first; null under reduced motion
  *   pond() -> svg string   80 x 50: the pond where Lumi lounges, placed by art.js drawGarden()
@@ -263,14 +265,8 @@ export const place = (svg, { x, y, w }) =>
 
 export const VISITORS = ['butterfly', 'bee', 'birds', 'ladybird'];
 
-// Species: each habit's butterfly and bee is its own, so a garden of them never repeats (the 13th
-// habit's matches the first's). [upper wings, lower wings, spots]; a bee's [body, stripes].
-export const BUTTERFLIES = [
-  ['#F28B30', '#F7B548', '#FFF6E0'], ['#3E8EDE', '#7BB8F0', '#E6F3FF'], ['#F5D547', '#FBE88A', '#FFFFFF'],
-  ['#F4F1EA', '#E2DCCF', '#3A3A3A'], ['#C8423A', '#E07A5F', '#3C5BA8'], ['#F08BB5', '#F7B8D2', '#FFFFFF'],
-  ['#6CBF6A', '#A2D99A', '#FFFFFF'], ['#7A5BC7', '#A98CE0', '#F3E9FF'], ['#E06A2B', '#8C4A2F', '#FFE08A'],
-  ['#2FA8A0', '#7FD3C8', '#FFFFFF'], ['#B5884A', '#D9B57A', '#3A2A1A'], ['#E84E7A', '#F59AB5', '#FFE3EC'],
-];
+// Species: each habit's bee is its own, so a garden of them never repeats (the 13th habit's matches
+// the first's). A bee's [body, stripes]. Butterflies are the kit's species (src/cast/butterfly.js).
 export const BEES = [
   ['#F5C230', INK], ['#E3A33A', '#6B3F1D'], ['#E0533A', INK], ['#4FA36B', INK], ['#D27D3A', '#5A3A22'], ['#5C6BC0', INK],
   ['#F2D27A', '#7A5A2A'], ['#E8E2D0', INK], ['#B6D35A', '#2F4A1E'], ['#E87FA0', INK], ['#7FC6E8', INK], ['#C9A0DC', INK],
@@ -282,16 +278,8 @@ export const BIRDS = [
 ];
 const pick = (list, i) => list[(Math.floor(i) || 0) % list.length] || list[0];
 
-const butterfly = (i) => {
-  const [up, low, spot] = pick(BUTTERFLIES, i);
-  return `<g data-part="wings">`
-  + `<ellipse cx="9.5" cy="11.5" rx="7" ry="6" fill="${up}" transform="rotate(-20 9.5 11.5)"/><ellipse cx="22.5" cy="11.5" rx="7" ry="6" fill="${up}" transform="rotate(20 22.5 11.5)"/>`
-  + `<ellipse cx="11" cy="20.5" rx="4.6" ry="4" fill="${low}"/><ellipse cx="21" cy="20.5" rx="4.6" ry="4" fill="${low}"/>`
-  + `<circle cx="8" cy="10.5" r="1.8" fill="${spot}"/><circle cx="24" cy="10.5" r="1.8" fill="${spot}"/></g>`
-  + `<rect x="14.8" y="8.5" width="2.4" height="16" rx="1.2" fill="${INK}"/>`
-  + `<path d="M15.4 9 Q13.5 5 11 3.6 M16.6 9 Q18.5 5 21 3.6" stroke="${INK}" stroke-width="1" fill="none" stroke-linecap="round"/>`
-  + `<circle cx="11" cy="3.6" r="1" fill="${INK}"/><circle cx="21" cy="3.6" r="1" fill="${INK}"/>`;
-};
+// An emerged butterfly: its species from the kit, open, in the visitor's 32 units.
+const butterfly = (sp) => `<g transform="scale(.2667)">${open((sp?.art ? sp : SPECIES[0]).art)}</g>`;
 
 const bee = (i) => {
   const [body, stripe] = pick(BEES, i);
@@ -329,7 +317,7 @@ const ladybird = () =>
 
 const DRAW = { butterfly, bee, birds, ladybird };
 
-/** `species` picks the colours (see BUTTERFLIES, BEES, BIRDS); 0 is the first. */
+/** `species` picks the colours (see BEES, BIRDS; 0 is the first), or for a butterfly is the kit's species. */
 export function visitor(kind = 'butterfly', species = 0) {
   const k = DRAW[kind] ? kind : 'butterfly';
   const w = k === 'birds' ? 56 : 32;

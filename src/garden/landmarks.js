@@ -5,7 +5,8 @@ import { SIZE, visitor, pond } from './scene.js';
 /**
  * The garden's landmarks, LANDMARKS in model.js: drawn into a scene by drawGarden (art.js).
  *
- *   layout(shape, taken, gifts, fresh) -> { back, front, life }   svg strings in the scene's units
+ *   layout(shape, taken, gifts, fresh) -> { back, front, life, pond }   svg strings in the scene's units, and
+ *       the pond's box { x, y, w, h, z } (null when a crowded strip leaves it out)
  *       Lumi's pond (scene.js pond()) is every garden's, there before any landmark; the pond landmark
  *       is a frog joining it. The path and the fence lie behind the plants (`back`); every other piece takes the free spot
  *       nearest where it would like to be, clear of `taken` (the plants' boxes, which it adds to).
@@ -142,7 +143,7 @@ export function layout(shape, taken, gifts, fresh = []) {
     if (b.y + b.h < hy + 10 * k) far += svg; else if (b.behind) hidden += svg; else front += svg;
     return { ...b, z: b.z * k };
   };
-  place('lumi');
+  const lumi = place('lumi');
   for (const gift of ['bench', 'birdhouse', 'beehive']) {
     if (!has.has(gift)) continue;
     const b = place(gift);
@@ -155,7 +156,7 @@ export function layout(shape, taken, gifts, fresh = []) {
   for (const gift of ['stall', 'pennant', 'scarecrow', 'snowman']) if (has.has(gift)) place(gift);
   if (has.has('lantern')) { place('lantern'); place('lantern', WANT.lantern2); }
   if (has.has('nest')) life += guest('birds', 1, fit([0.3, 0.55], 34 * k, 19 * k, tall), 'nest');
-  return { back: far + back + hidden, front, life };
+  return { back: far + back + hidden, front, life, pond: lumi };
 }
 
 /** Lanterns glow, the pond's ripple widens and fades, and the frog hops now and then. */
