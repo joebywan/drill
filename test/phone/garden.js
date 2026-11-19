@@ -33,6 +33,8 @@ export default async ({ page, seed, touch, btn, swipe, shot, run, check, checkSo
   p = practised(p, 'calm', 1); // …then yesterday's Calm, so today's is its fifth day: it hatches
   await seed(p);
   await shot('home');
+  // Chess has a finished unit, so home opens scrolled to its next lesson: back to the top for the header.
+  await page.evaluate(() => scrollTo(0, 0));
 
   const inView = (sel) => page.evaluate((sel) => {
     const r = document.querySelector(sel).getBoundingClientRect();
