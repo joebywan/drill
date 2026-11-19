@@ -130,8 +130,8 @@ permission, and the pool stays the fallback even then.
   default token it can't open update pull requests (the repo doesn't let Actions create them) or change workflow files,
   and CI wouldn't run on its pull requests. Create a classic personal access token with the `public_repo` and `workflow`
   scopes and save it as the repo secret `RENOVATE_TOKEN`.
-- **Play publishing: written, waiting on Joseph.** `.github/workflows/publish-play.yml` uploads the signed bundle from a
-  GitHub release to Play's internal track. It runs by hand only and refuses to run without its secret or a bundle signed with
+- **Play publishing: written, parked.** No Play launch until Joseph is happy with the app (his call, 2026-11-20).
+  `.github/workflows/publish-play.yml` uploads the signed bundle from a GitHub release to Play's internal track. It runs by hand only and refuses to run without its secret or a bundle signed with
   the pinned key, so nothing happens until these steps are done:
   1. The release key first (Joseph's steps above), then run **Android release** once; the release now carries the `.aab`.
   2. Make a Play Console developer account and create the app, package `com.joebywan.wingbeat`.

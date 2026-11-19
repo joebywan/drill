@@ -40,8 +40,6 @@ ages, backgrounds and motivation) then reviewed the survivors.
   fine, because it's plainly dress-up.
 - "Beat" only ever means a rhythm or a wing, never winning a score.
 - The store listing leads with Learn, so the name doesn't read as a rhythm game.
-- The EU mark: get a trade mark lawyer's opinion before the Play launch, launch outside the EU
-  first, and keep a fallback ready ("Wingbeat Learn", or Habataki for the EU only).
 
 ## Ideas that came with the name, not built yet
 
