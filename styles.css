@@ -750,7 +750,7 @@ body:has(main.night) {
   position: absolute; top: -13px; width: 32px; height: 32px; margin-left: -16px; border-radius: 50%; background: var(--maths);
   border: 3px solid var(--card); box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
 }
-.marker.right, .marker.answer { background: var(--accent); }
+.marker.right, .marker.spot { background: var(--accent); }
 .marker.wrong { background: var(--wrong); }
 .numline .end { position: absolute; bottom: 8px; font-weight: 700; color: var(--muted); }
 .numline .end:first-of-type { left: 6px; }

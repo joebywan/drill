@@ -174,3 +174,20 @@ test('every Maths item and fresh version fits a 360x640 phone in a wide font, wi
   }, items);
   expect(bad).toEqual([]);
 });
+
+test('a number line shows one marker after a right drop, and two after a miss', async ({ page }) => {
+  const line = course.units.flatMap((u) => u.lessons.flatMap((l) => l.items)).find((i) => i.type === 'line');
+  await page.goto('/');
+  const markers = async (wrong) => page.evaluate(async ({ item, wrong }) => {
+    const { mount } = await import('/src/maths/exercise.js');
+    const app = document.getElementById('app');
+    app.innerHTML = '<main class="play"><div class="coach"><p class="bubble"></p></div><div class="stage"></div></main>';
+    mount(app.querySelector('.stage'), item, { say() {}, done() {} });
+    const slider = app.querySelector('.numline');
+    if (!wrong) for (let k = 0; k < item.ticks; k++) slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
+    slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })); // the end tick, or the start: neither is the answer
+    return [...slider.querySelectorAll('.marker')].filter((m) => m.checkVisibility()).length;
+  }, { item: wrong ? line : { ...line, show: undefined, sum: String(line.max) }, wrong });
+  expect(await markers(false)).toBe(1);
+  expect(await markers(true)).toBe(2);
+});

@@ -122,7 +122,7 @@ const TYPES = {
         aria-valuemin="${item.min}" aria-valuemax="${item.max}">
         <div class="track">${Array.from({ length: item.ticks + 1 }, (_, k) => `<i style="left:${at(k)}"></i>`).join('')}
           ${item.min < 0 && item.max > 0 ? `<em class="zero" style="left:${(100 * -item.min) / (item.max - item.min)}%">0</em>` : ''}
-          <b class="marker"></b><b class="marker answer" hidden></b></div>
+          <b class="marker"></b><b class="marker spot" hidden></b></div>
         <span class="end">${esc(item.min + unit)}</span><span class="end">${esc(item.max + unit)}</span>
       </div>`);
     const slider = card.querySelector('.numline');
