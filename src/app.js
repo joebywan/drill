@@ -1,5 +1,7 @@
 import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
-import { GARDEN_WORDS, award, garden, moreArrived, plantWords } from './garden/model.js';
+import { GARDEN_WORDS, LIFE, LIFE_WORDS, award, creatures, garden, guide, moreArrived, plantWords } from './garden/model.js';
+import { lifeArt } from './cast/butterfly.js';
+import { fieldGuide } from './guide.js';
 import { PLANTS, animateLandmarks, animateScene, animateVisitor, drawGarden, flower, landmark, plant, sway, visitor } from './garden/art.js';
 import { COMEBACK_WORDS, PAUSED_WORDS, activeComeback, answerComeback, noteReminder, preferred, reminderHour, remindersPaused, shorter, shouldRemind, startComeback, usualHours, usualLine } from './fitting.js';
 import { WINGS, firstToday, emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, track, unlogToday, writeJournal, finishSession, meetsCoach, metCoach, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
@@ -229,6 +231,7 @@ function home(arrived = null, newly = []) {
   };
 
   const g = garden(progress, new Date(), south());
+  const raised = raising(creatures(progress).find((c) => c.id === (learning ? courseShown.id : habitShown)));
   app.innerHTML = `
     <header class="bar">
       <h1>Wingbeat</h1>
@@ -250,8 +253,9 @@ function home(arrived = null, newly = []) {
       ${streakRow(progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true, showsStreak(habitShown, pref('quiet-streaks', false))))}</button>`
         : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : '')}
       ${invite ? comebackCard(invite) : ''}
-      ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly) : ''}
+      ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly, raised) : ''}
       ${shownSubjects[0]?.lookBack?.(progress, new Date()) ?? ''}
+      ${shownHabit.kind === 'log' ? '' : raised}
       ${units.map((u) => `
         <section class="street">
           <h2>${esc(u.title)}</h2>
@@ -297,6 +301,7 @@ function home(arrived = null, newly = []) {
     stopHome = stopGarden;
   }
   app.querySelector('.garden-link').addEventListener('click', () => gardenView());
+  app.querySelector('.raising')?.addEventListener('click', (e) => guideView(e.currentTarget.dataset.species, () => { home(); focusOn('.raising'); }));
   app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); focusOn('.sound'); });
   app.querySelector('.menu').addEventListener('click', () => { stopHome(); keep(); });
   app.querySelector('.streak-line')?.addEventListener('click', () => habitView(habitShown));
@@ -629,11 +634,24 @@ function liven(el) {
 const shortDate = (date) => dateOf(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
 /** One thing that arrived, drawn small beside its line: "A butterfly arrived · 12 Oct". A visitor in its habit's species. */
-const arrival = ({ gift, text, on }, habit) => {
+const arrival = ({ gift, text, on, species: kind }, habit) => {
   const species = habitsFor(progress).findIndex((h) => h.id === habit);
-  const art = gift === 'flower' ? flower(habit) : gift === 'butterfly' || gift === 'bee' ? visitor(gift, species) : landmark(gift);
+  const art = LIFE.includes(gift) ? lifeSvg(kind, gift) : gift === 'flower' ? flower(habit) : gift === 'bee' ? visitor(gift, species) : landmark(gift);
   return `<span class="arrival">${art}<span>${esc(text)}${on ? ` · ${shortDate(on)}` : ''}</span></span>`;
 };
+
+/** A raised butterfly at its stage, drawn small by the kit (cropped close); the caterpillar at `growth`. */
+const lifeSvg = (species, stage, growth = 0) => `<svg class="creature" viewBox="12 6 96 84" aria-hidden="true">${lifeArt(species, stage, growth)}</svg>`;
+
+/** Home's line for the creature the path shown is raising ("Chess is raising a Chequered Swallowtail"), into the field guide. */
+const raising = (c) => (!c ? '' : `<button class="raising" data-species="${esc(c.species.id)}">${lifeSvg(c.species, c.stage, c.growth)}<span>${esc(LIFE_WORDS.raising(c))}</span></button>`);
+
+/** The field guide (src/guide.js), on `id`'s page when given; its back runs `back`. */
+function guideView(id, back) {
+  stopHome();
+  stopHome = () => {};
+  fieldGuide(guide(progress), { app, back, focusOn, date: shortDate, id });
+}
 
 /** What arrived in the garden is heard: the first thing's own sound, after `wait` ms. */
 const arrive = (newly, wait = 0) => { if (newly.length) setTimeout(() => chime(newly[0].sound || newly[0].gift), wait); };
@@ -674,11 +692,12 @@ function gardenView(from = null) {
       <b>${esc(kind[0].toUpperCase() + kind.slice(1))} · ${esc(p.name)}</b>
       ${words.days ? `<span>${esc(words.days)}</span>` : ''}
       ${words.next ? `<span class="hint">${esc(words.next)}</span>` : ''}
+      ${p.creatures.map((c) => `<span class="arrival">${lifeSvg(c.species, c.stage, c.growth)}<span>${esc(LIFE_WORDS.card(c))}${c.k === 3 && c.on ? ` ${shortDate(c.on)}` : ''}</span></span>`).join('')}
       ${[...p.flowers, ...p.visitors].sort((a, b) => a.on.localeCompare(b.on)).map((a) => arrival(a, p.habit)).join('')}
     </button></li>`;
   };
   app.innerHTML = `
-    <header class="bar"><button class="back" aria-label="Back">←</button></header>
+    <header class="bar"><button class="back" aria-label="Back">←</button><button class="link guide-link">${esc(LIFE_WORDS.open)}</button></header>
     <main class="garden-page">
       <h1>Your garden</h1>
       <div class="garden-view">${drawGarden(g, 'tall')}</div>
@@ -689,6 +708,7 @@ function gardenView(from = null) {
     </main>`;
   stopHome = liven(app.querySelector('.garden-view'));
   app.querySelector('[data-event]')?.addEventListener('click', () => playEvent(g.event));
+  app.querySelector('.guide-link').addEventListener('click', () => guideView(null, () => { gardenView(); focusOn('.guide-link'); }));
   focusOn(from ? `[data-plant="${from}"]` : 'h1');
   const open = (id) => habitView(id, () => gardenView(id));
   app.querySelector('.back').addEventListener('click', () => { home(); focusOn('.garden-link'); });
@@ -704,10 +724,11 @@ function gardenView(from = null) {
  * the big button sits in the footer. After it: a calm "done", today's streak, anything that arrived
  * in the garden (the end screens' own lines) and a small Undo for the rest of the day.
  */
-function logPanel(h, logged, newly) {
+function logPanel(h, logged, newly, raised = '') {
   const n = currentStreak(progress, new Date(), h.id);
   return `<section class="log-habit">
     <h2><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}</h2>
+    ${raised}
     ${logged ? `<p class="said" role="status">${esc(LOG_WORDS.done)}</p>
       <div class="chips">${chip('log', `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`)}</div>
       ${arrivals(newly)}

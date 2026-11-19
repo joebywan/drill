@@ -290,7 +290,7 @@ test('every practice habit answers each "How do you feel?" reply in its own coac
 
 // The garden: every achievement line and stage name is gentle. Nothing is lost, nothing is owed.
 import { EVENTS as GARDEN_EVENTS } from '../src/garden/events.js';
-import { RULES as GARDEN_RULES, STAGES as GARDEN_STAGES, moreArrived, plantWords, stage as gardenStage } from '../src/garden/model.js';
+import { LIFE_WORDS, RULES as GARDEN_RULES, STAGES as GARDEN_STAGES, creatures as gardenCreatures, moreArrived, plantWords, stage as gardenStage } from '../src/garden/model.js';
 
 test('seasonal events have no loss, guilt, urgency or ability words, and name no end date', () => {
   const strings = (v) => (typeof v === 'string' ? [v] : v && typeof v === 'object' ? Object.values(v).flatMap(strings) : []);
@@ -302,7 +302,13 @@ test('seasonal events have no loss, guilt, urgency or ability words, and name no
 
 test('garden text has no loss, guilt, urgency or ability words', () => {
   const screen = [0, 1, 4, 13, 29, 30, 400].flatMap((d) => Object.values(plantWords({ days: d, ...gardenStage(d) })));
-  const texts = [...GARDEN_RULES.map((r) => r.text), ...GARDEN_STAGES.map((s) => s.name), ...screen, moreArrived(4), 'Your garden'];
+  // Every raised butterfly at every stage, on home, the garden's cards and the field guide.
+  const raised = [0, 1, 2, 3].flatMap((k) => gardenCreatures({ done: {}, habits: {}, garden: { earned: Object.fromEntries(GARDEN_RULES.filter((r) => r.stage === k).map((r) => [r.id, '2026-10-01'])) } }));
+  const life = [...raised.flatMap((c) => [LIFE_WORDS.raising(c), LIFE_WORDS.card(c), LIFE_WORDS.by(c.name)]), LIFE_WORDS.by(null), LIFE_WORDS.title, LIFE_WORDS.open, LIFE_WORDS.source,
+    ...[1, 2, 3].flatMap((stage) => [1, 2].flatMap((n) => ['unit', 'day'].map((unit) => LIFE_WORDS.next({ stage, in: n, unit })))),
+    ...LIFE_WORDS.arrived.map((line) => line('Chess', 'Australian Painted Lady'))];
+  assert.ok(raised.length > 50);
+  const texts = [...GARDEN_RULES.map((r) => r.text), ...GARDEN_STAGES.map((s) => s.name), ...screen, ...life, moreArrived(4), 'Your garden'];
   assert.ok(texts.length > 10);
   for (const text of texts) for (const lint of [LOSS, URGENCY, ABILITY]) assert.doesNotMatch(text, lint, text);
   for (const text of texts) assert.doesNotMatch(text, /\b(missing|locked|wilt\w*|die[sd]?|dying|dead)\b/i, text);

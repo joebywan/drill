@@ -24,7 +24,8 @@
 <body>
 <div id="sheet"></div>
 <script type="module">
-  import { KINDS, PLANTS, plant, sway, MOODS, scene, slots, place, VISITORS, visitor, animateVisitor, animateScene } from '../src/garden/art.js';
+  import { KINDS, PLANTS, drawGarden, plant, sway, MOODS, scene, slots, place, VISITORS, visitor, animateVisitor, animateScene } from '../src/garden/art.js';
+  import { SPECIES } from '../src/cast/butterfly.js';
   import { SEASONS } from '../src/garden/season.js';
   // Names only: model.js and subjects.js pull in the app's dependencies. The tests check every
   // habit in HABITS has a plant.
@@ -53,6 +54,15 @@
       : v('butterfly', 130, 190, 34) + v('bee', 240, 270, 28) + v('birds', 140, 470, 34);
     return `<div class="scene" data-mood="${mood}">${scene(mood, shape, season).replace(/<\/svg>$/, grown + life + '</svg>')}</div>`;
   };
+  // Every stage of a raised butterfly: the courses' on the Learning tree, the habits' on their plants;
+  // emerged ones fly, every other one by Lumi at her pond.
+  const life = (k, i, growth = 0.6) => ({ id: `r${i}`, k, stage: ['egg', 'caterpillar', 'chrysalis', 'butterfly'][k], growth, species: SPECIES[i], on: `2026-11-0${i}` });
+  const raised = { mood: 'sunlit', season: 'summer', landmarks: [], plants: [
+    { habit: 'learn', stage: 4, flowers: [], visitors: [], creatures: [life(0, 0), life(1, 1), life(2, 2), life(3, 3)] },
+    { habit: 'calm', stage: 2, flowers: [], visitors: [], creatures: [life(1, 7, 0)] },
+    { habit: 'move', stage: 4, flowers: [], visitors: [], creatures: [life(3, 8)] },
+    { habit: 'focus', stage: 3, flowers: [], visitors: [], creatures: [life(2, 11)] },
+  ] };
   const slotDemo = (shape) => `<div class="scene">${scene('morning', shape).replace(/<\/svg>$/,
     slots(shape, 6).map((s) => place(plant('learn', 4), s)).join('') + '</svg>')}</div>`;
 
@@ -61,6 +71,7 @@
       + `<h2>${m}: tall</h2><div id="tall-${m}">${garden(m, 'tall')}</div>`).join('')
     + SEASONS.map((s) => `<h2>${s}: strip</h2><div id="strip-${s}">${garden('sunlit', 'strip', s)}</div>`
       + `<h2>${s}: tall</h2><div id="tall-${s}">${garden('sunlit', 'tall', s)}</div>`).join('')
+    + `<h2>Raised butterflies: all four stages (tall, then strip: emerged only)</h2><div id="raised-tall">${drawGarden(raised, 'tall')}</div><div id="raised-strip" style="margin-top:8px">${drawGarden(raised, 'strip')}</div>`
     + `<h2>All six slots</h2><div id="slots-strip">${slotDemo('strip')}</div><div id="slots-tall" style="margin-top:8px">${slotDemo('tall')}</div>`;
 
   document.querySelectorAll('svg.plant').forEach(sway);

@@ -1122,30 +1122,36 @@ test('a fresh garden is one seed; the first lesson grows a sprout and opens a fl
   await expect(strip(page, 1).locator('svg.plant-tree.stage-0')).toBeVisible();
   await finishFirstLesson(page);
   // The first unit is one lesson long, so finishing it is a finished unit: a flower opens.
-  await expect(page.locator('.arrivals li')).toHaveText([`A flower opened for ${basics.units[0].title}`]);
+  // That unit is chess's first, so its egg is laid and hatches at once: only the hatching is said.
+  await expect(page.locator('.arrivals li')).toHaveText([`A flower opened for ${basics.units[0].title}`, 'Your Chess egg hatched into a caterpillar']);
+  await expect(page.locator('.arrivals svg.creature')).toBeVisible();
   await continueButton(page).click();
   await expect(strip(page, 1).locator('svg.plant-tree.stage-1')).toBeVisible();
   await expect(strip(page, 1).locator('[data-part="bloom"]')).toHaveCount(1);
 });
 
-test('a 7-day Calm streak brings a butterfly, shown on the end screen and in the garden', async ({ page }) => {
-  await grown(page, ['calm'], 7);
+test('a fifth day of Calm hatches its caterpillar, shown on the end screen and in the garden', async ({ page }) => {
+  await grown(page, ['calm'], 4);
   await page.clock.install();
   await firstVisit(page);
-  await expect(strip(page, 2).locator('svg.visitor')).toHaveCount(0);
   await breathe(page);
-  await expect(page.locator('.arrivals')).toContainText('A butterfly arrived');
-  await expect(page.locator('.arrivals svg.visitor-butterfly')).toBeVisible();
+  // The egg and the hatching both arrive now; only the latest is announced.
+  await expect(page.locator('.arrivals li')).toHaveText(['Your Calm egg hatched into a caterpillar', 'A bee found Calm']);
+  await expect(page.locator('.arrivals svg.creature')).toBeVisible();
   await continueButton(page).click();
 
-  await expect(strip(page, 2).locator('svg.visitor-butterfly')).toHaveCount(1);
+  // Home's line for the habit shown, and the strip keeps to emerged butterflies.
+  await tab(page, 'Calm').click();
+  await expect(page.locator('.raising')).toHaveText('Calm is raising a Common Brown');
+  await expect(strip(page, 2).locator('svg.visitor-butterfly, svg.creature')).toHaveCount(0);
   await strip(page, 2).click();
   await expect(page.getByRole('heading', { name: 'Your garden' })).toBeFocused();
+  await expect(page.locator('.garden-view svg.creature[data-stage="caterpillar"]')).toHaveCount(1);
   const calm = page.locator('.plant-card[data-plant="calm"]');
   await expect(calm).toContainText('Lavender · sapling');
-  await expect(calm).toContainText('8 days practised');
-  await expect(calm).toContainText('6 more days to young');
-  await expect(calm).toContainText(/A butterfly arrived · \d+ \w{3}/);
+  await expect(calm).toContainText('5 days practised');
+  await expect(calm).toContainText('9 more days to young');
+  await expect(calm).toContainText('Common Brown · caterpillar');
 
   // A card opens that habit's view; Back comes to the garden, then home to the strip.
   await calm.click();
@@ -1302,7 +1308,8 @@ test('a self-reported habit: add Walk, one tap, its streak and plant, and Undo t
   await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
   await expect(page.getByText('Done for today.')).toBeFocused();
   await expect(page.locator('.chip.log')).toContainText('1');
-  await expect(page.locator('.arrivals li')).toHaveText(['A bee found Walk']);
+  await expect(page.locator('.arrivals li')).toHaveText(['Your Walk egg arrived: a Caper White', 'A bee found Walk']);
+  await expect(page.locator('.log-habit .raising')).toHaveText('Walk is raising a Caper White');
   await expect(walked).toHaveCount(0);
   await expect(page.getByText('How do you feel?')).toHaveCount(0);
   await expect(strip(page, 2).locator('svg.plant-tulip[data-habit="walk"]')).toBeVisible();
@@ -1336,7 +1343,7 @@ test('a habit of your own: name, icon and plant; log it, rename it, and its name
   await expect(tab(page, 'Stretch')).toBeFocused();
   await page.getByRole('button', { name: 'Done today' }).click();
   await expect(tab(page, 'Stretch')).toHaveAccessibleName('Stretch, 1-day streak');
-  await expect(page.locator('.arrivals li')).toHaveText(['A bee found Stretch']);
+  await expect(page.locator('.arrivals li')).toHaveText(['Your Stretch egg arrived: a Red Lacewing', 'A bee found Stretch']);
   await expect(strip(page, 2).locator('svg.plant-cactus[data-habit="own-1"]')).toBeVisible();
 
   const name = '<img src=x onerror=hacked=1>&'; // within the 30-letter name
@@ -1521,8 +1528,8 @@ for (const colorScheme of ['light', 'dark']) {
       test('the garden strip and the full garden have no sideways scroll', async ({ page }) => {
         await grown(page, ['learn', 'calm', 'move', 'reflect', 'break'], 30, true);
         await firstVisit(page);
-        // A butterfly for each, a bee for each but Learning, and every landmark 150 days bring.
-        await expect(strip(page, 5).locator('svg.visitor-butterfly')).toHaveCount(5);
+        // A butterfly for each but Learning (no course is finished), and every landmark 150 days bring.
+        await expect(strip(page, 5).locator('svg.visitor-butterfly')).toHaveCount(4);
         await expect(strip(page, 5).locator('[data-landmark]')).not.toHaveCount(0);
         expect(await overflow(page)).toBe(0);
         await strip(page, 5).click();
@@ -2482,4 +2489,45 @@ test('the first lesson of each new Coding unit plays through as a real session, 
     const marked = lesson.items.filter((i) => i.type !== 'teach').length;
     await expect(page.getByText(`${marked} of ${marked} right first try`)).toBeVisible();
   }
+});
+
+test('the field guide opens from the garden and from home, and shows every kind', async ({ page }) => {
+  let p = emptyProgress();
+  for (let i = 30; i >= 1; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    p = finishPractice(p, 'calm', null, d);
+    if (i <= 6) p = finishPractice(p, 'move', null, d);
+  }
+  p = award(p).progress;
+  await page.addInitScript((saved) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', saved); }, JSON.stringify(p));
+  await firstVisit(page);
+  await tab(page, 'Move').click();
+  await expect(page.locator('.raising')).toHaveText('Move is raising a Wanderer');
+  await page.locator('.raising').click();
+  await expect(page.getByRole('heading', { name: 'Wanderer' })).toBeFocused();
+  await expect(page.locator('main')).toContainText('8 more days to its chrysalis');
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(page.locator('.raising')).toBeFocused();
+
+  await strip(page, 3).click();
+  await expect(page.locator('.plant-card[data-plant="calm"]')).toContainText(/Common Brown · arrived \d+ \w{3}/);
+  await page.getByRole('button', { name: 'Field guide', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Field guide' })).toBeFocused();
+  // Emerged first, in colour; then the one being raised; then a pale silhouette for the rest.
+  const tiles = page.locator('.guide-tile');
+  await expect(tiles.nth(0)).toContainText('Common Brown');
+  await expect(tiles.nth(0)).toContainText('Raised by Calm');
+  await expect(tiles.nth(1)).toContainText('Wanderer');
+  await expect(page.locator('.guide-tile.waiting', { hasText: 'Blue Triangle' })).toContainText('Raised by Maths');
+  await expect(page.locator('.guide-tile.waiting svg.silhouette')).not.toHaveCount(0);
+  await tiles.nth(0).click();
+  await expect(page.getByRole('heading', { name: 'Common Brown' })).toBeFocused();
+  await expect(page.locator('.latin')).toBeVisible();
+  await expect(page.locator('.guide-arts svg')).toHaveCount(2);
+  await expect(page.locator('.source a').first()).toHaveAttribute('href', /^https:/);
+  await page.goBack(); // the phone's back: to the grid, then the garden
+  await expect(tiles.nth(0)).toBeFocused();
+  await page.goBack();
+  await expect(page.getByRole('button', { name: 'Field guide', exact: true })).toBeFocused();
 });

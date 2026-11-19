@@ -149,6 +149,17 @@ export const chrysalis = (band = '#F3E7B8') => `<path d="M30 20 L92 16" stroke="
   + `<path d="M52 40 Q60 44 68 40" stroke="${band}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
   + [[53, 46], [57, 47], [61, 47], [65, 46]].map(([x, y]) => dot([x, y, 1.1, '#F2D04A'])).join('') + '</g>';
 
+/** A species' colour for its caterpillar's spots and its chrysalis's band: its first patch or spot. */
+export const tintOf = (art) => Object.values(art.cells || {})[0] || art.dots?.[0]?.[3] || '#F3E7B8';
+
+/** A species at a stage of its life ('egg', 'caterpillar', 'chrysalis', 'butterfly'), open once emerged. */
+export function lifeArt(species, stage, growth = 0, body = BODY_INK) {
+  if (stage === 'egg') return egg();
+  if (stage === 'caterpillar') return caterpillar(growth, tintOf(species.art), body);
+  if (stage === 'chrysalis') return chrysalis(tintOf(species.art));
+  return open(species.art, body);
+}
+
 // --- The player's butterfly today: flying once today is done, basking in the sun until then, resting
 // on a flower with its wings closed after a missed day. Never sad. From the approved sketches.
 const SUN = '<circle cx="104" cy="16" r="8" fill="#FFD27A"/>' + [0, 45, 90, 135, 180, 225, 270, 315]
