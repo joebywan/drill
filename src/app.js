@@ -9,7 +9,7 @@ import { flap, lumi, lumiPerched } from './cast/lumi.js';
 import { BOX, butterfly, butterflyToday } from './cast/butterfly.js';
 import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, comeBack, dropEchoes, echoes, fresh, warmUps } from './repeat.js';
 import { GOES, easier, flying, helpFor, misses, noteAnswer, struggling, warmedLast } from './adapt.js';
-import { CALM_SOUNDS, DARES_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
+import { CALM_SOUNDS, DARES_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, CHOOSE_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, setSound, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
 import { lessonOf } from './garden/events.js';
@@ -186,7 +186,13 @@ function home(arrived = null, newly = []) {
   const firstPick = brandNew && first && (first === courseShown.habit ? courseShown.title : habitOf(first)?.name);
   // The next lesson; a finished path whose subject has `again` ("Reflect today") keeps one of its lessons one tap away.
   const again = shownSubjects[0]?.again;
-  const { current, repeat } = nextUp(units, again);
+  const { current, repeat } = nextUp(units, again, progress.log);
+  // A guided habit lets you pick another routine, and (not Reflect) count a day done away from the app.
+  const guided = shownSubjects[0]?.kind === 'practice';
+  const todays = progress.log.filter((e) => e.habit === habitShown && e.date === today(new Date()));
+  const away = guided && habitShown !== 'reflect' && !todays.length;
+  const finishedUnits = guided ? units.map((u) => ({ ...u, nodes: u.nodes.filter((n) => n.state === 'done') })).filter((u) => u.nodes.length) : [];
+  const countedAway = guided && todays.some((e) => e.was !== undefined);
   // A practice often left at the same step offers a shorter one, for this session (fitting.js).
   const upNext = current ?? repeat;
   const short = upNext?.subject.kind === 'practice' && shorter(progress, habitShown, upNext.lesson, upNext.id, progress.timings?.[timingsOf(habitShown)]);
@@ -246,7 +252,8 @@ function home(arrived = null, newly = []) {
       ${learning && courses.length > 1 ? `<nav class="courses" aria-label="Course">${courses.map((s) =>
         `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === courseShown}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
       ${learning && courseShown.games ? `<nav class="courses games" aria-label="Games"><span>Games</span>${courseShown.games.map((g) => `<button class="course" data-game="${g.id}">${esc(g.label)}</button>`).join('')}</nav>` : ''}
-      ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : invite ? '' : greeting(shownHabit)}
+      ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : invite ? ''
+        : countedAway ? `<p class="said away-line" role="status" tabindex="-1">${esc(CHOOSE_WORDS.counted)} <button class="link" data-unaway>${esc(CHOOSE_WORDS.undo)}</button></p>` : greeting(shownHabit)}
       ${streakRow(progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true, showsStreak(habitShown, pref('quiet-streaks', false))))}</button>`
         : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : '')}
       ${invite ? comebackCard(invite) : ''}
@@ -263,8 +270,12 @@ function home(arrived = null, newly = []) {
       ${dueChip}
       ${shownHabit.kind === 'log' ? (logged ? '' : `<button class="next" data-log>${esc(shownHabit.did)}</button>`)
         : current ? `<button class="next" data-lesson="${current.id}">Continue · ${esc(current.lesson.title)}</button>`
-        : repeat ? `<button class="next" data-lesson="${repeat.id}">${esc(again.label)}</button>` : ''}
-      ${short ? `<button class="link short" data-short>${esc(short.words)}</button>` : ''}
+        : repeat ? `<button class="next" data-lesson="${repeat.id}">${esc(again.lessons ? `${again.label} · ${repeat.lesson.title}` : again.label)}</button>` : ''}
+      <div class="links">
+        ${short ? `<button class="link short" data-short>${esc(short.words)}</button>` : ''}
+        ${finishedUnits.length ? `<button class="link choose" data-choose>${esc(CHOOSE_WORDS.else)}</button>`
+          : away ? `<button class="link choose" data-away>${esc(CHOOSE_WORDS.awayOnly)}</button>` : ''}
+      </div>
       ${offer ? `<p class="offer"><button data-place>${esc(offer.placement.offer)}</button><button class="dismiss" data-dismiss aria-label="Dismiss">×</button></p>` : ''}
     </footer>`;
 
@@ -335,6 +346,14 @@ function home(arrived = null, newly = []) {
     home(null, got);
     focusOn('.log-habit [role="status"]');
   });
+  app.querySelector('[data-away]')?.addEventListener('click', () => awayToday(habitShown));
+  app.querySelector('[data-choose]')?.addEventListener('click', () => chooseView(shownHabit, finishedUnits, away));
+  app.querySelector('[data-unaway]')?.addEventListener('click', () => {
+    progress = unlogToday(progress, habitShown);
+    save();
+    home();
+    focusOn('.cta .next');
+  });
   app.querySelector('[data-undo]')?.addEventListener('click', () => {
     progress = unlogToday(progress, habitShown);
     save();
@@ -362,6 +381,36 @@ function home(arrived = null, newly = []) {
     home();
     focusOn('.cta .next');
   });
+}
+
+/** Counts today for a guided habit done away from the app: the streak, the day and the wing as a session, nothing unlocked. */
+function awayToday(habit) {
+  progress = logToday(progress, habit, 'Away from the app');
+  let got;
+  ({ progress, newly: got } = award(progress));
+  save();
+  if (got.length) arrive(got); else play('tap');
+  home(null, got);
+  focusOn('.away-line');
+}
+
+/** "Something else": every routine finished, by unit, one tap to start, and (offered once a day) "I did it away from the app". */
+function chooseView(h, finishedUnits, away) {
+  stopHome();
+  app.innerHTML = `
+    <header class="bar"><button class="back" aria-label="Back">←</button></header>
+    <main class="survey add-habit">
+      <h1>${esc(CHOOSE_WORDS.else)}</h1>
+      ${finishedUnits.map((u) => `<h2>${esc(u.title)}</h2>
+        ${u.nodes.map((n) => `<button class="choice" data-lesson="${n.id}">${esc(n.lesson.title)}</button>`).join('')}`).join('')}
+      ${away ? `<button class="choice" data-away>${esc(CHOOSE_WORDS.away)}</button>` : ''}
+    </main>`;
+  focusOn('h1');
+  app.querySelector('.back').addEventListener('click', () => { home(); focusOn('[data-choose]'); });
+  app.querySelector('[data-away]')?.addEventListener('click', () => awayToday(h.id));
+  for (const b of app.querySelectorAll('[data-lesson]')) {
+    b.addEventListener('click', () => lesson(finishedUnits.flatMap((u) => u.nodes).find((n) => n.id === b.dataset.lesson)));
+  }
 }
 
 /** Your butterfly drawn as it is today, or `state`; small on home, the end screens and the chip. */
@@ -559,7 +608,7 @@ function timingsView(id, back) {
   // A growing value starts from what the next session's lesson uses.
   const units = subjects.filter((s) => s.habit === id).flatMap((s) => unitsOf(progress, s));
   const subject = subjects.find((s) => s.habit === id);
-  const { current, repeat } = nextUp(units, subject?.again);
+  const { current, repeat } = nextUp(units, subject?.again, progress.log);
   const nodes = units.flatMap((u) => u.nodes);
   const usual = pathTimings(id, nodes.map((n) => n.lesson), nodes.indexOf(current ?? repeat), subject?.varied);
   app.innerHTML = `

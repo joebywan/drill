@@ -321,7 +321,7 @@ test('field-guide lines have no loss, urgency, ability or alarm words', () => {
 // target ("8 glasses"), and the preset names and button words get the same lint as everything else.
 // What learners name their own habits is theirs and is never linted.
 import { PRESETS } from '../src/subjects.js';
-import { LOG_WORDS } from '../src/cast/lines.js';
+import { CHOOSE_WORDS, LOG_WORDS } from '../src/cast/lines.js';
 import { rules as gardenRules } from '../src/garden/model.js';
 const NAGGING = /\b(forg[eo]t\w*|remember to|reminder|don'?t forget|you haven'?t|not yet|still haven'?t|goal\w*|target\w*|glasses|cups|litres?|liters?|steps|\d+ ?(min|minutes|pages|km|times))\b/i;
 
@@ -330,6 +330,7 @@ test('self-reported habit words never nag, count toward a target or judge', () =
   const texts = [
     ...PRESETS.flatMap((x) => [x.name, x.did, x.title]),
     ...Object.values(LOG_WORDS),
+    ...Object.values(CHOOSE_WORDS),
     ...gardenRules(presets).map((r) => r.text),
   ];
   assert.ok(texts.length > 30);

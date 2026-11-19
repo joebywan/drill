@@ -124,3 +124,51 @@ test('a `varies` value starts from the middle of the routine\'s own values, and 
   assert.equal(pathTimings('break', [], 0, { seconds: [10, 25] }).seconds, 20, 'the middle lands on the step (17.5 → 20)');
   assert.deepEqual(setTiming({}, 'break', 'seconds', 20, 20), { seconds: 20 }, '20 for every step is not the steps as written');
 });
+
+test('nextUp rotates `again.lessons`: never-done first, then least recent, ties in path order; one routine keeps one', async () => {
+  const { nextUp, unitsOf, finishPractice, logToday, unlogToday } = await import('../src/progress.js');
+  const { subjects } = await import('../src/subjects.js');
+  const calm = subjects.find((s) => s.id === 'calm');
+  const brk = subjects.find((s) => s.id === 'break');
+  const day = (d) => new Date(2026, 9, d, 12);
+  const all = (s) => Object.fromEntries(s.units.flatMap((u) => u.lessons).map((l) => [`${s.id}:${l.id}`, true]));
+  let p = { ...emptyProgress(), done: all(calm) };
+  const pick = () => nextUp(unitsOf(p, calm), calm.again, p.log).repeat.lesson.id;
+  assert.equal(pick(), 'breathe3', 'nothing logged: path order');
+  const order = [];
+  for (let d = 1; d <= 11; d++) {
+    const id = pick();
+    order.push(id);
+    p = finishPractice(p, 'calm', `calm:${id}`, day(d), { title: id });
+  }
+  assert.deepEqual(order, ['breathe3', 'ground2', 'scan2', 'sigh2', 'hug2', 'breathe3', 'ground2', 'scan2', 'sigh2', 'hug2', 'breathe3'], 'each in turn, then round again');
+  // Playing an old one by hand makes it the most recent.
+  p = finishPractice(p, 'calm', 'calm:ground2', day(12), { title: 'x' });
+  assert.equal(pick(), 'scan2');
+  // A session of another habit, or one with no lesson (away), changes nothing.
+  const before = pick();
+  p = finishPractice(p, 'move', 'move:wake3', day(13));
+  p = logToday(p, 'calm', 'Away from the app', day(13));
+  assert.equal(pick(), before);
+  const done = { ...emptyProgress(), done: all(brk) };
+  assert.equal(nextUp(unitsOf(done, brk), brk.again, [{ habit: 'break', lesson: 'break:break2' }]).repeat.id, 'break:break2', 'one routine keeps one');
+  assert.equal(nextUp(unitsOf(emptyProgress(), calm), calm.again, []).repeat, undefined, 'an open path has no repeat');
+});
+
+test('a day away from the app counts like a session, unlocks nothing, once a day, and can be undone', async () => {
+  const { logToday, unlogToday, finishPractice, currentStreak } = await import('../src/progress.js');
+  const day = (d) => new Date(2026, 9, d, 12);
+  let p = finishPractice(emptyProgress(), 'calm', 'calm:breathe1', day(1));
+  const base = p;
+  p = logToday(p, 'calm', 'Away from the app', day(2));
+  assert.equal(p.habits.calm.count, 2, 'the streak');
+  assert.equal(p.habits.calm.days, 2, 'the day');
+  assert.equal(p.wings.length, 2, 'the wing panel');
+  assert.deepEqual(p.done, base.done, 'nothing unlocked');
+  assert.equal(p.log.at(-1).title, 'Away from the app');
+  assert.equal(logToday(p, 'calm', 'Away from the app', day(2)), p, 'once a day');
+  const had = finishPractice(base, 'calm', null, day(2));
+  assert.equal(logToday(had, 'calm', 'Away from the app', day(2)), had, 'not when the habit has a session today');
+  assert.deepEqual(unlogToday(p, 'calm', day(2)), base, 'undone the same day');
+  assert.equal(unlogToday(p, 'calm', day(3)), p, 'not the next day');
+});

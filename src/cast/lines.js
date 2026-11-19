@@ -361,6 +361,15 @@ export const MOVE_SAFETY = 'Move gently and stop if anything hurts. If you have 
  * calm: no counting toward a target, no reminders, nothing about a day it didn't happen. The
  * names learners give their own habits are theirs and are never linted; these words are.
  */
+/** Choosing another routine, and counting a day done away from the app (home's footer and the list it opens). Plain: no praise, no count. */
+export const CHOOSE_WORDS = {
+  else: 'Something else',
+  away: 'I did it away from the app',
+  awayOnly: 'Did it away from the app?',
+  counted: "That's counted for today.",
+  undo: 'Undo',
+};
+
 export const LOG_WORDS = {
   hint: 'One tap when it happens. That is all.',
   done: 'Done for today.',

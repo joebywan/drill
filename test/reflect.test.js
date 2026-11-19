@@ -19,7 +19,7 @@ test("a day's own lines show in the habit view, safely, and an empty day adds no
 test("every practice path that can run out keeps a lesson on home, and it's a real one", () => {
   for (const s of subjects.filter((x) => x.kind === 'practice')) {
     assert.ok(s.again?.label, `${s.id} has an again label`);
-    assert.ok(s.units.some((u) => u.lessons.some((l) => l.id === s.again.lesson)), `${s.id}: ${s.again.lesson}`);
+    for (const id of s.again.lessons ?? [s.again.lesson]) assert.ok(s.units.some((u) => u.lessons.some((l) => l.id === id)), `${s.id}: ${id}`);
   }
 });
 

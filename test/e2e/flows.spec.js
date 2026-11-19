@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures.js';
+import { test, expect, calmFinished } from './fixtures.js';
 import { readFileSync } from 'node:fs';
 import { answer, kind, starPath } from '../../src/chess/items.js';
 import { emptyProgress, finishPractice, finishSession, leavePractice } from '../../src/progress.js';
@@ -2482,4 +2482,53 @@ test('the first lesson of each new Coding unit plays through as a real session, 
     const marked = lesson.items.filter((i) => i.type !== 'teach').length;
     await expect(page.getByText(`${marked} of ${marked} right first try`)).toBeVisible();
   }
+});
+
+// Choosing today's routine: a finished path suggests the one done least recently.
+const calmDays = (page, saved) => page.addInitScript((s) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', s); }, saved);
+const savedLog = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).log);
+
+test('a finished Calm path suggests the routine done least recently, and "Something else" lists the finished ones', async ({ page }) => {
+  await calmDays(page, calmFinished());
+  await firstVisit(page);
+  await tab(page, 'Calm').click();
+  await expect(page.getByRole('button', { name: 'Breathe · A slower scan' })).toBeVisible();
+  await page.getByRole('button', { name: 'Something else' }).click();
+  await expect(page.getByRole('heading', { name: 'Grounding' })).toBeVisible();
+  await expect(page.locator('.choice')).toHaveCount(12); // eleven routines and the away row
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Breathe · A slower scan' })).toBeVisible();
+  await page.getByRole('button', { name: 'Something else' }).click();
+  await page.getByRole('button', { name: 'Back to the room' }).click();
+  await expect(page.getByRole('heading', { name: '5 things you can see' })).toBeVisible();
+});
+
+test('"I did it away from the app" counts today for the habit with no end screen, and Undo takes it back', async ({ page }) => {
+  await calmDays(page, calmFinished());
+  await firstVisit(page);
+  await tab(page, 'Calm').click();
+  const before = (await savedLog(page)).length;
+  await page.getByRole('button', { name: 'Something else' }).click();
+  await page.getByRole('button', { name: 'I did it away from the app' }).click();
+  await expect(page.getByRole('button', { name: 'Breathe · A slower scan' })).toBeVisible(); // home, not an end screen
+  await expect(page.locator('.away-line')).toHaveText(/^That's counted for today\.\s*Undo$/);
+  const log = await savedLog(page);
+  expect(log).toHaveLength(before + 1);
+  expect(log.at(-1).title).toBe('Away from the app');
+  // Once a day: the list has no away row now.
+  await page.getByRole('button', { name: 'Something else' }).click();
+  await expect(page.getByRole('button', { name: 'I did it away from the app' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await page.locator('[data-unaway]').click();
+  expect(await savedLog(page)).toHaveLength(before);
+  await expect(page.locator('.away-line')).toHaveCount(0);
+});
+
+test('before any routine is finished the link counts the day directly', async ({ page }) => {
+  await firstVisit(page);
+  await tab(page, 'Calm').click();
+  await page.getByRole('button', { name: 'Did it away from the app?' }).click();
+  await expect(page.locator('.away-line')).toBeVisible();
+  expect((await savedLog(page)).at(-1).title).toBe('Away from the app');
+  await expect(page.getByRole('button', { name: 'Continue · The long out-breath' })).toBeVisible(); // nothing unlocked
 });

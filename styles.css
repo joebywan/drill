@@ -769,10 +769,11 @@ body:has(main.night) {
 .comeback p { margin: 0 40px 12px 0; line-height: 1.45; }
 .comeback .choice { width: 100%; margin: 0; }
 .comeback .link { margin: 4px auto 0; }
-.cta .short { margin: 4px auto 0; }
+.cta .links { display: flex; flex-wrap: wrap; justify-content: center; column-gap: 8px; }
+.cta .links .link { margin: 4px 0 0; }
 .habit .usual { margin: 4px 0 0; color: var(--muted); }
 .paused { margin-top: 16px; }
-.home:has(~ .cta :is(.short, .offer)) { padding-bottom: 170px; } /* room for the offer under Continue */
+.home:has(~ .cta :is(.short, .offer, .choose)) { padding-bottom: 170px; } /* room for the offer under Continue */
 
 /* ---- Sync and friends (src/sync/ui.js): pairing and recovery codes, the friend list. ---- */
 .survey.sync { text-align: left; }
@@ -938,3 +939,7 @@ body:has(main.night) {
 .does li > span:first-child svg { width: 1.6em; vertical-align: middle; }
 .hero.perched svg { overflow: visible; }
 .survey .hero.perched { margin-top: 24px; }
+
+/* Choosing another routine (CHOOSE_WORDS): the sheet's unit headings, and the quiet "counted" line with its Undo. */
+.add-habit h2 { margin: 20px 0 0; font-size: 1rem; text-align: left; color: var(--muted); }
+.away-line .link { display: inline; min-height: 0; margin: 0; padding: 0 4px; }

@@ -8,7 +8,7 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            `last` is the local date (YYYY-MM-DD) of the habit's last finished session;
  *            `forgiven` lists the dates a missed day was forgiven; `days` counts every date with a
  *            session, ever (the log only keeps a year), and only goes up: the garden grows from it
- *   log      [{ date, hour?, habit, title, mins, right?, of?, feel? }]  — every finished session,
+ *   log      [{ date, hour?, habit, title, mins, lesson?, right?, of?, feel? }]  — every finished session,
  *            oldest first, for the habit view: what was done each day. `hour` is the local hour
  *            (0–23) it was logged, absent on entries from before version 9
  *   left     [{ date, hour, habit, lessonId, title, step, of }]  — practices closed part-way, oldest
@@ -263,7 +263,7 @@ export function finishPractice(progress, habit, lessonId, now = new Date(), abou
   return {
     ...progress,
     habits: { ...progress.habits, [habit]: practised(progress, habit, now, true) },
-    ...session(progress, habit, { habit, title: about.title || 'Practice', mins: about.mins || 0 }, now),
+    ...session(progress, habit, { habit, title: about.title || 'Practice', mins: about.mins || 0, ...(lessonId && { lesson: lessonId }) }, now),
     done: lessonId ? { ...progress.done, [lessonId]: true } : progress.done,
   };
 }
@@ -438,12 +438,17 @@ export function unitsOf(progress, subject) {
 
 /**
  * A habit's next lesson on its path (`units`, from unitsOf): `current` is the first open one from
- * the placement question's starting unit on; once the path is done, `repeat` is `again`'s lesson
- * (the subject's { label, lesson }), if it has one.
+ * the placement question's starting unit on; once the path is done, `repeat` is the one of `again`'s
+ * lessons (`lesson`, or the list `lessons`) done least recently in `log` (a session's `lesson`),
+ * never-done first, ties in path order.
  */
-export function nextUp(units, again) {
+export function nextUp(units, again, log = []) {
   const from = Math.max(0, units.findIndex((u) => u.placed));
+  const nodes = units.flatMap((u) => u.nodes);
   const current = [...units.slice(from), ...units].flatMap((u) => u.nodes).find((n) => n.state === 'open');
-  const repeat = !current && again ? units.flatMap((u) => u.nodes).find((n) => n.lesson.id === again.lesson) : undefined;
+  if (current || !again) return { current, repeat: undefined };
+  const last = (n) => log.findLastIndex((e) => e.lesson === n.id);
+  const repeat = (again.lessons ?? [again.lesson]).map((id) => nodes.find((n) => n.lesson.id === id)).filter(Boolean)
+    .reduce((a, b) => (!a || last(b) < last(a) ? b : a), undefined);
   return { current, repeat };
 }
