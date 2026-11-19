@@ -1,7 +1,7 @@
 # Wingbeat — working notes for Claude
 
-Called Drill until November 2026 (why it changed: `docs/NAMING.md`); the Android app id and Kotlin
-package keep `com.joebywan.drill`.
+Called Drill until November 2026 (why it changed: `docs/NAMING.md`). The Android app id and Kotlin
+package are `com.joebywan.wingbeat`.
 
 A Duolingo-style learning app: lessons that teach, a cast of characters, a streak, review.
 Static page, vanilla ES modules, no build step, no server. Chess, maths, Japanese, coding, JavaScript,
@@ -300,7 +300,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 
 `android/` is a WebView wrapper (Kotlin, AGP 9 with built-in Kotlin, Gradle needs **Java 17**):
 `cd android && JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ANDROID_HOME=~/Android/Sdk ./gradlew assembleDebug`
-after `npm ci` at the root. App id `com.joebywan.drill`, locked.
+after `npm ci` at the root. App id `com.joebywan.wingbeat`, locked.
 
 - The web app is not copied into git: `copyWebAssets` syncs index.html, styles.css, src/, assets/ and
   the three import-map packages into the APK, served from `https://appassets.androidplatform.net` by
@@ -315,7 +315,7 @@ after `npm ci` at the root. App id `com.joebywan.drill`, locked.
   today. The reminder brain (`window.wingbeat`, feature-detected) sets the hour (`reminderHour()`, null
   → 18:00) and can say not today (`shouldRemind()`), both snapshotted into the summary; whether each
   note was opened or cleared is queued in Kotlin and handed to `noteReminder()` on load. Logcat tags `WingbeatBridge`, `WingbeatDaily`. Test path (debug builds only skip the once-a-day guard):
-  `adb shell am broadcast -n com.joebywan.drill/.Ticker -a com.joebywan.drill.REMIND --ez force true`.
+  `adb shell am broadcast -n com.joebywan.wingbeat/.Ticker -a com.joebywan.wingbeat.REMIND --ez force true`.
 - **What the WebView lacks:** `speechSynthesis`, so `speak()`/`voice()` in feel.js use `WingbeatBridge.hasVoice`/`speak` (Android's
   TextToSpeech; the manifest's `<queries>` lets it find the engine). With no voice for the course, a teach card offers
   "Get a Japanese voice" once (`offerVoice()`, `wingbeat.voice-offer`), which opens the engine's ACTION_INSTALL_TTS_DATA

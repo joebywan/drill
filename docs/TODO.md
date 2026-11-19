@@ -54,7 +54,7 @@ WebView shell serving the bundled app from `appassets.androidplatform.net` (as S
 no internet permission, then a JS bridge passing a session summary, a home-screen widget
 (streak flame tinted by today's light; Lumi plus one line) and opt-in local notifications.
 Release setup copies Daybook's: one signing key from the first build, `assembleRelease` only,
-checks that fail unsigned, wrong-key or debuggable APKs. App id `com.joebywan.drill`.
+checks that fail unsigned, wrong-key or debuggable APKs. App id `com.joebywan.wingbeat`.
 
 Widget and reminder mechanics, from a friend's Android habit app (Fizz) reviewed 2026-10-30:
 
@@ -130,7 +130,7 @@ permission, and the pool stays the fallback even then.
   GitHub release to Play's internal track. It runs by hand only and refuses to run without its secret or a bundle signed with
   the pinned key, so nothing happens until these steps are done:
   1. The release key first (Joseph's steps above), then run **Android release** once; the release now carries the `.aab`.
-  2. Make a Play Console developer account and create the app, package `com.joebywan.drill`.
+  2. Make a Play Console developer account and create the app, package `com.joebywan.wingbeat`.
   3. Upload that first `.aab` by hand to Internal testing and roll it out: the Play API can't release to an app still in draft.
      Choose Play App Signing with the release key as the upload key; `verify-aab.sh` pins that key.
   4. In Google Cloud make a service account with a JSON key; in Play Console, Users and permissions, invite it with release rights to this app.

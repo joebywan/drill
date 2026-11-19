@@ -49,12 +49,12 @@ if ((findProperty("requireSigning") as String?).toBoolean() && !haveReleaseKey) 
 }
 
 android {
-    namespace = "com.joebywan.drill"
+    namespace = "com.joebywan.wingbeat"
     compileSdk = 36
 
     defaultConfig {
         // Locked: changing it after the first release makes every installed copy un-updatable.
-        applicationId = "com.joebywan.drill"
+        applicationId = "com.joebywan.wingbeat"
         minSdk = 26
         targetSdk = 36
         // CI supplies a rising versionCode for every release; local builds get 1.
