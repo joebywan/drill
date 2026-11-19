@@ -1,6 +1,6 @@
 /**
  * The sync worker on this machine, with an in-memory D1 and the migrations applied: for the
- * tests (`start()`), and `npm run dev` (PORT, default 8787) for trying Drill against it.
+ * tests (`start()`), and `npm run dev` (PORT, default 8787) for trying Wingbeat against it.
  * Nothing here talks to Cloudflare.
  */
 import { Miniflare } from 'miniflare';
@@ -28,5 +28,5 @@ export async function start({ port } = {}) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const { url } = await start({ port: Number(process.env.PORT) || 8787 });
-  console.log(`Drill sync running at ${url}`);
+  console.log(`Wingbeat sync running at ${url}`);
 }

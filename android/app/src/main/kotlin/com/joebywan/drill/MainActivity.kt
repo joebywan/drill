@@ -64,7 +64,7 @@ class MainActivity : ComponentActivity() {
                     return true
                 }
             }
-            addJavascriptInterface(Bridge(), "DrillBridge")
+            addJavascriptInterface(Bridge(), "WingbeatBridge")
         }
         setContentView(web)
         // targetSdk 35+ is edge to edge: keep the page out from under the system bars.
@@ -89,7 +89,7 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * What the page calls (src/widget.js feature-detects `DrillBridge`). Every choice is made in JS;
+     * What the page calls (src/widget.js feature-detects `WingbeatBridge`). Every choice is made in JS;
      * this side stores what it is handed and renders it. Called on a WebView thread.
      */
     inner class Bridge {
@@ -118,7 +118,7 @@ class MainActivity : ComponentActivity() {
             val t = tts ?: return
             t.language = Locale.forLanguageTag(lang)
             t.setSpeechRate(rate)
-            t.speak(text, TextToSpeech.QUEUE_FLUSH, null, "drill")
+            t.speak(text, TextToSpeech.QUEUE_FLUSH, null, "wingbeat")
         }
 
         /** The page's background behind the system bars, and whether their icons go dark (src/widget.js tellBars). */
@@ -140,7 +140,7 @@ class MainActivity : ComponentActivity() {
             runCatching { startActivity(Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA)) }
         }
 
-        /** What became of the notes since last asked, as a JSON array, for `window.drill.noteReminder`. */
+        /** What became of the notes since last asked, as a JSON array, for `window.wingbeat.noteReminder`. */
         @JavascriptInterface
         fun notes(): String = Daily.takeNotes(this@MainActivity)
 
@@ -184,6 +184,6 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val HOST = "appassets.androidplatform.net"
-        const val TAG = "DrillBridge"
+        const val TAG = "WingbeatBridge"
     }
 }

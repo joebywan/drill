@@ -21,7 +21,7 @@ case "$(basename "$APK")" in
 esac
 
 # 2. Signed with the expected certificate.
-[[ -f "$EXPECTED_FILE" ]] || fail "missing $EXPECTED_FILE: put the SHA-256 of the Drill release certificate in it (see CLAUDE.md, Android)"
+[[ -f "$EXPECTED_FILE" ]] || fail "missing $EXPECTED_FILE: put the SHA-256 of the Wingbeat release certificate in it (see CLAUDE.md, Android)"
 EXPECTED="$(tr -d '[:space:]' < "$EXPECTED_FILE")"
 ACTUAL="$(python3 "$ROOT/tools/apk-cert.py" "$APK")" || fail "could not read the signing certificate"
 if [[ "$ACTUAL" != "$EXPECTED" ]]; then

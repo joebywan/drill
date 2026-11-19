@@ -8,7 +8,7 @@ export default async ({ page, seed, touch, btn, type, shot, check, run }) => {
   const { start } = await import('../../server/dev.js');
   const worker = await start({ port: 0 });
   try {
-    await page.addInitScript(() => { window.DRILL_SYNC = true; });
+    await page.addInitScript(() => { window.WINGBEAT_SYNC = true; });
     await page.route(`${API}/**`, async (route) => route.fulfill({ response: await route.fetch({ url: route.request().url().replace(API, worker.url) }) }));
     const as = async (recovery) => {
       const { token } = await derive(recovery);
@@ -30,7 +30,7 @@ export default async ({ page, seed, touch, btn, type, shot, check, run }) => {
     await type(code);
     await page.getByRole('heading', { name: 'This device is linked' }).waitFor({ timeout: 15000 }).catch(() => {});
     await shot('linked');
-    const linked = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.sync') || 'null'));
+    const linked = await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.sync') || 'null'));
     check('the phone joined the other device\'s profile', linked?.recovery === other);
 
     // A friend asks; the phone accepts and sends a cheer.

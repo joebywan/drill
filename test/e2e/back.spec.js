@@ -2,8 +2,8 @@ import { test, expect } from './fixtures.js';
 
 // The phone's back button (src/nav.js): page.goBack() is what the wrapper's web.goBack() does.
 const seed = (page, extra = {}) => page.addInitScript((p) => {
-  if (localStorage.getItem('drill.progress')) return;
-  localStorage.setItem('drill.progress', JSON.stringify({ version: 3, picked: [], done: {}, cards: {}, habits: {}, log: [], ...p }));
+  if (localStorage.getItem('wingbeat.progress')) return;
+  localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 3, picked: [], done: {}, cards: {}, habits: {}, log: [], ...p }));
 }, extra);
 const back = (page) => page.evaluate(() => history.back());
 const onHome = (page) => expect(page.locator('main.home')).toBeVisible();
@@ -57,7 +57,7 @@ test('back from a lesson does what its X does', async ({ page }) => {
   await back(page);
   await onHome(page);
   await expect(page.locator('.cta .next')).toBeFocused();
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')).log.length)).toBe(0);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).log.length)).toBe(0);
 });
 
 test('back from a routine does what its X does: how far it got is kept in `left`', async ({ page }) => {
@@ -69,7 +69,7 @@ test('back from a routine does what its X does: how far it got is kept in `left`
   await expect(page.locator('.orb')).toBeVisible();
   await back(page);
   await onHome(page);
-  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')));
   expect(saved.log).toHaveLength(0);
   expect(Object.keys(saved.left ?? {}).length).toBeGreaterThan(0);
 });
@@ -87,7 +87,7 @@ test("back from an end screen is its Continue", async ({ page }) => {
 });
 
 test('back from a coach meeting, the settings, the add-a-habit sheet and its form', async ({ page }) => {
-  await page.addInitScript(() => { window.DRILL_PLAIN = false; });
+  await page.addInitScript(() => { window.WINGBEAT_PLAIN = false; });
   await seed(page);
   await page.goto('/');
   await page.locator('.cta .next').click();

@@ -368,12 +368,12 @@ export const LOG_WORDS = {
 };
 
 /**
- * The first-visit intro (app.js intro): what Drill does, then what the learner would like out of
+ * The first-visit intro (app.js intro): what Wingbeat does, then what the learner would like out of
  * it. Plain words, every step skippable, and linted like the rest. `does` is keyed by habit id,
  * plus `track` for the one-tap habits.
  */
 export const INTRO_WORDS = {
-  title: 'What can Drill do for you?',
+  title: 'What can Wingbeat do for you?',
   does: {
     learn: 'Learn: short lessons, one course at a time.',
     calm: 'Calm: slow breathing and a body scan.',
@@ -389,7 +389,7 @@ export const INTRO_WORDS = {
   next: 'Next',
   skip: 'Skip',
   back: 'Back',
-  want: 'What would you like out of Drill?',
+  want: 'What would you like out of Wingbeat?',
   wantSaid: 'Pick as many as you like. You can change this any time from the ⋯ menu.',
   learn: 'Learn something',
   habits: 'Build habits',
@@ -749,7 +749,7 @@ export const GAME_WORDS = {
     best: (n) => `Best ${n}`,
     newBest: (n) => `Your best on this phone. The one before was ${n}.`,
     oldBest: (n) => `Your best on this phone is ${n}.`,
-    first: 'That is your score to beat now.',
+    first: 'Your first score on this phone.',
     time: 'Time. Pieces down.',
     again: 'Again',
   },

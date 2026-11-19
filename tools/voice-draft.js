@@ -31,7 +31,7 @@ const voice = JSON.parse(readFileSync(new URL(`../src/cast/voice/${coach}.json`,
 const existing = (dares ? voice.dares : voice.lines).flatMap((p) => p.lines);
 const state = Object.entries(when).map(([k, v]) => `${k}: ${v}`).join(', ') || 'any (a general line)';
 
-const system = `You write lines for ${voice.name}, a coach character in Drill, a gentle habits app.
+const system = `You write lines for ${voice.name}, a coach character in Wingbeat, a gentle habits app.
 Personality: ${voice.voice.personality}
 How ${voice.name} encourages: ${voice.voice.encourages}
 How ${voice.name} dares: ${voice.voice.dares}

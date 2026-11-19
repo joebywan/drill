@@ -1,4 +1,4 @@
--- Drill sync. No names, emails or free text: a profile is the hash of a device-held token.
+-- Wingbeat sync. No names, emails or free text: a profile is the hash of a device-held token.
 CREATE TABLE profiles (
   id TEXT PRIMARY KEY,               -- SHA-256 of the auth token derived from the recovery code
   friend_code TEXT NOT NULL UNIQUE,  -- 8 characters, what friends swap

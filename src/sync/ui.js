@@ -9,7 +9,7 @@ import { available, cheer, claim, forget, friendAction, friends, join, lookOf, p
  * The ⋯ menu's sync screens: Use on another device, Recovery code, Friends, Delete my data.
  * `ctx` is { app, progress() (the current progress), adopt(p) (take merged progress and save it),
  * back() (the ⋯ screen), focusOn(sel) }. Every screen works without sync, and says so plainly when
- * the server can't be reached; nothing here blocks using Drill.
+ * the server can't be reached; nothing here blocks using Wingbeat.
  */
 export const SYNC_MENU = [
   ['device', 'Use on another device'],
@@ -40,7 +40,7 @@ export function openPairLink(ctx) {
   return true;
 }
 
-const OFFLINE = "Drill's server can't be reached just now. Everything else works as usual.";
+const OFFLINE = "Wingbeat's server can't be reached just now. Everything else works as usual.";
 const say = (e) => (e?.status === 0 ? OFFLINE : e?.status === 429 ? 'That was a lot at once. Try again in a few minutes.' : 'Something went wrong on the server. Try again later.');
 
 /** 'subject:index' of the latest unit with a lesson done, on a learning path: the card's "current unit". */
@@ -55,10 +55,10 @@ const unitTitle = (unit) => {
   return subjects.find((s) => s.id === id)?.units[Number(i)]?.title;
 };
 
-const ABOUT = `<p class="said about">Turning this on sends a copy of your progress to Drill's server, locked on this
+const ABOUT = `<p class="said about">Turning this on sends a copy of your progress to Wingbeat's server, locked on this
   device first with a code only your devices have, so the server can't read it. Friends see a card: a
   preset name and animal, your streak and how many lessons you've done. No email, no password.
-  <a href="privacy.html">How Drill handles your data</a></p>`;
+  <a href="privacy.html">How Wingbeat handles your data</a></p>`;
 
 function screen(ctx, html, back = ctx.back) {
   ctx.app.innerHTML = `<main class="survey sync">${html}<p class="said" role="status"></p><button class="choice" data-back>Back</button></main>`;
@@ -168,7 +168,7 @@ function recovery(ctx) {
   const me = profile();
   const s = screen(ctx, me ? `
     <h1>Recovery code</h1>
-    <p class="said">If Drill is on none of your devices any more, this code brings your progress back to a new one. Keep it somewhere safe, like a password manager or on paper. Anyone with it can see your progress, so keep it to yourself.</p>
+    <p class="said">If Wingbeat is on none of your devices any more, this code brings your progress back to a new one. Keep it somewhere safe, like a password manager or on paper. Anyone with it can see your progress, so keep it to yourself.</p>
     <p class="code recovery">${esc(me.recovery)}</p>
     <button class="next" data-copy>Copy</button>
     <button class="choice" data-use>Use a recovery code</button>` : `
@@ -271,16 +271,16 @@ function cardLine(card) {
 function deleteView(ctx) {
   const on = !!profile();
   const s = screen(ctx, on ? `<h1>Delete my data</h1>
-    <p class="said">This deletes everything Drill's server keeps for you: your locked progress, your card, your friends and cheers.
+    <p class="said">This deletes everything Wingbeat's server keeps for you: your locked progress, your card, your friends and cheers.
       Your progress on this device stays, and sync turns off here. Other linked devices keep their own progress too.</p>
     <button class="next danger" data-delete>Delete it</button>` : `<h1>Delete my data</h1>
-    <p class="said">Sync is off on this device, so it has sent nothing to Drill's server. Your progress lives only here:
+    <p class="said">Sync is off on this device, so it has sent nothing to Wingbeat's server. Your progress lives only here:
       clearing this site's data in your browser removes it.</p>
     <p class="said">To delete what another device synced, use Delete my data there, or the recovery code on <a href="privacy.html#delete">this page</a>.</p>`);
   s.$('[data-delete]')?.addEventListener('click', () => busy(ctx, async () => {
     try {
       await forget();
-      screen(ctx, `<h1>Deleted</h1><p class="said">Nothing of yours is left on Drill's server. Your progress is still on this device.</p>`);
+      screen(ctx, `<h1>Deleted</h1><p class="said">Nothing of yours is left on Wingbeat's server. Your progress is still on this device.</p>`);
     } catch (e) { s.status(say(e)); }
   }));
 }

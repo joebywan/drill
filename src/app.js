@@ -22,7 +22,7 @@ import { merge } from './sync/merge.js';
 import { navigation } from './nav.js';
 import { currentUnit, openPairLink, openSync, syncMenuHtml } from './sync/ui.js';
 
-const STORE = 'drill.progress';
+const STORE = 'wingbeat.progress';
 const REVIEW_SIZE = 8;
 const app = document.getElementById('app');
 
@@ -100,7 +100,7 @@ const focusOn = (sel) => {
 let stopHome = () => {};
 
 // The habit whose path home shows. Remembered across visits when storage allows.
-const HABIT_KEY = 'drill.habit';
+const HABIT_KEY = 'wingbeat.habit';
 let habitShown = (() => {
   let h = null;
   try { h = localStorage.getItem(HABIT_KEY); } catch { /* private mode */ }
@@ -114,7 +114,7 @@ function showHabit(id) {
 // The shown habit's coach greets home in its own voice (say() in lines.js). Kept per habit, light
 // and day so a re-render doesn't change it; what was said lately and the day of the last dare
 // are kept in storage, so lines don't repeat and a dare comes at most once a day.
-const SAID = 'drill.said';
+const SAID = 'wingbeat.said';
 const greeted = new Map();
 function greeting(h) {
   // On Learning, the course shown speaks: Rosa, Kaede, Ada…
@@ -134,7 +134,7 @@ function greeting(h) {
 
 // The courses (Learn subjects) share the Learning tab; it shows one course's path at a time,
 // remembered like the habit shown.
-const COURSE_KEY = 'drill.course';
+const COURSE_KEY = 'wingbeat.course';
 const courses = subjects.filter((s) => s.kind === 'learn');
 let courseShown = (() => {
   let c = null;
@@ -225,7 +225,7 @@ function home(arrived = null, newly = []) {
   const g = garden(progress, new Date(), south());
   app.innerHTML = `
     <header class="bar">
-      <h1>Drill</h1>
+      <h1>Wingbeat</h1>
       <button class="sound" aria-pressed="${soundOn()}" aria-label="Sound">${soundOn() ? '🔊' : '🔇'}</button>
       <button class="menu" aria-label="Settings">⋯</button>
     </header>
@@ -341,7 +341,7 @@ function home(arrived = null, newly = []) {
     focusOn('.cta .next');
   });
   app.querySelector('[data-review]')?.addEventListener('click', () =>
-    run(null, reviewKeys.map((k) => ({ key: k, ...items.get(k), item: window.DRILL_PLAIN ? items.get(k).item : fresh(items.get(k).subject, items.get(k).item) })), 'Review'));
+    run(null, reviewKeys.map((k) => ({ key: k, ...items.get(k), item: window.WINGBEAT_PLAIN ? items.get(k).item : fresh(items.get(k).subject, items.get(k).item) })), 'Review'));
   for (const btn of app.querySelectorAll('[data-lesson]')) {
     btn.addEventListener('click', () => lesson(units.flatMap((u) => u.nodes).find((x) => x.id === btn.dataset.lesson)));
   }
@@ -356,14 +356,14 @@ function home(arrived = null, newly = []) {
 }
 
 /** Runs a path node's lesson; `timings` goes over the learner's own for this session only. */
-const lesson = (n, timings) => !window.DRILL_PLAIN && meetsCoach(progress, n.subject) ? meetCoach(n, () => lesson(n, timings)) :
+const lesson = (n, timings) => !window.WINGBEAT_PLAIN && meetsCoach(progress, n.subject) ? meetCoach(n, () => lesson(n, timings)) :
   run(n.id, lessonQueue(n), n.lesson.title, timings);
 
 /** A session's items: a lesson with its warm-ups and echoes (repeat.js), or a checkpoint's mix. */
 function lessonQueue({ subject, lesson: l }) {
   const entry = (item, source = item) => ({ ...items.get(`${subject.id}:${source.id}`), key: `${subject.id}:${source.id}`, item });
   const own = l.items.map((item) => entry(item));
-  if (subject.kind !== 'learn' || window.DRILL_PLAIN) return own;
+  if (subject.kind !== 'learn' || window.WINGBEAT_PLAIN) return own;
   if (l.mix) return checkpoint(subject, l.items, Math.random, CHECKPOINT, (item) => misses(progress.answers)[`${subject.id}:${item.id}`] ?? 0).map(({ item, source }) => entry(item, source));
   const keys = own.map((e) => e.key);
   const missed = misses(progress.answers);
@@ -859,7 +859,7 @@ function run(lessonId, queue, title, extra = null) {
         const correct = hinted ? false : answered;
         // Only the first try schedules a card, and an echo is a second go at something just learned.
         if (correct !== null && !entry.retry && !entry.echo) results.push({ key: entry.key, correct });
-        const plain = window.DRILL_PLAIN;
+        const plain = window.WINGBEAT_PLAIN;
         // A miss comes back at the end, fresh where it can be, until it lands or runs out of goes.
         const leftForReview = comeBack(queue, at, entry, correct,
           () => (plain ? entry.item : fresh(entry.subject, items.get(entry.key)?.item ?? entry.item)), plain ? 2 : GOES);
@@ -1158,7 +1158,7 @@ function keep(note = '') {
   app.querySelector('[data-save]').addEventListener('click', () => {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([JSON.stringify(progress)], { type: 'application/json' }));
-    a.download = `drill-progress-${today()}.json`;
+    a.download = `wingbeat-progress-${today()}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     status.textContent = 'Saved.';
@@ -1169,7 +1169,7 @@ function keep(note = '') {
     try { p = migrate(JSON.parse(await input.files[0].text())); } catch { /* not JSON */ }
     input.value = ''; // the same file can be picked again
     if (p) confirmLoad(p);
-    else status.textContent = "That file isn't Drill progress, so nothing changed.";
+    else status.textContent = "That file isn't Wingbeat progress, so nothing changed.";
   });
 }
 
@@ -1192,7 +1192,7 @@ function confirmLoad(p) {
 }
 
 /**
- * The first-visit intro, step 1: what Drill can do, one plain line each, with Lumi. Shown once
+ * The first-visit intro, step 1: what Wingbeat can do, one plain line each, with Lumi. Shown once
  * (`progress.picked` records it); Skip leaves the default home.
  */
 function intro() {
@@ -1301,7 +1301,7 @@ function choose(picked) {
  * The Android wrapper's bridge (CLAUDE.md): plain functions on one small global, over the live
  * progress. `noteReminder` returns false for an outcome it doesn't know, which changes nothing.
  */
-window.drill = {
+window.wingbeat = {
   reminderHour: () => reminderHour(progress),
   shouldRemind: () => shouldRemind(progress),
   noteReminder: (outcome) => {

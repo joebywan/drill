@@ -35,7 +35,7 @@ export function readRecovery(text) {
 /** { key, token } from a recovery code: the AES-GCM key for progress, and the server's bearer token. */
 export async function derive(recovery) {
   const base = await crypto.subtle.importKey('raw', enc.encode(recovery), 'HKDF', false, ['deriveKey', 'deriveBits']);
-  const params = (info) => ({ name: 'HKDF', hash: 'SHA-256', salt: enc.encode('drill-sync-v1'), info: enc.encode(info) });
+  const params = (info) => ({ name: 'HKDF', hash: 'SHA-256', salt: enc.encode('wingbeat-sync-v1'), info: enc.encode(info) });
   const key = await crypto.subtle.deriveKey(params('progress key'), base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
   const token = b64url(new Uint8Array(await crypto.subtle.deriveBits(params('server token'), base, 256)));
   return { key, token };

@@ -1,8 +1,8 @@
 {
-  "name": "drill-sync",
+  "name": "wingbeat-sync",
   "private": true,
   "type": "module",
-  "description": "Drill's sync API: a Cloudflare Worker with D1. See DEPLOY.md.",
+  "description": "Wingbeat's sync API: a Cloudflare Worker with D1. See DEPLOY.md.",
   "scripts": {
     "test": "node --test test/*.test.js",
     "dev": "node dev.js",

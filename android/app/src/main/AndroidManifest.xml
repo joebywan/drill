@@ -25,7 +25,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Drill"
+        android:theme="@style/Theme.Wingbeat"
         android:usesCleartextTraffic="false">
 
         <activity

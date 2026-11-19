@@ -1,7 +1,7 @@
 // A first visit with empty storage opens the intro; skipping it lands on home with no questions,
 // and Calm never offers placement.
 export default async ({ page, touch, btn, shot, check }) => {
-  check('first screen is the intro', await page.getByRole('heading', { name: 'What can Drill do for you?' }).isVisible());
+  check('first screen is the intro', await page.getByRole('heading', { name: 'What can Wingbeat do for you?' }).isVisible());
   await touch(btn('Skip'));
   const survey = () => page.getByRole('heading', { name: /chess before\?/ }).count();
   const skip = () => page.locator('[data-place]').count();

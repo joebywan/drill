@@ -59,18 +59,18 @@ async function finishFirstLesson(page) {
 
 const offer = (page) => page.getByRole('button', { name: 'Know some chess already? Skip ahead' });
 
-// The first-visit intro: what Drill does, then what you'd like out of it; home puts that first.
+// The first-visit intro: what Wingbeat does, then what you'd like out of it; home puts that first.
 const tabOrder = (page) => page.locator('.path-tab[data-path]').evaluateAll((tabs) => tabs.map((t) => t.dataset.path));
 const pressedTab = (page) => page.locator('.path-tab[aria-pressed="true"]');
 const pick = (page, name) => page.getByRole('button', { name, exact: true });
 
 async function toStepTwo(page) {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'What can Drill do for you?' })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'What can Wingbeat do for you?' })).toBeFocused();
   for (const text of ['Calm: slow breathing', 'Track: one tap', 'nothing ever wilts', 'Everything stays on this device'])
     await expect(page.getByText(text)).toBeVisible();
   await page.getByRole('button', { name: 'Next' }).click();
-  await expect(page.getByRole('heading', { name: 'What would you like out of Drill?' })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'What would you like out of Wingbeat?' })).toBeFocused();
 }
 
 test('intro, learn only: Learn something lists the live courses, the others are coming soon, and home starts on Learning', async ({ page }) => {
@@ -91,7 +91,7 @@ test('intro, learn only: Learn something lists the live courses, the others are 
   await expect(offer(page)).toBeVisible(); // the placement offer is still there, as it was
   await expect(page.locator('.cta .next')).toBeFocused();
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'What can Drill do for you?' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'What can Wingbeat do for you?' })).toHaveCount(0);
 });
 
 test('intro, habits only: the picks come first in the order tapped, and a tracker is switched on', async ({ page }) => {
@@ -160,13 +160,13 @@ for (const [width, height] of [[360, 640], [412, 800], [412, 915]]) {
   });
 }
 
-test('someone who used Drill before the intro existed never sees it', async ({ page }) => {
+test('someone who used Wingbeat before the intro existed never sees it', async ({ page }) => {
   const v6 = { version: 6, habits: { learn: { count: 0, last: null, forgiven: [], days: 0 } }, log: [], done: {}, cards: {},
     journal: {}, garden: { earned: {} }, tracked: [], start: { chess: null } };
-  await page.addInitScript((p) => localStorage.setItem('drill.progress', p), JSON.stringify(v6));
+  await page.addInitScript((p) => localStorage.setItem('wingbeat.progress', p), JSON.stringify(v6));
   await page.goto('/');
   await expect(tab(page, 'Learning')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'What can Drill do for you?' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'What can Wingbeat do for you?' })).toHaveCount(0);
 });
 
 test('"Change what you see" in the ⋯ menu reopens step 2 with the picks, and Back changes nothing', async ({ page }) => {
@@ -176,7 +176,7 @@ test('"Change what you see" in the ⋯ menu reopens step 2 with the picks, and B
   await page.getByRole('button', { name: 'Show my home' }).click();
   await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('button', { name: 'Change what you see' }).click();
-  await expect(page.getByRole('heading', { name: 'What would you like out of Drill?' })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'What would you like out of Wingbeat?' })).toBeFocused();
   await expect(pick(page, 'Calm')).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Back' }).click();
   expect((await tabOrder(page))[0]).toBe('calm');
@@ -233,7 +233,7 @@ test('the skip-ahead offer is optional: taking it starts the path further on, an
 
 test('the skip-ahead offer stops once the first unit is finished', async ({ page }) => {
   const done = Object.fromEntries(basics.units[0].lessons.map((l) => [`chess:${l.id}`, true]));
-  await page.addInitScript((p) => localStorage.setItem('drill.progress', p), JSON.stringify({ ...emptyProgress(), done }));
+  await page.addInitScript((p) => localStorage.setItem('wingbeat.progress', p), JSON.stringify({ ...emptyProgress(), done }));
   await firstVisit(page);
   await expect(page.getByRole('heading', { name: basics.units[0].title })).toBeVisible();
   await expect(offer(page)).toHaveCount(0);
@@ -287,7 +287,7 @@ test('the "5 in a row" flare plays, then leaves nothing behind', async ({ page }
 /** Home with the board unit done, then "Rook and bishop" played through: Lumi's next step is in the same unit. */
 async function rookAndBishop(page, during = async () => {}) {
   const lesson = basics.units[1].lessons[0];
-  await page.addInitScript((p) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', p); },
+  await page.addInitScript((p) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', p); },
     JSON.stringify({ ...emptyProgress(), done: { [`chess:${basics.units[0].lessons[0].id}`]: true } }));
   await firstVisit(page);
   await page.getByRole('button', { name: `Continue · ${lesson.title}` }).click();
@@ -436,7 +436,7 @@ test('a Japanese review: due kana come back on the Japanese path, with Kaede', a
   const results = lesson.items.filter((i) => i.type !== 'teach').map((i) => ({ key: `japanese:${i.id}`, correct: true }));
   const then = new Date(Date.now() - 30 * 86400000);
   const p = finishSession(emptyProgress(), `japanese:${lesson.id}`, results, then);
-  await page.addInitScript(([p, course]) => { localStorage.setItem('drill.progress', p); localStorage.setItem('drill.course', course); }, [JSON.stringify(p), 'japanese']);
+  await page.addInitScript(([p, course]) => { localStorage.setItem('wingbeat.progress', p); localStorage.setItem('wingbeat.course', course); }, [JSON.stringify(p), 'japanese']);
   await firstVisit(page);
   await page.locator('[data-review]').click();
   await expect(page.locator('.who svg')).toHaveClass(/cast-kaede/);
@@ -556,7 +556,7 @@ test('a Calm practice closed part-way is kept in `left`, with how far it got, an
   await expect(page.getByText('Breath 2 of 3')).toBeVisible();
   await page.getByRole('button', { name: 'Stop' }).click();
   await expect(tab(page, 'Calm')).toHaveAccessibleName('Calm'); // no streak from a practice left part-way
-  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')));
   expect(saved.log).toEqual([]);
   expect(saved.left).toEqual([{ date: expect.any(String), hour: expect.any(Number), habit: 'calm', lessonId: 'calm:breathe1', title: 'Breathing', step: 2, of: 6 }]);
   await expect(page.getByRole('button', { name: 'Continue · The long out-breath' })).toBeVisible();
@@ -571,7 +571,7 @@ test('your own timings: a growing value shows what the next lesson uses, and + s
   await expect(breaths.locator('output')).toHaveText(`${first} (grows as you go)`);
   await breaths.getByRole('button', { name: 'More' }).click();
   await expect(breaths.locator('output')).toHaveText(`${first + 1} (default grows as you go)`);
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')).timings)).toEqual({ calm: { breaths: first + 1 } });
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).timings)).toEqual({ calm: { breaths: first + 1 } });
   await page.getByRole('button', { name: 'Back to defaults' }).click();
   await expect(breaths.locator('output')).toHaveText(`${first} (grows as you go)`);
 });
@@ -584,7 +584,7 @@ test('your own timings: a value that differs per step reads as written, and + se
   await expect(each.locator('output')).toHaveText('As written (15–25 s)');
   await each.getByRole('button', { name: 'More' }).click();
   await expect(each.locator('output')).toHaveText('25 s (default as written, 15–25 s)');
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')).timings)).toEqual({ break: { seconds: 25 } });
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).timings)).toEqual({ break: { seconds: 25 } });
   await page.getByRole('button', { name: 'Back to defaults' }).click();
   await expect(each.locator('output')).toHaveText('As written (15–25 s)');
 });
@@ -603,7 +603,7 @@ test('your own timings: Calm breathes in for 6 when set, saves at once, and goes
   await expect(page.getByRole('button', { name: 'Back to defaults' })).toBeDisabled();
   for (let i = 0; i < 2; i++) await inhale.getByRole('button', { name: 'More' }).click();
   await expect(inhale.locator('output')).toHaveText('6 s (default 4)');
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')).timings)).toEqual({ calm: { inhale: 6 } });
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).timings)).toEqual({ calm: { inhale: 6 } });
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Your timings' })).toBeFocused();
 
@@ -629,7 +629,7 @@ test('your own timings: Calm breathes in for 6 when set, saves at once, and goes
   await page.getByRole('button', { name: 'Back to defaults' }).click();
   await expect(inhale.locator('output')).toHaveText('4 s (default 4)');
   await expect(page.getByRole('button', { name: 'Back to defaults' })).toBeDisabled();
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')).timings)).toEqual({ calm: {} });
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).timings)).toEqual({ calm: {} });
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Calm' })).toBeVisible();
 });
@@ -1003,7 +1003,7 @@ async function grown(page, habits, days, earned = false, extra = {}) {
     }
   }
   if (earned) p = award(p).progress;
-  await page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
+  await page.addInitScript((saved) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', saved); }, JSON.stringify(p));
 }
 
 const strip = (page, n) => page.getByRole('button', { name: `Your garden: ${n} plant${n === 1 ? '' : 's'}` });
@@ -1309,7 +1309,7 @@ function leftAtTheSameStep() {
   for (const [n, step] of [[4, 6], [3, 7], [2, 6]]) p = leavePractice(p, 'calm', 'calm:breathe2', step, 10, daysAgo(n), { title: 'Breathing' });
   return p;
 }
-const seeded = (page, p) => page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
+const seeded = (page, p) => page.addInitScript((saved) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', saved); }, JSON.stringify(p));
 const comebackCard = (page) => page.locator('.comeback');
 
 test('after a drop-off, home offers a gentle comeback: their usual practice at their usual hour, and one session brings a ladybird', async ({ page }) => {
@@ -1317,7 +1317,7 @@ test('after a drop-off, home offers a gentle comeback: their usual practice at t
   await page.clock.install();
   await firstVisit(page);
   await expect(comebackCard(page)).toContainText('Some Breathing around 7 pm, the way you like it? A ladybird would love to visit your garden.');
-  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')));
   expect(saved.comeback).toEqual({ date: expect.any(String), habit: 'calm', title: 'Breathing', hour: 19 });
   await page.getByRole('button', { name: 'Start Breathing' }).click();
   await page.getByRole('button', { name: 'Start' }).click();
@@ -1326,7 +1326,7 @@ test('after a drop-off, home offers a gentle comeback: their usual practice at t
   await continueButton(page).click();
   await expect(comebackCard(page)).toHaveCount(0); // it ends after one session
   await expect(page.locator('.garden-link svg[data-kind="ladybird"]')).toHaveCount(1);
-  const after = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
+  const after = await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')));
   expect(after.comeback.done).toEqual(expect.any(String));
   expect(Object.keys(after.garden.earned)).toContain('ladybird:calm');
 });
@@ -1352,7 +1352,7 @@ test('a practice left at the same step offers a shorter one, for that session on
   await expect(page.getByText('Breath 1 of 3')).toBeVisible();
   await page.clock.runFor(40_000);
   await expect(page.getByText('3 breaths', { exact: false }).first()).toBeVisible();
-  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')));
   expect(saved.timings).toEqual({}); // never saved as their timings
   await continueButton(page).click();
   // Finished since: no more offer, and the path has moved on.
@@ -1365,18 +1365,18 @@ test('the habit view shows the usual hour, and the bridge for the Android wrappe
   await tab(page, 'Calm').click();
   await page.getByRole('button', { name: /See your week$/ }).click();
   await expect(page.getByText('You usually practise around 7 pm')).toBeVisible();
-  expect(await page.evaluate(() => window.drill.reminderHour())).toBe(19);
-  expect(await page.evaluate(() => window.drill.shouldRemind())).toBe(true);
-  expect(await page.evaluate(() => window.drill.noteReminder('snoozed'))).toBe(false);
-  for (let i = 0; i < 8; i++) expect(await page.evaluate(() => window.drill.noteReminder('cleared'))).toBe(true);
-  expect(await page.evaluate(() => window.drill.shouldRemind())).toBe(false);
+  expect(await page.evaluate(() => window.wingbeat.reminderHour())).toBe(19);
+  expect(await page.evaluate(() => window.wingbeat.shouldRemind())).toBe(true);
+  expect(await page.evaluate(() => window.wingbeat.noteReminder('snoozed'))).toBe(false);
+  for (let i = 0; i < 8; i++) expect(await page.evaluate(() => window.wingbeat.noteReminder('cleared'))).toBe(true);
+  expect(await page.evaluate(() => window.wingbeat.shouldRemind())).toBe(false);
   await page.getByRole('button', { name: 'Back' }).click();
   await page.getByRole('button', { name: 'Settings' }).click();
   await expect(page.getByText("Reminders are paused because they weren't helping.")).toBeVisible();
   await page.getByRole('button', { name: 'Turn back on' }).click();
   await expect(page.getByText('Reminders are on again.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Turn back on' })).toHaveCount(0);
-  expect(await page.evaluate(() => window.drill.shouldRemind())).toBe(true);
+  expect(await page.evaluate(() => window.wingbeat.shouldRemind())).toBe(true);
 });
 
 const overflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -1450,7 +1450,7 @@ for (const colorScheme of ['light', 'dark']) {
       });
 
       test('a Coding if-block and its tiles have no sideways scroll, and the program clears the tiles', async ({ page }) => {
-        await page.addInitScript((p) => { localStorage.setItem('drill.progress', p); localStorage.setItem('drill.course', 'coding'); },
+        await page.addInitScript((p) => { localStorage.setItem('wingbeat.progress', p); localStorage.setItem('wingbeat.course', 'coding'); },
           JSON.stringify({ ...emptyProgress(), picked: [], start: { coding: 'If and else' } }));
         await page.goto('/');
         await page.getByRole('button', { name: 'Continue · If there\'s a rock' }).click();
@@ -1471,7 +1471,7 @@ for (const colorScheme of ['light', 'dark']) {
 async function calmDone(page, lessons) {
   let p = { ...emptyProgress(), start: { chess: basics.units[0].title } };
   for (const id of lessons) p = finishPractice(p, 'calm', `calm:${id}`, new Date());
-  await page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
+  await page.addInitScript((saved) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', saved); }, JSON.stringify(p));
 }
 
 /** Records every synthesised tone's frequency and every noise loop started, in window.heard. */
@@ -1573,7 +1573,7 @@ test('Calm sounds: both are off until turned on, the bell then rings at the star
 
 test('under reduced motion Calm stays quiet: no bell, no rain', async ({ page }) => {
   await listen(page);
-  await page.addInitScript(() => { localStorage.setItem('drill.rain', 'on'); localStorage.setItem('drill.bell', 'on'); });
+  await page.addInitScript(() => { localStorage.setItem('wingbeat.rain', 'on'); localStorage.setItem('wingbeat.bell', 'on'); });
   await calmDone(page, ['breathe1']);
   await page.goto('/');
   await tab(page, 'Calm').click();
@@ -1589,7 +1589,7 @@ test('the coach greets home in its own voice, dares once a day, and welcomes a c
   await page.addInitScript(() => { Math.random = () => 0; });
   let p = emptyProgress();
   for (const d of [27, 28, 29]) p = finishPractice(p, 'calm', null, new Date(2026, 9, d, 8), { title: 'Breathing', mins: 2 });
-  await page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
+  await page.addInitScript((saved) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', saved); }, JSON.stringify(p));
   await page.goto('/');
   await tab(page, 'Calm').click();
   const greeting = page.locator('.greeting');
@@ -1602,7 +1602,7 @@ test('the coach greets home in its own voice, dares once a day, and welcomes a c
   await expect(greeting).not.toHaveClass(/dare/);
   // After a gap: a welcome, never a dare, even on a new day.
   const back = finishPractice(emptyProgress(), 'calm', null, new Date(2026, 9, 20, 8), { title: 'Breathing', mins: 2 });
-  await page.evaluate((saved) => { localStorage.setItem('drill.progress', saved); localStorage.removeItem('drill.said'); }, JSON.stringify(back));
+  await page.evaluate((saved) => { localStorage.setItem('wingbeat.progress', saved); localStorage.removeItem('wingbeat.said'); }, JSON.stringify(back));
   await page.reload();
   await tab(page, 'Calm').click();
   await expect(greeting).toHaveText('Moss Hello again. The pond is just as you left it.');
@@ -1704,7 +1704,7 @@ test('Coding: a full first lesson with Fennel, a wrong run shown and replayed, t
   await page.clock.install({ time: new Date(Date.now() + 10 * 86400e3) });
   await page.reload();
   await page.getByRole('button', { name: /to review/ }).click();
-  const keys = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('drill.progress')).cards));
+  const keys = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('wingbeat.progress')).cards));
   expect(keys.length).toBe(marked);
   expect(keys.every((k) => k.startsWith('coding:'))).toBe(true);
   for (let i = 0; i < marked; i++) {
@@ -1866,7 +1866,7 @@ test('on a landscape desktop, end-screen and practice buttons follow the content
 
 test('Wind down: settle in, Calm breathing on your own timings, a sigh, goodnight, all in the night palette', async ({ page }) => {
   const p = { ...emptyProgress(), picked: [], timings: { calm: { inhale: 6 } } };
-  await page.addInitScript((saved) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', saved); }, JSON.stringify(p));
+  await page.addInitScript((saved) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', saved); }, JSON.stringify(p));
   await page.clock.install();
   await page.goto('/');
   const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
@@ -1928,7 +1928,7 @@ test('with the Android bridge, a finished lesson sends a summary and the ⋯ scr
   await page.addInitScript(() => {
     const calls = (window.bridgeCalls = []);
     let on = false;
-    window.DrillBridge = {
+    window.WingbeatBridge = {
       summary: (json) => calls.push(['summary', JSON.parse(json)]),
       art: (pose, png) => calls.push(['art', pose, png.length]),
       remindersOn: () => on,
@@ -1936,7 +1936,7 @@ test('with the Android bridge, a finished lesson sends a summary and the ⋯ scr
       notes: () => { calls.push(['notes']); return '["opened"]'; },
     };
     // A stand-in reminder brain, if the real one hasn't defined itself.
-    window.drill ??= { noteReminder: (n) => calls.push(['heard', n]) };
+    window.wingbeat ??= { noteReminder: (n) => calls.push(['heard', n]) };
   });
   await firstVisit(page);
   await expect.poll(() => page.evaluate(() => bridgeCalls.filter((c) => c[0] === 'art').map((c) => c[1]))).toEqual(['teach', 'sleepy', 'complete']);
@@ -1967,7 +1967,7 @@ test('tiles drag into any slot, by default: a Coding hole and a word slot', asyn
     const { mount } = await import(path);
     document.body.innerHTML = '<div id="t" class="quiz"></div>';
     window.result = null;
-    window.drill = mount(document.getElementById('t'), item, { say() {}, done(right) { window.result = right; } });
+    window.wingbeat = mount(document.getElementById('t'), item, { say() {}, done(right) { window.result = right; } });
   }, [path, item]);
   const drag = async (from, to) => {
     const a = await from.boundingBox(), b = await to.boundingBox();
@@ -2006,7 +2006,7 @@ test('Coding, the new blocks on a real page: a bug fixed by tapping, an endless 
     const { mount } = await import('/src/coding/exercise.js');
     document.body.innerHTML = '<div id="t" class="quiz"></div><p id="said"></p>';
     window.result = null;
-    window.drill = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right) { window.result = right; } });
+    window.wingbeat = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right) { window.result = right; } });
   }, item);
   const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
   const result = () => page.evaluate(() => window.result);
@@ -2141,7 +2141,7 @@ test('Coding, laying out a program: the cursor, a limit, Run, and a run with ste
     const { mount } = await import('/src/coding/exercise.js');
     document.body.innerHTML = '<div id="t" class="quiz"></div><p id="said"></p>';
     window.result = null;
-    window.drill = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right) { window.result = right; } });
+    window.wingbeat = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right) { window.result = right; } });
   }, item);
   const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
   const run = page.getByRole('button', { name: 'Run', exact: true });
@@ -2205,7 +2205,7 @@ test('Coding, values and shapes on a real page: the count shows while walking, t
     const { mount } = await import('/src/coding/exercise.js');
     document.body.innerHTML = '<div id="t" class="quiz"></div><p id="said"></p>';
     window.result = null;
-    window.drill = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right) { window.result = right; } });
+    window.wingbeat = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right) { window.result = right; } });
   }, item);
   const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
   const result = () => page.evaluate(() => window.result);
@@ -2269,14 +2269,14 @@ test('the first lesson of each new Coding unit plays through as a real session, 
   for (const [unit, lesson] of [...codingCourse.units.slice(3).map((u) => [u, u.lessons[0]]), [{ ...loops, lessons: loops.lessons }, loops.lessons.at(-1)]]) {
     await page.goto('/');
     await page.evaluate((start) => {
-      localStorage.setItem('drill.course', 'coding');
-      localStorage.setItem('drill.progress', JSON.stringify({ ...JSON.parse(localStorage.getItem('drill.progress') || '{}'), version: 3, picked: [], done: {}, cards: {}, habits: {}, log: [], start: { coding: start } }));
+      localStorage.setItem('wingbeat.course', 'coding');
+      localStorage.setItem('wingbeat.progress', JSON.stringify({ ...JSON.parse(localStorage.getItem('wingbeat.progress') || '{}'), version: 3, picked: [], done: {}, cards: {}, habits: {}, log: [], start: { coding: start } }));
     }, unit.title);
     if (lesson !== unit.lessons[0]) await page.evaluate((id) => {
-      const p = JSON.parse(localStorage.getItem('drill.progress'));
+      const p = JSON.parse(localStorage.getItem('wingbeat.progress'));
       delete p.start.coding;
       p.done = Object.fromEntries(id.map((k) => [`coding:${k}`, true]));
-      localStorage.setItem('drill.progress', JSON.stringify(p));
+      localStorage.setItem('wingbeat.progress', JSON.stringify(p));
     }, [...codingCourse.units.flatMap((u) => u.lessons).slice(0, codingCourse.units.flatMap((u) => u.lessons).indexOf(lesson)).map((l) => l.id), ...codingCourse.units.map((u) => `${u.lessons[0].id}-checkpoint`).slice(0, 1)]);
     await page.reload();
     await page.getByRole('button', { name: `Continue · ${lesson.title}` }).click();

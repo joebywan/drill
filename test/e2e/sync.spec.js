@@ -19,7 +19,7 @@ test.afterAll(() => worker?.mf.dispose());
 
 async function device(browser) {
   const context = await browser.newContext();
-  await context.addInitScript(() => { window.DRILL_SYNC = true; });
+  await context.addInitScript(() => { window.WINGBEAT_SYNC = true; });
   await context.route(`${API}/**`, async (route) => {
     const response = await route.fetch({ url: route.request().url().replace(API, worker.url) });
     await route.fulfill({ response });
@@ -31,7 +31,7 @@ const basics = JSON.parse(readFileSync(new URL('../../src/data/basics.json', imp
 const first = basics.units[0].lessons[0];
 
 async function open(page, progress) {
-  if (progress) await page.addInitScript((p) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', p); }, JSON.stringify(progress));
+  if (progress) await page.addInitScript((p) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', p); }, JSON.stringify(progress));
   await page.goto('/');
   const skip = page.getByRole('button', { name: 'Skip', exact: true });
   if (await skip.count()) await skip.click();
@@ -41,7 +41,7 @@ const menu = async (page, item) => {
   await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('button', { name: item }).click();
 };
-const stored = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
+const stored = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')));
 
 (SYNC ? test.skip : test)('the flag is off as shipped: no sync in Settings or the privacy page, and nothing is sent', async ({ page }) => {
   const calls = [];
@@ -58,13 +58,13 @@ const stored = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('dr
 });
 
 live('sync is off until turned on: nothing is sent', async ({ page }) => {
-  await page.addInitScript(() => { window.DRILL_SYNC = true; });
+  await page.addInitScript(() => { window.WINGBEAT_SYNC = true; });
   const calls = [];
   page.on('request', (r) => { if (!r.url().startsWith('http://127.0.0.1')) calls.push(r.url()); });
   await open(page, finishPractice(emptyProgress(), 'calm', null, new Date(), { title: 'Breathe', mins: 2 }));
   await menu(page, 'Friends');
   await expect(page.getByRole('heading', { name: 'Friends' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'How Drill handles your data' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'How Wingbeat handles your data' })).toBeVisible();
   await page.getByRole('button', { name: 'Back' }).click();
   await page.getByRole('button', { name: 'Delete my data' }).click();
   await expect(page.getByText('Sync is off on this device')).toBeVisible();
@@ -100,7 +100,7 @@ live('pair a second device, see progress arrive, make a friend, cheer, then dele
   // Both devices share a recovery code.
   await menu(b, 'Recovery code');
   const recovery = await b.locator('.code.recovery').textContent();
-  expect(JSON.parse(await a.evaluate(() => localStorage.getItem('drill.sync'))).recovery).toBe(recovery);
+  expect(JSON.parse(await a.evaluate(() => localStorage.getItem('wingbeat.sync'))).recovery).toBe(recovery);
 
   // A third person, C, turns sync on from Friends and gives A their code.
   const c = await device(browser);
@@ -142,7 +142,7 @@ live('pair a second device, see progress arrive, make a friend, cheer, then dele
   await a.getByRole('button', { name: 'Delete my data' }).click();
   await a.getByRole('button', { name: 'Delete it' }).click();
   await expect(a.getByRole('heading', { name: 'Deleted' })).toBeVisible();
-  expect(await a.evaluate(() => localStorage.getItem('drill.sync'))).toBeNull();
+  expect(await a.evaluate(() => localStorage.getItem('wingbeat.sync'))).toBeNull();
   expect((await stored(a)).done[`chess:${first.id}`]).toBe(true);
   expect(await worker.db.prepare('SELECT COUNT(*) AS n FROM profiles').first('n')).toBe(1, 'only C is left');
   await c.getByRole('button', { name: 'Back' }).click();
@@ -157,8 +157,8 @@ live('inside the Android wrapper, sync and friends are hidden and nothing is sen
   const calls = [];
   page.on('request', (r) => { if (!r.url().startsWith('http://127.0.0.1')) calls.push(r.url()); });
   await page.addInitScript(() => {
-    window.DrillBridge = { summary() {}, art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]' };
-    localStorage.setItem('drill.sync', JSON.stringify({ recovery: '0000-1111-2222-3333-4444', code: 'ABCDEFGH' }));
+    window.WingbeatBridge = { summary() {}, art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]' };
+    localStorage.setItem('wingbeat.sync', JSON.stringify({ recovery: '0000-1111-2222-3333-4444', code: 'ABCDEFGH' }));
   });
   await open(page, finishPractice(emptyProgress(), 'calm', null, new Date(), { title: 'Breathe', mins: 2 }));
   await page.getByRole('button', { name: 'Settings' }).click();

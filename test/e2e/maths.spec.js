@@ -105,7 +105,7 @@ test('maths cards come back in review, on the shared Learning review', async ({ 
   const results = marked(first).map((i) => ({ key: `maths:${i.id}`, correct: true }));
   const p = finishSession({ ...emptyProgress(), picked: ['maths'] }, `maths:${first.id}`, results, then);
   await page.addInitScript((saved) => {
-    if (!localStorage.getItem('drill.progress')) { localStorage.setItem('drill.progress', saved); localStorage.setItem('drill.course', 'maths'); }
+    if (!localStorage.getItem('wingbeat.progress')) { localStorage.setItem('wingbeat.progress', saved); localStorage.setItem('wingbeat.course', 'maths'); }
   }, JSON.stringify(p));
   await page.goto('/');
   await page.getByRole('button', { name: new RegExp(`^${results.length} to review`) }).click();

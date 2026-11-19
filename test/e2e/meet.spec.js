@@ -4,9 +4,9 @@ import { Chess } from 'chess.js';
 import { vary } from '../../src/chess/items.js';
 
 const seed = (page, course, done = {}) => page.addInitScript(([c, d]) => {
-  if (localStorage.getItem('drill.progress')) return;
-  localStorage.setItem('drill.course', c);
-  localStorage.setItem('drill.progress', JSON.stringify({ version: 3, picked: [], done: d, cards: {}, habits: {}, log: [] }));
+  if (localStorage.getItem('wingbeat.progress')) return;
+  localStorage.setItem('wingbeat.course', c);
+  localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 3, picked: [], done: d, cards: {}, habits: {}, log: [] }));
 }, [course, done]);
 
 test("a course's own coach waits on its path and introduces themselves once, before the first lesson", async ({ page }) => {
@@ -48,9 +48,9 @@ test('someone already on a course never gets the introduction', async ({ page })
 
 const card = { due: '2020-01-01T00:00:00Z', stability: 1, difficulty: 5, elapsed_days: 0, scheduled_days: 1, reps: 1, lapses: 0, state: 2, last_review: '2019-12-31T00:00:00Z' };
 const seeded = (page, done, cards = {}) => page.addInitScript(([d, c]) => {
-  if (localStorage.getItem('drill.progress')) return;
-  localStorage.setItem('drill.course', 'coding');
-  localStorage.setItem('drill.progress', JSON.stringify({ version: 3, picked: [], done: d, cards: c, habits: {}, log: [] }));
+  if (localStorage.getItem('wingbeat.progress')) return;
+  localStorage.setItem('wingbeat.course', 'coding');
+  localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 3, picked: [], done: d, cards: c, habits: {}, log: [] }));
 }, [done, cards]);
 
 test('a second lesson opens with an earlier item and ends with its own again', async ({ page }) => {
@@ -72,9 +72,9 @@ test('a unit ends in a checkpoint that mixes it', async ({ page }) => {
 test('two misses in a unit bring a second explanation and a smaller step, and the miss comes back', async ({ page }) => {
   await seeded(page, { 'coding:steps-0': true });
   await page.addInitScript(() => {
-    const p = JSON.parse(localStorage.getItem('drill.progress'));
+    const p = JSON.parse(localStorage.getItem('wingbeat.progress'));
     p.answers = [{ key: 'coding:steps-0-one', right: false, ms: 1, at: '2026-01-01T00:00:00.000Z' }];
-    localStorage.setItem('drill.progress', JSON.stringify(p));
+    localStorage.setItem('wingbeat.progress', JSON.stringify(p));
   });
   await page.goto('/');
   await page.getByRole('button', { name: 'Around the rock, current' }).click();
@@ -94,9 +94,9 @@ test('two misses in a unit bring a second explanation and a smaller step, and th
 });
 
 const seedCard = (page, course, key) => page.addInitScript(([c, k, cd]) => {
-  if (localStorage.getItem('drill.progress')) return;
-  localStorage.setItem('drill.course', c);
-  localStorage.setItem('drill.progress', JSON.stringify({ version: 3, picked: [], done: { [`${c}:done-already`]: true }, cards: { [k]: cd }, habits: {}, log: [] }));
+  if (localStorage.getItem('wingbeat.progress')) return;
+  localStorage.setItem('wingbeat.course', c);
+  localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 3, picked: [], done: { [`${c}:done-already`]: true }, cards: { [k]: cd }, habits: {}, log: [] }));
 }, [course, key, card]);
 
 test('a Japanese warm-up asks a different question from the one in its lesson', async ({ page }) => {
@@ -144,7 +144,7 @@ test('a puzzle solved after its hint is logged as that, plays as a miss and come
   await expect(page.locator('.bubble')).toContainText('The marked piece');
   await play(right.slice(0, 2), right.slice(2, 4));
   await expect(page.locator('.foot.show.wrong')).toBeVisible();
-  const last = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')).answers.at(-1));
+  const last = await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).answers.at(-1));
   expect(last).toMatchObject({ key: `chess:${item.id}`, right: true, hinted: true, warm: true });
   expect(+await page.getByRole('progressbar').getAttribute('aria-valuemax')).toBe(before + 1);
 });

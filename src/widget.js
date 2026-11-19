@@ -3,7 +3,7 @@ import { WIDGET_LINES } from './cast/lines.js';
 import { lumi } from './cast/lumi.js';
 
 /**
- * The Android wrapper's side of Drill, pure apart from the bridge glue at the end. The home-screen
+ * The Android wrapper's side of Wingbeat, pure apart from the bridge glue at the end. The home-screen
  * widget and the daily note are drawn by Kotlin, but every choice is made here: `look()` picks the widget's look, and
  * `summary()` hands over a schedule of looks for the next few days, so the widget can change at
  * midnight (when `light()` turns soft or ember) without the app running. Kotlin only renders.
@@ -46,7 +46,7 @@ function best(progress, at) {
  * reminder stays quiet when it is today), the reminder's line pool, and the widget's looks from
  * now through the next `days` days' boundaries, each with the time it starts.
  */
-export function summary(progress, now = new Date(), days = 3, brain = globalThis.drill) {
+export function summary(progress, now = new Date(), days = 3, brain = globalThis.wingbeat) {
   const times = [now];
   for (let d = 0; d <= days; d++)
     for (const [h] of BANDS) {
@@ -56,7 +56,7 @@ export function summary(progress, now = new Date(), days = 3, brain = globalThis
   const last = Object.values(progress.habits).map((s) => s.last).filter(Boolean).sort().at(-1) ?? null;
   return {
     doneOn: last,
-    // The reminder brain (window.drill, when it is there) picks the hour and whether to speak at
+    // The reminder brain (window.wingbeat, when it is there) picks the hour and whether to speak at
     // all; without it, a fixed hour and yes. A snapshot: it is re-read on every save and app open.
     remindAt: brain?.reminderHour?.() ?? REMIND_AT,
     wanted: brain?.shouldRemind?.() ?? true,
@@ -72,7 +72,7 @@ export function summary(progress, now = new Date(), days = 3, brain = globalThis
 export const REMIND_AT = 18;
 
 /** The bridge the Android wrapper adds to the page. In a browser it is absent and nothing here runs. */
-export const bridge = () => globalThis.DrillBridge;
+export const bridge = () => globalThis.WingbeatBridge;
 
 /**
  * The bars follow the page: `rgb` is the body's background ('rgb(24, 20, 15)'), so Wind down's night
@@ -95,7 +95,7 @@ export const tellAndroid = (progress) => bridge()?.summary(JSON.stringify(summar
  * reminder brain. Left in the queue while there is no brain to hear it.
  */
 export function passNotes() {
-  const hear = globalThis.drill?.noteReminder;
+  const hear = globalThis.wingbeat?.noteReminder;
   if (!hear || !bridge()?.notes) return;
   for (const note of JSON.parse(bridge().notes())) hear(note);
 }

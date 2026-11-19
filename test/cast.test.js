@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { MOODS } from '../src/cast/kit.js';
 import { rosa } from '../src/cast/rosa.js';
 import { lumi } from '../src/cast/lumi.js';
+import { butterfly } from '../src/cast/butterfly.js';
 import { MOODS as CALM, moss, breathe } from '../src/cast/moss.js';
 import * as Clover from '../src/cast/clover.js';
 import * as Mira from '../src/cast/mira.js';
@@ -27,6 +28,15 @@ test('every character draws every mood, with no holes in the geometry', () => {
     assert.doesNotMatch(s, /undefined|NaN|null/, name);
     assert.match(s, /data-part="eyes"/, name);
   }
+});
+
+test('every butterfly gets its own clip-path ids, and uses only ones it defines', () => {
+  const ids = (s) => [...s.matchAll(/<clipPath id="([^"]+)"/g)].map((m) => m[1]);
+  const a = butterfly(), b = butterfly();
+  assert.equal(ids(a).length, 4, 'a fore and a hind wing each side');
+  assert.equal(new Set([...ids(a), ...ids(b)]).size, 8);
+  for (const s of [a, b]) assert.deepEqual([...s.matchAll(/url\(#([^)]+)\)/g)].map((m) => m[1]).sort(), ids(s).sort());
+  assert.doesNotMatch(a, /undefined|NaN/);
 });
 
 test('moods look different from each other', () => {

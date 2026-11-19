@@ -7,7 +7,7 @@ test.use({ timezoneId: 'Australia/Sydney' });
 const atDate = async (page, iso) => {
   await page.clock.setFixedTime(new Date(iso));
   const p = finishPractice(emptyProgress(), 'calm', null, new Date(iso), { title: 'Breathe', mins: 2 });
-  await page.addInitScript((s) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', s); }, JSON.stringify(p));
+  await page.addInitScript((s) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', s); }, JSON.stringify(p));
   await page.goto('/');
 };
 const tap = (page, sq) => page.locator(`.board rect[data-square="${sq}"]`).click();
@@ -38,7 +38,7 @@ test('the park tournament changes the garden, its set grants the pennant, and it
   await next(page);
 
   await expect(page.locator('.arrival, .arrivals').first()).toContainText('pennant');
-  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')));
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')));
   expect(saved.done['event:summer-tournament']).toBe(true);
   expect(saved.garden.earned['garden:pennant']).toBeTruthy();
   expect(saved.cards).toEqual({});

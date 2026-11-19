@@ -91,8 +91,8 @@ for (const [course, id] of [[javascript, 'jsv-1'], [javascript, 'jsl-1'], [javas
     const unit = course.units.find((u) => u.lessons.includes(lesson));
     await page.goto('/');
     await page.evaluate(([c, start, done]) => {
-      localStorage.setItem('drill.course', c);
-      localStorage.setItem('drill.progress', JSON.stringify({ ...JSON.parse(localStorage.getItem('drill.progress') || '{}'), version: 3, picked: [], done, cards: {}, habits: {}, log: [], start: { [c]: start } }));
+      localStorage.setItem('wingbeat.course', c);
+      localStorage.setItem('wingbeat.progress', JSON.stringify({ ...JSON.parse(localStorage.getItem('wingbeat.progress') || '{}'), version: 3, picked: [], done, cards: {}, habits: {}, log: [], start: { [c]: start } }));
     }, [course.id, unit.title, Object.fromEntries(unit.lessons.slice(0, unit.lessons.indexOf(lesson)).map((l) => [`${course.id}:${l.id}`, true]))]);
     await page.reload();
     await page.getByRole('button', { name: `Continue · ${lesson.title}` }).click();

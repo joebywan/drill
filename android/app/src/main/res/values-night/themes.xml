@@ -1,5 +1,5 @@
 <resources>
-    <style name="Theme.Drill" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.Wingbeat" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/bg</item>
     </style>
     <color name="bg">#151A22</color>

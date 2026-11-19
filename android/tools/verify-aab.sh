@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Gate an Android App Bundle before it goes to Play: signed at all, and signed with THE key.
 #
-# Copied from Daybook's, with one change: Daybook leaves its upload key free to differ, while Drill
+# Copied from Daybook's, with one change: Daybook leaves its upload key free to differ, while Wingbeat
 # builds its APK and its bundle in one step with one key, so this pins it like verify-apk.sh.
 set -euo pipefail
 
@@ -14,7 +14,7 @@ fail() { echo "verify-aab: FAIL: $*" >&2; exit 1; }
 
 [[ -f "$AAB" ]] || fail "no such bundle: $AAB"
 [[ -x "$KEYTOOL" ]] || fail "keytool not found at $KEYTOOL"
-[[ -f "$EXPECTED_FILE" ]] || fail "missing $EXPECTED_FILE: put the SHA-256 of the Drill release certificate in it (see CLAUDE.md, Android)"
+[[ -f "$EXPECTED_FILE" ]] || fail "missing $EXPECTED_FILE: put the SHA-256 of the Wingbeat release certificate in it (see CLAUDE.md, Android)"
 
 # An unsigned bundle has no signature block in META-INF at all.
 unzip -l "$AAB" | grep -qE "META-INF/.*\.(RSA|DSA|EC)$" || fail "bundle contains no signature block: it was built without a signing key"

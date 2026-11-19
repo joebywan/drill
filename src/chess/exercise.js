@@ -36,8 +36,8 @@ const starPoints = Array.from({ length: 10 }, (_, i) => {
   return `${(20 + r * Math.cos(a)).toFixed(2)},${(21 + r * Math.sin(a)).toFixed(2)}`;
 }).join(' ');
 function assets() {
-  if (document.getElementById('drill-star')) return;
-  document.body.insertAdjacentHTML('beforeend', `<svg id="drill-star" aria-hidden="true" style="position:absolute;width:0;height:0">
+  if (document.getElementById('wingbeat-star')) return;
+  document.body.insertAdjacentHTML('beforeend', `<svg id="wingbeat-star" aria-hidden="true" style="position:absolute;width:0;height:0">
     <defs><g id="markerStar"><polygon points="${starPoints}" fill="#f7c02b" stroke="#b9800a" stroke-width="2" stroke-linejoin="round"/></g>
     <g id="markerStarOn"><use href="#markerStar" transform="translate(21 -2) scale(.5)"/></g></defs></svg>`);
   document.head.insertAdjacentHTML('beforeend', `<link rel="stylesheet" href="${ASSETS}extensions/arrows/arrows.css"><link rel="stylesheet" href="${ASSETS}extensions/promotion-dialog/promotion-dialog.css">`);
@@ -140,10 +140,10 @@ export function board(el, fen, color = fen.split(' ')[1]) {  // seen from `color
     orientation: color === 'w' ? COLOR.white : COLOR.black,
     assetsUrl: ASSETS,
     // The frame carries the a-h and 1-8 coordinates: beginners learn to read squares from it.
-    // Drill's own pieces (tools/pieces.js) and colours (the "Board skin" block in styles.css).
+    // Wingbeat's own pieces (tools/pieces.js) and colours (the "Board skin" block in styles.css).
     style: {
-      cssClass: 'drill', borderType: 'frame', animationDuration: reducedMotion() ? 0 : 250,
-      pieces: { file: new URL('../../assets/pieces/drill.svg', import.meta.url).href },
+      cssClass: 'wingbeat', borderType: 'frame', animationDuration: reducedMotion() ? 0 : 250,
+      pieces: { file: new URL('../../assets/pieces/wingbeat.svg', import.meta.url).href },
     },
     // Keyboard play: arrows walk the squares (each one is announced), Enter picks up and drops.
     // The board is also read out as a table and piece lists. The typed move form stays off: it

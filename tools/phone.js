@@ -3,7 +3,7 @@
  *   npm run phone -- [scenario...] [--url <base>] [--avd <name>]   (no scenario: all of test/phone/*.js)
  * With no --url it serves this checkout on a free port, forwarded with `adb reverse`, and Chrome opens
  * http://localhost:<port>/: a secure context, so APIs such as Wake Lock are there as on the real site.
- * One run on the emulator at a time, machine-wide: a run takes the lock file `/tmp/drill-phone.lock`
+ * One run on the emulator at a time, machine-wide: a run takes the lock file `/tmp/wingbeat-phone.lock`
  * (created with 'wx', holding its PID, so a lock left by a process that is gone is taken over) and
  * prints "waiting for the emulator" until it can. An emulator already running that no run started
  * (someone driving it by hand) is waited for the same way. Holding the lock, it boots the AVD (--avd,
@@ -33,7 +33,7 @@ if (unknown.length) { console.error(`unknown scenario: ${unknown.join(', ')} (ha
 
 // --- One run at a time --------------------------------------------------------------------
 // /tmp, not tmpdir(): a sandboxed agent may have its own TMPDIR, and the lock must be one for the machine.
-const LOCK = `${process.platform === 'win32' ? tmpdir() : '/tmp'}/drill-phone.lock`;
+const LOCK = `${process.platform === 'win32' ? tmpdir() : '/tmp'}/wingbeat-phone.lock`;
 const alive = (pid) => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
 const holder = () => { try { return readFileSync(LOCK, 'utf8').trim(); } catch { return null; } };
 // Any emulator up or booting: one adb lists, or a qemu process (adb doesn't list it until it is up).
@@ -113,7 +113,7 @@ try {
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('response', (r) => r.status() >= 400 && requests.push(`${r.status()} ${r.url()}`));
   page.on('requestfailed', (r) => requests.push(`${r.failure()?.errorText} ${r.url()}`));
-  await page.addInitScript(() => { window.DRILL_PLAIN = true; }); // scenarios walk a lesson's own items: no warm-ups or echoes
+  await page.addInitScript(() => { window.WINGBEAT_PLAIN = true; }); // scenarios walk a lesson's own items: no warm-ups or echoes
   await page.clock.install(); // timed routines run on page.clock, so minutes take seconds
   await page.goto(base, { waitUntil: 'networkidle' });
 
@@ -176,7 +176,7 @@ try {
   const type = async (text) => { adb('shell', 'input', 'text', text.replaceAll(' ', '%s')); await sleep(800); };
   /** Starts from the home path, skipping placement, with `patch` merged into the saved progress. */
   const seed = async (patch = {}) => {
-    await page.evaluate((patch) => localStorage.setItem('drill.progress', JSON.stringify({
+    await page.evaluate((patch) => localStorage.setItem('wingbeat.progress', JSON.stringify({
       version: 2, habits: { learn: { count: 0, last: null, forgiven: [] } }, log: [], done: {}, cards: {}, start: 'x', met: Object.fromEntries(['chess', 'maths', 'japanese', 'coding', 'javascript', 'typescript', 'testing'].map((c) => [c, true])), ...patch,
     })), patch);
     await page.reload({ waitUntil: 'networkidle' }); await run(800);

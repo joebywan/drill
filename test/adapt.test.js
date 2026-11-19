@@ -98,7 +98,7 @@ test('finishing on evidence: right first time ends it, one miss needs one right,
   assert.equal(play(false, false, false, false), GOES, 'capped: never a loop');
   assert.equal(play(false, false, true, false), GOES);
   assert.equal(nextGo({}, false, 2).goes, 2);
-  assert.equal(nextGo({ goes: 2, slips: 1 }, false, 2), null, 'DRILL_PLAIN gives a miss one more go');
+  assert.equal(nextGo({ goes: 2, slips: 1 }, false, 2), null, 'WINGBEAT_PLAIN gives a miss one more go');
 });
 
 test('lesson help wins over unit help, and only for lessons that exist', () => {

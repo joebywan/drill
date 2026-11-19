@@ -1,4 +1,4 @@
-# Drill backlog
+# Wingbeat backlog
 
 Ideas agreed in principle. Most are now built (each section says where); what is genuinely left is
 under **Still open** at the end.
@@ -15,7 +15,7 @@ Decided 2026-10-29 as the shape to build, when it's time:
   restores it if every device is lost. No email, no passwords, no third-party sign-in (Google
   blocks its sign-in inside embedded WebViews, which rules it out for the Android wrapper).
 - **The device stays the source of truth.** localStorage is still the record; sync sits on top,
-  so Drill works offline and in a browser with no backend at all.
+  so Wingbeat works offline and in a browser with no backend at all.
 - **Two things are uploaded:**
   - the full progress, **encrypted on the device** with a key derived from the recovery code
     (WebCrypto, no library). The server stores it but cannot read it. Conflicts are merged on
@@ -47,7 +47,7 @@ and a self-hosted PocketBase (~€6/month, own backups) were the alternatives.
 
 ## Android wrapper
 
-**Done** (#78, icon #79): the wrapper, DrillBridge, the widget, the opt-in daily note and the
+**Done** (#78, icon #79): the wrapper, WingbeatBridge, the widget, the opt-in daily note and the
 release checks. The signing key and Play publishing are under Still open.
 
 WebView shell serving the bundled app from `appassets.androidplatform.net` (as Saffron Road),
@@ -72,9 +72,9 @@ Widget and reminder mechanics, from a friend's Android habit app (Fizz) reviewed
 
 ## Fitting the person
 
-Agreed 2026-10-30: Drill learns from its own on-device log how to fit the person, so it reacts
+Agreed 2026-10-30: Wingbeat learns from its own on-device log how to fit the person, so it reacts
 in a way that suits them. It isn't there to guess their feelings. Fizz logs similar events to a
-JSON Lines file but never reads them back; Drill should use them. Needs HABITS.md task 13, and
+JSON Lines file but never reads them back; Wingbeat should use them. Needs HABITS.md task 13, and
 the Android wrapper for anything about notifications.
 
 - **Remind when they actually practise.** Learn the hours sessions usually happen and send the
@@ -89,19 +89,19 @@ the Android wrapper for anything about notifications.
 - Everything stays on the device, can be seen in the habit view, and goes in the file export.
 
 **Done** (#80, on #62's log): built in `src/fitting.js` (see CLAUDE.md): the reminders themselves are the Android wrapper's,
-which calls `window.drill.reminderHour()`, `shouldRemind()` and `noteReminder(outcome)`.
+which calls `window.wingbeat.reminderHour()`, `shouldRemind()` and `noteReminder(outcome)`.
 
 ## Coach voice
 
 Agreed 2026-10-30: like Duolingo's characters, each coach has lines that encourage and,
 sometimes, antagonise or challenge the player to get them to play more ("Moss bets you can't
 do three slow breaths before lunch"). A challenge is a dare in character, sent once; it is not
-Fizz's escalating run of panicked nags. Drill needs a way to generate these lines either way:
+Fizz's escalating run of panicked nags. Wingbeat needs a way to generate these lines either way:
 a tool that drafts lines per coach and state with an LLM at authoring time, for review and
 committing, with the coach's voice described once per character.
 
 Still open: whether lines are also written live on the device. Fizz writes its mascot's lines
-with Bedrock (a cloud model, with built-in lines as the fallback). For Drill, which has no
+with Bedrock (a cloud model, with built-in lines as the fallback). For Wingbeat, which has no
 internet permission:
 
 - **Line pool:** many hand-reviewed lines per state (habit, streak, hour, light, comeback),
@@ -113,7 +113,7 @@ internet permission:
   stays as the fallback either way. Check the current options before choosing.
 
 **Done** (#68; plan #61). Shipped: the line pool (`src/cast/voice/*.json`, `say()` in lines.js, `tools/voice-draft.js` for
-drafting with Claude at authoring time). The on-device model is still later: Drill has no internet
+drafting with Claude at authoring time). The on-device model is still later: Wingbeat has no internet
 permission, and the pool stays the fallback even then.
 
 ## Ideas from the Duo council
@@ -125,7 +125,7 @@ permission, and the pool stays the fallback even then.
 - **Joseph's steps.** Sync is built but flagged off (`SYNC` in `src/sync/config.js`) with no
   backend planned for now. To turn it on: deploy the sync API (`server/DEPLOY.md`: Cloudflare account, the DNS move to
   Cloudflare, D1, one deploy), then set `SYNC` to true. Create the Android release key once, put its SHA-256 in
-  `android/release-key.sha256` and add the four `DRILL_KEY*` repo secrets (CLAUDE.md, Android).
+  `android/release-key.sha256` and add the four `WINGBEAT_KEY*` repo secrets (CLAUDE.md, Android).
 - **Play publishing: written, waiting on Joseph.** `.github/workflows/publish-play.yml` uploads the signed bundle from a
   GitHub release to Play's internal track. It runs by hand only and refuses to run without its secret or a bundle signed with
   the pinned key, so nothing happens until these steps are done:
@@ -139,7 +139,6 @@ permission, and the pool stays the fallback even then.
 - **Sync on Android.** The wrapper has no internet permission, so sync is hidden there. Adding it
   is a decision (and a CI check to change).
 - **On-device model** for coach lines (Coach voice above). The pool stays the fallback.
-- **Renaming "Drill"** (HABITS.md, the garden): the app has moved from drilling to growing.
 
 ## To test or improve
 

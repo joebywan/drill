@@ -1,13 +1,13 @@
-# What Drill should take from Duolingo
+# What Wingbeat should take from Duolingo
 
 A five-person council (retention, character, pedagogy, UX, and the critics' view) studied Duolingo
-on 2026-10-30. This note turns their findings into suggestions for Drill. Every suggestion was
-checked against the code on `main` at 11d274b, so none of them describes something Drill already does.
+on 2026-10-30. This note turns their findings into suggestions for Wingbeat. Every suggestion was
+checked against the code on `main` at 11d274b, so none of them describes something Wingbeat already does.
 
 Evidence labels: **measured** means an A/B test or a published metric; **observational** means a
 correlation, and selection bias is likely; **claimed** means the company said so but published no
 number. Most of Duolingo's single-feature A/B effects are small (0.4–3%). The big multipliers, such
-as "3.6× more likely to finish", are correlations. Drill can't A/B test, so these numbers are
+as "3.6× more likely to finish", are correlations. Wingbeat can't A/B test, so these numbers are
 priors, not promises.
 
 ## 1. The Duo magic, in one page
@@ -61,11 +61,11 @@ priors, not promises.
    ([Yancey & Settles, KDD 2020](https://research.duolingo.com/papers/yancey.kdd20.pdf));
    *observational* for the widget ([widget](https://blog.duolingo.com/widget-feature)).
 
-## 2. Already in Drill
+## 2. Already in Wingbeat
 
 - [x] **Tiny unit:** any lesson or review keeps Learning; any session keeps a practice habit
   (`progress.js`).
-- [x] **Slack and blameless repair: Drill is ahead here.** One missed day in seven is forgiven
+- [x] **Slack and blameless repair: Wingbeat is ahead here.** One missed day in seven is forgiven
   automatically, and a gap of up to three days is repaired by one review. The repair is free and
   never framed as "you missed"; the habit view calls a forgiven day "A rest day". The JCR result
   supports exactly this. Duolingo sells repair, and deceptive.design lists that as a dark pattern.
@@ -196,7 +196,7 @@ Ranked by expected gain in habit-keeping and learning, divided by effort.
 **11. "Try one now" from the intro.**
 - **What:** step 1 of `intro()` gets a button that plays the picked course's first lesson
   straight away, with the picks offered after the first win.
-- **Evidence:** moving the sign-up wall behind a lesson gave about +20% DAU (*measured*). Drill
+- **Evidence:** moving the sign-up wall behind a lesson gave about +20% DAU (*measured*). Wingbeat
   has no wall, so the gain is smaller.
 - **Size:** S. **Confidence:** plausible.
 
@@ -279,23 +279,23 @@ Ranked by expected gain in habit-keeping and learning, divided by effort.
 - **Hearts and Energy.** Duolingo's own earlier move limit was neutral on retention (*measured*).
   Energy draws backlash because it rations practice
   ([Android Authority](https://androidauthority.com/quitting-duolingo-energy-system-3599842)).
-- **Gems, paid freezes, paid repair.** Repair is Drill's best idea. Selling it is a catalogued dark
+- **Gems, paid freezes, paid repair.** Repair is Wingbeat's best idea. Selling it is a catalogued dark
   pattern ([deceptive.design](https://www.deceptive.design/articles/when-a-user-uses-duolingo-on-a-series-of-consecutive-days-this-is-called-a-streak-if-users-miss-a-day-they-can-pay-to-repair-it)).
 - **Guilt as tone.** This covers the passive-aggressive reminders, the panicking widget, the
   melting icon and "Duo is dead". No published A/B result shows guilt copy beating neutral copy; the
   "sad Duo gets more opens" claims are folklore. Its farewell line lands as shame for some
   ([Daily Dot](https://www.dailydot.com/irl/duolingo-owl-memes/)). Dead Duo's 1.7B impressions came
-  from social reach that Drill doesn't have.
+  from social reach that Wingbeat doesn't have.
 - **Timed boosts and midnight countdowns.** These are ticking-clock stressors
   ([Android Authority](https://androidauthority.com/duolingo-xp-boost-ux-trap-3674572)).
-- **Fleet A/B testing and telemetry.** Drill keeps data on the device. Copy the discipline instead:
+- **Fleet A/B testing and telemetry.** Wingbeat keeps data on the device. Copy the discipline instead:
   a written hypothesis per change, the emulator, and suggestion 9.
 - **A strict path with no escape.** The 2022 path cost learners their choice
   ([PiunikaWeb](https://piunikaweb.com/2022/10/13/duolingo-app-update-with-path-ui-faces-backlash-from-users/)).
-  Drill keeps earlier lessons open and offers placement.
+  Wingbeat keeps earlier lessons open and offers placement.
 - **Live AI-written content.** The "AI-first" memo cost trust
   ([Fortune](https://fortune.com/2025/08/18/duolingo-ceo-admits-controversial-ai-memo-did-not-give-enough-context-insists-company-never-laid-off-full-time-employees)).
-  Drill drafts lines at authoring time and a person reviews every one.
+  Wingbeat drafts lines at authoring time and a person reviews every one.
 
 **Where the memos disagreed, and how it was resolved:**
 - **Leagues' +17%.** The retention memo cites it as measured; the pitfalls memo couldn't find a
@@ -308,13 +308,13 @@ Ranked by expected gain in habit-keeping and learning, divided by effort.
 - **Commitment framing versus "no questions in the way".** The aim is asked once, after a week,
   and can be skipped (12).
 - **The final reminder.** Duolingo's farewell is respectful in intent but reads as passive
-  aggression. Drill's existing passive line on ⋯ is the better version, so no farewell note is
+  aggression. Wingbeat's existing passive line on ⋯ is the better version, so no farewell note is
   suggested.
 
 ## 5. Open questions for Joseph
 
 1. **Widget:** keep the flame and number, or show the plant (13)?
-2. **Rest days (4):** should Drill ever offer a rest, for example after a long run of evenings with
+2. **Rest days (4):** should Wingbeat ever offer a rest, for example after a long run of evenings with
    nothing done, or only when the person sets one?
 3. **Woven review (5):** should it add 1–2 items to each lesson, or replace 1–2 new ones so
    lessons stay the same length?

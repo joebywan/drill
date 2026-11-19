@@ -31,20 +31,20 @@ tasks.named("preBuild") { dependsOn(copyWebAssets) }
 // them as -P gradle properties). Locals are ks*, not keyAlias/keyPassword: those are SigningConfig's
 // own property names and would shadow these inside the block.
 fun secret(name: String) = (findProperty(name) as String?) ?: System.getenv(name).orEmpty()
-val ksPath = secret("DRILL_KEYSTORE")
-val ksPassword = secret("DRILL_KEYSTORE_PASSWORD")
-val ksAlias = secret("DRILL_KEY_ALIAS")
-val ksKeyPassword = secret("DRILL_KEY_PASSWORD")
+val ksPath = secret("WINGBEAT_KEYSTORE")
+val ksPassword = secret("WINGBEAT_KEYSTORE_PASSWORD")
+val ksAlias = secret("WINGBEAT_KEY_ALIAS")
+val ksKeyPassword = secret("WINGBEAT_KEY_PASSWORD")
 val haveReleaseKey = listOf(ksPath, ksPassword, ksAlias, ksKeyPassword).all { it.isNotBlank() } && File(ksPath).exists()
 
 // A green build is not proof of a signed APK: with no key AGP quietly writes app-release-unsigned.apk.
 // Release builds pass -PrequireSigning=true, which turns that into a failure.
 if ((findProperty("requireSigning") as String?).toBoolean() && !haveReleaseKey) {
     throw GradleException(
-        "-PrequireSigning was set but the release key is not available. Need DRILL_KEYSTORE " +
-            "(exists: ${ksPath.isNotBlank() && File(ksPath).exists()}), DRILL_KEYSTORE_PASSWORD " +
-            "(set: ${ksPassword.isNotBlank()}), DRILL_KEY_ALIAS (set: ${ksAlias.isNotBlank()}), " +
-            "DRILL_KEY_PASSWORD (set: ${ksKeyPassword.isNotBlank()})."
+        "-PrequireSigning was set but the release key is not available. Need WINGBEAT_KEYSTORE " +
+            "(exists: ${ksPath.isNotBlank() && File(ksPath).exists()}), WINGBEAT_KEYSTORE_PASSWORD " +
+            "(set: ${ksPassword.isNotBlank()}), WINGBEAT_KEY_ALIAS (set: ${ksAlias.isNotBlank()}), " +
+            "WINGBEAT_KEY_PASSWORD (set: ${ksKeyPassword.isNotBlank()})."
     )
 }
 
@@ -58,8 +58,8 @@ android {
         minSdk = 26
         targetSdk = 36
         // CI supplies a rising versionCode for every release; local builds get 1.
-        versionCode = (System.getenv("DRILL_VERSION_CODE") ?: "1").toInt()
-        versionName = System.getenv("DRILL_VERSION_NAME") ?: "0.1.0"
+        versionCode = (System.getenv("WINGBEAT_VERSION_CODE") ?: "1").toInt()
+        versionName = System.getenv("WINGBEAT_VERSION_NAME") ?: "0.1.0"
     }
 
     sourceSets["main"].assets.directories.add(webAssets.get().asFile.path)

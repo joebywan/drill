@@ -1,6 +1,6 @@
 name: Web
 
-# Publishes Drill to GitHub Pages: https://knowhowit.com.au/drill/ (the custom domain comes from the
+# Publishes Wingbeat to GitHub Pages: https://knowhowit.com.au/wingbeat/ (the custom domain comes from the
 # joebywan.github.io user site). There is no build: the site is the repo's own files plus the three
 # libraries the import map in index.html points into node_modules.
 on:

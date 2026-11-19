@@ -1,5 +1,5 @@
 /**
- * Drill's sync API: a Cloudflare Worker over one D1 database (migrations/). It stores what the
+ * Wingbeat's sync API: a Cloudflare Worker over one D1 database (migrations/). It stores what the
  * device sends and never reads it: progress arrives encrypted, a card holds preset values only,
  * and nobody gives a name, an email or a password. A profile is the SHA-256 of a token the device
  * derives from its recovery code (src/sync/keys.js); `Authorization: Bearer <token>` on each call.
