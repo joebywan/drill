@@ -733,7 +733,7 @@ test('Reflect keeps two lines and a skip, on its own streak, and shows them back
 
   await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
   await page.getByRole('button', { name: 'About the same' }).click();
-  await expect(page.locator('.chip.reflect')).toContainText('📓 1');
+  await expect(page.locator('.chip.reflect')).toHaveCount(0);
   await continueButton(page).click();
   await expect(tab(page, 'Learning')).toHaveAccessibleName('Learning');
 
@@ -1974,7 +1974,7 @@ test('Wind down: settle in, Calm breathing on your own timings, a sigh, goodnigh
   await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
   await expect(page.locator('main.practice-end.night')).toBeVisible();
   await expect(page.getByText(/^3 breaths · 1 sigh · \d+ min$/)).toBeVisible();
-  await expect(page.locator('.chip.winddown')).toContainText('🌙 1');
+  await expect(page.locator('.chip.winddown')).toHaveCount(0);
   await page.getByRole('button', { name: 'Settled' }).click();
   await continueButton(page).click();
   await expect(page.getByRole('button', { name: 'Lights low, done' })).toBeVisible();
