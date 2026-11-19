@@ -19,7 +19,7 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *   cards    { itemKey: FSRS card }  — every item ever answered, scheduled for review
  *   start    { subjectId: unitTitle | null }  — where a subject's optional placement question put
  *            the learner, null once the offer is dismissed, absent while it is still offered
- *   journal  { 'YYYY-MM-DD': { good?, learned?, tomorrow?, focus?: [] } }  — Reflect's lines and what
+ *   journal  { 'YYYY-MM-DD': { good?, learned?, tomorrow?, asked?, focus?: [] } }  — Reflect's lines and what
  *            each Focus session was for, the learner's own words. Kept here, not in the log; only the habit view and the file export read them
  *   garden   { earned: { achievementId: 'YYYY-MM-DD' } }  — what the garden has been given
  *            (src/garden/model.js). Earned once, kept forever: nothing removes an entry
@@ -55,7 +55,7 @@ function readStreak(raw) {
 // Reflect's three lines. Focus keeps a list under `focus`, a line per session (one string before lists).
 const JOURNAL_KEYS = ['good', 'learned', 'tomorrow'];
 const isJournal = (j) => isObject(j) && Object.entries(j).every(([date, day]) =>
-  isDate(date) && isObject(day) && JOURNAL_KEYS.every((k) => day[k] == null || typeof day[k] === 'string')
+  isDate(date) && isObject(day) && [...JOURNAL_KEYS, 'asked'].every((k) => day[k] == null || typeof day[k] === 'string')
   && (day.focus == null || typeof day.focus === 'string' || (Array.isArray(day.focus) && day.focus.every((t) => typeof t === 'string'))));
 /** A journal day's Focus lines as a list, oldest first: a single string from before lists is a list of one. */
 export const focusLines = (day) => [day?.focus ?? []].flat().filter((t) => typeof t === 'string' && t.trim());
@@ -307,6 +307,7 @@ export function track(progress, entry) {
  */
 export function writeJournal(progress, entry, now = new Date()) {
   const lines = Object.fromEntries(JOURNAL_KEYS.filter((k) => entry?.[k]?.trim()).map((k) => [k, entry[k].trim()]));
+  if (lines.learned && typeof entry.asked === 'string') lines.asked = entry.asked; // which middle prompt that line answers
   const date = today(now);
   const journal = progress.journal || {};
   const focus = focusLines(entry).map((t) => t.trim());

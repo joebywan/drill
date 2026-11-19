@@ -162,10 +162,17 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   opens and closes on a soft bell and can have soft rain under it (`calmSound()`, `rain()` in
   feel.js, both generated): set on the ⋯ screen, both off until turned on, and both silent
   when Sound is muted or under reduced motion.
-- `src/reflect/` — the Reflect practice subject: three prompts (good, learned, tomorrow), each
-  skippable, self-paced like grounding, with Lumi coaching. What is written goes to
-  `progress.journal` via `writeJournal`, never the log; the habit view shows it through the
-  subject's `dayDetail` hook. A subject's `again` ({ label, lesson }, in the course JSON) keeps a
+- `src/reflect/` — the Reflect practice subject: three prompts, each skippable, self-paced like
+  grounding, with Lumi coaching. "One good thing" first and "One thing for tomorrow" last never
+  change; the middle one comes from the `middle` pool in `reflect.json`, chosen by the date
+  (`middleFor`, the same all day), and its line is kept under `learned` with `asked` (the pool id)
+  on the day's entry so the week view labels it right. What is written goes to `progress.journal`
+  via `writeJournal`, never the log; the habit view shows it through the subject's `dayDetail`
+  hook. The subject's `lookBack` (home: one line from seven days ago, else the newest older one,
+  tapping it opens the habit view) and `readBack` (end screen: "Read back your week" once three of
+  the last seven days have lines) return html and are the only other readers; our words around the
+  lines are `REFLECT_WORDS` in `cast/lines.js`. No prompt asks about a bad feeling, and nothing
+  interprets what was written. A subject's `again` ({ label, lesson }, in the course JSON) keeps a
   lesson on home once the path is done: "Reflect today", "Take a break", "Breathe". The learner's text is never linted or sent anywhere (a test checks).
 - `src/winddown/` — Wind down, a bedtime sequence made only of Calm's pieces: kit.js `sequence()`
   plays a 'sequence' item's parts in turn (its own settle-in steps and goodnight card, then Calm's

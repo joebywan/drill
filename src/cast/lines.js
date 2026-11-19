@@ -321,6 +321,12 @@ export const REFLECT_LINES = {
   'no different': ["That's alright. Thanks for telling me. Some days are heavy, and that's not on you."],
 };
 
+/** Reflect's own words around the learner's lines: home's look back, and the end screen's link. */
+export const REFLECT_WORDS = {
+  lookBack: (exact, when, back) => (exact ? `Last ${when}\u2019s ${back}:` : `Your ${back} on ${when}:`),
+  readBack: 'Read back your week',
+};
+
 /**
  * Move's coach: playful and gentle. Never pushes for more, never mentions bodies' shape or size;
  * the count is a guide, not a target (the guardrail tests check).
