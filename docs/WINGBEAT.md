@@ -131,7 +131,7 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
   or habit that raises it. A gallery page. No app wiring.
 - [x] **T2. Switches.** (#131) A switch for coach dares. Streak numbers hidden on Calm, Reflect and Wind
   down unless switched on. Learning's 🔥 icon replaced.
-- [ ] **T3. Your butterfly.** The wing panels; today's three states on home, the end screen and the
+- [x] **T3. Your butterfly.** (#140) The wing panels; today's three states on home, the end screen and the
   widget; the flame retired; the intro and tagline; Lumi's flipper-flap; widget and daily-note lines
   that follow what the person does. Needs T1.
 - [ ] **T4. Course and habit butterflies.** The stages on the path and in the garden, emerged
@@ -143,16 +143,16 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
 
 - [ ] **H1. Choose today's routine.** A finished Calm or Move path suggests the routine done least
   recently and offers the rest. One tap counts a guided habit done away from the app.
-- [ ] **H2. Move grows.** Back and neck, seated, and balance. Clover demonstrates every new move.
-- [ ] **H3. Reflect.** A middle prompt that rotates, and a line from a week ago on Reflect's home.
+- [x] **H2. Move grows.** (#139) Back and neck, seated, and balance. Clover demonstrates every new move.
+- [x] **H3. Reflect.** (#137) A middle prompt that rotates, and a line from a week ago on Reflect's home.
 - [ ] **H4. One-tap habits.** Five more presets and an optional "when" for any habit.
-- [ ] **H5. Quiet counts.** A quiet habit's count leaves the greeting and the end screen.
+- [x] **H5. Quiet counts.** (#136) A quiet habit's count leaves the greeting and the end screen.
 
 **Courses**
 
-- [ ] **C1. Japanese.** The rest of hiragana, the sounds that change (が, ぱ), small kana, everyday
+- [x] **C1. Japanese.** (#135) The rest of hiragana, the sounds that change (が, ぱ), small kana, everyday
   words, greetings and a first sentence. It teaches はばたき, "wingbeat".
-- [ ] **C2. Maths.** Six more units.
+- [x] **C2. Maths.** (#133) Six more units.
 
 **Phone**
 
