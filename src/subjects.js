@@ -212,6 +212,9 @@ export const subjects = [{
       ['Not a single one', 'Vowels'],
       ['I know あいうえお', 'K and S'],
       ['I can read the k and s rows', 'First words'],
+      ['I can read up to the n row', 'H and M'],
+      ['I know all the plain kana', 'Sounds that change'],
+      ['I can read every kana, dots and all', 'Food and numbers'],
     ],
   },
 }, {

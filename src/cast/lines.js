@@ -438,6 +438,7 @@ export const KAEDE_LINES = {
     'Say it out loud. Your mouth remembers too.',
     'I stand up on my back legs when I am pleased. You will see it a lot.',
     'Hiragana first, then words. Then the menu. Then the world.',
+    'はばたき, habataki, is a wingbeat. It is also the name of this app, in my language.',
   ],
   complete: [
     'Lesson done. These come back in review, so they stick.',
