@@ -1,4 +1,4 @@
-package com.joebywan.drill
+package com.joebywan.wingbeat
 
 import android.Manifest
 import android.content.Intent

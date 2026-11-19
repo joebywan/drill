@@ -1,4 +1,4 @@
-package com.joebywan.drill
+package com.joebywan.wingbeat
 
 import android.app.AlarmManager
 import android.app.NotificationChannel
@@ -196,9 +196,9 @@ class Ticker : BroadcastReceiver() {
     }
 
     companion object {
-        const val TICK = "com.joebywan.drill.TICK"
-        const val REMIND = "com.joebywan.drill.REMIND"
-        const val CLEARED = "com.joebywan.drill.CLEARED"
+        const val TICK = "com.joebywan.wingbeat.TICK"
+        const val REMIND = "com.joebywan.wingbeat.REMIND"
+        const val CLEARED = "com.joebywan.wingbeat.CLEARED"
     }
 }
 
