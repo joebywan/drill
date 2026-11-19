@@ -191,8 +191,14 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   amber eyes) demonstrating each of its steps; both are posed with `rig()` in `src/cast/kit.js`.
   Both play through `coached()` in kit.js: the step and its time, how to do it (`how`), what's next, and
   a first-step room check, with no tap needed. Every timed routine's pause (`pauseButton`) is round and beside the coach. Course in `src/data/move.json`:
-  Wake up, Strength (reps grow 5, 8, 10), Stretch. Guardrails bar pushing and body or weight
-  words, and check the safety line is on the first lesson and after "Not really".
+  Wake up, Strength (reps grow 5, 8, 10), Stretch, Back and neck, Seated, Balance. Every move is a
+  gentle one public health services publish (NHS sitting, flexibility, strength and balance pages):
+  nothing on the floor, no deep bends, no full neck circles, nothing fast, no kit beyond a chair or
+  a wall. A new routine is data plus a pose, never a new flow. Clover has three rigs, each with its
+  own resting phase: standing, seated (the `seat` prop, a chair; a seated demo never stands her up
+  between reps) and balance (the `wall` prop, her right hand on it). Seated is all on a chair and
+  Balance keeps a hand on the wall (move.test.js checks both). Guardrails bar pushing, health claims
+  and body or weight words, and check the safety line is on every unit's first lesson and after "Not really".
 - **Calm is not therapy.** `test/guardrails.test.js` bars health claims, diagnosis words and urgency
   in Calm's text, and checks the Lifeline help line (13 11 14, as plain text) is on the first Calm
   lesson and after "Not really".
