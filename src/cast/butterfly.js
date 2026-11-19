@@ -7,6 +7,7 @@ import data from '../data/butterflies.json' with { type: 'json' };
  * the wing edge, the cast's ink for bodies. The wings are one `data-part="wings"` group and the body
  * `data-part="body"`, so garden/scene.js animateVisitor(el, 'butterfly') flaps an open one as is.
  *
+ * Every drawing with a body takes an optional last `body` colour; see BODY_INK below.
  *   butterfly(filled, full)    the player's own, from above: 14 wing panels (PANELS), `filled` colours
  *                              them in fill order (left, right, left, …); `full` adds the dark edge
  *                              and the spots. The app icon draws it (tools/icon.js).
@@ -45,11 +46,17 @@ const VEINS = 'M57 40 L16 15 M57 40 L9 29 M57 41 L22 44 M57 52 L25 63 M57 54 L31
 const mirror = (s) => `<g transform="translate(120 0) scale(-1 1)">${s}</g>`;
 const edge = (colour, width) => `<path d="${FORE} ${HIND}" fill="none" stroke="${colour}" stroke-width="${width}" stroke-linejoin="round"/>`;
 const dot = ([x, y, r, c]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`;
-const BODY = `<g data-part="body"><rect x="57.6" y="36" width="4.8" height="36" rx="2.4" fill="${INK}"/><ellipse cx="60" cy="38" rx="4.2" ry="6.5" fill="${INK}"/>`
-  + `<circle cx="60" cy="29" r="4.2" fill="${INK}"/>`
-  + `<path d="M58.6 26 Q55 16 49 10 M61.4 26 Q65 16 71 10" stroke="${INK}" stroke-width="1.7" fill="none" stroke-linecap="round"/>`
-  + `<circle cx="49" cy="10" r="2.2" fill="${INK}"/><circle cx="71" cy="10" r="2.2" fill="${INK}"/></g>`;
-const fly = (left, right = left) => `<g data-part="wings">${left}${mirror(right)}</g>${BODY}`;
+// The body, head and antennae: `var(--butterfly-body)` (pale in styles.css's dark theme) over the
+// ink by default, so they read on a dark page; a caller with no CSS (the icon, a PNG) passes a colour.
+const BODY_INK = `var(--butterfly-body, ${INK})`;
+// A var() goes on the group as `color`, once, and the parts paint with currentColor.
+const paint = (c) => (k) => `${k}="${c.startsWith('var(') ? 'currentColor' : c}"`;
+const tint = (c) => (c.startsWith('var(') ? ` style="color:${c}"` : '');
+const BODY = (c) => { const p = paint(c); return `<g data-part="body"${tint(c)}><rect x="57.6" y="36" width="4.8" height="36" rx="2.4" ${p('fill')}/><ellipse cx="60" cy="38" rx="4.2" ry="6.5" ${p('fill')}/>`
+  + `<circle cx="60" cy="29" r="4.2" ${p('fill')}/>`
+  + `<path d="M58.6 26 Q55 16 49 10 M61.4 26 Q65 16 71 10" ${p('stroke')} stroke-width="1.7" fill="none" stroke-linecap="round"/>`
+  + `<circle cx="49" cy="10" r="2.2" ${p('fill')}/><circle cx="71" cy="10" r="2.2" ${p('fill')}/></g>`; };
+const fly = (left, right, body) => `<g data-part="wings">${left}${mirror(right)}</g>${BODY(body)}`;
 
 // --- The player's butterfly: each wing a fan of wedge panels from its root, clipped to the wing.
 // Panels are wedges between two angles (degrees); SEQ is one side's fill order.
@@ -64,7 +71,7 @@ const panels = (root, fan, cs, part) => fan.map(([a, b], i) => {
 const DOTS = [[11.5, 30, 1.4, '#fff'], [9, 23.5, 1.2, '#fff'], [14, 16.5, 1.2, '#fff'], [31, 82, 3.2, EDGE], [31, 82, 1.6, '#F2D04A']].map(dot).join('');
 
 let uid = 0;
-export function butterfly(filled = ORDER, full = true) {
+export function butterfly(filled = ORDER, full = true, body = BODY_INK) {
   const sides = [[], []];
   filled.forEach((c, k) => sides[k % 2].push(c));
   // One pair of clips serves both halves: a clip is read in the user space of what it clips, mirrored too.
@@ -72,7 +79,7 @@ export function butterfly(filled = ORDER, full = true) {
   const half = (cs) => `<g clip-path="url(#${id}f)">${panels(FROOT, FW, cs, 'f')}</g><g clip-path="url(#${id}h)">${panels(HROOT, HW, cs, 'h')}</g>`
     + (full ? edge(EDGE, 2.8) + DOTS : edge(SOFT, 1.4));
   return `<defs><clipPath id="${id}f"><path d="${FORE}"/></clipPath><clipPath id="${id}h"><path d="${HIND}"/></clipPath></defs>`
-    + fly(half(sides[0]), half(sides[1]));
+    + fly(half(sides[0]), half(sides[1]), body);
 }
 
 // --- A species, from its drawing spec (all optional but `fore`):
@@ -87,30 +94,32 @@ const CELLS = [[22, 22, 9, 6.5, -28], [36, 62, 8.5, 6.2, -20], [38, 28, 8, 5.5, 
 const cell = ([cx, cy, rx, ry, r], c) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c}" transform="rotate(${r} ${cx} ${cy})"/>`;
 const eye = ([x, y, r, ring, centre = '#fff']) => (ring ? dot([x, y, r * 1.45, ring]) : '') + dot([x, y, r, '#1E1B1E']) + dot([x, y, r * 0.42, centre]);
 
-export function open(art) {
+export function open(art, body = BODY_INK) {
   const { fore, hind = fore, tip, clear, veins, tails, edge: e, edgeW = 2, cells = {}, dots = [], eyes = [] } = art;
-  return fly(`<path d="${FORE}" fill="${fore}"${clear ? ' fill-opacity=".3"' : ''}/><path d="${HIND}" fill="${hind}"/>`
+  const half = `<path d="${FORE}" fill="${fore}"${clear ? ' fill-opacity=".3"' : ''}/><path d="${HIND}" fill="${hind}"/>`
     + (tails ? `<path d="${TAIL}" fill="${hind}"/>` : '')
     + (tip ? `<path d="${TIP}" fill="${tip}"/>` : '')
     + Object.entries(cells).map(([i, c]) => cell(CELLS[i], c)).join('')
     + (veins ? `<path d="${VEINS}" stroke="${veins}" stroke-width="1.6" fill="none" stroke-linecap="round"/>` : '')
-    + (e ? edge(e, edgeW) : '') + dots.map(dot).join('') + eyes.map(eye).join(''));
+    + (e ? edge(e, edgeW) : '') + dots.map(dot).join('') + eyes.map(eye).join('');
+  return fly(half, half, body);
 }
 
 /** Side-on with the wings closed over its back, the underside showing: [forewing, hindwing, spots]. */
-export function side(art) {
+export function side(art, body = BODY_INK) {
+  const p = paint(body);
   const [under, hind, spot] = art.under || [art.hind || art.fore, art.fore, art.fore];
   return `<g transform="translate(-6 10) scale(2.35)"><g data-part="wings">`
     + `<path d="M20 31 C12 28 10 21 14 18 C18 15 22 22 23 30 Z" fill="${hind}"/>`
     + `<path d="M22 30 C14 18 16 4 28 1 C40 -2 44 14 36 26 C33 30 29 31 26 31 Z" fill="${under}"${art.edge ? ` stroke="${art.edge}" stroke-width=".8"` : ''}/>`
     + `<circle cx="30" cy="12" r="2.4" fill="${spot}"/><circle cx="25" cy="21" r="1.8" fill="${spot}"/></g>`
-    + `<g data-part="body"><ellipse cx="25" cy="32" rx="9" ry="2.6" fill="${INK}"/><circle cx="34" cy="31" r="2.6" fill="${INK}"/>`
-    + `<path d="M35 29 Q39 22 44 20 M35.5 30 Q41 25 46 25" stroke="${INK}" stroke-width="1.1" fill="none" stroke-linecap="round"/>`
-    + `<circle cx="44" cy="20" r="1.1" fill="${INK}"/><circle cx="46" cy="25" r="1.1" fill="${INK}"/></g></g>`;
+    + `<g data-part="body"${tint(body)}><ellipse cx="25" cy="32" rx="9" ry="2.6" ${p('fill')}/><circle cx="34" cy="31" r="2.6" ${p('fill')}/>`
+    + `<path d="M35 29 Q39 22 44 20 M35.5 30 Q41 25 46 25" ${p('stroke')} stroke-width="1.1" fill="none" stroke-linecap="round"/>`
+    + `<circle cx="44" cy="20" r="1.1" ${p('fill')}/><circle cx="46" cy="25" r="1.1" ${p('fill')}/></g></g>`;
 }
 
 /** The player's butterfly side-on: the cream underside, the hindwing in the latest panel's colour. */
-export const butterflySide = (filled = ORDER) => side({ under: [WING, filled.at(-1) || EMPTY, filled[0] || SOFT] });
+export const butterflySide = (filled = ORDER, body = BODY_INK) => side({ under: [WING, filled.at(-1) || EMPTY, filled[0] || SOFT] }, body);
 
 // --- The life cycle, on a leaf.
 const LEAF = `<ellipse cx="60" cy="66" rx="40" ry="13" fill="#6CBF6A" transform="rotate(-8 60 66)"/><path d="M22 71 Q60 66 98 60" stroke="#4E8E4A" stroke-width="1.6" fill="none"/>`;
@@ -119,7 +128,7 @@ export const egg = () => LEAF + `<ellipse data-part="egg" cx="60" cy="60" rx="5.
 
 // Its segments, tail to head; a hatchling has the last two, a grown one all six, and it scales up too.
 const SEGMENTS = [[29.5, 59, 4.4], [38, 58, 5], [46, 57, 5.6], [54, 56, 6.1], [62.5, 55, 6.6], [71, 54.5, 7]];
-export function caterpillar(growth = 1, spot = '#F3E7B8') {
+export function caterpillar(growth = 1, spot = '#F3E7B8', body = BODY_INK) {
   const g = Math.min(1, Math.max(0, Number(growth) || 0));
   const s = (0.55 + 0.45 * g).toFixed(2);
   return LEAF + `<g data-part="caterpillar" transform="translate(81 58) scale(${s}) translate(-81 -58)">`
@@ -128,7 +137,7 @@ export function caterpillar(growth = 1, spot = '#F3E7B8') {
       + `<rect x="${x - 1.4}" y="${(y + r - 1.5).toFixed(1)}" width="2.8" height="3.6" rx="1.4" fill="#3F7A3A"/>`).join('')
     + `<circle cx="81" cy="52" r="8.2" fill="#9AD47A"/><circle cx="84.5" cy="50" r="1.7" fill="${INK}"/><circle cx="79" cy="50.5" r="1.5" fill="${INK}"/>`
     + `<path d="M79 55.5 Q82 57.5 85.5 55" stroke="${INK}" stroke-width="1.2" fill="none" stroke-linecap="round"/>`
-    + `<path d="M79 44.5 L77 38.5 M84 44.5 L86 38.5" stroke="${INK}" stroke-width="1.2" stroke-linecap="round"/></g>`;
+    + `<path d="M79 44.5 L77 38.5 M84 44.5 L86 38.5" ${paint(body)('stroke')}${tint(body)} stroke-width="1.2" stroke-linecap="round"/></g>`;
 }
 
 export const chrysalis = (band = '#F3E7B8') => `<path d="M30 20 L92 16" stroke="#8A6A45" stroke-width="3.2" stroke-linecap="round"/><ellipse cx="60" cy="19" rx="3" ry="2" fill="#F6F0DC"/>`

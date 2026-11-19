@@ -53,3 +53,12 @@ test('the caterpillar grows with growth: more segments, and bigger', () => {
   assert.deepEqual(look(-1), look(0));
   assert.deepEqual(look(2), look(1));
 });
+
+test('bodies take the theme colour by default, or a colour passed in for places with no CSS', () => {
+  const art = SPECIES[0].art;
+  for (const svg of [butterfly(), butterflySide(), open(art), side(art), caterpillar(1)]) assert.match(svg, /style="color:var\(--butterfly-body, #1E1B2E\)"/);
+  for (const svg of [butterfly(undefined, true, '#123456'), butterflySide(undefined, '#123456'), open(art, '#123456'), side(art, '#123456'), caterpillar(1, undefined, '#123456')]) {
+    assert.doesNotMatch(svg, /var\(|currentColor/);
+    assert.match(svg, /#123456/);
+  }
+});
