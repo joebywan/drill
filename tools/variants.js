@@ -1167,7 +1167,7 @@ export const MATHS = {
   }),
   'biggest-unit': () => [[2, 3, 4], [2, 3, 5], [2, 4, 5], [3, 4, 6], [3, 5, 6], [4, 5, 6], [2, 5, 8], [3, 6, 8], [4, 6, 8]].map(([a, b, c]) => ({
     goal: 'biggest', picture: { bars: [[1, a], [1, b], [1, c]] }, prompt: 'Which shaded part is biggest?', options: [`1/${a}`, `1/${b}`, `1/${c}`],
-    explain: `Fewer parts means bigger parts: 1/${a} beats 1/${b} and 1/${c}.`,
+    explain: `Fewer parts means bigger parts: 1/${a} is bigger than 1/${b} and 1/${c}.`,
   })),
   'biggest-bars': () => [[[1, 3], [3, 4], [2, 5]], [[1, 2], [3, 5], [1, 4]], [[2, 3], [1, 2], [1, 5]], [[1, 2], [3, 4], [3, 5]], [[2, 5], [1, 3], [1, 2]], [[4, 5], [2, 3], [1, 2]], [[1, 4], [2, 5], [1, 3]]].map((bars) => {
     const big = bars.reduce((a, b) => (a[0] / a[1] >= b[0] / b[1] ? a : b));

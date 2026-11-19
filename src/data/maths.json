@@ -612,7 +612,7 @@
                   ]
                 ]
               },
-              "text": "These bars are the same length, so you can compare them by eye. Fewer parts means bigger parts: 1/2 beats 1/8. And the further the shading reaches, the more it is."
+              "text": "These bars are the same length, so you can compare them by eye. Fewer parts means bigger parts: 1/2 is bigger than 1/8. And the further the shading reaches, the more it is."
             },
             {
               "id": "frac-1-biggest", "family": "biggest-unit",
@@ -640,7 +640,7 @@
                 "1/4",
                 "1/5"
               ],
-              "explain": "Fewer parts means bigger parts: a third beats a quarter or a fifth."
+              "explain": "Fewer parts means bigger parts: a third is bigger than a quarter or a fifth."
             },
             {
               "id": "frac-1-biggest2", "family": "biggest-bars",
