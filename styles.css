@@ -709,12 +709,12 @@ body:has(main.night) {
   min-height: 190px; padding: 16px; background: var(--card); border: 2px solid var(--line); border-radius: 18px; text-align: center;
 }
 /* One glyph is huge; a word shrinks to fit the card. */
-.quiz .glyph { margin: 0; font-size: min(110px, calc(250px / var(--len, 1))); line-height: 1.15; font-weight: 500; }
+.quiz .glyph { margin: 0; font-size: clamp(28px, calc(250px / var(--len, 1)), 110px); line-height: 1.15; font-weight: 500; }
 .quiz .reading { margin: 0; font-size: 1.3rem; font-weight: 700; color: var(--muted); }
-.quiz .meaning { margin: 0; font-size: 1.1rem; font-weight: 700; }
-.quiz .slots { display: flex; gap: 8px; margin: 8px 0 0; }
+.quiz .meaning { margin: 0; padding: 0 48px; font-size: 1.1rem; font-weight: 700; } /* clear of the speaker */
+.quiz .slots { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 8px 0 0; }
 .quiz .slot {
-  display: grid; place-items: center; width: 64px; height: 72px; font-size: 44px;
+  display: grid; place-items: center; min-width: min(64px, 11vw); height: 72px; padding: 0 4px; font-size: min(44px, 9vw); white-space: nowrap;
   border-bottom: 4px solid var(--line); border-radius: 6px;
 }
 .quiz .slot:not(:empty) { border-color: var(--accent); }
@@ -725,7 +725,7 @@ body:has(main.night) {
 .quiz .quiz-pairs { display: grid; grid-template-columns: 1fr 1fr; }
 .quiz .quiz-pairs .choice { font-size: 1.4rem; padding: 10px 6px; min-height: 56px; }
 .quiz .quiz-build { flex-wrap: wrap; justify-content: center; }
-.quiz .quiz-build .choice { flex: 0 0 calc(25% - 6px); }
+.quiz .quiz-build .choice { flex: 0 0 auto; min-width: calc(25% - 6px); }
 .quiz .choice[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
 .quiz .choice.used { visibility: hidden; }
 .quiz-star { position: absolute; top: 12px; left: calc(50% - 12px); font-size: 28px; font-style: normal; color: #F5A524; pointer-events: none; }

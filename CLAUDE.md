@@ -89,9 +89,10 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   (match two columns), `build` (tap tiles in order). `items.js` is pure (`problem()`), `exercise.js`
   mounts them; `ctx.lang` marks text for the system font and picks the voice (`speak()` in feel.js:
   `speechSynthesis`, and with no voice or Sound muted the reading is shown instead).
-- Japanese: `src/data/japanese.json` (hiragana: vowels, k and s rows, first words), coached by Kaede, a red
-  panda (`src/cast/kaede.js`, rig-posed). `test/quiz.test.js` checks every answer against its own kana
-  table and that no kana is asked before a teach card shows it.
+- Japanese: `src/data/japanese.json` (all of hiragana, the sounds that change and small kana, everyday words,
+  greetings, and a first sentence with は: これは ねこです), coached by Kaede, a red panda (`src/cast/kaede.js`,
+  rig-posed). Sentences are `build` items with word tiles. `test/quiz.test.js` checks every answer against its own kana
+  table (small kana, and は said "wa" at the end of a part) and that no kana is asked before a teach card shows it.
 - `src/quiz/` also has `line` (drag a marker on a number line, snapped to its ticks, answered on
   release) and takes a `picture` the course draws through the mount's `ctx.art`, plus `ctx.look`
   for a course's own styling.
@@ -190,8 +191,14 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   amber eyes) demonstrating each of its steps; both are posed with `rig()` in `src/cast/kit.js`.
   Both play through `coached()` in kit.js: the step and its time, how to do it (`how`), what's next, and
   a first-step room check, with no tap needed. Every timed routine's pause (`pauseButton`) is round and beside the coach. Course in `src/data/move.json`:
-  Wake up, Strength (reps grow 5, 8, 10), Stretch. Guardrails bar pushing and body or weight
-  words, and check the safety line is on the first lesson and after "Not really".
+  Wake up, Strength (reps grow 5, 8, 10), Stretch, Back and neck, Seated, Balance. Every move is a
+  gentle one public health services publish (NHS sitting, flexibility, strength and balance pages):
+  nothing on the floor, no deep bends, no full neck circles, nothing fast, no kit beyond a chair or
+  a wall. A new routine is data plus a pose, never a new flow. Clover has three rigs, each with its
+  own resting phase: standing, seated (the `seat` prop, a chair; a seated demo never stands her up
+  between reps) and balance (the `wall` prop, her right hand on it). Seated is all on a chair and
+  Balance keeps a hand on the wall (move.test.js checks both). Guardrails bar pushing, health claims
+  and body or weight words, and check the safety line is on every unit's first lesson and after "Not really".
 - **Calm is not therapy.** `test/guardrails.test.js` bars health claims, diagnosis words and urgency
   in Calm's text, and checks the Lifeline help line (13 11 14, as plain text) is on the first Calm
   lesson and after "Not really".

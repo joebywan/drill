@@ -341,6 +341,9 @@ export const MOVE_LINES = {
     'Wiggle your toes. No reason. It just feels nice.',
     'Stiff is normal. Bodies like moving, a little at a time.',
     'My favourite move is the reach-up. Hello, ceiling.',
+    'Chair moves are my secret. Nobody can tell I am moving. Except you.',
+    'Balance tip from a rabbit: hold the wall. Walls are great.',
+    'All that turning and twisting? I deserve a flop. A big one.',
   ],
   // The end screen: settled, not a party.
   done: ['A few minutes of moving, just for you.', 'Done. Nice and easy does it.', 'All moved. Have a sip of water.'],
@@ -447,6 +450,7 @@ export const KAEDE_LINES = {
     'Say it out loud. Your mouth remembers too.',
     'I stand up on my back legs when I am pleased. You will see it a lot.',
     'Hiragana first, then words. Then the menu. Then the world.',
+    'はばたき, habataki, is a wingbeat. It is also the name of this app, in my language.',
   ],
   complete: [
     'Lesson done. These come back in review, so they stick.',
