@@ -916,11 +916,11 @@ body:has(main.night) {
 
 /* ---- Raised butterflies: home's line, the garden's cards and the field guide (src/guide.js) ---- */
 .raising {
-  display: flex; align-items: center; gap: 8px; margin: 10px auto 0; max-width: 100%; padding: 2px 14px 2px 4px;
+  display: flex; align-items: center; gap: 8px; margin: 8px auto 0; max-width: 100%; padding: 2px 14px 2px 4px;
   border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text); font-size: .85rem; text-align: left;
 }
 .raising svg { width: 40px; height: 34px; flex: none; }
-.raising + .street h2 { margin-top: 14px; }
+.raising + .street h2 { margin-top: 10px; }
 .log-habit .raising { margin-bottom: 8px; }
 .arrival svg.creature { height: 30px; }
 .bar .guide-link { margin: 0 0 0 auto; }
