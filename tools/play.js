@@ -9,6 +9,8 @@
  *   options.unit     1-based unit to play (default 1); `only` limits it to some lesson ids
  *   options.answer   async (h, item) => void
  *   options.small    wm size to play at, e.g. '1080x1700', for a short phone
+ *   options.parts    selectors of the parts of the course's screen that must not sit on each other (default: Coding's)
+ *   options.tray     of those, the ones the verdict may cover: the answer tray (default: '.tiles')
  *
  * Time is an estimate at a steady human pace, since the harness taps faster than a person: reading
  * (1.5 s + 0.2 s a word of what the coach says, 0.1 s a word of the explanation after), one second a
@@ -20,8 +22,10 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 const OUT = new URL('../test-results/', import.meta.url).pathname;
 const words = (s) => (String(s ?? '').match(/\S+/g) || []).length;
 
+const PARTS = ['.bubble', '.grid-world', '.vars', '.program', '.tiles']; // Coding's screen
+
 /** What is wrong with the screen right now: clipped or overlapping text, things off the side or behind each other. */
-const scan = () => {
+const scan = ({ parts: all, tray }) => {
   const out = [];
   const app = document.getElementById('app');
   const shown = (el) => { const s = getComputedStyle(el); const r = el.getBoundingClientRect(); return s.visibility !== 'hidden' && s.display !== 'none' && r.width > 0 && r.height > 0; };
@@ -38,10 +42,10 @@ const scan = () => {
   // Things that must not sit on each other: the parts of the screen, and the buttons in them.
   const area = (r) => Math.max(0, r.width) * Math.max(0, r.height);
   const cut = (a, b) => area({ width: Math.min(a.right, b.right) - Math.max(a.left, b.left), height: Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) });
-  const parts = ['.bubble', '.grid-world', '.vars', '.program', '.tiles'].map((q) => app.querySelector(q)).filter((e) => e && shown(e));
+  const parts = all.map((q) => app.querySelector(q)).filter((e) => e && shown(e));
   for (const [i, a] of parts.entries()) for (const b of parts.slice(i + 1)) if (cut(a.getBoundingClientRect(), b.getBoundingClientRect()) > 16) out.push(`overlap: ${label(a)} and ${label(b)}`);
   const foot = app.querySelector('.foot.show');
-  if (foot) for (const e of app.querySelectorAll('.bubble, .grid-world, .vars, .program')) if (shown(e) && cut(foot.getBoundingClientRect(), e.getBoundingClientRect()) > 16) out.push(`verdict covers: ${label(e)}`);
+  if (foot) for (const e of app.querySelectorAll(all.filter((q) => !tray.includes(q)).join(', '))) if (shown(e) && cut(foot.getBoundingClientRect(), e.getBoundingClientRect()) > 16) out.push(`verdict covers: ${label(e)}`);
   const buttons = [...app.querySelectorAll('.stage button')].filter((b) => shown(b) && getComputedStyle(b).visibility !== 'hidden');
   for (const [i, a] of buttons.entries()) for (const b of buttons.slice(i + 1)) {
     if (a.contains(b) || b.contains(a)) continue;
@@ -51,7 +55,7 @@ const scan = () => {
   return [...new Set(out)];
 };
 
-export async function playCourse(h, { course, unit = 1, only, answer, small }) {
+export async function playCourse(h, { course, unit = 1, only, answer, small, parts = PARTS, tray = ['.tiles'] }) {
   const { page, adb, touch, btn, shot, seed, run, check } = h;
   const unitAt = course.units[unit - 1];
   if (!unitAt) throw new Error(`${course.id} has ${course.units.length} units, not ${unit}`);
@@ -115,7 +119,7 @@ export async function playCourse(h, { course, unit = 1, only, answer, small }) {
     const seenOdd = new Set();
     const look = async (item, when) => {
       if (when === 'answered') await new Promise((r) => setTimeout(r, 900)); // let the verdict's pop settle
-      const [found, over] = await Promise.all([page.evaluate(scan), page.evaluate(() => document.documentElement.scrollWidth - innerWidth)]);
+      const [found, over] = await Promise.all([page.evaluate(scan, { parts, tray }), page.evaluate(() => document.documentElement.scrollWidth - innerWidth)]);
       row.overflow = Math.max(row.overflow, over);
       const news = found.filter((f) => !seenOdd.has(f)).map((f) => `${item.id} (${when}): ${f}`);
       found.forEach((f) => seenOdd.add(f));
