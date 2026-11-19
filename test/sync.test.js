@@ -178,13 +178,13 @@ test('merge refuses what isn\'t progress', () => {
 
 test('the public card carries numbers and presets only, never the journal or the log', () => {
   let p = lesson(lesson(emptyProgress(), 'a', '2026-10-01'), 'b', '2026-10-02');
-  p = writeJournal(p, { good: 'secret words' }, at('2026-10-02'));
+  p = writeJournal(p, { good: 'secret words', learned: 'private note', asked: 'noticed' }, at('2026-10-02'));
   const c = card(withLook(p, { word: 'Sunny', animal: 'fox' }), at('2026-10-02'));
   assert.deepEqual(Object.keys(c).sort(), ['animal', 'lessons', 'streak', 'unit', 'word']);
   assert.equal(c.lessons, 2);
   assert.equal(c.streak, 2);
   assert.ok(checkCard(c));
-  assert.doesNotMatch(JSON.stringify(c), /secret|Lesson|chess:a/);
+  assert.doesNotMatch(JSON.stringify(c), /secret|private|noticed|Lesson|chess:a/);
   assert.equal(checkCard({ ...c, word: 'Rude' }), null);
   assert.equal(checkCard({ ...c, unit: 'anything at all' }), null);
 });

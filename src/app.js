@@ -246,6 +246,7 @@ function home(arrived = null, newly = []) {
         : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
       ${invite ? comebackCard(invite) : ''}
       ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly) : ''}
+      ${shownSubjects[0]?.lookBack?.(progress, new Date()) ?? ''}
       ${units.map((u) => `
         <section class="street">
           <h2>${esc(u.title)}</h2>
@@ -294,6 +295,7 @@ function home(arrived = null, newly = []) {
   app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); focusOn('.sound'); });
   app.querySelector('.menu').addEventListener('click', () => { stopHome(); keep(); });
   app.querySelector('.streak-line')?.addEventListener('click', () => habitView(habitShown));
+  app.querySelector('.look-back')?.addEventListener('click', () => habitView(habitShown));
   // Before a habit's first session there is no habit view yet, so its timings are offered here.
   app.querySelector('.timings-link')?.addEventListener('click', () => { stopHome(); timingsView(timingsOf(habitShown), () => { home(); focusOn('.timings-link'); }); });
   // The tabs are one row that scrolls inside itself: the selected one is brought into view.
@@ -932,6 +934,7 @@ function run(lessonId, queue, title, extra = null) {
           ${chip(h.id, `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`)}
         </div>
         ${arrivals(newly)}
+        ${subject.readBack?.(progress, new Date()) ?? ''}
         <section class="feel" aria-labelledby="feel-q">
           <h2 id="feel-q">${esc(who.ask ?? 'How do you feel?')}</h2>
           <div class="feels">${feelsFor(who.feel).map(([value, label]) => `<button class="choice" data-feel="${value}">${esc(label)}</button>`).join('')}</div>
@@ -956,6 +959,7 @@ function run(lessonId, queue, title, extra = null) {
         focusOn('.cta .next');
       });
     }
+    app.querySelector('.read-back')?.addEventListener('click', () => { endCoach.stop(); habitView(h.id, () => home(firstTime ? lessonId : null)); });
     app.querySelector('.next').addEventListener('click', () => {
       endCoach.stop();
       home(firstTime ? lessonId : null);
