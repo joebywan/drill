@@ -706,7 +706,7 @@ body:has(main.night) {
 /* One glyph is huge; a word shrinks to fit the card. */
 .quiz .glyph { margin: 0; font-size: clamp(28px, calc(250px / var(--len, 1)), 110px); line-height: 1.15; font-weight: 500; }
 .quiz .reading { margin: 0; font-size: 1.3rem; font-weight: 700; color: var(--muted); }
-.quiz .meaning { margin: 0; font-size: 1.1rem; font-weight: 700; }
+.quiz .meaning { margin: 0; padding: 0 48px; font-size: 1.1rem; font-weight: 700; } /* clear of the speaker */
 .quiz .slots { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 8px 0 0; }
 .quiz .slot {
   display: grid; place-items: center; min-width: min(64px, 11vw); height: 72px; padding: 0 4px; font-size: min(44px, 9vw); white-space: nowrap;
