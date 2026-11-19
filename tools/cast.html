@@ -1,6 +1,6 @@
 <!doctype html>
 <!-- Render harness for the cast: every character and mood at 200, 96 and 48 px, on light and on
-     dark, plus solid-black silhouettes at 48 px. `npm start`, then open /tools/cast.html.
+     dark, plus solid-black silhouettes at 48 px, and Lumi in every skin (src/cast/skins.js). `npm start`, then open /tools/cast.html.
      A drawing is not done until it reads here at every size, on both backgrounds. -->
 <html lang="en">
 <head>
@@ -34,6 +34,11 @@
   import { kaede } from '../src/cast/kaede.js';
   import { NAME as ADA, ada } from '../src/cast/ada.js';
   import * as fennel from '../src/cast/fennel.js';
+  import { SKINS } from '../src/cast/skins.js';
+  import { HABIT_COLOURS } from '../src/cast/butterfly.js';
+
+  // The costume's wings in a full set of the learner's colours.
+  const wings = ['learn', 'calm', 'move', 'reflect', 'learn', 'walk', 'calm', 'learn', 'move', 'focus', 'learn', 'calm', 'reflect', 'learn'].map((h) => HABIT_COLOURS[h]);
 
   const cast = [
     ['Rosa', MOODS.map((m) => [m, rosa(m)])],
@@ -45,6 +50,7 @@
       [c.NAME, c.MOODS.map((m) => [m, draw(m)])],
       [`${c.NAME} poses`, c.POSES.map((p) => [p, draw('guide', p)])],
     ]),
+    ...SKINS.map((k) => [`Lumi · ${k.id}`, MOODS.map((m) => [m, lumi(m, k.id, wings)])]),
   ];
   const demos = { clover: clover.demo, mira: mira.demo, hazel: hazel.demo, fennel: fennel.demo };
   const fig = ([label, svg]) => `<figure>${svg}<figcaption>${label}</figcaption></figure>`;

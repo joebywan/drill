@@ -30,7 +30,7 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>] [--avd <name>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (one per habit and course, plus onboarding, first-visit, walkthrough, garden, timings, fitting, voice, sync, scan, left, drag; scenarios named `*-all` play a whole course through `tools/play.js` and run only by name, e.g. `CODING_UNIT=3 npm run phone -- coding-all`, one unit at a time, see the header of `test/phone/coding-all.js`); a new one is
+No scenario runs all of `test/phone/*.js` (one per habit and course, plus onboarding, first-visit, walkthrough, garden, wardrobe, timings, fitting, voice, sync, scan, left, drag; scenarios named `*-all` play a whole course through `tools/play.js` and run only by name, e.g. `CODING_UNIT=3 npm run phone -- coding-all`, one unit at a time, see the header of `test/phone/coding-all.js`); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `dragTo`, `type`,
 `shot`, `run`, `check`).
 
@@ -109,6 +109,13 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   reacts in place) and `lines.js` (everything the cast says; the guardrail tests lint it).
   `tools/cast.html` renders every mood at 200/96/48 px, light and dark. `butterfly.js` is the
   player's butterfly (wing panels filled in habit colours), so far drawn only on the icon.
+- **Lumi's skins** (`src/cast/skins.js`): seven things to wear, each `head` (in her head group, so it nods
+  with her), `front`, `back` (the costume's wings: your own butterfly, by the kit) or `arm` (the costume's
+  straps, in each `data-arm` group so `flap()` beats them). `lumi(mood, skin, colours)`; `worn(progress)`
+  is `progress.skin` once its `skin:<id>` rule (`SKIN_RULES` in garden/model.js) is earned. Arrive through
+  `award()` like anything else, listed first on an end screen; the wardrobe (`wardrobe()` in app.js, from ⋯
+  and the garden) wears one with a tap. Worn wherever Lumi is drawn large and in the widget's poses; not
+  in the pond (too small to read) nor on the launcher icon. Words: `SKIN_WORDS`.
 - **Coach voice:** each coach's voice sheet and line pools are data, one file each in
   `src/cast/voice/<coach>.json` (`voice`: personality, how they encourage and dare, `never` words;
   `lines` and `dares`: `{ when, lines }` pools keyed by habit, streak band, hour band, light, and the

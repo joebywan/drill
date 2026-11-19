@@ -59,7 +59,7 @@ test('achievements: a flower per finished unit, an egg on the first day, a bee f
   assert.deepEqual(progress.garden.earned, { 'bee:calm': '2026-10-01', 'egg:calm': '2026-10-01', [`flower:calm:${unit.title}`]: '2026-10-01' });
   assert.deepEqual(award(progress, day(1)).newly, [], 'earned once');
   progress = practise(progress, 'calm', 6, 2);
-  assert.deepEqual(award(progress, day(7)).newly.map((r) => r.id), ['hatched:calm', 'garden:path'], 'and 7 days bring the path');
+  assert.deepEqual(award(progress, day(7)).newly.map((r) => r.id), ['hatched:calm', 'garden:path', 'skin:daisy'], 'and 7 days bring the path, and a daisy for Lumi');
   assert.equal(award(practise(emptyProgress(), 'learn', 1), day(1)).newly.length, 0, 'no bee and no egg for Learning itself');
   const g = garden(award(practise(emptyProgress(), 'move', 30), day(30)).progress, day(30)).plants.find((x) => x.habit === 'move');
   assert.deepEqual(g.visitors.map((v) => v.gift), ['bee']);
@@ -127,7 +127,7 @@ test('every rule has a unique id, a known gift and a pure test', () => {
   const p = emptyProgress();
   const frozen = JSON.stringify(p);
   for (const r of RULES) {
-    assert.ok(['flower', ...LIFE, 'bee', 'ladybird', ...LANDMARKS.map((l) => l.gift), ...EVENTS.map((e) => e.gift)].includes(r.gift), r.id);
+    assert.ok(['flower', ...LIFE, 'bee', 'ladybird', ...LANDMARKS.map((l) => l.gift), ...EVENTS.map((e) => e.gift), 'skin'].includes(r.gift), r.id);
     assert.equal(r.test(p), false, r.id);
   }
   assert.equal(JSON.stringify(p), frozen);

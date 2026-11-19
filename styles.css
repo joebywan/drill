@@ -977,6 +977,19 @@ body:has(main.night) {
 .hero.perched svg { overflow: visible; }
 .survey .hero.perched { margin-top: 24px; }
 
+/* Lumi's wardrobe: a grid of Lumi in every skin; one not given yet is dimmed, with what gives it. */
+.bar .wardrobe-link { margin: 0; }
+.wardrobe { padding: 0 16px 40px; }
+.wardrobe h1 { margin: 0 0 4px; font-size: 1.6rem; }
+.skins { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.skin-card { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; height: 100%; padding: 10px 8px; text-align: center; font-weight: 600; }
+li.skin-card { border-radius: 12px; border: 2px dashed var(--line); color: var(--muted); }
+.skin-card svg { width: 84px; height: auto; }
+.skin-card small { font-weight: 400; color: var(--muted); font-size: .85rem; }
+.skin-card[aria-pressed="true"] { border-color: var(--accent); }
+.skin-card[aria-pressed="true"] > span::after { content: ' ✓'; color: var(--accent); }
+.skin-card.later svg { opacity: .4; filter: grayscale(.6); }
+.arrival svg.cast { height: 34px; }
 /* Choosing another routine (CHOOSE_WORDS): the sheet's unit headings, and the quiet "counted" line with its Undo. */
 .add-habit h2 { margin: 20px 0 0; font-size: 1rem; text-align: left; color: var(--muted); }
 .add-habit .away-row { margin-top: 40px; }
