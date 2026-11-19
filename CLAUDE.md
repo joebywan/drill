@@ -89,9 +89,10 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   (match two columns), `build` (tap tiles in order). `items.js` is pure (`problem()`), `exercise.js`
   mounts them; `ctx.lang` marks text for the system font and picks the voice (`speak()` in feel.js:
   `speechSynthesis`, and with no voice or Sound muted the reading is shown instead).
-- Japanese: `src/data/japanese.json` (hiragana: vowels, k and s rows, first words), coached by Kaede, a red
-  panda (`src/cast/kaede.js`, rig-posed). `test/quiz.test.js` checks every answer against its own kana
-  table and that no kana is asked before a teach card shows it.
+- Japanese: `src/data/japanese.json` (all of hiragana, the sounds that change and small kana, everyday words,
+  greetings, and a first sentence with は: これは ねこです), coached by Kaede, a red panda (`src/cast/kaede.js`,
+  rig-posed). Sentences are `build` items with word tiles. `test/quiz.test.js` checks every answer against its own kana
+  table (small kana, and は said "wa" at the end of a part) and that no kana is asked before a teach card shows it.
 - `src/quiz/` also has `line` (drag a marker on a number line, snapped to its ticks, answered on
   release) and takes a `picture` the course draws through the mount's `ctx.art`, plus `ctx.look`
   for a course's own styling.
