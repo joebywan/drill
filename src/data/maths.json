@@ -242,6 +242,574 @@
       ]
     },
     {
+      "title": "Times tables you can see",
+      "lessons": [
+        {
+          "id": "times-0",
+          "title": "Groups and arrays",
+          "items": [
+            {
+              "id": "times-0-teach",
+              "type": "teach",
+              "picture": {
+                "array": [
+                  3,
+                  4
+                ]
+              },
+              "text": "An array is dots in equal rows. Here are 3 rows of 4: that is 3 × 4, and 4 + 4 + 4 is 12. Turn it on its side and it is 4 rows of 3, still 12. Either order, same answer."
+            },
+            {
+              "id": "times-0-count",
+              "family": "array-count",
+              "type": "pick",
+              "picture": {
+                "array": [
+                  2,
+                  6
+                ]
+              },
+              "prompt": "How many dots? Count the rows, not every dot.",
+              "options": [
+                "6",
+                "12",
+                "18"
+              ],
+              "explain": "2 rows of 6: 6 + 6 is 12."
+            },
+            {
+              "id": "times-0-sum",
+              "family": "array-sum",
+              "type": "pick",
+              "picture": {
+                "array": [
+                  3,
+                  5
+                ]
+              },
+              "prompt": "Which sum matches the picture?",
+              "options": [
+                "3 × 5",
+                "3 + 5",
+                "5 × 5"
+              ],
+              "explain": "3 rows of 5 is 3 × 5, which is 15."
+            },
+            {
+              "id": "times-0-build",
+              "family": "array-build",
+              "type": "build",
+              "picture": {
+                "array": [
+                  4,
+                  5
+                ]
+              },
+              "show": "4 × 5",
+              "prompt": "4 rows of 5. Build the total.",
+              "explain": "5, 10, 15, 20: 4 × 5 is 20."
+            },
+            {
+              "id": "times-0-turn",
+              "family": "turn-around",
+              "type": "pick",
+              "show": "4 × 3",
+              "prompt": "Which is the same as 4 × 3?",
+              "options": [
+                "3 × 4",
+                "4 + 3",
+                "3 × 3"
+              ],
+              "explain": "Turn 4 rows of 3 on its side: 3 rows of 4. Both are 12."
+            },
+            {
+              "id": "times-0-pairs",
+              "family": "times-pairs",
+              "type": "pairs",
+              "tiles": [
+                "2 × 6",
+                "15",
+                "4 × 4",
+                "12",
+                "3 × 5",
+                "16"
+              ],
+              "prompt": "Match each sum to its answer.",
+              "explain": "2 × 6 is 12, 3 × 5 is 15, 4 × 4 is 16."
+            }
+          ]
+        },
+        {
+          "id": "times-1",
+          "title": "Times 2, 5 and 10",
+          "items": [
+            {
+              "id": "times-1-teach",
+              "type": "teach",
+              "show": "7 × 10",
+              "text": "Times 10 moves every digit up a place, so 7 becomes 70 and 23 becomes 230. Times 5 is half of times 10: 7 × 10 is 70, so 7 × 5 is 35. And times 2 is doubling."
+            },
+            {
+              "id": "times-1-x10",
+              "family": "times-ten",
+              "type": "build",
+              "show": "36 × 10",
+              "prompt": "Move every digit up a place.",
+              "explain": "36 tens is 360."
+            },
+            {
+              "id": "times-1-x5",
+              "family": "times-five",
+              "type": "build",
+              "show": "8 × 5",
+              "prompt": "Times 10, then halve.",
+              "explain": "8 × 10 is 80, and half of that is 40."
+            },
+            {
+              "id": "times-1-line",
+              "family": "times-line",
+              "type": "line",
+              "show": "6 × 5",
+              "min": 0,
+              "max": 50,
+              "ticks": 10,
+              "prompt": "Count in 5s. Where does it land?",
+              "explain": "5, 10, 15, 20, 25, 30: six hops of 5."
+            },
+            {
+              "id": "times-1-x2",
+              "family": "times-two",
+              "type": "pick",
+              "show": "17 × 2",
+              "prompt": "Double it.",
+              "options": [
+                "32",
+                "34",
+                "36"
+              ],
+              "explain": "10 doubled is 20 and 7 doubled is 14: 34."
+            },
+            {
+              "id": "times-1-x5b",
+              "family": "times-five",
+              "type": "build",
+              "show": "14 × 5",
+              "prompt": "Times 10, then halve.",
+              "explain": "14 × 10 is 140, and half of that is 70."
+            }
+          ]
+        },
+        {
+          "id": "times-2",
+          "title": "Doubling and nines",
+          "items": [
+            {
+              "id": "times-2-teach",
+              "type": "teach",
+              "show": "7 × 8",
+              "text": "Times 4 is double, then double again. Times 8 is one more double. So 7 × 8 goes 7, 14, 28, 56."
+            },
+            {
+              "id": "times-2-x4",
+              "family": "tables-four",
+              "type": "build",
+              "show": "6 × 4",
+              "prompt": "Double, then double again.",
+              "explain": "6, 12, 24."
+            },
+            {
+              "id": "times-2-x8",
+              "family": "tables-eight",
+              "type": "build",
+              "show": "7 × 8",
+              "prompt": "Double three times.",
+              "explain": "7, 14, 28, 56."
+            },
+            {
+              "id": "times-2-nine",
+              "type": "teach",
+              "show": "7 × 9",
+              "text": "Times 9 is times 10, take away one lot. 7 × 10 is 70, take away 7: 63."
+            },
+            {
+              "id": "times-2-x9",
+              "family": "times-nine",
+              "type": "build",
+              "show": "6 × 9",
+              "prompt": "Times 10, then take one 6 away.",
+              "explain": "6 × 10 is 60, take away 6: 54."
+            },
+            {
+              "id": "times-2-x9pick",
+              "family": "times-nine-pick",
+              "type": "pick",
+              "show": "8 × 9",
+              "prompt": "Times 10, take one lot away.",
+              "options": [
+                "63",
+                "72",
+                "81"
+              ],
+              "explain": "8 × 10 is 80, take away 8: 72."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Sharing and dividing",
+      "lessons": [
+        {
+          "id": "share-0",
+          "title": "Share it out",
+          "items": [
+            {
+              "id": "share-0-teach",
+              "type": "teach",
+              "picture": {
+                "array": [
+                  2,
+                  4
+                ]
+              },
+              "text": "Sharing is dividing. Share 8 dots into 2 equal rows and each row gets 4: 8 ÷ 2 is 4. Halving is sharing between 2."
+            },
+            {
+              "id": "share-0-rows",
+              "family": "share-rows",
+              "type": "pick",
+              "picture": {
+                "array": [
+                  3,
+                  4
+                ]
+              },
+              "sum": "12 ÷ 3",
+              "prompt": "12 dots shared into 3 equal rows. How many in each row?",
+              "options": [
+                "3",
+                "4",
+                "5"
+              ],
+              "explain": "3 rows of 4 is 12, so 12 ÷ 3 is 4."
+            },
+            {
+              "id": "share-0-half",
+              "family": "halve",
+              "type": "build",
+              "show": "68 ÷ 2",
+              "prompt": "Halve it: the tens, then the ones.",
+              "explain": "Half of 60 is 30 and half of 8 is 4: 34."
+            },
+            {
+              "id": "share-0-quarter",
+              "type": "teach",
+              "show": "48 ÷ 4",
+              "text": "To share by 4, halve and halve again. Half of 48 is 24, and half of 24 is 12, so 48 ÷ 4 is 12."
+            },
+            {
+              "id": "share-0-q",
+              "family": "halve-twice",
+              "type": "build",
+              "show": "56 ÷ 4",
+              "prompt": "Halve, then halve again.",
+              "explain": "56, 28, 14."
+            },
+            {
+              "id": "share-0-q2",
+              "family": "halve-twice-pick",
+              "type": "pick",
+              "show": "100 ÷ 4",
+              "prompt": "Halve, then halve again.",
+              "options": [
+                "20",
+                "25",
+                "50"
+              ],
+              "explain": "100, 50, 25."
+            }
+          ]
+        },
+        {
+          "id": "share-1",
+          "title": "Dividing by 10 and 5",
+          "items": [
+            {
+              "id": "share-1-teach",
+              "type": "teach",
+              "show": "70 ÷ 10",
+              "text": "Dividing by 10 is times 10 backwards: every digit moves down a place, so 70 becomes 7 and 350 becomes 35. To divide by 5, double first, then divide by 10. 35 ÷ 5: 70 ÷ 10 is 7."
+            },
+            {
+              "id": "share-1-d10",
+              "family": "divide-ten",
+              "type": "build",
+              "show": "240 ÷ 10",
+              "prompt": "Move every digit down a place.",
+              "explain": "240 is 24 tens: 24."
+            },
+            {
+              "id": "share-1-d5",
+              "family": "divide-five",
+              "type": "build",
+              "show": "45 ÷ 5",
+              "prompt": "Double it, then divide by 10.",
+              "explain": "45 doubled is 90, and 90 ÷ 10 is 9."
+            },
+            {
+              "id": "share-1-notes",
+              "family": "fives-in",
+              "type": "pick",
+              "show": "$60 ÷ $5",
+              "prompt": "How many $5 notes make $60?",
+              "options": [
+                "10",
+                "12",
+                "15"
+              ],
+              "explain": "60 doubled is 120, and 120 ÷ 10 is 12."
+            },
+            {
+              "id": "share-1-line",
+              "family": "divide-line",
+              "type": "line",
+              "show": "40 ÷ 5",
+              "min": 0,
+              "max": 10,
+              "ticks": 10,
+              "prompt": "Where does it land?",
+              "explain": "40 doubled is 80, and 80 ÷ 10 is 8."
+            }
+          ]
+        },
+        {
+          "id": "share-2",
+          "title": "What is left over",
+          "items": [
+            {
+              "id": "share-2-teach",
+              "type": "teach",
+              "picture": {
+                "frame": 7
+              },
+              "text": "Some numbers don't share evenly. Share these 7 dots between 2 people: 3 each, and 1 is left over. What is left over is called the remainder."
+            },
+            {
+              "id": "share-2-frame",
+              "family": "left-frame",
+              "type": "pick",
+              "picture": {
+                "frame": 9
+              },
+              "sum": "9 - 4 × 2",
+              "prompt": "Share these between 2 people. How many are left over?",
+              "options": [
+                "0",
+                "1",
+                "2"
+              ],
+              "explain": "4 each uses 8 dots, so 1 is left over."
+            },
+            {
+              "id": "share-2-17",
+              "family": "left-over",
+              "type": "build",
+              "show": "17 ÷ 5",
+              "sum": "17 - 3 × 5",
+              "prompt": "How many are left over? Three 5s is 15.",
+              "explain": "17 take away 15 leaves 2."
+            },
+            {
+              "id": "share-2-eggs",
+              "family": "left-eggs",
+              "type": "pick",
+              "show": "40 ÷ 6",
+              "sum": "40 - 6 × 6",
+              "prompt": "40 eggs go in boxes of 6. How many eggs are left over?",
+              "options": [
+                "3",
+                "4",
+                "5"
+              ],
+              "explain": "6 boxes of 6 is 36, and 40 take away 36 leaves 4."
+            },
+            {
+              "id": "share-2-23",
+              "family": "left-over",
+              "type": "build",
+              "show": "23 ÷ 4",
+              "sum": "23 - 5 × 4",
+              "prompt": "How many are left over? Five 4s is 20.",
+              "explain": "23 take away 20 leaves 3."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Rounding and estimating",
+      "lessons": [
+        {
+          "id": "round-0",
+          "title": "To the nearest 10",
+          "items": [
+            {
+              "id": "round-0-teach",
+              "type": "teach",
+              "picture": {
+                "line": [
+                  40,
+                  50,
+                  10
+                ]
+              },
+              "show": "47",
+              "text": "Rounding swaps a number for a nearby one that is easy to work with. 47 sits between 40 and 50: 3 hops from 50 and 7 from 40, so 47 to the nearest 10 is 50. Exactly halfway, like 45, rounds up."
+            },
+            {
+              "id": "round-0-line",
+              "family": "round-ten-line",
+              "type": "line",
+              "show": "62",
+              "sum": "62 to the nearest 10",
+              "min": 0,
+              "max": 100,
+              "ticks": 10,
+              "prompt": "Drag 62 to its nearest 10.",
+              "explain": "62 is 2 from 60 and 8 from 70: 60."
+            },
+            {
+              "id": "round-0-pick",
+              "family": "round-ten",
+              "type": "pick",
+              "show": "85",
+              "sum": "85 to the nearest 10",
+              "prompt": "To the nearest 10?",
+              "options": [
+                "80",
+                "85",
+                "90"
+              ],
+              "explain": "85 is halfway, and halfway rounds up: 90."
+            },
+            {
+              "id": "round-0-build",
+              "family": "round-ten-build",
+              "type": "build",
+              "show": "34 to the nearest 10",
+              "prompt": "Build it.",
+              "explain": "34 is 4 from 30 and 6 from 40: 30."
+            }
+          ]
+        },
+        {
+          "id": "round-1",
+          "title": "To the nearest 100",
+          "items": [
+            {
+              "id": "round-1-teach",
+              "type": "teach",
+              "picture": {
+                "line": [
+                  300,
+                  400,
+                  10
+                ]
+              },
+              "show": "349",
+              "text": "To the nearest 100, look at the tens. 349 has 4 tens, short of halfway to 400, so it rounds to 300. With 5 tens or more, like 350, it rounds up to 400."
+            },
+            {
+              "id": "round-1-line",
+              "family": "round-hundred-line",
+              "type": "line",
+              "show": "730",
+              "sum": "730 to the nearest 100",
+              "min": 0,
+              "max": 1000,
+              "ticks": 10,
+              "prompt": "Drag 730 to its nearest 100.",
+              "explain": "730 has 3 tens, short of halfway: 700."
+            },
+            {
+              "id": "round-1-pick",
+              "family": "round-hundred",
+              "type": "pick",
+              "show": "650",
+              "sum": "650 to the nearest 100",
+              "prompt": "To the nearest 100?",
+              "options": [
+                "600",
+                "650",
+                "700"
+              ],
+              "explain": "650 has 5 tens, halfway, so it rounds up: 700."
+            },
+            {
+              "id": "round-1-build",
+              "family": "round-hundred-build",
+              "type": "build",
+              "show": "1480 to the nearest 100",
+              "prompt": "Look at the tens.",
+              "explain": "1480 has 8 tens, past halfway: 1500."
+            }
+          ]
+        },
+        {
+          "id": "round-2",
+          "title": "Is it about right?",
+          "items": [
+            {
+              "id": "round-2-teach",
+              "type": "teach",
+              "show": "38 + 41",
+              "text": "Before you trust a total, round each number and add those. 38 + 41 is about 40 + 40, so about 80. An answer of 79 looks right; 179 is a slip somewhere."
+            },
+            {
+              "id": "round-2-est",
+              "family": "estimate",
+              "type": "pick",
+              "show": "38 + 43",
+              "sum": "38 to the nearest 10 + 43 to the nearest 10",
+              "prompt": "Round each to the nearest 10. About how much?",
+              "options": [
+                "70",
+                "80",
+                "90"
+              ],
+              "explain": "38 + 43 is about 40 + 40, which is 80."
+            },
+            {
+              "id": "round-2-right",
+              "family": "about-right",
+              "type": "pick",
+              "show": "29 + 52 + 18",
+              "prompt": "Which total is about right? Round first.",
+              "options": [
+                "69",
+                "99",
+                "199"
+              ],
+              "explain": "About 30 + 50 + 20, which is 100, so 99."
+            },
+            {
+              "id": "round-2-times",
+              "family": "about-times",
+              "type": "pick",
+              "show": "51 × 4",
+              "prompt": "Which is about right? Round first.",
+              "options": [
+                "204",
+                "304",
+                "2040"
+              ],
+              "explain": "50 × 4 is 200, so 204."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "title": "Percentages",
       "lessons": [
         {
@@ -752,6 +1320,559 @@
                 "1"
               ],
               "explain": "Four quarters make a whole: 4/4 is 1."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Decimals and money",
+      "lessons": [
+        {
+          "id": "dec-0",
+          "title": "Tenths and hundredths",
+          "items": [
+            {
+              "id": "dec-0-teach",
+              "type": "teach",
+              "picture": {
+                "grid": 30
+              },
+              "show": "0.3",
+              "text": "A decimal point splits a whole from its parts. Call this grid 1 whole. Each row is a tenth, 0.1, and each square a hundredth, 0.01. 3 rows are shaded: 0.3."
+            },
+            {
+              "id": "dec-0-grid",
+              "family": "dec-grid",
+              "type": "pick",
+              "picture": {
+                "grid": 7
+              },
+              "prompt": "What decimal is shaded? Each square is 0.01.",
+              "options": [
+                "0.07",
+                "0.7",
+                "7"
+              ],
+              "explain": "7 of 100 squares: 0.07."
+            },
+            {
+              "id": "dec-0-line",
+              "family": "dec-line",
+              "type": "line",
+              "show": "0.6",
+              "min": 0,
+              "max": 1,
+              "ticks": 10,
+              "prompt": "Drag the marker to 0.6.",
+              "explain": "Six hops of 0.1: 0.6."
+            },
+            {
+              "id": "dec-0-small",
+              "family": "dec-line-hundredths",
+              "type": "line",
+              "show": "0.04",
+              "min": 0,
+              "max": 0.1,
+              "ticks": 10,
+              "prompt": "This line runs from 0 to 0.1. Drag to 0.04.",
+              "explain": "Each hop is 0.01, so four hops: 0.04."
+            },
+            {
+              "id": "dec-0-pairs",
+              "family": "dec-pairs",
+              "type": "pairs",
+              "tiles": [
+                "0.5",
+                "1/10",
+                "0.25",
+                "50%",
+                "0.1",
+                "1/4"
+              ],
+              "prompt": "Match each decimal to the same amount.",
+              "explain": "0.5 is 50%, 0.25 is 1/4, 0.1 is 1/10."
+            }
+          ]
+        },
+        {
+          "id": "dec-1",
+          "title": "Adding prices",
+          "items": [
+            {
+              "id": "dec-1-teach",
+              "type": "teach",
+              "show": "$2.50 + $1.75",
+              "text": "Add the dollars, then the cents. $2 + $1 is $3. 50c + 75c is 125c, which is $1.25. So $4.25 altogether. Tap the point like a digit."
+            },
+            {
+              "id": "dec-1-build",
+              "family": "add-prices",
+              "type": "build",
+              "show": "$3.40 + $2.35",
+              "prompt": "Dollars, then cents.",
+              "explain": "$5, then 40c + 35c is 75c: $5.75."
+            },
+            {
+              "id": "dec-1-pick",
+              "family": "add-prices-pick",
+              "type": "pick",
+              "show": "$4.80 + $2.60",
+              "prompt": "Tap the total.",
+              "options": [
+                "$6.40",
+                "$7.40",
+                "$8.40"
+              ],
+              "explain": "$6, then 80c + 60c is $1.40: $7.40."
+            },
+            {
+              "id": "dec-1-pairs",
+              "family": "make-ten-dollars",
+              "type": "pairs",
+              "make": 10,
+              "tiles": [
+                "$6.50",
+                "$2.75",
+                "$3.50",
+                "$7.25",
+                "$8.40",
+                "$1.60"
+              ],
+              "prompt": "Tap two prices that make $10.",
+              "explain": "$6.50 and $3.50, $2.75 and $7.25, $8.40 and $1.60."
+            }
+          ]
+        },
+        {
+          "id": "dec-2",
+          "title": "Working out change",
+          "items": [
+            {
+              "id": "dec-2-teach",
+              "type": "teach",
+              "show": "$10 - $6.35",
+              "text": "Change is what you get back. Count up from the price: 5c takes $6.35 to $6.40, 60c more to $7, then $3 to $10. 5c + 60c + $3 is $3.65."
+            },
+            {
+              "id": "dec-2-build",
+              "family": "change",
+              "type": "build",
+              "show": "$10 - $7.45",
+              "prompt": "Count up from $7.45 to $10.",
+              "explain": "5c to $7.50, 50c to $8, then $2: $2.55."
+            },
+            {
+              "id": "dec-2-pick",
+              "family": "change-pick",
+              "type": "pick",
+              "show": "$20 - $12.80",
+              "prompt": "Count up to $20.",
+              "options": [
+                "$7.20",
+                "$7.80",
+                "$8.20"
+              ],
+              "explain": "20c to $13, then $7: $7.20."
+            },
+            {
+              "id": "dec-2-fifty",
+              "family": "change-pick",
+              "type": "pick",
+              "show": "$50 - $36.70",
+              "prompt": "Count up to $50.",
+              "options": [
+                "$13.30",
+                "$13.70",
+                "$14.30"
+              ],
+              "explain": "30c to $37, then $13: $13.30."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Ratios and better buys",
+      "lessons": [
+        {
+          "id": "ratio-0",
+          "title": "Scale a recipe",
+          "items": [
+            {
+              "id": "ratio-0-teach",
+              "type": "teach",
+              "picture": {
+                "array": [
+                  3,
+                  4
+                ]
+              },
+              "text": "A ratio says how much goes with how much. One egg makes 4 pikelets: each row here is one egg's 4. Three eggs, three rows: 12 pikelets. To scale a recipe, times every amount by the same number."
+            },
+            {
+              "id": "ratio-0-rows",
+              "family": "recipe-rows",
+              "type": "pick",
+              "picture": {
+                "array": [
+                  4,
+                  3
+                ]
+              },
+              "prompt": "A cup of flour makes 3 scones: one row each. How many scones from 4 cups?",
+              "options": [
+                "7",
+                "12",
+                "15"
+              ],
+              "explain": "4 rows of 3: 12 scones."
+            },
+            {
+              "id": "ratio-0-mix",
+              "family": "mix",
+              "type": "pick",
+              "picture": {
+                "bar": [
+                  1,
+                  5
+                ]
+              },
+              "sum": "3 × 4",
+              "prompt": "Mix 1 cup of cordial with 4 cups of water. For 3 cups of cordial, how many cups of water?",
+              "options": [
+                "7",
+                "12",
+                "15"
+              ],
+              "explain": "4 cups of water for every cup of cordial: 3 × 4 is 12."
+            },
+            {
+              "id": "ratio-0-up",
+              "family": "recipe-up",
+              "type": "build",
+              "show": "300 g for 4 people",
+              "sum": "300 × 8 ÷ 4",
+              "prompt": "Pasta for 8 people instead: how many grams?",
+              "explain": "8 people is twice 4, so twice 300 g: 600 g."
+            },
+            {
+              "id": "ratio-0-down",
+              "family": "recipe-down",
+              "type": "build",
+              "show": "6 eggs for 12 muffins",
+              "sum": "6 × 6 ÷ 12",
+              "prompt": "Only 6 muffins: how many eggs?",
+              "explain": "6 muffins is half of 12, so half the eggs: 3."
+            }
+          ]
+        },
+        {
+          "id": "ratio-1",
+          "title": "The price for one",
+          "items": [
+            {
+              "id": "ratio-1-teach",
+              "type": "teach",
+              "show": "4 for $12",
+              "text": "To compare packs, work out the price for one. Share the price between them: 4 for $12 is $12 ÷ 4, so $3 each."
+            },
+            {
+              "id": "ratio-1-build",
+              "family": "unit-price",
+              "type": "build",
+              "show": "5 for $15",
+              "prompt": "What does one cost?",
+              "explain": "$15 ÷ 5 is $3 each."
+            },
+            {
+              "id": "ratio-1-pick",
+              "family": "unit-price-pick",
+              "type": "pick",
+              "show": "6 for $9",
+              "prompt": "What does one cost?",
+              "options": [
+                "$1.50",
+                "$1.60",
+                "$3"
+              ],
+              "explain": "$9 ÷ 6 is $1.50 each."
+            },
+            {
+              "id": "ratio-1-ten",
+              "family": "unit-price-ten",
+              "type": "build",
+              "show": "10 for $4.50",
+              "prompt": "Divide by 10: every digit moves down a place.",
+              "explain": "$4.50 ÷ 10 is 45c, which is $0.45."
+            }
+          ]
+        },
+        {
+          "id": "ratio-2",
+          "title": "Which is cheaper?",
+          "items": [
+            {
+              "id": "ratio-2-teach",
+              "type": "teach",
+              "show": "3 for $6 or 5 for $9",
+              "text": "Which is the better buy? Find the price for one in each. 3 for $6 is $2 each. 5 for $9 is $1.80 each. $1.80 is less, so the 5-pack is cheaper each."
+            },
+            {
+              "id": "ratio-2-pick",
+              "family": "better-buy",
+              "type": "pick",
+              "goal": "smallest",
+              "show": "Cheaper each?",
+              "prompt": "Which is the better buy? Compare the price for one.",
+              "options": [
+                "3 for $6",
+                "5 for $9"
+              ],
+              "explain": "3 for $6 is $2 each and 5 for $9 is $1.80 each: 5 for $9."
+            },
+            {
+              "id": "ratio-2-pairs",
+              "family": "price-pairs",
+              "type": "pairs",
+              "tiles": [
+                "2 for $6",
+                "$2",
+                "5 for $10",
+                "$0.50",
+                "4 for $2",
+                "$3"
+              ],
+              "prompt": "Match each pack to its price for one.",
+              "explain": "2 for $6 is $3 each, 5 for $10 is $2 each, 4 for $2 is $0.50 each."
+            },
+            {
+              "id": "ratio-2-three",
+              "family": "better-buy",
+              "type": "pick",
+              "goal": "smallest",
+              "show": "Cheaper each?",
+              "prompt": "Three packs now. Which is cheaper each?",
+              "options": [
+                "2 for $5",
+                "4 for $8",
+                "6 for $15"
+              ],
+              "explain": "2 for $5 is $2.50 each, 4 for $8 is $2 each, 6 for $15 is $2.50 each: 4 for $8."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Below zero",
+      "lessons": [
+        {
+          "id": "neg-0",
+          "title": "Below zero",
+          "items": [
+            {
+              "id": "neg-0-teach",
+              "type": "teach",
+              "picture": {
+                "line": [
+                  -10,
+                  10,
+                  20
+                ]
+              },
+              "show": "-3",
+              "text": "Numbers keep going below zero. A - in front means below: -3 is 3 below zero. On a cold morning it can be -3 °C, and -8 °C is colder still: the further below zero, the smaller the number."
+            },
+            {
+              "id": "neg-0-line",
+              "family": "neg-line",
+              "type": "line",
+              "show": "-4",
+              "min": -10,
+              "max": 10,
+              "ticks": 20,
+              "unit": "°C",
+              "prompt": "Drag the marker to -4 °C.",
+              "explain": "Four hops below zero: -4 °C."
+            },
+            {
+              "id": "neg-0-cold",
+              "family": "coldest",
+              "type": "pick",
+              "goal": "smallest",
+              "picture": {
+                "line": [
+                  -10,
+                  10,
+                  20
+                ]
+              },
+              "prompt": "Which is coldest?",
+              "options": [
+                "-8 °C",
+                "-3 °C",
+                "2 °C"
+              ],
+              "explain": "-8 °C is furthest below zero, so it is the coldest."
+            },
+            {
+              "id": "neg-0-warm",
+              "family": "warmest",
+              "type": "pick",
+              "goal": "biggest",
+              "picture": {
+                "line": [
+                  -10,
+                  10,
+                  20
+                ]
+              },
+              "prompt": "Which is warmest?",
+              "options": [
+                "-6 °C",
+                "-1 °C",
+                "-4 °C"
+              ],
+              "explain": "-1 °C is closest to zero, so it is the warmest."
+            },
+            {
+              "id": "neg-0-lift",
+              "family": "lift-line",
+              "type": "line",
+              "show": "-2",
+              "min": -5,
+              "max": 5,
+              "ticks": 10,
+              "prompt": "Level -2 is two floors under the ground floor, 0. Drag the lift there.",
+              "explain": "Two floors down from 0: -2."
+            }
+          ]
+        },
+        {
+          "id": "neg-1",
+          "title": "Up and down past zero",
+          "items": [
+            {
+              "id": "neg-1-teach",
+              "type": "teach",
+              "show": "3 - 5",
+              "text": "Cross zero in two hops. It is 3 °C and drops 5 degrees: 3 down to 0, then 2 more, so 3 - 5 is -2. Going up works the same way: -4 + 6 is 4 up to 0, then 2 more: 2."
+            },
+            {
+              "id": "neg-1-drop",
+              "family": "drop-line",
+              "type": "line",
+              "show": "4 - 7",
+              "min": -10,
+              "max": 10,
+              "ticks": 20,
+              "unit": "°C",
+              "prompt": "It is 4 °C and drops 7 degrees. Drag to the new temperature.",
+              "explain": "4 down to 0, then 3 more: -3 °C."
+            },
+            {
+              "id": "neg-1-lift",
+              "family": "lift-up",
+              "type": "pick",
+              "show": "-3 + 5",
+              "prompt": "A lift at level -3 goes up 5 floors. Which level?",
+              "options": [
+                "2",
+                "8",
+                "-8"
+              ],
+              "explain": "3 up to the ground floor, then 2 more: level 2."
+            },
+            {
+              "id": "neg-1-down",
+              "family": "lift-down",
+              "type": "pick",
+              "show": "2 - 6",
+              "prompt": "A lift at level 2 goes down 6 floors. Which level?",
+              "options": [
+                "-4",
+                "4",
+                "-8"
+              ],
+              "explain": "2 down to 0, then 4 more: level -4."
+            },
+            {
+              "id": "neg-1-rise",
+              "family": "rise-line",
+              "type": "line",
+              "show": "-6 + 9",
+              "min": -10,
+              "max": 10,
+              "ticks": 20,
+              "unit": "°C",
+              "prompt": "It is -6 °C at dawn and warms up 9 degrees. Drag to the new temperature.",
+              "explain": "6 up to 0, then 3 more: 3 °C."
+            }
+          ]
+        },
+        {
+          "id": "neg-2",
+          "title": "Owing money",
+          "items": [
+            {
+              "id": "neg-2-teach",
+              "type": "teach",
+              "show": "-20 + 50",
+              "text": "Owing money is like being below zero. Owe $20 and you are at -20. Get $50: $20 pays what you owe, and $30 is yours. So -20 + 50 is 30."
+            },
+            {
+              "id": "neg-2-pay",
+              "family": "owe-pay",
+              "type": "pick",
+              "show": "-30 + 45",
+              "prompt": "You owe $30, then get paid $45. How much is yours?",
+              "options": [
+                "$15",
+                "$75",
+                "-$15"
+              ],
+              "explain": "$30 pays what you owe, and $15 is yours."
+            },
+            {
+              "id": "neg-2-spend",
+              "family": "owe-spend",
+              "type": "pick",
+              "show": "15 - 40",
+              "prompt": "You have $15 and spend $40 on a card. Where are you now?",
+              "options": [
+                "-$25",
+                "$25",
+                "-$55"
+              ],
+              "explain": "$15 takes you to 0, and you owe $25 more: -25."
+            },
+            {
+              "id": "neg-2-line",
+              "family": "owe-line",
+              "type": "line",
+              "show": "-8 + 5",
+              "min": -10,
+              "max": 10,
+              "ticks": 20,
+              "prompt": "Owe $8, then pay back $5. Drag to where you are.",
+              "explain": "$5 of the $8 is paid, so you still owe $3: -3."
+            },
+            {
+              "id": "neg-2-pairs",
+              "family": "neg-pairs",
+              "type": "pairs",
+              "make": 10,
+              "tiles": [
+                "-2",
+                "7",
+                "-5",
+                "12",
+                "3",
+                "15"
+              ],
+              "prompt": "Tap two numbers that make 10.",
+              "explain": "-2 and 12, -5 and 15, 3 and 7."
             }
           ]
         }

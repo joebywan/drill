@@ -71,7 +71,7 @@ import testingCourse from './code/courses/testing.js';
  *
  * Optional: `again`, { label, lesson }: once the path is done, home keeps a button with that label
  * which runs that lesson again ("Reflect today", "Breathe"); `dayDetail(progress, date)`, extra html under a day's sessions
- * in the habit view (Reflect's own lines); `placement`, { offer, question, options: [[label, unitTitle]] }:
+ * in the habit view (Reflect's own lines); `lookBack(progress, now)` and `readBack(progress, now)`, html for home and for the end screen (Reflect's line from a week ago, and its link to the week); `placement`, { offer, question, options: [[label, unitTitle]] }:
  * an optional question home offers by the subject's path (`offer` is the link) to start further on;
  * `games`, [{ id, label, entry }]: replayable modes in a small row on the course's home, each `entry` run as a session (chess/games.js);
  * `varied`, { key: [values] }: a timing marked `varies` in TIMINGS, as the routine has it per step.
@@ -192,8 +192,11 @@ export const subjects = [{
     question: 'How is your maths?',
     options: [
       ['Rusty. Start me at the start', 'Mental maths'],
-      ['Adding in my head is fine', 'Percentages'],
-      ['Percentages are fine too', 'Fractions you can see'],
+      ['Adding in my head is fine', 'Times tables you can see'],
+      ['My times tables and dividing are fine', 'Rounding and estimating'],
+      ['Rounding and percentages are fine too', 'Fractions you can see'],
+      ['Fractions are fine too', 'Decimals and money'],
+      ['Decimals and money are fine too', 'Ratios and better buys'],
     ],
   },
 }, {
@@ -282,6 +285,8 @@ codeSubject(testingCourse, HELLO.testing, {
   ...reflectCourse,
   mount: reflect.mount,
   dayDetail: reflect.dayDetail,
+  lookBack: reflect.lookBack,
+  readBack: reflect.readBack,
   habit: 'reflect',
   kind: 'practice',
   coach: { draw: lumi, name: 'Lumi', start: 'teach', lines: REFLECT_LINES, help: CALM_HELP, feel: 'clearer' },

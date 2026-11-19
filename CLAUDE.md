@@ -95,10 +95,13 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - `src/quiz/` also has `line` (drag a marker on a number line, snapped to its ticks, answered on
   release) and takes a `picture` the course draws through the mount's `ctx.art`, plus `ctx.look`
   for a course's own styling.
-- `src/maths/` — the Maths course (`src/data/maths.json`: mental maths, percentages, fractions you
-  can see, for adults rusty at maths). Items are written as sums and pictures; `items.js` works every
-  answer out (`value()` reads "15% of $60", so 2/4 is right for 1/2) and `toQuiz()` turns each into a
-  src/quiz item; `problem()` checks both. `exercise.js` draws the ten frame, bars, 100 grid and a teach card's number line. Coach:
+- `src/maths/` — the Maths course (`src/data/maths.json`, nine units: mental maths, times tables you
+  can see, sharing and dividing, rounding and estimating, percentages, fractions you can see, decimals
+  and money, ratios and better buys, below zero; for adults rusty at maths and for children). Items are
+  written as sums and pictures; `items.js` works every answer out (`value()` reads "15% of $60",
+  "47 to the nearest 10", "5 for $9" as the price for one, and "-3 °C", so 2/4 is right for 1/2; a pick's
+  `goal` can be 'biggest' or 'smallest') and `toQuiz()` turns each into a src/quiz item; `problem()`
+  checks both. `exercise.js` draws the ten frame, arrays of dots, bars, 100 grid and a teach card's number line. Coach:
   Ada, an octopus (`src/cast/ada.js`, posed with `rig()`), with `MATHS_LINES` and `MATHS_HEADLINES`.
 - `src/cast/` — the characters (`kit.js`, `rosa.js`, `lumi.js`), `coach.js` (a character that
   reacts in place) and `lines.js` (everything the cast says; the guardrail tests lint it).
@@ -162,10 +165,17 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   opens and closes on a soft bell and can have soft rain under it (`calmSound()`, `rain()` in
   feel.js, both generated): set on the ⋯ screen, both off until turned on, and both silent
   when Sound is muted or under reduced motion.
-- `src/reflect/` — the Reflect practice subject: three prompts (good, learned, tomorrow), each
-  skippable, self-paced like grounding, with Lumi coaching. What is written goes to
-  `progress.journal` via `writeJournal`, never the log; the habit view shows it through the
-  subject's `dayDetail` hook. A subject's `again` ({ label, lesson }, in the course JSON) keeps a
+- `src/reflect/` — the Reflect practice subject: three prompts, each skippable, self-paced like
+  grounding, with Lumi coaching. "One good thing" first and "One thing for tomorrow" last never
+  change; the middle one comes from the `middle` pool in `reflect.json`, chosen by the date
+  (`middleFor`, the same all day), and its line is kept under `learned` with `asked` (the pool id)
+  on the day's entry so the week view labels it right. What is written goes to `progress.journal`
+  via `writeJournal`, never the log; the habit view shows it through the subject's `dayDetail`
+  hook. The subject's `lookBack` (home: one line from seven days ago, else the newest older one,
+  tapping it opens the habit view) and `readBack` (end screen: "Read back your week" once three of
+  the last seven days have lines) return html and are the only other readers; our words around the
+  lines are `REFLECT_WORDS` in `cast/lines.js`. No prompt asks about a bad feeling, and nothing
+  interprets what was written. A subject's `again` ({ label, lesson }, in the course JSON) keeps a
   lesson on home once the path is done: "Reflect today", "Take a break", "Breathe". The learner's text is never linted or sent anywhere (a test checks).
 - `src/winddown/` — Wind down, a bedtime sequence made only of Calm's pieces: kit.js `sequence()`
   plays a 'sequence' item's parts in turn (its own settle-in steps and goodnight card, then Calm's

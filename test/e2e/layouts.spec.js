@@ -33,6 +33,19 @@ test.describe('at 360x640', () => {
     expect(node.y + node.height).toBeLessThan(cta.y);
   });
 
+  test("Reflect's look back, even a long one, leaves the next step in sight", async ({ page }) => {
+    const day = new Date();
+    day.setDate(day.getDate() - 7);
+    const date = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+    await page.addInitScript(([d, text]) => localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 3, picked: [], done: {}, cards: {}, habits: {}, log: [], journal: { [d]: { good: text } } })),
+      [date, 'A very long line about a walk by the river with a friend, and the sun came out just as we reached the old bridge. '.repeat(3)]);
+    await page.goto('/');
+    await page.locator('[data-path="reflect"]').click();
+    const [line, node, cta] = await Promise.all(['.look-back', '.node.here', '.cta'].map((s) => page.locator(s).boundingBox()));
+    expect(line.height).toBeLessThan(100);
+    expect(node.y + node.height).toBeLessThan(cta.y);
+  });
+
   test('a course pill and the ✕ answer a thumb that lands just outside them', async ({ page }) => {
     await seed(page);
     await page.goto('/');

@@ -22,7 +22,13 @@
   "maths": {
     "Mental maths": "Make the sum easier first. Round one number to a ten, work that out, then fix up what you changed. 38 + 5 is 40 + 3.",
     "Percentages": "Percent means out of 100. 10% is dividing by 10, 50% is halving, and 25% is halving twice. Build other percentages from those.",
-    "Fractions you can see": "The bottom number says how many equal parts there are. The top says how many you have. Picture the bar, then compare the shaded parts."
+    "Fractions you can see": "The bottom number says how many equal parts there are. The top says how many you have. Picture the bar, then compare the shaded parts.",
+    "Times tables you can see": "Picture the dots in rows: 3 × 4 is 3 rows of 4. Use a fact you know to reach one you don't. Times 5 is half of times 10, times 4 is two doubles, and times 9 is times 10 less one lot.",
+    "Sharing and dividing": "Dividing is sharing into equal rows. Halve to share by 2, halve twice to share by 4. To divide by 5, double and then divide by 10. What doesn't fit into a full row is left over.",
+    "Rounding and estimating": "Find the two tens (or hundreds) a number sits between and pick the closer one. Exactly halfway rounds up. Round every number first, add those, and the real answer should be close.",
+    "Decimals and money": "The point splits whole dollars from cents: $3.45 is 3 dollars and 45 cents. Add the dollars, then the cents. For change, count up from the price to the next 10c, the next dollar, then the note.",
+    "Ratios and better buys": "Whatever you do to one amount, do to the other: twice the people, twice the pasta. To compare packs, divide each price by how many are in it. The smaller price for one is the better buy.",
+    "Below zero": "Picture the number line or a thermometer. Going down past zero, hop to 0 first, then count the rest below. A minus number is owing: pay it off to get back to 0."
   },
   "japanese": {
     "Vowels": "There are five to learn: a, i, u, e, o. Each kana has one sound. Say it out loud and picture its story, then try the kana again.",
