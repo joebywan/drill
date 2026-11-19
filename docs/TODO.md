@@ -126,6 +126,10 @@ permission, and the pool stays the fallback even then.
   backend planned for now. To turn it on: deploy the sync API (`server/DEPLOY.md`: Cloudflare account, the DNS move to
   Cloudflare, D1, one deploy), then set `SYNC` to true. Create the Android release key once, put its SHA-256 in
   `android/release-key.sha256` and add the four `WINGBEAT_KEY*` repo secrets (CLAUDE.md, Android).
+- **Renovate token: waiting on Joseph.** Renovate runs every Monday (`.github/workflows/renovate.yml`), but with the
+  default token it can't open update pull requests (the repo doesn't let Actions create them) or change workflow files,
+  and CI wouldn't run on its pull requests. Create a classic personal access token with the `public_repo` and `workflow`
+  scopes and save it as the repo secret `RENOVATE_TOKEN`.
 - **Play publishing: written, waiting on Joseph.** `.github/workflows/publish-play.yml` uploads the signed bundle from a
   GitHub release to Play's internal track. It runs by hand only and refuses to run without its secret or a bundle signed with
   the pinned key, so nothing happens until these steps are done:
