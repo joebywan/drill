@@ -36,11 +36,12 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 
 - With no `--url` it serves this checkout on a free port forwarded with `adb reverse`; Chrome opens
   `http://localhost:<port>/`, a secure context, so Wake Lock and the like work as on the real site.
-- One run at a time, machine-wide: it takes `/tmp/wingbeat-phone.lock` (its PID inside; a lock whose
-  process is gone is taken over) and prints "waiting for the emulator" until it can, and waits the
-  same way while any emulator it didn't start is running. Then it boots the AVD (`--avd`, else
-  `PHONE_AVD`, default `splendor36`; `--avd daybook_tablet` for a tablet) `-read-only`, shuts it down
-  at the end and lets go of the lock, on an error or Ctrl-C too. SDK from `ANDROID_HOME` or `~/Android/Sdk`.
+- A few runs at a time, machine-wide (`PHONE_SLOTS`, default 4), each on its own emulator: a run takes the first
+  free slot's lock `/tmp/wingbeat-phone-<n>.lock` (its PID inside; a lock whose process is gone is taken over) and
+  prints "waiting for the emulator" until it can. Slot n is `emulator-<5554 + 2n>`; one already running there
+  that no run started is waited for the same way. Then it boots the AVD (`--avd`, else `PHONE_AVD`, default
+  `splendor36`; `--avd daybook_tablet` for a tablet) `-read-only` (which lets one AVD run several times over),
+  shuts it down at the end and lets go of the lock, on an error or Ctrl-C too. SDK from `ANDROID_HOME` or `~/Android/Sdk`.
 - Screenshots of the whole screen (keyboard included) go to `test-results/phone/<scenario>/NN-name.png`.
 - It prints page errors, failed requests, sideways overflow, and the device checks: during Calm,
   Chrome's stream is `state:started` in `dumpsys audio` with an active track in
@@ -49,8 +50,8 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - Quirks: Chrome's own prompts ("No thanks", "Not now") cover the page and are declined through
   `uiautomator dump`. Taps are real, so the page origin on screen is measured by tapping a blank
   page, not hard-coded. Timed parts run on `page.clock`. The host's PulseAudio may fail to open
-  while Android audio still runs, so judge sound by the dumpsys checks. **Only one agent may use
-  the emulator at a time:** `npm run phone` waits its turn by itself.
+  while Android audio still runs, so judge sound by the dumpsys checks. **Agents share the
+  emulators:** `npm run phone` takes a free slot or waits its turn by itself; never start an emulator by hand or delete a lock.
 
 ## Architecture
 
