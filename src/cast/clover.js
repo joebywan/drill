@@ -12,16 +12,19 @@ import { face, limb, rig, shadow, svg } from './kit.js';
  *   NAME                       the display name; renaming the character is this one line
  *   MOODS                      ['guide', 'cheer', 'done', 'idle', 'tapped', 'rest']
  *   POSES                      ['squat', 'reach-up', 'side-bend-left', 'side-bend-right',
- *                               'shoulder-roll', 'march', 'lunge', 'wall-push', 'neck-tilt']
+ *                               'shoulder-roll', 'march', 'lunge', 'wall-push', 'neck-tilt',
+ *                               seated on a chair: 'neck-turn', 'chest-stretch', 'twist',
+ *                               'seated-march', 'ankle-stretch', 'sit-to-stand',
+ *                               a hand on a wall: 'heel-raise', 'side-leg-lift', 'one-leg-stand']
  *                              left and right are the learner's, as in a mirror (screen left).
  *   clover(mood, pose?) -> svg string
  *       draw a mood; works with coach(el, clover) like Moss. With `pose`, the limbs hold that
  *       pose (its first phase) and the face keeps the mood: draw this under reduced motion so
  *       the move still shows.
  *   demo(el, pose, seconds, reps = 1) -> Animation[] | null
- *       kit.js rig().demo: from standing to `pose` and back, `reps` times over exactly `seconds`.
- *       Two-sided moves (march, neck-tilt, shoulder-roll, wall-push) pass through both phases
- *       each rep; when it ends the drawn mood shows again. Null under reduced motion.
+ *       kit.js rig().demo: from standing (or sitting, or holding the wall) to `pose` and back,
+ *       `reps` times over exactly `seconds`. Two-sided moves (march, neck-tilt, shoulder-roll,
+ *       wall-push, and most new ones) pass through both phases each rep; when it ends the drawn mood shows again. Null under reduced motion.
  */
 export const NAME = 'Clover';
 export const MOODS = ['guide', 'cheer', 'done', 'idle', 'tapped', 'rest'];
@@ -33,6 +36,14 @@ const EAR = '#E8A3A6';
 const NOSE = '#D46A78';
 const TAIL = '#FBF6EE';
 const BAND = '#C2375A';
+const WOOD = '#9A6A43';
+const WOOD_TOP = '#C99A6B';
+const WALL = '#D9CFC1';
+const WALL_EDGE = '#A99A86';
+
+// A plain kitchen chair from the front, behind her: two back posts and a rail, the seat's edge, two legs.
+const chair = `<rect x="13" y="50" width="6" height="64" rx="3" fill="${WOOD}"/><rect x="81" y="50" width="6" height="64" rx="3" fill="${WOOD}"/>`
+  + `<rect x="11" y="48" width="78" height="8" rx="4" fill="${WOOD_TOP}"/><rect x="8" y="84" width="84" height="9" rx="4.5" fill="${WOOD_TOP}"/>`;
 
 // Faces in the kit's part settings. Rest is a content pause for breath: eyes closed and smiling.
 const FACES = {
@@ -53,7 +64,9 @@ const J = {
 const ARM = 29, LEG = 18;
 
 // A pose: per part [rotate, dx, dy, scaleY]; `body` moves the whole upper body (see kit.js rig()).
-const STAND = { armL: [16], armR: [-16] };
+// The chair and the wall are props, folded flat (scaleY 0) until a seated or balance pose opens one.
+// Every part is named here so every pose, in any of the three rigs below, animates the same parts.
+const STAND = { armL: [16], armR: [-16], seat: [0, 0, 0, 0], wall: [0, 0, 0, 0], look: [0], head: [0], torso: [0] };
 const ARMS = {
   guide:  { armL: [16], armR: [-64] },          // right hand out, presenting
   cheer:  { armL: [140], armR: [-140] },        // both up, warm
@@ -85,13 +98,51 @@ const POSE = {
   ],
   'neck-tilt': [{ head: [-14] }, { head: [14] }],
 };
-const RIG = rig(J, STAND, POSE);
-export const { POSES, demo } = RIG;
+
+// Seated: a chair (the kit's `seat` prop) behind her, her feet dangling short below its seat.
+// Every seated move starts and ends sitting, so its demo never stands her up between reps.
+const SIT = { seat: [0, 0, 0, 1], body: [0, -3], legL: [0, 0, 4, 0.9], legR: [0, 0, 4, 0.9], armL: [10], armR: [-10] };
+const CROSS = { armL: [-112, 4, 0], armR: [112, -4, 0] }; // hands on the opposite shoulders
+const LEAN = { body: [0, 1], head: [0, 0, 3], armL: [30], armR: [-30] };
+const SEATED = {
+  'neck-turn': [{ look: [0, -6, 0], head: [-5] }, { look: [0, 6, 0], head: [5] }],
+  'chest-stretch': [{ armL: [62, 0, -2], armR: [-62, 0, -2], torso: [0, 0, 0, 1.02], head: [0, 0, 1] }],
+  'twist': [
+    { ...CROSS, torso: [-5], look: [0, -6, 0] },
+    { ...CROSS, torso: [5], look: [0, 6, 0] },
+  ],
+  'seated-march': [
+    { legL: [8, 0, -7, 0.9] },
+    { legR: [-8, 0, -7, 0.9] },
+  ],
+  // One leg out straight, the foot up off the floor. The other leg stays down.
+  'ankle-stretch': [{ legL: [70, 0, 2, 1.1] }, { legR: [-70, 0, 2, 1.1] }],
+  // Lean forward, stand up, lean, sit: the chair stays put behind her.
+  'sit-to-stand': [LEAN, { body: [0, -8], legL: [0, 0, -5, 1.25], legR: [0, 0, -5, 1.25], armL: [16], armR: [-16] }, LEAN],
+};
+
+// Balance: a wall (the `wall` prop) on her right, her right hand resting on it the whole time.
+const HOLD = { wall: [0, 0, 0, 1], armL: [16], armR: [-82, -4, -2] };
+const BALANCE = {
+  'heel-raise': [{ body: [0, -6], legL: [0, 0, -6], legR: [0, 0, -6], armR: [-84, -4, -2] }],
+  'side-leg-lift': [{ legL: [38] }, { legR: [-30] }],
+  'one-leg-stand': [
+    { legL: [14, 0, -13, 0.6] }, { legL: [14, 0, -13, 0.6] },
+    { legR: [-14, 0, -13, 0.6] }, { legR: [-14, 0, -13, 0.6] },
+  ],
+};
+
+// One rig per resting position; a pose is demonstrated by the rig that holds it.
+const RIGS = [rig(J, STAND, POSE), rig(J, { ...STAND, ...SIT }, SEATED), rig(J, { ...STAND, ...HOLD }, BALANCE)];
+const RIG = RIGS[0];
+const of = (pose) => RIGS.find((r) => r.POSES.includes(pose)) ?? RIG;
+export const POSES = RIGS.flatMap((r) => r.POSES);
+export const demo = (el, pose, ...rest) => of(pose).demo(el, pose, ...rest);
 const { at } = RIG;
 
 export function clover(mood = 'guide', pose) {
   const m = FACES[mood] ? mood : 'guide';
-  const p = RIG.pose(pose, ARMS[m]);
+  const p = of(pose).pose(pose, ARMS[m]);
   const arm = ([x, y]) => limb([x, y], [x, y + ARM], LIMB, BAND, 10);
   // A leg ends in a long rabbit foot, toes turned out.
   const leg = ([x, y], side) => limb([x, y], [x, y + LEG], LIMB, LIMB, 11)
@@ -101,6 +152,8 @@ export function clover(mood = 'guide', pose) {
     + `<rect x="${50 + side * 10 - 3.5}" y="9" width="7" height="20" rx="3.5" fill="${EAR}"/></g>`;
   return svg(NAME.toLowerCase(), m, `
     ${shadow(30)}
+    <g ${at('wall', p)}><rect x="88" y="0" width="14" height="114" fill="${WALL}"/><rect x="86" y="0" width="3" height="114" fill="${WALL_EDGE}"/></g>
+    <g ${at('seat', p)}>${chair}</g>
     <g data-part="legs"><g ${at('legL', p)}>${leg(J.legL, -1)}</g><g ${at('legR', p)}>${leg(J.legR, 1)}</g></g>
     <g ${at('body', p)}><g ${at('torso', p)}>
       <circle data-part="tail" cx="76" cy="92" r="8" fill="${TAIL}"/>
@@ -108,11 +161,13 @@ export function clover(mood = 'guide', pose) {
       <ellipse cx="50" cy="82" rx="17" ry="14" fill="${BELLY}"/>
       <g ${at('head', p)}>
         <g data-part="ears">${ear(-1)}${ear(1)}</g>
+        <g ${at('look', p)}>
         <ellipse cx="45" cy="56" rx="6" ry="4.5" fill="${BELLY}"/><ellipse cx="56" cy="56" rx="6" ry="4.5" fill="${BELLY}"/>
         ${face(FACES[m], { cx: 50, cy: 42, skin: SKIN, mouthY: 16 })}
         <ellipse cx="50.5" cy="52.5" rx="3.6" ry="2.6" fill="${NOSE}"/>
+        </g>
       </g>
       <g data-part="arms"><g ${at('armL', p)}>${arm(J.armL)}</g><g ${at('armR', p)}>${arm(J.armR)}</g></g>
-    </g></g>`).replace('<svg ', `<svg data-pose="${POSE[pose] ? pose : ''}" `);
+    </g></g>`).replace('<svg ', `<svg data-pose="${POSES.includes(pose) ? pose : ''}" `);
 }
 
