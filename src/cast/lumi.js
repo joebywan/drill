@@ -1,5 +1,6 @@
 import { INK, face, limb, shadow, svg } from './kit.js';
 import { butterfly } from './butterfly.js';
+import { skinOf } from './skins.js';
 import { move } from '../feel.js';
 
 /**
@@ -23,12 +24,18 @@ const ARMS = {
   sleepy:     [[14, 80], [60, 84]],
 };
 
-export function lumi(mood = 'teach') {
+/**
+ * Lumi in `mood`, wearing `skin` (an id from skins.js; none or unknown is just Lumi). `colours` are the
+ * learner's wing panels, for the butterfly costume's wings.
+ */
+export function lumi(mood = 'teach', skin = null, colours = []) {
   const [lh, rh] = ARMS[mood] || ARMS.teach;
+  const wear = skinOf(skin) ?? {};
+  const arm = (shoulder, hand) => limb(shoulder, hand, SEAL, SEAL, 12) + (wear.arm?.(shoulder, hand) ?? '');
   const whisker = (y1, y2) => [-1, 1].map((s) =>
     `<path d="M${50 + s * 12} ${y1} L${50 + s * 22} ${y2}" stroke="${INK}" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>`).join('');
-  return svg('lumi', mood, `
-    ${shadow(26)}
+  const drawn = svg('lumi', mood, `
+    ${shadow(26)}${wear.back?.(colours) ?? ''}
     <g data-part="body">
       <ellipse cx="35" cy="105" rx="11" ry="5" fill="${SEAL_SHADE}" transform="rotate(-18 35 105)"/>
       <ellipse cx="65" cy="105" rx="11" ry="5" fill="${SEAL_SHADE}" transform="rotate(18 65 105)"/>
@@ -39,10 +46,11 @@ export function lumi(mood = 'teach') {
         <ellipse cx="44" cy="53" rx="7" ry="5" fill="${MUZZLE}"/><ellipse cx="56" cy="53" rx="7" ry="5" fill="${MUZZLE}"/>
         ${whisker(52, 50)}${whisker(55, 57)}
         ${face(mood, { cx: 50, cy: 39, skin: SEAL, mouthY: 20 })}
-        <ellipse cx="50" cy="48.5" rx="4" ry="3" fill="${INK}"/>
+        <ellipse cx="50" cy="48.5" rx="4" ry="3" fill="${INK}"/>${wear.head ?? ''}
       </g>
-      <g data-part="arms">${limb(L, lh, SEAL, SEAL, 12)}${limb(R, rh, SEAL, SEAL, 12)}</g>
+      ${wear.front ?? ''}<g data-part="arms"><g data-arm="left">${arm(L, lh)}</g><g data-arm="right">${arm(R, rh)}</g></g>
     </g>`);
+  return wear.id ? drawn.replace('cast-lumi ', `cast-lumi skin-${wear.id} `) : drawn;
 }
 
 /**
@@ -51,10 +59,11 @@ export function lumi(mood = 'teach') {
  * `el` holds her drawing, best in a flippers-up mood ('complete'). Skipped under reduced motion.
  */
 export function flap(el) {
-  for (const [i, part] of [...(el?.querySelectorAll('[data-part="arms"] > *') ?? [])].entries()) {
-    const [x, y] = i < 2 ? L : R;
+  for (const part of el?.querySelectorAll('[data-arm]') ?? []) {
+    const left = part.dataset.arm === 'left';
+    const [x, y] = left ? L : R;
     part.style.transformOrigin = `${x}px ${y}px`;
-    move(part, [0, 1, 0, 1, 0].map((k) => ({ transform: `rotate(${k * (i < 2 ? -50 : 50)}deg)` })), { duration: 900, easing: 'ease-in-out' });
+    move(part, [0, 1, 0, 1, 0].map((k) => ({ transform: `rotate(${k * (left ? -50 : 50)}deg)` })), { duration: 900, easing: 'ease-in-out' });
   }
 }
 

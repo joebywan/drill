@@ -3,6 +3,7 @@ import { WIDGET_LINES } from './cast/lines.js';
 import { lumi } from './cast/lumi.js';
 import { BOX, butterflyToday, habitColour } from './cast/butterfly.js';
 import { INK } from './cast/kit.js';
+import { worn } from './cast/skins.js';
 
 /**
  * The Android wrapper's side of Wingbeat, pure apart from the bridge glue at the end. The home-screen
@@ -140,21 +141,25 @@ async function png(svg, width, height) {
 
 /** The pale body and antennae your butterfly has on the widget's night sky. */
 const NIGHT_BODY = '#E6DFD2';
-let sent = null; // the wings last drawn for the widget: they change at most once a day
+let sent = { lumi: null, wings: null }; // what was last drawn for the widget: the wings change at most once a day
 
 /**
- * The widget's art, drawn from the same SVG as in the app and handed over as PNGs: Lumi's poses once,
- * and your butterfly's three states (`look().art`) in your own wing colours, again whenever they change.
+ * The widget's art, drawn from the same SVG as in the app and handed over as PNGs: Lumi's poses in
+ * what she wears, again when that changes (the costume's wings too), and your butterfly's three
+ * states (`look().art`) in your own wing colours, again whenever they change.
  */
 export async function sendArt(progress) {
   const b = bridge();
   if (!b) return;
+  const skin = worn(progress);
   const wings = JSON.stringify(progress.wings || []);
-  if (wings === sent) return;
-  const first = sent === null;
-  sent = wings;
-  if (first) for (const pose of ['teach', 'sleepy', 'complete']) b.art(pose, await png(lumi(pose), 200, 240));
-  for (const state of Object.values(STATES))
+  const her = JSON.stringify([skin, skin === 'costume' ? wings : null]);
+  const colours = wingColours(progress);
+  // Both noted before any await, so an overlapping call sends nothing twice or out of order.
+  const redraw = { lumi: her !== sent.lumi, wings: wings !== sent.wings };
+  sent = { lumi: her, wings };
+  if (redraw.lumi) for (const pose of ['teach', 'sleepy', 'complete']) b.art(pose, await png(lumi(pose, skin, colours), 200, 240));
+  if (redraw.wings) for (const state of Object.values(STATES))
     for (const night of [false, true])
-      b.art(`butterfly-${state}${night ? '-night' : ''}`, await png(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${BOX}">${butterflyToday(state, wingColours(progress), night ? NIGHT_BODY : INK)}</svg>`, 240, 200));
+      b.art(`butterfly-${state}${night ? '-night' : ''}`, await png(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${BOX}">${butterflyToday(state, colours, night ? NIGHT_BODY : INK)}</svg>`, 240, 200));
 }

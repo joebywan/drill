@@ -43,10 +43,14 @@
                     <path android:pathData="M46,48.5 a4,3 0 1,0 8,0 a4,3 0 1,0 -8,0 Z" android:fillColor="#1E1B2E" />
                 </group>
                 <group>
-                    <path android:pathData="M25 62 L14 76" android:strokeColor="#6E82A8" android:strokeWidth="12" android:strokeLineCap="round" />
-                    <path android:pathData="M6.5600000000000005,76 a7.4399999999999995,7.4399999999999995 0 1,0 14.879999999999999,0 a7.4399999999999995,7.4399999999999995 0 1,0 -14.879999999999999,0 Z" android:fillColor="#6E82A8" />
-                    <path android:pathData="M75 62 L88 58" android:strokeColor="#6E82A8" android:strokeWidth="12" android:strokeLineCap="round" />
-                    <path android:pathData="M80.56,58 a7.4399999999999995,7.4399999999999995 0 1,0 14.879999999999999,0 a7.4399999999999995,7.4399999999999995 0 1,0 -14.879999999999999,0 Z" android:fillColor="#6E82A8" />
+                    <group>
+                        <path android:pathData="M25 62 L14 76" android:strokeColor="#6E82A8" android:strokeWidth="12" android:strokeLineCap="round" />
+                        <path android:pathData="M6.5600000000000005,76 a7.4399999999999995,7.4399999999999995 0 1,0 14.879999999999999,0 a7.4399999999999995,7.4399999999999995 0 1,0 -14.879999999999999,0 Z" android:fillColor="#6E82A8" />
+                    </group>
+                    <group>
+                        <path android:pathData="M75 62 L88 58" android:strokeColor="#6E82A8" android:strokeWidth="12" android:strokeLineCap="round" />
+                        <path android:pathData="M80.56,58 a7.4399999999999995,7.4399999999999995 0 1,0 14.879999999999999,0 a7.4399999999999995,7.4399999999999995 0 1,0 -14.879999999999999,0 Z" android:fillColor="#6E82A8" />
+                    </group>
                 </group>
             </group>
         </group>

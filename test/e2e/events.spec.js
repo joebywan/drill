@@ -37,7 +37,8 @@ test('the park tournament changes the garden, its set grants the pennant, and it
   await hop(page, 'a1', 'a8');
   await next(page);
 
-  await expect(page.locator('.arrival, .arrivals').first()).toContainText('pennant');
+  await expect(page.locator('.arrivals')).toContainText('pennant');
+  await expect(page.locator('.arrivals')).toContainText('Sunglasses for Lumi to wear'); // and something for Lumi
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')));
   expect(saved.done['event:summer-tournament']).toBe(true);
   expect(saved.garden.earned['garden:pennant']).toBeTruthy();
