@@ -28,6 +28,7 @@ export const PANELS = 14;
 export const HABIT_COLOURS = {
   learn: '#4CAF73', calm: '#9B8CE0', move: '#F07A5A', reflect: '#F2B640', break: '#4A9BE0', focus: '#A86F3E',
   winddown: '#5B5FC7', walk: '#E0609A', read: '#D24B3E', water: '#2EA6A0', outside: '#8DB33A',
+  tidy: '#45C1CF', floss: '#E6CF2E', music: '#CF4FB0', make: '#EE8E3A', call: '#7D4FD0',
 };
 export const OWN_COLOURS = ['#B565C9', '#64809E', '#C0622F', '#C9A227', '#8E4A73', '#3E8E6E'];
 export const habitColour = (id, own = 0) => HABIT_COLOURS[id] || OWN_COLOURS[own % OWN_COLOURS.length];

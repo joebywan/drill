@@ -264,10 +264,17 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   the first arrival's sound when something arrives: its gift (`flower`, `butterfly`, `bee`), or a
   landmark's `sound` (`build`, `birds`, `pond`, `lantern`, `bee`).
 - **Self-reported habits** (kind 'log'): no path, one tap a day ("I walked today"). The habit list is
-  `habitsFor(progress)` in subjects.js, never HABITS alone: the built-ins, then PRESETS and the
+  `habitsFor(progress)` in subjects.js, never HABITS alone: the built-ins, then PRESETS (Walk, Read, Water,
+  Outside, Tidy, Floss, Music, Make, Call; each with its own plant, wing colour and species) and the
   learner's own from `progress.tracked`. `logToday`/`unlogToday`/`track` in progress.js; the tab's
-  panel, the "+ Habit" sheet and the make-your-own form in app.js (`logPanel`, `addHabit`,
-  `editHabit`). Learners' habit names are never linted and always escaped.
+  panel, the "+ Habit" sheet (presets two to a row, so it fits 360x640) and the make-your-own form in app.js
+  (`logPanel`, `addHabit`, `editHabit`). Learners' habit names are never linted and always escaped.
+- **A habit's "when"** ("After breakfast"): one optional line per habit id, any habit, in `progress.when`
+  (`setWhen()`; optional, read leniently by `migrate()`, merged like timings). `whenView()` in app.js asks
+  "When will you do it?" (a few picks, or their own words; Skip is one tap) after a one-tap habit is added,
+  and from every habit view ("Tie it to your day" / "Change when"). Shown on a one-tap habit's panel and in
+  the habit view, never on a guided habit's home. The learner's words: escaped, never linted, never sent
+  unsealed. Our words are `LOG_WORDS.when*`.
 - Home's top is kept short so the next lesson's node shows without scrolling at 360x640 (`layouts.spec.js`):
   a cropped garden strip, the courses in one row, and "Skip ahead" in the footer, under Continue.
 - Home lists each habit once: one row of tabs (icon, name, streak coloured by `light()`) that

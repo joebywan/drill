@@ -1293,8 +1293,12 @@ test('a self-reported habit: add Walk, one tap, its streak and plant, and Undo t
   await firstVisit(page);
   await page.getByRole('button', { name: 'Add a habit' }).click();
   await expect(page.getByRole('heading', { name: 'Add a habit' })).toBeFocused();
-  for (const name of ['Walk', 'Read', 'Water', 'Outside', 'Make your own']) await expect(page.getByRole('button', { name: new RegExp(name) })).toBeVisible();
+  for (const name of ['Walk', 'Read', 'Water', 'Outside', 'Tidy', 'Floss', 'Music', 'Make', 'Call', 'Make your own']) await expect(page.getByRole('button', { name: new RegExp(name) }).first()).toBeVisible();
   await page.getByRole('button', { name: /Walk/ }).click();
+  // "When will you do it?" is offered, and skipping it is one tap.
+  await expect(page.getByRole('heading', { name: 'When will you do it?' })).toBeFocused();
+  await page.getByRole('button', { name: 'Skip', exact: true }).click();
+  await expect(page.locator('.log-habit .when')).toHaveCount(0);
 
   await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk');
   await expect(tab(page, 'Walk')).toBeFocused();
@@ -1339,6 +1343,7 @@ test('a habit of your own: name, icon and plant; log it, rename it, and its name
   await page.getByRole('radio', { name: '🧘' }).check();
   await page.getByRole('radio', { name: 'Cactus' }).check();
   await page.getByRole('button', { name: 'Add habit' }).click();
+  await page.getByRole('button', { name: 'Back' }).click(); // Back on "When will you do it?" goes on without one
 
   await expect(tab(page, 'Stretch')).toBeFocused();
   await page.getByRole('button', { name: 'Done today' }).click();
@@ -1372,7 +1377,59 @@ test('a habit of your own: name, icon and plant; log it, rename it, and its name
   await expect(page.locator('.path-tab[data-path="own-1"]')).toHaveCount(0);
   await page.getByRole('button', { name: 'Add a habit' }).click();
   await page.locator('[data-track="own-1"]').click();
+  await page.getByRole('button', { name: 'Skip', exact: true }).click();
   await expect(page.locator('.path-tab[data-path="own-1"]')).toHaveAccessibleName(`${name}, 1-day streak`);
+});
+
+test('a habit\'s "when": a new preset with one, shown on its panel, changed in its habit view, and one for a guided habit', async ({ page }) => {
+  await firstVisit(page);
+  await page.getByRole('button', { name: 'Add a habit' }).click();
+  await page.getByRole('button', { name: /Floss/ }).click();
+  await expect(page.getByRole('heading', { name: 'When will you do it?' })).toBeFocused();
+  await page.getByRole('button', { name: 'Before bed' }).click();
+  await expect(tab(page, 'Floss')).toBeFocused();
+  await expect(page.locator('.log-habit .when')).toHaveText('Before bed');
+  await page.getByRole('button', { name: 'I flossed today' }).click();
+  await expect(page.locator('.log-habit .raising')).toHaveText('Floss is raising an Orange Migrant');
+
+  await week(page, 1).click();
+  await expect(page.locator('main.habit .when')).toHaveText('Before bed');
+  await page.getByRole('button', { name: 'Change when' }).click();
+  await expect(page.getByRole('button', { name: 'Before bed' })).toHaveAttribute('aria-pressed', 'true');
+  const own = '<b>After my teeth</b>&'; // their words: only ever text
+  await page.getByRole('textbox', { name: 'Or in your own words' }).fill(own);
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.locator('main.habit .when')).toHaveText(own);
+  await expect(page.getByRole('button', { name: 'Change when' })).toBeFocused();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(page.locator('.log-habit .when')).toHaveText(own);
+  await expect(page.locator('#app b:text("After my teeth")')).toHaveCount(0);
+  await page.reload();
+  await expect(page.locator('.log-habit .when')).toHaveText(own);
+
+  // Cleared from the habit view, it leaves the panel.
+  await week(page, 1).click();
+  await page.getByRole('button', { name: 'Change when' }).click();
+  await page.getByRole('button', { name: 'Clear it' }).click();
+  await expect(page.locator('main.habit .when')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(page.locator('.log-habit .when')).toHaveCount(0);
+
+});
+
+test('a guided habit\'s "when" is set from its habit view, and stays off home\'s path', async ({ page }) => {
+  await grown(page, ['calm'], 2);
+  await firstVisit(page);
+  await tab(page, 'Calm').click();
+  await page.locator('.streak-line').click();
+  await page.getByRole('button', { name: 'Tie it to your day' }).click();
+  await expect(page.getByRole('heading', { name: 'When will you do it?' })).toBeFocused();
+  await page.getByRole('button', { name: 'After breakfast' }).click();
+  await expect(page.locator('main.habit .when')).toHaveText('After breakfast');
+  await expect(page.getByRole('button', { name: 'Change when' })).toBeFocused();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(tab(page, 'Calm')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByText('After breakfast')).toHaveCount(0);
 });
 
 test('with many habits, the tab row stays one row that scrolls inside itself, and + Habit is last', async ({ page }) => {

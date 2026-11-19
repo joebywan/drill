@@ -456,7 +456,15 @@ html { scroll-padding-bottom: 160px; }
 .look-back q { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
 .add-tab { border-style: dashed; }
 .add-habit .choice, .own-habit .choice { overflow-wrap: anywhere; }
-.own-habit form { text-align: left; }
+/* Nine presets and any hidden habits, two to a row, so the sheet fits a small phone. */
+.add-habit .offers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0 8px; }
+.add-habit .offers .choice { margin: 0; }
+/* A habit's "when" (app.js whenView), under its name on the panel and in the habit view. */
+.when { margin: 0 0 4px; color: var(--muted); overflow-wrap: anywhere; }
+.habit .when { margin-top: 4px; }
+.when-ask .choice { margin: 0; }
+.when-ask .choice[aria-pressed="true"] { border-color: var(--accent); }
+.own-habit form, .when-ask form { text-align: left; }
 .field { display: block; margin: 16px 0; font-weight: 700; }
 .field input {
   display: block; box-sizing: border-box; width: 100%; margin-top: 6px; padding: 12px 14px; border-radius: 12px;
@@ -505,7 +513,7 @@ html { scroll-padding-bottom: 160px; }
 .branch .choice:disabled { color: var(--muted); border-style: dashed; }
 
 /* Your timings (app.js timingsView): a − and + stepper per value, thumb-sized, the default beside it. */
-.habit .timings-link { margin: 8px 0 0; padding-left: 0; }
+.habit :is(.timings-link, .when-link) { margin: 8px 0 0; padding-left: 0; }
 .steppers { margin: 20px 0; padding: 0; list-style: none; }
 .steppers li { padding: 10px 0; border-bottom: 1px solid var(--line); }
 .steppers li > span { display: block; font-weight: 600; }

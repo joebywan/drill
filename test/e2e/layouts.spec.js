@@ -20,6 +20,20 @@ test.describe('at 360x640', () => {
     expect(new Set(ys).size).toBe(1);
   });
 
+  test('the + Habit sheet fits all nine presets and Make your own, and "When will you do it?" fits too', async ({ page }) => {
+    await seed(page);
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Add a habit' }).click();
+    await expect(page.locator('[data-track]')).toHaveCount(9);
+    await expect(page.getByRole('button', { name: 'Make your own' })).toBeInViewport({ ratio: 1 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
+    await page.locator('[data-track="call"]').click();
+    await expect(page.getByRole('button', { name: 'Skip', exact: true })).toBeInViewport({ ratio: 1 });
+    await page.getByRole('button', { name: 'At lunch' }).click();
+    await expect(page.locator('.log-habit .when')).toBeInViewport();
+    await expect(page.getByRole('button', { name: 'I called someone today' })).toBeInViewport({ ratio: 1 });
+  });
+
   // Before a finished lesson there is nothing being raised, so the test above holds the first screen; after
   // one, the next node already sat below the fold (home scrolls it into view), with or without the line.
   test('a started course shows what it is raising, and its next lesson is still in view', async ({ page }) => {
