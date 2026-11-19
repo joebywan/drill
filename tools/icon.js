@@ -12,6 +12,7 @@ import { writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 import { lumi } from '../src/cast/lumi.js';
 import { butterfly } from '../src/cast/butterfly.js';
+import { INK } from '../src/cast/kit.js';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const RES = `${ROOT}android/app/src/main/res`;
@@ -27,7 +28,7 @@ const SAFE = 33;
 const GAP = 2.4, DROP = 4; // the themed icon's gap under the butterfly, and how far Lumi drops there so it clears her brows
 const her = lumi('teach').replace(/^<svg[^>]*>|<\/svg>$/g, '').replace(/<ellipse data-part="shadow"[^>]*\/>/, '');
 const art = `<g transform="${AT}"><g data-part="lumi" transform="${LUMI}">${her}</g>`
-  + `<g data-part="butterfly" transform="${FLY}">${butterfly()}</g></g>`;
+  + `<g data-part="butterfly" transform="${FLY}">${butterfly(undefined, true, INK)}</g></g>`;
 
 const attrs = (s) => Object.fromEntries([...s.matchAll(/([\w-]+)="([^"]*)"/g)].map((m) => [m[1], m[2]]));
 const oval = (cx, cy, rx, ry) => `M${cx - rx},${cy} a${rx},${ry} 0 1,0 ${2 * rx},0 a${rx},${ry} 0 1,0 ${-2 * rx},0 Z`;
@@ -104,7 +105,7 @@ const whole = (fly) => fly.replace(/<g clip-path="url\(#([^)]+)\)">.*?<\/g>/g, (
 const mono = (under) => `<defs><clipPath id="under"><path d="${under}"/></clipPath></defs><g clip-path="url(#under)"><g transform="translate(0 ${DROP})"><g transform="${AT}"><g transform="${LUMI}">`
   + `<path fill-rule="evenodd" fill="#fff" d="${[outline, ...eyes, nose, ...brows].map((s) => s.d).join(' ')}"/>`
   + `${pupils.map((s) => `<path fill="#fff" d="${s.d}"/>`).join('')}</g></g></g></g>`
-  + `<g transform="${AT}"><g transform="${FLY}">${whole(butterfly()).replace(/(fill|stroke)="#\w+"/g, '$1="#fff"')}</g></g>`;
+  + `<g transform="${AT}"><g transform="${FLY}">${whole(butterfly(undefined, true, INK)).replace(/(fill|stroke)="#\w+"/g, '$1="#fff"')}</g></g>`;
 
 const page = await (await chromium.launch()).newPage({ viewport: { width: 512, height: 512 } });
 const [reach, under] = await page.evaluate(async ([inner, gap]) => {
