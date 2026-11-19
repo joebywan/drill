@@ -11,6 +11,9 @@ TypeScript and TS test-writing are live.
 (a Claude Doc: read it with the docs tools). It holds the cast, the character states, the
 guardrails, and events/widgets/notifications. What's left is in `docs/TODO.md`.
 
+**Then read `docs/WINGBEAT.md`:** the plan for bringing the theme into line with the name and growing
+the short courses. Where it and the brief disagree (the flame, the anonymous butterflies), it wins.
+
 The product is a Duolingo-*style* course, not a Daybook-style puzzle app. Daybook supplies repo
 conventions only. Learn Duolingo's functions, never copy its characters: "Oscar" is Duolingo's
 chess teacher, so that name and the draft knight are retired.
