@@ -121,9 +121,9 @@ const greeted = new Map();
 function greeting(h) {
   // On Learning, the course shown speaks: Rosa, Kaede, Ada…
   const course = h.id === 'learn' ? courseShown.coach.name.toLowerCase() : undefined;
-  const { coach: who, state, facts } = moment(progress, h, new Date(), course);
+  const { coach: who, state, facts } = moment(progress, h, new Date(), course, showsStreak(h.id, pref('quiet-streaks', false)));
   const dares = pref('dares', true);
-  const key = `${h.id} ${who} ${state.light} ${state.today} ${dares}`;
+  const key = `${h.id} ${who} ${state.light} ${state.today} ${dares} ${facts.count}`;
   if (!greeted.has(key)) {
     let kept = {};
     try { kept = JSON.parse(localStorage.getItem(SAID)) || {}; } catch { /* private mode or unreadable */ }
@@ -991,7 +991,7 @@ function run(lessonId, queue, title, extra = null) {
         <h1>${esc(line('done', Math.random(), who.lines))}</h1>
         <p class="said">${esc([...did, `${mins} min`].join(' · '))}</p>
         <div class="chips">
-          ${chip(h.id, `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`)}
+          ${showsStreak(h.id, pref('quiet-streaks', false)) ? chip(h.id, `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`) : ''}
         </div>
         ${beats ? wingbeat(true, newPanel) : ''}
         ${arrivals(newly)}

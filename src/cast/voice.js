@@ -24,9 +24,10 @@ function usualHour(progress, habit) {
 
 /**
  * { coach, state, facts } for `habit` ({ id, name }) at `now`. A fact that isn't known is null.
+ * `streakShown` false (a quiet habit, see showsStreak) leaves the streak count out of the facts, so no line states it.
  * `coach` picks one where a habit has several (Learning's courses: the course shown).
  */
-export function moment(progress, habit, now = new Date(), coach = coachOf(habit.id)) {
+export function moment(progress, habit, now = new Date(), coach = coachOf(habit.id), streakShown = true) {
   const date = today(now);
   const last = progress.habits[habit.id]?.last;
   const count = currentStreak(progress, now, habit.id);
@@ -42,6 +43,6 @@ export function moment(progress, habit, now = new Date(), coach = coachOf(habit.
       first: !last,
       comeback: !!last && (Date.parse(date) - Date.parse(last)) / 86400000 >= COMEBACK_DAYS,
     },
-    facts: { habit: habit.name, usualHour: usualHour(progress, habit.id), count: count >= 2 ? count : null, days: days >= 2 ? days : null },
+    facts: { habit: habit.name, usualHour: usualHour(progress, habit.id), count: streakShown && count >= 2 ? count : null, days: days >= 2 ? days : null },
   };
 }
