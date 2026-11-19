@@ -119,6 +119,7 @@ test('dares: sometimes, at most once a day, only while not done, never first or 
     { ...base, light: 'resting' },
     { ...base, first: true },
     { ...base, comeback: true },
+    { ...base, dares: false },
   ]) {
     assert.equal(mayDare(state), false, JSON.stringify(state));
     for (const coach of Object.keys(VOICES)) {

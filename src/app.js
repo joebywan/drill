@@ -3,12 +3,12 @@ import { GARDEN_WORDS, award, garden, moreArrived, plantWords } from './garden/m
 import { PLANTS, animateLandmarks, animateScene, animateVisitor, drawGarden, flower, landmark, plant, sway, visitor } from './garden/art.js';
 import { COMEBACK_WORDS, PAUSED_WORDS, activeComeback, answerComeback, noteReminder, preferred, reminderHour, remindersPaused, shorter, shouldRemind, startComeback, usualHours, usualLine } from './fitting.js';
 import { emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, track, unlogToday, writeJournal, finishSession, meetsCoach, metCoach, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
-import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
+import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, showsStreak, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { lumi } from './cast/lumi.js';
 import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, comeBack, dropEchoes, echoes, fresh, warmUps } from './repeat.js';
 import { GOES, easier, flying, helpFor, misses, noteAnswer, struggling, warmedLast } from './adapt.js';
-import { CALM_SOUNDS, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
+import { CALM_SOUNDS, DARES_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, setSound, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
 import { lessonOf } from './garden/events.js';
@@ -120,12 +120,13 @@ function greeting(h) {
   // On Learning, the course shown speaks: Rosa, Kaede, Ada…
   const course = h.id === 'learn' ? courseShown.coach.name.toLowerCase() : undefined;
   const { coach: who, state, facts } = moment(progress, h, new Date(), course);
-  const key = `${h.id} ${who} ${state.light} ${state.today}`;
+  const dares = pref('dares', true);
+  const key = `${h.id} ${who} ${state.light} ${state.today} ${dares}`;
   if (!greeted.has(key)) {
     let kept = {};
     try { kept = JSON.parse(localStorage.getItem(SAID)) || {}; } catch { /* private mode or unreadable */ }
     const recent = Array.isArray(kept.recent) ? kept.recent : [];
-    const said = say(who, { ...state, daredToday: kept.dared === state.today }, facts, Math.random, recent);
+    const said = say(who, { ...state, dares, daredToday: kept.dared === state.today }, facts, Math.random, recent);
     try { localStorage.setItem(SAID, JSON.stringify({ recent: [...recent, said.line].slice(-6), dared: said.dare ? state.today : kept.dared })); } catch { /* lasts the visit */ }
     greeted.set(key, `<p class="said welcome greeting${said.dare ? ' dare' : ''}"><b>${esc(VOICES[who].name)}</b> ${esc(said.text)}</p>`);
   }
@@ -241,7 +242,7 @@ function home(arrived = null, newly = []) {
         `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === courseShown}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
       ${learning && courseShown.games ? `<nav class="courses games" aria-label="Games"><span>Games</span>${courseShown.games.map((g) => `<button class="course" data-game="${g.id}">${esc(g.label)}</button>`).join('')}</nav>` : ''}
       ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : invite ? '' : greeting(shownHabit)}
-      ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
+      ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true, showsStreak(habitShown, pref('quiet-streaks', false))))}</button>`
         : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
       ${invite ? comebackCard(invite) : ''}
       ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly) : ''}
@@ -433,7 +434,7 @@ function comebackLesson(c) {
  */
 function habitTab(h) {
   const n = currentStreak(progress, new Date(), h.id);
-  const started = !!progress.habits[h.id]?.last;
+  const started = !!progress.habits[h.id]?.last && showsStreak(h.id, pref('quiet-streaks', false));
   return `<button class="path-tab" data-path="${esc(h.id)}" aria-pressed="${h.id === habitShown}"
     aria-label="${esc(h.name)}${started ? `, ${n}-day streak` : ''}">${esc(h.icon)} ${esc(h.name)}${started ? ` <b class="streak-${light(progress, new Date(), h.id)}">${n}</b>` : ''}</button>`;
 }
@@ -1127,6 +1128,9 @@ function keep(note = '') {
       ${syncMenuHtml()}
       <h2>Calm sounds</h2>
       ${CALM_SOUNDS.map(([name, label]) => `<button class="choice" data-pref="${name}" aria-pressed="${calmPref(name)}">${esc(label)}</button>`).join('')}
+      <h2>Coaches and streaks</h2>
+      <button class="choice" data-pref="dares" aria-pressed="${pref('dares', true)}">${esc(DARES_LABEL)}</button>
+      <button class="choice" data-pref="quiet-streaks" aria-pressed="${pref('quiet-streaks', false)}">${esc(QUIET_STREAK_LABEL)}</button>
       <h2>Garden</h2>
       <button class="choice" data-pref="south" aria-pressed="${south()}">${esc(SOUTH_LABEL)}</button>
       ${bridge() ? `<h2>${esc(REMINDER_WORDS.title)}</h2><button class="choice" data-remind aria-pressed="${bridge().remindersOn()}">${esc(REMINDER_WORDS.toggle)}</button>` : ''}
