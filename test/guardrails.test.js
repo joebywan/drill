@@ -6,7 +6,7 @@ import { helpHtml } from '../src/practice/kit.js';
 import { subjects } from '../src/subjects.js';
 import unitHelp from '../src/data/help.json' with { type: 'json' };
 import lessonHelp from '../src/data/lesson-help.json' with { type: 'json' };
-import { GAME_WORDS, MOVE_ON, HELLO, ACCURACY, BREAK_LINES, FOCUS_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, KAEDE_LINES, KAEDE_HEADLINES, MATHS_LINES, MATHS_HEADLINES, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
+import { DARES_LABEL, QUIET_STREAK_LABEL, GAME_WORDS, MOVE_ON, HELLO, ACCURACY, BREAK_LINES, FOCUS_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, MOVE_LINES, MOVE_SAFETY, KAEDE_LINES, KAEDE_HEADLINES, MATHS_LINES, MATHS_HEADLINES, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
 // Praise the process, never the person: no ability words. No absence, loss or guilt either.
 const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intelligen\w*|born to)\b/i;
@@ -19,7 +19,7 @@ const hellos = [
   ['move on', MOVE_ON],
 ];
 const lines = [...hellos, ...[LINES, HEADLINES, KAEDE_LINES, KAEDE_HEADLINES, MATHS_LINES, MATHS_HEADLINES, CALM_LINES, BREAK_LINES, REFLECT_LINES, MOVE_LINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((text) => [kind, text])))];
-const labels = [...ACCURACY, ...PACE].map(([, label]) => label).concat(STREAK_LABEL, QUIET_DAY, REST_DAY, NO_STREAK, FIRST_SQUARE, streakLine(0, false), streakLine(0, true), streakLine(14, true));
+const labels = [...ACCURACY, ...PACE].map(([, label]) => label).concat(DARES_LABEL, QUIET_STREAK_LABEL, streakLine(14, true, false), STREAK_LABEL, QUIET_DAY, REST_DAY, NO_STREAK, FIRST_SQUARE, streakLine(0, false), streakLine(0, true), streakLine(14, true));
 
 test('end-screen headlines and chip labels pass the same lint', () => {
   for (const [kind, list] of Object.entries(HEADLINES)) {
@@ -304,6 +304,15 @@ test('garden text has no loss, guilt, urgency or ability words', () => {
   assert.ok(texts.length > 10);
   for (const text of texts) for (const lint of [LOSS, URGENCY, ABILITY]) assert.doesNotMatch(text, lint, text);
   for (const text of texts) assert.doesNotMatch(text, /\b(missing|locked|wilt\w*|die[sd]?|dying|dead)\b/i, text);
+});
+
+// The field guide (src/data/butterflies.json): for all ages, so the garden's lint and no alarm.
+import butterflies from '../src/data/butterflies.json' with { type: 'json' };
+test('field-guide lines have no loss, urgency, ability or alarm words', () => {
+  const texts = butterflies.species.flatMap((s) => [s.name, ...s.lines.map((l) => l.text)]);
+  assert.ok(texts.length > 40);
+  for (const text of texts) for (const lint of [LOSS, URGENCY, ABILITY]) assert.doesNotMatch(text, lint, text);
+  for (const text of texts) assert.doesNotMatch(text, /\b(missing|locked|wilt\w*|die[sd]?|dying|dead|death|kill\w*|endangered|threat\w*|extinct\w*|declin\w*|rare)\b/i, text);
 });
 
 // Self-reported habits: one tap means "yes, today". No nagging, no reminders, no counting toward a

@@ -1,0 +1,59 @@
+<!doctype html>
+<!-- Render harness for the butterfly kit (src/cast/butterfly.js): every species open and side-on,
+     the life cycle, the player's butterfly at 0, 4, 9 and 14 panels, and the habit colours, at 200,
+     96 and 48 px, on light and on dark. `npm start`, then open /tools/butterflies.html. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Butterflies</title>
+<style>
+  body { font: 13px system-ui, sans-serif; margin: 0; }
+  .panel { padding: 12px 16px; }
+  .light { background: #f6f7f9; color: #1c2230; }
+  .dark { background: #151a22; color: #e8ebf0; --butterfly-body: #E6DFD2; } /* as styles.css sets it for dark */
+  h2 { font-size: 15px; margin: 12px 0 6px; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: end; margin-bottom: 10px; }
+  figure { margin: 0; text-align: center; }
+  figcaption { opacity: .7; max-width: 200px; }
+  .s200 svg { width: 200px; } .s96 svg { width: 96px; } .s48 svg { width: 48px; }
+  .s48 figcaption { font-size: 10px; max-width: 64px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 4px; border-radius: 999px; background: #E0D6C3; color: #1c2230; }
+  .chip i { width: 16px; height: 16px; border-radius: 50%; }
+</style>
+</head>
+<body>
+<div id="sheet"></div>
+<script type="module">
+  import { BOX, HABIT_COLOURS, OWN_COLOURS, SPECIES, butterfly, butterflySide, open, side, egg, caterpillar, chrysalis } from '../src/cast/butterfly.js';
+  import { animateVisitor } from '../src/garden/scene.js';
+
+  const art = (body) => `<svg viewBox="${BOX}" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+  const fig = ([label, body]) => `<figure>${art(body)}<figcaption>${label}</figcaption></figure>`;
+  const sizes = (items) => ['s200', 's96', 's48'].map((s) => `<div class="row ${s}">${items.map(fig).join('')}</div>`).join('');
+
+  // Every habit colour, then the own-habit cycle, so the 14 panels show as many as fit.
+  const colours = [...Object.values(HABIT_COLOURS), ...OWN_COLOURS];
+  const yours = [0, 4, 9, 14].map((n) => [`${n} panels`, butterfly(colours.slice(0, n), n === 14)]).concat([['side-on', butterflySide(colours.slice(0, 9))]]);
+  const band = SPECIES[0].art.cells?.[0] || '#F3E7B8';
+  const life = [['egg', egg()], ['caterpillar 0', caterpillar(0, band)], ['caterpillar 0.5', caterpillar(0.5, band)], ['caterpillar 1', caterpillar(1, band)], ['chrysalis', chrysalis(band)]];
+  const legend = [...Object.entries(HABIT_COLOURS), ...OWN_COLOURS.map((c, i) => [`own ${i + 1}`, c])]
+    .map(([id, c]) => `<span class="chip"><i style="background:${c}"></i>${id}</span>`).join('');
+  const species = SPECIES.flatMap((s) => [[`${s.name} · ${s.raisedBy}`, open(s.art)], [`${s.name}, side-on`, side(s.art)]]);
+
+  const panel = (theme) => `<div class="panel ${theme}">
+    <h2>Your butterfly (${theme})</h2>${sizes(yours)}
+    <div class="row">${legend}</div>
+    <h2>Life cycle (${theme})</h2>${sizes(life)}
+    <h2>Species (${theme})</h2>
+    <div class="row s96">${species.map(fig).join('')}</div>
+    <div class="row s48">${species.map(fig).join('')}</div>
+    <h2>Species at 200 px (${theme})</h2>
+    <div class="row s200">${species.map(fig).join('')}</div>
+  </div>`;
+  document.getElementById('sheet').innerHTML = panel('light') + panel('dark');
+  // The garden's flutter flaps any open butterfly, wings and all: shown on the 96 px row of yours.
+  document.querySelectorAll('.s96 svg').forEach((el, i) => i < 4 && animateVisitor(el, 'butterfly'));
+</script>
+</body>
+</html>

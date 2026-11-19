@@ -26,6 +26,7 @@
     --right-bg: #16301f;
     --wrong-bg: #3a1d17;
     --streak: #B9741A;
+    --butterfly-body: #E6DFD2; /* the butterfly kit's body and antennae */
   }
 }
 
@@ -312,6 +313,8 @@ html { scroll-padding-bottom: 160px; }
 /* One pill on every tab, pressed or not. */
 .path-tab b { display: inline-block; min-width: 1.6em; padding: 0 7px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: .9em; }
 .path-tab b.streak-bright { color: var(--streak); }
+/* A quiet habit's number is hidden: a dot in today's light instead. */
+.path-tab b:empty { min-width: 0; width: .55em; height: .55em; padding: 0; border: 0; background: currentColor; vertical-align: middle; }
 .streak-line, .link {
   display: block; margin: 10px auto 0; padding: 6px 12px; border: 0; border-radius: 999px; background: none;
   color: var(--muted); font-size: .9rem; text-decoration: underline; text-underline-offset: 3px;
