@@ -38,11 +38,38 @@ one), the seasons and events, and `light()` as the model of today (bright, soft,
 - **Japanese stops at 15 of the 46 hiragana** and a handful of words: about two weeks of lessons.
   Nobody could greet a grandchild with it.
 - **Maths is three topics** (mental maths, percentages, fractions), also about two weeks.
-- **The practice habits are enough.** Their routines repeat and grow by turning up.
+- **The habits have their own review**, below.
 - **No new subject is needed** for the name. Every subject in the brief is live.
 
 Short courses matter more now, because each course raises a butterfly (below). A course that ends in
 twelve lessons would hand its butterfly over in a fortnight.
+
+### Habits
+
+The habit side was reviewed the same way, by what each habit offers on day 60, not day 6.
+
+| Habit | What it has | Once its path is done | Verdict |
+|---|---|---|---|
+| Calm | 5 techniques, 11 sessions | "Breathe": six slow breaths, every day | Enough to learn. Needs a way to choose |
+| Move | 8 routines from 8 moves | "Move": the morning flow, every day | Not enough |
+| Reflect | The same 3 prompts | The same 3 prompts | Not enough |
+| Focus | A timer of 10, 15 or 25 minutes | The timer | Enough |
+| Wind down | A bedtime sequence in 3 steps | The whole sequence | Enough |
+| Screen break | One two-minute routine | The routine | Enough |
+| One-tap habits | 4 presets, or your own name, icon and plant | Nothing changes | Works, but bare |
+
+- **A finished path collapses to one routine.** Every other routine is still there, but only by
+  scrolling back up the path and tapping an old stop. Nothing offers it.
+- **Move has nothing for a stiff back or neck, nothing seated and nothing for balance.**
+- **Reflect never changes and never looks back.** What was written shows only day by day, in the week
+  view.
+- **One-tap habits have no "when".** A habit sticks best when it is tied to something already done
+  every day ("after breakfast").
+- **The widget and the daily note talk about lessons and puzzles**, even to someone who only breathes
+  and walks.
+- **The quiet habits still show their count** in the coach's greeting ("20 days of calm in a row") and
+  on the end screen's streak chip, though their tabs now hide it.
+- **Still open from `docs/HABITS.md`:** counting a guided habit done away from the app.
 
 ## Decisions
 
@@ -72,6 +99,17 @@ twelve lessons would hand its butterfly over in a fortnight.
 9. **Phone testing runs on the emulator** (`npm run phone`), course by course, in place of waiting
    for a real phone.
 10. **No Play launch** until the owner is happy with the app, so no store listing work yet.
+11. **A finished habit offers a choice.** Once Calm's or Move's path is done, the big button suggests
+    the routine done least recently, and "Something else" lists the rest.
+12. **Move grows** by three units: back and neck, seated, and balance.
+13. **Reflect varies and looks back.** Its first and last lines stay. The middle one rotates through a
+    small pool, and Reflect's home shows one line from a week ago.
+14. **One-tap habits get five more presets and an optional "when"** ("after breakfast").
+15. **A guided habit done away from the app can be counted** with one tap.
+16. **The widget and the daily note follow what the person does**: no puzzle offered to someone who
+    only breathes.
+17. **A quiet habit's count is hidden on the way in and out**: the tab, the greeting and the end
+    screen. The week view still shows it.
 
 ### Rules for this work
 
@@ -88,17 +126,27 @@ twelve lessons would hand its butterfly over in a fortnight.
 
 **Theme**
 
-- [ ] **T1. Butterfly kit.** One pure module that draws the egg, the caterpillar, the chrysalis and
+- [x] **T1. Butterfly kit.** (#132) One pure module that draws the egg, the caterpillar, the chrysalis and
   every species, open and side-on. The species data: name, Latin name, lines, source, and the course
   or habit that raises it. A gallery page. No app wiring.
-- [ ] **T2. Switches.** A switch for coach dares. Streak numbers hidden on Calm, Reflect and Wind
+- [x] **T2. Switches.** (#131) A switch for coach dares. Streak numbers hidden on Calm, Reflect and Wind
   down unless switched on. Learning's 🔥 icon replaced.
 - [ ] **T3. Your butterfly.** The wing panels; today's three states on home, the end screen and the
-  widget; the flame retired; the intro and tagline; Lumi's flipper-flap. Needs T1.
+  widget; the flame retired; the intro and tagline; Lumi's flipper-flap; widget and daily-note lines
+  that follow what the person does. Needs T1.
 - [ ] **T4. Course and habit butterflies.** The stages on the path and in the garden, emerged
   butterflies with Lumi, and the field guide. Needs T1.
 - [ ] **T5. Lumi's skins**, with a wardrobe to choose from. After T3 and T4.
 - [ ] **T6. The cast brief, README and CLAUDE.md** brought up to date. Last.
+
+**Habits**
+
+- [ ] **H1. Choose today's routine.** A finished Calm or Move path suggests the routine done least
+  recently and offers the rest. One tap counts a guided habit done away from the app.
+- [ ] **H2. Move grows.** Back and neck, seated, and balance. Clover demonstrates every new move.
+- [ ] **H3. Reflect.** A middle prompt that rotates, and a line from a week ago on Reflect's home.
+- [ ] **H4. One-tap habits.** Five more presets and an optional "when" for any habit.
+- [ ] **H5. Quiet counts.** A quiet habit's count leaves the greeting and the end screen.
 
 **Courses**
 
