@@ -387,6 +387,15 @@ export const LOG_WORDS = {
   save: 'Save',
   hide: 'Hide this habit',
   hideNote: 'Hiding keeps its days, its plant and its butterfly. Add it again any time from + Habit.',
+  // An optional "when" for any habit (app.js whenView): the learner's own line, never ours to judge.
+  whenAsk: 'When will you do it?',
+  whenSaid: 'Tie it to something you already do each day.',
+  whenPicks: ['After breakfast', 'At lunch', 'After dinner', 'Before bed'],
+  whenOwn: 'Or in your own words',
+  whenSkip: 'Skip',
+  whenClear: 'Clear it',
+  whenSet: 'Tie it to your day',
+  whenChange: 'Change when',
 };
 
 /**

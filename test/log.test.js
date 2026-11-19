@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { VERSION, emptyProgress, finishPractice, light, logToday, migrate, startedHabits, track, unlogToday } from '../src/progress.js';
+import { VERSION, emptyProgress, finishPractice, light, logToday, migrate, setWhen, startedHabits, track, unlogToday } from '../src/progress.js';
 import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor } from '../src/subjects.js';
 import { RULES, award, garden, mood, rules } from '../src/garden/model.js';
 import { KINDS } from '../src/garden/art.js';
@@ -164,4 +164,40 @@ test('rules and the garden follow the habit list: own habits earn visitors, hidd
   assert.ok(garden(hidden, day(30)).plants.some((x) => x.habit === 'own-1'), 'hiding keeps the plant');
   assert.equal(mood(progress, day(30)), 'sunlit', 'a log tap lights the garden');
   assert.deepEqual(award(hidden, day(31)).newly, []);
+});
+
+test('the five newer presets: each tracked, read back by habitsFor, logged and raising its own butterfly', () => {
+  const words = { tidy: ['I tidied today', 'Tidied'], floss: ['I flossed today', 'Flossed'], music: ['I played today', 'Played music'],
+    make: ['I made something today', 'Made something'], call: ['I called someone today', 'Called someone'] };
+  const species = { tidy: 'Common Aeroplane', floss: 'Orange Migrant', music: 'Regent Skipper', make: 'Dainty Swallowtail', call: 'Lurcher' };
+  let p = emptyProgress();
+  for (const id of Object.keys(words)) p = track(p, { id, hidden: false });
+  assert.deepEqual(ids(p).slice(HABITS.length), Object.keys(words));
+  for (const [id, [did, title]] of Object.entries(words)) {
+    const h = habitsFor(p).find((x) => x.id === id);
+    assert.deepEqual([h.did, h.title, h.kind, h.hidden], [did, title, 'log', false], id);
+    p = logToday(p, id, h.title, day(1));
+    assert.equal(p.habits[id].days, 1, id);
+    assert.ok(award(p, day(1)).newly.some((r) => r.text.startsWith(`Your ${h.name} egg arrived: a`) && r.text.endsWith(species[id])), id);
+  }
+  assert.equal(p.log.length, 5);
+  assert.ok(migrate(roundTrip(p)));
+});
+
+test('a habit\'s "when": set, changed, cleared, and kept through migrate', () => {
+  let p = setWhen(emptyProgress(), 'walk', '  After breakfast  ');
+  assert.deepEqual(p.when, { walk: 'After breakfast' }, 'trimmed');
+  p = setWhen(p, 'calm', 'Before bed'); // a guided habit too
+  p = setWhen(p, 'walk', 'When the kettle boils, every single morning'); // their words, kept short
+  assert.deepEqual(p.when, { walk: 'When the kettle boils, every single morning'.slice(0, 40), calm: 'Before bed' });
+  assert.deepEqual(migrate(roundTrip(p)).when, p.when, 'kept through migrate');
+  p = setWhen(p, 'walk', '   ');
+  assert.deepEqual(p.when, { calm: 'Before bed' }, 'blank clears');
+  p = setWhen(p, 'calm', '');
+  assert.equal('when' in p, false, 'nothing left, no field');
+  assert.equal(migrate(roundTrip(p)).when, undefined);
+  // Read leniently: a bad entry is dropped, never the whole save.
+  const bad = migrate({ ...roundTrip(emptyProgress()), when: { walk: 'At lunch', 'Not An Id': 'x', read: 7, water: '  ', outside: 'x'.repeat(41) } });
+  assert.deepEqual(bad.when, { walk: 'At lunch' });
+  assert.equal(migrate({ ...roundTrip(emptyProgress()), when: 'At lunch' }).when, undefined);
 });

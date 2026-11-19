@@ -335,7 +335,7 @@ test('self-reported habit words never nag, count toward a target or judge', () =
   const presets = { tracked: PRESETS.map((x) => ({ id: x.id })) };
   const texts = [
     ...PRESETS.flatMap((x) => [x.name, x.did, x.title]),
-    ...Object.values(LOG_WORDS),
+    ...Object.values(LOG_WORDS).flat(),
     ...Object.values(CHOOSE_WORDS),
     ...gardenRules(presets).map((r) => r.text),
   ];
@@ -557,4 +557,13 @@ test("the wardrobe's words never sell, hurry, judge or take away", () => {
   assert.ok(texts.length > 20);
   for (const text of texts) for (const lint of [NAGGING, LOSS, ABILITY, URGENCY]) assert.doesNotMatch(text, lint, text);
   for (const text of texts) assert.doesNotMatch(text, /\b(buy|bought|shop|price|coins?|gems?|unlock\w*|locked|expir\w*|limited|exclusive|premium)\b/i, text);
+});
+
+test('a habit\'s "when" is the learner\'s own: escaped where drawn, never linted, and kept to progress, merge and app', () => {
+  const touch = sources('src').filter((f) => /\.when\b/.test(readFileSync(f, 'utf8'))).sort();
+  // sync/sync.js sends progress only sealed, and its friends card (card()) carries no when.
+  assert.deepEqual(touch, ['src/app.js', 'src/progress.js', 'src/sync/merge.js']);
+  const app = readFileSync('src/app.js', 'utf8');
+  assert.doesNotMatch(app, /\$\{\s*(progress\.when\[|set\b)/, 'drawn only through esc()');
+  assert.equal(app.match(/esc\(progress\.when\[/g).length, 2, 'the panel and the habit view');
 });

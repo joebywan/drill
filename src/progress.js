@@ -35,6 +35,8 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            A one-tap log that added one is marked `wing`, so undoing it takes the panel back
  *   skin     optional: the id of what Lumi wears (src/cast/skins.js), worn only once its `skin:` rule is
  *            in `garden.earned`. Absent is just Lumi
+ *   when     { habitId: 'After breakfast' }  — optional: the one line the learner tied each habit to, their own
+ *            words (setWhen). Read leniently like the two below: a bad entry is dropped, never the whole file
  *   reminders, comeback  — optional, what src/fitting.js learns about fitting the person (see there);
  *            read leniently: a bad reminder record or comeback is dropped, never the whole file
  *   version  the shape's version; `migrate()` brings any older shape up to VERSION
@@ -73,6 +75,8 @@ const isLeft = (e) => isObject(e) && isDate(e.date) && isHour(e.hour) && typeof 
   && (e.lessonId === null || typeof e.lessonId === 'string') && (e.of === null || (Number.isInteger(e.of) && e.of > 0))
   && Number.isInteger(e.step) && e.step >= 0 && e.step <= (e.of ?? 0);
 
+const WHEN_MAX = 40;
+const isWhen = (w) => typeof w === 'string' && w.trim().length > 0 && w.length <= WHEN_MAX;
 const isReminder = (r) => isObject(r) && isDate(r.date) && isHour(r.hour) && ['opened', 'cleared', 'on'].includes(r.outcome);
 const isComeback = (c) => isObject(c) && isDate(c.date) && typeof c.habit === 'string' && typeof c.title === 'string'
   && (c.hour === null || isHour(c.hour)) && (c.done == null || isDate(c.done)) && (c.dismissed == null || typeof c.dismissed === 'boolean');
@@ -141,11 +145,14 @@ export function migrate(raw) {
   // Version 10: your butterfly's wings (none before).
   const wings = raw.wings ?? [];
   if (!Array.isArray(wings) || wings.length > WINGS || !wings.every((id) => typeof id === 'string' && /^[a-z0-9-]{1,40}$/.test(id))) return null;
-  // Fitting (src/fitting.js): optional, so no version of their own; a bad record is dropped, not the file.
+  // Fitting (src/fitting.js) and each habit's `when`: optional, so no version of their own; a bad record is dropped, not the file.
   delete kept.reminders;
   delete kept.comeback;
   if (typeof kept.skin !== 'string' || !/^[a-z]{1,20}$/.test(kept.skin)) delete kept.skin; // what Lumi wears: optional too
+  delete kept.when;
+  const when = isObject(raw.when) ? Object.fromEntries(Object.entries(raw.when).filter(([id, w]) => /^[a-z0-9-]{1,40}$/.test(id) && isWhen(w))) : {};
   const fitting = {
+    ...(Object.keys(when).length && { when }),
     ...(Array.isArray(raw.reminders) && { reminders: raw.reminders.filter(isReminder) }),
     ...(isComeback(raw.comeback) && { comeback: raw.comeback }),
   };
@@ -332,6 +339,18 @@ export function track(progress, entry) {
   const at = tracked.findIndex((t) => t.id === id);
   if (at < 0) return { ...progress, tracked: [...tracked, next] };
   return { ...progress, tracked: tracked.map((t, i) => (i === at ? { ...t, ...next } : t)) };
+}
+
+/**
+ * Ties `habit` to a moment of the learner's day ("After breakfast"): their own words, trimmed and
+ * kept short, never judged. Blank clears it. Any habit, built-in or one-tap.
+ */
+export function setWhen(progress, habit, text) {
+  const { [habit]: _, ...when } = progress.when || {};
+  const line = String(text ?? '').trim().slice(0, WHEN_MAX);
+  if (line) when[habit] = line;
+  const { when: __, ...rest } = progress;
+  return Object.keys(when).length ? { ...rest, when } : rest;
 }
 
 /**
