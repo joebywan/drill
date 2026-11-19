@@ -1,5 +1,5 @@
 import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
-import { GARDEN_WORDS, LIFE, LIFE_WORDS, award, creatures, garden, guide, moreArrived, plantWords } from './garden/model.js';
+import { GARDEN_WORDS, LIFE, LIFE_WORDS, SKIN_RULES, award, creatures, garden, guide, moreArrived, plantWords } from './garden/model.js';
 import { lifeArt } from './cast/butterfly.js';
 import { fieldGuide } from './guide.js';
 import { PLANTS, animateLandmarks, animateScene, animateVisitor, drawGarden, flower, landmark, plant, sway, visitor } from './garden/art.js';
@@ -8,10 +8,11 @@ import { WINGS, firstToday, emptyProgress, nextUp, unitsOf, finishPractice, leav
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, showsStreak, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { flap, lumi, lumiPerched } from './cast/lumi.js';
+import { worn } from './cast/skins.js';
 import { BOX, butterfly, butterflyToday } from './cast/butterfly.js';
 import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, comeBack, dropEchoes, echoes, fresh, warmUps } from './repeat.js';
 import { GOES, easier, flying, helpFor, misses, noteAnswer, struggling, warmedLast } from './adapt.js';
-import { CALM_SOUNDS, DARES_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
+import { CALM_SOUNDS, DARES_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, SKIN_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, setSound, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
 import { lessonOf } from './garden/events.js';
@@ -35,6 +36,9 @@ let progress = award(load(), new Date(), (r) => r.habit === null).progress;
 /** Every habit this learner has (built in, then their own; what the intro picked first), and one of them by id. */
 const habits = () => ordered(habitsFor(progress), preferred(progress)); // picks first, then the ones finished most
 const habitOf = (id) => habits().find((h) => h.id === id);
+/** Lumi in what she wears (the wardrobe), the costume's wings in your own colours; a coach's drawing, Lumi dressed. */
+const dressed = (mood, skin = worn(progress)) => lumi(mood, skin, wingColours(progress));
+const drawOf = (c) => (c.draw === lumi ? dressed : c.draw);
 /** Whose timings a habit plays by: its subject's `timings` (Wind down plays Calm's), or its own. */
 const timingsOf = (id) => subjects.find((s) => s.habit === id)?.timings ?? id;
 
@@ -285,7 +289,7 @@ function home(arrived = null, newly = []) {
     // content otherwise: never sad, whatever the light.
     const late = new Date().getHours() >= 21;
     const pose = homePoses(current.subject.coach);
-    const guideCoach = coach(guide, current.subject.coach.draw);
+    const guideCoach = coach(guide, drawOf(current.subject.coach));
     const guideLight = light(progress, new Date(), habitShown);
     const settle = () => guideCoach.set(guideLight === 'bright' ? (late ? pose.rest : pose.done) : pose.ready);
     const from = arrived && app.querySelector(`.node[data-lesson="${arrived}"]`);
@@ -413,7 +417,7 @@ function yoursView() {
  * and has Lumi flipper-flap; under reduced motion the panel is simply there.
  */
 const wingbeat = (lumiToo, newPanel) => `<section class="wingbeat-moment">
-    ${lumiToo ? `<div class="wing-lumi">${lumi('complete')}</div>` : ''}
+    ${lumiToo ? `<div class="wing-lumi">${dressed('complete')}</div>` : ''}
     <svg viewBox="${BOX}" aria-hidden="true">${butterfly(wingColours(progress), progress.wings.length >= WINGS)}</svg>
     <p>${esc(line(newPanel ? 'wingbeat' : 'full', Math.random(), WING_WORDS))}</p></section>`;
 function beat(section, newPanel, lumiEl, wait) {
@@ -469,7 +473,7 @@ function meetCoach({ subject }, then) {
     </main>
     <footer class="cta"><button class="next" data-go>${esc(hello.go)}</button></footer>`;
   scrollTo(0, 0); // it opens at its top, not where home was scrolled to
-  const who = coach(app.querySelector('.hero'), draw);
+  const who = coach(app.querySelector('.hero'), draw === lumi ? dressed : draw);
   who.set('teach');
   who.hop();
   focusOn('h1');
@@ -634,9 +638,9 @@ function liven(el) {
 const shortDate = (date) => dateOf(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
 /** One thing that arrived, drawn small beside its line: "A butterfly arrived · 12 Oct". A visitor in its habit's species. */
-const arrival = ({ gift, text, on, species: kind }, habit) => {
+const arrival = ({ gift, text, on, species: kind, skin }, habit) => {
   const species = habitsFor(progress).findIndex((h) => h.id === habit);
-  const art = LIFE.includes(gift) ? lifeSvg(kind, gift) : gift === 'flower' ? flower(habit) : gift === 'bee' ? visitor(gift, species) : landmark(gift);
+  const art = skin ? dressed('complete', skin) : LIFE.includes(gift) ? lifeSvg(kind, gift) : gift === 'flower' ? flower(habit) : gift === 'bee' ? visitor(gift, species) : landmark(gift);
   return `<span class="arrival">${art}<span>${esc(text)}${on ? ` · ${shortDate(on)}` : ''}</span></span>`;
 };
 
@@ -656,10 +660,51 @@ function guideView(id, back) {
 /** What arrived in the garden is heard: the first thing's own sound, after `wait` ms. */
 const arrive = (newly, wait = 0) => { if (newly.length) setTimeout(() => chime(newly[0].sound || newly[0].gift), wait); };
 
-/** What a session brought to the garden, quietly: three lines at most, then "and N more". */
-const arrivals = (newly) => (!newly.length ? '' : `<ul class="arrivals">
-  ${newly.slice(0, 3).map((r) => `<li>${arrival(r, r.habit)}</li>`).join('')}
-  ${newly.length > 3 ? `<li>${esc(moreArrived(newly.length - 3))}</li>` : ''}</ul>`);
+/**
+ * What a session brought, quietly: a skin for Lumi first, then the garden's in three lines at most and
+ * "and N more in your garden". A skin isn't in the garden, so it never counts towards the three.
+ */
+const arrivals = (newly) => {
+  const garden = newly.filter((r) => !r.skin);
+  return !newly.length ? '' : `<ul class="arrivals">
+  ${[...newly.filter((r) => r.skin), ...garden.slice(0, 3)].map((r) => `<li>${arrival(r, r.habit)}</li>`).join('')}
+  ${garden.length > 3 ? `<li>${esc(moreArrived(garden.length - 3))}</li>` : ''}</ul>`;
+};
+
+/**
+ * Lumi's wardrobe: Lumi in every skin. One tap wears one that has been given; one not given yet is
+ * dimmed, with what gives it. "Just Lumi" is always there. No shop, no currency, nothing expires.
+ */
+function wardrobe(back) {
+  stopHome();
+  stopHome = () => {};
+  const earned = progress.garden?.earned || {};
+  const on = worn(progress);
+  const card = (id, name, more = '') => `<li><button class="choice skin-card" data-skin="${id}" aria-pressed="${on === (id || null)}">${dressed('teach', id || null)}
+    <span>${esc(name)}</span>${more}</button></li>`;
+  app.innerHTML = `
+    <header class="bar"><button class="back" aria-label="Back">←</button></header>
+    <main class="wardrobe">
+      <h1>${esc(SKIN_WORDS.title)}</h1>
+      <p class="said">${esc(SKIN_WORDS.said)}</p>
+      <ul class="skins">
+        ${card('', SKIN_WORDS.none)}
+        ${SKIN_RULES.map(([id, , from]) => (earned[`skin:${id}`]
+    ? card(id, SKIN_WORDS.names[id], `<small>${esc(from)} · ${esc(shortDate(earned[`skin:${id}`]))}</small>`)
+    : `<li class="skin-card later">${dressed('teach', id)}<span>${esc(SKIN_WORDS.names[id])}</span><small>${esc(from)}</small></li>`)).join('')}
+      </ul>
+    </main>`;
+  focusOn('h1');
+  app.querySelector('.back').addEventListener('click', back);
+  for (const b of app.querySelectorAll('[data-skin]')) b.addEventListener('click', () => {
+    const { skin, ...rest } = progress;
+    progress = b.dataset.skin ? { ...rest, skin: b.dataset.skin } : rest;
+    save();
+    play('tap');
+    wardrobe(back);
+    focusOn(`[data-skin="${b.dataset.skin}"]`);
+  });
+}
 
 /** A seasonal event's card on the garden screen: what's on, its set, and what it leaves. Never when it ends. */
 const eventCard = (e) => {
@@ -697,7 +742,7 @@ function gardenView(from = null) {
     </button></li>`;
   };
   app.innerHTML = `
-    <header class="bar"><button class="back" aria-label="Back">←</button><button class="link guide-link">${esc(LIFE_WORDS.open)}</button></header>
+    <header class="bar"><button class="back" aria-label="Back">←</button><button class="link guide-link">${esc(LIFE_WORDS.open)}</button><button class="link wardrobe-link">${esc(SKIN_WORDS.open)}</button></header>
     <main class="garden-page">
       <h1>Your garden</h1>
       <div class="garden-view">${drawGarden(g, 'tall')}</div>
@@ -709,6 +754,7 @@ function gardenView(from = null) {
   stopHome = liven(app.querySelector('.garden-view'));
   app.querySelector('[data-event]')?.addEventListener('click', () => playEvent(g.event));
   app.querySelector('.guide-link').addEventListener('click', () => guideView(null, () => { gardenView(); focusOn('.guide-link'); }));
+  app.querySelector('.wardrobe-link').addEventListener('click', () => wardrobe(() => { gardenView(); focusOn('.wardrobe-link'); }));
   focusOn(from ? `[data-plant="${from}"]` : 'h1');
   const open = (id) => habitView(id, () => gardenView(id));
   app.querySelector('.back').addEventListener('click', () => { home(); focusOn('.garden-link'); });
@@ -878,7 +924,7 @@ function run(lessonId, queue, title, extra = null) {
     </footer>`;
   const $ = (sel) => app.querySelector(sel);
   const [topic, bubble, stage, foot, next] = ['.topic', '.bubble', '.stage', '.foot', '.next'].map($);
-  const sessionCoach = coach($('.who'), who.draw);
+  const sessionCoach = coach($('.who'), drawOf(who));
   let said = '';
   const quit = () => { cleanup(); sessionCoach.stop(); };
   $('.close').addEventListener('click', () => {
@@ -1029,7 +1075,7 @@ function run(lessonId, queue, title, extra = null) {
         </section>
       </main>
       <footer class="cta"><button class="next">Continue</button></footer>`;
-    const endCoach = coach(app.querySelector('.hero'), who.draw);
+    const endCoach = coach(app.querySelector('.hero'), drawOf(who));
     endCoach.set('done');
     if (beats) beat(app.querySelector('.wingbeat-moment'), newPanel, () => app.querySelector('.wing-lumi'), 600);
     arrive(newly, 400);
@@ -1116,7 +1162,7 @@ function run(lessonId, queue, title, extra = null) {
       </main>
       <footer class="cta"><button class="next">Continue</button></footer>`;
     const [rosaEl, lumiEl] = app.querySelectorAll('.duo .hero');
-    const cast = [coach(rosaEl, who.draw), coach(lumiEl, lumi)];
+    const cast = [coach(rosaEl, who.draw), coach(lumiEl, dressed)];
     let left = false;
     for (const c of cast) c.set('correct');
     // The high five: both lean in and hop, a spark where the hands meet, then a proud bounce.
@@ -1175,7 +1221,7 @@ function survey(subject) {
       ${options.map(([label], i) => `<button class="choice" data-i="${i}">${esc(label)}</button>`).join('')}
       <button class="link" data-back>Back</button>
     </main>`;
-  const guide = coach(app.querySelector('.hero'), lumi);
+  const guide = coach(app.querySelector('.hero'), dressed);
   guide.set('teach');
   focusOn('h1');
   for (const b of app.querySelectorAll('[data-i]')) {
@@ -1196,7 +1242,7 @@ function suggest(subject, unit) {
       <button class="choice" data-first>Start from the beginning</button>
       <button class="link" data-back>Back</button>
     </main>`;
-  const guide = coach(app.querySelector('.hero'), lumi);
+  const guide = coach(app.querySelector('.hero'), dressed);
   guide.set('correct');
   guide.hop();
   focusOn('h1');
@@ -1234,6 +1280,7 @@ function keep(note = '') {
       <button class="choice" data-pref="quiet-streaks" aria-pressed="${pref('quiet-streaks', false)}">${esc(QUIET_STREAK_LABEL)}</button>
       <h2>Garden</h2>
       <button class="choice" data-pref="south" aria-pressed="${south()}">${esc(SOUTH_LABEL)}</button>
+      <button class="choice" data-wardrobe>${esc(SKIN_WORDS.title)}</button>
       ${bridge() ? `<h2>${esc(REMINDER_WORDS.title)}</h2><button class="choice" data-remind aria-pressed="${bridge().remindersOn()}">${esc(REMINDER_WORDS.toggle)}</button>` : ''}
       ${remindersPaused(progress) ? `<p class="said paused">${esc(PAUSED_WORDS.line)} <button class="link" data-remind-on>${esc(PAUSED_WORDS.on)}</button></p>` : ''}
       <button class="choice" data-back>Back</button>
@@ -1258,6 +1305,7 @@ function keep(note = '') {
   focusOn('h1');
   app.querySelector('[data-back]').addEventListener('click', () => { home(); focusOn('.menu'); });
   app.querySelector('[data-change]').addEventListener('click', () => want(true));
+  app.querySelector('[data-wardrobe]').addEventListener('click', () => wardrobe(() => { keep(); focusOn('[data-wardrobe]'); }));
   app.querySelector('[data-remind-on]')?.addEventListener('click', () => { progress = noteReminder(progress, 'on'); save(); keep(PAUSED_WORDS.back); });
   const ctx = { app, progress: () => progress, adopt, back: () => keep(), focusOn };
   for (const b of app.querySelectorAll('[data-sync]')) b.addEventListener('click', () => openSync(b.dataset.sync, ctx));
@@ -1319,7 +1367,8 @@ function intro() {
       <button class="next" data-next>${esc(INTRO_WORDS.next)}</button>
       <button class="link" data-skip>${esc(INTRO_WORDS.skip)}</button>
     </footer>`;
-  const guide = coach(app.querySelector('.hero'), (mood) => lumiPerched(mood));
+  // Wearing a skin, she leaves the butterfly off her crown: a hat would sit under it.
+  const guide = coach(app.querySelector('.hero'), (mood) => (worn(progress) ? dressed(mood) : lumiPerched(mood)));
   guide.set('teach');
   focusOn('h1');
   app.querySelector('[data-next]').addEventListener('click', () => { guide.stop(); want(); });

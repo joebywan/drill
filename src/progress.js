@@ -33,6 +33,8 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *   wings    [habitId]  — your butterfly's wing panels (src/cast/butterfly.js), PANELS at most: one is
  *            added by the first session of each day practised, any habit, in its colour. Nothing fades.
  *            A one-tap log that added one is marked `wing`, so undoing it takes the panel back
+ *   skin     optional: the id of what Lumi wears (src/cast/skins.js), worn only once its `skin:` rule is
+ *            in `garden.earned`. Absent is just Lumi
  *   reminders, comeback  — optional, what src/fitting.js learns about fitting the person (see there);
  *            read leniently: a bad reminder record or comeback is dropped, never the whole file
  *   version  the shape's version; `migrate()` brings any older shape up to VERSION
@@ -142,6 +144,7 @@ export function migrate(raw) {
   // Fitting (src/fitting.js): optional, so no version of their own; a bad record is dropped, not the file.
   delete kept.reminders;
   delete kept.comeback;
+  if (typeof kept.skin !== 'string' || !/^[a-z]{1,20}$/.test(kept.skin)) delete kept.skin; // what Lumi wears: optional too
   const fitting = {
     ...(Array.isArray(raw.reminders) && { reminders: raw.reminders.filter(isReminder) }),
     ...(isComeback(raw.comeback) && { comeback: raw.comeback }),

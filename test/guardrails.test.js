@@ -547,3 +547,13 @@ test('the wingbeat and your butterfly never nag, hurry, judge or count a streak'
   // "Wingbeat" is used sparingly: the moment itself, nowhere else on the screen.
   assert.deepEqual(texts.filter((t) => /wingbeat/i.test(t)), [...WING_WORDS.wingbeat, ...WING_WORDS.full]);
 });
+
+// Lumi's wardrobe: given, never bought; nothing to buy, spend or lose, and nothing expires.
+import { SKIN_WORDS } from '../src/cast/lines.js';
+import { SKIN_RULES } from '../src/garden/model.js';
+test("the wardrobe's words never sell, hurry, judge or take away", () => {
+  const texts = [...strings(SKIN_WORDS), ...Object.values(SKIN_WORDS.names).map(SKIN_WORDS.arrived), ...SKIN_RULES.map(([, , from]) => from)];
+  assert.ok(texts.length > 20);
+  for (const text of texts) for (const lint of [NAGGING, LOSS, ABILITY, URGENCY]) assert.doesNotMatch(text, lint, text);
+  for (const text of texts) assert.doesNotMatch(text, /\b(buy|bought|shop|price|coins?|gems?|unlock\w*|locked|expir\w*|limited|exclusive|premium)\b/i, text);
+});

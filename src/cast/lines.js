@@ -632,6 +632,20 @@ export const WING_WORDS = {
   more: "Each day you practise colours the next panel, in the colour of that day's first habit. Nothing fades.",
   done: 'Every panel is coloured. Nothing fades, and each day you practise, it flies.',
 };
+/**
+ * Lumi's wardrobe (cast/skins.js): each skin's name and what gives it, the arrival line and the
+ * screen. Given, never bought, and nothing expires. An event's skin says "From the {event}".
+ */
+export const SKIN_WORDS = {
+  names: { daisy: 'A daisy', bowtie: 'A bow tie', crown: 'A flower crown', sunglasses: 'Sunglasses', strawhat: 'A straw hat', beanie: 'A beanie and scarf', costume: 'A butterfly costume' },
+  for: { daisy: 'For 7 days practised', bowtie: "For your butterfly's full wings", costume: 'For the first butterfly you raise' },
+  event: (name) => `From the ${name}`,
+  arrived: (name) => `${name} for Lumi to wear`,
+  title: "Lumi's wardrobe",
+  said: 'Tap one and Lumi wears it.',
+  none: 'Just Lumi',
+  open: 'Wardrobe',
+};
 export const REMINDER_WORDS = {
   title: 'Daily note',
   toggle: 'One quiet note in the evening, only on days with nothing done',

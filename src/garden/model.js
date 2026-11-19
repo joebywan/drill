@@ -1,4 +1,5 @@
-import { LEARN, light, startedHabits, today } from '../progress.js';
+import { LEARN, WINGS, light, startedHabits, today } from '../progress.js';
+import { SKIN_WORDS } from '../cast/lines.js';
 import { PRESETS, habitsFor, subjects } from '../subjects.js';
 import { season } from './season.js';
 import { SPECIES, speciesFor } from '../cast/butterfly.js';
@@ -162,6 +163,14 @@ export const LANDMARKS = [
   { at: 90, gift: 'nest', sound: 'birds', text: 'More birds came to stay' },
 ];
 
+/** What gives each skin: [skin, test(progress), the wardrobe's line for it]. An event's comes with its landmark. */
+export const SKIN_RULES = [
+  ['daisy', (p) => gardenDays(p) >= 7, SKIN_WORDS.for.daisy],
+  ['bowtie', (p) => (p.wings?.length ?? 0) >= WINGS, SKIN_WORDS.for.bowtie],
+  ...EVENTS.map((e) => [e.skin, (p) => !!p.done[lessonOf(e)], SKIN_WORDS.event(e.name)]),
+  ['costume', (p) => creatures(p).some((c) => c.k === 3), SKIN_WORDS.for.costume],
+];
+
 /**
  * Achievements: { id, habit, gift, text, test(progress), sound? }. `gift` is what arrives: a
  * 'flower' grows on the plant, a 'butterfly' or 'bee' visits it, anything else is a landmark for the
@@ -186,7 +195,10 @@ export const rules = (progress) => [
   ...LANDMARKS.map(({ at, gift, sound, text }) => ({ id: `garden:${gift}`, habit: null, gift, sound, text, test: (p) => gardenDays(p) >= at })),
   // A seasonal event's gift (events.js), for finishing its set in any year.
   ...EVENTS.map((e) => ({ id: `garden:${e.gift}`, habit: null, gift: e.gift, sound: e.sound, text: e.text, test: (p) => !!p.done[lessonOf(e)] })),
+  // Lumi's skins (cast/skins.js), each for something the learner did: not drawn in the garden.
+  ...SKIN_RULES.map(([skin, test, from]) => ({ id: `skin:${skin}`, habit: null, gift: 'skin', skin, from, sound: 'flower', text: SKIN_WORDS.arrived(SKIN_WORDS.names[skin]), test })),
 ];
+
 // ponytail: 'birds:<habit>' (30 days) was retired for the birdhouse, which any such garden has long
 // earned; old saves keep the id in `earned`, and garden() draws only what a rule still names.
 /** The built-in habits' achievements, before the learner adds any of their own. */
@@ -247,7 +259,7 @@ export function garden(progress, now = new Date(), south = false) {
       creatures: raised.filter((c) => c.habit === habit),
     };
   });
-  const landmarks = all.filter((r) => r.habit === null && earned[r.id]).map(({ id, gift, text }) => ({ id, gift, text, on: earned[id] }));
+  const landmarks = all.filter((r) => r.habit === null && r.gift !== 'skin' && earned[r.id]).map(({ id, gift, text }) => ({ id, gift, text, on: earned[id] }));
   return { mood: mood(progress, now), season: season(now, south), event: eventOn(now, south), plants, landmarks };
 }
 
