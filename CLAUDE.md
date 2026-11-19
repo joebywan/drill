@@ -95,10 +95,13 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 - `src/quiz/` also has `line` (drag a marker on a number line, snapped to its ticks, answered on
   release) and takes a `picture` the course draws through the mount's `ctx.art`, plus `ctx.look`
   for a course's own styling.
-- `src/maths/` — the Maths course (`src/data/maths.json`: mental maths, percentages, fractions you
-  can see, for adults rusty at maths). Items are written as sums and pictures; `items.js` works every
-  answer out (`value()` reads "15% of $60", so 2/4 is right for 1/2) and `toQuiz()` turns each into a
-  src/quiz item; `problem()` checks both. `exercise.js` draws the ten frame, bars, 100 grid and a teach card's number line. Coach:
+- `src/maths/` — the Maths course (`src/data/maths.json`, nine units: mental maths, times tables you
+  can see, sharing and dividing, rounding and estimating, percentages, fractions you can see, decimals
+  and money, ratios and better buys, below zero; for adults rusty at maths and for children). Items are
+  written as sums and pictures; `items.js` works every answer out (`value()` reads "15% of $60",
+  "47 to the nearest 10", "5 for $9" as the price for one, and "-3 °C", so 2/4 is right for 1/2; a pick's
+  `goal` can be 'biggest' or 'smallest') and `toQuiz()` turns each into a src/quiz item; `problem()`
+  checks both. `exercise.js` draws the ten frame, arrays of dots, bars, 100 grid and a teach card's number line. Coach:
   Ada, an octopus (`src/cast/ada.js`, posed with `rig()`), with `MATHS_LINES` and `MATHS_HEADLINES`.
 - `src/cast/` — the characters (`kit.js`, `rosa.js`, `lumi.js`), `coach.js` (a character that
   reacts in place) and `lines.js` (everything the cast says; the guardrail tests lint it).
