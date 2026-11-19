@@ -923,6 +923,7 @@ body:has(main.night) {
 .raising + .street h2 { margin-top: 10px; }
 .log-habit .raising { margin-bottom: 8px; }
 .arrival svg.creature { height: 30px; }
+.arrivals .arrival > span { text-align: left; }
 .bar .guide-link { margin: 0 0 0 auto; }
 .field-guide { padding: 0 16px 40px; }
 .field-guide h1 { margin: 0 0 12px; font-size: 1.6rem; }
