@@ -19,7 +19,8 @@ const grid = (n) => `<svg class="pic grid" viewBox="0 0 102 102" role="img" aria
 /** A number line to look at, for a teach card: end numbers and equal hops, as the `line` item draws them. */
 const line = ([min, max, hops]) => `<svg class="pic line" viewBox="0 0 204 44" role="img" aria-label="A number line from ${min} to ${max} in ${hops} equal hops">
   <path d="M6 12H198" class="track"/>${Array.from({ length: hops + 1 }, (_, k) => `<path d="M${6 + (k * 192) / hops} 4V20" class="hop"/>`).join('')}
-  <text x="6" y="38">${min}</text><text x="198" y="38" text-anchor="end">${max}</text></svg>`;
+  <text x="6" y="38">${min}</text><text x="198" y="38" text-anchor="end">${max}</text>
+  ${min < 0 && max > 0 ? `<text x="${6 + (-min * 192) / (max - min)}" y="38" text-anchor="middle">0</text>` : ''}</svg>`;
 
 /** A maths picture, drawn on the quiz card (numbers only, so nothing to escape). */
 export function art(p) {
