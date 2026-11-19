@@ -182,7 +182,7 @@ test('Reflect lines are kept by day, blanks left out, and a second visit adds to
   assert.equal(writeJournal(q, {}, now), q);
   assert.equal(writeJournal(q, null, now), q);
   const done = writeJournal(finishPractice(q, 'reflect', 'reflect:reflect1', now, { title: 'Reflect', mins: 1 }), { good: 'A walk' }, now);
-  assert.deepEqual(done.log, [{ date: '2026-10-30', hour: 20, habit: 'reflect', title: 'Reflect', mins: 1 }]);
+  assert.deepEqual(done.log, [{ date: '2026-10-30', hour: 20, habit: 'reflect', title: 'Reflect', mins: 1, lesson: 'reflect:reflect1' }]);
   assert.equal(done.habits.reflect.count, 1);
   assert.deepEqual(migrate(roundTrip(done)), done);
 });
