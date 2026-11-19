@@ -5,14 +5,14 @@
  *   assets/icon.svg                    the web favicon (the middle 72 units, rounded)
  *   assets/icon-512.png                full bleed: the manifest's maskable icon and the Play listing icon
  *   android/.../drawable/ic_launcher_fg.xml, ic_launcher_mono.xml   the adaptive icon's layers
- *   android/.../drawable/ic_butterfly.xml   the daily note's small icon: the butterfly in one colour
+ *   android/.../drawable/ic_butterfly.xml   the daily note's small icon: the butterfly side-on, in one colour
  * The Android layers are vector drawables converted from the same SVG elements, so nothing is redrawn.
  * It fails if Lumi's face or any part of the butterfly leaves the adaptive icon's 66-unit safe circle.
  */
 import { writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 import { lumi } from '../src/cast/lumi.js';
-import { butterfly } from '../src/cast/butterfly.js';
+import { butterfly, butterflySide } from '../src/cast/butterfly.js';
 import { INK } from '../src/cast/kit.js';
 
 const ROOT = new URL('..', import.meta.url).pathname;
@@ -140,8 +140,9 @@ for (const [part, r] of Object.entries(reach)) if (r > SAFE) throw new Error(`Th
 
 writeFileSync(`${RES}/drawable/ic_launcher_fg.xml`, vector(art));
 writeFileSync(`${RES}/drawable/ic_launcher_mono.xml`, vector(mono(under)));
-// The note's small icon: Android draws only its alpha, so the butterfly goes whole and white, centred in a 120-unit square.
-const small = whole(butterfly(undefined, true, INK)).replace(/(fill|stroke)="#\w+"/g, '$1="#fff"');
+// The note's small icon: side-on with its wings closed (never a lone front-on butterfly), all white, as
+// Android draws only its alpha, in a 120-unit square.
+const small = butterflySide(undefined, INK).replace(/(fill|stroke)="#\w+"/g, '$1="#fff"');
 writeFileSync(`${RES}/drawable/ic_butterfly.xml`, vector(`<g transform="translate(0 10)">${small}</g>`, 120, 24));
 
 // The web's copies, of the same canvas: the favicon shows what a launcher shows, the middle 72

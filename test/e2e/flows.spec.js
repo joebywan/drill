@@ -2026,6 +2026,20 @@ test('Japanese taps get the same pop and shake as every lesson', async ({ page }
 });
 
 // The Android wrapper's bridge, faked: the app tells it about each save and offers the daily note.
+test("with the Android bridge, a quiet habit's count stays off the widget until its switch is on", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.sums = [];
+    window.WingbeatBridge = { summary: (json) => window.sums.push(JSON.parse(json)), art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]' };
+  });
+  await firstBreathing(page);
+  const latest = () => page.evaluate(() => window.sums.at(-1).looks[0]);
+  expect(await latest()).toMatchObject({ habit: 'calm', light: 'bright', streak: null, butterfly: 'flying' });
+  await continueButton(page).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Streak numbers on Calm, Reflect and Wind down' }).click();
+  expect(await latest()).toMatchObject({ habit: 'calm', streak: 1 });
+});
+
 test('with the Android bridge, a finished lesson sends a summary and the ⋯ screen offers the note', async ({ page }) => {
   await page.addInitScript(() => {
     const calls = (window.bridgeCalls = []);

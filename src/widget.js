@@ -52,9 +52,9 @@ const LIGHTS = ['ember', 'soft', 'bright'];
 /** The widget and your butterfly follow the learner's best habit: the brightest light, then the longest streak. */
 function best(progress, at) {
   const ids = Object.keys(progress.habits);
-  return ids.map((id) => ({ light: light(progress, at, id), streak: currentStreak(progress, at, id) }))
+  return ids.map((id) => ({ habit: id, light: light(progress, at, id), streak: currentStreak(progress, at, id) }))
     .sort((a, b) => LIGHTS.indexOf(b.light) - LIGHTS.indexOf(a.light) || b.streak - a.streak)[0]
-    ?? { light: 'ember', streak: 0 };
+    ?? { habit: LEARN, light: 'ember', streak: 0 };
 }
 
 /** Your butterfly today (src/cast/butterfly.js butterflyToday), from the best habit's light. Before any session, basking. */
@@ -69,9 +69,11 @@ export function wingColours(progress) {
 /**
  * What the app passes over the bridge after every save: the latest day anything was done (the
  * reminder stays quiet when it is today), the reminder's line pool, and the widget's looks from
- * now through the next `days` days' boundaries, each with the time it starts.
+ * now through the next `days` days' boundaries, each with the time it starts. `shows(habit)` says
+ * whether that habit's streak count may show (a quiet habit's is hidden unless switched on, as in
+ * habitview.js showsStreak); a hidden count is sent as null and the widget shows no number.
  */
-export function summary(progress, now = new Date(), days = 3, brain = globalThis.wingbeat) {
+export function summary(progress, now = new Date(), days = 3, brain = globalThis.wingbeat, shows = () => true) {
   const times = [now];
   for (let d = 0; d <= days; d++)
     for (const [h] of BANDS) {
@@ -89,7 +91,7 @@ export function summary(progress, now = new Date(), days = 3, brain = globalThis
     remind: WIDGET_LINES[words].remind,
     looks: times.map((t) => {
       const b = best(progress, t);
-      return { at: +t, ...b, ...look(b.light, t.getHours(), words) };
+      return { at: +t, ...b, streak: shows(b.habit) ? b.streak : null, ...look(b.light, t.getHours(), words) };
     }),
   };
 }
@@ -114,7 +116,7 @@ export function tellBars(rgb) {
   bridge()?.bars?.(hex, 0.299 * r + 0.587 * g + 0.114 * b > 140);
 }
 
-export const tellAndroid = (progress) => bridge()?.summary(JSON.stringify(summary(progress)));
+export const tellAndroid = (progress, shows) => bridge()?.summary(JSON.stringify(summary(progress, new Date(), 3, globalThis.wingbeat, shows)));
 
 /**
  * What became of each note ('opened' or 'cleared'), queued by the wrapper and handed to the

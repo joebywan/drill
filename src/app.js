@@ -36,6 +36,9 @@ const habitOf = (id) => habits().find((h) => h.id === id);
 /** Whose timings a habit plays by: its subject's `timings` (Wind down plays Calm's), or its own. */
 const timingsOf = (id) => subjects.find((s) => s.habit === id)?.timings ?? id;
 
+/** The widget's summary, with a quiet habit's streak count hidden unless the ⋯ switch shows it (decision 17). */
+const tellWidget = () => tellAndroid(progress, (id) => showsStreak(id, pref('quiet-streaks', false)));
+
 function load() {
   let raw = null;
   try { raw = localStorage.getItem(STORE); } catch { /* private mode */ }
@@ -49,7 +52,7 @@ function load() {
 let persistAsked = false;
 function save(synced = false) {
   try { localStorage.setItem(STORE, JSON.stringify(progress)); } catch { /* private mode: progress lasts the visit */ }
-  tellAndroid(progress);
+  tellWidget();
   sendArt(progress).catch(console.warn);
   if (!synced) syncSoon();
   // Ask the browser, quietly and once a visit, not to evict progress (Safari clears it after a week away).
@@ -1216,6 +1219,7 @@ function keep(note = '') {
       setPref(b.dataset.pref, on);
       b.setAttribute('aria-pressed', on);
       if (on && b.dataset.pref === 'bell') play('bell');
+      if (b.dataset.pref === 'quiet-streaks') tellWidget();
     });
   }
   // Android only: the once-a-day note is off until turned on here.
@@ -1391,7 +1395,7 @@ window.wingbeat = {
   },
 };
 
-tellAndroid(progress); // the widget catches up with a new day even when nothing is saved
+tellWidget(); // the widget catches up with a new day even when nothing is saved
 sendArt(progress).catch(console.warn);
 passNotes();
 addEventListener('visibilitychange', () => document.hidden || passNotes()); // a note tapped while the app was open

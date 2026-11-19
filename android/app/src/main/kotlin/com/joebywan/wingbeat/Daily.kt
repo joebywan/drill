@@ -81,7 +81,12 @@ object Daily {
         val ink = Color.parseColor(look.getString("ink"))
         val views = RemoteViews(ctx.packageName, R.layout.widget).apply {
             setInt(R.id.bg, "setColorFilter", Color.parseColor(look.getString("bg")))
-            setTextViewText(R.id.streak, look.getInt("streak").toString())
+            // A quiet habit's count is hidden (null): no number, the butterfly stands alone.
+            if (look.isNull("streak")) setViewVisibility(R.id.streak, android.view.View.GONE)
+            else {
+                setViewVisibility(R.id.streak, android.view.View.VISIBLE)
+                setTextViewText(R.id.streak, look.getInt("streak").toString())
+            }
             setTextColor(R.id.streak, ink)
             setTextViewText(R.id.line, lineOf(look.getJSONArray("lines"), look.getLong("at")))
             setTextColor(R.id.line, ink)
@@ -92,7 +97,7 @@ object Daily {
             setOnClickPendingIntent(R.id.root, openApp(ctx))
         }
         manager.updateAppWidget(ids, views)
-        Log.i(TAG, "widget: ${look.getString("light")} ${look.getInt("streak")} ${look.getString("pose")} ${look.optString("art")}")
+        Log.i(TAG, "widget: ${look.getString("light")} ${look.opt("streak")} ${look.getString("pose")} ${look.optString("art")}")
     }
 
     private fun openApp(ctx: Context) = PendingIntent.getActivity(
