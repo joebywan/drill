@@ -2,6 +2,7 @@ import { test, expect } from './fixtures.js';
 import { readFileSync } from 'node:fs';
 import { answer, kind, starPath } from '../../src/chess/items.js';
 import { emptyProgress, finishPractice, finishSession, leavePractice } from '../../src/progress.js';
+import { middleFor } from '../../src/reflect/practice.js';
 import { award } from '../../src/garden/model.js';
 import { answer as stopsAt, fixBug, mirrored, solve as oneWay, tileName } from '../../src/coding/program.js';
 
@@ -745,7 +746,12 @@ test('grounding is tap-to-count, and stopping is one tap with no questions', asy
   await expect(page.locator('.day').first().getByRole('listitem')).toHaveCount(1);
 });
 
+// Reflect's middle prompt follows the date, so these tests fix it (noon, local).
+const REFLECT_DAY = '2026-03-15';
+const onDay = (page, day = REFLECT_DAY) => page.clock.setFixedTime(new Date(`${day}T12:00:00`));
+
 test('Reflect keeps two lines and a skip, on its own streak, and shows them back in the habit view', async ({ page }) => {
+  await onDay(page);
   await firstVisit(page);
   await tab(page, 'Reflect').click();
   await page.getByRole('button', { name: 'Continue · Three small lines' }).click();
@@ -755,7 +761,7 @@ test('Reflect keeps two lines and a skip, on its own streak, and shows them back
   await expect(page.getByRole('textbox', { name: 'One good thing' })).toBeFocused();
   await page.getByRole('textbox').fill('Tea in the sun');
   await page.getByRole('button', { name: 'Next' }).click();
-  await expect(page.getByRole('heading', { name: 'One thing you learned' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: middleFor(REFLECT_DAY).prompt })).toBeVisible();
   await page.getByRole('button', { name: 'Skip' }).click();
   await page.getByRole('textbox', { name: 'One thing for tomorrow' }).fill('Call Sam');
   await page.getByRole('button', { name: 'Finish' }).click();
@@ -773,6 +779,7 @@ test('Reflect keeps two lines and a skip, on its own streak, and shows them back
 });
 
 test('a Reflect box grows with what is written, up to a cap, and the mic tip shows once', async ({ page }) => {
+  await onDay(page);
   await page.setViewportSize({ width: 360, height: 800 });
   await firstVisit(page);
   await tab(page, 'Reflect').click();
@@ -792,8 +799,74 @@ test('a Reflect box grows with what is written, up to a cap, and the mic tip sho
   expect(capped).toBeLessThan(300);
   expect(await box.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true); // then it scrolls
   await box.press('Enter'); // Enter still moves on
-  await expect(page.getByRole('heading', { name: 'One thing you learned' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: middleFor(REFLECT_DAY).prompt })).toBeVisible();
   await expect(tip).toBeHidden();
+});
+
+test("Reflect's middle prompt is the date's, so another day asks another", async ({ page }) => {
+  const asked = async (day) => {
+    await onDay(page, day);
+    await page.reload();
+    await tab(page, 'Reflect').click();
+    await page.getByRole('button', { name: 'Continue · Three small lines' }).click();
+    await page.getByRole('button', { name: 'Start' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click();
+    return page.getByRole('heading').first();
+  };
+  await onDay(page);
+  await firstVisit(page);
+  const [a, b] = ['2026-03-15', '2026-03-16'];
+  await expect(await asked(a)).toHaveText(middleFor(a).prompt);
+  await page.getByRole('textbox').fill('typed on the first day');
+  await expect(page.getByRole('textbox')).toHaveAttribute('placeholder', middleFor(a).example);
+  await expect(await asked(b)).toHaveText(middleFor(b).prompt);
+  expect(middleFor(a).prompt).not.toBe(middleFor(b).prompt);
+});
+
+// A seeded Reflect history: a session and one good line on each of the given days.
+const withLines = (page, ...days) => {
+  const p = days.reduce((q, d) => finishPractice(q, 'reflect', null, new Date(`${d}T12:00:00`), { title: 'Reflect', mins: 1 }), { ...emptyProgress(), picked: [] });
+  p.journal = Object.fromEntries(days.map((d) => [d, { good: `Line of ${d}` }]));
+  return page.addInitScript((saved) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', saved); }, JSON.stringify(p));
+};
+
+test("Reflect's home shows a line from a week ago, which opens the habit view, and only on Reflect", async ({ page }) => {
+  await onDay(page);
+  await withLines(page, '2026-03-08', '2026-03-12');
+  await firstVisit(page);
+  await expect(page.locator('.look-back')).toHaveCount(0);
+  await tab(page, 'Reflect').click();
+  const back = page.getByRole('button', { name: /^Last Sunday.s good thing: Line of 2026-03-08$/ });
+  await expect(back).toBeVisible();
+  await back.click();
+  await expect(page.locator('.day')).toHaveCount(7);
+  await expect(page.getByRole('list', { name: 'Your lines' }).first()).toBeVisible();
+});
+
+const reflectedWith = async (page, ...days) => {
+  await onDay(page);
+  await withLines(page, ...days);
+  await firstVisit(page);
+  await tab(page, 'Reflect').click();
+  await page.getByRole('button', { name: 'Continue · Three small lines' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('textbox').fill('today');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Skip' }).click();
+  await page.getByRole('button', { name: 'Skip' }).click();
+  await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
+};
+
+test("Reflect's end screen has no link to the week with only two days of lines", async ({ page }) => {
+  await reflectedWith(page, '2026-03-14');
+  await expect(page.getByRole('button', { name: 'Read back your week' })).toHaveCount(0);
+});
+
+test("Reflect's end screen offers the week once three of the last seven days have lines", async ({ page }) => {
+  await reflectedWith(page, '2026-03-14', '2026-03-10');
+  await page.getByRole('button', { name: 'Read back your week' }).click();
+  await expect(page.locator('.day')).toHaveCount(7);
+  await expect(page.getByText('Line of 2026-03-10')).toBeVisible();
 });
 
 test('once the short Reflect path is done, "Reflect today" stays on home', async ({ page }) => {

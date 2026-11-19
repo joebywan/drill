@@ -322,6 +322,12 @@ export const REFLECT_LINES = {
   'no different': ["That's alright. Thanks for telling me. Some days are heavy, and that's not on you."],
 };
 
+/** Reflect's own words around the learner's lines: home's look back, and the end screen's link. */
+export const REFLECT_WORDS = {
+  lookBack: (exact, when, back) => (exact ? `Last ${when}\u2019s ${back}:` : `Your ${back} on ${when}:`),
+  readBack: 'Read back your week',
+};
+
 /**
  * Move's coach: playful and gentle. Never pushes for more, never mentions bodies' shape or size;
  * the count is a guide, not a target (the guardrail tests check).
@@ -443,6 +449,7 @@ export const KAEDE_LINES = {
     'Say it out loud. Your mouth remembers too.',
     'I stand up on my back legs when I am pleased. You will see it a lot.',
     'Hiragana first, then words. Then the menu. Then the world.',
+    'はばたき, habataki, is a wingbeat. It is also the name of this app, in my language.',
   ],
   complete: [
     'Lesson done. These come back in review, so they stick.',
@@ -521,6 +528,12 @@ export const MATHS_LINES = {
     'I keep a pencil behind my eye. Where else would it go?',
     'Rosa says chess is harder. Rosa is wrong, and has two arms.',
     'Take your time. The numbers are not going anywhere.',
+    'Times 9 is times 10, less one lot. I do it in a blink, then check it anyway.',
+    'Rows of dots. I can count eight rows at once. Showing off? Little bit.',
+    'Round first, then add. If the real answer is miles off, something slipped.',
+    'Price for one, every time. The big pack is not always the better buy.',
+    'Below zero is just the number line carrying on. Like my arms, really.',
+    'Change? Count up from the price. Quicker than taking away, and I checked.',
   ],
   complete: [
     'Lesson done. These come back in review, so they stick.',

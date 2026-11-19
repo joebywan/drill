@@ -14,7 +14,7 @@
               "type": "teach",
               "say": "Hi. I'm Lumi. This one is just three short lines about your day.",
               "text": [
-                "One good thing, one thing you learned, and one thing for tomorrow.",
+                "One good thing, one thing that changes from day to day, and one thing for tomorrow.",
                 "Writing a small thing down helps you notice it. Good moments are easy to walk past, and a plan for tomorrow is lighter on paper than in your head.",
                 "A few words is plenty. Skip any line you like. What you write is kept on this device, and nobody else reads it. With sync on, it is encrypted before it leaves."
               ]
@@ -30,8 +30,16 @@
   "again": { "label": "Reflect today", "lesson": "reflect3" },
   "tip": "Rather talk? Tap the mic on your keyboard.",
   "prompts": [
-    { "key": "good", "label": "Good", "prompt": "One good thing", "example": "A warm cup of tea after lunch" },
-    { "key": "learned", "label": "Learned", "prompt": "One thing you learned", "example": "Honey never goes off" },
-    { "key": "tomorrow", "label": "Tomorrow", "prompt": "One thing for tomorrow", "example": "Text Sam back" }
+    { "key": "good", "label": "Good", "back": "good thing", "prompt": "One good thing", "example": "A warm cup of tea after lunch" },
+    { "key": "tomorrow", "label": "Tomorrow", "back": "thing for tomorrow", "prompt": "One thing for tomorrow", "example": "Text Sam back" }
+  ],
+  "middle": [
+    { "id": "learned", "label": "Learned", "back": "thing you learned", "prompt": "One thing you learned", "example": "Honey never goes off" },
+    { "id": "noticed", "label": "Noticed", "back": "thing you noticed", "prompt": "One thing you noticed", "example": "The light was golden at five" },
+    { "id": "glad", "label": "Glad of", "back": "person you were glad of", "prompt": "Someone you're glad of", "example": "The neighbour who waves every morning" },
+    { "id": "self", "label": "For me", "back": "thing you did for yourself", "prompt": "One thing you did for yourself", "example": "Sat down with a book" },
+    { "id": "smile", "label": "Smiled", "back": "smile", "prompt": "Something that made you smile", "example": "A dog in a tiny raincoat" },
+    { "id": "finished", "label": "Finished", "back": "small finish", "prompt": "One small thing you finished", "example": "Put the washing away" },
+    { "id": "more", "label": "More of", "back": "thing you'd like more of", "prompt": "Something you'd like more of", "example": "Slow Sunday mornings" }
   ]
 }

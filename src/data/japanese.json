@@ -1230,6 +1230,3473 @@
           ]
         }
       ]
+    },
+    {
+      "title": "T and N",
+      "lessons": [
+        {
+          "id": "t1",
+          "title": "た ち つ て と",
+          "items": [
+            {
+              "id": "t1-teach-87",
+              "type": "teach",
+              "show": "た",
+              "read": "ta",
+              "speak": "た",
+              "text": "た is \"ta\". A little t on the left, こ beside it: \"ta\", like the start of \"tap\"."
+            },
+            {
+              "id": "t1-teach-88",
+              "type": "teach",
+              "show": "ち",
+              "read": "chi",
+              "speak": "ち",
+              "text": "ち is \"chi\", not \"ti\". It looks like a 5 written backwards: a cheeky 5 going \"chi\"."
+            },
+            {
+              "id": "t1-pick-89",
+              "type": "pick",
+              "show": "た",
+              "speak": "た",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ta",
+                "chi",
+                "sa"
+              ],
+              "answer": "ta",
+              "explain": "た reads \"ta\"."
+            },
+            {
+              "id": "t1-pick-90",
+              "type": "pick",
+              "show": "ち",
+              "speak": "ち",
+              "prompt": "Which sound is this?",
+              "options": [
+                "chi",
+                "shi",
+                "ta"
+              ],
+              "answer": "chi",
+              "explain": "ち reads \"chi\"."
+            },
+            {
+              "id": "t1-teach-91",
+              "type": "teach",
+              "show": "つ",
+              "read": "tsu",
+              "speak": "つ",
+              "text": "つ is \"tsu\", one sound, like the end of \"cats\". One curve, a wave rolling in."
+            },
+            {
+              "id": "t1-teach-92",
+              "type": "teach",
+              "show": "て",
+              "read": "te",
+              "speak": "て",
+              "text": "て is \"te\". One stroke across and down, like an arm reaching out. Handy: て on its own means hand."
+            },
+            {
+              "id": "t1-teach-93",
+              "type": "teach",
+              "show": "と",
+              "read": "to",
+              "speak": "と",
+              "text": "と is \"to\". A toe with a little splinter stuck in it: \"to!\""
+            },
+            {
+              "id": "t1-pick-94",
+              "type": "pick",
+              "show": "つ",
+              "speak": "つ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "tsu",
+                "su",
+                "ku"
+              ],
+              "answer": "tsu",
+              "explain": "つ reads \"tsu\"."
+            },
+            {
+              "id": "t1-pick-95",
+              "type": "pick",
+              "show": "て",
+              "speak": "て",
+              "prompt": "Which sound is this?",
+              "options": [
+                "te",
+                "ke",
+                "se"
+              ],
+              "answer": "te",
+              "explain": "て reads \"te\"."
+            },
+            {
+              "id": "t1-pick-96",
+              "type": "pick",
+              "show": "と",
+              "speak": "と",
+              "prompt": "Which sound is this?",
+              "options": [
+                "to",
+                "so",
+                "ko"
+              ],
+              "answer": "to",
+              "explain": "と reads \"to\"."
+            },
+            {
+              "id": "t1-which-97",
+              "type": "pick",
+              "show": "chi",
+              "prompt": "Which kana says \"chi\"?",
+              "options": [
+                "ち",
+                "さ",
+                "き"
+              ],
+              "answer": "ち",
+              "explain": "\"chi\" is ち."
+            },
+            {
+              "id": "t1-listen-98",
+              "type": "pick",
+              "listen": true,
+              "show": "tsu",
+              "speak": "つ",
+              "prompt": "Which kana is this sound?",
+              "options": [
+                "つ",
+                "く",
+                "そ"
+              ],
+              "answer": "つ",
+              "explain": "That was \"tsu\": つ."
+            },
+            {
+              "id": "t1-pairs-99",
+              "type": "pairs",
+              "prompt": "Match each kana to its sound.",
+              "pairs": [
+                [
+                  "た",
+                  "ta"
+                ],
+                [
+                  "ち",
+                  "chi"
+                ],
+                [
+                  "つ",
+                  "tsu"
+                ],
+                [
+                  "て",
+                  "te"
+                ],
+                [
+                  "と",
+                  "to"
+                ]
+              ],
+              "explain": "た ta, ち chi, つ tsu, て te, と to."
+            }
+          ]
+        },
+        {
+          "id": "n1",
+          "title": "な に ぬ ね の",
+          "items": [
+            {
+              "id": "n1-teach-100",
+              "type": "teach",
+              "show": "な",
+              "read": "na",
+              "speak": "な",
+              "text": "な is \"na\". A little cross on the left, a knot tied on the right: knot, \"na\"."
+            },
+            {
+              "id": "n1-teach-101",
+              "type": "teach",
+              "show": "に",
+              "read": "ni",
+              "speak": "に",
+              "text": "に is \"ni\". A leg on the left, and こ beside it is the knee, bent: \"ni\", said like knee."
+            },
+            {
+              "id": "n1-pick-102",
+              "type": "pick",
+              "show": "な",
+              "speak": "な",
+              "prompt": "Which sound is this?",
+              "options": [
+                "na",
+                "ta",
+                "ni"
+              ],
+              "answer": "na",
+              "explain": "な reads \"na\"."
+            },
+            {
+              "id": "n1-pick-103",
+              "type": "pick",
+              "show": "に",
+              "speak": "に",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ni",
+                "ko",
+                "ki"
+              ],
+              "answer": "ni",
+              "explain": "に reads \"ni\"."
+            },
+            {
+              "id": "n1-teach-104",
+              "type": "teach",
+              "show": "ぬ",
+              "read": "nu",
+              "speak": "ぬ",
+              "text": "ぬ is \"nu\". A bowl of noodles with chopsticks crossing it, and a loop at the end: \"nu\" for noodles."
+            },
+            {
+              "id": "n1-teach-105",
+              "type": "teach",
+              "show": "ね",
+              "read": "ne",
+              "speak": "ね",
+              "text": "ね is \"ne\". A straight post on the left, and on the right a curve with a loop, like a cat's tail. Cat starts with it."
+            },
+            {
+              "id": "n1-pick-106",
+              "type": "pick",
+              "show": "ぬ",
+              "speak": "ぬ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "nu",
+                "ne",
+                "su"
+              ],
+              "answer": "nu",
+              "explain": "ぬ reads \"nu\"."
+            },
+            {
+              "id": "n1-pick-107",
+              "type": "pick",
+              "show": "ね",
+              "speak": "ね",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ne",
+                "nu",
+                "na"
+              ],
+              "answer": "ne",
+              "explain": "ね reads \"ne\"."
+            },
+            {
+              "id": "n1-teach-108",
+              "type": "teach",
+              "show": "の",
+              "read": "no",
+              "speak": "の",
+              "text": "の is \"no\". One swirl, drawn in one go: a \"no entry\" sign."
+            },
+            {
+              "id": "n1-pick-109",
+              "type": "pick",
+              "show": "の",
+              "speak": "の",
+              "prompt": "Which sound is this?",
+              "options": [
+                "no",
+                "nu",
+                "o"
+              ],
+              "answer": "no",
+              "explain": "の reads \"no\"."
+            },
+            {
+              "id": "n1-which-110",
+              "type": "pick",
+              "show": "ne",
+              "prompt": "Which kana says \"ne\"?",
+              "options": [
+                "ね",
+                "ぬ",
+                "き"
+              ],
+              "answer": "ね",
+              "explain": "\"ne\" is ね."
+            },
+            {
+              "id": "n1-listen-111",
+              "type": "pick",
+              "listen": true,
+              "show": "na",
+              "speak": "な",
+              "prompt": "Which kana is this sound?",
+              "options": [
+                "な",
+                "た",
+                "さ"
+              ],
+              "answer": "な",
+              "explain": "That was \"na\": な."
+            },
+            {
+              "id": "n1-pairs-112",
+              "type": "pairs",
+              "prompt": "Match each kana to its sound.",
+              "pairs": [
+                [
+                  "な",
+                  "na"
+                ],
+                [
+                  "に",
+                  "ni"
+                ],
+                [
+                  "ぬ",
+                  "nu"
+                ],
+                [
+                  "ね",
+                  "ne"
+                ],
+                [
+                  "の",
+                  "no"
+                ]
+              ],
+              "explain": "な na, に ni, ぬ nu, ね ne, の no."
+            }
+          ]
+        },
+        {
+          "id": "an",
+          "title": "Animals",
+          "items": [
+            {
+              "id": "an-teach-113",
+              "type": "teach",
+              "show": "いぬ",
+              "read": "inu",
+              "speak": "いぬ",
+              "text": "いぬ, \"inu\": a dog. い i, ぬ nu."
+            },
+            {
+              "id": "an-build-114",
+              "type": "build",
+              "show": "inu: dog",
+              "speak": "いぬ",
+              "prompt": "Build \"inu\" from the tiles.",
+              "answer": [
+                "い",
+                "ぬ"
+              ],
+              "tiles": [
+                "ね",
+                "う"
+              ],
+              "explain": "いぬ is い i + ぬ nu: dog."
+            },
+            {
+              "id": "an-teach-115",
+              "type": "teach",
+              "show": "ねこ",
+              "read": "neko",
+              "speak": "ねこ",
+              "text": "ねこ, \"neko\": a cat. Cats get everywhere. Like me, only less elegant."
+            },
+            {
+              "id": "an-pick-116",
+              "type": "pick",
+              "show": "ねこ",
+              "speak": "ねこ",
+              "prompt": "How does this word read?",
+              "options": [
+                "neko",
+                "nuko",
+                "neki"
+              ],
+              "answer": "neko",
+              "explain": "ねこ reads \"neko\"."
+            },
+            {
+              "id": "an-teach-117",
+              "type": "teach",
+              "show": "さかな",
+              "read": "sakana",
+              "speak": "さかな",
+              "text": "さかな, \"sakana\": a fish. Three kana, all yours."
+            },
+            {
+              "id": "an-build-118",
+              "type": "build",
+              "show": "sakana: fish",
+              "speak": "さかな",
+              "prompt": "Build \"sakana\" from the tiles.",
+              "answer": [
+                "さ",
+                "か",
+                "な"
+              ],
+              "tiles": [
+                "た",
+                "こ"
+              ],
+              "explain": "さかな is さ sa + か ka + な na: fish."
+            },
+            {
+              "id": "an-teach-119",
+              "type": "teach",
+              "show": "かに",
+              "read": "kani",
+              "speak": "かに",
+              "text": "かに, \"kani\": a crab. か ka, に ni."
+            },
+            {
+              "id": "an-teach-120",
+              "type": "teach",
+              "show": "たこ",
+              "read": "tako",
+              "speak": "たこ",
+              "text": "たこ, \"tako\": an octopus. Do not tell Ada. She thinks she is unique."
+            },
+            {
+              "id": "an-listen-121",
+              "type": "pick",
+              "listen": true,
+              "show": "tako",
+              "speak": "たこ",
+              "prompt": "Which word is this sound?",
+              "options": [
+                "たこ",
+                "かに",
+                "ねこ"
+              ],
+              "answer": "たこ",
+              "explain": "That was \"tako\": たこ."
+            },
+            {
+              "id": "an-pairs-122",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "いぬ",
+                  "dog"
+                ],
+                [
+                  "ねこ",
+                  "cat"
+                ],
+                [
+                  "さかな",
+                  "fish"
+                ],
+                [
+                  "かに",
+                  "crab"
+                ],
+                [
+                  "たこ",
+                  "octopus"
+                ]
+              ],
+              "explain": "いぬ dog, ねこ cat, さかな fish, かに crab, たこ octopus."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "H and M",
+      "lessons": [
+        {
+          "id": "h1",
+          "title": "は ひ ふ へ ほ",
+          "items": [
+            {
+              "id": "h1-teach-123",
+              "type": "teach",
+              "show": "は",
+              "read": "ha",
+              "speak": "は",
+              "text": "は is \"ha\". A post on the left and a little hook beside it: someone waving and laughing, \"ha!\""
+            },
+            {
+              "id": "h1-teach-124",
+              "type": "teach",
+              "show": "ひ",
+              "read": "hi",
+              "speak": "ひ",
+              "text": "ひ is \"hi\". A wide grin, giggling \"hee hee\"."
+            },
+            {
+              "id": "h1-pick-125",
+              "type": "pick",
+              "show": "は",
+              "speak": "は",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ha",
+                "na",
+                "ke"
+              ],
+              "answer": "ha",
+              "explain": "は reads \"ha\"."
+            },
+            {
+              "id": "h1-pick-126",
+              "type": "pick",
+              "show": "ひ",
+              "speak": "ひ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "hi",
+                "shi",
+                "chi"
+              ],
+              "answer": "hi",
+              "explain": "ひ reads \"hi\"."
+            },
+            {
+              "id": "h1-teach-127",
+              "type": "teach",
+              "show": "ふ",
+              "read": "fu",
+              "speak": "ふ",
+              "text": "ふ is \"fu\", soft, like blowing on hot soup. Little strokes fly round the middle like steam."
+            },
+            {
+              "id": "h1-teach-128",
+              "type": "teach",
+              "show": "へ",
+              "read": "he",
+              "speak": "へ",
+              "text": "へ is \"he\". One little hill: \"he\", like the start of \"hello\"."
+            },
+            {
+              "id": "h1-pick-129",
+              "type": "pick",
+              "show": "ふ",
+              "speak": "ふ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "fu",
+                "tsu",
+                "su"
+              ],
+              "answer": "fu",
+              "explain": "ふ reads \"fu\"."
+            },
+            {
+              "id": "h1-pick-130",
+              "type": "pick",
+              "show": "へ",
+              "speak": "へ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "he",
+                "te",
+                "ha"
+              ],
+              "answer": "he",
+              "explain": "へ reads \"he\"."
+            },
+            {
+              "id": "h1-teach-131",
+              "type": "teach",
+              "show": "ほ",
+              "read": "ho",
+              "speak": "ほ",
+              "text": "ほ is \"ho\". Like は with one more bar on top: a house with a chimney. \"Ho\", as in home."
+            },
+            {
+              "id": "h1-pick-132",
+              "type": "pick",
+              "show": "ほ",
+              "speak": "ほ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ho",
+                "ha",
+                "ko"
+              ],
+              "answer": "ho",
+              "explain": "ほ reads \"ho\"."
+            },
+            {
+              "id": "h1-which-133",
+              "type": "pick",
+              "show": "fu",
+              "prompt": "Which kana says \"fu\"?",
+              "options": [
+                "ふ",
+                "ひ",
+                "へ"
+              ],
+              "answer": "ふ",
+              "explain": "\"fu\" is ふ."
+            },
+            {
+              "id": "h1-listen-134",
+              "type": "pick",
+              "listen": true,
+              "show": "ho",
+              "speak": "ほ",
+              "prompt": "Which kana is this sound?",
+              "options": [
+                "ほ",
+                "は",
+                "け"
+              ],
+              "answer": "ほ",
+              "explain": "That was \"ho\": ほ."
+            },
+            {
+              "id": "h1-pairs-135",
+              "type": "pairs",
+              "prompt": "Match each kana to its sound.",
+              "pairs": [
+                [
+                  "は",
+                  "ha"
+                ],
+                [
+                  "ひ",
+                  "hi"
+                ],
+                [
+                  "ふ",
+                  "fu"
+                ],
+                [
+                  "へ",
+                  "he"
+                ],
+                [
+                  "ほ",
+                  "ho"
+                ]
+              ],
+              "explain": "は ha, ひ hi, ふ fu, へ he, ほ ho."
+            }
+          ]
+        },
+        {
+          "id": "m1",
+          "title": "ま み む め も",
+          "items": [
+            {
+              "id": "m1-teach-136",
+              "type": "teach",
+              "show": "ま",
+              "read": "ma",
+              "speak": "ま",
+              "text": "ま is \"ma\". Two bars and a loop hanging below: \"ma\", like the start of \"mama\"."
+            },
+            {
+              "id": "m1-teach-137",
+              "type": "teach",
+              "show": "み",
+              "read": "mi",
+              "speak": "み",
+              "text": "み is \"mi\". It looks like 21 written in one stroke. Me, forever twenty-one."
+            },
+            {
+              "id": "m1-pick-138",
+              "type": "pick",
+              "show": "ま",
+              "speak": "ま",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ma",
+                "ho",
+                "ha"
+              ],
+              "answer": "ma",
+              "explain": "ま reads \"ma\"."
+            },
+            {
+              "id": "m1-pick-139",
+              "type": "pick",
+              "show": "み",
+              "speak": "み",
+              "prompt": "Which sound is this?",
+              "options": [
+                "mi",
+                "ni",
+                "shi"
+              ],
+              "answer": "mi",
+              "explain": "み reads \"mi\"."
+            },
+            {
+              "id": "m1-teach-140",
+              "type": "teach",
+              "show": "む",
+              "read": "mu",
+              "speak": "む",
+              "text": "む is \"mu\". A cow with its tail flicked up, saying \"moo\"."
+            },
+            {
+              "id": "m1-teach-141",
+              "type": "teach",
+              "show": "め",
+              "read": "me",
+              "speak": "め",
+              "text": "め is \"me\". Like ぬ without the loop at the end: an eye with lashes. め on its own means eye."
+            },
+            {
+              "id": "m1-teach-142",
+              "type": "teach",
+              "show": "も",
+              "read": "mo",
+              "speak": "も",
+              "text": "も is \"mo\". A fishhook with two bars across it: hook more fish, \"mo\"."
+            },
+            {
+              "id": "m1-pick-143",
+              "type": "pick",
+              "show": "む",
+              "speak": "む",
+              "prompt": "Which sound is this?",
+              "options": [
+                "mu",
+                "me",
+                "su"
+              ],
+              "answer": "mu",
+              "explain": "む reads \"mu\"."
+            },
+            {
+              "id": "m1-pick-144",
+              "type": "pick",
+              "show": "め",
+              "speak": "め",
+              "prompt": "Which sound is this?",
+              "options": [
+                "me",
+                "nu",
+                "ne"
+              ],
+              "answer": "me",
+              "explain": "め reads \"me\"."
+            },
+            {
+              "id": "m1-pick-145",
+              "type": "pick",
+              "show": "も",
+              "speak": "も",
+              "prompt": "Which sound is this?",
+              "options": [
+                "mo",
+                "shi",
+                "ma"
+              ],
+              "answer": "mo",
+              "explain": "も reads \"mo\"."
+            },
+            {
+              "id": "m1-listen-146",
+              "type": "pick",
+              "listen": true,
+              "show": "mu",
+              "speak": "む",
+              "prompt": "Which kana is this sound?",
+              "options": [
+                "む",
+                "す",
+                "も"
+              ],
+              "answer": "む",
+              "explain": "That was \"mu\": む."
+            },
+            {
+              "id": "m1-pairs-147",
+              "type": "pairs",
+              "prompt": "Match each kana to its sound.",
+              "pairs": [
+                [
+                  "ま",
+                  "ma"
+                ],
+                [
+                  "み",
+                  "mi"
+                ],
+                [
+                  "む",
+                  "mu"
+                ],
+                [
+                  "め",
+                  "me"
+                ],
+                [
+                  "も",
+                  "mo"
+                ]
+              ],
+              "explain": "ま ma, み mi, む mu, め me, も mo."
+            }
+          ]
+        },
+        {
+          "id": "bo",
+          "title": "The body",
+          "items": [
+            {
+              "id": "bo-teach-148",
+              "type": "teach",
+              "show": "め",
+              "read": "me",
+              "speak": "め",
+              "text": "め on its own is a word: an eye. One kana, one eye."
+            },
+            {
+              "id": "bo-teach-149",
+              "type": "teach",
+              "show": "みみ",
+              "read": "mimi",
+              "speak": "みみ",
+              "text": "みみ, \"mimi\": an ear. Two the same, like a pair of ears. Mine are excellent."
+            },
+            {
+              "id": "bo-build-150",
+              "type": "build",
+              "show": "mimi: ear",
+              "speak": "みみ",
+              "prompt": "Build \"mimi\" from the tiles.",
+              "answer": [
+                "み",
+                "み"
+              ],
+              "tiles": [
+                "む",
+                "め"
+              ],
+              "explain": "みみ is み mi + み mi: ear."
+            },
+            {
+              "id": "bo-teach-151",
+              "type": "teach",
+              "show": "くち",
+              "read": "kuchi",
+              "speak": "くち",
+              "text": "くち, \"kuchi\": a mouth. く ku, ち chi."
+            },
+            {
+              "id": "bo-pick-152",
+              "type": "pick",
+              "show": "くち",
+              "speak": "くち",
+              "prompt": "How does this word read?",
+              "options": [
+                "kuchi",
+                "kushi",
+                "kutsu"
+              ],
+              "answer": "kuchi",
+              "explain": "くち reads \"kuchi\"."
+            },
+            {
+              "id": "bo-teach-153",
+              "type": "teach",
+              "show": "て",
+              "read": "te",
+              "speak": "て",
+              "text": "て on its own: a hand."
+            },
+            {
+              "id": "bo-teach-154",
+              "type": "teach",
+              "show": "あたま",
+              "read": "atama",
+              "speak": "あたま",
+              "text": "あたま, \"atama\": a head."
+            },
+            {
+              "id": "bo-build-155",
+              "type": "build",
+              "show": "atama: head",
+              "speak": "あたま",
+              "prompt": "Build \"atama\" from the tiles.",
+              "answer": [
+                "あ",
+                "た",
+                "ま"
+              ],
+              "tiles": [
+                "な",
+                "は"
+              ],
+              "explain": "あたま is あ a + た ta + ま ma: head."
+            },
+            {
+              "id": "bo-listen-156",
+              "type": "pick",
+              "listen": true,
+              "show": "mimi",
+              "speak": "みみ",
+              "prompt": "Which word is this sound?",
+              "options": [
+                "みみ",
+                "くち",
+                "あたま"
+              ],
+              "answer": "みみ",
+              "explain": "That was \"mimi\": みみ."
+            },
+            {
+              "id": "bo-pairs-157",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "め",
+                  "eye"
+                ],
+                [
+                  "みみ",
+                  "ear"
+                ],
+                [
+                  "くち",
+                  "mouth"
+                ],
+                [
+                  "て",
+                  "hand"
+                ],
+                [
+                  "あたま",
+                  "head"
+                ]
+              ],
+              "explain": "め eye, みみ ear, くち mouth, て hand, あたま head."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Y, R, W and ん",
+      "lessons": [
+        {
+          "id": "y1",
+          "title": "や ゆ よ",
+          "items": [
+            {
+              "id": "y1-teach-158",
+              "type": "teach",
+              "show": "や",
+              "read": "ya",
+              "speak": "や",
+              "text": "や is \"ya\". A yacht: a curved sail, a mast and a little flag. The y row has only three."
+            },
+            {
+              "id": "y1-teach-159",
+              "type": "teach",
+              "show": "ゆ",
+              "read": "yu",
+              "speak": "ゆ",
+              "text": "ゆ is \"yu\", like \"you\". A line that curls round and back through itself: a U-turn."
+            },
+            {
+              "id": "y1-teach-160",
+              "type": "teach",
+              "show": "よ",
+              "read": "yo",
+              "speak": "よ",
+              "text": "よ is \"yo\". A yo-yo dangling off a little bar, the loop at the bottom."
+            },
+            {
+              "id": "y1-pick-161",
+              "type": "pick",
+              "show": "や",
+              "speak": "や",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ya",
+                "yu",
+                "sa"
+              ],
+              "answer": "ya",
+              "explain": "や reads \"ya\"."
+            },
+            {
+              "id": "y1-pick-162",
+              "type": "pick",
+              "show": "ゆ",
+              "speak": "ゆ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "yu",
+                "yo",
+                "nu"
+              ],
+              "answer": "yu",
+              "explain": "ゆ reads \"yu\"."
+            },
+            {
+              "id": "y1-pick-163",
+              "type": "pick",
+              "show": "よ",
+              "speak": "よ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "yo",
+                "ya",
+                "ma"
+              ],
+              "answer": "yo",
+              "explain": "よ reads \"yo\"."
+            },
+            {
+              "id": "y1-teach-164",
+              "type": "teach",
+              "show": "やま",
+              "read": "yama",
+              "speak": "やま",
+              "text": "やま, \"yama\": a mountain."
+            },
+            {
+              "id": "y1-build-165",
+              "type": "build",
+              "show": "yama: mountain",
+              "speak": "やま",
+              "prompt": "Build \"yama\" from the tiles.",
+              "answer": [
+                "や",
+                "ま"
+              ],
+              "tiles": [
+                "よ",
+                "も"
+              ],
+              "explain": "やま is や ya + ま ma: mountain."
+            },
+            {
+              "id": "y1-teach-166",
+              "type": "teach",
+              "show": "うみ",
+              "read": "umi",
+              "speak": "うみ",
+              "text": "うみ, \"umi\": the sea. う u, み mi."
+            },
+            {
+              "id": "y1-teach-167",
+              "type": "teach",
+              "show": "ゆき",
+              "read": "yuki",
+              "speak": "ゆき",
+              "text": "ゆき, \"yuki\": snow. Red pandas like snow. We look very good in it."
+            },
+            {
+              "id": "y1-listen-168",
+              "type": "pick",
+              "listen": true,
+              "show": "yuki",
+              "speak": "ゆき",
+              "prompt": "Which word is this sound?",
+              "options": [
+                "ゆき",
+                "やま",
+                "うみ"
+              ],
+              "answer": "ゆき",
+              "explain": "That was \"yuki\": ゆき."
+            },
+            {
+              "id": "y1-pairs-169",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "やま",
+                  "mountain"
+                ],
+                [
+                  "うみ",
+                  "sea"
+                ],
+                [
+                  "ゆき",
+                  "snow"
+                ],
+                [
+                  "いけ",
+                  "pond"
+                ],
+                [
+                  "えき",
+                  "station"
+                ]
+              ],
+              "explain": "やま mountain, うみ sea, ゆき snow, いけ pond, えき station."
+            }
+          ]
+        },
+        {
+          "id": "r1",
+          "title": "ら り る れ ろ",
+          "items": [
+            {
+              "id": "r1-teach-170",
+              "type": "teach",
+              "show": "ら",
+              "read": "ra",
+              "speak": "ら",
+              "text": "ら is \"ra\". A rabbit sitting up, one ear raised. Say it with a quick tap of the tongue, between an r and an l."
+            },
+            {
+              "id": "r1-teach-171",
+              "type": "teach",
+              "show": "り",
+              "read": "ri",
+              "speak": "り",
+              "text": "り is \"ri\". Like い, but the right stroke runs longer: reeds by a river, \"ri\"."
+            },
+            {
+              "id": "r1-pick-172",
+              "type": "pick",
+              "show": "ら",
+              "speak": "ら",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ra",
+                "chi",
+                "sa"
+              ],
+              "answer": "ra",
+              "explain": "ら reads \"ra\"."
+            },
+            {
+              "id": "r1-pick-173",
+              "type": "pick",
+              "show": "り",
+              "speak": "り",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ri",
+                "i",
+                "ko"
+              ],
+              "answer": "ri",
+              "explain": "り reads \"ri\"."
+            },
+            {
+              "id": "r1-teach-174",
+              "type": "teach",
+              "show": "る",
+              "read": "ru",
+              "speak": "る",
+              "text": "る is \"ru\". A road that loops round at the end: a roundabout, \"ru\"."
+            },
+            {
+              "id": "r1-teach-175",
+              "type": "teach",
+              "show": "ろ",
+              "read": "ro",
+              "speak": "ろ",
+              "text": "ろ is \"ro\". る without the loop: the road just stops. \"Ro.\""
+            },
+            {
+              "id": "r1-teach-176",
+              "type": "teach",
+              "show": "れ",
+              "read": "re",
+              "speak": "れ",
+              "text": "れ is \"re\". Like ね, but the end kicks out instead of looping: \"re\"."
+            },
+            {
+              "id": "r1-pick-177",
+              "type": "pick",
+              "show": "る",
+              "speak": "る",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ru",
+                "ro",
+                "tsu"
+              ],
+              "answer": "ru",
+              "explain": "る reads \"ru\"."
+            },
+            {
+              "id": "r1-pick-178",
+              "type": "pick",
+              "show": "ろ",
+              "speak": "ろ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ro",
+                "ru",
+                "chi"
+              ],
+              "answer": "ro",
+              "explain": "ろ reads \"ro\"."
+            },
+            {
+              "id": "r1-pick-179",
+              "type": "pick",
+              "show": "れ",
+              "speak": "れ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "re",
+                "ne",
+                "nu"
+              ],
+              "answer": "re",
+              "explain": "れ reads \"re\"."
+            },
+            {
+              "id": "r1-teach-180",
+              "type": "teach",
+              "show": "くるま",
+              "read": "kuruma",
+              "speak": "くるま",
+              "text": "くるま, \"kuruma\": a car."
+            },
+            {
+              "id": "r1-build-181",
+              "type": "build",
+              "show": "kuruma: car",
+              "speak": "くるま",
+              "prompt": "Build \"kuruma\" from the tiles.",
+              "answer": [
+                "く",
+                "る",
+                "ま"
+              ],
+              "tiles": [
+                "ろ",
+                "む"
+              ],
+              "explain": "くるま is く ku + る ru + ま ma: car."
+            },
+            {
+              "id": "r1-pairs-182",
+              "type": "pairs",
+              "prompt": "Match each kana to its sound.",
+              "pairs": [
+                [
+                  "ら",
+                  "ra"
+                ],
+                [
+                  "り",
+                  "ri"
+                ],
+                [
+                  "る",
+                  "ru"
+                ],
+                [
+                  "れ",
+                  "re"
+                ],
+                [
+                  "ろ",
+                  "ro"
+                ]
+              ],
+              "explain": "ら ra, り ri, る ru, れ re, ろ ro."
+            }
+          ]
+        },
+        {
+          "id": "wn",
+          "title": "わ を ん",
+          "items": [
+            {
+              "id": "wn-teach-183",
+              "type": "teach",
+              "show": "わ",
+              "read": "wa",
+              "speak": "わ",
+              "text": "わ is \"wa\". Like れ and ね, but the end curls round in one big wave: \"wa\"."
+            },
+            {
+              "id": "wn-pick-184",
+              "type": "pick",
+              "show": "わ",
+              "speak": "わ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "wa",
+                "re",
+                "ne"
+              ],
+              "answer": "wa",
+              "explain": "わ reads \"wa\"."
+            },
+            {
+              "id": "wn-teach-185",
+              "type": "teach",
+              "show": "を",
+              "read": "o",
+              "speak": "を",
+              "text": "を is said \"o\", just like お. It has one job, joining words in a sentence, so you will hardly ever see it inside a word. Some books write it \"wo\"."
+            },
+            {
+              "id": "wn-teach-186",
+              "type": "teach",
+              "show": "ん",
+              "read": "n",
+              "speak": "ん",
+              "text": "ん is \"n\", the only kana with no vowel. A scribbled n, and it never starts a word."
+            },
+            {
+              "id": "wn-pick-187",
+              "type": "pick",
+              "show": "ん",
+              "speak": "ん",
+              "prompt": "Which sound is this?",
+              "options": [
+                "n",
+                "so",
+                "nu"
+              ],
+              "answer": "n",
+              "explain": "ん reads \"n\"."
+            },
+            {
+              "id": "wn-teach-188",
+              "type": "teach",
+              "show": "かわ",
+              "read": "kawa",
+              "speak": "かわ",
+              "text": "かわ, \"kawa\": a river."
+            },
+            {
+              "id": "wn-build-189",
+              "type": "build",
+              "show": "kawa: river",
+              "speak": "かわ",
+              "prompt": "Build \"kawa\" from the tiles.",
+              "answer": [
+                "か",
+                "わ"
+              ],
+              "tiles": [
+                "れ",
+                "ね"
+              ],
+              "explain": "かわ is か ka + わ wa: river."
+            },
+            {
+              "id": "wn-teach-190",
+              "type": "teach",
+              "show": "ほん",
+              "read": "hon",
+              "speak": "ほん",
+              "text": "ほん, \"hon\": a book."
+            },
+            {
+              "id": "wn-teach-191",
+              "type": "teach",
+              "show": "みかん",
+              "read": "mikan",
+              "speak": "みかん",
+              "text": "みかん, \"mikan\": a mandarin. And that is every plain hiragana, all 46 of them. I am up on my hind legs."
+            },
+            {
+              "id": "wn-build-192",
+              "type": "build",
+              "show": "mikan: mandarin",
+              "speak": "みかん",
+              "prompt": "Build \"mikan\" from the tiles.",
+              "answer": [
+                "み",
+                "か",
+                "ん"
+              ],
+              "tiles": [
+                "む",
+                "ろ"
+              ],
+              "explain": "みかん is み mi + か ka + ん n: mandarin."
+            },
+            {
+              "id": "wn-listen-193",
+              "type": "pick",
+              "listen": true,
+              "show": "hon",
+              "speak": "ほん",
+              "prompt": "Which word is this sound?",
+              "options": [
+                "ほん",
+                "かわ",
+                "いぬ"
+              ],
+              "answer": "ほん",
+              "explain": "That was \"hon\": ほん."
+            },
+            {
+              "id": "wn-pairs-194",
+              "type": "pairs",
+              "prompt": "Match each kana to its sound.",
+              "pairs": [
+                [
+                  "わ",
+                  "wa"
+                ],
+                [
+                  "を",
+                  "o"
+                ],
+                [
+                  "ん",
+                  "n"
+                ],
+                [
+                  "る",
+                  "ru"
+                ],
+                [
+                  "れ",
+                  "re"
+                ]
+              ],
+              "explain": "わ wa, を o, ん n, る ru, れ re."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Sounds that change",
+      "lessons": [
+        {
+          "id": "ga",
+          "title": "が and ざ",
+          "items": [
+            {
+              "id": "ga-teach-195",
+              "type": "teach",
+              "show": "が",
+              "read": "ga",
+              "speak": "が",
+              "text": "Two little dots, and か becomes が, \"ga\". The dots make the sound heavier: k turns into g."
+            },
+            {
+              "id": "ga-teach-196",
+              "type": "teach",
+              "show": "がぎぐげご",
+              "read": "ga gi gu ge go",
+              "speak": "がぎぐげご",
+              "text": "The whole k row takes the dots: ga, gi, gu, ge, go."
+            },
+            {
+              "id": "ga-pick-197",
+              "type": "pick",
+              "show": "ぎ",
+              "speak": "ぎ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "gi",
+                "ki",
+                "ga"
+              ],
+              "answer": "gi",
+              "explain": "ぎ reads \"gi\"."
+            },
+            {
+              "id": "ga-pick-198",
+              "type": "pick",
+              "show": "ご",
+              "speak": "ご",
+              "prompt": "Which sound is this?",
+              "options": [
+                "go",
+                "ko",
+                "ge"
+              ],
+              "answer": "go",
+              "explain": "ご reads \"go\"."
+            },
+            {
+              "id": "ga-teach-199",
+              "type": "teach",
+              "show": "ざ",
+              "read": "za",
+              "speak": "ざ",
+              "text": "The s row takes them too: さ with dots is ざ, \"za\"."
+            },
+            {
+              "id": "ga-teach-200",
+              "type": "teach",
+              "show": "ざじずぜぞ",
+              "read": "za ji zu ze zo",
+              "speak": "ざじずぜぞ",
+              "text": "za, ji, zu, ze, zo. Just as し is \"shi\", じ is \"ji\"."
+            },
+            {
+              "id": "ga-pick-201",
+              "type": "pick",
+              "show": "じ",
+              "speak": "じ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "ji",
+                "shi",
+                "zu"
+              ],
+              "answer": "ji",
+              "explain": "じ reads \"ji\"."
+            },
+            {
+              "id": "ga-pick-202",
+              "type": "pick",
+              "show": "ず",
+              "speak": "ず",
+              "prompt": "Which sound is this?",
+              "options": [
+                "zu",
+                "su",
+                "ze"
+              ],
+              "answer": "zu",
+              "explain": "ず reads \"zu\"."
+            },
+            {
+              "id": "ga-teach-203",
+              "type": "teach",
+              "show": "かぎ",
+              "read": "kagi",
+              "speak": "かぎ",
+              "text": "かぎ, \"kagi\": a key. Remember き, the kana shaped like a key? Two dots, and here is the actual word."
+            },
+            {
+              "id": "ga-build-204",
+              "type": "build",
+              "show": "kagi: key",
+              "speak": "かぎ",
+              "prompt": "Build \"kagi\" from the tiles.",
+              "answer": [
+                "か",
+                "ぎ"
+              ],
+              "tiles": [
+                "き",
+                "が"
+              ],
+              "explain": "かぎ is か ka + ぎ gi: key."
+            },
+            {
+              "id": "ga-which-205",
+              "type": "pick",
+              "show": "ge",
+              "prompt": "Which kana says \"ge\"?",
+              "options": [
+                "げ",
+                "け",
+                "ぜ"
+              ],
+              "answer": "げ",
+              "explain": "\"ge\" is げ."
+            },
+            {
+              "id": "ga-listen-206",
+              "type": "pick",
+              "listen": true,
+              "show": "zo",
+              "speak": "ぞ",
+              "prompt": "Which kana is this sound?",
+              "options": [
+                "ぞ",
+                "そ",
+                "ご"
+              ],
+              "answer": "ぞ",
+              "explain": "That was \"zo\": ぞ."
+            },
+            {
+              "id": "ga-pairs-207",
+              "type": "pairs",
+              "prompt": "Match each kana to its sound.",
+              "pairs": [
+                [
+                  "が",
+                  "ga"
+                ],
+                [
+                  "ぎ",
+                  "gi"
+                ],
+                [
+                  "ざ",
+                  "za"
+                ],
+                [
+                  "じ",
+                  "ji"
+                ],
+                [
+                  "ず",
+                  "zu"
+                ]
+              ],
+              "explain": "が ga, ぎ gi, ざ za, じ ji, ず zu."
+            }
+          ]
+        },
+        {
+          "id": "da",
+          "title": "だ and ば",
+          "items": [
+            {
+              "id": "da-teach-208",
+              "type": "teach",
+              "show": "だ",
+              "read": "da",
+              "speak": "だ",
+              "text": "た with dots is だ, \"da\": t turns into d."
+            },
+            {
+              "id": "da-teach-209",
+              "type": "teach",
+              "show": "だぢづでど",
+              "read": "da ji zu de do",
+              "speak": "だぢづでど",
+              "text": "da, ji, zu, de, do. ぢ and づ sound just like じ and ず, and you will hardly ever meet them. だ, で and ど are the ones to know."
+            },
+            {
+              "id": "da-pick-210",
+              "type": "pick",
+              "show": "で",
+              "speak": "で",
+              "prompt": "Which sound is this?",
+              "options": [
+                "de",
+                "te",
+                "ze"
+              ],
+              "answer": "de",
+              "explain": "で reads \"de\"."
+            },
+            {
+              "id": "da-pick-211",
+              "type": "pick",
+              "show": "ど",
+              "speak": "ど",
+              "prompt": "Which sound is this?",
+              "options": [
+                "do",
+                "to",
+                "zo"
+              ],
+              "answer": "do",
+              "explain": "ど reads \"do\"."
+            },
+            {
+              "id": "da-teach-212",
+              "type": "teach",
+              "show": "ば",
+              "read": "ba",
+              "speak": "ば",
+              "text": "は with dots is ば, \"ba\": h turns into b."
+            },
+            {
+              "id": "da-teach-213",
+              "type": "teach",
+              "show": "ばびぶべぼ",
+              "read": "ba bi bu be bo",
+              "speak": "ばびぶべぼ",
+              "text": "ba, bi, bu, be, bo. Even ふ, \"fu\", turns into a plain \"bu\"."
+            },
+            {
+              "id": "da-pick-214",
+              "type": "pick",
+              "show": "び",
+              "speak": "び",
+              "prompt": "Which sound is this?",
+              "options": [
+                "bi",
+                "hi",
+                "ba"
+              ],
+              "answer": "bi",
+              "explain": "び reads \"bi\"."
+            },
+            {
+              "id": "da-pick-215",
+              "type": "pick",
+              "show": "ぼ",
+              "speak": "ぼ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "bo",
+                "ho",
+                "do"
+              ],
+              "answer": "bo",
+              "explain": "ぼ reads \"bo\"."
+            },
+            {
+              "id": "da-teach-216",
+              "type": "teach",
+              "show": "ともだち",
+              "read": "tomodachi",
+              "speak": "ともだち",
+              "text": "ともだち, \"tomodachi\": a friend. That is you and me now."
+            },
+            {
+              "id": "da-build-217",
+              "type": "build",
+              "show": "tomodachi: friend",
+              "speak": "ともだち",
+              "prompt": "Build \"tomodachi\" from the tiles.",
+              "answer": [
+                "と",
+                "も",
+                "だ",
+                "ち"
+              ],
+              "tiles": [
+                "ど",
+                "た"
+              ],
+              "explain": "ともだち is と to + も mo + だ da + ち chi: friend."
+            },
+            {
+              "id": "da-teach-218",
+              "type": "teach",
+              "show": "ぶた",
+              "read": "buta",
+              "speak": "ぶた",
+              "text": "ぶた, \"buta\": a pig."
+            },
+            {
+              "id": "da-which-219",
+              "type": "pick",
+              "show": "be",
+              "prompt": "Which kana says \"be\"?",
+              "options": [
+                "べ",
+                "へ",
+                "で"
+              ],
+              "answer": "べ",
+              "explain": "\"be\" is べ."
+            },
+            {
+              "id": "da-pairs-220",
+              "type": "pairs",
+              "prompt": "Match each kana to its sound.",
+              "pairs": [
+                [
+                  "だ",
+                  "da"
+                ],
+                [
+                  "で",
+                  "de"
+                ],
+                [
+                  "ど",
+                  "do"
+                ],
+                [
+                  "ば",
+                  "ba"
+                ],
+                [
+                  "ぶ",
+                  "bu"
+                ]
+              ],
+              "explain": "だ da, で de, ど do, ば ba, ぶ bu."
+            }
+          ]
+        },
+        {
+          "id": "pa",
+          "title": "ぱ, and our name",
+          "items": [
+            {
+              "id": "pa-teach-221",
+              "type": "teach",
+              "show": "ぱ",
+              "read": "pa",
+              "speak": "ぱ",
+              "text": "A little circle instead of dots, and は becomes ぱ, \"pa\". Only the h row takes the circle."
+            },
+            {
+              "id": "pa-teach-222",
+              "type": "teach",
+              "show": "ぱぴぷぺぽ",
+              "read": "pa pi pu pe po",
+              "speak": "ぱぴぷぺぽ",
+              "text": "pa, pi, pu, pe, po. Dots for b, a circle for p."
+            },
+            {
+              "id": "pa-pick-223",
+              "type": "pick",
+              "show": "ぴ",
+              "speak": "ぴ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "pi",
+                "bi",
+                "hi"
+              ],
+              "answer": "pi",
+              "explain": "ぴ reads \"pi\"."
+            },
+            {
+              "id": "pa-pick-224",
+              "type": "pick",
+              "show": "ぽ",
+              "speak": "ぽ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "po",
+                "bo",
+                "ho"
+              ],
+              "answer": "po",
+              "explain": "ぽ reads \"po\"."
+            },
+            {
+              "id": "pa-teach-225",
+              "type": "teach",
+              "show": "さんぽ",
+              "read": "sanpo",
+              "speak": "さんぽ",
+              "text": "さんぽ, \"sanpo\": a walk. The stroll kind, not the getting-somewhere kind."
+            },
+            {
+              "id": "pa-teach-226",
+              "type": "teach",
+              "show": "てんぷら",
+              "read": "tenpura",
+              "speak": "てんぷら",
+              "text": "てんぷら, \"tenpura\": tempura. The ん before a p comes out nearly as an m."
+            },
+            {
+              "id": "pa-build-227",
+              "type": "build",
+              "show": "tenpura: tempura",
+              "speak": "てんぷら",
+              "prompt": "Build \"tenpura\" from the tiles.",
+              "answer": [
+                "て",
+                "ん",
+                "ぷ",
+                "ら"
+              ],
+              "tiles": [
+                "ぶ",
+                "ろ"
+              ],
+              "explain": "てんぷら is て te + ん n + ぷ pu + ら ra: tempura."
+            },
+            {
+              "id": "pa-teach-228",
+              "type": "teach",
+              "show": "はばたき",
+              "read": "habataki",
+              "speak": "はばたき",
+              "text": "はばたき, \"habataki\": the beat of a wing. A wingbeat. That is the name of this app in Japanese, and you just read it."
+            },
+            {
+              "id": "pa-build-229",
+              "type": "build",
+              "show": "habataki: wingbeat",
+              "speak": "はばたき",
+              "prompt": "Build \"habataki\" from the tiles.",
+              "answer": [
+                "は",
+                "ば",
+                "た",
+                "き"
+              ],
+              "tiles": [
+                "ぱ",
+                "だ"
+              ],
+              "explain": "はばたき is は ha + ば ba + た ta + き ki: wingbeat."
+            },
+            {
+              "id": "pa-listen-230",
+              "type": "pick",
+              "listen": true,
+              "show": "habataki",
+              "speak": "はばたき",
+              "prompt": "Which word is this sound?",
+              "options": [
+                "はばたき",
+                "さんぽ",
+                "てんぷら"
+              ],
+              "answer": "はばたき",
+              "explain": "That was \"habataki\": はばたき."
+            },
+            {
+              "id": "pa-pairs-231",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "さんぽ",
+                  "walk"
+                ],
+                [
+                  "てんぷら",
+                  "tempura"
+                ],
+                [
+                  "はばたき",
+                  "wingbeat"
+                ],
+                [
+                  "ともだち",
+                  "friend"
+                ],
+                [
+                  "ぶた",
+                  "pig"
+                ]
+              ],
+              "explain": "さんぽ walk, てんぷら tempura, はばたき wingbeat, ともだち friend, ぶた pig."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Small kana",
+      "lessons": [
+        {
+          "id": "tsu",
+          "title": "Little っ",
+          "items": [
+            {
+              "id": "tsu-teach-232",
+              "type": "teach",
+              "show": "きって",
+              "read": "kitte",
+              "speak": "きって",
+              "text": "A small っ is a little stop. It doubles the sound after it: き, stop, て. きって, \"kitte\": a stamp, for a letter."
+            },
+            {
+              "id": "tsu-pick-233",
+              "type": "pick",
+              "show": "きって",
+              "speak": "きって",
+              "prompt": "How does this word read?",
+              "options": [
+                "kitte",
+                "kite",
+                "kitsute"
+              ],
+              "answer": "kitte",
+              "explain": "きって reads \"kitte\"."
+            },
+            {
+              "id": "tsu-teach-234",
+              "type": "teach",
+              "show": "しっぽ",
+              "read": "shippo",
+              "speak": "しっぽ",
+              "text": "しっぽ, \"shippo\": a tail. Mine is the finest in this app. Stripes and everything."
+            },
+            {
+              "id": "tsu-build-235",
+              "type": "build",
+              "show": "shippo: tail",
+              "speak": "しっぽ",
+              "prompt": "Build \"shippo\" from the tiles.",
+              "answer": [
+                "し",
+                "っ",
+                "ぽ"
+              ],
+              "tiles": [
+                "つ",
+                "ぼ"
+              ],
+              "explain": "しっぽ reads \"shippo\": tail."
+            },
+            {
+              "id": "tsu-teach-236",
+              "type": "teach",
+              "show": "ざっし",
+              "read": "zasshi",
+              "speak": "ざっし",
+              "text": "ざっし, \"zasshi\": a magazine."
+            },
+            {
+              "id": "tsu-teach-237",
+              "type": "teach",
+              "show": "にっぽん",
+              "read": "nippon",
+              "speak": "にっぽん",
+              "text": "にっぽん, \"nippon\": Japan. You will hear にほん, \"nihon\", too. Both are right."
+            },
+            {
+              "id": "tsu-build-238",
+              "type": "build",
+              "show": "nippon: Japan",
+              "speak": "にっぽん",
+              "prompt": "Build \"nippon\" from the tiles.",
+              "answer": [
+                "に",
+                "っ",
+                "ぽ",
+                "ん"
+              ],
+              "tiles": [
+                "つ",
+                "ほ"
+              ],
+              "explain": "にっぽん reads \"nippon\": Japan."
+            },
+            {
+              "id": "tsu-which-239",
+              "type": "pick",
+              "show": "kitte",
+              "prompt": "Which word says \"kitte\"?",
+              "options": [
+                "きって",
+                "きて",
+                "きつて"
+              ],
+              "answer": "きって",
+              "explain": "\"kitte\" is きって."
+            },
+            {
+              "id": "tsu-listen-240",
+              "type": "pick",
+              "listen": true,
+              "show": "zasshi",
+              "speak": "ざっし",
+              "prompt": "Which word is this sound?",
+              "options": [
+                "ざっし",
+                "しっぽ",
+                "きって"
+              ],
+              "answer": "ざっし",
+              "explain": "That was \"zasshi\": ざっし."
+            },
+            {
+              "id": "tsu-pairs-241",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "きって",
+                  "stamp"
+                ],
+                [
+                  "しっぽ",
+                  "tail"
+                ],
+                [
+                  "ざっし",
+                  "magazine"
+                ],
+                [
+                  "にっぽん",
+                  "Japan"
+                ],
+                [
+                  "ほん",
+                  "book"
+                ]
+              ],
+              "explain": "きって stamp, しっぽ tail, ざっし magazine, にっぽん Japan, ほん book."
+            }
+          ]
+        },
+        {
+          "id": "ya",
+          "title": "Little ゃ ゅ ょ",
+          "items": [
+            {
+              "id": "ya-teach-242",
+              "type": "teach",
+              "show": "きゃ",
+              "read": "kya",
+              "speak": "きゃ",
+              "text": "A small ゃ squeezes onto the kana before it, and the two make one sound: き and a small ゃ is きゃ, \"kya\". One beat, not two."
+            },
+            {
+              "id": "ya-teach-243",
+              "type": "teach",
+              "show": "きゃきゅきょ",
+              "read": "kya kyu kyo",
+              "speak": "きゃきゅきょ",
+              "text": "Small ゃ ゅ ょ: kya, kyu, kyo. They join kana that end in i: き, し, ち, に, and the rest."
+            },
+            {
+              "id": "ya-pick-244",
+              "type": "pick",
+              "show": "きょ",
+              "speak": "きょ",
+              "prompt": "Which sound is this?",
+              "options": [
+                "kyo",
+                "kiyo",
+                "kyu"
+              ],
+              "answer": "kyo",
+              "explain": "きょ reads \"kyo\"."
+            },
+            {
+              "id": "ya-teach-245",
+              "type": "teach",
+              "show": "しゃしゅしょ",
+              "read": "sha shu sho",
+              "speak": "しゃしゅしょ",
+              "text": "し keeps its sh: sha, shu, sho."
+            },
+            {
+              "id": "ya-teach-246",
+              "type": "teach",
+              "show": "ちゃちゅちょ",
+              "read": "cha chu cho",
+              "speak": "ちゃちゅちょ",
+              "text": "ち keeps its ch: cha, chu, cho."
+            },
+            {
+              "id": "ya-teach-247",
+              "type": "teach",
+              "show": "おちゃ",
+              "read": "ocha",
+              "speak": "おちゃ",
+              "text": "おちゃ, \"ocha\": tea. Bamboo tea would be better. Nobody listens."
+            },
+            {
+              "id": "ya-build-248",
+              "type": "build",
+              "show": "ocha: tea",
+              "speak": "おちゃ",
+              "prompt": "Build \"ocha\" from the tiles.",
+              "answer": [
+                "お",
+                "ち",
+                "ゃ"
+              ],
+              "tiles": [
+                "や",
+                "さ"
+              ],
+              "explain": "おちゃ reads \"ocha\": tea."
+            },
+            {
+              "id": "ya-teach-249",
+              "type": "teach",
+              "show": "でんしゃ",
+              "read": "densha",
+              "speak": "でんしゃ",
+              "text": "でんしゃ, \"densha\": a train."
+            },
+            {
+              "id": "ya-pick-250",
+              "type": "pick",
+              "show": "でんしゃ",
+              "speak": "でんしゃ",
+              "prompt": "How does this word read?",
+              "options": [
+                "densha",
+                "denshiya",
+                "dansha"
+              ],
+              "answer": "densha",
+              "explain": "でんしゃ reads \"densha\"."
+            },
+            {
+              "id": "ya-teach-251",
+              "type": "teach",
+              "show": "ちょっと",
+              "read": "chotto",
+              "speak": "ちょっと",
+              "text": "ちょっと, \"chotto\": a little. A small ょ and a small っ in one word. Show-off."
+            },
+            {
+              "id": "ya-listen-252",
+              "type": "pick",
+              "listen": true,
+              "show": "chotto",
+              "speak": "ちょっと",
+              "prompt": "Which word is this sound?",
+              "options": [
+                "ちょっと",
+                "でんしゃ",
+                "おちゃ"
+              ],
+              "answer": "ちょっと",
+              "explain": "That was \"chotto\": ちょっと."
+            },
+            {
+              "id": "ya-pairs-253",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "おちゃ",
+                  "tea"
+                ],
+                [
+                  "でんしゃ",
+                  "train"
+                ],
+                [
+                  "ちょっと",
+                  "a little"
+                ],
+                [
+                  "きって",
+                  "stamp"
+                ]
+              ],
+              "explain": "おちゃ tea, でんしゃ train, ちょっと a little, きって stamp."
+            }
+          ]
+        },
+        {
+          "id": "fa",
+          "title": "Family",
+          "items": [
+            {
+              "id": "fa-teach-254",
+              "type": "teach",
+              "show": "おかあさん",
+              "read": "okaasan",
+              "speak": "おかあさん",
+              "text": "Write a vowel twice and you hold it twice as long: か then あ is \"kaa\". おかあさん, \"okaasan\": mum."
+            },
+            {
+              "id": "fa-build-255",
+              "type": "build",
+              "show": "okaasan: mum",
+              "speak": "おかあさん",
+              "prompt": "Build \"okaasan\" from the tiles.",
+              "answer": [
+                "お",
+                "か",
+                "あ",
+                "さ",
+                "ん"
+              ],
+              "tiles": [
+                "は",
+                "の"
+              ],
+              "explain": "おかあさん is お o + か ka + あ a + さ sa + ん n: mum."
+            },
+            {
+              "id": "fa-teach-256",
+              "type": "teach",
+              "show": "おとうさん",
+              "read": "otousan",
+              "speak": "おとうさん",
+              "text": "おとうさん, \"otousan\": dad. う after an o sound holds the o longer too: とう is a long \"toh\"."
+            },
+            {
+              "id": "fa-pick-257",
+              "type": "pick",
+              "show": "おとうさん",
+              "speak": "おとうさん",
+              "prompt": "How does this word read?",
+              "options": [
+                "otousan",
+                "otosan",
+                "okaasan"
+              ],
+              "answer": "otousan",
+              "explain": "おとうさん reads \"otousan\"."
+            },
+            {
+              "id": "fa-teach-258",
+              "type": "teach",
+              "show": "おばあちゃん",
+              "read": "obaachan",
+              "speak": "おばあちゃん",
+              "text": "おばあちゃん, \"obaachan\": grandma. Hold the あ: said short, おばちゃん is auntie."
+            },
+            {
+              "id": "fa-build-259",
+              "type": "build",
+              "show": "obaachan: grandma",
+              "speak": "おばあちゃん",
+              "prompt": "Build \"obaachan\" from the tiles.",
+              "answer": [
+                "お",
+                "ば",
+                "あ",
+                "ち",
+                "ゃ",
+                "ん"
+              ],
+              "tiles": [
+                "や",
+                "ぱ"
+              ],
+              "explain": "おばあちゃん reads \"obaachan\": grandma."
+            },
+            {
+              "id": "fa-teach-260",
+              "type": "teach",
+              "show": "おじいちゃん",
+              "read": "ojiichan",
+              "speak": "おじいちゃん",
+              "text": "おじいちゃん, \"ojiichan\": grandpa. Hold the い: said short, おじちゃん is uncle."
+            },
+            {
+              "id": "fa-teach-261",
+              "type": "teach",
+              "show": "まご",
+              "read": "mago",
+              "speak": "まご",
+              "text": "まご, \"mago\": a grandchild. Possibly the reason you are here."
+            },
+            {
+              "id": "fa-listen-262",
+              "type": "pick",
+              "listen": true,
+              "show": "ojiichan",
+              "speak": "おじいちゃん",
+              "prompt": "Which word is this sound?",
+              "options": [
+                "おじいちゃん",
+                "おばあちゃん",
+                "おかあさん"
+              ],
+              "answer": "おじいちゃん",
+              "explain": "That was \"ojiichan\": おじいちゃん."
+            },
+            {
+              "id": "fa-pairs-263",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "おかあさん",
+                  "mum"
+                ],
+                [
+                  "おとうさん",
+                  "dad"
+                ],
+                [
+                  "おばあちゃん",
+                  "grandma"
+                ],
+                [
+                  "おじいちゃん",
+                  "grandpa"
+                ],
+                [
+                  "まご",
+                  "grandchild"
+                ]
+              ],
+              "explain": "おかあさん mum, おとうさん dad, おばあちゃん grandma, おじいちゃん grandpa, まご grandchild."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Food and numbers",
+      "lessons": [
+        {
+          "id": "fd",
+          "title": "Food",
+          "items": [
+            {
+              "id": "fd-teach-264",
+              "type": "teach",
+              "show": "ごはん",
+              "read": "gohan",
+              "speak": "ごはん",
+              "text": "ごはん, \"gohan\": rice. It means a meal too: rice is the meal, so the word does both jobs."
+            },
+            {
+              "id": "fd-build-265",
+              "type": "build",
+              "show": "gohan: rice",
+              "speak": "ごはん",
+              "prompt": "Build \"gohan\" from the tiles.",
+              "answer": [
+                "ご",
+                "は",
+                "ん"
+              ],
+              "tiles": [
+                "が",
+                "ほ"
+              ],
+              "explain": "ごはん is ご go + は ha + ん n: rice."
+            },
+            {
+              "id": "fd-teach-266",
+              "type": "teach",
+              "show": "たまご",
+              "read": "tamago",
+              "speak": "たまご",
+              "text": "たまご, \"tamago\": an egg."
+            },
+            {
+              "id": "fd-pick-267",
+              "type": "pick",
+              "show": "たまご",
+              "speak": "たまご",
+              "prompt": "How does this word read?",
+              "options": [
+                "tamago",
+                "tamako",
+                "tomago"
+              ],
+              "answer": "tamago",
+              "explain": "たまご reads \"tamago\"."
+            },
+            {
+              "id": "fd-teach-268",
+              "type": "teach",
+              "show": "みず",
+              "read": "mizu",
+              "speak": "みず",
+              "text": "みず, \"mizu\": water."
+            },
+            {
+              "id": "fd-build-269",
+              "type": "build",
+              "show": "mizu: water",
+              "speak": "みず",
+              "prompt": "Build \"mizu\" from the tiles.",
+              "answer": [
+                "み",
+                "ず"
+              ],
+              "tiles": [
+                "す",
+                "む"
+              ],
+              "explain": "みず is み mi + ず zu: water."
+            },
+            {
+              "id": "fd-teach-270",
+              "type": "teach",
+              "show": "りんご",
+              "read": "ringo",
+              "speak": "りんご",
+              "text": "りんご, \"ringo\": an apple."
+            },
+            {
+              "id": "fd-teach-271",
+              "type": "teach",
+              "show": "にく",
+              "read": "niku",
+              "speak": "にく",
+              "text": "にく, \"niku\": meat."
+            },
+            {
+              "id": "fd-listen-272",
+              "type": "pick",
+              "listen": true,
+              "show": "ringo",
+              "speak": "りんご",
+              "prompt": "Which word is this sound?",
+              "options": [
+                "りんご",
+                "たまご",
+                "ごはん"
+              ],
+              "answer": "りんご",
+              "explain": "That was \"ringo\": りんご."
+            },
+            {
+              "id": "fd-pairs-273",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "ごはん",
+                  "rice"
+                ],
+                [
+                  "たまご",
+                  "egg"
+                ],
+                [
+                  "みず",
+                  "water"
+                ],
+                [
+                  "りんご",
+                  "apple"
+                ],
+                [
+                  "にく",
+                  "meat"
+                ]
+              ],
+              "explain": "ごはん rice, たまご egg, みず water, りんご apple, にく meat."
+            }
+          ]
+        },
+        {
+          "id": "one",
+          "title": "One to five",
+          "items": [
+            {
+              "id": "one-teach-274",
+              "type": "teach",
+              "show": "いち",
+              "read": "ichi",
+              "speak": "いち",
+              "text": "いち, \"ichi\": one."
+            },
+            {
+              "id": "one-teach-275",
+              "type": "teach",
+              "show": "に",
+              "read": "ni",
+              "speak": "に",
+              "text": "に, \"ni\": two. One kana, a whole number."
+            },
+            {
+              "id": "one-teach-276",
+              "type": "teach",
+              "show": "さん",
+              "read": "san",
+              "speak": "さん",
+              "text": "さん, \"san\": three."
+            },
+            {
+              "id": "one-build-277",
+              "type": "build",
+              "show": "san: three",
+              "speak": "さん",
+              "prompt": "Build \"san\" from the tiles.",
+              "answer": [
+                "さ",
+                "ん"
+              ],
+              "tiles": [
+                "し",
+                "な"
+              ],
+              "explain": "さん is さ sa + ん n: three."
+            },
+            {
+              "id": "one-teach-278",
+              "type": "teach",
+              "show": "よん",
+              "read": "yon",
+              "speak": "よん",
+              "text": "よん, \"yon\": four. You may hear し for four too, but よん is the one most people say."
+            },
+            {
+              "id": "one-teach-279",
+              "type": "teach",
+              "show": "ご",
+              "read": "go",
+              "speak": "ご",
+              "text": "ご, \"go\": five."
+            },
+            {
+              "id": "one-pick-280",
+              "type": "pick",
+              "show": "いち",
+              "speak": "いち",
+              "prompt": "How does this word read?",
+              "options": [
+                "ichi",
+                "ishi",
+                "ini"
+              ],
+              "answer": "ichi",
+              "explain": "いち reads \"ichi\"."
+            },
+            {
+              "id": "one-listen-281",
+              "type": "pick",
+              "listen": true,
+              "show": "yon",
+              "speak": "よん",
+              "prompt": "Which word is this sound?",
+              "options": [
+                "よん",
+                "ほん",
+                "さん"
+              ],
+              "answer": "よん",
+              "explain": "That was \"yon\": よん."
+            },
+            {
+              "id": "one-pairs-282",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "いち",
+                  "one"
+                ],
+                [
+                  "に",
+                  "two"
+                ],
+                [
+                  "さん",
+                  "three"
+                ],
+                [
+                  "よん",
+                  "four"
+                ],
+                [
+                  "ご",
+                  "five"
+                ]
+              ],
+              "explain": "いち one, に two, さん three, よん four, ご five."
+            }
+          ]
+        },
+        {
+          "id": "six",
+          "title": "Six to ten",
+          "items": [
+            {
+              "id": "six-teach-283",
+              "type": "teach",
+              "show": "ろく",
+              "read": "roku",
+              "speak": "ろく",
+              "text": "ろく, \"roku\": six."
+            },
+            {
+              "id": "six-teach-284",
+              "type": "teach",
+              "show": "なな",
+              "read": "nana",
+              "speak": "なな",
+              "text": "なな, \"nana\": seven. You may hear しち too."
+            },
+            {
+              "id": "six-teach-285",
+              "type": "teach",
+              "show": "はち",
+              "read": "hachi",
+              "speak": "はち",
+              "text": "はち, \"hachi\": eight."
+            },
+            {
+              "id": "six-pick-286",
+              "type": "pick",
+              "show": "はち",
+              "speak": "はち",
+              "prompt": "How does this word read?",
+              "options": [
+                "hachi",
+                "hashi",
+                "hatsu"
+              ],
+              "answer": "hachi",
+              "explain": "はち reads \"hachi\"."
+            },
+            {
+              "id": "six-teach-287",
+              "type": "teach",
+              "show": "きゅう",
+              "read": "kyuu",
+              "speak": "きゅう",
+              "text": "きゅう, \"kyuu\": nine. A small ゅ, then a long u."
+            },
+            {
+              "id": "six-teach-288",
+              "type": "teach",
+              "show": "じゅう",
+              "read": "juu",
+              "speak": "じゅう",
+              "text": "じゅう, \"juu\": ten. The same shape as nine, with a different start."
+            },
+            {
+              "id": "six-build-289",
+              "type": "build",
+              "show": "juu: ten",
+              "speak": "じゅう",
+              "prompt": "Build \"juu\" from the tiles.",
+              "answer": [
+                "じ",
+                "ゅ",
+                "う"
+              ],
+              "tiles": [
+                "ゆ",
+                "し"
+              ],
+              "explain": "じゅう reads \"juu\": ten."
+            },
+            {
+              "id": "six-listen-290",
+              "type": "pick",
+              "listen": true,
+              "show": "kyuu",
+              "speak": "きゅう",
+              "prompt": "Which word is this sound?",
+              "options": [
+                "きゅう",
+                "じゅう",
+                "ろく"
+              ],
+              "answer": "きゅう",
+              "explain": "That was \"kyuu\": きゅう."
+            },
+            {
+              "id": "six-pairs-291",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "ろく",
+                  "six"
+                ],
+                [
+                  "なな",
+                  "seven"
+                ],
+                [
+                  "はち",
+                  "eight"
+                ],
+                [
+                  "きゅう",
+                  "nine"
+                ],
+                [
+                  "じゅう",
+                  "ten"
+                ]
+              ],
+              "explain": "ろく six, なな seven, はち eight, きゅう nine, じゅう ten."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Greetings",
+      "lessons": [
+        {
+          "id": "hi",
+          "title": "Hello",
+          "items": [
+            {
+              "id": "hi-teach-292",
+              "type": "teach",
+              "show": "おはよう",
+              "read": "ohayou",
+              "speak": "おはよう",
+              "text": "おはよう, \"ohayou\": good morning."
+            },
+            {
+              "id": "hi-build-293",
+              "type": "build",
+              "show": "ohayou: good morning",
+              "speak": "おはよう",
+              "prompt": "Build \"ohayou\" from the tiles.",
+              "answer": [
+                "お",
+                "は",
+                "よ",
+                "う"
+              ],
+              "tiles": [
+                "ほ",
+                "や"
+              ],
+              "explain": "おはよう is お o + は ha + よ yo + う u: good morning."
+            },
+            {
+              "id": "hi-teach-294",
+              "type": "teach",
+              "show": "こんにちは",
+              "read": "konnichiwa",
+              "speak": "こんにちは",
+              "text": "こんにちは, \"konnichiwa\": hello. Look at the last kana: it is は, but here it is said \"wa\". An old spelling that stuck. Read it ha, say it wa."
+            },
+            {
+              "id": "hi-pick-295",
+              "type": "pick",
+              "show": "こんにちは",
+              "speak": "こんにちは",
+              "prompt": "How does this word read?",
+              "options": [
+                "konnichiwa",
+                "konnichiha",
+                "konbanwa"
+              ],
+              "answer": "konnichiwa",
+              "explain": "こんにちは reads \"konnichiwa\"."
+            },
+            {
+              "id": "hi-teach-296",
+              "type": "teach",
+              "show": "こんばんは",
+              "read": "konbanwa",
+              "speak": "こんばんは",
+              "text": "こんばんは, \"konbanwa\": good evening. It ends in a は said \"wa\" too."
+            },
+            {
+              "id": "hi-build-297",
+              "type": "build",
+              "show": "konbanwa: good evening",
+              "speak": "こんばんは",
+              "prompt": "Build \"konbanwa\" from the tiles.",
+              "answer": [
+                "こ",
+                "ん",
+                "ば",
+                "ん",
+                "は"
+              ],
+              "tiles": [
+                "ほ",
+                "ぱ"
+              ],
+              "explain": "こんばんは is こ ko + ん n + ば ba + ん n + は ha: good evening."
+            },
+            {
+              "id": "hi-listen-298",
+              "type": "pick",
+              "listen": true,
+              "show": "konbanwa",
+              "speak": "こんばんは",
+              "prompt": "Which word is this sound?",
+              "options": [
+                "こんばんは",
+                "こんにちは",
+                "おはよう"
+              ],
+              "answer": "こんばんは",
+              "explain": "That was \"konbanwa\": こんばんは."
+            },
+            {
+              "id": "hi-which-299",
+              "type": "pick",
+              "show": "ohayou",
+              "prompt": "Which word says \"ohayou\"?",
+              "options": [
+                "おはよう",
+                "こんばんは",
+                "こんにちは"
+              ],
+              "answer": "おはよう",
+              "explain": "\"ohayou\" is おはよう."
+            },
+            {
+              "id": "hi-pairs-300",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "おはよう",
+                  "good morning"
+                ],
+                [
+                  "こんにちは",
+                  "hello"
+                ],
+                [
+                  "こんばんは",
+                  "good evening"
+                ]
+              ],
+              "explain": "おはよう good morning, こんにちは hello, こんばんは good evening."
+            }
+          ]
+        },
+        {
+          "id": "ty",
+          "title": "Thank you",
+          "items": [
+            {
+              "id": "ty-teach-301",
+              "type": "teach",
+              "show": "ありがとう",
+              "read": "arigatou",
+              "speak": "ありがとう",
+              "text": "ありがとう, \"arigatou\": thank you. The last う just holds the o: \"arigatoh\"."
+            },
+            {
+              "id": "ty-build-302",
+              "type": "build",
+              "show": "arigatou: thank you",
+              "speak": "ありがとう",
+              "prompt": "Build \"arigatou\" from the tiles.",
+              "answer": [
+                "あ",
+                "り",
+                "が",
+                "と",
+                "う"
+              ],
+              "tiles": [
+                "か",
+                "ろ"
+              ],
+              "explain": "ありがとう is あ a + り ri + が ga + と to + う u: thank you."
+            },
+            {
+              "id": "ty-teach-303",
+              "type": "teach",
+              "show": "すみません",
+              "read": "sumimasen",
+              "speak": "すみません",
+              "text": "すみません, \"sumimasen\": excuse me. It does sorry too, and thanks for the trouble. A very hard-working word."
+            },
+            {
+              "id": "ty-pick-304",
+              "type": "pick",
+              "show": "すみません",
+              "speak": "すみません",
+              "prompt": "How does this word read?",
+              "options": [
+                "sumimasen",
+                "sumimasan",
+                "sunimasen"
+              ],
+              "answer": "sumimasen",
+              "explain": "すみません reads \"sumimasen\"."
+            },
+            {
+              "id": "ty-teach-305",
+              "type": "teach",
+              "show": "はい",
+              "read": "hai",
+              "speak": "はい",
+              "text": "はい, \"hai\": yes."
+            },
+            {
+              "id": "ty-listen-306",
+              "type": "pick",
+              "listen": true,
+              "show": "arigatou",
+              "speak": "ありがとう",
+              "prompt": "Which word is this sound?",
+              "options": [
+                "ありがとう",
+                "すみません",
+                "こんにちは"
+              ],
+              "answer": "ありがとう",
+              "explain": "That was \"arigatou\": ありがとう."
+            },
+            {
+              "id": "ty-which-307",
+              "type": "pick",
+              "show": "sumimasen",
+              "prompt": "Which word says \"sumimasen\"?",
+              "options": [
+                "すみません",
+                "こんばんは",
+                "ありがとう"
+              ],
+              "answer": "すみません",
+              "explain": "\"sumimasen\" is すみません."
+            },
+            {
+              "id": "ty-pairs-308",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "ありがとう",
+                  "thank you"
+                ],
+                [
+                  "すみません",
+                  "excuse me"
+                ],
+                [
+                  "はい",
+                  "yes"
+                ],
+                [
+                  "おはよう",
+                  "good morning"
+                ]
+              ],
+              "explain": "ありがとう thank you, すみません excuse me, はい yes, おはよう good morning."
+            }
+          ]
+        },
+        {
+          "id": "gn",
+          "title": "Good night",
+          "items": [
+            {
+              "id": "gn-teach-309",
+              "type": "teach",
+              "show": "いただきます",
+              "read": "itadakimasu",
+              "speak": "いただきます",
+              "text": "いただきます, \"itadakimasu\": said before you eat, hands together. A thank you for the food. I say it to my bamboo."
+            },
+            {
+              "id": "gn-build-310",
+              "type": "build",
+              "show": "itadakimasu: said before eating",
+              "speak": "いただきます",
+              "prompt": "Build \"itadakimasu\" from the tiles.",
+              "answer": [
+                "い",
+                "た",
+                "だ",
+                "き",
+                "ま",
+                "す"
+              ],
+              "tiles": [
+                "ち",
+                "ぎ"
+              ],
+              "explain": "いただきます is い i + た ta + だ da + き ki + ま ma + す su: said before eating."
+            },
+            {
+              "id": "gn-teach-311",
+              "type": "teach",
+              "show": "おやすみ",
+              "read": "oyasumi",
+              "speak": "おやすみ",
+              "text": "おやすみ, \"oyasumi\": good night. Say it to someone on their way to bed."
+            },
+            {
+              "id": "gn-pick-312",
+              "type": "pick",
+              "show": "おやすみ",
+              "speak": "おやすみ",
+              "prompt": "How does this word read?",
+              "options": [
+                "oyasumi",
+                "oyasuni",
+                "ayasumi"
+              ],
+              "answer": "oyasumi",
+              "explain": "おやすみ reads \"oyasumi\"."
+            },
+            {
+              "id": "gn-build-313",
+              "type": "build",
+              "show": "oyasumi: good night",
+              "speak": "おやすみ",
+              "prompt": "Build \"oyasumi\" from the tiles.",
+              "answer": [
+                "お",
+                "や",
+                "す",
+                "み"
+              ],
+              "tiles": [
+                "よ",
+                "む"
+              ],
+              "explain": "おやすみ is お o + や ya + す su + み mi: good night."
+            },
+            {
+              "id": "gn-listen-314",
+              "type": "pick",
+              "listen": true,
+              "show": "itadakimasu",
+              "speak": "いただきます",
+              "prompt": "Which word is this sound?",
+              "options": [
+                "いただきます",
+                "おやすみ",
+                "ありがとう"
+              ],
+              "answer": "いただきます",
+              "explain": "That was \"itadakimasu\": いただきます."
+            },
+            {
+              "id": "gn-pairs-315",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "いただきます",
+                  "said before eating"
+                ],
+                [
+                  "おやすみ",
+                  "good night"
+                ],
+                [
+                  "こんばんは",
+                  "good evening"
+                ],
+                [
+                  "ありがとう",
+                  "thank you"
+                ],
+                [
+                  "はい",
+                  "yes"
+                ]
+              ],
+              "explain": "いただきます said before eating, おやすみ good night, こんばんは good evening, ありがとう thank you, はい yes."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "A first sentence",
+      "lessons": [
+        {
+          "id": "se1",
+          "title": "This is…",
+          "items": [
+            {
+              "id": "se1-teach-316",
+              "type": "teach",
+              "show": "これ",
+              "read": "kore",
+              "speak": "これ",
+              "text": "これ, \"kore\": this. Point at something while you say it."
+            },
+            {
+              "id": "se1-teach-317",
+              "type": "teach",
+              "show": "です",
+              "read": "desu",
+              "speak": "です",
+              "text": "です, \"desu\": is. It goes at the very end. The u is barely there: \"dess\"."
+            },
+            {
+              "id": "se1-teach-318",
+              "type": "teach",
+              "show": "これは ねこです",
+              "read": "kore wa neko desu",
+              "speak": "これはねこです",
+              "text": "Your first sentence: \"This is a cat.\" これ this, ねこ cat, です is, at the end. The は after これ marks what you are talking about, and there it is said \"wa\", as in こんにちは."
+            },
+            {
+              "id": "se1-build-319",
+              "type": "build",
+              "show": "kore wa neko desu: This is a cat.",
+              "speak": "これはねこです",
+              "prompt": "Put the words in order.",
+              "answer": [
+                "これ",
+                "は",
+                "ねこ",
+                "です"
+              ],
+              "tiles": [
+                "いぬ"
+              ],
+              "explain": "これ は ねこ です, \"kore wa neko desu\": This is a cat."
+            },
+            {
+              "id": "se1-teach-320",
+              "type": "teach",
+              "show": "これは おちゃです",
+              "read": "kore wa ocha desu",
+              "speak": "これはおちゃです",
+              "text": "Swap the middle word, and it is a new sentence: \"This is tea.\""
+            },
+            {
+              "id": "se1-build-321",
+              "type": "build",
+              "show": "kore wa ocha desu: This is tea.",
+              "speak": "これはおちゃです",
+              "prompt": "Put the words in order.",
+              "answer": [
+                "これ",
+                "は",
+                "おちゃ",
+                "です"
+              ],
+              "tiles": [
+                "みず"
+              ],
+              "explain": "これ は おちゃ です, \"kore wa ocha desu\": This is tea."
+            },
+            {
+              "id": "se1-build-322",
+              "type": "build",
+              "show": "kore wa hon desu: This is a book.",
+              "speak": "これはほんです",
+              "prompt": "Put the words in order.",
+              "answer": [
+                "これ",
+                "は",
+                "ほん",
+                "です"
+              ],
+              "tiles": [
+                "ねこ"
+              ],
+              "explain": "これ は ほん です, \"kore wa hon desu\": This is a book."
+            },
+            {
+              "id": "se1-pairs-323",
+              "type": "pairs",
+              "prompt": "Match each sentence to what it means.",
+              "pairs": [
+                [
+                  "これは ねこです",
+                  "This is a cat."
+                ],
+                [
+                  "これは いぬです",
+                  "This is a dog."
+                ],
+                [
+                  "これは おちゃです",
+                  "This is tea."
+                ]
+              ],
+              "explain": "これは ねこです This is a cat., これは いぬです This is a dog., これは おちゃです This is tea.."
+            }
+          ]
+        },
+        {
+          "id": "se2",
+          "title": "I am…",
+          "items": [
+            {
+              "id": "se2-teach-324",
+              "type": "teach",
+              "show": "わたし",
+              "read": "watashi",
+              "speak": "わたし",
+              "text": "わたし, \"watashi\": I, me."
+            },
+            {
+              "id": "se2-teach-325",
+              "type": "teach",
+              "show": "わたしは おばあちゃんです",
+              "read": "watashi wa obaachan desu",
+              "speak": "わたしはおばあちゃんです",
+              "text": "\"I am Grandma.\" The same shape as before: わたし, は said \"wa\", who you are, then です."
+            },
+            {
+              "id": "se2-build-326",
+              "type": "build",
+              "show": "watashi wa obaachan desu: I am Grandma.",
+              "speak": "わたしはおばあちゃんです",
+              "prompt": "Put the words in order.",
+              "answer": [
+                "わたし",
+                "は",
+                "おばあちゃん",
+                "です"
+              ],
+              "tiles": [
+                "おかあさん"
+              ],
+              "explain": "わたし は おばあちゃん です, \"watashi wa obaachan desu\": I am Grandma."
+            },
+            {
+              "id": "se2-build-327",
+              "type": "build",
+              "show": "watashi wa ojiichan desu: I am Grandpa.",
+              "speak": "わたしはおじいちゃんです",
+              "prompt": "Put the words in order.",
+              "answer": [
+                "わたし",
+                "は",
+                "おじいちゃん",
+                "です"
+              ],
+              "tiles": [
+                "まご"
+              ],
+              "explain": "わたし は おじいちゃん です, \"watashi wa ojiichan desu\": I am Grandpa."
+            },
+            {
+              "id": "se2-teach-328",
+              "type": "teach",
+              "show": "これは まごです",
+              "read": "kore wa mago desu",
+              "speak": "これはまごです",
+              "text": "Showing a photo? \"This is my grandchild.\" Use まご for your own grandchild."
+            },
+            {
+              "id": "se2-build-329",
+              "type": "build",
+              "show": "kore wa mago desu: This is my grandchild.",
+              "speak": "これはまごです",
+              "prompt": "Put the words in order.",
+              "answer": [
+                "これ",
+                "は",
+                "まご",
+                "です"
+              ],
+              "tiles": [
+                "わたし"
+              ],
+              "explain": "これ は まご です, \"kore wa mago desu\": This is my grandchild."
+            },
+            {
+              "id": "se2-pairs-330",
+              "type": "pairs",
+              "prompt": "Match each sentence to what it means.",
+              "pairs": [
+                [
+                  "わたしは おばあちゃんです",
+                  "I am Grandma."
+                ],
+                [
+                  "わたしは おじいちゃんです",
+                  "I am Grandpa."
+                ],
+                [
+                  "これは まごです",
+                  "This is my grandchild."
+                ]
+              ],
+              "explain": "わたしは おばあちゃんです I am Grandma., わたしは おじいちゃんです I am Grandpa., これは まごです This is my grandchild.."
+            }
+          ]
+        },
+        {
+          "id": "se3",
+          "title": "Saying hello",
+          "items": [
+            {
+              "id": "se3-teach-331",
+              "type": "teach",
+              "show": "こんにちは わたしは おばあちゃんです",
+              "read": "konnichiwa watashi wa obaachan desu",
+              "speak": "こんにちはわたしはおばあちゃんです",
+              "text": "All together: \"Hello, I am Grandma.\" For Grandpa, swap in おじいちゃん. A grandchild in Osaka will be delighted. I would be."
+            },
+            {
+              "id": "se3-build-332",
+              "type": "build",
+              "show": "konnichiwa watashi wa ojiichan desu: Hello, I am Grandpa.",
+              "speak": "こんにちはわたしはおじいちゃんです",
+              "prompt": "Put the words in order.",
+              "answer": [
+                "こんにちは",
+                "わたし",
+                "は",
+                "おじいちゃん",
+                "です"
+              ],
+              "tiles": [
+                "こんばんは"
+              ],
+              "explain": "こんにちは わたし は おじいちゃん です, \"konnichiwa watashi wa ojiichan desu\": Hello, I am Grandpa."
+            },
+            {
+              "id": "se3-build-333",
+              "type": "build",
+              "show": "kore wa mizu desu: This is water.",
+              "speak": "これはみずです",
+              "prompt": "Put the words in order.",
+              "answer": [
+                "これ",
+                "は",
+                "みず",
+                "です"
+              ],
+              "tiles": [
+                "おちゃ"
+              ],
+              "explain": "これ は みず です, \"kore wa mizu desu\": This is water."
+            },
+            {
+              "id": "se3-listen-334",
+              "type": "pick",
+              "listen": true,
+              "show": "oyasumi",
+              "speak": "おやすみ",
+              "prompt": "Which word is this sound?",
+              "options": [
+                "おやすみ",
+                "おはよう",
+                "ありがとう"
+              ],
+              "answer": "おやすみ",
+              "explain": "That was \"oyasumi\": おやすみ."
+            },
+            {
+              "id": "se3-build-335",
+              "type": "build",
+              "show": "kore wa ringo desu: This is an apple.",
+              "speak": "これはりんごです",
+              "prompt": "Put the words in order.",
+              "answer": [
+                "これ",
+                "は",
+                "りんご",
+                "です"
+              ],
+              "tiles": [
+                "たまご"
+              ],
+              "explain": "これ は りんご です, \"kore wa ringo desu\": This is an apple."
+            },
+            {
+              "id": "se3-pairs-336",
+              "type": "pairs",
+              "prompt": "Match each word to what it means.",
+              "pairs": [
+                [
+                  "おはよう",
+                  "good morning"
+                ],
+                [
+                  "おやすみ",
+                  "good night"
+                ],
+                [
+                  "いただきます",
+                  "said before eating"
+                ],
+                [
+                  "すみません",
+                  "excuse me"
+                ]
+              ],
+              "explain": "おはよう good morning, おやすみ good night, いただきます said before eating, すみません excuse me."
+            },
+            {
+              "id": "se3-pairs-337",
+              "type": "pairs",
+              "prompt": "Match each sentence to what it means.",
+              "pairs": [
+                [
+                  "これは みずです",
+                  "This is water."
+                ],
+                [
+                  "これは りんごです",
+                  "This is an apple."
+                ],
+                [
+                  "わたしは おじいちゃんです",
+                  "I am Grandpa."
+                ]
+              ],
+              "explain": "これは みずです This is water., これは りんごです This is an apple., わたしは おじいちゃんです I am Grandpa.."
+            }
+          ]
+        }
+      ]
     }
   ]
 }

@@ -1,10 +1,12 @@
 import { mount as quiz } from '../quiz/exercise.js';
 import { toQuiz } from './items.js';
 
-/** A ten frame: two rows of five, the first `n` filled. */
-const frame = (n) => `<svg class="pic frame" viewBox="0 0 110 46" role="img" aria-label="${n} dots in a frame of 10">
-  ${Array.from({ length: 10 }, (_, i) => `<rect x="${2 + (i % 5) * 21.2}" y="${2 + Math.floor(i / 5) * 21}" width="21" height="21" class="cell"/>
-  ${i < n ? `<circle cx="${12.5 + (i % 5) * 21.2}" cy="${12.5 + Math.floor(i / 5) * 21}" r="7" class="dot"/>` : ''}`).join('')}</svg>`;
+/** Rows of cells, the first `n` with a dot: a ten frame is 2 rows of 5, an array every cell filled. */
+const dots = (rows, cols, n, label, size = '') => `<svg class="pic frame" viewBox="0 0 ${4 + cols * 21.2} ${4 + rows * 21}" role="img" aria-label="${label}"${size}>
+  ${Array.from({ length: rows * cols }, (_, i) => `<rect x="${2 + (i % cols) * 21.2}" y="${2 + Math.floor(i / cols) * 21}" width="21" height="21" class="cell"/>
+  ${i < n ? `<circle cx="${12.5 + (i % cols) * 21.2}" cy="${12.5 + Math.floor(i / cols) * 21}" r="7" class="dot"/>` : ''}`).join('')}</svg>`;
+const frame = (n) => dots(2, 5, n, `${n} dots in a frame of 10`);
+const array = ([r, c]) => dots(r, c, r * c, `${r} rows of ${c} dots`, ` style="max-width:${Math.min(300, c * 40)}px"`);
 
 /** A bar cut into `d` equal parts, the first `n` shaded. */
 const bar = ([n, d]) => `<svg class="pic bar" viewBox="0 0 204 34" role="img" aria-label="${n} of ${d} equal parts shaded">
@@ -17,7 +19,8 @@ const grid = (n) => `<svg class="pic grid" viewBox="0 0 102 102" role="img" aria
 /** A number line to look at, for a teach card: end numbers and equal hops, as the `line` item draws them. */
 const line = ([min, max, hops]) => `<svg class="pic line" viewBox="0 0 204 44" role="img" aria-label="A number line from ${min} to ${max} in ${hops} equal hops">
   <path d="M6 12H198" class="track"/>${Array.from({ length: hops + 1 }, (_, k) => `<path d="M${6 + (k * 192) / hops} 4V20" class="hop"/>`).join('')}
-  <text x="6" y="38">${min}</text><text x="198" y="38" text-anchor="end">${max}</text></svg>`;
+  <text x="6" y="38">${min}</text><text x="198" y="38" text-anchor="end">${max}</text>
+  ${min < 0 && max > 0 ? `<text x="${6 + (-min * 192) / (max - min)}" y="38" text-anchor="middle">0</text>` : ''}</svg>`;
 
 /** A maths picture, drawn on the quiz card (numbers only, so nothing to escape). */
 export function art(p) {
@@ -26,6 +29,7 @@ export function art(p) {
   if (p.grid != null) return grid(Number(p.grid));
   if (p.bars) return p.bars.map((b) => bar(b.map(Number))).join('');
   if (p.line) return line(p.line.map(Number));
+  if (p.array) return array(p.array.map(Number));
   return '';
 }
 

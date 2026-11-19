@@ -34,6 +34,35 @@ test.describe('at 360x640', () => {
     expect(Math.abs(yours.y + yours.height / 2 - (line.y + line.height / 2))).toBeLessThan(2); // one row
   });
 
+  test("Reflect's look back, even a long one, leaves the next step in sight", async ({ page }) => {
+    const day = new Date();
+    day.setDate(day.getDate() - 7);
+    const date = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+    await page.addInitScript(([d, text]) => localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 3, picked: [], done: {}, cards: {}, habits: {}, log: [], journal: { [d]: { good: text } } })),
+      [date, 'A very long line about a walk by the river with a friend, and the sun came out just as we reached the old bridge. '.repeat(3)]);
+    await page.goto('/');
+    await page.locator('[data-path="reflect"]').click();
+    const [line, node, cta] = await Promise.all(['.look-back', '.node.here', '.cta'].map((s) => page.locator(s).boundingBox()));
+    expect(line.height).toBeLessThan(100);
+    expect(node.y + node.height).toBeLessThan(cta.y);
+  });
+
+  test("on Reflect, your butterfly's row and the look back together still leave the next step in sight", async ({ page }) => {
+    const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const now = new Date(), before = new Date();
+    before.setDate(before.getDate() - 7);
+    const [today, weekAgo] = [ymd(now), ymd(before)];
+    await page.addInitScript(([t, w, text]) => localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 10, picked: [], done: {}, cards: {}, wings: ['reflect', 'reflect'],
+      habits: { reflect: { count: 1, last: t, forgiven: [], days: 2 } }, log: [{ date: w, habit: 'reflect', title: 'Reflect', mins: 1 }, { date: t, habit: 'reflect', title: 'Reflect', mins: 1 }],
+      journal: { [w]: { good: text } } })), [today, weekAgo, 'A very long line about a walk by the river with a friend, and the sun came out just as we reached the old bridge. '.repeat(3)]);
+    await page.goto('/');
+    await page.locator('[data-path="reflect"]').click();
+    await expect(page.locator('.yours-link')).toBeVisible();
+    await expect(page.locator('.look-back')).toBeVisible();
+    const [node, cta] = await Promise.all(['.node.here', '.cta'].map((s) => page.locator(s).boundingBox()));
+    expect(node.y + node.height).toBeLessThan(cta.y);
+  });
+
   test('a course pill and the ✕ answer a thumb that lands just outside them', async ({ page }) => {
     await seed(page);
     await page.goto('/');
