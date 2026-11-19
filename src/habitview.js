@@ -10,7 +10,10 @@ export const NO_STREAK = 'Any session starts a streak.';
 export const FIRST_SQUARE = 'Your first session fills the first square.';
 
 /** The line over a habit's path on home, which opens its view: "14-day streak · See your week". */
-export const streakLine = (n, started) => (n ? `${n}-day streak · See your week`
+/** Calm, Reflect and Wind down show no streak number on home unless the ⋯ switch is on. */
+export const QUIET_HABITS = ['calm', 'reflect', 'winddown'];
+export const showsStreak = (id, quietOn) => quietOn || !QUIET_HABITS.includes(id);
+export const streakLine = (n, started, shown = true) => (n ? `${shown ? `${n}-day streak · ` : ''}See your week`
   : started ? 'Any session starts a streak · See your week' : 'Your first session starts a streak');
 
 /** A YYYY-MM-DD local date as a Date at local midnight, `plus` days on. */

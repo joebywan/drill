@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { REST, phases, summary } from '../src/move/routines.js';
 import { countOf, total } from '../src/practice/timeline.js';
-import { POSES } from '../src/cast/clover.js';
+import { POSES, clover } from '../src/cast/clover.js';
 
 const course = JSON.parse(readFileSync('src/data/move.json', 'utf8'));
 const units = Object.fromEntries(course.units.map((u) => [u.title, u.lessons.flatMap((l) => l.items)]));
@@ -46,22 +46,44 @@ test('every session is 2 to 5 minutes', () => {
 });
 
 test('reps grow along the Strength path by turning up: squats 5, 8, 10', () => {
-  const most = (move) => units.Strength.filter((i) => i.set).map((i) => Math.max(...i.set.filter((x) => x.move === move).map((x) => x.reps)));
+  const most = (move, unit = 'Strength') => units[unit].filter((i) => i.set).map((i) => Math.max(...i.set.filter((x) => x.move === move).map((x) => x.reps)));
   assert.deepEqual(most('squat'), [5, 8, 10]);
   assert.deepEqual(most('wall-push'), [5, 8, 10]);
-  // Wake up and Stretch grow by time instead: never shorter than the lesson before.
-  for (const unit of ['Wake up', 'Stretch']) {
+  // The new units' rep moves grow gently too.
+  assert.deepEqual(most('sit-to-stand', 'Seated'), [3, 4, 5]);
+  assert.deepEqual(most('heel-raise', 'Balance'), [5, 8, 10]);
+  assert.deepEqual(most('side-leg-lift', 'Balance'), [3, 4, 5]);
+  // The others grow by time instead: never shorter than the lesson before.
+  for (const unit of ['Wake up', 'Stretch', 'Back and neck', 'Seated', 'Balance']) {
     const mins = units[unit].filter((i) => i.set).map((i) => total(phases(i.set, course.moves)));
     assert.deepEqual(mins, [...mins].sort((a, b) => a - b), unit);
   }
 });
 
 test('each unit is taught once, in its first lesson, then practised', () => {
-  assert.deepEqual(course.units.map((u) => u.title), ['Wake up', 'Strength', 'Stretch']);
+  assert.deepEqual(course.units.map((u) => u.title), ['Wake up', 'Strength', 'Stretch', 'Back and neck', 'Seated', 'Balance']);
   for (const u of course.units) {
     const teach = u.lessons.map((l) => l.items.filter((i) => i.type === 'teach').length);
     assert.deepEqual(teach, [1, ...Array(u.lessons.length - 1).fill(0)], u.title);
+    assert.equal(u.lessons[0].items[0].help, true, `${u.title}: the safety line is on its first lesson`);
   }
   const ids = Object.values(units).flat().map((i) => i.id);
   assert.equal(new Set(ids).size, ids.length, 'item ids are unique');
+});
+
+const moves = (unit) => [...new Set(units[unit].filter((i) => i.set).flatMap((i) => i.set.map((x) => x.move)))];
+
+test('Seated is all on a chair: Clover sits on one for every move', () => {
+  const chair = /data-part="seat" style="[^"]*scale\(1, 1\)/;
+  for (const id of moves('Seated')) assert.match(clover('guide', course.moves[id].pose), chair, id);
+  assert.doesNotMatch(clover('guide', 'squat'), chair);
+});
+
+test('Balance keeps a hand on a wall or chair back, and Clover holds the wall', () => {
+  assert.match(units.Balance[0].text.join(' '), /keep a hand on it or near it/);
+  const wall = /data-part="wall" style="[^"]*scale\(1, 1\)/;
+  for (const id of moves('Balance')) {
+    assert.match(course.moves[id].how[0], /wall or a chair back/, id);
+    assert.match(clover('guide', course.moves[id].pose), wall, id);
+  }
 });

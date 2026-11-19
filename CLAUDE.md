@@ -89,16 +89,20 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   (match two columns), `build` (tap tiles in order). `items.js` is pure (`problem()`), `exercise.js`
   mounts them; `ctx.lang` marks text for the system font and picks the voice (`speak()` in feel.js:
   `speechSynthesis`, and with no voice or Sound muted the reading is shown instead).
-- Japanese: `src/data/japanese.json` (hiragana: vowels, k and s rows, first words), coached by Kaede, a red
-  panda (`src/cast/kaede.js`, rig-posed). `test/quiz.test.js` checks every answer against its own kana
-  table and that no kana is asked before a teach card shows it.
+- Japanese: `src/data/japanese.json` (all of hiragana, the sounds that change and small kana, everyday words,
+  greetings, and a first sentence with は: これは ねこです), coached by Kaede, a red panda (`src/cast/kaede.js`,
+  rig-posed). Sentences are `build` items with word tiles. `test/quiz.test.js` checks every answer against its own kana
+  table (small kana, and は said "wa" at the end of a part) and that no kana is asked before a teach card shows it.
 - `src/quiz/` also has `line` (drag a marker on a number line, snapped to its ticks, answered on
   release) and takes a `picture` the course draws through the mount's `ctx.art`, plus `ctx.look`
   for a course's own styling.
-- `src/maths/` — the Maths course (`src/data/maths.json`: mental maths, percentages, fractions you
-  can see, for adults rusty at maths). Items are written as sums and pictures; `items.js` works every
-  answer out (`value()` reads "15% of $60", so 2/4 is right for 1/2) and `toQuiz()` turns each into a
-  src/quiz item; `problem()` checks both. `exercise.js` draws the ten frame, bars, 100 grid and a teach card's number line. Coach:
+- `src/maths/` — the Maths course (`src/data/maths.json`, nine units: mental maths, times tables you
+  can see, sharing and dividing, rounding and estimating, percentages, fractions you can see, decimals
+  and money, ratios and better buys, below zero; for adults rusty at maths and for children). Items are
+  written as sums and pictures; `items.js` works every answer out (`value()` reads "15% of $60",
+  "47 to the nearest 10", "5 for $9" as the price for one, and "-3 °C", so 2/4 is right for 1/2; a pick's
+  `goal` can be 'biggest' or 'smallest') and `toQuiz()` turns each into a src/quiz item; `problem()`
+  checks both. `exercise.js` draws the ten frame, arrays of dots, bars, 100 grid and a teach card's number line. Coach:
   Ada, an octopus (`src/cast/ada.js`, posed with `rig()`), with `MATHS_LINES` and `MATHS_HEADLINES`.
 - `src/cast/` — the characters (`kit.js`, `rosa.js`, `lumi.js`), `coach.js` (a character that
   reacts in place) and `lines.js` (everything the cast says; the guardrail tests lint it).
@@ -162,10 +166,17 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   opens and closes on a soft bell and can have soft rain under it (`calmSound()`, `rain()` in
   feel.js, both generated): set on the ⋯ screen, both off until turned on, and both silent
   when Sound is muted or under reduced motion.
-- `src/reflect/` — the Reflect practice subject: three prompts (good, learned, tomorrow), each
-  skippable, self-paced like grounding, with Lumi coaching. What is written goes to
-  `progress.journal` via `writeJournal`, never the log; the habit view shows it through the
-  subject's `dayDetail` hook. A subject's `again` ({ label, lesson }, in the course JSON) keeps a
+- `src/reflect/` — the Reflect practice subject: three prompts, each skippable, self-paced like
+  grounding, with Lumi coaching. "One good thing" first and "One thing for tomorrow" last never
+  change; the middle one comes from the `middle` pool in `reflect.json`, chosen by the date
+  (`middleFor`, the same all day), and its line is kept under `learned` with `asked` (the pool id)
+  on the day's entry so the week view labels it right. What is written goes to `progress.journal`
+  via `writeJournal`, never the log; the habit view shows it through the subject's `dayDetail`
+  hook. The subject's `lookBack` (home: one line from seven days ago, else the newest older one,
+  tapping it opens the habit view) and `readBack` (end screen: "Read back your week" once three of
+  the last seven days have lines) return html and are the only other readers; our words around the
+  lines are `REFLECT_WORDS` in `cast/lines.js`. No prompt asks about a bad feeling, and nothing
+  interprets what was written. A subject's `again` ({ label, lesson }, in the course JSON) keeps a
   lesson on home once the path is done: "Reflect today", "Take a break", "Breathe". The learner's text is never linted or sent anywhere (a test checks).
 - `src/winddown/` — Wind down, a bedtime sequence made only of Calm's pieces: kit.js `sequence()`
   plays a 'sequence' item's parts in turn (its own settle-in steps and goodnight card, then Calm's
@@ -180,8 +191,14 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   amber eyes) demonstrating each of its steps; both are posed with `rig()` in `src/cast/kit.js`.
   Both play through `coached()` in kit.js: the step and its time, how to do it (`how`), what's next, and
   a first-step room check, with no tap needed. Every timed routine's pause (`pauseButton`) is round and beside the coach. Course in `src/data/move.json`:
-  Wake up, Strength (reps grow 5, 8, 10), Stretch. Guardrails bar pushing and body or weight
-  words, and check the safety line is on the first lesson and after "Not really".
+  Wake up, Strength (reps grow 5, 8, 10), Stretch, Back and neck, Seated, Balance. Every move is a
+  gentle one public health services publish (NHS sitting, flexibility, strength and balance pages):
+  nothing on the floor, no deep bends, no full neck circles, nothing fast, no kit beyond a chair or
+  a wall. A new routine is data plus a pose, never a new flow. Clover has three rigs, each with its
+  own resting phase: standing, seated (the `seat` prop, a chair; a seated demo never stands her up
+  between reps) and balance (the `wall` prop, her right hand on it). Seated is all on a chair and
+  Balance keeps a hand on the wall (move.test.js checks both). Guardrails bar pushing, health claims
+  and body or weight words, and check the safety line is on every unit's first lesson and after "Not really".
 - **Calm is not therapy.** `test/guardrails.test.js` bars health claims, diagnosis words and urgency
   in Calm's text, and checks the Lifeline help line (13 11 14, as plain text) is on the first Calm
   lesson and after "Not really".
@@ -201,8 +218,13 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   habit's permanent count of dates practised, never the streak); `RULES` is the achievement table
   (one line of data each), `award()` records what is earned in `progress.garden.earned` and never
   removes it; `mood()` maps the habits' lights; `garden()` is all the garden screen needs.
-  Each habit earns a butterfly (7 in a row) and a bee (its first session, not Learning), each its
-  own species; the whole garden earns `LANDMARKS` (path, bench, birdhouse with birds, a frog at
+  Every Learn course and every other habit raises a butterfly, a real species from the kit
+  (`raisers()`, `grown()`, `creatures()`): a course by units finished (egg at its first lesson,
+  caterpillar from 1 to n − 2, chrysalis at n − 1, butterfly at n), a habit by days at its plant's
+  STAGES (1, 5, 14, 30). Each stage reached is a rule (`egg:`, `hatched:`, `chrysalis:`, `emerged:<id>`),
+  so it is an arrival and never goes back; `guide()` feeds the field guide (`src/guide.js`, opened
+  from the garden's bar and from home's "Chess is raising a…" line). Each habit also earns a bee (its
+  first session, not Learning), its own species; the whole garden earns `LANDMARKS` (path, bench, birdhouse with birds, a frog at
   Lumi's pond, fence, lanterns, hive with bees, more birds) from `gardenDays()`, every habit's days added
   up. Each landmark is a different piece so every one changes the picture. The old per-habit
   `birds:<habit>` stays in saves but is no longer drawn. app.js gives a save any landmark it had
@@ -221,7 +243,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   closed })` (tree, lavender, sunflower, vine on a trellis, daisies, evening primrose; five stages, scaled by `GROW` so a
   sprout is about a third of full height and a sapling about half; up to 6 blooms that
   never overlap), `sway()`, `visitor(kind, species)`/`animateVisitor()` (butterfly, bee, birds;
-  `BUTTERFLIES`, `BEES`, `BIRDS` are the species) and, from `landmarks.js`, `layout()` (the path
+  a butterfly is the kit's species, `BEES` and `BIRDS` the others') and, from `landmarks.js`, `layout()` (the path
   and fence behind the plants, each other piece at the nearest free spot, smaller when crowded),
   `landmark(gift)` and `animateLandmarks()`; and, from
   `scene.js`, `scene(mood, 'strip' | 'tall')`, `slots(shape, n)` and `place()`. Scene colours carry

@@ -59,12 +59,13 @@ test('logToday is one tap a day through the finish path: streak, days, log and a
   let p = track(emptyProgress(), { id: 'walk' });
   p = logToday(p, 'walk', 'Walked', day(1));
   assert.deepEqual(p.habits.walk, { count: 1, last: '2026-10-01', forgiven: [], days: 1 });
-  assert.deepEqual(p.log, [{ date: '2026-10-01', hour: 12, habit: 'walk', title: 'Walked', mins: 0, was: null }]);
+  assert.deepEqual(p.log, [{ date: '2026-10-01', hour: 12, habit: 'walk', title: 'Walked', mins: 0, was: null, wing: true }]);
   assert.equal(logToday(p, 'walk', 'Walked', day(1, 20)), p, 'a second tap the same day changes nothing');
   assert.equal(light(p, day(1), 'walk'), 'bright');
   const { newly } = award(p, day(1));
-  assert.deepEqual(newly.map((r) => r.id), ['bee:walk']);
-  assert.equal(newly[0].text, 'A bee found Walk');
+  assert.deepEqual(newly.map((r) => r.id), ['egg:walk', 'bee:walk']);
+  assert.equal(newly[1].text, 'A bee found Walk');
+  assert.equal(newly[0].text, 'Your Walk egg arrived: a Caper White');
   // It follows the same forgiving rules as any habit.
   p = logToday(p, 'walk', 'Walked', day(3));
   assert.equal(p.habits.walk.count, 2, 'one missed day forgiven');
@@ -120,9 +121,9 @@ test('migrate: a v4 save goes through both steps (start per subject, then tracke
   const v4 = { version: 4, habits: { learn: { count: 2, last: '2026-10-02', forgiven: [], days: 2 } }, log: [], done: {}, cards: {},
     journal: {}, garden: { earned: {} }, start: 'Forks' };
   assert.ok(VERSION >= 6);
-  assert.deepEqual(migrate(roundTrip(v4)), { ...v4, version: VERSION, start: { chess: 'Forks' }, tracked: [], picked: [], timings: {}, left: [] });
+  assert.deepEqual(migrate(roundTrip(v4)), { ...v4, version: VERSION, start: { chess: 'Forks' }, tracked: [], picked: [], timings: {}, left: [], wings: [] });
   const v5 = { ...v4, version: 5, start: { chess: null } };
-  assert.deepEqual(migrate(roundTrip(v5)), { ...v5, version: VERSION, tracked: [], picked: [], timings: {}, left: [] });
+  assert.deepEqual(migrate(roundTrip(v5)), { ...v5, version: VERSION, tracked: [], picked: [], timings: {}, left: [], wings: [] });
   let p = track(track(emptyProgress(), { id: 'water' }), { name: '<b>Stretch</b>', icon: '🎵', plant: 'mushroom' });
   p = logToday(logToday(p, 'water', 'Drank water', day(1)), 'own-1', '<b>Stretch</b>', day(1));
   assert.deepEqual(migrate(roundTrip(p)), p);
@@ -148,13 +149,14 @@ test('rules and the garden follow the habit list: own habits earn visitors, hidd
   let p = track(emptyProgress(), { name: 'Stretch', plant: 'mushroom' });
   for (let d = 1; d <= 30; d++) p = logToday(p, 'own-1', 'Stretch', day(d));
   const { progress, newly } = award(p, day(30));
-  assert.deepEqual(newly.filter((r) => r.habit).map((r) => r.id).sort(), ['bee:own-1', 'butterfly:own-1']);
+  assert.deepEqual(newly.filter((r) => r.habit).map((r) => r.id).sort(), ['bee:own-1', 'emerged:own-1']);
   assert.equal(newly.find((r) => r.gift === 'bee').text, 'A bee found Stretch');
   assert.ok(startedHabits(progress, ids(progress)).includes('own-1'));
   const plant = garden(progress, day(30)).plants.find((x) => x.habit === 'own-1');
   assert.equal(plant.plant, 'mushroom');
   assert.equal(plant.name, 'full grown');
-  assert.equal(plant.visitors.length, 2);
+  assert.equal(plant.visitors.length, 1);
+  assert.equal(plant.creatures[0].stage, 'butterfly');
   assert.equal(garden(progress, day(30)).plants.find((x) => x.habit === 'learn').plant, undefined);
   const renamed = track(progress, { id: 'own-1', name: 'Morning stretch' });
   assert.equal(garden(renamed, day(30)).plants.find((x) => x.habit === 'own-1').visitors.find((v) => v.gift === 'bee').text, 'A bee found Morning stretch');

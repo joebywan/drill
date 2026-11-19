@@ -1,6 +1,8 @@
-import { currentStreak, light } from './progress.js';
+import { LEARN, currentStreak, light } from './progress.js';
 import { WIDGET_LINES } from './cast/lines.js';
 import { lumi } from './cast/lumi.js';
+import { BOX, butterflyToday, habitColour } from './cast/butterfly.js';
+import { INK } from './cast/kit.js';
 
 /**
  * The Android wrapper's side of Wingbeat, pure apart from the bridge glue at the end. The home-screen
@@ -20,39 +22,65 @@ const SKY = {
   evening: ['#FCE3D2', '#3A2016'],
   night: ['#1F2631', '#E8ECF2'],
 };
-/** The streak flame, tinted by today's light: lit, warm, or a low glow. */
-const FLAME = { bright: '#F0772A', soft: '#E3A857', ember: '#9C6B4E' };
+/** Your butterfly by today's light: flying once today is done, basking until then, resting after a missed day. Never sad. */
+export const STATES = { bright: 'flying', soft: 'basking', ember: 'resting' };
 
-/** (light, hour) → what the widget shows. `lines` is a pool; Kotlin picks one per look. */
-export function look(lit, hour) {
+/**
+ * (light, hour, whose words) → what the widget shows: `butterfly` is its state and `art` the drawing
+ * Kotlin shows (sendArt; at night with a pale body). `lines` is a pool; Kotlin picks one per look.
+ */
+export function look(lit, hour, words = 'learn') {
   const b = band(hour);
   const [bg, ink] = SKY[b];
   const pose = lit === 'bright' ? 'complete' : b === 'night' ? 'sleepy' : 'teach';
-  return { bg, ink, flame: FLAME[lit], pose, lines: WIDGET_LINES[lit === 'bright' ? 'done' : b] };
+  const butterfly = STATES[lit];
+  return { bg, ink, butterfly, art: `butterfly-${butterfly}${b === 'night' ? '-night' : ''}`, pose, lines: WIDGET_LINES[words][lit === 'bright' ? 'done' : b] };
+}
+
+/**
+ * Whose words the widget and the note speak: 'learn' for someone whose sessions are mostly lessons,
+ * 'habits' for someone who mostly keeps habits. Before any session, what the intro picked first.
+ */
+export function leaning(progress) {
+  const log = progress.log || [];
+  if (!log.length) return (progress.picked?.[0] ?? LEARN) === LEARN ? 'learn' : 'habits';
+  return 2 * log.filter((e) => e.habit === LEARN).length >= log.length ? 'learn' : 'habits';
 }
 
 const LIGHTS = ['ember', 'soft', 'bright'];
 
-/** The widget's flame follows the learner's best habit: the brightest light, then the longest streak. */
+/** The widget and your butterfly follow the learner's best habit: the brightest light, then the longest streak. */
 function best(progress, at) {
   const ids = Object.keys(progress.habits);
-  return ids.map((id) => ({ light: light(progress, at, id), streak: currentStreak(progress, at, id) }))
+  return ids.map((id) => ({ habit: id, light: light(progress, at, id), streak: currentStreak(progress, at, id) }))
     .sort((a, b) => LIGHTS.indexOf(b.light) - LIGHTS.indexOf(a.light) || b.streak - a.streak)[0]
-    ?? { light: 'ember', streak: 0 };
+    ?? { habit: LEARN, light: 'ember', streak: 0 };
+}
+
+/** Your butterfly today (src/cast/butterfly.js butterflyToday), from the best habit's light. Before any session, basking. */
+export const wingState = (progress, at = new Date()) => STATES[best(progress, at).light];
+
+/** The colours on your butterfly's wings, panel by panel; a habit of the learner's own by its place among them. */
+export function wingColours(progress) {
+  const own = (progress.tracked || []).map((t) => t.id).filter((id) => id.startsWith('own-'));
+  return (progress.wings || []).map((id) => habitColour(id, Math.max(0, own.indexOf(id))));
 }
 
 /**
  * What the app passes over the bridge after every save: the latest day anything was done (the
  * reminder stays quiet when it is today), the reminder's line pool, and the widget's looks from
- * now through the next `days` days' boundaries, each with the time it starts.
+ * now through the next `days` days' boundaries, each with the time it starts. `shows(habit)` says
+ * whether that habit's streak count may show (a quiet habit's is hidden unless switched on, as in
+ * habitview.js showsStreak); a hidden count is sent as null and the widget shows no number.
  */
-export function summary(progress, now = new Date(), days = 3, brain = globalThis.wingbeat) {
+export function summary(progress, now = new Date(), days = 3, brain = globalThis.wingbeat, shows = () => true) {
   const times = [now];
   for (let d = 0; d <= days; d++)
     for (const [h] of BANDS) {
       const t = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d, h);
       if (t > now && +t !== +times.at(-1)) times.push(t);
     }
+  const words = leaning(progress);
   const last = Object.values(progress.habits).map((s) => s.last).filter(Boolean).sort().at(-1) ?? null;
   return {
     doneOn: last,
@@ -60,10 +88,10 @@ export function summary(progress, now = new Date(), days = 3, brain = globalThis
     // all; without it, a fixed hour and yes. A snapshot: it is re-read on every save and app open.
     remindAt: brain?.reminderHour?.() ?? REMIND_AT,
     wanted: brain?.shouldRemind?.() ?? true,
-    remind: WIDGET_LINES.remind,
+    remind: WIDGET_LINES[words].remind,
     looks: times.map((t) => {
       const b = best(progress, t);
-      return { at: +t, ...b, ...look(b.light, t.getHours()) };
+      return { at: +t, ...b, streak: shows(b.habit) ? b.streak : null, ...look(b.light, t.getHours(), words) };
     }),
   };
 }
@@ -88,7 +116,7 @@ export function tellBars(rgb) {
   bridge()?.bars?.(hex, 0.299 * r + 0.587 * g + 0.114 * b > 140);
 }
 
-export const tellAndroid = (progress) => bridge()?.summary(JSON.stringify(summary(progress)));
+export const tellAndroid = (progress, shows) => bridge()?.summary(JSON.stringify(summary(progress, new Date(), 3, globalThis.wingbeat, shows)));
 
 /**
  * What became of each note ('opened' or 'cleared'), queued by the wrapper and handed to the
@@ -100,16 +128,33 @@ export function passNotes() {
   for (const note of JSON.parse(bridge().notes())) hear(note);
 }
 
-/** Lumi's widget poses, drawn from the same SVG as in the app and handed over as PNGs. */
-export async function sendArt() {
+/** An SVG as base64 PNG, `width` x `height`. */
+async function png(svg, width, height) {
+  const img = new Image();
+  img.src = `data:image/svg+xml,${encodeURIComponent(svg.replace('<svg ', `<svg width="${width}" height="${height}" `))}`;
+  await img.decode();
+  const canvas = Object.assign(document.createElement('canvas'), { width, height });
+  canvas.getContext('2d').drawImage(img, 0, 0);
+  return canvas.toDataURL('image/png').split(',')[1];
+}
+
+/** The pale body and antennae your butterfly has on the widget's night sky. */
+const NIGHT_BODY = '#E6DFD2';
+let sent = null; // the wings last drawn for the widget: they change at most once a day
+
+/**
+ * The widget's art, drawn from the same SVG as in the app and handed over as PNGs: Lumi's poses once,
+ * and your butterfly's three states (`look().art`) in your own wing colours, again whenever they change.
+ */
+export async function sendArt(progress) {
   const b = bridge();
   if (!b) return;
-  for (const pose of ['teach', 'sleepy', 'complete']) {
-    const img = new Image();
-    img.src = `data:image/svg+xml,${encodeURIComponent(lumi(pose).replace('<svg ', '<svg width="200" height="240" '))}`;
-    await img.decode();
-    const canvas = Object.assign(document.createElement('canvas'), { width: 200, height: 240 });
-    canvas.getContext('2d').drawImage(img, 0, 0);
-    b.art(pose, canvas.toDataURL('image/png').split(',')[1]);
-  }
+  const wings = JSON.stringify(progress.wings || []);
+  if (wings === sent) return;
+  const first = sent === null;
+  sent = wings;
+  if (first) for (const pose of ['teach', 'sleepy', 'complete']) b.art(pose, await png(lumi(pose), 200, 240));
+  for (const state of Object.values(STATES))
+    for (const night of [false, true])
+      b.art(`butterfly-${state}${night ? '-night' : ''}`, await png(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${BOX}">${butterflyToday(state, wingColours(progress), night ? NIGHT_BODY : INK)}</svg>`, 240, 200));
 }

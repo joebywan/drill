@@ -1,14 +1,17 @@
 import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
-import { GARDEN_WORDS, award, garden, moreArrived, plantWords } from './garden/model.js';
+import { GARDEN_WORDS, LIFE, LIFE_WORDS, award, creatures, garden, guide, moreArrived, plantWords } from './garden/model.js';
+import { lifeArt } from './cast/butterfly.js';
+import { fieldGuide } from './guide.js';
 import { PLANTS, animateLandmarks, animateScene, animateVisitor, drawGarden, flower, landmark, plant, sway, visitor } from './garden/art.js';
 import { COMEBACK_WORDS, PAUSED_WORDS, activeComeback, answerComeback, noteReminder, preferred, reminderHour, remindersPaused, shorter, shouldRemind, startComeback, usualHours, usualLine } from './fitting.js';
-import { emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, track, unlogToday, writeJournal, finishSession, meetsCoach, metCoach, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
-import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, dayName, restDays, sessionLine } from './habitview.js';
+import { WINGS, firstToday, emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, track, unlogToday, writeJournal, finishSession, meetsCoach, metCoach, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
+import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, showsStreak, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
-import { lumi } from './cast/lumi.js';
+import { flap, lumi, lumiPerched } from './cast/lumi.js';
+import { BOX, butterfly, butterflyToday } from './cast/butterfly.js';
 import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, comeBack, dropEchoes, echoes, fresh, warmUps } from './repeat.js';
 import { GOES, easier, flying, helpFor, misses, noteAnswer, struggling, warmedLast } from './adapt.js';
-import { CALM_SOUNDS, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
+import { CALM_SOUNDS, DARES_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, setSound, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
 import { lessonOf } from './garden/events.js';
@@ -16,7 +19,7 @@ import { moment } from './cast/voice.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
 import { TIMINGS, TIMING_WORDS, pathTimings, setTiming, spread, timed } from './practice/timings.js';
-import { bridge, passNotes, sendArt, tellAndroid, tellBars } from './widget.js';
+import { bridge, passNotes, sendArt, tellAndroid, tellBars, wingColours, wingState } from './widget.js';
 import { profile as syncProfile, sync } from './sync/sync.js';
 import { merge } from './sync/merge.js';
 import { navigation } from './nav.js';
@@ -35,6 +38,9 @@ const habitOf = (id) => habits().find((h) => h.id === id);
 /** Whose timings a habit plays by: its subject's `timings` (Wind down plays Calm's), or its own. */
 const timingsOf = (id) => subjects.find((s) => s.habit === id)?.timings ?? id;
 
+/** The widget's summary, with a quiet habit's streak count hidden unless the ⋯ switch shows it (decision 17). */
+const tellWidget = () => tellAndroid(progress, (id) => showsStreak(id, pref('quiet-streaks', false)));
+
 function load() {
   let raw = null;
   try { raw = localStorage.getItem(STORE); } catch { /* private mode */ }
@@ -48,7 +54,8 @@ function load() {
 let persistAsked = false;
 function save(synced = false) {
   try { localStorage.setItem(STORE, JSON.stringify(progress)); } catch { /* private mode: progress lasts the visit */ }
-  tellAndroid(progress);
+  tellWidget();
+  sendArt(progress).catch(console.warn);
   if (!synced) syncSoon();
   // Ask the browser, quietly and once a visit, not to evict progress (Safari clears it after a week away).
   if (persistAsked) return;
@@ -119,13 +126,14 @@ const greeted = new Map();
 function greeting(h) {
   // On Learning, the course shown speaks: Rosa, Kaede, Ada…
   const course = h.id === 'learn' ? courseShown.coach.name.toLowerCase() : undefined;
-  const { coach: who, state, facts } = moment(progress, h, new Date(), course);
-  const key = `${h.id} ${who} ${state.light} ${state.today}`;
+  const { coach: who, state, facts } = moment(progress, h, new Date(), course, showsStreak(h.id, pref('quiet-streaks', false)));
+  const dares = pref('dares', true);
+  const key = `${h.id} ${who} ${state.light} ${state.today} ${dares} ${facts.count}`;
   if (!greeted.has(key)) {
     let kept = {};
     try { kept = JSON.parse(localStorage.getItem(SAID)) || {}; } catch { /* private mode or unreadable */ }
     const recent = Array.isArray(kept.recent) ? kept.recent : [];
-    const said = say(who, { ...state, daredToday: kept.dared === state.today }, facts, Math.random, recent);
+    const said = say(who, { ...state, dares, daredToday: kept.dared === state.today }, facts, Math.random, recent);
     try { localStorage.setItem(SAID, JSON.stringify({ recent: [...recent, said.line].slice(-6), dared: said.dare ? state.today : kept.dared })); } catch { /* lasts the visit */ }
     greeted.set(key, `<p class="said welcome greeting${said.dare ? ' dare' : ''}"><b>${esc(VOICES[who].name)}</b> ${esc(said.text)}</p>`);
   }
@@ -223,6 +231,7 @@ function home(arrived = null, newly = []) {
   };
 
   const g = garden(progress, new Date(), south());
+  const raised = raising(creatures(progress).find((c) => c.id === (learning ? courseShown.id : habitShown)));
   app.innerHTML = `
     <header class="bar">
       <h1>Wingbeat</h1>
@@ -241,10 +250,12 @@ function home(arrived = null, newly = []) {
         `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === courseShown}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
       ${learning && courseShown.games ? `<nav class="courses games" aria-label="Games"><span>Games</span>${courseShown.games.map((g) => `<button class="course" data-game="${g.id}">${esc(g.label)}</button>`).join('')}</nav>` : ''}
       ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : invite ? '' : greeting(shownHabit)}
-      ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true))}</button>`
-        : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
+      ${streakRow(progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true, showsStreak(habitShown, pref('quiet-streaks', false))))}</button>`
+        : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : '')}
       ${invite ? comebackCard(invite) : ''}
-      ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly) : ''}
+      ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly, raised) : ''}
+      ${shownSubjects[0]?.lookBack?.(progress, new Date()) ?? ''}
+      ${shownHabit.kind === 'log' ? '' : raised}
       ${units.map((u) => `
         <section class="street">
           <h2>${esc(u.title)}</h2>
@@ -290,9 +301,12 @@ function home(arrived = null, newly = []) {
     stopHome = stopGarden;
   }
   app.querySelector('.garden-link').addEventListener('click', () => gardenView());
+  app.querySelector('.raising')?.addEventListener('click', (e) => guideView(e.currentTarget.dataset.species, () => { home(); focusOn('.raising'); }));
   app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); focusOn('.sound'); });
   app.querySelector('.menu').addEventListener('click', () => { stopHome(); keep(); });
   app.querySelector('.streak-line')?.addEventListener('click', () => habitView(habitShown));
+  app.querySelector('.yours-link')?.addEventListener('click', yoursView);
+  app.querySelector('.look-back')?.addEventListener('click', () => habitView(habitShown));
   // Before a habit's first session there is no habit view yet, so its timings are offered here.
   app.querySelector('.timings-link')?.addEventListener('click', () => { stopHome(); timingsView(timingsOf(habitShown), () => { home(); focusOn('.timings-link'); }); });
   // The tabs are one row that scrolls inside itself: the selected one is brought into view.
@@ -353,6 +367,63 @@ function home(arrived = null, newly = []) {
     home();
     focusOn('.cta .next');
   });
+}
+
+/** Your butterfly drawn as it is today, or `state`; small on home, the end screens and the chip. */
+const yours = (state = wingState(progress)) => `<svg viewBox="${BOX}" aria-hidden="true">${butterflyToday(state, wingColours(progress))}</svg>`;
+
+/** Home's streak line (or what stands in its place) with your butterfly beside it, once there is anything to show. */
+const streakRow = (line) => (!line && !progress.log.length ? '' : `<div class="streak-row">
+  <button class="yours-link" aria-label="${esc(WING_WORDS.title)}, ${wingState(progress)}">${yours()}</button>${line}</div>`);
+
+/**
+ * "Your butterfly", from home: the wings so far, the habits whose colours are on them, what its three
+ * states mean and what comes next. No streak counts here.
+ */
+function yoursView() {
+  stopHome();
+  const wings = progress.wings || [];
+  const colours = wingColours(progress);
+  const legend = [...new Map(wings.map((id, i) => [id, colours[i]]))].map(([id, colour]) => {
+    const h = habitOf(id);
+    return `<li><i style="background:${colour}"></i><span aria-hidden="true">${esc(h?.icon ?? '')}</span> ${esc(h?.name ?? id)}</li>`;
+  }).join('');
+  const state = (s) => `<li>${yours(s)}<span>${esc(WING_WORDS[s])}</span></li>`;
+  app.innerHTML = `
+    <header class="bar"><button class="back" aria-label="Back">←</button></header>
+    <main class="yours-page">
+      <h1>${esc(WING_WORDS.title)}</h1>
+      <svg class="yours-wings" viewBox="${BOX}" aria-hidden="true">${butterfly(colours, wings.length >= WINGS)}</svg>
+      <p class="said">${esc(wings.length ? WING_WORDS.panels.replace('{n}', wings.length).replace('{of}', WINGS) : WING_WORDS.none)}</p>
+      ${legend ? `<h2>${esc(WING_WORDS.legend)}</h2><ul class="legend">${legend}</ul>` : ''}
+      <h2>${esc(WING_WORDS.states)}</h2>
+      <ul class="does states">${['flying', 'basking', 'resting'].map(state).join('')}</ul>
+      <h2>${esc(WING_WORDS.next)}</h2>
+      <p>${esc(wings.length >= WINGS ? WING_WORDS.done : WING_WORDS.more)}</p>
+    </main>`;
+  scrollTo(0, 0);
+  focusOn('h1');
+  app.querySelector('.back').addEventListener('click', () => { home(); focusOn('.yours-link'); });
+}
+
+/**
+ * The wingbeat: on the first session of a day, the end screen shows your butterfly with the panel
+ * that session coloured (`newPanel`; none once the wings are full) and one line. `lumiToo` draws Lumi
+ * beside it, where she isn't on the screen already. `beat()` then pops the panel in, plays the flutter
+ * and has Lumi flipper-flap; under reduced motion the panel is simply there.
+ */
+const wingbeat = (lumiToo, newPanel) => `<section class="wingbeat-moment">
+    ${lumiToo ? `<div class="wing-lumi">${lumi('complete')}</div>` : ''}
+    <svg viewBox="${BOX}" aria-hidden="true">${butterfly(wingColours(progress), progress.wings.length >= WINGS)}</svg>
+    <p>${esc(line(newPanel ? 'wingbeat' : 'full', Math.random(), WING_WORDS))}</p></section>`;
+function beat(section, newPanel, lumiEl, wait) {
+  const panel = newPanel && section.querySelector(':scope > svg [data-new]');
+  move(panel, [{ opacity: 0 }, { opacity: 1 }], { duration: 450, delay: wait, easing: 'ease-out', fill: 'backwards' });
+  setTimeout(() => {
+    flourish(section.querySelector(':scope > svg'), 'pop');
+    cue('flutter');
+    flap(lumiEl());
+  }, wait + 300);
 }
 
 /** Runs a path node's lesson; `timings` goes over the learner's own for this session only. */
@@ -434,8 +505,11 @@ function comebackLesson(c) {
 function habitTab(h) {
   const n = currentStreak(progress, new Date(), h.id);
   const started = !!progress.habits[h.id]?.last;
+  const number = started && showsStreak(h.id, pref('quiet-streaks', false));
+  const lit = light(progress, new Date(), h.id);
+  const label = number ? `, ${n}-day streak` : started && lit === 'bright' ? ', done today' : '';
   return `<button class="path-tab" data-path="${esc(h.id)}" aria-pressed="${h.id === habitShown}"
-    aria-label="${esc(h.name)}${started ? `, ${n}-day streak` : ''}">${esc(h.icon)} ${esc(h.name)}${started ? ` <b class="streak-${light(progress, new Date(), h.id)}">${n}</b>` : ''}</button>`;
+    aria-label="${esc(h.name)}${label}">${esc(h.icon)} ${esc(h.name)}${started ? ` <b class="streak-${lit}"${number ? `>${n}` : ' aria-hidden="true">'}</b>` : ''}</button>`;
 }
 
 /**
@@ -560,11 +634,24 @@ function liven(el) {
 const shortDate = (date) => dateOf(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
 /** One thing that arrived, drawn small beside its line: "A butterfly arrived · 12 Oct". A visitor in its habit's species. */
-const arrival = ({ gift, text, on }, habit) => {
+const arrival = ({ gift, text, on, species: kind }, habit) => {
   const species = habitsFor(progress).findIndex((h) => h.id === habit);
-  const art = gift === 'flower' ? flower(habit) : gift === 'butterfly' || gift === 'bee' ? visitor(gift, species) : landmark(gift);
+  const art = LIFE.includes(gift) ? lifeSvg(kind, gift) : gift === 'flower' ? flower(habit) : gift === 'bee' ? visitor(gift, species) : landmark(gift);
   return `<span class="arrival">${art}<span>${esc(text)}${on ? ` · ${shortDate(on)}` : ''}</span></span>`;
 };
+
+/** A raised butterfly at its stage, drawn small by the kit (cropped close); the caterpillar at `growth`. */
+const lifeSvg = (species, stage, growth = 0) => `<svg class="creature" viewBox="12 6 96 84" aria-hidden="true">${lifeArt(species, stage, growth)}</svg>`;
+
+/** Home's line for the creature the path shown is raising ("Chess is raising a Chequered Swallowtail"), into the field guide. */
+const raising = (c) => (!c ? '' : `<button class="raising" data-species="${esc(c.species.id)}">${lifeSvg(c.species, c.stage, c.growth)}<span>${esc(LIFE_WORDS.raising(c))}</span></button>`);
+
+/** The field guide (src/guide.js), on `id`'s page when given; its back runs `back`. */
+function guideView(id, back) {
+  stopHome();
+  stopHome = () => {};
+  fieldGuide(guide(progress), { app, back, focusOn, date: shortDate, id });
+}
 
 /** What arrived in the garden is heard: the first thing's own sound, after `wait` ms. */
 const arrive = (newly, wait = 0) => { if (newly.length) setTimeout(() => chime(newly[0].sound || newly[0].gift), wait); };
@@ -605,11 +692,12 @@ function gardenView(from = null) {
       <b>${esc(kind[0].toUpperCase() + kind.slice(1))} · ${esc(p.name)}</b>
       ${words.days ? `<span>${esc(words.days)}</span>` : ''}
       ${words.next ? `<span class="hint">${esc(words.next)}</span>` : ''}
+      ${p.creatures.map((c) => `<span class="arrival">${lifeSvg(c.species, c.stage, c.growth)}<span>${esc(LIFE_WORDS.card(c))}${c.k === 3 && c.on ? ` ${shortDate(c.on)}` : ''}</span></span>`).join('')}
       ${[...p.flowers, ...p.visitors].sort((a, b) => a.on.localeCompare(b.on)).map((a) => arrival(a, p.habit)).join('')}
     </button></li>`;
   };
   app.innerHTML = `
-    <header class="bar"><button class="back" aria-label="Back">←</button></header>
+    <header class="bar"><button class="back" aria-label="Back">←</button><button class="link guide-link">${esc(LIFE_WORDS.open)}</button></header>
     <main class="garden-page">
       <h1>Your garden</h1>
       <div class="garden-view">${drawGarden(g, 'tall')}</div>
@@ -620,6 +708,7 @@ function gardenView(from = null) {
     </main>`;
   stopHome = liven(app.querySelector('.garden-view'));
   app.querySelector('[data-event]')?.addEventListener('click', () => playEvent(g.event));
+  app.querySelector('.guide-link').addEventListener('click', () => guideView(null, () => { gardenView(); focusOn('.guide-link'); }));
   focusOn(from ? `[data-plant="${from}"]` : 'h1');
   const open = (id) => habitView(id, () => gardenView(id));
   app.querySelector('.back').addEventListener('click', () => { home(); focusOn('.garden-link'); });
@@ -635,10 +724,11 @@ function gardenView(from = null) {
  * the big button sits in the footer. After it: a calm "done", today's streak, anything that arrived
  * in the garden (the end screens' own lines) and a small Undo for the rest of the day.
  */
-function logPanel(h, logged, newly) {
+function logPanel(h, logged, newly, raised = '') {
   const n = currentStreak(progress, new Date(), h.id);
   return `<section class="log-habit">
     <h2><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}</h2>
+    ${raised}
     ${logged ? `<p class="said" role="status">${esc(LOG_WORDS.done)}</p>
       <div class="chips">${chip('log', `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`)}</div>
       ${arrivals(newly)}
@@ -911,11 +1001,13 @@ function run(lessonId, queue, title, extra = null) {
   const finishRoutine = () => {
     const { subject, topic: technique } = queue[0];
     const firstTime = lessonId && !progress.done[lessonId];
+    const beats = firstToday(progress), panels = progress.wings.length;
     const mins = Math.max(1, Math.round((Date.now() - started) / 60000));
     progress = answerComeback(writeJournal(finishPractice(progress, subject.habit, lessonId, new Date(), { title: technique, mins }), journal), subject.habit);
     let newly;
     ({ progress, newly } = award(progress));
     save();
+    const newPanel = progress.wings.length > panels;
     const h = habitOf(subject.habit);
     const n = currentStreak(progress, new Date(), h.id);
     app.innerHTML = `
@@ -925,9 +1017,11 @@ function run(lessonId, queue, title, extra = null) {
         <h1>${esc(line('done', Math.random(), who.lines))}</h1>
         <p class="said">${esc([...did, `${mins} min`].join(' · '))}</p>
         <div class="chips">
-          ${chip(h.id, `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`)}
+          ${showsStreak(h.id, pref('quiet-streaks', false)) ? chip(h.id, `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`) : ''}
         </div>
+        ${beats ? wingbeat(true, newPanel) : ''}
         ${arrivals(newly)}
+        ${subject.readBack?.(progress, new Date()) ?? ''}
         <section class="feel" aria-labelledby="feel-q">
           <h2 id="feel-q">${esc(who.ask ?? 'How do you feel?')}</h2>
           <div class="feels">${feelsFor(who.feel).map(([value, label]) => `<button class="choice" data-feel="${value}">${esc(label)}</button>`).join('')}</div>
@@ -937,6 +1031,7 @@ function run(lessonId, queue, title, extra = null) {
       <footer class="cta"><button class="next">Continue</button></footer>`;
     const endCoach = coach(app.querySelector('.hero'), who.draw);
     endCoach.set('done');
+    if (beats) beat(app.querySelector('.wingbeat-moment'), newPanel, () => app.querySelector('.wing-lumi'), 600);
     arrive(newly, 400);
     focusOn('h1');
     for (const b of app.querySelectorAll('[data-feel]')) {
@@ -952,6 +1047,7 @@ function run(lessonId, queue, title, extra = null) {
         focusOn('.cta .next');
       });
     }
+    app.querySelector('.read-back')?.addEventListener('click', () => { endCoach.stop(); habitView(h.id, () => home(firstTime ? lessonId : null)); });
     app.querySelector('.next').addEventListener('click', () => {
       endCoach.stop();
       home(firstTime ? lessonId : null);
@@ -979,12 +1075,14 @@ function run(lessonId, queue, title, extra = null) {
   const perfectRun = () => results.length > 0 && results.every((r) => r.correct);
   const finish = () => {
     const relit = needsRepair(progress);
+    const beats = firstToday(progress), panels = progress.wings.length;
     const firstTime = lessonId && !progress.done[lessonId];
     const seconds = Math.round((Date.now() - started) / 1000);
     progress = finishSession(progress, lessonId, results, new Date(), { title: title || 'Review', mins: Math.max(1, Math.round(seconds / 60)) });
     let newly;
     ({ progress, newly } = award(progress));
     save();
+    const newPanel = progress.wings.length > panels;
     const right = results.filter((r) => r.correct).length;
     const perfect = perfectRun();
     const missed = results.some((r) => !r.correct);
@@ -1010,9 +1108,10 @@ function run(lessonId, queue, title, extra = null) {
         <div class="chips">
           ${percent === null ? '' : chip('acc', accuracyLabel(percent), `${percent}%`)}
           ${chip('time', pace, clock)}
-          ${chip('fire', STREAK_LABEL, `🔥 ${currentStreak(progress)}`)}
+          ${chip('fire', STREAK_LABEL, currentStreak(progress), yours('flying'))}
         </div>
         <p class="learned">${Object.keys(progress.cards).length} learned so far · ${right} of ${results.length} ${lessonId ? 'right first try' : 'recalled'}</p>
+        ${beats ? wingbeat(false, newPanel) : ''}
         ${arrivals(newly)}
       </main>
       <footer class="cta"><button class="next">Continue</button></footer>`;
@@ -1044,6 +1143,9 @@ function run(lessonId, queue, title, extra = null) {
       setTimeout(() => !left && cast[1].hop(), 140);
     };
     if (leanIn) leanIn.finished.then(settle, () => {}); else settle();
+    // The wingbeat, and Lumi's signature flipper-flap on a perfect lesson, once she has settled.
+    if (beats) beat(app.querySelector('.wingbeat-moment'), newPanel, () => (left ? null : lumiEl), 1200);
+    else if (perfect) setTimeout(() => !left && flap(lumiEl), 1500);
     focusOn('h1');
     cue('done');
     arrive(newly, 900);
@@ -1127,6 +1229,9 @@ function keep(note = '') {
       ${syncMenuHtml()}
       <h2>Calm sounds</h2>
       ${CALM_SOUNDS.map(([name, label]) => `<button class="choice" data-pref="${name}" aria-pressed="${calmPref(name)}">${esc(label)}</button>`).join('')}
+      <h2>Coaches and streaks</h2>
+      <button class="choice" data-pref="dares" aria-pressed="${pref('dares', true)}">${esc(DARES_LABEL)}</button>
+      <button class="choice" data-pref="quiet-streaks" aria-pressed="${pref('quiet-streaks', false)}">${esc(QUIET_STREAK_LABEL)}</button>
       <h2>Garden</h2>
       <button class="choice" data-pref="south" aria-pressed="${south()}">${esc(SOUTH_LABEL)}</button>
       ${bridge() ? `<h2>${esc(REMINDER_WORDS.title)}</h2><button class="choice" data-remind aria-pressed="${bridge().remindersOn()}">${esc(REMINDER_WORDS.toggle)}</button>` : ''}
@@ -1139,6 +1244,7 @@ function keep(note = '') {
       setPref(b.dataset.pref, on);
       b.setAttribute('aria-pressed', on);
       if (on && b.dataset.pref === 'bell') play('bell');
+      if (b.dataset.pref === 'quiet-streaks') tellWidget();
     });
   }
   // Android only: the once-a-day note is off until turned on here.
@@ -1196,15 +1302,16 @@ function confirmLoad(p) {
  * (`progress.picked` records it); Skip leaves the default home.
  */
 function intro() {
-  const row = (icon, text) => `<li><span aria-hidden="true">${esc(icon)}</span><span>${esc(text)}</span></li>`;
+  const row = (icon, text, art = esc(icon)) => `<li><span aria-hidden="true">${art}</span><span>${esc(text)}</span></li>`;
   app.innerHTML = `
     <main class="survey intro">
-      <div class="hero"></div>
+      <div class="hero perched"></div>
       <h1>${esc(INTRO_WORDS.title)}</h1>
+      <p class="tagline">${esc(INTRO_WORDS.tagline)}</p>
       <ul class="does">
         ${HABITS.filter((h) => INTRO_WORDS.does[h.id]).map((h) => row(h.icon, INTRO_WORDS.does[h.id])).join('')}
         ${row('👆', INTRO_WORDS.does.track)}
-        ${row('🌻', INTRO_WORDS.garden)}
+        ${row('', INTRO_WORDS.butterfly, yours('basking'))}
         ${row('🔒', INTRO_WORDS.privacy)}
       </ul>
     </main>
@@ -1212,7 +1319,7 @@ function intro() {
       <button class="next" data-next>${esc(INTRO_WORDS.next)}</button>
       <button class="link" data-skip>${esc(INTRO_WORDS.skip)}</button>
     </footer>`;
-  const guide = coach(app.querySelector('.hero'), lumi);
+  const guide = coach(app.querySelector('.hero'), (mood) => lumiPerched(mood));
   guide.set('teach');
   focusOn('h1');
   app.querySelector('[data-next]').addEventListener('click', () => { guide.stop(); want(); });
@@ -1313,8 +1420,8 @@ window.wingbeat = {
   },
 };
 
-tellAndroid(progress); // the widget catches up with a new day even when nothing is saved
-sendArt().catch(console.warn);
+tellWidget(); // the widget catches up with a new day even when nothing is saved
+sendArt(progress).catch(console.warn);
 passNotes();
 addEventListener('visibilitychange', () => document.hidden || passNotes()); // a note tapped while the app was open
 navigation(app);

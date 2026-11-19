@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { SPECIES, open } from '../src/cast/butterfly.js';
 import { MAX_FLOWERS, PLANTS, plant, blooms, sway, MOODS, SIZE, scene, slots, place, VISITORS, visitor, animateVisitor, animateScene, landmark } from '../src/garden/art.js';
 import { STAGES } from '../src/garden/model.js';
 import { HABITS } from '../src/subjects.js';
@@ -173,7 +174,8 @@ test('past six plants, up to MAX_PLANTS of every kind: no visitor sits on any pl
 test('a drawn garden has every plant at its stage, flowers capped at what the art draws, and its visitors', () => {
   const many = Array.from({ length: 9 }, (_, i) => ({ gift: 'flower', on: '2026-10-01', id: `f${i}` }));
   const plants = HABITS.map((h, i) => ({ habit: h.id, stage: i % 5, flowers: many,
-    visitors: ['butterfly', 'bee'].map((gift) => ({ gift, on: '2026-10-01', id: gift, species: i })) }));
+    visitors: [{ gift: 'bee', on: '2026-10-01', id: 'bee', species: i }],
+    creatures: [{ id: h.id, k: 3, stage: 'butterfly', species: SPECIES[i], on: `2026-10-0${i + 1}` }] }));
   for (const shape of ['strip', 'tall']) {
     const svg = drawGarden({ mood: 'sunlit', plants }, shape);
     clean(svg, shape);
@@ -182,9 +184,8 @@ test('a drawn garden has every plant at its stage, flowers capped at what the ar
     assert.equal(svg.match(/class="visitor /g).length, plants.length * 2);
     assert.match(svg, /class="pond"/, `Lumi's pond fits the ${shape} beside every plant`);
     assert.equal(svg.match(/<svg /g).length, 1 + plants.length * 3 + 2, 'one scene, and the pond with Lumi');
-    // Each habit's butterfly is its own species: no two share wing colours.
-    const wings = [...svg.matchAll(/<g data-part="wings"><ellipse [^>]*fill="(#\w+)"/g)].map((m) => m[1]);
-    assert.equal(new Set(wings).size, plants.length, shape);
+    // Each emerged butterfly is drawn as its own species, by the kit.
+    for (const sp of SPECIES.slice(0, plants.length)) assert.ok(svg.includes(open(sp.art)), sp.name);
   }
   const resting = drawGarden({ mood: 'resting', plants: plants.slice(0, 1) });
   assert.equal(resting, drawGarden({ mood: 'resting', plants: plants.slice(0, 1) }), 'the same every time');
@@ -263,4 +264,16 @@ test('the tall view has room for every landmark and its guests, clear of the pla
     const plants = Array.from({ length: n }, (_, i) => ({ habit: kinds[i], stage: 4, flowers: [], visitors: [] }));
     for (const shape of ['strip', 'tall']) assert.match(drawGarden({ mood: 'sunlit', plants }, shape), /class="pond"/, `${shape} ${n}`);
   }
+});
+
+test('eggs, caterpillars and chrysalises sit on their plant in the tall view only; emerged ones fly, some by Lumi', () => {
+  const young = ['egg', 'caterpillar', 'chrysalis'].map((stage, k) => ({ id: `c${k}`, k, stage, growth: 0.5, species: SPECIES[k] }));
+  const flown = [3, 4, 5].map((i) => ({ id: `c${i}`, k: 3, stage: 'butterfly', species: SPECIES[i], on: `2026-10-0${i}` }));
+  const plants = [{ habit: 'learn', stage: 4, flowers: [], visitors: [], creatures: [...young, ...flown] }];
+  const tall = drawGarden({ mood: 'sunlit', plants }, 'tall');
+  clean(tall, 'tall');
+  assert.deepEqual([...tall.matchAll(/class="creature" data-stage="(\w+)"/g)].map((m) => m[1]), ['egg', 'caterpillar', 'chrysalis']);
+  assert.equal(tall.match(/visitor-butterfly/g).length, 3, 'one at the tree\'s perch, the rest by the pond');
+  assert.doesNotMatch(drawGarden({ mood: 'sunlit', plants }, 'strip'), /class="creature"/, 'the strip shows emerged ones only');
+  assert.equal(drawGarden({ mood: 'sunlit', plants }, 'strip').match(/visitor-butterfly/g).length, 3);
 });

@@ -127,8 +127,8 @@ test("maths' skip-ahead is an optional offer, and starts the path at the unit pi
   await skip.click();
   await expect(page.getByRole('heading', { name: 'How is your maths?' })).toBeFocused();
   await page.getByRole('button', { name: 'Adding in my head is fine' }).click();
-  await page.getByRole('button', { name: 'Start at Percentages' }).click();
-  await expect(page.locator('.street', { has: page.getByRole('heading', { name: 'Percentages' }) }).locator('.here')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Start at Times tables you can see' }).click();
+  await expect(page.locator('.street', { has: page.getByRole('heading', { name: 'Times tables you can see' }) }).locator('.here')).toHaveCount(1);
   await expect(skip).toHaveCount(0);
   await page.getByRole('button', { name: 'Chess', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Know some chess already? Skip ahead' })).toBeVisible(); // each course its own
@@ -151,10 +151,10 @@ for (const colorScheme of ['light', 'dark']) {
   }
 }
 
-test('every fresh Maths version fits a 360x640 phone in a wide font, with its options on screen', async ({ page }) => {
+test('every Maths item and fresh version fits a 360x640 phone in a wide font, with its options on screen', async ({ page }) => {
   const pool = JSON.parse(readFileSync(new URL('../../src/data/maths-variants.json', import.meta.url)));
-  const items = course.units.flatMap((u) => u.lessons.flatMap((l) => l.items)).filter((i) => i.family)
-    .flatMap((i) => pool[i.family].map((e) => ({ id: i.id, type: i.type, ...e })));
+  const shipped = course.units.flatMap((u) => u.lessons.flatMap((l) => l.items));
+  const items = [...shipped, ...shipped.filter((i) => i.family).flatMap((i) => pool[i.family].map((e) => ({ id: i.id, type: i.type, ...e })))];
   await page.setViewportSize({ width: 360, height: 640 });
   await page.goto('/');
   await page.addStyleTag({ content: 'body, button { font-family: "DejaVu Sans", Verdana, sans-serif; }' });
@@ -173,4 +173,21 @@ test('every fresh Maths version fits a 360x640 phone in a wide font, with its op
     return out;
   }, items);
   expect(bad).toEqual([]);
+});
+
+test('a number line shows one marker after a right drop, and two after a miss', async ({ page }) => {
+  const line = course.units.flatMap((u) => u.lessons.flatMap((l) => l.items)).find((i) => i.type === 'line');
+  await page.goto('/');
+  const markers = async (wrong) => page.evaluate(async ({ item, wrong }) => {
+    const { mount } = await import('/src/maths/exercise.js');
+    const app = document.getElementById('app');
+    app.innerHTML = '<main class="play"><div class="coach"><p class="bubble"></p></div><div class="stage"></div></main>';
+    mount(app.querySelector('.stage'), item, { say() {}, done() {} });
+    const slider = app.querySelector('.numline');
+    if (!wrong) for (let k = 0; k < item.ticks; k++) slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
+    slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })); // the end tick, or the start: neither is the answer
+    return [...slider.querySelectorAll('.marker')].filter((m) => m.checkVisibility()).length;
+  }, { item: wrong ? line : { ...line, show: undefined, sum: String(line.max) }, wrong });
+  expect(await markers(false)).toBe(1);
+  expect(await markers(true)).toBe(2);
 });

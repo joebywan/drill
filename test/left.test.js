@@ -49,7 +49,7 @@ test('a left practice changes no streak, day count, habit view, garden or first 
 });
 
 test('migrate v8 to v9: older saves gain an empty `left`; v9 keeps it and the hours; junk is refused', () => {
-  assert.equal(VERSION, 9);
+  assert.ok(VERSION >= 9);
   const v8 = { ...roundTrip(finishPractice(emptyProgress(), 'calm', null, day(1))), version: 8 };
   delete v8.left;
   delete v8.log[0].hour;

@@ -1,4 +1,6 @@
 import { INK, face, limb, shadow, svg } from './kit.js';
+import { butterfly } from './butterfly.js';
+import { move } from '../feel.js';
 
 /**
  * Lumi, the guide: a baby seal who walks the learner along the street. The habit display
@@ -42,3 +44,20 @@ export function lumi(mood = 'teach') {
       <g data-part="arms">${limb(L, lh, SEAL, SEAL, 12)}${limb(R, rh, SEAL, SEAL, 12)}</g>
     </g>`);
 }
+
+/**
+ * Lumi's flipper-flap, at the wingbeat moment and as her signature on a perfect lesson: both front
+ * flippers beat like wings, twice, about her shoulders. Flippers only: Lumi is never drawn with wings.
+ * `el` holds her drawing, best in a flippers-up mood ('complete'). Skipped under reduced motion.
+ */
+export function flap(el) {
+  for (const [i, part] of [...(el?.querySelectorAll('[data-part="arms"] > *') ?? [])].entries()) {
+    const [x, y] = i < 2 ? L : R;
+    part.style.transformOrigin = `${x}px ${y}px`;
+    move(part, [0, 1, 0, 1, 0].map((k) => ({ transform: `rotate(${k * (i < 2 ? -50 : 50)}deg)` })), { duration: 900, easing: 'ease-in-out' });
+  }
+}
+
+/** Lumi with the player's butterfly on her crown, placed as on the app icon (tools/icon.js). */
+export const lumiPerched = (mood, filled) => lumi(mood)
+  .replace('</svg>', `<g data-part="butterfly" transform="translate(26.5 -10.4) scale(.391)">${butterfly(filled, true, INK)}</g></svg>`);

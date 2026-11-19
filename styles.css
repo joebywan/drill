@@ -26,6 +26,7 @@
     --right-bg: #16301f;
     --wrong-bg: #3a1d17;
     --streak: #B9741A;
+    --butterfly-body: #E6DFD2; /* the butterfly kit's body and antennae */
   }
 }
 
@@ -312,6 +313,8 @@ html { scroll-padding-bottom: 160px; }
 /* One pill on every tab, pressed or not. */
 .path-tab b { display: inline-block; min-width: 1.6em; padding: 0 7px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: .9em; }
 .path-tab b.streak-bright { color: var(--streak); }
+/* A quiet habit's number is hidden: a dot in today's light instead. */
+.path-tab b:empty { min-width: 0; width: .55em; height: .55em; padding: 0; border: 0; background: currentColor; vertical-align: middle; }
 .streak-line, .link {
   display: block; margin: 10px auto 0; padding: 6px 12px; border: 0; border-radius: 999px; background: none;
   color: var(--muted); font-size: .9rem; text-decoration: underline; text-underline-offset: 3px;
@@ -449,6 +452,8 @@ html { scroll-padding-bottom: 160px; }
   display: block; margin: 10px auto 0; min-height: 44px; padding: 10px 14px; border: 0; background: none;
   color: var(--muted); font-size: .95rem; text-decoration: underline; text-underline-offset: 3px;
 }
+.look-back { max-width: 100%; margin-top: 4px; padding: 6px 14px; text-align: center; text-decoration: none; overflow-wrap: anywhere; }
+.look-back q { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
 .add-tab { border-style: dashed; }
 .add-habit .choice, .own-habit .choice { overflow-wrap: anywhere; }
 .own-habit form { text-align: left; }
@@ -704,12 +709,12 @@ body:has(main.night) {
   min-height: 190px; padding: 16px; background: var(--card); border: 2px solid var(--line); border-radius: 18px; text-align: center;
 }
 /* One glyph is huge; a word shrinks to fit the card. */
-.quiz .glyph { margin: 0; font-size: min(110px, calc(250px / var(--len, 1))); line-height: 1.15; font-weight: 500; }
+.quiz .glyph { margin: 0; font-size: clamp(28px, calc(250px / var(--len, 1)), 110px); line-height: 1.15; font-weight: 500; }
 .quiz .reading { margin: 0; font-size: 1.3rem; font-weight: 700; color: var(--muted); }
-.quiz .meaning { margin: 0; font-size: 1.1rem; font-weight: 700; }
-.quiz .slots { display: flex; gap: 8px; margin: 8px 0 0; }
+.quiz .meaning { margin: 0; padding: 0 48px; font-size: 1.1rem; font-weight: 700; } /* clear of the speaker */
+.quiz .slots { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 8px 0 0; }
 .quiz .slot {
-  display: grid; place-items: center; width: 64px; height: 72px; font-size: 44px;
+  display: grid; place-items: center; min-width: min(64px, 11vw); height: 72px; padding: 0 4px; font-size: min(44px, 9vw); white-space: nowrap;
   border-bottom: 4px solid var(--line); border-radius: 6px;
 }
 .quiz .slot:not(:empty) { border-color: var(--accent); }
@@ -720,7 +725,7 @@ body:has(main.night) {
 .quiz .quiz-pairs { display: grid; grid-template-columns: 1fr 1fr; }
 .quiz .quiz-pairs .choice { font-size: 1.4rem; padding: 10px 6px; min-height: 56px; }
 .quiz .quiz-build { flex-wrap: wrap; justify-content: center; }
-.quiz .quiz-build .choice { flex: 0 0 calc(25% - 6px); }
+.quiz .quiz-build .choice { flex: 0 0 auto; min-width: calc(25% - 6px); }
 .quiz .choice[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
 .quiz .choice.used { visibility: hidden; }
 .quiz-star { position: absolute; top: 12px; left: calc(50% - 12px); font-size: 28px; font-style: normal; color: #F5A524; pointer-events: none; }
@@ -750,11 +755,12 @@ body:has(main.night) {
   position: absolute; top: -13px; width: 32px; height: 32px; margin-left: -16px; border-radius: 50%; background: var(--maths);
   border: 3px solid var(--card); box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
 }
-.marker.right, .marker.answer { background: var(--accent); }
+.marker.right, .marker.spot { background: var(--accent); }
 .marker.wrong { background: var(--wrong); }
 .numline .end { position: absolute; bottom: 8px; font-weight: 700; color: var(--muted); }
 .numline .end:first-of-type { left: 6px; }
 .numline .end:last-of-type { right: 6px; }
+.track .zero { position: absolute; top: 20px; transform: translateX(-50%); font-style: normal; font-weight: 700; color: var(--muted); }
 
 /* Fitting the person (src/fitting.js): the comeback card on home, the shorter-one offer, the usual hours. */
 .comeback { position: relative; margin: 12px 0 4px; padding: 14px 16px 10px; border: 2px solid var(--line); border-radius: 16px; background: var(--card); }
@@ -907,3 +913,57 @@ body:has(main.night) {
   .code-tray .chips { max-height: 24vh; }
   .quiz.code-look .glyph { max-height: 28vh; }
 }
+
+/* ---- Raised butterflies: home's line, the garden's cards and the field guide (src/guide.js) ---- */
+.raising {
+  display: flex; align-items: center; gap: 8px; margin: 8px auto 0; max-width: 100%; padding: 2px 14px 2px 4px;
+  border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text); font-size: .85rem; text-align: left;
+}
+.raising svg { width: 40px; height: 34px; flex: none; }
+.raising + .street h2 { margin-top: 10px; }
+.log-habit .raising { margin-bottom: 8px; }
+.arrival svg.creature { height: 30px; }
+.arrivals .arrival > span { text-align: left; }
+.bar .guide-link { margin: 0 0 0 auto; }
+.field-guide { padding: 0 16px 40px; }
+.field-guide h1 { margin: 0 0 12px; font-size: 1.6rem; }
+.guide-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.guide-tile {
+  display: grid; justify-items: center; gap: 2px; width: 100%; height: 100%; padding: 8px 8px 10px; border-radius: 14px;
+  border: 1px solid var(--line); background: var(--card); color: var(--text); text-align: center; font-size: .85rem;
+}
+.guide-tile b { font-size: .95rem; }
+.guide-tile span { color: var(--muted); }
+.guide-art { width: 100%; max-width: 120px; height: auto; }
+.silhouette * { fill: var(--line); stroke: none; }
+.guide-page .guide-arts { display: flex; justify-content: center; gap: 8px; }
+.guide-page .guide-art { max-width: 160px; }
+.guide-page .latin { margin: -8px 0 12px; font-style: italic; color: var(--muted); }
+.guide-page .said { margin-bottom: 12px; }
+.guide-page .source { color: var(--muted); font-size: .9rem; }
+.guide-page .source a { color: inherit; }
+
+/* ---- Your butterfly (app.js yours, yoursView, wingbeat): beside home's streak line, its own screen, the end screens' moment ---- */
+.streak-row { display: flex; align-items: center; justify-content: center; gap: 2px; margin-top: 6px; }
+.streak-row .streak-line, .streak-row .link { margin: 0; }
+.yours-link { flex: none; width: 48px; height: 40px; padding: 0; border: 0; border-radius: 12px; background: none; }
+.yours-link svg { display: block; width: 100%; height: 100%; }
+.chip b svg { height: 1em; width: auto; margin-right: 4px; vertical-align: -.1em; }
+.yours-page { padding: 24px 16px 48px; text-align: center; }
+.yours-page h2 { margin: 24px 0 8px; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.yours-page p { margin: 0 auto; max-width: 30em; }
+.yours-page .said { margin-top: 4px; }
+.yours-wings { display: block; width: 200px; margin: 8px auto 0; }
+.legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin: 0; padding: 0; list-style: none; }
+.legend i { display: inline-block; width: 14px; height: 14px; margin-right: 6px; border-radius: 4px; vertical-align: -2px; }
+.states li { align-items: center; }
+.states svg { flex: none; width: 60px; }
+.wingbeat-moment { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 14px auto 0; max-width: 340px; }
+.wingbeat-moment > svg { flex: none; width: 64px; }
+.wingbeat-moment p { margin: 0; text-align: left; font-weight: 600; }
+.wing-lumi { flex: none; width: 52px; }
+.wing-lumi svg { width: 100%; }
+.intro .tagline { margin: -4px 0 12px; font-style: italic; color: var(--muted); }
+.does li > span:first-child svg { width: 1.6em; vertical-align: middle; }
+.hero.perched svg { overflow: visible; }
+.survey .hero.perched { margin-top: 24px; }

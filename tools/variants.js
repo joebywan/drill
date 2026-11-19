@@ -12,7 +12,7 @@
 import { writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { STEPS, blockCount, changed, fill, fixBug, holes, parse, parts, pieces, problem as codingProblem, run, solve } from '../src/coding/program.js';
-import { problem as mathsProblem } from '../src/maths/items.js';
+import { problem as mathsProblem, value } from '../src/maths/items.js';
 
 const MAX = 8; // entries in a family: past this a repeat gains little and the pool gets heavy
 
@@ -1056,6 +1056,23 @@ const andPairs = (pairs) => pairs.map(([a, b]) => `${a} and ${b}`).join(', ');
 const lowest = (n, d) => { const g = (a, b) => (b ? g(b, a % b) : a); const k = g(n, d); return `${n / k}/${d / k}`; };
 const PERCENTS = [[50, '1/2', 'a half'], [25, '1/4', 'a quarter'], [10, '1/10', 'a tenth'], [20, '1/5', 'a fifth'], [75, '3/4', 'three quarters']];
 const dollars = (list) => list.map((v) => `$${v}`);
+const dec = (v) => String(+v.toFixed(6));
+/** Cents as money: 565 is "$5.65". */
+const money = (c) => `${c < 0 ? '-' : ''}$${(Math.abs(c) / 100).toFixed(2)}`;
+const cents = (c) => (c < 100 ? `${c}c` : money(c));
+const addCents = (d, a, e, b) => `$${d + e}, then ${a}c + ${b}c is ${cents(a + b)}: ${money((d + e) * 100 + a + b)}.`;
+const nearestTen = (n) => {
+  const lo = n - (n % 10);
+  return n % 10 === 5 ? `${n} is halfway, and halfway rounds up: ${lo + 10}.` : `${n} is ${n - lo} from ${lo} and ${lo + 10 - n} from ${lo + 10}: ${Math.round(n / 10) * 10}.`;
+};
+const nearestHundred = (n) => {
+  const t = Math.floor(n / 10) % 10;
+  return t < 5 ? `${n} has ${t} tens, short of halfway: ${n - (n % 100)}.` : `${n} has ${t} tens, ${t === 5 ? 'halfway, so it rounds up' : 'past halfway'}: ${n - (n % 100) + 100}.`;
+};
+/** Packs as [how many, cents each]: every price for one comes out in whole cents. */
+const OFFERS = [[3, 200], [5, 180], [2, 250], [4, 200], [6, 150], [4, 175], [2, 300], [5, 160], [3, 150], [4, 225], [6, 250], [2, 120]];
+const price = (c) => (c % 100 ? money(c) : `$${c / 100}`);
+const offer = ([n, c]) => `${n} for ${price(n * c)}`;
 
 export const MATHS = {
   'ten-gaps': () => range(1, 9).map((n) => ({
@@ -1180,10 +1197,271 @@ export const MATHS = {
   'frac-past': () => [[3, 2], [5, 4], [7, 4], [4, 3], [5, 3]].map(([n, d]) => ({
     show: `${n}/${d}`, min: 0, max: 2, ticks: 2 * d, prompt: `Past 1 now: drag to ${n}/${d}.`, explain: `${n}/${d} is one whole and ${n - d}/${d} more.`,
   })),
+
+  'array-count': () => product([2, 3, 4], range(3, 8)).map(([r, c]) => ({
+    picture: { array: [r, c] }, prompt: 'How many dots? Count the rows, not every dot.', options: [r * c - c, r * c, r * c + c].map(String),
+    explain: `${r} rows of ${c}: ${Array(r).fill(c).join(' + ')} is ${r * c}.`,
+  })),
+  'array-sum': () => product([2, 3, 4], range(3, 8)).map(([r, c]) => ({
+    picture: { array: [r, c] }, prompt: 'Which sum matches the picture?', options: [`${r} × ${c}`, `${r} + ${c}`, `${c} × ${c}`],
+    explain: `${r} rows of ${c} is ${r} × ${c}, which is ${r * c}.`,
+  })),
+  'array-build': () => product([2, 3, 4], range(3, 9)).map(([r, c]) => ({
+    picture: { array: [r, c] }, show: `${r} × ${c}`, prompt: `${r} rows of ${c}. Build the total.`,
+    explain: `${range(1, r).map((k) => k * c).join(', ')}: ${r} × ${c} is ${r * c}.`,
+  })),
+  'turn-around': () => product([2, 3, 4, 5], range(3, 9)).filter(([r, c]) => r !== c).map(([r, c]) => ({
+    show: `${r} × ${c}`, prompt: `Which is the same as ${r} × ${c}?`, options: [`${c} × ${r}`, `${r} + ${c}`, `${c} × ${c}`],
+    explain: `Turn ${r} rows of ${c} on its side: ${c} rows of ${r}. Both are ${r * c}.`,
+  })),
+  'times-pairs': (r) => range(1, 12).map(() => {
+    const three = shuffled([[2, 6], [3, 5], [4, 4], [2, 7], [3, 6], [4, 5], [3, 7], [4, 6], [5, 5], [3, 8]], r).slice(0, 3);
+    return { tiles: shuffled(three.flatMap(([a, b]) => [`${a} × ${b}`, String(a * b)]), r), prompt: 'Match each sum to its answer.', explain: `${three.map(([a, b]) => `${a} × ${b} is ${a * b}`).join(', ')}.` };
+  }),
+  'times-ten': () => [12, 18, 23, 36, 45, 57, 64, 80, 125].map((n) => ({
+    show: `${n} × 10`, prompt: 'Move every digit up a place.', explain: `${n} tens is ${n * 10}.`,
+  })),
+  'times-five': () => [6, 8, 12, 14, 16, 18, 22, 24, 30].map((n) => ({
+    show: `${n} × 5`, prompt: 'Times 10, then halve.', explain: `${n} × 10 is ${n * 10}, and half of that is ${n * 5}.`,
+  })),
+  'times-line': () => range(1, 9).map((k) => ({
+    show: `${k} × 5`, min: 0, max: 50, ticks: 10, prompt: 'Count in 5s. Where does it land?',
+    explain: `${range(1, k).map((j) => j * 5).join(', ')}: ${say(k)} hop${k > 1 ? 's' : ''} of 5.`,
+  })),
+  'times-two': () => [13, 14, 16, 17, 18, 19, 26, 37, 48].map((n) => ({
+    show: `${n} × 2`, prompt: 'Double it.', options: [2 * n - 2, 2 * n, 2 * n + 2].map(String),
+    explain: `${n - (n % 10)} doubled is ${2 * (n - (n % 10))} and ${n % 10} doubled is ${2 * (n % 10)}: ${2 * n}.`,
+  })),
+  'tables-four': () => [3, 4, 6, 7, 8, 9, 11, 12].map((n) => ({
+    show: `${n} × 4`, prompt: 'Double, then double again.', explain: `${n}, ${n * 2}, ${n * 4}.`,
+  })),
+  'tables-eight': () => [3, 4, 6, 7, 8, 9, 11, 12].map((n) => ({
+    show: `${n} × 8`, prompt: 'Double three times.', explain: `${n}, ${n * 2}, ${n * 4}, ${n * 8}.`,
+  })),
+  'times-nine': () => [3, 4, 5, 6, 7, 8, 9, 11, 12].map((n) => ({
+    show: `${n} × 9`, prompt: `Times 10, then take one ${n} away.`, explain: `${n} × 10 is ${n * 10}, take away ${n}: ${n * 9}.`,
+  })),
+  'times-nine-pick': () => [3, 4, 5, 6, 7, 8, 9, 12].map((n) => ({
+    show: `${n} × 9`, prompt: 'Times 10, take one lot away.', options: [9 * n - 9, 9 * n, 9 * n + 9].map(String), explain: `${n} × 10 is ${n * 10}, take away ${n}: ${n * 9}.`,
+  })),
+
+  'share-rows': () => product([2, 3, 4], range(3, 7)).map(([r, c]) => ({
+    picture: { array: [r, c] }, sum: `${r * c} ÷ ${r}`, prompt: `${r * c} dots shared into ${r} equal rows. How many in each row?`,
+    options: [c - 1, c, c + 1].map(String), explain: `${r} rows of ${c} is ${r * c}, so ${r * c} ÷ ${r} is ${c}.`,
+  })),
+  'halve-twice': () => [32, 44, 52, 56, 64, 72, 84, 88, 96].map((n) => ({
+    show: `${n} ÷ 4`, prompt: 'Halve, then halve again.', explain: `${n}, ${n / 2}, ${n / 4}.`,
+  })),
+  'halve-twice-pick': () => [40, 60, 80, 120, 140, 160, 200, 240].map((n) => ({
+    show: `${n} ÷ 4`, prompt: 'Halve, then halve again.', options: [n / 4 - 5, n / 4, n / 2].map(String), explain: `${n}, ${n / 2}, ${n / 4}.`,
+  })),
+  'divide-ten': () => [30, 90, 120, 350, 480, 600, 710, 920].map((n) => ({
+    show: `${n} ÷ 10`, prompt: 'Move every digit down a place.', explain: `${n} is ${n / 10} tens: ${n / 10}.`,
+  })),
+  'divide-five': () => [15, 25, 35, 55, 65, 80, 90, 120].map((n) => ({
+    show: `${n} ÷ 5`, prompt: 'Double it, then divide by 10.', explain: `${n} doubled is ${n * 2}, and ${n * 2} ÷ 10 is ${n / 5}.`,
+  })),
+  'fives-in': () => [20, 30, 40, 50, 70, 80, 90, 100].map((n) => ({
+    show: `$${n} ÷ $5`, prompt: `How many $5 notes make $${n}?`, options: [n / 5 - 2, n / 5, n / 5 + 3].map(String),
+    explain: `${n} doubled is ${n * 2}, and ${n * 2} ÷ 10 is ${n / 5}.`,
+  })),
+  'divide-line': () => range(1, 9).map((k) => k * 5).map((n) => ({
+    show: `${n} ÷ 5`, min: 0, max: 10, ticks: 10, prompt: 'Where does it land?', explain: `${n} doubled is ${n * 2}, and ${n * 2} ÷ 10 is ${n / 5}.`,
+  })),
+  'left-frame': () => product(range(4, 10), [2, 3]).map(([n, p]) => {
+    const q = Math.floor(n / p), left = n % p;
+    return {
+      picture: { frame: n }, sum: `${n} - ${q} × ${p}`, prompt: `Share these between ${p} people. How many are left over?`, options: ['0', '1', '2'],
+      explain: `${q} each uses ${q * p} dots, so ${left} ${left === 1 ? 'is' : 'are'} left over.`,
+    };
+  }),
+  'left-over': () => product(range(11, 39), [3, 4, 5, 6]).filter(([n, d]) => n % d && n / d >= 2 && n / d < 10).map(([n, d]) => {
+    const q = Math.floor(n / d);
+    return { show: `${n} ÷ ${d}`, sum: `${n} - ${q} × ${d}`, prompt: `How many are left over? ${Cap(say(q))} ${d}s is ${q * d}.`, explain: `${n} take away ${q * d} leaves ${n % d}.` };
+  }),
+  'left-eggs': () => range(20, 70).filter((n) => n % 6).map((n) => {
+    const q = Math.floor(n / 6), left = n % 6;
+    return {
+      show: `${n} ÷ 6`, sum: `${n} - ${q} × 6`, prompt: `${n} eggs go in boxes of 6. How many eggs are left over?`, options: [left - 1, left, left + 1].map(String),
+      explain: `${q} boxes of 6 is ${q * 6}, and ${n} take away ${q * 6} leaves ${left}.`,
+    };
+  }),
+
+  'round-ten-line': () => range(11, 89).filter((n) => n % 10).map((n) => ({
+    show: String(n), sum: `${n} to the nearest 10`, min: 0, max: 100, ticks: 10, prompt: `Drag ${n} to its nearest 10.`, explain: nearestTen(n),
+  })),
+  'round-ten': () => range(11, 99).filter((n) => n % 10).map((n) => ({
+    show: String(n), sum: `${n} to the nearest 10`, prompt: 'To the nearest 10?', options: [n - (n % 10), n, n - (n % 10) + 10].map(String), explain: nearestTen(n),
+  })),
+  'round-ten-build': () => range(11, 99).filter((n) => n % 10).map((n) => ({
+    show: `${n} to the nearest 10`, prompt: 'Build it.', explain: nearestTen(n),
+  })),
+  'round-hundred-line': () => range(11, 89).filter((t) => t % 10).map((t) => t * 10).map((n) => ({
+    show: String(n), sum: `${n} to the nearest 100`, min: 0, max: 1000, ticks: 10, prompt: `Drag ${n} to its nearest 100.`, explain: nearestHundred(n),
+  })),
+  'round-hundred': () => range(11, 99).filter((t) => t % 10).map((t) => t * 10).map((n) => ({
+    show: String(n), sum: `${n} to the nearest 100`, prompt: 'To the nearest 100?', options: [n - (n % 100), n, n - (n % 100) + 100].map(String), explain: nearestHundred(n),
+  })),
+  'round-hundred-build': () => [240, 470, 860, 1320, 1480, 2550, 3610, 4190, 950].map((n) => ({
+    show: `${n} to the nearest 100`, prompt: 'Look at the tens.', explain: nearestHundred(n),
+  })),
+  estimate: () => product(range(21, 79), range(21, 79)).filter(([a, b]) => a % 10 && b % 10 && a % 10 !== 5 && b % 10 !== 5).map(([a, b]) => {
+    const [x, y] = [a, b].map((n) => Math.round(n / 10) * 10);
+    return {
+      show: `${a} + ${b}`, sum: `${a} to the nearest 10 + ${b} to the nearest 10`, prompt: 'Round each to the nearest 10. About how much?',
+      options: [x + y - 10, x + y, x + y + 10].map(String), explain: `${a} + ${b} is about ${x} + ${y}, which is ${x + y}.`,
+    };
+  }),
+  'about-right': (r) => range(1, 40).map(() => {
+    const ns = [int(r, 2, 7), int(r, 2, 7), int(r, 2, 7)].map((t) => t * 10 + one(r, [-2, -1, 1, 2]));
+    const s = ns.reduce((a, b) => a + b), round = ns.map((n) => Math.round(n / 10) * 10);
+    return {
+      show: ns.join(' + '), prompt: 'Which total is about right? Round first.', options: [s - 30, s, s + 100].map(String),
+      explain: `About ${round.join(' + ')}, which is ${round.reduce((a, b) => a + b)}, so ${s}.`,
+    };
+  }),
+  'about-times': () => product([21, 29, 31, 39, 41, 49, 51, 59, 61, 79], [3, 4, 5, 6]).map(([a, k]) => ({
+    show: `${a} × ${k}`, prompt: 'Which is about right? Round first.', options: [a * k, a * k + 100, a * k * 10].map(String),
+    explain: `${Math.round(a / 10) * 10} × ${k} is ${Math.round(a / 10) * 10 * k}, so ${a * k}.`,
+  })),
+
+  'dec-grid': () => [10, 20, 40, 60, 80, 90, 3, 5, 8, 9, 25, 45, 63].map((n) => ({
+    picture: { grid: n }, prompt: 'What decimal is shaded? Each square is 0.01.',
+    options: (n % 10 ? [n / 100, n / 10, n] : [n / 100, n / 1000, n / 10]).map(dec),
+    explain: n % 10 ? `${n} of 100 squares: ${dec(n / 100)}.` : `${say(n / 10)} row${n > 10 ? 's' : ''} of 10 squares: ${dec(n / 100)}.`.replace(/^./, (c) => c.toUpperCase()),
+  })),
+  'dec-line': () => range(1, 9).map((k) => ({
+    show: `0.${k}`, min: 0, max: 1, ticks: 10, prompt: `Drag the marker to 0.${k}.`, explain: `${Cap(say(k))} hop${k > 1 ? 's' : ''} of 0.1: 0.${k}.`,
+  })),
+  'dec-line-hundredths': () => range(1, 9).map((k) => ({
+    show: `0.0${k}`, min: 0, max: 0.1, ticks: 10, prompt: `This line runs from 0 to 0.1. Drag to 0.0${k}.`, explain: `Each hop is 0.01, so ${say(k)} hop${k > 1 ? 's' : ''}: 0.0${k}.`,
+  })),
+  'dec-pairs': (r) => range(1, 12).map(() => {
+    const three = shuffled([['0.5', '50%'], ['0.25', '1/4'], ['0.1', '1/10'], ['0.75', '3/4'], ['0.2', '20%'], ['0.4', '2/5']], r).slice(0, 3);
+    return { tiles: shuffled(three.flat(), r), prompt: 'Match each decimal to the same amount.', explain: `${three.map(([a, b]) => `${a} is ${b}`).join(', ')}.` };
+  }),
+  'add-prices': () => product([1, 2, 3, 4], [15, 25, 35, 45, 55, 65, 85], [1, 2, 3], [15, 30, 35, 40, 60, 75]).filter(([, a, , b]) => (a + b) % 10).map(([d, a, e, b]) => ({
+    show: `$${d}.${a} + $${e}.${b}`, prompt: 'Dollars, then cents.', explain: addCents(d, a, e, b),
+  })),
+  'add-prices-pick': () => product([2, 3, 4, 5], [20, 40, 60, 80], [1, 2, 3], [30, 50, 70, 90]).map(([d, a, e, b]) => {
+    const t = (d + e) * 100 + a + b;
+    return { show: `$${d}.${a} + $${e}.${b}`, prompt: 'Tap the total.', options: [t - 100, t, t + 100].map(money), explain: addCents(d, a, e, b) };
+  }),
+  'make-ten-dollars': (r) => range(1, 12).map(() => {
+    const cents = shuffled([150, 225, 340, 475, 560, 615, 720, 835], r).slice(0, 3);
+    return { make: 10, tiles: shuffled(cents.flatMap((c) => [money(c), money(1000 - c)]), r), prompt: 'Tap two prices that make $10.', explain: `${cents.map((c) => `${money(c)} and ${money(1000 - c)}`).join(', ')}.` };
+  }),
+  change: () => product(range(1, 8), [15, 25, 35, 45, 55, 65, 75, 85]).map(([d, c]) => ({
+    show: `$10 - $${d}.${c}`, prompt: `Count up from $${d}.${c} to $10.`,
+    explain: `5c to $${d}.${c + 5}, ${95 - c}c to $${d + 1}, then $${9 - d}: ${money(1000 - d * 100 - c)}.`,
+  })),
+  'change-pick': () => product([[20, range(11, 18)], [50, [31, 36, 42, 47]]].flatMap(([note, ds]) => ds.map((d) => [note, d])), [10, 20, 30, 40, 60, 70, 80, 90]).map(([[note, d], c]) => {
+    const back = note * 100 - d * 100 - c;
+    return {
+      show: `$${note} - $${d}.${c}`, prompt: `Count up to $${note}.`, options: [back, back - (back % 100) + c, back + 100].map(money),
+      explain: `${100 - c}c to $${d + 1}, then $${note - d - 1}: ${money(back)}.`,
+    };
+  }),
+
+  'recipe-rows': () => product([2, 3, 4], range(2, 6)).filter(([r, c]) => r + c !== r * c).map(([r, c]) => ({
+    picture: { array: [r, c] }, prompt: `A cup of flour makes ${c} scones: one row each. How many scones from ${r} cups?`,
+    options: [r + c, r * c, r * c + c].map(String), explain: `${r} rows of ${c}: ${r * c} scones.`,
+  })),
+  mix: () => product(range(2, 5), range(2, 5)).filter(([w, c]) => w + c !== w * c).map(([w, c]) => ({
+    picture: { bar: [1, w + 1] }, sum: `${c} × ${w}`, prompt: `Mix 1 cup of cordial with ${w} cups of water. For ${c} cups of cordial, how many cups of water?`,
+    options: [w + c, w * c, (w + 1) * c].map(String), explain: `${w} cups of water for every cup of cordial: ${c} × ${w} is ${w * c}.`,
+  })),
+  'recipe-up': () => product([150, 200, 250, 300, 400, 500], [2, 4], [2, 3]).map(([g, p, k]) => ({
+    show: `${g} g for ${p} people`, sum: `${g} × ${p * k} ÷ ${p}`, prompt: `Pasta for ${p * k} people instead: how many grams?`,
+    explain: `${p * k} people is ${k === 2 ? 'twice' : 'three times'} ${p}, so ${k === 2 ? 'twice' : 'three times'} ${g} g: ${g * k} g.`,
+  })),
+  'recipe-down': () => product([2, 3, 4, 5, 6, 8], [12, 24]).map(([e, m]) => ({
+    show: `${e} eggs for ${m} muffins`, sum: `${e} × ${m / 2} ÷ ${m}`, prompt: `Only ${m / 2} muffins: how many eggs?`,
+    explain: `${m / 2} muffins is half of ${m}, so half the eggs: ${e / 2}.`,
+  })),
+  'unit-price': () => product(range(2, 6), range(2, 9)).map(([n, e]) => ({
+    show: `${n} for $${n * e}`, prompt: 'What does one cost?', explain: `$${n * e} ÷ ${n} is $${e} each.`,
+  })),
+  'unit-price-pick': () => product([2, 4, 6], [150, 250, 350, 450]).map(([n, e]) => ({
+    show: `${n} for $${(n * e) / 100}`, prompt: 'What does one cost?', options: [e, e + 10, 2 * e].map(money), explain: `$${(n * e) / 100} ÷ ${n} is ${money(e)} each.`,
+  })),
+  'unit-price-ten': () => [120, 250, 320, 450, 540, 650, 780, 960].map((c) => ({
+    show: `10 for ${money(c)}`, prompt: 'Divide by 10: every digit moves down a place.', explain: `${money(c)} ÷ 10 is ${c / 10}c, which is ${money(c / 10)}.`,
+  })),
+  'better-buy': (r) => range(1, 40).map(() => {
+    const packs = shuffled(OFFERS, r).slice(0, one(r, [2, 3]));
+    return {
+      goal: 'smallest', show: 'Cheaper each?', prompt: 'Which is the better buy? Compare the price for one.', options: packs.map(offer),
+      explain: `${packs.map((p) => `${offer(p)} is ${price(p[1])} each`).join(', ')}: ${offer(packs.reduce((a, b) => (b[1] < a[1] ? b : a)))}.`,
+    };
+  }).filter((e) => new Set(e.options.map((o) => value(o))).size === e.options.length),
+  'price-pairs': (r) => range(1, 40).map(() => {
+    const packs = shuffled(OFFERS, r).slice(0, 3);
+    return { tiles: shuffled(packs.flatMap((p) => [offer(p), price(p[1])]), r), prompt: 'Match each pack to its price for one.', explain: `${packs.map((p) => `${offer(p)} is ${price(p[1])} each`).join(', ')}.` };
+  }).filter((e) => new Set(e.tiles.map((t) => value(t))).size === 3),
+
+  'neg-line': () => range(1, 9).map((k) => ({
+    show: `-${k}`, min: -10, max: 10, ticks: 20, unit: '°C', prompt: `Drag the marker to -${k} °C.`, explain: `${Cap(say(k))} hop${k > 1 ? 's' : ''} below zero: -${k} °C.`,
+  })),
+  coldest: (r) => range(1, 30).map(() => {
+    const ts = shuffled(range(-9, 6), r).slice(0, 3);
+    return {
+      goal: 'smallest', picture: { line: [-10, 10, 20] }, prompt: 'Which is coldest?', options: ts.map((t) => `${t} °C`),
+      explain: `${Math.min(...ts)} °C is furthest below zero, so it is the coldest.`,
+    };
+  }).filter((e) => e.explain.startsWith('-')),
+  warmest: (r) => range(1, 30).map(() => {
+    const ts = shuffled(range(-9, -1), r).slice(0, 3);
+    return { goal: 'biggest', picture: { line: [-10, 10, 20] }, prompt: 'Which is warmest?', options: ts.map((t) => `${t} °C`), explain: `${Math.max(...ts)} °C is closest to zero, so it is the warmest.` };
+  }),
+  'lift-line': () => [-5, -4, -3, -2, -1, 1, 2, 3, 4].map((k) => ({
+    show: String(k), min: -5, max: 5, ticks: 10,
+    prompt: k < 0 ? `Level ${k} is ${say(-k)} floor${k < -1 ? 's' : ''} under the ground floor, 0. Drag the lift there.` : `Level ${k} is ${say(k)} floor${k > 1 ? 's' : ''} above the ground floor, 0. Drag the lift there.`,
+    explain: `${Cap(say(Math.abs(k)))} floor${Math.abs(k) > 1 ? 's' : ''} ${k < 0 ? 'down' : 'up'} from 0: ${k}.`,
+  })),
+  'drop-line': () => product(range(1, 6), range(2, 12)).filter(([s, d]) => s - d <= -1 && s - d >= -9).map(([s, d]) => ({
+    show: `${s} - ${d}`, min: -10, max: 10, ticks: 20, unit: '°C', prompt: `It is ${s} °C and drops ${d} degrees. Drag to the new temperature.`,
+    explain: `${s} down to 0, then ${d - s} more: ${s - d} °C.`,
+  })),
+  'rise-line': () => product(range(-8, -2), range(3, 15)).filter(([s, u]) => s + u >= 1 && s + u <= 9).map(([s, u]) => ({
+    show: `${s} + ${u}`, min: -10, max: 10, ticks: 20, unit: '°C', prompt: `It is ${s} °C at dawn and warms up ${u} degrees. Drag to the new temperature.`,
+    explain: `${-s} up to 0, then ${s + u} more: ${s + u} °C.`,
+  })),
+  'lift-up': () => product(range(-5, -1), range(3, 9)).filter(([s, u]) => s + u >= 1).map(([s, u]) => ({
+    show: `${s} + ${u}`, prompt: `A lift at level ${s} goes up ${u} floors. Which level?`, options: [s + u, u - s, s - u].map(String),
+    explain: `${-s} up to the ground floor, then ${s + u} more: level ${s + u}.`,
+  })),
+  'lift-down': () => product(range(1, 5), range(3, 9)).filter(([s, d]) => s - d <= -1).map(([s, d]) => ({
+    show: `${s} - ${d}`, prompt: `A lift at level ${s} goes down ${d} floors. Which level?`, options: [s - d, d - s, -(s + d)].map(String),
+    explain: `${s} down to 0, then ${d - s} more: level ${s - d}.`,
+  })),
+  'owe-pay': () => product([10, 20, 30, 40], [25, 35, 45, 50, 60]).filter(([o, p]) => p > o).map(([o, p]) => ({
+    show: `-${o} + ${p}`, prompt: `You owe $${o}, then get paid $${p}. How much is yours?`, options: [`$${p - o}`, `$${p + o}`, `-$${p - o}`],
+    explain: `$${o} pays what you owe, and $${p - o} is yours.`,
+  })),
+  'owe-spend': () => product([5, 10, 15, 20], [25, 30, 40, 50]).map(([h, s]) => ({
+    show: `${h} - ${s}`, prompt: `You have $${h} and spend $${s} on a card. Where are you now?`, options: [`-$${s - h}`, `$${s - h}`, `-$${s + h}`],
+    explain: `$${h} takes you to 0, and you owe $${s - h} more: -${s - h}.`,
+  })),
+  'owe-line': () => product(range(3, 9), range(1, 8)).filter(([o, p]) => p < o).map(([o, p]) => ({
+    show: `-${o} + ${p}`, min: -10, max: 10, ticks: 20, prompt: `Owe $${o}, then pay back $${p}. Drag to where you are.`,
+    explain: `$${p} of the $${o} is paid, so you still owe $${o - p}: ${p - o}.`,
+  })),
+  'neg-pairs': (r) => range(1, 12).map(() => {
+    const pairs = shuffled([[-2, 12], [-5, 15], [-1, 11], [-4, 14], [-3, 13], [3, 7], [-6, 16], [2, 8]], r).slice(0, 3);
+    return { make: 10, tiles: pairTiles(r, pairs), prompt: 'Tap two numbers that make 10.', explain: `${andPairs(pairs)}.` };
+  }),
 };
 
 const finishMaths = (type) => (e) => (mathsProblem({ id: 'x', type, ...e }) ? null : e);
-const MATHS_TYPES = { 'ten-gaps': 'pick', 'make-ten': 'pairs', 'make-hundred': 'pairs', 'add-line': 'line', 'hop-up-pick': 'pick', 'halve-double': 'pick', 'pct-grid': 'pick', 'pct-line-tens': 'line', 'pct-line-parts': 'line', 'pct-fraction': 'pick', 'five-of': 'pick', 'twenty-off': 'pick', 'pct-pairs': 'pairs', 'bar-pick': 'pick', 'same-amount': 'pick', 'same-pairs': 'pairs', 'biggest-unit': 'pick', 'biggest-bars': 'pick', 'frac-line': 'line', 'frac-past': 'line' };
+const MATHS_TYPES = { 'ten-gaps': 'pick', 'make-ten': 'pairs', 'make-hundred': 'pairs', 'add-line': 'line', 'hop-up-pick': 'pick', 'halve-double': 'pick', 'pct-grid': 'pick', 'pct-line-tens': 'line', 'pct-line-parts': 'line', 'pct-fraction': 'pick', 'five-of': 'pick', 'twenty-off': 'pick', 'pct-pairs': 'pairs', 'bar-pick': 'pick', 'same-amount': 'pick', 'same-pairs': 'pairs', 'biggest-unit': 'pick', 'biggest-bars': 'pick', 'frac-line': 'line', 'frac-past': 'line',
+  'array-count': 'pick', 'array-sum': 'pick', 'turn-around': 'pick', 'times-pairs': 'pairs', 'times-line': 'line', 'times-two': 'pick', 'times-nine-pick': 'pick',
+  'share-rows': 'pick', 'halve-twice-pick': 'pick', 'fives-in': 'pick', 'divide-line': 'line', 'left-frame': 'pick', 'left-eggs': 'pick',
+  'round-ten-line': 'line', 'round-ten': 'pick', 'round-hundred-line': 'line', 'round-hundred': 'pick', estimate: 'pick', 'about-right': 'pick', 'about-times': 'pick',
+  'dec-grid': 'pick', 'dec-line': 'line', 'dec-line-hundredths': 'line', 'dec-pairs': 'pairs', 'add-prices-pick': 'pick', 'make-ten-dollars': 'pairs', 'change-pick': 'pick',
+  'recipe-rows': 'pick', mix: 'pick', 'unit-price-pick': 'pick', 'better-buy': 'pick', 'price-pairs': 'pairs',
+  'neg-line': 'line', coldest: 'pick', warmest: 'pick', 'lift-line': 'line', 'drop-line': 'line', 'rise-line': 'line', 'lift-up': 'pick', 'lift-down': 'pick',
+  'owe-pay': 'pick', 'owe-spend': 'pick', 'owe-line': 'line', 'neg-pairs': 'pairs' };
 
 export const buildMaths = () => Object.fromEntries(Object.entries(MATHS).map(([name, make]) =>
   [name, choose(name, make(seeded(name)), finishMaths(MATHS_TYPES[name] ?? 'build'), () => 0)]));
