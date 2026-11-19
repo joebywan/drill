@@ -27,7 +27,7 @@ const option = (name) => { const at = args.indexOf(name); return at >= 0 ? args.
 let base = option('--url');
 const AVD = option('--avd') || process.env.PHONE_AVD || 'splendor36';
 const all = readdirSync(`${ROOT}test/phone`).filter((f) => f.endsWith('.js')).map((f) => f.slice(0, -3));
-const names = args.length ? args : all;
+const names = args.length ? args : all.filter((n) => !n.endsWith('-all')); // `-all` scenarios play a whole course: ask for them by name
 const unknown = names.filter((n) => !all.includes(n));
 if (unknown.length) { console.error(`unknown scenario: ${unknown.join(', ')} (have: ${all.join(', ')})`); process.exit(2); }
 
