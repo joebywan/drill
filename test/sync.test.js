@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { emptyProgress, finishPractice, finishSession, logToday, noteFeel, track, writeJournal, currentStreak } from '../src/progress.js';
+import { emptyProgress, finishPractice, finishSession, logToday, noteFeel, setWhen, track, writeJournal, currentStreak } from '../src/progress.js';
 import { derive, newPairCode, newRecovery, open, readRecovery, seal, unwrap, wrap } from '../src/sync/keys.js';
 import { merge } from '../src/sync/merge.js';
 import { card, lookOf, withLook } from '../src/sync/sync.js';
@@ -156,12 +156,13 @@ test('done, garden, journal, tracked and timings merge as unions', () => {
 });
 
 test('a habit of your own made on each device before linking stays two habits', () => {
-  let a = track(emptyProgress(), { name: 'Piano', icon: '🎹' });
-  let b = track(emptyProgress(), { name: 'Water', icon: '💧' });
+  let a = setWhen(track(emptyProgress(), { name: 'Piano', icon: '🎹' }), 'calm', 'Before bed');
+  let b = setWhen(setWhen(track(emptyProgress(), { name: 'Water', icon: '💧' }), 'own-1', 'At lunch'), 'calm', 'After dinner');
   a = logToday(a, 'own-1', 'Piano', at('2026-10-01'));
   b = logToday(b, 'own-1', 'Water', at('2026-10-02'));
   const m = merge(a, b);
   assert.deepEqual(m.tracked.map((t) => [t.id, t.name]), [['own-1', 'Piano'], ['own-2', 'Water']]);
+  assert.deepEqual(m.when, { calm: 'Before bed', 'own-2': 'At lunch' }, 'a "when" moves with its habit; this device wins');
   assert.deepEqual(m.log.map((e) => [e.habit, e.title]), [['own-1', 'Piano'], ['own-2', 'Water']]);
   assert.equal(m.habits['own-2'].count, 1);
   // The other device, merging the result back, finds its Water under the new id: no copy.

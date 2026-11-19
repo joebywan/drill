@@ -6,7 +6,7 @@ import { LEARN, migrate, nextStreak } from '../progress.js';
  * into one. Pure. Nothing either side did is dropped:
  *   - cards: per card, the latest review wins
  *   - log: a union (a session both sides have counts once; two identical sessions on one side stay two)
- *   - done, garden.earned (the earliest date), journal (per day and line), tracked, start, timings: unions,
+ *   - done, garden.earned (the earliest date), journal (per day and line), tracked, start, timings, when: unions,
  *     this device winning where both set the same thing
  *   - wings (your butterfly's panels): the longer list
  *   - look (the friends card's name and animal): the latest pick, by its `at`
@@ -39,6 +39,7 @@ export function merge(local, remote) {
       .map((h) => [h, { ...b.timings[h], ...a.timings[h] }])),
     ...((a.start || b.start) && { start: { ...b.start, ...a.start } }),
     ...((a.met || b.met) && { met: { ...b.met, ...a.met } }),
+    ...((a.when || b.when) && { when: { ...b.when, ...a.when } }),
     ...((a.answers || b.answers) && { answers: mergeAnswers(a.answers, b.answers) }),
     ...((a.picked || b.picked) && { picked: a.picked ?? b.picked }),
     ...((a.look || b.look) && { look: latestLook(a.look, b.look) }),
@@ -126,7 +127,7 @@ function earliest(a, b) {
  * Habits of the learner's own are numbered per device, so 'own-1' made on each of two devices
  * before they were linked can be two different habits, and one habit can have two ids. The other
  * side's are matched to ours by name and icon, or, when the id is taken by a different habit
- * here, given the next free id; their streak, log, timings and garden gifts move along.
+ * here, given the next free id; their streak, log, timings, when and garden gifts move along.
  */
 function ownIds(a, b) {
   if (!a || !b) return b;
@@ -147,6 +148,7 @@ function ownIds(a, b) {
     tracked: b.tracked.map((t) => ({ ...t, id: to(t.id) })),
     habits: rekey(b.habits),
     timings: rekey(b.timings),
+    ...(b.when && { when: rekey(b.when) }),
     log: b.log.map((e) => (moved.has(e.habit) ? { ...e, habit: to(e.habit) } : e)),
     garden: { ...b.garden, earned: Object.fromEntries(Object.entries(b.garden.earned).map(([k, d]) => [k.replace(/(?<=:)own-\d+$/, to), d])) },
   };

@@ -4,7 +4,7 @@ import { lifeArt } from './cast/butterfly.js';
 import { fieldGuide } from './guide.js';
 import { PLANTS, animateLandmarks, animateScene, animateVisitor, drawGarden, flower, landmark, plant, sway, visitor } from './garden/art.js';
 import { COMEBACK_WORDS, PAUSED_WORDS, activeComeback, answerComeback, noteReminder, preferred, reminderHour, remindersPaused, shorter, shouldRemind, startComeback, usualHours, usualLine } from './fitting.js';
-import { WINGS, firstToday, emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, track, unlogToday, writeJournal, finishSession, meetsCoach, metCoach, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
+import { WINGS, firstToday, emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, setWhen, track, unlogToday, writeJournal, finishSession, meetsCoach, metCoach, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, showsStreak, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { flap, lumi, lumiPerched } from './cast/lumi.js';
@@ -539,6 +539,8 @@ function habitView(id, back = () => { home(); focusOn('.streak-line'); }) {
       <h1><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}</h1>
       <p class="said">${n ? `${n}-day streak` : NO_STREAK}</p>
       ${usual ? `<p class="usual">${esc(usual)}</p>` : ''}
+      ${progress.when?.[id] ? `<p class="when">${esc(progress.when[id])}</p>` : ''}
+      <button class="link when-link">${esc(progress.when?.[id] ? LOG_WORDS.whenChange : LOG_WORDS.whenSet)}</button>
       ${TIMINGS[timingsOf(id)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
       <h2>This week</h2>
       <ol class="week" aria-hidden="true">${week.map(cell).join('')}</ol>
@@ -550,6 +552,37 @@ function habitView(id, back = () => { home(); focusOn('.streak-line'); }) {
   focusOn('h1');
   app.querySelector('.back').addEventListener('click', back);
   app.querySelector('.timings-link')?.addEventListener('click', () => timingsView(timingsOf(id), () => { habitView(id, back); focusOn('.timings-link'); }));
+  app.querySelector('.when-link').addEventListener('click', () => whenView(id, () => { habitView(id, back); focusOn('.when-link'); }));
+}
+
+/**
+ * "When will you do it?": an optional line tying habit `id` to the learner's day, picked from a few
+ * or in their own words; then `next`. Skip, Back and a blank Save leave it as it was (a blank Save
+ * clears one already set). Their words: escaped, never judged, kept on the device.
+ */
+function whenView(id, next) {
+  stopHome();
+  const h = habitOf(id);
+  const set = progress.when?.[id] || '';
+  const picks = LOG_WORDS.whenPicks;
+  app.innerHTML = `
+    <header class="bar"><button class="back" aria-label="Back">←</button></header>
+    <main class="survey when-ask">
+      <h1>${esc(LOG_WORDS.whenAsk)}</h1>
+      <p class="said"><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}. ${esc(LOG_WORDS.whenSaid)}</p>
+      <form>
+        <div class="focus-presets">${picks.map((w) => `<button type="button" class="choice" data-when="${esc(w)}" aria-pressed="${w === set}">${esc(w)}</button>`).join('')}</div>
+        <label class="field">${esc(LOG_WORDS.whenOwn)}<input name="when" maxlength="40" autocomplete="off" autocapitalize="sentences" enterkeyhint="done" value="${esc(picks.includes(set) ? '' : set)}"></label>
+        <button class="next">${esc(LOG_WORDS.save)}</button>
+      </form>
+      <button class="link" data-skip>${esc(set ? LOG_WORDS.whenClear : LOG_WORDS.whenSkip)}</button>
+    </main>`;
+  focusOn('h1');
+  const keep = (text) => { progress = setWhen(progress, id, text); save(); next(); };
+  for (const b of app.querySelectorAll('[data-when]')) b.addEventListener('click', () => keep(b.dataset.when));
+  app.querySelector('form').addEventListener('submit', (e) => { e.preventDefault(); const t = e.target.when.value; t.trim() || set ? keep(t) : next(); });
+  app.querySelector('[data-skip]').addEventListener('click', () => (set ? keep('') : next()));
+  app.querySelector('.back').addEventListener('click', next);
 }
 
 /**
@@ -728,6 +761,7 @@ function logPanel(h, logged, newly, raised = '') {
   const n = currentStreak(progress, new Date(), h.id);
   return `<section class="log-habit">
     <h2><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}</h2>
+    ${progress.when?.[h.id] ? `<p class="when">${esc(progress.when[h.id])}</p>` : ''}
     ${raised}
     ${logged ? `<p class="said" role="status">${esc(LOG_WORDS.done)}</p>
       <div class="chips">${chip('log', `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`)}</div>
@@ -754,17 +788,18 @@ function addHabit() {
     <main class="survey add-habit">
       <h1>Add a habit</h1>
       <p class="said">${esc(LOG_WORDS.add)}</p>
-      ${offer.map((h) => `<button class="choice" data-track="${esc(h.id)}"><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}</button>`).join('')}
+      <div class="offers">${offer.map((h) => `<button class="choice" data-track="${esc(h.id)}"><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}</button>`).join('')}</div>
       <button class="choice" data-own>${esc(LOG_WORDS.own)}</button>
     </main>`;
   focusOn('h1');
   app.querySelector('.back').addEventListener('click', () => { home(); focusOn('[data-add]'); });
   for (const b of app.querySelectorAll('[data-track]')) {
     b.addEventListener('click', () => {
-      progress = track(progress, { id: b.dataset.track, hidden: false });
+      const id = b.dataset.track;
+      progress = track(progress, { id, hidden: false });
       save();
       chime('plant');
-      homeOn(b.dataset.track);
+      if (progress.when?.[id]) homeOn(id); else whenView(id, () => homeOn(id));
     });
   }
   app.querySelector('[data-own]').addEventListener('click', () => editHabit(null));
@@ -800,8 +835,10 @@ function editHabit(h) {
     const data = new FormData(e.target);
     progress = track(progress, { id: h?.id, name: data.get('name'), icon: data.get('icon'), plant: data.get('plant') });
     save();
-    if (!h) chime('plant');
-    homeOn(h?.id || progress.tracked.at(-1).id);
+    if (h) return homeOn(h.id);
+    chime('plant');
+    const id = progress.tracked.at(-1).id;
+    whenView(id, () => homeOn(id));
   });
   app.querySelector('[data-hide]')?.addEventListener('click', () => {
     progress = track(progress, { id: h.id, hidden: true });
