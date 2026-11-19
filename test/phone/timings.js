@@ -13,7 +13,7 @@ export default async ({ page, seed, touch, btn, shot, run, check }) => {
   await touch(inhale.getByRole('button', { name: 'More' }));
   await touch(inhale.getByRole('button', { name: 'More' })); await shot('inhale-6');
   check('two taps on + set Breathe in to 6 s', (await inhale.locator('output').textContent()) === '6 s (default 4)');
-  check('saved at once', JSON.stringify(await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')).timings)) === '{"calm":{"inhale":6}}');
+  check('saved at once', JSON.stringify(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).timings)) === '{"calm":{"inhale":6}}');
   await touch(btn('Back').and(page.locator('.back')));
   await touch(btn('Continue · The long out-breath'));
   await touch(btn('Start')); await shot('inhale');

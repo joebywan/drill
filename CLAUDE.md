@@ -1,4 +1,7 @@
-# Drill — working notes for Claude
+# Wingbeat — working notes for Claude
+
+Called Drill until November 2026 (why it changed: `docs/NAMING.md`); the Android app id and Kotlin
+package keep `com.joebywan.drill`.
 
 A Duolingo-style learning app: lessons that teach, a cast of characters, a streak, review.
 Static page, vanilla ES modules, no build step, no server. Chess, maths, Japanese, coding, JavaScript,
@@ -30,7 +33,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
 
 - With no `--url` it serves this checkout on a free port forwarded with `adb reverse`; Chrome opens
   `http://localhost:<port>/`, a secure context, so Wake Lock and the like work as on the real site.
-- One run at a time, machine-wide: it takes `/tmp/drill-phone.lock` (its PID inside; a lock whose
+- One run at a time, machine-wide: it takes `/tmp/wingbeat-phone.lock` (its PID inside; a lock whose
   process is gone is taken over) and prints "waiting for the emulator" until it can, and waits the
   same way while any emulator it didn't start is running. Then it boots the AVD (`--avd`, else
   `PHONE_AVD`, default `splendor36`; `--avd daybook_tablet` for a tablet) `-read-only`, shuts it down
@@ -68,7 +71,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   puzzle (`new`, `demo`, `intro`) slides it along a path before input opens. `problem()` proves
   each one solvable in its budget by breadth-first search. Picked-up pieces show legal-move dots.
 - **Courses.** Several Learn subjects share the Learning habit; home shows one course's path at a
-  time (`courseShown`, the switcher under the tabs, remembered in `drill.course`), and reviews that
+  time (`courseShown`, the switcher under the tabs, remembered in `wingbeat.course`), and reviews that
   course's cards so its coach runs them. The intro picks courses by course id; `choose()` turns them
   into the Learning tab. A Learn coach's `lines`/`headlines` replace Rosa's in the runner and end screen.
 - **Chess games** (`src/chess/games.js`, the "Games" row on chess's home, a subject's `games`): replayable modes, each a one-entry session
@@ -76,7 +79,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   **Mate** (`mate.js`, `prover.js`, `prover-worker.js`): Daybook's game. `prover.js` is a port of its mate search on its own small
   board, because chess.js is far too slow to prove a mate in 4; it has no imports so it can run in a Worker (import maps don't reach workers).
   `src/data/mate.json` comes from `node tools/mate-positions.js`, Lichess CC0 (`docs/chess-positions/NOTICE.md`). Lazy-loaded. **Scramble** (`capture.js`): our own
-  capture game; pure rules on chess.js, the best on the device in `drill.capture.best`. **Play Rosa** (`engine.js`): alpha-beta on chess.js as a
+  capture game; pure rules on chess.js, the best on the device in `wingbeat.capture.best`. **Play Rosa** (`engine.js`): alpha-beta on chess.js as a
   generator, run in timer slices so the page stays live; `LEVELS` is its four levels. Words in `GAME_WORDS`, linted.
 - `src/quiz/` — course-free tap-and-match items any course can use: `teach` (a big glyph or word),
   `pick` (one tap; `listen` plays the sound instead of showing it when there is a voice), `pairs`
@@ -96,7 +99,8 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   Ada, an octopus (`src/cast/ada.js`, posed with `rig()`), with `MATHS_LINES` and `MATHS_HEADLINES`.
 - `src/cast/` — the characters (`kit.js`, `rosa.js`, `lumi.js`), `coach.js` (a character that
   reacts in place) and `lines.js` (everything the cast says; the guardrail tests lint it).
-  `tools/cast.html` renders every mood at 200/96/48 px, light and dark.
+  `tools/cast.html` renders every mood at 200/96/48 px, light and dark. `butterfly.js` is the
+  player's butterfly (wing panels filled in habit colours), so far drawn only on the icon.
 - **Coach voice:** each coach's voice sheet and line pools are data, one file each in
   `src/cast/voice/<coach>.json` (`voice`: personality, how they encourage and dare, `never` words;
   `lines` and `dares`: `{ when, lines }` pools keyed by habit, streak band, hour band, light, and the
@@ -151,7 +155,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   pausable clock. `practice.js` mounts teach cards and the routines with Moss (`src/cast/moss.js`)
   breathing along. `run()` in `app.js` skips meter, runs and review for kind 'practice', and ends on
   a calm screen with an optional "How do you feel?". Course in `src/data/calm.json`. Home shows one
-  habit's path at a time (the switcher under the bar, remembered in `drill.habit`). A Calm routine
+  habit's path at a time (the switcher under the bar, remembered in `wingbeat.habit`). A Calm routine
   opens and closes on a soft bell and can have soft rain under it (`calmSound()`, `rain()` in
   feel.js, both generated): set on the ⋯ screen, both off until turned on, and both silent
   when Sound is muted or under reduced motion.
@@ -251,7 +255,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   the intro picks, through `ordered()`. `progress.reminders` and `progress.comeback` are optional
   (no version of their own), kept by `migrate()` and so in the file export. The habit view shows
   "You usually practise around 7 pm".
-- **The reminder brain** (`window.drill`, set in app.js over the live progress, before
+- **The reminder brain** (`window.wingbeat`, set in app.js over the live progress, before
   `tellAndroid`/`passNotes` run): plain functions for the Android wrapper (see Android below).
   `reminderHour()` → 0–23, or null with too little data (then `REMIND_AT`, 18:00, in widget.js);
   `shouldRemind()` → boolean, false after a session today or while reminders are thinned or paused;
@@ -259,10 +263,10 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   → true, or false for any other value (nothing recorded). Nothing leaves the device.
 - **QR pairing** (`src/sync/qr.js`, our own small encoder, no licence to carry): the code beside the 6 digits opens `<page>#pair=<code>`. `openPairLink()` reads the fragment (never sent to a server), clears it and fills in Enter a code; linking takes one tap, unlike typed digits, since anyone can make a QR code.
 - **Sync and friends** (`src/sync/`, `server/`), opt-in and off by default: with it off nothing is sent
-  and Drill works with no backend. **Feature-flagged off** until the API is deployed: `SYNC` in
+  and Wingbeat works with no backend. **Feature-flagged off** until the API is deployed: `SYNC` in
   `config.js` gates `available()` (the ⋯ section, every call) and the sync parts of `privacy.html`;
-  tests set `window.DRILL_SYNC = true` before load. `keys.js`: the recovery code is the profile's secret, kept on the
-  device (`drill.sync`); HKDF gives the AES-GCM key progress is sealed with and the bearer token the
+  tests set `window.WINGBEAT_SYNC = true` before load. `keys.js`: the recovery code is the profile's secret, kept on the
+  device (`wingbeat.sync`); HKDF gives the AES-GCM key progress is sealed with and the bearer token the
   server knows the profile by (it stores the token's hash). A 6-digit pairing code carries the
   recovery code to a new device, wrapped with PBKDF2. `merge.js` is pure: cards per card (latest
   review wins), log/done/journal/garden as unions, streaks replayed from the merged log with
@@ -272,7 +276,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   Cloudflare Worker + D1 (`worker.js`, `migrations/`), tested with Miniflare (`npm test --prefix
   server`); e2e routes the API host to a local worker. Deploying is `server/DEPLOY.md`. `privacy.html`
   is the policy, with delete-by-recovery-code for Play. Inside the Android wrapper
-  (`DrillBridge`), which has no internet permission, the ⋯ section is hidden and sync never runs
+  (`WingbeatBridge`), which has no internet permission, the ⋯ section is hidden and sync never runs
   (`available()`). The card's name and animal are `progress.look` ({ word, animal, at }), synced, the
   latest pick winning.
 - `src/nav.js` — the phone's back button, on web and in the wrapper with no Kotlin. It watches #app, so
@@ -303,38 +307,41 @@ after `npm ci` at the root. App id `com.joebywan.drill`, locked.
   WebViewAssetLoader. No INTERNET permission; CI fails the build if one appears.
 - `src/widget.js` makes every choice: `look(light, hour)` → background, Lumi pose, line pool
   (`WIDGET_LINES`, linted), and `summary()` a schedule of looks over the next days' boundaries
-  (midnight, 5, 12, 18, 22). `save()` passes it to `DrillBridge.summary()`, so Kotlin only renders.
+  (midnight, 5, 12, 18, 22). `save()` passes it to `WingbeatBridge.summary()`, so Kotlin only renders.
   The page also sends Lumi's poses as PNGs (`art`). In a browser there is no bridge and nothing runs.
 - `Daily.kt`: the widget, an inexact alarm at the next look and at the note's hour, a 15-minute
   WorkManager job, `Ticker` re-arming on BOOT_COMPLETED and MY_PACKAGE_REPLACED. The daily note is
   opt-in on the ⋯ screen, low importance, at most once a day, and posts nothing if anything was done
-  today. The reminder brain (`window.drill`, feature-detected) sets the hour (`reminderHour()`, null
+  today. The reminder brain (`window.wingbeat`, feature-detected) sets the hour (`reminderHour()`, null
   → 18:00) and can say not today (`shouldRemind()`), both snapshotted into the summary; whether each
-  note was opened or cleared is queued in Kotlin and handed to `noteReminder()` on load. Logcat tags `DrillBridge`, `DrillDaily`. Test path (debug builds only skip the once-a-day guard):
+  note was opened or cleared is queued in Kotlin and handed to `noteReminder()` on load. Logcat tags `WingbeatBridge`, `WingbeatDaily`. Test path (debug builds only skip the once-a-day guard):
   `adb shell am broadcast -n com.joebywan.drill/.Ticker -a com.joebywan.drill.REMIND --ez force true`.
-- **What the WebView lacks:** `speechSynthesis`, so `speak()`/`voice()` in feel.js use `DrillBridge.hasVoice`/`speak` (Android's
+- **What the WebView lacks:** `speechSynthesis`, so `speak()`/`voice()` in feel.js use `WingbeatBridge.hasVoice`/`speak` (Android's
   TextToSpeech; the manifest's `<queries>` lets it find the engine). With no voice for the course, a teach card offers
-  "Get a Japanese voice" once (`offerVoice()`, `drill.voice-offer`), which opens the engine's ACTION_INSTALL_TTS_DATA
-  screen (`DrillBridge.installVoice`). `navigator.vibrate` needs the VIBRATE permission.
+  "Get a Japanese voice" once (`offerVoice()`, `wingbeat.voice-offer`), which opens the engine's ACTION_INSTALL_TTS_DATA
+  screen (`WingbeatBridge.installVoice`). `navigator.vibrate` needs the VIBRATE permission.
 - **System bars follow the page:** on every screen change and theme change app.js hands the body's background to
-  `tellBars()` (widget.js), which keeps `<meta name="theme-color">` current and calls `DrillBridge.bars(color, light)`,
+  `tellBars()` (widget.js), which keeps `<meta name="theme-color">` current and calls `WingbeatBridge.bars(color, light)`,
   so Wind down's night palette darkens the bars in light mode too.
 - **Back:** home leaves the app, except within a second of a back that landed there (MainActivity), so a quick
   double press out of a routine stops on home.
-- The icon is Lumi on the garden green, generated by `node tools/icon.js` from `lumi()`: the adaptive
-  icon's foreground and monochrome layers, `assets/icon.svg` (favicon) and `assets/icon-512.png`
-  (manifest and Play listing). Rerun it when Lumi changes.
+- The icon is Lumi close up with the butterfly on her crown, on the garden green, generated by
+  `node tools/icon.js` from `lumi()` and `butterfly()`: the adaptive icon's foreground and monochrome
+  layers (vector drawables converted from the same SVG; the wing panels are clip-path groups and
+  the right half a `scaleX="-1"` group), `assets/icon.svg` (favicon) and `assets/icon-512.png`
+  (manifest and Play listing). It fails if her face or the butterfly leaves the 66-unit safe circle.
+  Rerun it when either changes.
 - Play: **Publish to Google Play** (`publish-play.yml`), by hand only, takes the bundle from a release, checks it with `android/tools/verify-aab.sh` and uploads to the internal track. Inert until Joseph's steps in docs/TODO.md.
 - Releases copy Daybook: `assembleRelease` only, by hand from the **Android release** workflow;
   `-PrequireSigning=true` fails without the key, and `android/tools/verify-apk.sh` fails an
   unsigned, wrong-key or debuggable APK. The key is Joseph's, kept offline. To set it up once: create
   it, put its certificate SHA-256 in `android/release-key.sha256`, and add the repo secrets
-  `DRILL_KEYSTORE_BASE64`, `DRILL_KEYSTORE_PASSWORD`, `DRILL_KEY_ALIAS`, `DRILL_KEY_PASSWORD` (or set
-  `DRILL_KEYSTORE` etc. as env vars or `-P` properties for a local build).
+  `WINGBEAT_KEYSTORE_BASE64`, `WINGBEAT_KEYSTORE_PASSWORD`, `WINGBEAT_KEY_ALIAS`, `WINGBEAT_KEY_PASSWORD` (or set
+  `WINGBEAT_KEYSTORE` etc. as env vars or `-P` properties for a local build).
 
 ## Rules
 
-- **Reuse before you add.** Daybook bloated from copied code; Drill must not. Before writing a
+- **Reuse before you add.** Daybook bloated from copied code; Wingbeat must not. Before writing a
   helper, screen or exercise, look for one to extend: `src/html.js` (esc, chip), `focusOn()`,
   `coach()`, `src/calm/routines.js` (`timeline()` runs any timed routine), the subject contract
   (`coach`, `habit`, `kind`) and `finishRoutine()`, the one end screen for every practice habit.
@@ -369,7 +376,7 @@ after `npm ci` at the root. App id `com.joebywan.drill`, locked.
   `echoable` keeps a real-game puzzle out of its own session. Returning the item means "worth repeating as written", null
   means "don't". A new read or build item joins a family only if that family uses nothing taught after it. The card key
   stays the original's. `node tools/sessions.js` prints how long sessions get; `test/sessions.test.js` holds the bound.
-  E2E flows set `window.DRILL_PLAIN` (`test/e2e/fixtures.js`).
+  E2E flows set `window.WINGBEAT_PLAIN` (`test/e2e/fixtures.js`).
 - **The streak forgives.** One missed day in any seven is forgiven automatically; a gap of up
   to three days (or a second miss that week) is repaired by a review. A lesson finished in a
   repairable gap leaves the streak waiting for that review. Rules in `progress.js`, tested with
@@ -395,7 +402,7 @@ after `npm ci` at the root. App id `com.joebywan.drill`, locked.
 - No character shows sadness, guilt or urgency about the learner's absence.
 - Characters are hand-written SVG animated with CSS and the Web Animations API, not Rive.
 - Android home-screen widgets and local notifications are wanted, via a WebView wrapper with a
-  JS bridge, as Saffron Road does. Drill is meant to drive people to learn, not to earn.
+  JS bridge, as Saffron Road does. Wingbeat is meant to drive people to learn, not to earn.
 
 - **Every streak is a habit's streak** (Learning, Calm, …), each with its own tab and the
   same forgiving rules. Practice subjects are guided routines with no right or wrong. The plan
@@ -408,7 +415,7 @@ What is still open: `docs/TODO.md` ("Still open") and `docs/HABITS.md`.
 - **Beginners play, they don't pick notation.** Answers are moves on the board or taps on squares;
   text says "Knight to c7", never "Nc7+" (`words()` turns SAN into words). Boards show coordinates.
 - **No questions in the way.** A first visit opens a short, skippable intro (`intro()`/`want()` in
-  app.js, words in `INTRO_WORDS`): what Drill does, then Learn something / Build habits, each opening
+  app.js, words in `INTRO_WORDS`): what Wingbeat does, then Learn something / Build habits, each opening
   its list. The picks go in `progress.picked` and home orders its tabs by them through ONE function,
   `ordered()` in subjects.js; picked one-tap habits are switched on with `track()`. Skip is today's
   home (Lumi's welcome line, the garden, every habit). Shown once (`showsIntro`); saves from before

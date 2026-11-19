@@ -1,5 +1,5 @@
 {
-  "name": "drill",
+  "name": "wingbeat",
   "version": "0.1.0",
   "description": "Short daily lessons with streaks and spaced review. Chess first; a static page with no server.",
   "scripts": {

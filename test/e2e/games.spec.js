@@ -10,7 +10,7 @@ const DAY = '2026-03-15';
 const todays = (tier) => entry(positions[tier][dailyIndex(DAY, tier, positions[tier].length)]);
 const onDay = async (page) => {
   await page.clock.setFixedTime(new Date(`${DAY}T12:00:00`));
-  await page.addInitScript(() => localStorage.setItem('drill.mate.tier', '2'));
+  await page.addInitScript(() => localStorage.setItem('wingbeat.mate.tier', '2'));
 };
 
 // Taps a square by the board's own rects, twice for a move: pick up, put down.
@@ -82,7 +82,7 @@ test("Mate: today's board is played to checkmate against the best defence, and n
   await expect(page.locator('.foot .next')).toHaveText('Another board');
   await page.locator('.foot .next').click();
   await expect(page.locator('#said')).toContainText('Another board');
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress') || '{}').log?.length ?? 0)).toBe(0);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress') || '{}').log?.length ?? 0)).toBe(0);
 });
 
 test('Mate: a move that gives the mate up gets the best reply, is called out, and Undo takes it back', async ({ page }) => {
@@ -129,7 +129,7 @@ test('Scramble: moves, captures and a personal best when the clock runs out', as
   await page.clock.runFor(95000);
   await expect(page.locator('.foot.show')).toBeVisible();
   await expect(page.locator('.foot strong')).toContainText(`Score`);
-  const best = await page.evaluate(() => Number(localStorage.getItem('drill.capture.best')));
+  const best = await page.evaluate(() => Number(localStorage.getItem('wingbeat.capture.best')));
   expect(best).toBeGreaterThan(0);
   await page.locator('.foot .next').click();
   await expect(page.locator('.hud-best')).toHaveText(`Best ${best}`);

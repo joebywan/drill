@@ -165,7 +165,7 @@ html { scroll-padding-bottom: 160px; }
 .petals i { position: absolute; top: -16px; width: 11px; height: 9px; border-radius: 60% 60% 50% 50% / 80% 80% 30% 30%; opacity: .9; }
 .petals i.leaf { width: 9px; height: 14px; border-radius: 0 100% 0 100%; }
 
-/* ---- Board skin: Drill's board, pieces (assets/pieces/drill.svg) and markers ---- */
+/* ---- Board skin: Wingbeat's board, pieces (assets/pieces/wingbeat.svg) and markers ---- */
 :root {
   --sq-light: #E9F4EC; --sq-dark: #86C8A9; --sq-frame: #3A7F62; --sq-coord: #F4FBF6; --sq-ledge: #2C6650;
   --sq-hl: #F5C542; --sq-good: #155c34; --sq-bad: #a8361f;
@@ -178,13 +178,13 @@ html { scroll-padding-bottom: 160px; }
 }
 /* Rounded and raised on a solid ledge, like the quest markers. */
 .board .cm-chessboard { display: block; border-radius: 14px; box-shadow: 0 5px 0 var(--sq-ledge); }
-.cm-chessboard.drill .board .square.white { fill: var(--sq-light); }
-.cm-chessboard.drill .board .square.black { fill: var(--sq-dark); }
-.cm-chessboard.drill .board .border { fill: var(--sq-frame); stroke: none; rx: 14px; }
-.cm-chessboard.drill .board .border-inner { fill: none; stroke: none; }
+.cm-chessboard.wingbeat .board .square.white { fill: var(--sq-light); }
+.cm-chessboard.wingbeat .board .square.black { fill: var(--sq-dark); }
+.cm-chessboard.wingbeat .board .border { fill: var(--sq-frame); stroke: none; rx: 14px; }
+.cm-chessboard.wingbeat .board .border-inner { fill: none; stroke: none; }
 /* The frame's a-h and 1-8 are taught in the first lesson, so they must be easy to read. */
-.cm-chessboard.drill .coordinates { pointer-events: none; user-select: none; }
-.cm-chessboard.drill .coordinates .coordinate { fill: var(--sq-coord); font-size: 7px; font-weight: 800; }
+.cm-chessboard.wingbeat .coordinates { pointer-events: none; user-select: none; }
+.cm-chessboard.wingbeat .coordinates .coordinate { fill: var(--sq-coord); font-size: 7px; font-weight: 800; }
 /* Markers strong enough to read on a phone in sunlight, on both palettes. */
 .cm-chessboard .markers .marker.marker-square { fill: var(--sq-hl); opacity: .55; }
 .cm-chessboard .markers .marker.marker-circle { stroke: #3b6fd6; stroke-width: 4px; opacity: .85; }
@@ -481,7 +481,7 @@ html { scroll-padding-bottom: 160px; }
 .offer .dismiss { width: 44px; min-height: 44px; margin: -2px 0; font-size: 1.2rem; } /* a 44px target in a 40px pill */
 .survey .link { display: block; margin: 16px auto 0; }
 
-/* The first-visit intro (app.js intro, want): a list of what Drill does, then two branches of picks. */
+/* The first-visit intro (app.js intro, want): a list of what Wingbeat does, then two branches of picks. */
 .intro { padding-bottom: 150px; } /* room to scroll the last line above the button bar */
 /* A solid bar, so a long list scrolls under it instead of showing through the fade. */
 .intro + .cta { padding-top: 12px; background: var(--bg); border-top: 1px solid var(--line); }
@@ -853,7 +853,7 @@ body:has(main.night) {
 .games { align-items: center; }
 .games > span { font-size: .8rem; font-weight: 700; color: var(--muted); }
 .play:has(.game-note) .bubble, .play:has(.hud) .bubble { min-height: 7.4em; }
-.cm-chessboard.drill .markers .marker.marker-frame-danger { stroke: var(--wrong); stroke-width: 3px; opacity: 1; } /* Scramble's hunted piece */
+.cm-chessboard.wingbeat .markers .marker.marker-frame-danger { stroke: var(--wrong); stroke-width: 3px; opacity: 1; } /* Scramble's hunted piece */
 .game-tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 10px; }
 .game-tabs .course { padding: 4px 12px; }
 .hud { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; font-weight: 700; color: var(--muted); }

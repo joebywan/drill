@@ -80,7 +80,7 @@ function mountMate(el, item, { say }) {
   const note = el.querySelector('.game-note');
   const [hintBtn, undoBtn] = ['[data-hint]', '[data-undo]'].map((s) => el.querySelector(s));
   let b, gone = false, round = 0; // `round` goes up on anything that makes an answer from the prover stale
-  let tier = stored('drill.mate.tier', 2);
+  let tier = stored('wingbeat.mate.tier', 2);
   const again = item.again; // the banner's "Another board": a fresh one, not today's
   item.again = false;
   let daily, stack, still, dead, hintStep;
@@ -155,8 +155,8 @@ function mountMate(el, item, { say }) {
 
   function solved(n) {
     if (daily) {
-      const seen = stored('drill.mate.daily', {});
-      store('drill.mate.daily', { date: today(), tiers: [...(seen.date === today() ? seen.tiers : []), tier] });
+      const seen = stored('wingbeat.mate.daily', {});
+      store('wingbeat.mate.daily', { date: today(), tiers: [...(seen.date === today() ? seen.tiers : []), tier] });
     }
     item.again = true;
     cue('done');
@@ -167,9 +167,9 @@ function mountMate(el, item, { say }) {
   function begin(n, fresh = false) {
     round++;
     tier = n;
-    store('drill.mate.tier', n);
+    store('wingbeat.mate.tier', n);
     for (const t of el.querySelectorAll('[data-tier]')) t.setAttribute('aria-pressed', Number(t.dataset.tier) === n);
-    const seen = stored('drill.mate.daily', {});
+    const seen = stored('wingbeat.mate.daily', {});
     daily = !fresh && !(seen.date === today() && seen.tiers.includes(n));
     const list = positions[n];
     const first = entry(list[daily ? dailyIndex(today(), n, list.length) : Math.floor(Math.random() * list.length)]);
@@ -228,7 +228,7 @@ const clockText = (ms) => { const s = Math.ceil(Math.max(0, ms) / 1000); return 
 /** Scramble (capture.js). The clock starts on the first move and rests while the page is hidden. */
 function mountCapture(el, item, { say }) {
   noMeter();
-  const best = stored('drill.capture.best', 0);
+  const best = stored('wingbeat.capture.best', 0);
   el.innerHTML = `<div class="hud"><span class="hud-clock" role="timer">${clockText(RUN_MS)}</span><b class="hud-score">0</b><span class="hud-best">${W.capture.best(best)}</span></div><div class="board"></div>`;
   const [clockEl, scoreEl] = ['.hud-clock', '.hud-score'].map((s) => el.querySelector(s));
   let state = startCapture();
@@ -249,7 +249,7 @@ function mountCapture(el, item, { say }) {
     clearInterval(ticking);
     b.disableMoveInput();
     const { score } = state;
-    if (score > best) store('drill.capture.best', score);
+    if (score > best) store('wingbeat.capture.best', score);
     cue('done');
     say(W.capture.time, 'complete');
     banner(score > best ? 'right' : '', W.capture.score(score),

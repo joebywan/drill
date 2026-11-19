@@ -42,10 +42,10 @@ object Daily {
     private const val NOTES = "notes"
     const val OPENED = "opened"
     private const val CHANNEL = "daily"
-    private const val TAG = "DrillDaily"
+    private const val TAG = "WingbeatDaily"
     val POSES = setOf("teach", "sleepy", "complete")
 
-    fun prefs(ctx: Context): SharedPreferences = ctx.getSharedPreferences("drill", Context.MODE_PRIVATE)
+    fun prefs(ctx: Context): SharedPreferences = ctx.getSharedPreferences("wingbeat", Context.MODE_PRIVATE)
 
     private fun summary(ctx: Context): JSONObject? =
         prefs(ctx).getString(SUMMARY, null)?.let { runCatching { JSONObject(it) }.getOrNull() }

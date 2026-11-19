@@ -1,7 +1,7 @@
 {
-  "name": "Drill",
-  "short_name": "Drill",
-  "description": "Short daily lessons and habits. Runs entirely in the browser.",
+  "name": "Wingbeat",
+  "short_name": "Wingbeat",
+  "description": "Short lessons and daily habits. Small beats go a long way.",
   "start_url": "../",
   "scope": "../",
   "display": "standalone",

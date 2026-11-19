@@ -10,11 +10,11 @@ import { bridge } from '../widget.js';
  * Off until turned on from the ⋯ menu; with it off, nothing here runs and nothing is sent.
  * The one place in src/ that talks to a server (the guardrails test holds that).
  */
-const KEY = 'drill.sync'; // { recovery, code }: this device's copy of the profile
+const KEY = 'wingbeat.sync'; // { recovery, code }: this device's copy of the profile
 
 /**
  * Sync runs only with the SYNC flag on (config.js), and in the web app only: the Android wrapper
- * (DrillBridge) has no internet permission. Otherwise the ⋯ section is hidden and nothing here runs.
+ * (WingbeatBridge) has no internet permission. Otherwise the ⋯ section is hidden and nothing here runs.
  */
 export const available = () => SYNC && !bridge();
 let keys = null; // { recovery, key, token }, derived once a visit

@@ -1,4 +1,4 @@
-// The first-visit intro with real taps: what Drill does, then Build habits with Calm and Walk; home
+// The first-visit intro with real taps: what Wingbeat does, then Build habits with Calm and Walk; home
 // puts them first, Walk logs with one tap, and "Change what you see" in ⋯ brings Learning forward.
 export default async ({ page, touch, btn, shot, check }) => {
   const tabs = () => page.locator('.path-tab[data-path]').evaluateAll((t) => t.map((x) => x.dataset.path));
@@ -6,7 +6,7 @@ export default async ({ page, touch, btn, shot, check }) => {
   const vh = await page.evaluate(() => innerHeight);
   const inThumbZone = async (loc) => { const b = await loc.boundingBox(); return b.y + b.height > vh - 160; };
 
-  check('a first visit opens the intro', await page.getByRole('heading', { name: 'What can Drill do for you?' }).isVisible());
+  check('a first visit opens the intro', await page.getByRole('heading', { name: 'What can Wingbeat do for you?' }).isVisible());
   await shot('does');
   check('Next is in the thumb zone', await inThumbZone(btn('Next')));
   await touch(btn('Next')); await shot('want');
@@ -31,5 +31,5 @@ export default async ({ page, touch, btn, shot, check }) => {
   check('Learning joins after the habits', (await tabs()).slice(0, 3).join(',') === 'calm,walk,learn', (await tabs()).join(','));
 
   await page.reload({ waitUntil: 'networkidle' });
-  check('no intro after a reload', !(await page.getByRole('heading', { name: 'What can Drill do for you?' }).isVisible()));
+  check('no intro after a reload', !(await page.getByRole('heading', { name: 'What can Wingbeat do for you?' }).isVisible()));
 };

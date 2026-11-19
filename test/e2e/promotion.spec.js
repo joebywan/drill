@@ -70,7 +70,7 @@ test('Mate uses the same picker: the piece chosen is played, and dismissing it r
   const { fen } = entry(line);
   const key = forcedMate(fen, Number(positions[2].includes(line) ? 2 : 3)).keys.find((k) => k.length === 5);
   await page.route('**/src/data/mate.json', (r) => r.fulfill({ json: { 2: [line], 3: [line], 4: [line], notice: '' } }));
-  await page.addInitScript((tier) => localStorage.setItem('drill.mate.tier', tier), positions[2].includes(line) ? '2' : '3');
+  await page.addInitScript((tier) => localStorage.setItem('wingbeat.mate.tier', tier), positions[2].includes(line) ? '2' : '3');
   await page.goto('/');
   const skip = page.getByRole('button', { name: 'Skip', exact: true });
   if (await skip.count()) await skip.click();

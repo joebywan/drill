@@ -4,7 +4,7 @@ import { emptyProgress, finishPractice, finishSession } from '../../src/progress
 import { API } from '../../src/sync/config.js';
 import { matrixOf, readQr } from '../qr-read.js';
 
-// Sync ships dark, so these turn it on per page with DRILL_SYNC, against the real worker run locally.
+// Sync ships dark, so these turn it on per page with WINGBEAT_SYNC, against the real worker run locally.
 let worker;
 test.beforeAll(async () => {
   const { start } = await import('../../server/dev.js');
@@ -14,16 +14,16 @@ test.afterAll(() => worker?.mf.dispose());
 
 async function device(browser, baseURL) {
   const context = await browser.newContext({ baseURL });
-  await context.addInitScript(() => { window.DRILL_SYNC = true; });
+  await context.addInitScript(() => { window.WINGBEAT_SYNC = true; });
   await context.route(`${API}/**`, async (route) => {
     const response = await route.fetch({ url: route.request().url().replace(API, worker.url) });
     await route.fulfill({ response });
   });
   const page = await context.newPage();
-  await page.addInitScript(() => { window.DRILL_PLAIN = true; });
+  await page.addInitScript(() => { window.WINGBEAT_PLAIN = true; });
   return page;
 }
-const seed = (page, p) => page.addInitScript((s) => { if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', s); }, JSON.stringify(p));
+const seed = (page, p) => page.addInitScript((s) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', s); }, JSON.stringify(p));
 
 test('a QR code sits by the pairing code; scanning opens the app with it filled in, one tap links, and the fragment is cleared', async ({ browser, baseURL }) => {
   const a = await device(browser, baseURL);

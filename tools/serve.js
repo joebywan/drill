@@ -30,4 +30,4 @@ createServer(async (req, res) => {
   } catch {
     res.writeHead(404).end('404 Not Found');
   }
-}).listen(PORT, process.env.HOST || '127.0.0.1', () => console.log(`Drill running at http://${process.env.HOST || 'localhost'}:${PORT}`));
+}).listen(PORT, process.env.HOST || '127.0.0.1', () => console.log(`Wingbeat running at http://${process.env.HOST || 'localhost'}:${PORT}`));

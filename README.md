@@ -1,4 +1,4 @@
-# Drill
+# Wingbeat
 
 Short daily lessons with a day streak and spaced review, for the subjects I actually want
 to practise. Chess, maths and Japanese are live; JavaScript, TypeScript and writing TypeScript
@@ -6,9 +6,11 @@ tests are planned.
 
 No ads. No accounts. No server. It is a static page; progress lives in the browser.
 
+It was called Drill until November 2026; [docs/NAMING.md](docs/NAMING.md) says why it became Wingbeat.
+
 ## Running it
 
-Play it at **https://knowhowit.com.au/drill/** — published from `main` by `.github/workflows/pages.yml`.
+Play it at **https://knowhowit.com.au/wingbeat/** — published from `main` by `.github/workflows/pages.yml`.
 
 ```bash
 npm install

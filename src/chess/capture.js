@@ -1,7 +1,7 @@
 import { hop, load, handBack } from './items.js';
 
 /**
- * Scramble, Drill's own capture game: no kings, a clock, your one or two pieces against black ones
+ * Scramble, Wingbeat's own capture game: no kings, a clock, your one or two pieces against black ones
  * that keep arriving. Enemies only ever move to take your most valuable piece, right after your
  * move, and the piece they catch costs time rather than the run: it lands on a safe square and
  * the clock drops. Pure, with the legal moves from chess.js and `rng` passed in; the screen is in games.js.

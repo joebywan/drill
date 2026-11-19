@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures.js';
 
 const seed = (page) => page.addInitScript(() => {
-  if (!localStorage.getItem('drill.progress')) localStorage.setItem('drill.progress', JSON.stringify({ version: 3, picked: [], done: {}, cards: {}, habits: {}, log: [] }));
+  if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 3, picked: [], done: {}, cards: {}, habits: {}, log: [] }));
 });
 
 test.describe('at 360x640', () => {
@@ -39,7 +39,7 @@ test.describe('at 360x640', () => {
     await seed(page);
     await page.addInitScript(() => {
       window.said = [];
-      window.DrillBridge = { summary() {}, art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]', hasVoice: (l) => l === 'ja-JP', speak: (t, l) => window.said.push([t, l]) };
+      window.WingbeatBridge = { summary() {}, art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]', hasVoice: (l) => l === 'ja-JP', speak: (t, l) => window.said.push([t, l]) };
     });
     await page.goto('/');
     await page.locator('[data-course="japanese"]').click();
@@ -57,7 +57,7 @@ test.describe('at 360x640', () => {
     await expect(page.locator('.get-voice')).toHaveCount(0);
     await page.addInitScript(() => {
       window.installs = 0;
-      window.DrillBridge = { summary() {}, art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]', hasVoice: () => false, speak() {}, installVoice: () => window.installs++ };
+      window.WingbeatBridge = { summary() {}, art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]', hasVoice: () => false, speak() {}, installVoice: () => window.installs++ };
     });
     await page.goto('/');
     await page.locator('[data-course="japanese"]').click();
@@ -75,7 +75,7 @@ test.describe('at 360x640', () => {
     await seed(page);
     await page.addInitScript(() => {
       window.bars = [];
-      window.DrillBridge = { summary() {}, art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]', bars: (c, light) => window.bars.push([c, light]) };
+      window.WingbeatBridge = { summary() {}, art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]', bars: (c, light) => window.bars.push([c, light]) };
     });
     await page.goto('/');
     expect((await page.evaluate(() => window.bars)).at(-1)).toEqual(['#f6f7f9', true]);

@@ -4,8 +4,8 @@ import { reducedMotion } from './cast/kit.js';
  * Sound, haptics and motion. Each fails quietly: a lesson works silent, still and unbuzzed.
  */
 // On/off preferences kept per device: 'sound' (the home bar's mute), Calm's 'bell' and 'rain'.
-export const pref = (name, dflt) => { try { const v = localStorage.getItem(`drill.${name}`); return v ? v === 'on' : dflt; } catch { return dflt; } };
-export const setPref = (name, on) => { try { localStorage.setItem(`drill.${name}`, on ? 'on' : 'off'); } catch { /* lasts the visit */ } };
+export const pref = (name, dflt) => { try { const v = localStorage.getItem(`wingbeat.${name}`); return v ? v === 'on' : dflt; } catch { return dflt; } };
+export const setPref = (name, on) => { try { localStorage.setItem(`wingbeat.${name}`, on ? 'on' : 'off'); } catch { /* lasts the visit */ } };
 export const soundOn = () => pref('sound', true);
 export const setSound = (on) => setPref('sound', on);
 /** Calm's bell and rain, each off until turned on, and never when muted or under reduced motion. */
@@ -150,10 +150,10 @@ export function petals() {
  * has one. `voice(lang)` is null without one, or with Sound muted: then the screen shows the
  * written reading instead, and nothing waits on speech. Voices load late in Chrome, so asking
  * once here warms the list before the first lesson needs it. Android's WebView has no
- * speechSynthesis, so in the wrapper DrillBridge speaks through the phone's TTS engine.
+ * speechSynthesis, so in the wrapper WingbeatBridge speaks through the phone's TTS engine.
  */
 const RATE = 0.8;
-const bridge = () => globalThis.DrillBridge;
+const bridge = () => globalThis.WingbeatBridge;
 const synth = () => (typeof speechSynthesis === 'undefined' ? null : speechSynthesis);
 try { synth()?.getVoices(); } catch { /* no speech */ }
 export const voice = (lang) => {

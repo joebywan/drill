@@ -25,13 +25,13 @@ export default async ({ page, seed, touch, btn, shot, run, check }) => {
   check('three breaths this time', await page.getByText('Breath 1 of 3').isVisible());
   await run(40000); await shot('end');
   check('a ladybird came', await page.getByText('A ladybird came to visit').isVisible());
-  check('timings not saved', JSON.stringify(await page.evaluate(() => JSON.parse(localStorage.getItem('drill.progress')).timings)) === '{}');
+  check('timings not saved', JSON.stringify(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).timings)) === '{}');
   await touch(btn(/^Continue$/)); await shot('home-after');
   check('comeback card gone', (await page.locator('.comeback').count()) === 0);
   check('no shorter offer once finished', (await page.getByRole('button', { name: /^Try a shorter one/ }).count()) === 0);
   await touch(btn(/See your week$/)); await shot('habit-view');
   check('usual hour shown', await page.getByText('You usually practise around 7 pm').isVisible());
-  check('bridge: reminderHour', (await page.evaluate(() => window.drill.reminderHour())) === 19);
-  check('bridge: no reminder after a session today', (await page.evaluate(() => window.drill.shouldRemind())) === false);
-  check('bridge: noteReminder records', (await page.evaluate(() => window.drill.noteReminder('opened'))) === true);
+  check('bridge: reminderHour', (await page.evaluate(() => window.wingbeat.reminderHour())) === 19);
+  check('bridge: no reminder after a session today', (await page.evaluate(() => window.wingbeat.shouldRemind())) === false);
+  check('bridge: noteReminder records', (await page.evaluate(() => window.wingbeat.noteReminder('opened'))) === true);
 };

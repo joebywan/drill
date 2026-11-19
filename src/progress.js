@@ -87,7 +87,7 @@ const isTracked = (t) => isObject(t) && typeof t.id === 'string' && /^[a-z0-9-]{
  * less than the streak's count (the log may have started after the streak); up to version 4 `start`
  * was one string, chess's (the only subject that asked), and becomes { chess: it }; up to version 5
  * nothing was `tracked`, which starts empty; up to version 6 there was no first-visit intro, so
-`picked` becomes [] and someone who already used Drill never sees it; up to version 7 there were
+`picked` becomes [] and someone who already used Wingbeat never sees it; up to version 7 there were
  * no timings of the learner's own, so `timings` becomes {}; up to version 8 no session had its hour
  * and nothing was `left`, which becomes [].
  * Unknown fields are kept, so a file from a newer build loses nothing.

@@ -1,4 +1,4 @@
-# Deploying Drill's sync API
+# Deploying Wingbeat's sync API
 
 The worker in this folder is built and tested locally (`npm ci && npm test`, `npm run dev`). Putting it
 online needs Joseph: an account, DNS and one deploy. Everything is on Cloudflare's free plan.
@@ -30,7 +30,7 @@ domain on a zone Cloudflare runs (a CNAME to `workers.dev` doesn't work), so the
    knowhowit.com.au (where the domain was bought, not FreeDNS), replace the nameservers with those two.
    .com.au changes usually apply within a few hours, at most 48.
 5. Wait for Cloudflare to mark the domain **Active** (it emails you). Check the site still loads:
-   <https://knowhowit.com.au/drill/>.
+   <https://knowhowit.com.au/wingbeat/>.
 6. Then remove the domain from FreeDNS.
 
 ## 3. Database and deploy
@@ -40,14 +40,14 @@ From this folder (`server/`), on your machine:
 ```bash
 npm ci
 npx wrangler@4.156.0 login                    # opens the browser to authorise wrangler
-npx wrangler@4.156.0 d1 create drill-sync     # prints a database_id
+npx wrangler@4.156.0 d1 create wingbeat-sync     # prints a database_id
 ```
 
 Paste that `database_id` into `wrangler.toml` (replacing `REPLACE_WITH_DATABASE_ID`), commit it
 (it isn't secret), then:
 
 ```bash
-npx wrangler@4.156.0 d1 migrations apply drill-sync --remote   # creates the tables from migrations/
+npx wrangler@4.156.0 d1 migrations apply wingbeat-sync --remote   # creates the tables from migrations/
 npx wrangler@4.156.0 deploy
 ```
 
@@ -71,16 +71,16 @@ curl -i -X OPTIONS https://api.knowhowit.com.au/v1/progress   # 204, Access-Cont
 curl -i https://api.knowhowit.com.au/v1/progress              # 401 {"error":"no token"}
 ```
 
-Then in Drill (the merged PR, published by the Pages workflow): ⋯ → Friends → Turn on sync, and a
-friend code appears. Watch requests and errors in the dashboard: Workers & Pages → drill-sync → Logs.
+Then in Wingbeat (the merged PR, published by the Pages workflow): ⋯ → Friends → Turn on sync, and a
+friend code appears. Watch requests and errors in the dashboard: Workers & Pages → wingbeat-sync → Logs.
 
 ## Later changes
 
-- **Schema:** add `migrations/0002_….sql`, then `npx wrangler@4.156.0 d1 migrations apply drill-sync --remote`
+- **Schema:** add `migrations/0002_….sql`, then `npx wrangler@4.156.0 d1 migrations apply wingbeat-sync --remote`
   before deploying code that needs it. Never edit a migration that has been applied.
 - **Code:** `npx wrangler@4.156.0 deploy` from `server/`.
 - **Restore:** D1 Time Travel restores the database to any minute in the last 7 days on the free plan
-  (`npx wrangler@4.156.0 d1 time-travel restore drill-sync --timestamp=…`).
+  (`npx wrangler@4.156.0 d1 time-travel restore wingbeat-sync --timestamp=…`).
 
 ## Limits and costs
 
@@ -90,13 +90,13 @@ holds up to 10 GB, about 200,000 learners at ~50 KB each.
 
 ## Play Store and privacy
 
-- Privacy policy: <https://knowhowit.com.au/drill/privacy.html> (from `privacy.html`, published with the site).
-- Data deletion URL for the Play Console's Data safety form: <https://knowhowit.com.au/drill/privacy.html#delete>
+- Privacy policy: <https://knowhowit.com.au/wingbeat/privacy.html> (from `privacy.html`, published with the site).
+- Data deletion URL for the Play Console's Data safety form: <https://knowhowit.com.au/wingbeat/privacy.html#delete>
   (delete with a recovery code, no app needed). In the app: ⋯ → Delete my data.
 - Data safety answers: no data collected unless sync is on; then app activity (encrypted, not readable
   by us), and a user ID (the friend code). Not shared, not sold, encrypted in transit, deletable.
 - The Android wrapper has no internet permission and keeps it that way: with its bridge
-  (`DrillBridge`) present, the ⋯ sync section is hidden and sync never runs. Allowing sync in the APK
+  (`WingbeatBridge`) present, the ⋯ sync section is hidden and sync never runs. Allowing sync in the APK
   is a decision for Joseph (it needs `android.permission.INTERNET` and the section shown again).
 
 ## Known gaps

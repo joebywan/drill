@@ -1,5 +1,5 @@
 /**
- * A small QR encoder, written for Drill (no dependency): byte mode, error correction M, versions 1–6,
+ * A small QR encoder, written for Wingbeat (no dependency): byte mode, error correction M, versions 1–6,
  * which holds a pairing link (up to 106 bytes). Pure.
  *
  *   qr(text, mask?) -> rows of booleans (true is dark), with the best mask by the standard's penalty

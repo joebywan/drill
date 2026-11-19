@@ -3,7 +3,7 @@ import { subjects } from './subjects.js';
 import { TIMINGS, timed, valueIn } from './practice/timings.js';
 
 /**
- * Fitting the person (docs/TODO.md): what Drill learns from its own on-device log about when and
+ * Fitting the person (docs/TODO.md): what Wingbeat learns from its own on-device log about when and
  * how someone practises, so it can fit them. Pure; nothing here leaves the device. It reads the
  * log's `hour`s, `left` (practices closed part-way) and two fields of its own on progress:
  *
@@ -65,7 +65,7 @@ const list = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs.at
 /** The habit view's line: "You usually practise around 7 pm", or '' while there's no pattern. */
 export const usualLine = (hours) => (hours.length ? `You usually practise around ${list(hours.map(clock))}` : '');
 
-// Reminders. Each one shown is recorded once it is opened or cleared (window.drill.noteReminder).
+// Reminders. Each one shown is recorded once it is opened or cleared (window.wingbeat.noteReminder).
 export const OUTCOMES = ['opened', 'cleared', 'on'];
 const KEEP_REMINDERS = 60;
 const SPACE_AFTER = 3; // cleared in a row: from here, every other day

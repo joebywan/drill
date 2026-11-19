@@ -6,7 +6,7 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
 
 ## The model
 
-- **Everything in Drill is a habit, and each habit has its own streak.** Learning is one habit
+- **Everything in Wingbeat is a habit, and each habit has its own streak.** Learning is one habit
   (any lesson or review in any course keeps it); Calm is the next; more follow.
 - **Two kinds of subject feed habits.** A *Learn* subject teaches then tests, with right/wrong
   and spaced review. A *Practice* subject is a guided routine with a timer: no right or wrong,
@@ -45,7 +45,7 @@ Agreed with Joseph on 2026-10-30. This is the active plan; `TODO.md` stays the b
    export read them.
 7. [x] **Eyes and posture break.** (#38, #53, #57) A two-minute screen break: look far away, roll the
    shoulders, stand up.
-8. [x] **Self-reported habits.** (#52) One tap to log things Drill can't guide (walked, read, drank
+8. [x] **Self-reported habits.** (#52) One tap to log things Wingbeat can't guide (walked, read, drank
    water, went outside), then "add your own habit".
    Done: a third kind, 'log', with no path. `habitsFor(progress)` (subjects.js) is the habit list
    everywhere: the built-in HABITS, then the presets and the learner's own from progress v5's
@@ -90,7 +90,7 @@ The app's vibe moves from "build knowledge" to "grow yourself", shown as a garde
   ring-tailed lemur, Lumi the seal). Insects and birds are garden life, not coaches. No owls.
 - Done (#72): the garden follows the real season for the device's hemisphere (`src/garden/season.js`;
   spring blossom, summer wildflowers, autumn leaves, winter frost and lanterns), and Lumi lounges by a pond.
-- Done: seasonal events (`src/garden/events.js`). Later: the name "Drill" (Still open below).
+- Done: seasonal events (`src/garden/events.js`), and the name: Drill became Wingbeat (`docs/NAMING.md`).
 
 9. [x] **Garden model.** (#43) Pure: days practised per habit (kept permanently, not from the
    year-long log), growth stage, achievement rules and an `earned` record, and the garden's
@@ -121,11 +121,10 @@ The app's vibe moves from "build knowledge" to "grow yourself", shown as a garde
 
 ## Still open
 
-- **Renaming "Drill"**: the app has moved from "build knowledge" to "grow yourself".
 - **"Already practised today"** for Calm (from Fizz, task 4): a one-tap log for a session done
   away from the app. Task 8's one-tap logging covers tracked habits, not guided ones.
 
 ## Kept out
 
 Diet, calories or weight (streaks plus food tracking can feed unhealthy patterns); screen-time
-shaming; sleep tracking by numbers (Drill can't measure it honestly).
+shaming; sleep tracking by numbers (Wingbeat can't measure it honestly).
