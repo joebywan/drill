@@ -2538,6 +2538,7 @@ test('before any routine is finished the link counts the day directly', async ({
   await expect(page.locator('.away-line')).toBeVisible();
   expect((await savedLog(page)).at(-1).title).toBe('Away from the app');
   await expect(page.getByRole('button', { name: 'Continue · The long out-breath' })).toBeVisible(); // nothing unlocked
+});
 
 test('the field guide opens from the garden and from home, and shows every kind', async ({ page }) => {
   let p = emptyProgress();
