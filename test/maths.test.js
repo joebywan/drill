@@ -16,7 +16,13 @@ test('sums are worked out as written: + - × ÷, fractions, per cent, "of", doll
   assert.equal(value('50%'), 0.5);
   assert.equal(value('15% of $60'), 9);
   assert.equal(value('80 - 25% of 80'), 60);
-  for (const bad of ['alert(1)', '2 +', '1/0', 'x']) assert.throws(() => value(bad), bad);
+  assert.equal(value('47 to the nearest 10'), 50);
+  assert.equal(value('45 to the nearest 10'), 50); // halfway rounds up
+  assert.equal(value('349 to the nearest 100'), 300);
+  assert.equal(value('5 for $9'), 1.8); // the price for one
+  assert.equal(value('-8 °C'), -8);
+  assert.equal(value('-$25'), -25);
+  for (const bad of ['alert(1)', '2 +', '1/0', 'x', 'for 3']) assert.throws(() => value(bad), bad);
 });
 
 test('any way of writing the right value is right', () => {
@@ -25,6 +31,8 @@ test('any way of writing the right value is right', () => {
   assert.ok(!right(half, '1/5'));
   assert.ok(right({ sum: '10 - 6' }, 4)); // a value on the line is a number
   assert.ok(right({ goal: 'biggest', options: ['1/3', '1/4'] }, '1/3'));
+  assert.ok(right({ goal: 'smallest', options: ['3 for $6', '5 for $9'] }, '5 for $9'));
+  assert.equal(target({ picture: { array: [3, 4] } }), 12);
   assert.equal(target({ picture: { grid: 40 } }), 0.4);
   assert.equal(target({ picture: { frame: 7 } }), 7);
 });
@@ -98,11 +106,16 @@ test('every sign, picture and answer type is taught on a card before anything us
     assert.ok(first >= 0, what);
     assert.ok(items.slice(0, first).some((i) => i.type === 'teach' && teaches(i)), `${what}: ${items[first].id} comes first`);
   };
-  for (const kind of ['frame', 'grid', 'bar', 'bars']) taughtBefore((i) => i.picture?.[kind], (i) => i.picture?.[kind], kind);
+  for (const kind of ['frame', 'grid', 'bar', 'bars', 'array']) taughtBefore((i) => i.picture?.[kind], (i) => i.picture?.[kind], kind);
   taughtBefore((i) => i.type === 'line', (i) => i.picture?.line, 'a number line');
   taughtBefore((i) => i.type === 'build', (i) => /\btap the digits\b/i.test(i.text), 'how tiles work');
   const pastOne = (i) => /^(\d+)\/(\d+)$/.test(i.show || '') && value(i.show) >= 1;
   taughtBefore(pastOne, (i) => pastOne(i) && i.picture?.line, 'a fraction of 1 or more');
+  const said = (i) => [i.show, i.sum, ...(i.options || []), ...(i.tiles || [])].filter(Boolean).join(' ');
+  taughtBefore((i) => /\d\.\d/.test(said(i)), (i) => /decimal point/.test(i.text), 'a decimal point');
+  taughtBefore((i) => /(^|[\s(])-\$?\d/.test(said(i)) || i.min < 0, (i) => /below zero/.test(i.text) && i.picture?.line, 'a number below zero');
+  taughtBefore((i) => /nearest/.test(said(i)), (i) => /^Rounding/.test(i.text), 'rounding');
+  taughtBefore((i) => /\bfor \$/.test(said(i)), (i) => /price for one/.test(i.text), 'a price for one');
 });
 
 test('maths is a Learning course with its own coach and a placement that names real units', () => {

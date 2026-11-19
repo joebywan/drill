@@ -8,20 +8,27 @@ import pool from '../data/maths-variants.json' with { type: 'json' };
  *   sum      what is worked out, when it isn't `show` ("10 - 7" for "How many more make 10?")
  *   picture  { frame: n } n dots in a ten frame; { bar: [n, d] } n of d parts shaded;
  *            { grid: n } n of 100 squares shaded; { bars: [[n, d], ...] } bars one above another;
- *            { line: [min, max, hops] } a number line to look at, on a teach card
+ *            { line: [min, max, hops] } a number line to look at, on a teach card;
+ *            { array: [rows, cols] } dots in equal rows, every one filled (3 × 4)
  *   tiles    for pairs: the numbers to pair off, in any order
  *   extra    for build: decoy tiles (default: two digits not in the answer)
  *   make     for pairs: two tiles go together when they add up to this. Without it, when they are
  *            worth the same (50% and 1/2)
- *   goal     'biggest': for pick, the biggest option is the answer
+ *   goal     'biggest' or 'smallest': for pick, the biggest (smallest) option is the answer
  *
  * Every answer is worked out from the sum or the picture, never stored, so a typo in the course
  * can't make a right answer wrong; and any way of writing the right value is right (2/4 for 1/2).
  */
 
-/** The value of a sum as written: numbers, + - × ÷ and brackets, "a/b", "n%" and "of" (25% of 80). */
+/**
+ * The value of a sum as written: numbers, + - × ÷ and brackets, "a/b", "n%" and "of" (25% of 80),
+ * dollars and °C, "47 to the nearest 10", and a price for one from "3 for $6" (2).
+ */
 export function value(text) {
-  const js = String(text).replace(/\$/g, '').replace(/×/g, '*').replace(/÷/g, '/')
+  const js = String(text).replace(/\$|°C/g, '')
+    .replace(/(\d+(?:\.\d+)?) to the nearest (\d+)/g, (_, n, to) => String(Math.round(n / to) * to))
+    .replace(/(\d+(?:\.\d+)?) for (\d+(?:\.\d+)?)/g, '($2/$1)')
+    .replace(/×/g, '*').replace(/÷/g, '/')
     .replace(/(\d+(?:\.\d+)?)%/g, '($1/100)').replace(/\bof\b/g, '*');
   if (!/^[\d\s.+\-*/()]+$/.test(js)) throw new Error(`not a sum: ${text}`);
   const v = Function(`"use strict"; return (${js});`)();
@@ -36,12 +43,14 @@ export function pictured(p) {
   if (p.frame != null) return p.frame;
   if (p.bar) return p.bar[0] / p.bar[1];
   if (p.grid != null) return p.grid / 100;
+  if (p.array) return p.array[0] * p.array[1];
   return null;
 }
 
 /** The number an item asks for. */
 export function target(item) {
   if (item.goal === 'biggest') return Math.max(...item.options.map(value));
+  if (item.goal === 'smallest') return Math.min(...item.options.map(value));
   const sum = item.sum ?? item.show;
   return sum != null ? value(sum) : pictured(item.picture);
 }

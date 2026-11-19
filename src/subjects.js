@@ -192,8 +192,11 @@ export const subjects = [{
     question: 'How is your maths?',
     options: [
       ['Rusty. Start me at the start', 'Mental maths'],
-      ['Adding in my head is fine', 'Percentages'],
-      ['Percentages are fine too', 'Fractions you can see'],
+      ['Adding in my head is fine', 'Times tables you can see'],
+      ['My times tables and dividing are fine', 'Rounding and estimating'],
+      ['Rounding and percentages are fine too', 'Fractions you can see'],
+      ['Fractions are fine too', 'Decimals and money'],
+      ['Decimals and money are fine too', 'Ratios and better buys'],
     ],
   },
 }, {

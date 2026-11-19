@@ -328,5 +328,625 @@
 {"show":"5/3","min":0,"max":2,"ticks":6,"prompt":"Past 1 now: drag to 5/3.","explain":"5/3 is one whole and 2/3 more."},
 {"show":"7/4","min":0,"max":2,"ticks":8,"prompt":"Past 1 now: drag to 7/4.","explain":"7/4 is one whole and 3/4 more."},
 {"show":"3/2","min":0,"max":2,"ticks":4,"prompt":"Past 1 now: drag to 3/2.","explain":"3/2 is one whole and 1/2 more."}
+],
+"array-count": [
+{"picture":{"array":[2,6]},"prompt":"How many dots? Count the rows, not every dot.","options":["6","12","18"],"explain":"2 rows of 6: 6 + 6 is 12."},
+{"picture":{"array":[2,8]},"prompt":"How many dots? Count the rows, not every dot.","options":["8","16","24"],"explain":"2 rows of 8: 8 + 8 is 16."},
+{"picture":{"array":[4,8]},"prompt":"How many dots? Count the rows, not every dot.","options":["24","32","40"],"explain":"4 rows of 8: 8 + 8 + 8 + 8 is 32."},
+{"picture":{"array":[3,6]},"prompt":"How many dots? Count the rows, not every dot.","options":["12","18","24"],"explain":"3 rows of 6: 6 + 6 + 6 is 18."},
+{"picture":{"array":[2,3]},"prompt":"How many dots? Count the rows, not every dot.","options":["3","6","9"],"explain":"2 rows of 3: 3 + 3 is 6."},
+{"picture":{"array":[4,3]},"prompt":"How many dots? Count the rows, not every dot.","options":["9","12","15"],"explain":"4 rows of 3: 3 + 3 + 3 + 3 is 12."},
+{"picture":{"array":[3,7]},"prompt":"How many dots? Count the rows, not every dot.","options":["14","21","28"],"explain":"3 rows of 7: 7 + 7 + 7 is 21."},
+{"picture":{"array":[3,4]},"prompt":"How many dots? Count the rows, not every dot.","options":["8","12","16"],"explain":"3 rows of 4: 4 + 4 + 4 is 12."}
+],
+"array-sum": [
+{"picture":{"array":[2,5]},"prompt":"Which sum matches the picture?","options":["2 × 5","2 + 5","5 × 5"],"explain":"2 rows of 5 is 2 × 5, which is 10."},
+{"picture":{"array":[2,6]},"prompt":"Which sum matches the picture?","options":["2 × 6","2 + 6","6 × 6"],"explain":"2 rows of 6 is 2 × 6, which is 12."},
+{"picture":{"array":[4,8]},"prompt":"Which sum matches the picture?","options":["4 × 8","4 + 8","8 × 8"],"explain":"4 rows of 8 is 4 × 8, which is 32."},
+{"picture":{"array":[2,8]},"prompt":"Which sum matches the picture?","options":["2 × 8","2 + 8","8 × 8"],"explain":"2 rows of 8 is 2 × 8, which is 16."},
+{"picture":{"array":[4,5]},"prompt":"Which sum matches the picture?","options":["4 × 5","4 + 5","5 × 5"],"explain":"4 rows of 5 is 4 × 5, which is 20."},
+{"picture":{"array":[4,6]},"prompt":"Which sum matches the picture?","options":["4 × 6","4 + 6","6 × 6"],"explain":"4 rows of 6 is 4 × 6, which is 24."},
+{"picture":{"array":[2,3]},"prompt":"Which sum matches the picture?","options":["2 × 3","2 + 3","3 × 3"],"explain":"2 rows of 3 is 2 × 3, which is 6."},
+{"picture":{"array":[2,4]},"prompt":"Which sum matches the picture?","options":["2 × 4","2 + 4","4 × 4"],"explain":"2 rows of 4 is 2 × 4, which is 8."}
+],
+"array-build": [
+{"picture":{"array":[4,8]},"show":"4 × 8","prompt":"4 rows of 8. Build the total.","explain":"8, 16, 24, 32: 4 × 8 is 32."},
+{"picture":{"array":[4,3]},"show":"4 × 3","prompt":"4 rows of 3. Build the total.","explain":"3, 6, 9, 12: 4 × 3 is 12."},
+{"picture":{"array":[4,7]},"show":"4 × 7","prompt":"4 rows of 7. Build the total.","explain":"7, 14, 21, 28: 4 × 7 is 28."},
+{"picture":{"array":[2,6]},"show":"2 × 6","prompt":"2 rows of 6. Build the total.","explain":"6, 12: 2 × 6 is 12."},
+{"picture":{"array":[4,4]},"show":"4 × 4","prompt":"4 rows of 4. Build the total.","explain":"4, 8, 12, 16: 4 × 4 is 16."},
+{"picture":{"array":[4,5]},"show":"4 × 5","prompt":"4 rows of 5. Build the total.","explain":"5, 10, 15, 20: 4 × 5 is 20."},
+{"picture":{"array":[2,7]},"show":"2 × 7","prompt":"2 rows of 7. Build the total.","explain":"7, 14: 2 × 7 is 14."},
+{"picture":{"array":[2,9]},"show":"2 × 9","prompt":"2 rows of 9. Build the total.","explain":"9, 18: 2 × 9 is 18."}
+],
+"turn-around": [
+{"show":"2 × 6","prompt":"Which is the same as 2 × 6?","options":["6 × 2","2 + 6","6 × 6"],"explain":"Turn 2 rows of 6 on its side: 6 rows of 2. Both are 12."},
+{"show":"3 × 7","prompt":"Which is the same as 3 × 7?","options":["7 × 3","3 + 7","7 × 7"],"explain":"Turn 3 rows of 7 on its side: 7 rows of 3. Both are 21."},
+{"show":"5 × 4","prompt":"Which is the same as 5 × 4?","options":["4 × 5","5 + 4","4 × 4"],"explain":"Turn 5 rows of 4 on its side: 4 rows of 5. Both are 20."},
+{"show":"2 × 7","prompt":"Which is the same as 2 × 7?","options":["7 × 2","2 + 7","7 × 7"],"explain":"Turn 2 rows of 7 on its side: 7 rows of 2. Both are 14."},
+{"show":"3 × 9","prompt":"Which is the same as 3 × 9?","options":["9 × 3","3 + 9","9 × 9"],"explain":"Turn 3 rows of 9 on its side: 9 rows of 3. Both are 27."},
+{"show":"2 × 8","prompt":"Which is the same as 2 × 8?","options":["8 × 2","2 + 8","8 × 8"],"explain":"Turn 2 rows of 8 on its side: 8 rows of 2. Both are 16."},
+{"show":"4 × 8","prompt":"Which is the same as 4 × 8?","options":["8 × 4","4 + 8","8 × 8"],"explain":"Turn 4 rows of 8 on its side: 8 rows of 4. Both are 32."},
+{"show":"5 × 8","prompt":"Which is the same as 5 × 8?","options":["8 × 5","5 + 8","8 × 8"],"explain":"Turn 5 rows of 8 on its side: 8 rows of 5. Both are 40."}
+],
+"times-pairs": [
+{"tiles":["5 × 5","4 × 6","3 × 8","24","24","25"],"prompt":"Match each sum to its answer.","explain":"4 × 6 is 24, 3 × 8 is 24, 5 × 5 is 25."},
+{"tiles":["16","4 × 6","18","4 × 4","24","3 × 6"],"prompt":"Match each sum to its answer.","explain":"4 × 6 is 24, 4 × 4 is 16, 3 × 6 is 18."},
+{"tiles":["16","4 × 4","20","2 × 6","4 × 5","12"],"prompt":"Match each sum to its answer.","explain":"2 × 6 is 12, 4 × 4 is 16, 4 × 5 is 20."},
+{"tiles":["4 × 4","25","5 × 5","24","3 × 8","16"],"prompt":"Match each sum to its answer.","explain":"5 × 5 is 25, 3 × 8 is 24, 4 × 4 is 16."},
+{"tiles":["12","3 × 8","24","20","4 × 5","2 × 6"],"prompt":"Match each sum to its answer.","explain":"4 × 5 is 20, 3 × 8 is 24, 2 × 6 is 12."},
+{"tiles":["25","5 × 5","12","2 × 6","2 × 7","14"],"prompt":"Match each sum to its answer.","explain":"2 × 7 is 14, 5 × 5 is 25, 2 × 6 is 12."},
+{"tiles":["18","3 × 5","20","4 × 5","3 × 6","15"],"prompt":"Match each sum to its answer.","explain":"4 × 5 is 20, 3 × 6 is 18, 3 × 5 is 15."},
+{"tiles":["3 × 5","15","5 × 5","4 × 6","25","24"],"prompt":"Match each sum to its answer.","explain":"5 × 5 is 25, 3 × 5 is 15, 4 × 6 is 24."}
+],
+"times-ten": [
+{"show":"64 × 10","prompt":"Move every digit up a place.","explain":"64 tens is 640."},
+{"show":"36 × 10","prompt":"Move every digit up a place.","explain":"36 tens is 360."},
+{"show":"18 × 10","prompt":"Move every digit up a place.","explain":"18 tens is 180."},
+{"show":"45 × 10","prompt":"Move every digit up a place.","explain":"45 tens is 450."},
+{"show":"125 × 10","prompt":"Move every digit up a place.","explain":"125 tens is 1250."},
+{"show":"12 × 10","prompt":"Move every digit up a place.","explain":"12 tens is 120."},
+{"show":"23 × 10","prompt":"Move every digit up a place.","explain":"23 tens is 230."},
+{"show":"80 × 10","prompt":"Move every digit up a place.","explain":"80 tens is 800."}
+],
+"times-five": [
+{"show":"16 × 5","prompt":"Times 10, then halve.","explain":"16 × 10 is 160, and half of that is 80."},
+{"show":"30 × 5","prompt":"Times 10, then halve.","explain":"30 × 10 is 300, and half of that is 150."},
+{"show":"22 × 5","prompt":"Times 10, then halve.","explain":"22 × 10 is 220, and half of that is 110."},
+{"show":"14 × 5","prompt":"Times 10, then halve.","explain":"14 × 10 is 140, and half of that is 70."},
+{"show":"18 × 5","prompt":"Times 10, then halve.","explain":"18 × 10 is 180, and half of that is 90."},
+{"show":"24 × 5","prompt":"Times 10, then halve.","explain":"24 × 10 is 240, and half of that is 120."},
+{"show":"6 × 5","prompt":"Times 10, then halve.","explain":"6 × 10 is 60, and half of that is 30."},
+{"show":"12 × 5","prompt":"Times 10, then halve.","explain":"12 × 10 is 120, and half of that is 60."}
+],
+"times-line": [
+{"show":"1 × 5","min":0,"max":50,"ticks":10,"prompt":"Count in 5s. Where does it land?","explain":"5: one hop of 5."},
+{"show":"4 × 5","min":0,"max":50,"ticks":10,"prompt":"Count in 5s. Where does it land?","explain":"5, 10, 15, 20: four hops of 5."},
+{"show":"5 × 5","min":0,"max":50,"ticks":10,"prompt":"Count in 5s. Where does it land?","explain":"5, 10, 15, 20, 25: five hops of 5."},
+{"show":"9 × 5","min":0,"max":50,"ticks":10,"prompt":"Count in 5s. Where does it land?","explain":"5, 10, 15, 20, 25, 30, 35, 40, 45: nine hops of 5."},
+{"show":"7 × 5","min":0,"max":50,"ticks":10,"prompt":"Count in 5s. Where does it land?","explain":"5, 10, 15, 20, 25, 30, 35: seven hops of 5."},
+{"show":"6 × 5","min":0,"max":50,"ticks":10,"prompt":"Count in 5s. Where does it land?","explain":"5, 10, 15, 20, 25, 30: six hops of 5."},
+{"show":"2 × 5","min":0,"max":50,"ticks":10,"prompt":"Count in 5s. Where does it land?","explain":"5, 10: two hops of 5."},
+{"show":"3 × 5","min":0,"max":50,"ticks":10,"prompt":"Count in 5s. Where does it land?","explain":"5, 10, 15: three hops of 5."}
+],
+"times-two": [
+{"show":"48 × 2","prompt":"Double it.","options":["94","96","98"],"explain":"40 doubled is 80 and 8 doubled is 16: 96."},
+{"show":"26 × 2","prompt":"Double it.","options":["50","52","54"],"explain":"20 doubled is 40 and 6 doubled is 12: 52."},
+{"show":"18 × 2","prompt":"Double it.","options":["34","36","38"],"explain":"10 doubled is 20 and 8 doubled is 16: 36."},
+{"show":"19 × 2","prompt":"Double it.","options":["36","38","40"],"explain":"10 doubled is 20 and 9 doubled is 18: 38."},
+{"show":"17 × 2","prompt":"Double it.","options":["32","34","36"],"explain":"10 doubled is 20 and 7 doubled is 14: 34."},
+{"show":"16 × 2","prompt":"Double it.","options":["30","32","34"],"explain":"10 doubled is 20 and 6 doubled is 12: 32."},
+{"show":"14 × 2","prompt":"Double it.","options":["26","28","30"],"explain":"10 doubled is 20 and 4 doubled is 8: 28."},
+{"show":"37 × 2","prompt":"Double it.","options":["72","74","76"],"explain":"30 doubled is 60 and 7 doubled is 14: 74."}
+],
+"tables-four": [
+{"show":"12 × 4","prompt":"Double, then double again.","explain":"12, 24, 48."},
+{"show":"4 × 4","prompt":"Double, then double again.","explain":"4, 8, 16."},
+{"show":"6 × 4","prompt":"Double, then double again.","explain":"6, 12, 24."},
+{"show":"8 × 4","prompt":"Double, then double again.","explain":"8, 16, 32."},
+{"show":"9 × 4","prompt":"Double, then double again.","explain":"9, 18, 36."},
+{"show":"7 × 4","prompt":"Double, then double again.","explain":"7, 14, 28."},
+{"show":"11 × 4","prompt":"Double, then double again.","explain":"11, 22, 44."},
+{"show":"3 × 4","prompt":"Double, then double again.","explain":"3, 6, 12."}
+],
+"tables-eight": [
+{"show":"3 × 8","prompt":"Double three times.","explain":"3, 6, 12, 24."},
+{"show":"8 × 8","prompt":"Double three times.","explain":"8, 16, 32, 64."},
+{"show":"4 × 8","prompt":"Double three times.","explain":"4, 8, 16, 32."},
+{"show":"11 × 8","prompt":"Double three times.","explain":"11, 22, 44, 88."},
+{"show":"7 × 8","prompt":"Double three times.","explain":"7, 14, 28, 56."},
+{"show":"9 × 8","prompt":"Double three times.","explain":"9, 18, 36, 72."},
+{"show":"12 × 8","prompt":"Double three times.","explain":"12, 24, 48, 96."},
+{"show":"6 × 8","prompt":"Double three times.","explain":"6, 12, 24, 48."}
+],
+"times-nine": [
+{"show":"12 × 9","prompt":"Times 10, then take one 12 away.","explain":"12 × 10 is 120, take away 12: 108."},
+{"show":"8 × 9","prompt":"Times 10, then take one 8 away.","explain":"8 × 10 is 80, take away 8: 72."},
+{"show":"7 × 9","prompt":"Times 10, then take one 7 away.","explain":"7 × 10 is 70, take away 7: 63."},
+{"show":"9 × 9","prompt":"Times 10, then take one 9 away.","explain":"9 × 10 is 90, take away 9: 81."},
+{"show":"11 × 9","prompt":"Times 10, then take one 11 away.","explain":"11 × 10 is 110, take away 11: 99."},
+{"show":"5 × 9","prompt":"Times 10, then take one 5 away.","explain":"5 × 10 is 50, take away 5: 45."},
+{"show":"6 × 9","prompt":"Times 10, then take one 6 away.","explain":"6 × 10 is 60, take away 6: 54."},
+{"show":"4 × 9","prompt":"Times 10, then take one 4 away.","explain":"4 × 10 is 40, take away 4: 36."}
+],
+"times-nine-pick": [
+{"show":"9 × 9","prompt":"Times 10, take one lot away.","options":["72","81","90"],"explain":"9 × 10 is 90, take away 9: 81."},
+{"show":"12 × 9","prompt":"Times 10, take one lot away.","options":["99","108","117"],"explain":"12 × 10 is 120, take away 12: 108."},
+{"show":"6 × 9","prompt":"Times 10, take one lot away.","options":["45","54","63"],"explain":"6 × 10 is 60, take away 6: 54."},
+{"show":"5 × 9","prompt":"Times 10, take one lot away.","options":["36","45","54"],"explain":"5 × 10 is 50, take away 5: 45."},
+{"show":"3 × 9","prompt":"Times 10, take one lot away.","options":["18","27","36"],"explain":"3 × 10 is 30, take away 3: 27."},
+{"show":"7 × 9","prompt":"Times 10, take one lot away.","options":["54","63","72"],"explain":"7 × 10 is 70, take away 7: 63."},
+{"show":"8 × 9","prompt":"Times 10, take one lot away.","options":["63","72","81"],"explain":"8 × 10 is 80, take away 8: 72."},
+{"show":"4 × 9","prompt":"Times 10, take one lot away.","options":["27","36","45"],"explain":"4 × 10 is 40, take away 4: 36."}
+],
+"share-rows": [
+{"picture":{"array":[2,3]},"sum":"6 ÷ 2","prompt":"6 dots shared into 2 equal rows. How many in each row?","options":["2","3","4"],"explain":"2 rows of 3 is 6, so 6 ÷ 2 is 3."},
+{"picture":{"array":[3,5]},"sum":"15 ÷ 3","prompt":"15 dots shared into 3 equal rows. How many in each row?","options":["4","5","6"],"explain":"3 rows of 5 is 15, so 15 ÷ 3 is 5."},
+{"picture":{"array":[4,6]},"sum":"24 ÷ 4","prompt":"24 dots shared into 4 equal rows. How many in each row?","options":["5","6","7"],"explain":"4 rows of 6 is 24, so 24 ÷ 4 is 6."},
+{"picture":{"array":[2,5]},"sum":"10 ÷ 2","prompt":"10 dots shared into 2 equal rows. How many in each row?","options":["4","5","6"],"explain":"2 rows of 5 is 10, so 10 ÷ 2 is 5."},
+{"picture":{"array":[3,3]},"sum":"9 ÷ 3","prompt":"9 dots shared into 3 equal rows. How many in each row?","options":["2","3","4"],"explain":"3 rows of 3 is 9, so 9 ÷ 3 is 3."},
+{"picture":{"array":[4,5]},"sum":"20 ÷ 4","prompt":"20 dots shared into 4 equal rows. How many in each row?","options":["4","5","6"],"explain":"4 rows of 5 is 20, so 20 ÷ 4 is 5."},
+{"picture":{"array":[2,4]},"sum":"8 ÷ 2","prompt":"8 dots shared into 2 equal rows. How many in each row?","options":["3","4","5"],"explain":"2 rows of 4 is 8, so 8 ÷ 2 is 4."},
+{"picture":{"array":[3,4]},"sum":"12 ÷ 3","prompt":"12 dots shared into 3 equal rows. How many in each row?","options":["3","4","5"],"explain":"3 rows of 4 is 12, so 12 ÷ 3 is 4."}
+],
+"halve-twice": [
+{"show":"88 ÷ 4","prompt":"Halve, then halve again.","explain":"88, 44, 22."},
+{"show":"56 ÷ 4","prompt":"Halve, then halve again.","explain":"56, 28, 14."},
+{"show":"52 ÷ 4","prompt":"Halve, then halve again.","explain":"52, 26, 13."},
+{"show":"64 ÷ 4","prompt":"Halve, then halve again.","explain":"64, 32, 16."},
+{"show":"96 ÷ 4","prompt":"Halve, then halve again.","explain":"96, 48, 24."},
+{"show":"32 ÷ 4","prompt":"Halve, then halve again.","explain":"32, 16, 8."},
+{"show":"84 ÷ 4","prompt":"Halve, then halve again.","explain":"84, 42, 21."},
+{"show":"44 ÷ 4","prompt":"Halve, then halve again.","explain":"44, 22, 11."}
+],
+"halve-twice-pick": [
+{"show":"120 ÷ 4","prompt":"Halve, then halve again.","options":["25","30","60"],"explain":"120, 60, 30."},
+{"show":"160 ÷ 4","prompt":"Halve, then halve again.","options":["35","40","80"],"explain":"160, 80, 40."},
+{"show":"240 ÷ 4","prompt":"Halve, then halve again.","options":["55","60","120"],"explain":"240, 120, 60."},
+{"show":"60 ÷ 4","prompt":"Halve, then halve again.","options":["10","15","30"],"explain":"60, 30, 15."},
+{"show":"40 ÷ 4","prompt":"Halve, then halve again.","options":["5","10","20"],"explain":"40, 20, 10."},
+{"show":"80 ÷ 4","prompt":"Halve, then halve again.","options":["15","20","40"],"explain":"80, 40, 20."},
+{"show":"200 ÷ 4","prompt":"Halve, then halve again.","options":["45","50","100"],"explain":"200, 100, 50."},
+{"show":"140 ÷ 4","prompt":"Halve, then halve again.","options":["30","35","70"],"explain":"140, 70, 35."}
+],
+"divide-ten": [
+{"show":"90 ÷ 10","prompt":"Move every digit down a place.","explain":"90 is 9 tens: 9."},
+{"show":"920 ÷ 10","prompt":"Move every digit down a place.","explain":"920 is 92 tens: 92."},
+{"show":"30 ÷ 10","prompt":"Move every digit down a place.","explain":"30 is 3 tens: 3."},
+{"show":"350 ÷ 10","prompt":"Move every digit down a place.","explain":"350 is 35 tens: 35."},
+{"show":"480 ÷ 10","prompt":"Move every digit down a place.","explain":"480 is 48 tens: 48."},
+{"show":"710 ÷ 10","prompt":"Move every digit down a place.","explain":"710 is 71 tens: 71."},
+{"show":"600 ÷ 10","prompt":"Move every digit down a place.","explain":"600 is 60 tens: 60."},
+{"show":"120 ÷ 10","prompt":"Move every digit down a place.","explain":"120 is 12 tens: 12."}
+],
+"divide-five": [
+{"show":"120 ÷ 5","prompt":"Double it, then divide by 10.","explain":"120 doubled is 240, and 240 ÷ 10 is 24."},
+{"show":"35 ÷ 5","prompt":"Double it, then divide by 10.","explain":"35 doubled is 70, and 70 ÷ 10 is 7."},
+{"show":"80 ÷ 5","prompt":"Double it, then divide by 10.","explain":"80 doubled is 160, and 160 ÷ 10 is 16."},
+{"show":"15 ÷ 5","prompt":"Double it, then divide by 10.","explain":"15 doubled is 30, and 30 ÷ 10 is 3."},
+{"show":"55 ÷ 5","prompt":"Double it, then divide by 10.","explain":"55 doubled is 110, and 110 ÷ 10 is 11."},
+{"show":"65 ÷ 5","prompt":"Double it, then divide by 10.","explain":"65 doubled is 130, and 130 ÷ 10 is 13."},
+{"show":"25 ÷ 5","prompt":"Double it, then divide by 10.","explain":"25 doubled is 50, and 50 ÷ 10 is 5."},
+{"show":"90 ÷ 5","prompt":"Double it, then divide by 10.","explain":"90 doubled is 180, and 180 ÷ 10 is 18."}
+],
+"fives-in": [
+{"show":"$50 ÷ $5","prompt":"How many $5 notes make $50?","options":["8","10","13"],"explain":"50 doubled is 100, and 100 ÷ 10 is 10."},
+{"show":"$40 ÷ $5","prompt":"How many $5 notes make $40?","options":["6","8","11"],"explain":"40 doubled is 80, and 80 ÷ 10 is 8."},
+{"show":"$90 ÷ $5","prompt":"How many $5 notes make $90?","options":["16","18","21"],"explain":"90 doubled is 180, and 180 ÷ 10 is 18."},
+{"show":"$100 ÷ $5","prompt":"How many $5 notes make $100?","options":["18","20","23"],"explain":"100 doubled is 200, and 200 ÷ 10 is 20."},
+{"show":"$70 ÷ $5","prompt":"How many $5 notes make $70?","options":["12","14","17"],"explain":"70 doubled is 140, and 140 ÷ 10 is 14."},
+{"show":"$30 ÷ $5","prompt":"How many $5 notes make $30?","options":["4","6","9"],"explain":"30 doubled is 60, and 60 ÷ 10 is 6."},
+{"show":"$20 ÷ $5","prompt":"How many $5 notes make $20?","options":["2","4","7"],"explain":"20 doubled is 40, and 40 ÷ 10 is 4."},
+{"show":"$80 ÷ $5","prompt":"How many $5 notes make $80?","options":["14","16","19"],"explain":"80 doubled is 160, and 160 ÷ 10 is 16."}
+],
+"divide-line": [
+{"show":"5 ÷ 5","min":0,"max":10,"ticks":10,"prompt":"Where does it land?","explain":"5 doubled is 10, and 10 ÷ 10 is 1."},
+{"show":"45 ÷ 5","min":0,"max":10,"ticks":10,"prompt":"Where does it land?","explain":"45 doubled is 90, and 90 ÷ 10 is 9."},
+{"show":"30 ÷ 5","min":0,"max":10,"ticks":10,"prompt":"Where does it land?","explain":"30 doubled is 60, and 60 ÷ 10 is 6."},
+{"show":"15 ÷ 5","min":0,"max":10,"ticks":10,"prompt":"Where does it land?","explain":"15 doubled is 30, and 30 ÷ 10 is 3."},
+{"show":"35 ÷ 5","min":0,"max":10,"ticks":10,"prompt":"Where does it land?","explain":"35 doubled is 70, and 70 ÷ 10 is 7."},
+{"show":"10 ÷ 5","min":0,"max":10,"ticks":10,"prompt":"Where does it land?","explain":"10 doubled is 20, and 20 ÷ 10 is 2."},
+{"show":"20 ÷ 5","min":0,"max":10,"ticks":10,"prompt":"Where does it land?","explain":"20 doubled is 40, and 40 ÷ 10 is 4."},
+{"show":"40 ÷ 5","min":0,"max":10,"ticks":10,"prompt":"Where does it land?","explain":"40 doubled is 80, and 80 ÷ 10 is 8."}
+],
+"left-frame": [
+{"picture":{"frame":5},"sum":"5 - 1 × 3","prompt":"Share these between 3 people. How many are left over?","options":["0","1","2"],"explain":"1 each uses 3 dots, so 2 are left over."},
+{"picture":{"frame":9},"sum":"9 - 3 × 3","prompt":"Share these between 3 people. How many are left over?","options":["0","1","2"],"explain":"3 each uses 9 dots, so 0 are left over."},
+{"picture":{"frame":6},"sum":"6 - 3 × 2","prompt":"Share these between 2 people. How many are left over?","options":["0","1","2"],"explain":"3 each uses 6 dots, so 0 are left over."},
+{"picture":{"frame":7},"sum":"7 - 2 × 3","prompt":"Share these between 3 people. How many are left over?","options":["0","1","2"],"explain":"2 each uses 6 dots, so 1 is left over."},
+{"picture":{"frame":6},"sum":"6 - 2 × 3","prompt":"Share these between 3 people. How many are left over?","options":["0","1","2"],"explain":"2 each uses 6 dots, so 0 are left over."},
+{"picture":{"frame":5},"sum":"5 - 2 × 2","prompt":"Share these between 2 people. How many are left over?","options":["0","1","2"],"explain":"2 each uses 4 dots, so 1 is left over."},
+{"picture":{"frame":9},"sum":"9 - 4 × 2","prompt":"Share these between 2 people. How many are left over?","options":["0","1","2"],"explain":"4 each uses 8 dots, so 1 is left over."},
+{"picture":{"frame":8},"sum":"8 - 4 × 2","prompt":"Share these between 2 people. How many are left over?","options":["0","1","2"],"explain":"4 each uses 8 dots, so 0 are left over."}
+],
+"left-over": [
+{"show":"29 ÷ 3","sum":"29 - 9 × 3","prompt":"How many are left over? Nine 3s is 27.","explain":"29 take away 27 leaves 2."},
+{"show":"25 ÷ 4","sum":"25 - 6 × 4","prompt":"How many are left over? Six 4s is 24.","explain":"25 take away 24 leaves 1."},
+{"show":"38 ÷ 4","sum":"38 - 9 × 4","prompt":"How many are left over? Nine 4s is 36.","explain":"38 take away 36 leaves 2."},
+{"show":"31 ÷ 5","sum":"31 - 6 × 5","prompt":"How many are left over? Six 5s is 30.","explain":"31 take away 30 leaves 1."},
+{"show":"17 ÷ 3","sum":"17 - 5 × 3","prompt":"How many are left over? Five 3s is 15.","explain":"17 take away 15 leaves 2."},
+{"show":"14 ÷ 6","sum":"14 - 2 × 6","prompt":"How many are left over? Two 6s is 12.","explain":"14 take away 12 leaves 2."},
+{"show":"39 ÷ 6","sum":"39 - 6 × 6","prompt":"How many are left over? Six 6s is 36.","explain":"39 take away 36 leaves 3."},
+{"show":"32 ÷ 6","sum":"32 - 5 × 6","prompt":"How many are left over? Five 6s is 30.","explain":"32 take away 30 leaves 2."}
+],
+"left-eggs": [
+{"show":"44 ÷ 6","sum":"44 - 7 × 6","prompt":"44 eggs go in boxes of 6. How many eggs are left over?","options":["1","2","3"],"explain":"7 boxes of 6 is 42, and 44 take away 42 leaves 2."},
+{"show":"50 ÷ 6","sum":"50 - 8 × 6","prompt":"50 eggs go in boxes of 6. How many eggs are left over?","options":["1","2","3"],"explain":"8 boxes of 6 is 48, and 50 take away 48 leaves 2."},
+{"show":"33 ÷ 6","sum":"33 - 5 × 6","prompt":"33 eggs go in boxes of 6. How many eggs are left over?","options":["2","3","4"],"explain":"5 boxes of 6 is 30, and 33 take away 30 leaves 3."},
+{"show":"29 ÷ 6","sum":"29 - 4 × 6","prompt":"29 eggs go in boxes of 6. How many eggs are left over?","options":["4","5","6"],"explain":"4 boxes of 6 is 24, and 29 take away 24 leaves 5."},
+{"show":"57 ÷ 6","sum":"57 - 9 × 6","prompt":"57 eggs go in boxes of 6. How many eggs are left over?","options":["2","3","4"],"explain":"9 boxes of 6 is 54, and 57 take away 54 leaves 3."},
+{"show":"38 ÷ 6","sum":"38 - 6 × 6","prompt":"38 eggs go in boxes of 6. How many eggs are left over?","options":["1","2","3"],"explain":"6 boxes of 6 is 36, and 38 take away 36 leaves 2."},
+{"show":"56 ÷ 6","sum":"56 - 9 × 6","prompt":"56 eggs go in boxes of 6. How many eggs are left over?","options":["1","2","3"],"explain":"9 boxes of 6 is 54, and 56 take away 54 leaves 2."},
+{"show":"28 ÷ 6","sum":"28 - 4 × 6","prompt":"28 eggs go in boxes of 6. How many eggs are left over?","options":["3","4","5"],"explain":"4 boxes of 6 is 24, and 28 take away 24 leaves 4."}
+],
+"round-ten-line": [
+{"show":"81","sum":"81 to the nearest 10","min":0,"max":100,"ticks":10,"prompt":"Drag 81 to its nearest 10.","explain":"81 is 1 from 80 and 9 from 90: 80."},
+{"show":"63","sum":"63 to the nearest 10","min":0,"max":100,"ticks":10,"prompt":"Drag 63 to its nearest 10.","explain":"63 is 3 from 60 and 7 from 70: 60."},
+{"show":"14","sum":"14 to the nearest 10","min":0,"max":100,"ticks":10,"prompt":"Drag 14 to its nearest 10.","explain":"14 is 4 from 10 and 6 from 20: 10."},
+{"show":"64","sum":"64 to the nearest 10","min":0,"max":100,"ticks":10,"prompt":"Drag 64 to its nearest 10.","explain":"64 is 4 from 60 and 6 from 70: 60."},
+{"show":"82","sum":"82 to the nearest 10","min":0,"max":100,"ticks":10,"prompt":"Drag 82 to its nearest 10.","explain":"82 is 2 from 80 and 8 from 90: 80."},
+{"show":"41","sum":"41 to the nearest 10","min":0,"max":100,"ticks":10,"prompt":"Drag 41 to its nearest 10.","explain":"41 is 1 from 40 and 9 from 50: 40."},
+{"show":"62","sum":"62 to the nearest 10","min":0,"max":100,"ticks":10,"prompt":"Drag 62 to its nearest 10.","explain":"62 is 2 from 60 and 8 from 70: 60."},
+{"show":"16","sum":"16 to the nearest 10","min":0,"max":100,"ticks":10,"prompt":"Drag 16 to its nearest 10.","explain":"16 is 6 from 10 and 4 from 20: 20."}
+],
+"round-ten": [
+{"show":"92","sum":"92 to the nearest 10","prompt":"To the nearest 10?","options":["90","92","100"],"explain":"92 is 2 from 90 and 8 from 100: 90."},
+{"show":"77","sum":"77 to the nearest 10","prompt":"To the nearest 10?","options":["70","77","80"],"explain":"77 is 7 from 70 and 3 from 80: 80."},
+{"show":"33","sum":"33 to the nearest 10","prompt":"To the nearest 10?","options":["30","33","40"],"explain":"33 is 3 from 30 and 7 from 40: 30."},
+{"show":"26","sum":"26 to the nearest 10","prompt":"To the nearest 10?","options":["20","26","30"],"explain":"26 is 6 from 20 and 4 from 30: 30."},
+{"show":"84","sum":"84 to the nearest 10","prompt":"To the nearest 10?","options":["80","84","90"],"explain":"84 is 4 from 80 and 6 from 90: 80."},
+{"show":"23","sum":"23 to the nearest 10","prompt":"To the nearest 10?","options":["20","23","30"],"explain":"23 is 3 from 20 and 7 from 30: 20."},
+{"show":"54","sum":"54 to the nearest 10","prompt":"To the nearest 10?","options":["50","54","60"],"explain":"54 is 4 from 50 and 6 from 60: 50."},
+{"show":"45","sum":"45 to the nearest 10","prompt":"To the nearest 10?","options":["40","45","50"],"explain":"45 is halfway, and halfway rounds up: 50."}
+],
+"round-ten-build": [
+{"show":"79 to the nearest 10","prompt":"Build it.","explain":"79 is 9 from 70 and 1 from 80: 80."},
+{"show":"65 to the nearest 10","prompt":"Build it.","explain":"65 is halfway, and halfway rounds up: 70."},
+{"show":"87 to the nearest 10","prompt":"Build it.","explain":"87 is 7 from 80 and 3 from 90: 90."},
+{"show":"76 to the nearest 10","prompt":"Build it.","explain":"76 is 6 from 70 and 4 from 80: 80."},
+{"show":"32 to the nearest 10","prompt":"Build it.","explain":"32 is 2 from 30 and 8 from 40: 30."},
+{"show":"61 to the nearest 10","prompt":"Build it.","explain":"61 is 1 from 60 and 9 from 70: 60."},
+{"show":"18 to the nearest 10","prompt":"Build it.","explain":"18 is 8 from 10 and 2 from 20: 20."},
+{"show":"83 to the nearest 10","prompt":"Build it.","explain":"83 is 3 from 80 and 7 from 90: 80."}
+],
+"round-hundred-line": [
+{"show":"450","sum":"450 to the nearest 100","min":0,"max":1000,"ticks":10,"prompt":"Drag 450 to its nearest 100.","explain":"450 has 5 tens, halfway, so it rounds up: 500."},
+{"show":"140","sum":"140 to the nearest 100","min":0,"max":1000,"ticks":10,"prompt":"Drag 140 to its nearest 100.","explain":"140 has 4 tens, short of halfway: 100."},
+{"show":"330","sum":"330 to the nearest 100","min":0,"max":1000,"ticks":10,"prompt":"Drag 330 to its nearest 100.","explain":"330 has 3 tens, short of halfway: 300."},
+{"show":"730","sum":"730 to the nearest 100","min":0,"max":1000,"ticks":10,"prompt":"Drag 730 to its nearest 100.","explain":"730 has 3 tens, short of halfway: 700."},
+{"show":"320","sum":"320 to the nearest 100","min":0,"max":1000,"ticks":10,"prompt":"Drag 320 to its nearest 100.","explain":"320 has 2 tens, short of halfway: 300."},
+{"show":"440","sum":"440 to the nearest 100","min":0,"max":1000,"ticks":10,"prompt":"Drag 440 to its nearest 100.","explain":"440 has 4 tens, short of halfway: 400."},
+{"show":"620","sum":"620 to the nearest 100","min":0,"max":1000,"ticks":10,"prompt":"Drag 620 to its nearest 100.","explain":"620 has 2 tens, short of halfway: 600."},
+{"show":"550","sum":"550 to the nearest 100","min":0,"max":1000,"ticks":10,"prompt":"Drag 550 to its nearest 100.","explain":"550 has 5 tens, halfway, so it rounds up: 600."}
+],
+"round-hundred": [
+{"show":"870","sum":"870 to the nearest 100","prompt":"To the nearest 100?","options":["800","870","900"],"explain":"870 has 7 tens, past halfway: 900."},
+{"show":"590","sum":"590 to the nearest 100","prompt":"To the nearest 100?","options":["500","590","600"],"explain":"590 has 9 tens, past halfway: 600."},
+{"show":"780","sum":"780 to the nearest 100","prompt":"To the nearest 100?","options":["700","780","800"],"explain":"780 has 8 tens, past halfway: 800."},
+{"show":"740","sum":"740 to the nearest 100","prompt":"To the nearest 100?","options":["700","740","800"],"explain":"740 has 4 tens, short of halfway: 700."},
+{"show":"820","sum":"820 to the nearest 100","prompt":"To the nearest 100?","options":["800","820","900"],"explain":"820 has 2 tens, short of halfway: 800."},
+{"show":"330","sum":"330 to the nearest 100","prompt":"To the nearest 100?","options":["300","330","400"],"explain":"330 has 3 tens, short of halfway: 300."},
+{"show":"830","sum":"830 to the nearest 100","prompt":"To the nearest 100?","options":["800","830","900"],"explain":"830 has 3 tens, short of halfway: 800."},
+{"show":"840","sum":"840 to the nearest 100","prompt":"To the nearest 100?","options":["800","840","900"],"explain":"840 has 4 tens, short of halfway: 800."}
+],
+"round-hundred-build": [
+{"show":"1480 to the nearest 100","prompt":"Look at the tens.","explain":"1480 has 8 tens, past halfway: 1500."},
+{"show":"240 to the nearest 100","prompt":"Look at the tens.","explain":"240 has 4 tens, short of halfway: 200."},
+{"show":"3610 to the nearest 100","prompt":"Look at the tens.","explain":"3610 has 1 tens, short of halfway: 3600."},
+{"show":"470 to the nearest 100","prompt":"Look at the tens.","explain":"470 has 7 tens, past halfway: 500."},
+{"show":"1320 to the nearest 100","prompt":"Look at the tens.","explain":"1320 has 2 tens, short of halfway: 1300."},
+{"show":"4190 to the nearest 100","prompt":"Look at the tens.","explain":"4190 has 9 tens, past halfway: 4200."},
+{"show":"2550 to the nearest 100","prompt":"Look at the tens.","explain":"2550 has 5 tens, halfway, so it rounds up: 2600."},
+{"show":"950 to the nearest 100","prompt":"Look at the tens.","explain":"950 has 5 tens, halfway, so it rounds up: 1000."}
+],
+"estimate": [
+{"show":"23 + 68","sum":"23 to the nearest 10 + 68 to the nearest 10","prompt":"Round each to the nearest 10. About how much?","options":["80","90","100"],"explain":"23 + 68 is about 20 + 70, which is 90."},
+{"show":"27 + 67","sum":"27 to the nearest 10 + 67 to the nearest 10","prompt":"Round each to the nearest 10. About how much?","options":["90","100","110"],"explain":"27 + 67 is about 30 + 70, which is 100."},
+{"show":"63 + 67","sum":"63 to the nearest 10 + 67 to the nearest 10","prompt":"Round each to the nearest 10. About how much?","options":["120","130","140"],"explain":"63 + 67 is about 60 + 70, which is 130."},
+{"show":"42 + 47","sum":"42 to the nearest 10 + 47 to the nearest 10","prompt":"Round each to the nearest 10. About how much?","options":["80","90","100"],"explain":"42 + 47 is about 40 + 50, which is 90."},
+{"show":"44 + 71","sum":"44 to the nearest 10 + 71 to the nearest 10","prompt":"Round each to the nearest 10. About how much?","options":["100","110","120"],"explain":"44 + 71 is about 40 + 70, which is 110."},
+{"show":"48 + 32","sum":"48 to the nearest 10 + 32 to the nearest 10","prompt":"Round each to the nearest 10. About how much?","options":["70","80","90"],"explain":"48 + 32 is about 50 + 30, which is 80."},
+{"show":"22 + 64","sum":"22 to the nearest 10 + 64 to the nearest 10","prompt":"Round each to the nearest 10. About how much?","options":["70","80","90"],"explain":"22 + 64 is about 20 + 60, which is 80."},
+{"show":"44 + 53","sum":"44 to the nearest 10 + 53 to the nearest 10","prompt":"Round each to the nearest 10. About how much?","options":["80","90","100"],"explain":"44 + 53 is about 40 + 50, which is 90."}
+],
+"about-right": [
+{"show":"29 + 62 + 72","prompt":"Which total is about right? Round first.","options":["133","163","263"],"explain":"About 30 + 60 + 70, which is 160, so 163."},
+{"show":"49 + 59 + 19","prompt":"Which total is about right? Round first.","options":["97","127","227"],"explain":"About 50 + 60 + 20, which is 130, so 127."},
+{"show":"21 + 52 + 61","prompt":"Which total is about right? Round first.","options":["104","134","234"],"explain":"About 20 + 50 + 60, which is 130, so 134."},
+{"show":"38 + 41 + 71","prompt":"Which total is about right? Round first.","options":["120","150","250"],"explain":"About 40 + 40 + 70, which is 150, so 150."},
+{"show":"42 + 51 + 62","prompt":"Which total is about right? Round first.","options":["125","155","255"],"explain":"About 40 + 50 + 60, which is 150, so 155."},
+{"show":"61 + 31 + 68","prompt":"Which total is about right? Round first.","options":["130","160","260"],"explain":"About 60 + 30 + 70, which is 160, so 160."},
+{"show":"32 + 69 + 28","prompt":"Which total is about right? Round first.","options":["99","129","229"],"explain":"About 30 + 70 + 30, which is 130, so 129."},
+{"show":"39 + 48 + 72","prompt":"Which total is about right? Round first.","options":["129","159","259"],"explain":"About 40 + 50 + 70, which is 160, so 159."}
+],
+"about-times": [
+{"show":"59 × 3","prompt":"Which is about right? Round first.","options":["177","277","1770"],"explain":"60 × 3 is 180, so 177."},
+{"show":"51 × 3","prompt":"Which is about right? Round first.","options":["153","253","1530"],"explain":"50 × 3 is 150, so 153."},
+{"show":"59 × 4","prompt":"Which is about right? Round first.","options":["236","336","2360"],"explain":"60 × 4 is 240, so 236."},
+{"show":"49 × 3","prompt":"Which is about right? Round first.","options":["147","247","1470"],"explain":"50 × 3 is 150, so 147."},
+{"show":"49 × 4","prompt":"Which is about right? Round first.","options":["196","296","1960"],"explain":"50 × 4 is 200, so 196."},
+{"show":"21 × 6","prompt":"Which is about right? Round first.","options":["126","226","1260"],"explain":"20 × 6 is 120, so 126."},
+{"show":"41 × 5","prompt":"Which is about right? Round first.","options":["205","305","2050"],"explain":"40 × 5 is 200, so 205."},
+{"show":"79 × 5","prompt":"Which is about right? Round first.","options":["395","495","3950"],"explain":"80 × 5 is 400, so 395."}
+],
+"dec-grid": [
+{"picture":{"grid":9},"prompt":"What decimal is shaded? Each square is 0.01.","options":["0.09","0.9","9"],"explain":"9 of 100 squares: 0.09."},
+{"picture":{"grid":60},"prompt":"What decimal is shaded? Each square is 0.01.","options":["0.6","0.06","6"],"explain":"Six rows of 10 squares: 0.6."},
+{"picture":{"grid":8},"prompt":"What decimal is shaded? Each square is 0.01.","options":["0.08","0.8","8"],"explain":"8 of 100 squares: 0.08."},
+{"picture":{"grid":40},"prompt":"What decimal is shaded? Each square is 0.01.","options":["0.4","0.04","4"],"explain":"Four rows of 10 squares: 0.4."},
+{"picture":{"grid":20},"prompt":"What decimal is shaded? Each square is 0.01.","options":["0.2","0.02","2"],"explain":"Two rows of 10 squares: 0.2."},
+{"picture":{"grid":5},"prompt":"What decimal is shaded? Each square is 0.01.","options":["0.05","0.5","5"],"explain":"5 of 100 squares: 0.05."},
+{"picture":{"grid":90},"prompt":"What decimal is shaded? Each square is 0.01.","options":["0.9","0.09","9"],"explain":"Nine rows of 10 squares: 0.9."},
+{"picture":{"grid":25},"prompt":"What decimal is shaded? Each square is 0.01.","options":["0.25","2.5","25"],"explain":"25 of 100 squares: 0.25."}
+],
+"dec-line": [
+{"show":"0.7","min":0,"max":1,"ticks":10,"prompt":"Drag the marker to 0.7.","explain":"Seven hops of 0.1: 0.7."},
+{"show":"0.6","min":0,"max":1,"ticks":10,"prompt":"Drag the marker to 0.6.","explain":"Six hops of 0.1: 0.6."},
+{"show":"0.8","min":0,"max":1,"ticks":10,"prompt":"Drag the marker to 0.8.","explain":"Eight hops of 0.1: 0.8."},
+{"show":"0.1","min":0,"max":1,"ticks":10,"prompt":"Drag the marker to 0.1.","explain":"One hop of 0.1: 0.1."},
+{"show":"0.9","min":0,"max":1,"ticks":10,"prompt":"Drag the marker to 0.9.","explain":"Nine hops of 0.1: 0.9."},
+{"show":"0.3","min":0,"max":1,"ticks":10,"prompt":"Drag the marker to 0.3.","explain":"Three hops of 0.1: 0.3."},
+{"show":"0.4","min":0,"max":1,"ticks":10,"prompt":"Drag the marker to 0.4.","explain":"Four hops of 0.1: 0.4."},
+{"show":"0.2","min":0,"max":1,"ticks":10,"prompt":"Drag the marker to 0.2.","explain":"Two hops of 0.1: 0.2."}
+],
+"dec-line-hundredths": [
+{"show":"0.09","min":0,"max":0.1,"ticks":10,"prompt":"This line runs from 0 to 0.1. Drag to 0.09.","explain":"Each hop is 0.01, so nine hops: 0.09."},
+{"show":"0.03","min":0,"max":0.1,"ticks":10,"prompt":"This line runs from 0 to 0.1. Drag to 0.03.","explain":"Each hop is 0.01, so three hops: 0.03."},
+{"show":"0.08","min":0,"max":0.1,"ticks":10,"prompt":"This line runs from 0 to 0.1. Drag to 0.08.","explain":"Each hop is 0.01, so eight hops: 0.08."},
+{"show":"0.02","min":0,"max":0.1,"ticks":10,"prompt":"This line runs from 0 to 0.1. Drag to 0.02.","explain":"Each hop is 0.01, so two hops: 0.02."},
+{"show":"0.05","min":0,"max":0.1,"ticks":10,"prompt":"This line runs from 0 to 0.1. Drag to 0.05.","explain":"Each hop is 0.01, so five hops: 0.05."},
+{"show":"0.04","min":0,"max":0.1,"ticks":10,"prompt":"This line runs from 0 to 0.1. Drag to 0.04.","explain":"Each hop is 0.01, so four hops: 0.04."},
+{"show":"0.06","min":0,"max":0.1,"ticks":10,"prompt":"This line runs from 0 to 0.1. Drag to 0.06.","explain":"Each hop is 0.01, so six hops: 0.06."},
+{"show":"0.01","min":0,"max":0.1,"ticks":10,"prompt":"This line runs from 0 to 0.1. Drag to 0.01.","explain":"Each hop is 0.01, so one hop: 0.01."}
+],
+"dec-pairs": [
+{"tiles":["1/10","2/5","0.75","0.4","3/4","0.1"],"prompt":"Match each decimal to the same amount.","explain":"0.75 is 3/4, 0.4 is 2/5, 0.1 is 1/10."},
+{"tiles":["0.5","50%","2/5","1/10","0.4","0.1"],"prompt":"Match each decimal to the same amount.","explain":"0.1 is 1/10, 0.5 is 50%, 0.4 is 2/5."},
+{"tiles":["0.4","0.5","0.25","1/4","50%","2/5"],"prompt":"Match each decimal to the same amount.","explain":"0.25 is 1/4, 0.4 is 2/5, 0.5 is 50%."},
+{"tiles":["1/4","1/10","50%","0.5","0.25","0.1"],"prompt":"Match each decimal to the same amount.","explain":"0.5 is 50%, 0.25 is 1/4, 0.1 is 1/10."},
+{"tiles":["20%","0.25","3/4","1/4","0.75","0.2"],"prompt":"Match each decimal to the same amount.","explain":"0.75 is 3/4, 0.2 is 20%, 0.25 is 1/4."},
+{"tiles":["20%","0.1","0.4","1/10","0.2","2/5"],"prompt":"Match each decimal to the same amount.","explain":"0.2 is 20%, 0.1 is 1/10, 0.4 is 2/5."},
+{"tiles":["3/4","0.5","50%","0.4","0.75","2/5"],"prompt":"Match each decimal to the same amount.","explain":"0.5 is 50%, 0.75 is 3/4, 0.4 is 2/5."},
+{"tiles":["0.1","0.5","1/10","2/5","0.4","50%"],"prompt":"Match each decimal to the same amount.","explain":"0.4 is 2/5, 0.5 is 50%, 0.1 is 1/10."}
+],
+"add-prices": [
+{"show":"$1.55 + $3.40","prompt":"Dollars, then cents.","explain":"$4, then 55c + 40c is 95c: $4.95."},
+{"show":"$2.35 + $3.60","prompt":"Dollars, then cents.","explain":"$5, then 35c + 60c is 95c: $5.95."},
+{"show":"$2.85 + $2.60","prompt":"Dollars, then cents.","explain":"$4, then 85c + 60c is $1.45: $5.45."},
+{"show":"$2.15 + $3.30","prompt":"Dollars, then cents.","explain":"$5, then 15c + 30c is 45c: $5.45."},
+{"show":"$3.25 + $3.60","prompt":"Dollars, then cents.","explain":"$6, then 25c + 60c is 85c: $6.85."},
+{"show":"$2.65 + $3.30","prompt":"Dollars, then cents.","explain":"$5, then 65c + 30c is 95c: $5.95."},
+{"show":"$4.45 + $3.60","prompt":"Dollars, then cents.","explain":"$7, then 45c + 60c is $1.05: $8.05."},
+{"show":"$4.15 + $1.30","prompt":"Dollars, then cents.","explain":"$5, then 15c + 30c is 45c: $5.45."}
+],
+"add-prices-pick": [
+{"show":"$4.20 + $1.30","prompt":"Tap the total.","options":["$4.50","$5.50","$6.50"],"explain":"$5, then 20c + 30c is 50c: $5.50."},
+{"show":"$4.80 + $2.70","prompt":"Tap the total.","options":["$6.50","$7.50","$8.50"],"explain":"$6, then 80c + 70c is $1.50: $7.50."},
+{"show":"$5.20 + $1.30","prompt":"Tap the total.","options":["$5.50","$6.50","$7.50"],"explain":"$6, then 20c + 30c is 50c: $6.50."},
+{"show":"$3.20 + $2.50","prompt":"Tap the total.","options":["$4.70","$5.70","$6.70"],"explain":"$5, then 20c + 50c is 70c: $5.70."},
+{"show":"$3.80 + $2.90","prompt":"Tap the total.","options":["$5.70","$6.70","$7.70"],"explain":"$5, then 80c + 90c is $1.70: $6.70."},
+{"show":"$3.80 + $2.50","prompt":"Tap the total.","options":["$5.30","$6.30","$7.30"],"explain":"$5, then 80c + 50c is $1.30: $6.30."},
+{"show":"$4.60 + $3.30","prompt":"Tap the total.","options":["$6.90","$7.90","$8.90"],"explain":"$7, then 60c + 30c is 90c: $7.90."},
+{"show":"$4.80 + $3.50","prompt":"Tap the total.","options":["$7.30","$8.30","$9.30"],"explain":"$7, then 80c + 50c is $1.30: $8.30."}
+],
+"make-ten-dollars": [
+{"make":10,"tiles":["$7.75","$4.40","$1.65","$5.60","$2.25","$8.35"],"prompt":"Tap two prices that make $10.","explain":"$8.35 and $1.65, $5.60 and $4.40, $2.25 and $7.75."},
+{"make":10,"tiles":["$4.75","$8.50","$7.20","$1.50","$2.80","$5.25"],"prompt":"Tap two prices that make $10.","explain":"$4.75 and $5.25, $7.20 and $2.80, $1.50 and $8.50."},
+{"make":10,"tiles":["$7.20","$2.80","$3.40","$6.60","$8.35","$1.65"],"prompt":"Tap two prices that make $10.","explain":"$7.20 and $2.80, $8.35 and $1.65, $3.40 and $6.60."},
+{"make":10,"tiles":["$8.35","$7.75","$8.50","$1.65","$1.50","$2.25"],"prompt":"Tap two prices that make $10.","explain":"$2.25 and $7.75, $1.50 and $8.50, $8.35 and $1.65."},
+{"make":10,"tiles":["$6.60","$7.75","$2.25","$5.25","$3.40","$4.75"],"prompt":"Tap two prices that make $10.","explain":"$3.40 and $6.60, $4.75 and $5.25, $2.25 and $7.75."},
+{"make":10,"tiles":["$4.40","$3.40","$5.60","$6.60","$4.75","$5.25"],"prompt":"Tap two prices that make $10.","explain":"$5.60 and $4.40, $4.75 and $5.25, $3.40 and $6.60."},
+{"make":10,"tiles":["$7.75","$5.60","$2.25","$4.40","$6.15","$3.85"],"prompt":"Tap two prices that make $10.","explain":"$6.15 and $3.85, $5.60 and $4.40, $2.25 and $7.75."},
+{"make":10,"tiles":["$2.80","$4.40","$7.20","$2.25","$7.75","$5.60"],"prompt":"Tap two prices that make $10.","explain":"$5.60 and $4.40, $7.20 and $2.80, $2.25 and $7.75."}
+],
+"change": [
+{"show":"$10 - $5.15","prompt":"Count up from $5.15 to $10.","explain":"5c to $5.20, 80c to $6, then $4: $4.85."},
+{"show":"$10 - $6.55","prompt":"Count up from $6.55 to $10.","explain":"5c to $6.60, 40c to $7, then $3: $3.45."},
+{"show":"$10 - $8.25","prompt":"Count up from $8.25 to $10.","explain":"5c to $8.30, 70c to $9, then $1: $1.75."},
+{"show":"$10 - $7.75","prompt":"Count up from $7.75 to $10.","explain":"5c to $7.80, 20c to $8, then $2: $2.25."},
+{"show":"$10 - $2.65","prompt":"Count up from $2.65 to $10.","explain":"5c to $2.70, 30c to $3, then $7: $7.35."},
+{"show":"$10 - $7.65","prompt":"Count up from $7.65 to $10.","explain":"5c to $7.70, 30c to $8, then $2: $2.35."},
+{"show":"$10 - $5.45","prompt":"Count up from $5.45 to $10.","explain":"5c to $5.50, 50c to $6, then $4: $4.55."},
+{"show":"$10 - $8.75","prompt":"Count up from $8.75 to $10.","explain":"5c to $8.80, 20c to $9, then $1: $1.25."}
+],
+"change-pick": [
+{"show":"$20 - $13.90","prompt":"Count up to $20.","options":["$6.10","$6.90","$7.10"],"explain":"10c to $14, then $6: $6.10."},
+{"show":"$20 - $16.70","prompt":"Count up to $20.","options":["$3.30","$3.70","$4.30"],"explain":"30c to $17, then $3: $3.30."},
+{"show":"$20 - $14.60","prompt":"Count up to $20.","options":["$5.40","$5.60","$6.40"],"explain":"40c to $15, then $5: $5.40."},
+{"show":"$20 - $14.80","prompt":"Count up to $20.","options":["$5.20","$5.80","$6.20"],"explain":"20c to $15, then $5: $5.20."},
+{"show":"$50 - $36.90","prompt":"Count up to $50.","options":["$13.10","$13.90","$14.10"],"explain":"10c to $37, then $13: $13.10."},
+{"show":"$20 - $11.20","prompt":"Count up to $20.","options":["$8.80","$8.20","$9.80"],"explain":"80c to $12, then $8: $8.80."},
+{"show":"$20 - $13.10","prompt":"Count up to $20.","options":["$6.90","$6.10","$7.90"],"explain":"90c to $14, then $6: $6.90."},
+{"show":"$20 - $17.10","prompt":"Count up to $20.","options":["$2.90","$2.10","$3.90"],"explain":"90c to $18, then $2: $2.90."}
+],
+"recipe-rows": [
+{"picture":{"array":[4,6]},"prompt":"A cup of flour makes 6 scones: one row each. How many scones from 4 cups?","options":["10","24","30"],"explain":"4 rows of 6: 24 scones."},
+{"picture":{"array":[4,2]},"prompt":"A cup of flour makes 2 scones: one row each. How many scones from 4 cups?","options":["6","8","10"],"explain":"4 rows of 2: 8 scones."},
+{"picture":{"array":[3,4]},"prompt":"A cup of flour makes 4 scones: one row each. How many scones from 3 cups?","options":["7","12","16"],"explain":"3 rows of 4: 12 scones."},
+{"picture":{"array":[3,3]},"prompt":"A cup of flour makes 3 scones: one row each. How many scones from 3 cups?","options":["6","9","12"],"explain":"3 rows of 3: 9 scones."},
+{"picture":{"array":[4,4]},"prompt":"A cup of flour makes 4 scones: one row each. How many scones from 4 cups?","options":["8","16","20"],"explain":"4 rows of 4: 16 scones."},
+{"picture":{"array":[3,6]},"prompt":"A cup of flour makes 6 scones: one row each. How many scones from 3 cups?","options":["9","18","24"],"explain":"3 rows of 6: 18 scones."},
+{"picture":{"array":[2,3]},"prompt":"A cup of flour makes 3 scones: one row each. How many scones from 2 cups?","options":["5","6","9"],"explain":"2 rows of 3: 6 scones."},
+{"picture":{"array":[2,4]},"prompt":"A cup of flour makes 4 scones: one row each. How many scones from 2 cups?","options":["6","8","12"],"explain":"2 rows of 4: 8 scones."}
+],
+"mix": [
+{"picture":{"bar":[1,6]},"sum":"2 × 5","prompt":"Mix 1 cup of cordial with 5 cups of water. For 2 cups of cordial, how many cups of water?","options":["7","10","12"],"explain":"5 cups of water for every cup of cordial: 2 × 5 is 10."},
+{"picture":{"bar":[1,5]},"sum":"4 × 4","prompt":"Mix 1 cup of cordial with 4 cups of water. For 4 cups of cordial, how many cups of water?","options":["8","16","20"],"explain":"4 cups of water for every cup of cordial: 4 × 4 is 16."},
+{"picture":{"bar":[1,6]},"sum":"3 × 5","prompt":"Mix 1 cup of cordial with 5 cups of water. For 3 cups of cordial, how many cups of water?","options":["8","15","18"],"explain":"5 cups of water for every cup of cordial: 3 × 5 is 15."},
+{"picture":{"bar":[1,5]},"sum":"2 × 4","prompt":"Mix 1 cup of cordial with 4 cups of water. For 2 cups of cordial, how many cups of water?","options":["6","8","10"],"explain":"4 cups of water for every cup of cordial: 2 × 4 is 8."},
+{"picture":{"bar":[1,4]},"sum":"3 × 3","prompt":"Mix 1 cup of cordial with 3 cups of water. For 3 cups of cordial, how many cups of water?","options":["6","9","12"],"explain":"3 cups of water for every cup of cordial: 3 × 3 is 9."},
+{"picture":{"bar":[1,5]},"sum":"5 × 4","prompt":"Mix 1 cup of cordial with 4 cups of water. For 5 cups of cordial, how many cups of water?","options":["9","20","25"],"explain":"4 cups of water for every cup of cordial: 5 × 4 is 20."},
+{"picture":{"bar":[1,4]},"sum":"4 × 3","prompt":"Mix 1 cup of cordial with 3 cups of water. For 4 cups of cordial, how many cups of water?","options":["7","12","16"],"explain":"3 cups of water for every cup of cordial: 4 × 3 is 12."},
+{"picture":{"bar":[1,4]},"sum":"2 × 3","prompt":"Mix 1 cup of cordial with 3 cups of water. For 2 cups of cordial, how many cups of water?","options":["5","6","8"],"explain":"3 cups of water for every cup of cordial: 2 × 3 is 6."}
+],
+"recipe-up": [
+{"show":"300 g for 2 people","sum":"300 × 4 ÷ 2","prompt":"Pasta for 4 people instead: how many grams?","explain":"4 people is twice 2, so twice 300 g: 600 g."},
+{"show":"250 g for 4 people","sum":"250 × 8 ÷ 4","prompt":"Pasta for 8 people instead: how many grams?","explain":"8 people is twice 4, so twice 250 g: 500 g."},
+{"show":"300 g for 4 people","sum":"300 × 8 ÷ 4","prompt":"Pasta for 8 people instead: how many grams?","explain":"8 people is twice 4, so twice 300 g: 600 g."},
+{"show":"250 g for 2 people","sum":"250 × 6 ÷ 2","prompt":"Pasta for 6 people instead: how many grams?","explain":"6 people is three times 2, so three times 250 g: 750 g."},
+{"show":"400 g for 2 people","sum":"400 × 6 ÷ 2","prompt":"Pasta for 6 people instead: how many grams?","explain":"6 people is three times 2, so three times 400 g: 1200 g."},
+{"show":"200 g for 4 people","sum":"200 × 8 ÷ 4","prompt":"Pasta for 8 people instead: how many grams?","explain":"8 people is twice 4, so twice 200 g: 400 g."},
+{"show":"150 g for 2 people","sum":"150 × 4 ÷ 2","prompt":"Pasta for 4 people instead: how many grams?","explain":"4 people is twice 2, so twice 150 g: 300 g."},
+{"show":"250 g for 4 people","sum":"250 × 12 ÷ 4","prompt":"Pasta for 12 people instead: how many grams?","explain":"12 people is three times 4, so three times 250 g: 750 g."}
+],
+"recipe-down": [
+{"show":"2 eggs for 24 muffins","sum":"2 × 12 ÷ 24","prompt":"Only 12 muffins: how many eggs?","explain":"12 muffins is half of 24, so half the eggs: 1."},
+{"show":"6 eggs for 12 muffins","sum":"6 × 6 ÷ 12","prompt":"Only 6 muffins: how many eggs?","explain":"6 muffins is half of 12, so half the eggs: 3."},
+{"show":"5 eggs for 24 muffins","sum":"5 × 12 ÷ 24","prompt":"Only 12 muffins: how many eggs?","explain":"12 muffins is half of 24, so half the eggs: 2.5."},
+{"show":"4 eggs for 12 muffins","sum":"4 × 6 ÷ 12","prompt":"Only 6 muffins: how many eggs?","explain":"6 muffins is half of 12, so half the eggs: 2."},
+{"show":"3 eggs for 12 muffins","sum":"3 × 6 ÷ 12","prompt":"Only 6 muffins: how many eggs?","explain":"6 muffins is half of 12, so half the eggs: 1.5."},
+{"show":"3 eggs for 24 muffins","sum":"3 × 12 ÷ 24","prompt":"Only 12 muffins: how many eggs?","explain":"12 muffins is half of 24, so half the eggs: 1.5."},
+{"show":"8 eggs for 24 muffins","sum":"8 × 12 ÷ 24","prompt":"Only 12 muffins: how many eggs?","explain":"12 muffins is half of 24, so half the eggs: 4."},
+{"show":"4 eggs for 24 muffins","sum":"4 × 12 ÷ 24","prompt":"Only 12 muffins: how many eggs?","explain":"12 muffins is half of 24, so half the eggs: 2."}
+],
+"unit-price": [
+{"show":"5 for $40","prompt":"What does one cost?","explain":"$40 ÷ 5 is $8 each."},
+{"show":"3 for $21","prompt":"What does one cost?","explain":"$21 ÷ 3 is $7 each."},
+{"show":"3 for $27","prompt":"What does one cost?","explain":"$27 ÷ 3 is $9 each."},
+{"show":"6 for $48","prompt":"What does one cost?","explain":"$48 ÷ 6 is $8 each."},
+{"show":"2 for $14","prompt":"What does one cost?","explain":"$14 ÷ 2 is $7 each."},
+{"show":"6 for $12","prompt":"What does one cost?","explain":"$12 ÷ 6 is $2 each."},
+{"show":"6 for $36","prompt":"What does one cost?","explain":"$36 ÷ 6 is $6 each."},
+{"show":"5 for $45","prompt":"What does one cost?","explain":"$45 ÷ 5 is $9 each."}
+],
+"unit-price-pick": [
+{"show":"4 for $18","prompt":"What does one cost?","options":["$4.50","$4.60","$9.00"],"explain":"$18 ÷ 4 is $4.50 each."},
+{"show":"4 for $14","prompt":"What does one cost?","options":["$3.50","$3.60","$7.00"],"explain":"$14 ÷ 4 is $3.50 each."},
+{"show":"6 for $9","prompt":"What does one cost?","options":["$1.50","$1.60","$3.00"],"explain":"$9 ÷ 6 is $1.50 each."},
+{"show":"2 for $3","prompt":"What does one cost?","options":["$1.50","$1.60","$3.00"],"explain":"$3 ÷ 2 is $1.50 each."},
+{"show":"4 for $10","prompt":"What does one cost?","options":["$2.50","$2.60","$5.00"],"explain":"$10 ÷ 4 is $2.50 each."},
+{"show":"6 for $27","prompt":"What does one cost?","options":["$4.50","$4.60","$9.00"],"explain":"$27 ÷ 6 is $4.50 each."},
+{"show":"4 for $6","prompt":"What does one cost?","options":["$1.50","$1.60","$3.00"],"explain":"$6 ÷ 4 is $1.50 each."},
+{"show":"6 for $21","prompt":"What does one cost?","options":["$3.50","$3.60","$7.00"],"explain":"$21 ÷ 6 is $3.50 each."}
+],
+"unit-price-ten": [
+{"show":"10 for $2.50","prompt":"Divide by 10: every digit moves down a place.","explain":"$2.50 ÷ 10 is 25c, which is $0.25."},
+{"show":"10 for $7.80","prompt":"Divide by 10: every digit moves down a place.","explain":"$7.80 ÷ 10 is 78c, which is $0.78."},
+{"show":"10 for $1.20","prompt":"Divide by 10: every digit moves down a place.","explain":"$1.20 ÷ 10 is 12c, which is $0.12."},
+{"show":"10 for $6.50","prompt":"Divide by 10: every digit moves down a place.","explain":"$6.50 ÷ 10 is 65c, which is $0.65."},
+{"show":"10 for $3.20","prompt":"Divide by 10: every digit moves down a place.","explain":"$3.20 ÷ 10 is 32c, which is $0.32."},
+{"show":"10 for $4.50","prompt":"Divide by 10: every digit moves down a place.","explain":"$4.50 ÷ 10 is 45c, which is $0.45."},
+{"show":"10 for $5.40","prompt":"Divide by 10: every digit moves down a place.","explain":"$5.40 ÷ 10 is 54c, which is $0.54."},
+{"show":"10 for $9.60","prompt":"Divide by 10: every digit moves down a place.","explain":"$9.60 ÷ 10 is 96c, which is $0.96."}
+],
+"better-buy": [
+{"goal":"smallest","show":"Cheaper each?","prompt":"Which is the better buy? Compare the price for one.","options":["5 for $9","3 for $6","6 for $15"],"explain":"5 for $9 is $1.80 each, 3 for $6 is $2 each, 6 for $15 is $2.50 each: 5 for $9."},
+{"goal":"smallest","show":"Cheaper each?","prompt":"Which is the better buy? Compare the price for one.","options":["2 for $5","6 for $9","4 for $9"],"explain":"2 for $5 is $2.50 each, 6 for $9 is $1.50 each, 4 for $9 is $2.25 each: 6 for $9."},
+{"goal":"smallest","show":"Cheaper each?","prompt":"Which is the better buy? Compare the price for one.","options":["4 for $9","2 for $2.40","6 for $15"],"explain":"4 for $9 is $2.25 each, 2 for $2.40 is $1.20 each, 6 for $15 is $2.50 each: 2 for $2.40."},
+{"goal":"smallest","show":"Cheaper each?","prompt":"Which is the better buy? Compare the price for one.","options":["2 for $5","6 for $9"],"explain":"2 for $5 is $2.50 each, 6 for $9 is $1.50 each: 6 for $9."},
+{"goal":"smallest","show":"Cheaper each?","prompt":"Which is the better buy? Compare the price for one.","options":["5 for $9","4 for $9","4 for $7"],"explain":"5 for $9 is $1.80 each, 4 for $9 is $2.25 each, 4 for $7 is $1.75 each: 4 for $7."},
+{"goal":"smallest","show":"Cheaper each?","prompt":"Which is the better buy? Compare the price for one.","options":["2 for $6","4 for $7","3 for $4.50"],"explain":"2 for $6 is $3 each, 4 for $7 is $1.75 each, 3 for $4.50 is $1.50 each: 3 for $4.50."},
+{"goal":"smallest","show":"Cheaper each?","prompt":"Which is the better buy? Compare the price for one.","options":["4 for $8","2 for $5"],"explain":"4 for $8 is $2 each, 2 for $5 is $2.50 each: 4 for $8."},
+{"goal":"smallest","show":"Cheaper each?","prompt":"Which is the better buy? Compare the price for one.","options":["5 for $9","4 for $9"],"explain":"5 for $9 is $1.80 each, 4 for $9 is $2.25 each: 5 for $9."}
+],
+"price-pairs": [
+{"tiles":["5 for $8","2 for $6","4 for $9","$3","$1.60","$2.25"],"prompt":"Match each pack to its price for one.","explain":"2 for $6 is $3 each, 4 for $9 is $2.25 each, 5 for $8 is $1.60 each."},
+{"tiles":["6 for $9","$1.50","2 for $6","2 for $2.40","$3","$1.20"],"prompt":"Match each pack to its price for one.","explain":"2 for $2.40 is $1.20 each, 2 for $6 is $3 each, 6 for $9 is $1.50 each."},
+{"tiles":["$1.60","5 for $8","$2.50","2 for $5","5 for $9","$1.80"],"prompt":"Match each pack to its price for one.","explain":"5 for $8 is $1.60 each, 2 for $5 is $2.50 each, 5 for $9 is $1.80 each."},
+{"tiles":["4 for $7","2 for $5","$2.50","$1.75","5 for $8","$1.60"],"prompt":"Match each pack to its price for one.","explain":"4 for $7 is $1.75 each, 5 for $8 is $1.60 each, 2 for $5 is $2.50 each."},
+{"tiles":["2 for $5","6 for $9","$2.50","$3","2 for $6","$1.50"],"prompt":"Match each pack to its price for one.","explain":"6 for $9 is $1.50 each, 2 for $5 is $2.50 each, 2 for $6 is $3 each."},
+{"tiles":["5 for $9","$2","$1.80","2 for $5","4 for $8","$2.50"],"prompt":"Match each pack to its price for one.","explain":"5 for $9 is $1.80 each, 4 for $8 is $2 each, 2 for $5 is $2.50 each."},
+{"tiles":["$2","2 for $2.40","4 for $8","2 for $6","$1.20","$3"],"prompt":"Match each pack to its price for one.","explain":"2 for $2.40 is $1.20 each, 4 for $8 is $2 each, 2 for $6 is $3 each."},
+{"tiles":["$2.50","3 for $6","$3","2 for $6","2 for $5","$2"],"prompt":"Match each pack to its price for one.","explain":"2 for $6 is $3 each, 2 for $5 is $2.50 each, 3 for $6 is $2 each."}
+],
+"neg-line": [
+{"show":"-3","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"Drag the marker to -3 °C.","explain":"Three hops below zero: -3 °C."},
+{"show":"-4","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"Drag the marker to -4 °C.","explain":"Four hops below zero: -4 °C."},
+{"show":"-6","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"Drag the marker to -6 °C.","explain":"Six hops below zero: -6 °C."},
+{"show":"-8","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"Drag the marker to -8 °C.","explain":"Eight hops below zero: -8 °C."},
+{"show":"-1","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"Drag the marker to -1 °C.","explain":"One hop below zero: -1 °C."},
+{"show":"-9","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"Drag the marker to -9 °C.","explain":"Nine hops below zero: -9 °C."},
+{"show":"-7","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"Drag the marker to -7 °C.","explain":"Seven hops below zero: -7 °C."},
+{"show":"-5","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"Drag the marker to -5 °C.","explain":"Five hops below zero: -5 °C."}
+],
+"coldest": [
+{"goal":"smallest","picture":{"line":[-10,10,20]},"prompt":"Which is coldest?","options":["1 °C","5 °C","-1 °C"],"explain":"-1 °C is furthest below zero, so it is the coldest."},
+{"goal":"smallest","picture":{"line":[-10,10,20]},"prompt":"Which is coldest?","options":["1 °C","-5 °C","-4 °C"],"explain":"-5 °C is furthest below zero, so it is the coldest."},
+{"goal":"smallest","picture":{"line":[-10,10,20]},"prompt":"Which is coldest?","options":["-2 °C","-7 °C","1 °C"],"explain":"-7 °C is furthest below zero, so it is the coldest."},
+{"goal":"smallest","picture":{"line":[-10,10,20]},"prompt":"Which is coldest?","options":["1 °C","-9 °C","-8 °C"],"explain":"-9 °C is furthest below zero, so it is the coldest."},
+{"goal":"smallest","picture":{"line":[-10,10,20]},"prompt":"Which is coldest?","options":["-4 °C","-2 °C","-1 °C"],"explain":"-4 °C is furthest below zero, so it is the coldest."},
+{"goal":"smallest","picture":{"line":[-10,10,20]},"prompt":"Which is coldest?","options":["-2 °C","4 °C","-1 °C"],"explain":"-2 °C is furthest below zero, so it is the coldest."},
+{"goal":"smallest","picture":{"line":[-10,10,20]},"prompt":"Which is coldest?","options":["1 °C","-4 °C","-8 °C"],"explain":"-8 °C is furthest below zero, so it is the coldest."},
+{"goal":"smallest","picture":{"line":[-10,10,20]},"prompt":"Which is coldest?","options":["-6 °C","3 °C","1 °C"],"explain":"-6 °C is furthest below zero, so it is the coldest."}
+],
+"warmest": [
+{"goal":"biggest","picture":{"line":[-10,10,20]},"prompt":"Which is warmest?","options":["-1 °C","-5 °C","-3 °C"],"explain":"-1 °C is closest to zero, so it is the warmest."},
+{"goal":"biggest","picture":{"line":[-10,10,20]},"prompt":"Which is warmest?","options":["-6 °C","-7 °C","-8 °C"],"explain":"-6 °C is closest to zero, so it is the warmest."},
+{"goal":"biggest","picture":{"line":[-10,10,20]},"prompt":"Which is warmest?","options":["-3 °C","-6 °C","-8 °C"],"explain":"-3 °C is closest to zero, so it is the warmest."},
+{"goal":"biggest","picture":{"line":[-10,10,20]},"prompt":"Which is warmest?","options":["-6 °C","-7 °C","-5 °C"],"explain":"-5 °C is closest to zero, so it is the warmest."},
+{"goal":"biggest","picture":{"line":[-10,10,20]},"prompt":"Which is warmest?","options":["-3 °C","-1 °C","-8 °C"],"explain":"-1 °C is closest to zero, so it is the warmest."},
+{"goal":"biggest","picture":{"line":[-10,10,20]},"prompt":"Which is warmest?","options":["-9 °C","-2 °C","-5 °C"],"explain":"-2 °C is closest to zero, so it is the warmest."},
+{"goal":"biggest","picture":{"line":[-10,10,20]},"prompt":"Which is warmest?","options":["-6 °C","-2 °C","-5 °C"],"explain":"-2 °C is closest to zero, so it is the warmest."},
+{"goal":"biggest","picture":{"line":[-10,10,20]},"prompt":"Which is warmest?","options":["-8 °C","-4 °C","-3 °C"],"explain":"-3 °C is closest to zero, so it is the warmest."}
+],
+"lift-line": [
+{"show":"3","min":-5,"max":5,"ticks":10,"prompt":"Level 3 is three floors above the ground floor, 0. Drag the lift there.","explain":"Three floors up from 0: 3."},
+{"show":"4","min":-5,"max":5,"ticks":10,"prompt":"Level 4 is four floors above the ground floor, 0. Drag the lift there.","explain":"Four floors up from 0: 4."},
+{"show":"-2","min":-5,"max":5,"ticks":10,"prompt":"Level -2 is two floors under the ground floor, 0. Drag the lift there.","explain":"Two floors down from 0: -2."},
+{"show":"-5","min":-5,"max":5,"ticks":10,"prompt":"Level -5 is five floors under the ground floor, 0. Drag the lift there.","explain":"Five floors down from 0: -5."},
+{"show":"-4","min":-5,"max":5,"ticks":10,"prompt":"Level -4 is four floors under the ground floor, 0. Drag the lift there.","explain":"Four floors down from 0: -4."},
+{"show":"-3","min":-5,"max":5,"ticks":10,"prompt":"Level -3 is three floors under the ground floor, 0. Drag the lift there.","explain":"Three floors down from 0: -3."},
+{"show":"1","min":-5,"max":5,"ticks":10,"prompt":"Level 1 is one floor above the ground floor, 0. Drag the lift there.","explain":"One floor up from 0: 1."},
+{"show":"-1","min":-5,"max":5,"ticks":10,"prompt":"Level -1 is one floor under the ground floor, 0. Drag the lift there.","explain":"One floor down from 0: -1."}
+],
+"drop-line": [
+{"show":"5 - 10","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"It is 5 °C and drops 10 degrees. Drag to the new temperature.","explain":"5 down to 0, then 5 more: -5 °C."},
+{"show":"3 - 6","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"It is 3 °C and drops 6 degrees. Drag to the new temperature.","explain":"3 down to 0, then 3 more: -3 °C."},
+{"show":"2 - 7","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"It is 2 °C and drops 7 degrees. Drag to the new temperature.","explain":"2 down to 0, then 5 more: -5 °C."},
+{"show":"6 - 12","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"It is 6 °C and drops 12 degrees. Drag to the new temperature.","explain":"6 down to 0, then 6 more: -6 °C."},
+{"show":"2 - 9","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"It is 2 °C and drops 9 degrees. Drag to the new temperature.","explain":"2 down to 0, then 7 more: -7 °C."},
+{"show":"2 - 10","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"It is 2 °C and drops 10 degrees. Drag to the new temperature.","explain":"2 down to 0, then 8 more: -8 °C."},
+{"show":"2 - 5","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"It is 2 °C and drops 5 degrees. Drag to the new temperature.","explain":"2 down to 0, then 3 more: -3 °C."},
+{"show":"3 - 10","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"It is 3 °C and drops 10 degrees. Drag to the new temperature.","explain":"3 down to 0, then 7 more: -7 °C."}
+],
+"rise-line": [
+{"show":"-7 + 10","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"It is -7 °C at dawn and warms up 10 degrees. Drag to the new temperature.","explain":"7 up to 0, then 3 more: 3 °C."},
+{"show":"-4 + 12","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"It is -4 °C at dawn and warms up 12 degrees. Drag to the new temperature.","explain":"4 up to 0, then 8 more: 8 °C."},
+{"show":"-4 + 5","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"It is -4 °C at dawn and warms up 5 degrees. Drag to the new temperature.","explain":"4 up to 0, then 1 more: 1 °C."},
+{"show":"-8 + 9","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"It is -8 °C at dawn and warms up 9 degrees. Drag to the new temperature.","explain":"8 up to 0, then 1 more: 1 °C."},
+{"show":"-2 + 11","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"It is -2 °C at dawn and warms up 11 degrees. Drag to the new temperature.","explain":"2 up to 0, then 9 more: 9 °C."},
+{"show":"-3 + 6","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"It is -3 °C at dawn and warms up 6 degrees. Drag to the new temperature.","explain":"3 up to 0, then 3 more: 3 °C."},
+{"show":"-6 + 7","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"It is -6 °C at dawn and warms up 7 degrees. Drag to the new temperature.","explain":"6 up to 0, then 1 more: 1 °C."},
+{"show":"-5 + 8","min":-10,"max":10,"ticks":20,"unit":"°C","prompt":"It is -5 °C at dawn and warms up 8 degrees. Drag to the new temperature.","explain":"5 up to 0, then 3 more: 3 °C."}
+],
+"lift-up": [
+{"show":"-1 + 6","prompt":"A lift at level -1 goes up 6 floors. Which level?","options":["5","7","-7"],"explain":"1 up to the ground floor, then 5 more: level 5."},
+{"show":"-5 + 7","prompt":"A lift at level -5 goes up 7 floors. Which level?","options":["2","12","-12"],"explain":"5 up to the ground floor, then 2 more: level 2."},
+{"show":"-4 + 5","prompt":"A lift at level -4 goes up 5 floors. Which level?","options":["1","9","-9"],"explain":"4 up to the ground floor, then 1 more: level 1."},
+{"show":"-1 + 8","prompt":"A lift at level -1 goes up 8 floors. Which level?","options":["7","9","-9"],"explain":"1 up to the ground floor, then 7 more: level 7."},
+{"show":"-3 + 4","prompt":"A lift at level -3 goes up 4 floors. Which level?","options":["1","7","-7"],"explain":"3 up to the ground floor, then 1 more: level 1."},
+{"show":"-1 + 5","prompt":"A lift at level -1 goes up 5 floors. Which level?","options":["4","6","-6"],"explain":"1 up to the ground floor, then 4 more: level 4."},
+{"show":"-1 + 9","prompt":"A lift at level -1 goes up 9 floors. Which level?","options":["8","10","-10"],"explain":"1 up to the ground floor, then 8 more: level 8."},
+{"show":"-1 + 4","prompt":"A lift at level -1 goes up 4 floors. Which level?","options":["3","5","-5"],"explain":"1 up to the ground floor, then 3 more: level 3."}
+],
+"lift-down": [
+{"show":"1 - 6","prompt":"A lift at level 1 goes down 6 floors. Which level?","options":["-5","5","-7"],"explain":"1 down to 0, then 5 more: level -5."},
+{"show":"2 - 3","prompt":"A lift at level 2 goes down 3 floors. Which level?","options":["-1","1","-5"],"explain":"2 down to 0, then 1 more: level -1."},
+{"show":"2 - 7","prompt":"A lift at level 2 goes down 7 floors. Which level?","options":["-5","5","-9"],"explain":"2 down to 0, then 5 more: level -5."},
+{"show":"5 - 7","prompt":"A lift at level 5 goes down 7 floors. Which level?","options":["-2","2","-12"],"explain":"5 down to 0, then 2 more: level -2."},
+{"show":"2 - 4","prompt":"A lift at level 2 goes down 4 floors. Which level?","options":["-2","2","-6"],"explain":"2 down to 0, then 2 more: level -2."},
+{"show":"3 - 4","prompt":"A lift at level 3 goes down 4 floors. Which level?","options":["-1","1","-7"],"explain":"3 down to 0, then 1 more: level -1."},
+{"show":"3 - 5","prompt":"A lift at level 3 goes down 5 floors. Which level?","options":["-2","2","-8"],"explain":"3 down to 0, then 2 more: level -2."},
+{"show":"1 - 5","prompt":"A lift at level 1 goes down 5 floors. Which level?","options":["-4","4","-6"],"explain":"1 down to 0, then 4 more: level -4."}
+],
+"owe-pay": [
+{"show":"-10 + 45","prompt":"You owe $10, then get paid $45. How much is yours?","options":["$35","$55","-$35"],"explain":"$10 pays what you owe, and $35 is yours."},
+{"show":"-10 + 25","prompt":"You owe $10, then get paid $25. How much is yours?","options":["$15","$35","-$15"],"explain":"$10 pays what you owe, and $15 is yours."},
+{"show":"-40 + 45","prompt":"You owe $40, then get paid $45. How much is yours?","options":["$5","$85","-$5"],"explain":"$40 pays what you owe, and $5 is yours."},
+{"show":"-20 + 50","prompt":"You owe $20, then get paid $50. How much is yours?","options":["$30","$70","-$30"],"explain":"$20 pays what you owe, and $30 is yours."},
+{"show":"-30 + 50","prompt":"You owe $30, then get paid $50. How much is yours?","options":["$20","$80","-$20"],"explain":"$30 pays what you owe, and $20 is yours."},
+{"show":"-40 + 50","prompt":"You owe $40, then get paid $50. How much is yours?","options":["$10","$90","-$10"],"explain":"$40 pays what you owe, and $10 is yours."},
+{"show":"-20 + 60","prompt":"You owe $20, then get paid $60. How much is yours?","options":["$40","$80","-$40"],"explain":"$20 pays what you owe, and $40 is yours."},
+{"show":"-30 + 60","prompt":"You owe $30, then get paid $60. How much is yours?","options":["$30","$90","-$30"],"explain":"$30 pays what you owe, and $30 is yours."}
+],
+"owe-spend": [
+{"show":"15 - 25","prompt":"You have $15 and spend $25 on a card. Where are you now?","options":["-$10","$10","-$40"],"explain":"$15 takes you to 0, and you owe $10 more: -10."},
+{"show":"5 - 30","prompt":"You have $5 and spend $30 on a card. Where are you now?","options":["-$25","$25","-$35"],"explain":"$5 takes you to 0, and you owe $25 more: -25."},
+{"show":"20 - 25","prompt":"You have $20 and spend $25 on a card. Where are you now?","options":["-$5","$5","-$45"],"explain":"$20 takes you to 0, and you owe $5 more: -5."},
+{"show":"20 - 40","prompt":"You have $20 and spend $40 on a card. Where are you now?","options":["-$20","$20","-$60"],"explain":"$20 takes you to 0, and you owe $20 more: -20."},
+{"show":"15 - 30","prompt":"You have $15 and spend $30 on a card. Where are you now?","options":["-$15","$15","-$45"],"explain":"$15 takes you to 0, and you owe $15 more: -15."},
+{"show":"5 - 40","prompt":"You have $5 and spend $40 on a card. Where are you now?","options":["-$35","$35","-$45"],"explain":"$5 takes you to 0, and you owe $35 more: -35."},
+{"show":"10 - 25","prompt":"You have $10 and spend $25 on a card. Where are you now?","options":["-$15","$15","-$35"],"explain":"$10 takes you to 0, and you owe $15 more: -15."},
+{"show":"5 - 25","prompt":"You have $5 and spend $25 on a card. Where are you now?","options":["-$20","$20","-$30"],"explain":"$5 takes you to 0, and you owe $20 more: -20."}
+],
+"owe-line": [
+{"show":"-7 + 3","min":-10,"max":10,"ticks":20,"prompt":"Owe $7, then pay back $3. Drag to where you are.","explain":"$3 of the $7 is paid, so you still owe $4: -4."},
+{"show":"-9 + 1","min":-10,"max":10,"ticks":20,"prompt":"Owe $9, then pay back $1. Drag to where you are.","explain":"$1 of the $9 is paid, so you still owe $8: -8."},
+{"show":"-6 + 1","min":-10,"max":10,"ticks":20,"prompt":"Owe $6, then pay back $1. Drag to where you are.","explain":"$1 of the $6 is paid, so you still owe $5: -5."},
+{"show":"-5 + 4","min":-10,"max":10,"ticks":20,"prompt":"Owe $5, then pay back $4. Drag to where you are.","explain":"$4 of the $5 is paid, so you still owe $1: -1."},
+{"show":"-7 + 2","min":-10,"max":10,"ticks":20,"prompt":"Owe $7, then pay back $2. Drag to where you are.","explain":"$2 of the $7 is paid, so you still owe $5: -5."},
+{"show":"-7 + 4","min":-10,"max":10,"ticks":20,"prompt":"Owe $7, then pay back $4. Drag to where you are.","explain":"$4 of the $7 is paid, so you still owe $3: -3."},
+{"show":"-9 + 3","min":-10,"max":10,"ticks":20,"prompt":"Owe $9, then pay back $3. Drag to where you are.","explain":"$3 of the $9 is paid, so you still owe $6: -6."},
+{"show":"-7 + 1","min":-10,"max":10,"ticks":20,"prompt":"Owe $7, then pay back $1. Drag to where you are.","explain":"$1 of the $7 is paid, so you still owe $6: -6."}
+],
+"neg-pairs": [
+{"make":10,"tiles":["2","-4","8","14","-2","12"],"prompt":"Tap two numbers that make 10.","explain":"2 and 8, -4 and 14, -2 and 12."},
+{"make":10,"tiles":["-2","12","-1","14","11","-4"],"prompt":"Tap two numbers that make 10.","explain":"-4 and 14, -1 and 11, -2 and 12."},
+{"make":10,"tiles":["14","12","11","-2","-4","-1"],"prompt":"Tap two numbers that make 10.","explain":"-1 and 11, -2 and 12, -4 and 14."},
+{"make":10,"tiles":["12","15","16","-2","-6","-5"],"prompt":"Tap two numbers that make 10.","explain":"-6 and 16, -2 and 12, -5 and 15."},
+{"make":10,"tiles":["3","7","14","15","-5","-4"],"prompt":"Tap two numbers that make 10.","explain":"-5 and 15, -4 and 14, 3 and 7."},
+{"make":10,"tiles":["-1","-3","-2","13","12","11"],"prompt":"Tap two numbers that make 10.","explain":"-2 and 12, -3 and 13, -1 and 11."},
+{"make":10,"tiles":["-5","7","12","-2","15","3"],"prompt":"Tap two numbers that make 10.","explain":"-2 and 12, 3 and 7, -5 and 15."},
+{"make":10,"tiles":["12","16","-2","15","-6","-5"],"prompt":"Tap two numbers that make 10.","explain":"-6 and 16, -5 and 15, -2 and 12."}
 ]
 }
