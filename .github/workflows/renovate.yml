@@ -22,7 +22,7 @@ jobs:
       # Self-hosted so this works without installing the Renovate GitHub App. If RENOVATE_TOKEN
       # (a PAT) is set, Renovate's pull requests also trigger CI, which is what makes automerge
       # safe; with the default GITHUB_TOKEN they do not.
-      - uses: renovatebot/github-action@v41
+      - uses: renovatebot/github-action@v46.3.14
         with:
           token: ${{ secrets.RENOVATE_TOKEN || github.token }}
         env:
