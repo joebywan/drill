@@ -65,7 +65,7 @@ export async function playCourse(h, { course, unit = 1, only, answer, small }) {
   // Unplayed lessons ahead of this one count as done, so the path asks for this unit's.
   const done = Object.fromEntries([...before, ...skipped].map((l) => [key(l), true]));
   const restored = unit > 1 && saved && before.every((l) => saved.done?.[key(l)]) ? saved : null;
-  await seed(restored ? { ...restored, done: { ...restored.done, ...done } } : { done });
+  await seed(restored ? { ...restored, done } : { done }); // only what is behind this unit counts as done, so a unit can be played again
 
   await page.evaluate(() => { window.WINGBEAT_PLAIN = false; }); // the app reads it as it goes: warm-ups, echoes and checkpoints on, as a learner has them
   if (small) { adb('shell', 'wm', 'size', small); await run(1500); }
@@ -167,8 +167,8 @@ export async function playCourse(h, { course, unit = 1, only, answer, small }) {
   page.off('pageerror', onError); page.off('response', onResponse); page.off('requestfailed', onFailed);
   if (small) adb('shell', 'wm', 'size', 'reset');
   const progress = await page.evaluate(() => localStorage.getItem('wingbeat.progress'));
-  if (!small) writeFileSync(`${dir}progress.json`, progress);
-  writeFileSync(`${dir}unit-${unit}${small ? '-small' : ''}.json`, JSON.stringify({ unit, title: unitAt.title, page: height, lessons: report }, null, 1));
+  if (!small && !only) writeFileSync(`${dir}progress.json`, progress);
+  writeFileSync(`${dir}unit-${unit}${small ? '-small' : only ? '-some' : ''}.json`, JSON.stringify({ unit, title: unitAt.title, page: height, lessons: report }, null, 1));
   for (const r of report) {
     check(`${r.lesson}: played to the end`, !r.stuck, r.stuck ?? '');
     check(`${r.lesson}: no page errors or failed requests`, !r.errors.length, r.errors.join('; '));

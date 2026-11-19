@@ -151,22 +151,32 @@ From the repetition work and the Coding expansion, 2026-10-30. None of it is con
 **Test by playing**
 
 - **Blank button label in Firefox for Android.** Joseph has seen it a few times, on the JavaScript Meet screen: the green button at full height with no text. It stayed blank until he left and opened the course again, so it is a stuck draw that a rebuilt screen clears, not a slow one. The text and colour are right, so it isn't being drawn. Not reproduced: 39 runs of the old code in Firefox 159 on the emulator, which renders in software, including scrolling during the entrance and a shorter screen.
-- **Coding end to end, for pacing.** All 51 lessons have never been played through. Later lessons
-  have only had automated fit and solvability checks.
-- **Session length.** Warm-ups, "Once more" and checkpoints make every Learn session longer. Check
-  it still feels like small wins, not a slog. Checkpoints now sit on every path, chess's included.
-- **Real touch on a phone** (`npm run phone`, or a real device): tapping the buggy block, dragging
-  tiles into holes and into code, and the smaller blocks on phones under 700px tall.
+- **Session length, on a real phone and a real beginner.** The emulator played all 64 Coding lessons (see "Coding: played" below), but at an
+  idealised pace. Check a first-time learner still feels small wins, not a slog, with warm-ups, "Once more" and checkpoints in.
+  Chess, Maths, Japanese and the code courses haven't had the same pass: `tools/play.js` is the harness.
+- **Real touch on a real phone:** the emulator covered tapping, drag and the small-phone size for Coding; a real finger and a real keyboard still haven't.
 - **Sound and motion in the new units.** Live values and the drawing trail under normal motion were
   only seen in a one-off script: e2e runs with reduced motion.
 - **The live site** beyond its start screen, on a phone and from another network.
 
-**Coding: lessons to judge first**
+**Coding: played** (2026-11, emulator Pixel 6, `CODING_UNIT=n npm run phone -- coding-all`, `tools/play.js`)
 
-- `js-0` is mostly easy reading.
-- The rewritten `if-3`, `until-2`, `bug-1`, `bug-2`, `logic-2`, `list-2`, `draw-0`, `param-0`, `param-1`, `js-3`, `js-4` have
-  only had automated checks. Play them, and every new unscramble, palette and free build, on a phone.
+All 13 units, 64 lessons (checkpoints included), by real touch with warm-ups and echoes on: no wrong answer from the course's own
+`way`s, no page error, no failed request, no sideways overflow, nothing untappable. Sessions are 8 to 13 items (checkpoint 8) and about
+1 to 2.2 minutes at a steady pace; none near 6 minutes or 20 items. The longest are `bug-3` (13 items, ~2:14), `loops-4` (~2:09),
+`bug-1` (~2:08) and `draw-3` (~2:04, 59 to 67 taps, the most). The estimate is a learner who reads and knows the answer, so real
+sessions run longer. A quarter to a third of every session is repeats (2 warm-ups, 1 to 2 echoes).
+`js-0` is the lightest in taps (25 for 12 items: mostly reading) but not slow. The other named lessons (`if-3`, `until-2`, `bug-1`,
+`bug-2`, `logic-2`, `list-2`, `draw-0`, `param-0`, `param-1`, `js-3`, `js-4`) play like their neighbours.
 
+- **A tall program runs under the tray or the verdict** (medium). On a 412x786 page, and worse at 412x533, a long program (`var-3-grow`,
+  `fn-3`, `draw-3`, `bug-3`, `param-2`) reaches under the fixed answer tray when asked and under the verdict banner once answered. The page scrolls
+  (the `.play` bottom padding), so nothing is lost, but the last blocks and the result of a run are off the visible part
+  until you scroll. Fix is a design call: let the program scroll in its own box, as built items already do.
+- **Small tap targets** (low): the empty slot in a laid-out answer is 28px wide, a filled block 28 to 30px, and the tray's tiles 38px on a short
+  phone. Heights are covered by an invisible 44px target; widths are not.
+- **Not played yet:** a real beginner, a real finger, Firefox, and sound with the new motion. The drawing trail and live values were seen only
+  in passing.
 **Coding: bigger improvements**
 
 - **Fresh numbers.** Done for Coding and Maths (#99, `tools/variants.js`), find-the-bug and the one-offs included. `frac-2-4q` stays

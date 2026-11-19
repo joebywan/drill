@@ -30,7 +30,7 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>] [--avd <name>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (one per habit and course, plus onboarding, first-visit, walkthrough, garden, timings, fitting, voice, sync, scan, left, drag); a new one is
+No scenario runs all of `test/phone/*.js` (one per habit and course, plus onboarding, first-visit, walkthrough, garden, timings, fitting, voice, sync, scan, left, drag; scenarios named `*-all` play a whole course through `tools/play.js` and run only by name, e.g. `CODING_UNIT=3 npm run phone -- coding-all`, one unit at a time, see the header of `test/phone/coding-all.js`); a new one is
 a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `dragTo`, `type`,
 `shot`, `run`, `check`).
 
