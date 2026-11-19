@@ -402,7 +402,7 @@ function yoursView() {
  * beside it, where she isn't on the screen already. `beat()` then pops the panel in, plays the flutter
  * and has Lumi flipper-flap; under reduced motion the panel is simply there.
  */
-const wingbeat = (lumiToo, newPanel) => `<section class="wingbeat-moment" role="status">
+const wingbeat = (lumiToo, newPanel) => `<section class="wingbeat-moment">
     ${lumiToo ? `<div class="wing-lumi">${lumi('complete')}</div>` : ''}
     <svg viewBox="${BOX}" aria-hidden="true">${butterfly(wingColours(progress), progress.wings.length >= WINGS)}</svg>
     <p>${esc(line(newPanel ? 'wingbeat' : 'full', Math.random(), WING_WORDS))}</p></section>`;
@@ -1116,7 +1116,7 @@ function run(lessonId, queue, title, extra = null) {
     };
     if (leanIn) leanIn.finished.then(settle, () => {}); else settle();
     // The wingbeat, and Lumi's signature flipper-flap on a perfect lesson, once she has settled.
-    if (beats) beat(app.querySelector('.wingbeat-moment'), newPanel, () => !left && lumiEl, 1200);
+    if (beats) beat(app.querySelector('.wingbeat-moment'), newPanel, () => (left ? null : lumiEl), 1200);
     else if (perfect) setTimeout(() => !left && flap(lumiEl), 1500);
     focusOn('h1');
     cue('done');

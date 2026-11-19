@@ -2041,11 +2041,15 @@ test('with the Android bridge, a finished lesson sends a summary and the ⋯ scr
     window.wingbeat ??= { noteReminder: (n) => calls.push(['heard', n]) };
   });
   await firstVisit(page);
-  await expect.poll(() => page.evaluate(() => bridgeCalls.filter((c) => c[0] === 'art').map((c) => c[1]))).toEqual(['teach', 'sleepy', 'complete']);
+  const drawings = ['teach', 'sleepy', 'complete', ...['flying', 'basking', 'resting'].flatMap((s) => [`butterfly-${s}`, `butterfly-${s}-night`])];
+  const sent = () => page.evaluate(() => bridgeCalls.filter((c) => c[0] === 'art').map((c) => c[1]));
+  await expect.poll(sent).toEqual(drawings); // Lumi's poses, then your butterfly's states, empty wings
+
   expect(await page.evaluate(() => bridgeCalls.some((c) => c[0] === 'notes')), 'opened/cleared notes go to the reminder brain').toBe(true);
   await finishFirstLesson(page);
   const last = await page.evaluate(() => bridgeCalls.filter((c) => c[0] === 'summary').at(-1)[1]);
-  expect(last.looks[0]).toMatchObject({ light: 'bright', streak: 1, pose: 'complete' });
+  expect(last.looks[0]).toMatchObject({ light: 'bright', streak: 1, pose: 'complete', butterfly: 'flying' });
+  await expect.poll(sent).toEqual([...drawings, ...drawings.slice(3)]); // the butterfly again, with its first panel
   expect(last.doneOn).toMatch(/^\d{4}-\d\d-\d\d$/);
   await continueButton(page).click();
   await page.getByRole('button', { name: 'Settings' }).click();
