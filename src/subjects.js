@@ -84,7 +84,7 @@ import testingCourse from './code/courses/testing.js';
  */
 /** The built-in habits, in the order the home bar shows them. `habitsFor(progress)` adds the learner's own. */
 export const HABITS = [
-  { id: 'learn', name: 'Learning', icon: '🔥' },
+  { id: 'learn', name: 'Learning', icon: '✏️' },
   { id: 'calm', name: 'Calm', icon: '🌿' },
   { id: 'break', name: 'Screen break', icon: '👀' },
   { id: 'reflect', name: 'Reflect', icon: '📓' },

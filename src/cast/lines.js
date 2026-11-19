@@ -266,6 +266,9 @@ export const WINDDOWN_LINES = {
 /** Calm's optional sounds, set from the ⋯ screen: [preference, label]. */
 // The ⋯ screen's season toggle: on when the timezone guesses south, and it can be changed.
 export const SOUTH_LABEL = 'Southern hemisphere seasons';
+/** The ⋯ switches for the coaches' dares (on) and the quiet habits' streak numbers (off). */
+export const DARES_LABEL = 'Dares from the coaches';
+export const QUIET_STREAK_LABEL = 'Streak numbers on Calm, Reflect and Wind down';
 export const CALM_SOUNDS = [['bell', 'A soft bell at the start and end'], ['rain', 'Soft rain while you practise']];
 
 /** Real help, shown as plain text on the first Calm lesson and after "Not really". */
@@ -699,7 +702,7 @@ const fits = (when, state) => MOMENTS.every((k) => !!when[k] === !!state[k])
 /** How often a coach dares, when it may. */
 export const DARE_ODDS = 0.25;
 /** At most one dare a day, only while the habit isn't done today, never on a first session or after a gap. */
-export const mayDare = (state) => !state.daredToday && state.light === 'not yet' && !state.first && !state.comeback;
+export const mayDare = (state) => state.dares !== false && !state.daredToday && state.light === 'not yet' && !state.first && !state.comeback;
 
 const slots = (text) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]);
 
