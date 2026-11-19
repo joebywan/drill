@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures.js';
+import { test, expect, calmFinished } from './fixtures.js';
 
 const seed = (page) => page.addInitScript(() => {
   if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 3, picked: [], done: {}, cards: {}, habits: {}, log: [] }));
@@ -159,4 +159,18 @@ test.describe('at 360x640', () => {
       expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(640);
     });
   }
+});
+
+test.describe('a finished practice path at 360x640', () => {
+  test.use({ viewport: { width: 360, height: 640 } });
+  test('the big button and the Something else link fit, and the path still shows', async ({ page }) => {
+    await page.addInitScript((s) => { localStorage.setItem('wingbeat.progress', s); }, calmFinished());
+    await page.goto('/');
+    await page.locator('[data-path="calm"]').click();
+    const [cta, link, strip] = await Promise.all(['.cta', '.choose', '.garden-link'].map((s) => page.locator(s).boundingBox()));
+    expect(link.y + link.height).toBeLessThanOrEqual(640);
+    expect(cta.height).toBeLessThan(150);
+    expect(strip.y + strip.height).toBeLessThan(cta.y);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+  });
 });

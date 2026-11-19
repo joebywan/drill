@@ -121,8 +121,7 @@ The app's vibe moves from "build knowledge" to "grow yourself", shown as a garde
 
 ## Still open
 
-- **"Already practised today"** for Calm (from Fizz, task 4): a one-tap log for a session done
-  away from the app. Task 8's one-tap logging covers tracked habits, not guided ones.
+Nothing. (Counting a guided habit done away from the app is now in the list under "Something else" on home.)
 
 ## Kept out
 
