@@ -8,6 +8,7 @@ import { LEARN, migrate, nextStreak } from '../progress.js';
  *   - log: a union (a session both sides have counts once; two identical sessions on one side stay two)
  *   - done, garden.earned (the earliest date), journal (per day and line), tracked, start, timings: unions,
  *     this device winning where both set the same thing
+ *   - wings (your butterfly's panels): the longer list
  *   - look (the friends card's name and animal): the latest pick, by its `at`
  *   - each habit's streak is replayed from the merged log with the same rules as a live session,
  *     never lower than either side's when both end on the same day (the log keeps a year; a streak
@@ -33,6 +34,7 @@ export function merge(local, remote) {
     journal: mergeJournal(a.journal, b.journal),
     garden: { ...b.garden, ...a.garden, earned: earliest(a.garden.earned, b.garden.earned) },
     tracked: mergeTracked(a.tracked, b.tracked),
+    wings: a.wings.length >= b.wings.length ? a.wings : b.wings,
     timings: Object.fromEntries([...new Set([...Object.keys(b.timings), ...Object.keys(a.timings)])]
       .map((h) => [h, { ...b.timings[h], ...a.timings[h] }])),
     ...((a.start || b.start) && { start: { ...b.start, ...a.start } }),
@@ -63,8 +65,8 @@ function mergeCards(a, b) {
 }
 
 // A session is the same session on both sides if it matches in everything but what can be added
-// to it later (the "how do you feel?" answer) or is device bookkeeping (`was`, for today's undo).
-const sameness = ({ feel, was, ...e }) => JSON.stringify(Object.keys(e).sort().map((k) => [k, e[k]]));
+// to it later (the "how do you feel?" answer) or is device bookkeeping (`was` and `wing`, for today's undo).
+const sameness = ({ feel, was, wing, ...e }) => JSON.stringify(Object.keys(e).sort().map((k) => [k, e[k]]));
 
 function mergeLog(a, b) {
   const seen = new Map(); // sameness → how many times this side has it

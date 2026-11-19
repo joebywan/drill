@@ -123,8 +123,8 @@ export const LINES = {
     'Review done. Those patterns are sticking.',
     'Recall like that is how the patterns settle in.',
   ],
-  relit: ['That review relit your streak. Welcome back to the board.'],
-  repair: ['One short review relights your streak'],
+  relit: ['That review has your butterfly flying again. Welcome back to the board.'],
+  repair: ['One short review gets your butterfly flying again'],
   // Lumi, on home for a brand-new learner.
   welcome: ["Hi, I'm Lumi. Pick something to grow."],
   // Lumi, beside Rosa on the end screen.
@@ -160,7 +160,7 @@ export const HEADLINES = {
     'Remembered! I am proud, and I am usually only proud of myself.',
     'Review done. Those patterns are moving in to stay.',
   ],
-  relit: ['Streak relit! Somebody put the kettle on.', 'There it is, the streak is glowing again.'],
+  relit: ['Flying again! Somebody put the kettle on.', 'Look at it go. Your butterfly is flying again, and so is my reputation.'],
 };
 
 /** A line of the given kind; `pick` in [0, 1) chooses which, from those not in `recent` while any are left. */
@@ -173,9 +173,10 @@ export const headline = (kind, pick) => line(kind, pick, HEADLINES);
 
 /**
  * The learning events that earn a celebration: a run of right answers, a lesson right first
- * time all through (quickly or not), a streak relit by a review.
+ * time all through (quickly or not), a streak back on its wings after a review; and one practice
+ * event, the wingbeat: the first session of a day colouring a panel on your butterfly (WING_WORDS).
  */
-export const CELEBRATIONS = ['run3', 'run5', 'perfect', 'fast', 'relit'];
+export const CELEBRATIONS = ['run3', 'run5', 'perfect', 'fast', 'relit', 'wingbeat'];
 
 /** The banner line kind for a right answer, given the run of right answers so far. */
 export const rightAnswer = (run) => (run === 5 ? 'run5' : run === 3 ? 'run3' : 'correct');
@@ -189,7 +190,7 @@ const band = (bands, value) => bands.find(([floor]) => value >= floor)[1];
 export const ACCURACY = [[100, 'SPOT ON'], [80, 'SOLID'], [0, 'GETTING THERE']];
 // Seconds per item, fastest first. ponytail: one flat pace for every item type; weight by type
 // (teach items read slower than taps) if the label feels unfair.
-export const PACE = [[-8, 'BLAZING'], [-14, 'SWIFT'], [-Infinity, 'STEADY']];
+export const PACE = [[-8, 'SPEEDY'], [-14, 'SWIFT'], [-Infinity, 'STEADY']];
 export const accuracyLabel = (percent) => band(ACCURACY, percent);
 export const paceLabel = (secondsPerItem) => band(PACE, -secondsPerItem);
 export const STREAK_LABEL = 'DAY STREAK';
@@ -387,7 +388,8 @@ export const INTRO_WORDS = {
     focus: 'Focus: a calm timer for one thing at a time.',
     track: 'Track: one tap for a walk, a book, water or time outside.',
   },
-  garden: 'Your habits grow plants in a garden, and nothing ever wilts.',
+  tagline: 'Small beats go a long way.',
+  butterfly: "Each day you practise colours a panel on your butterfly's wings.",
   privacy: 'Everything stays on this device.',
   next: 'Next',
   skip: 'Skip',
@@ -462,7 +464,7 @@ export const KAEDE_LINES = {
     'Review done. Those kana are moving in to stay.',
     'Recall like that is how a script settles in.',
   ],
-  relit: ['That review relit your streak. Welcome back to the kana.'],
+  relit: ['That review has your butterfly flying again. Welcome back to the kana.'],
 };
 
 /** Kaede's end-screen headlines, by the same kinds as HEADLINES. */
@@ -472,7 +474,7 @@ export const KAEDE_HEADLINES = {
   fast: ['Done already? I had barely finished my bamboo.', 'Whoosh. That was quick and right.'],
   struggled: ['That took some wrestling, and you won.', 'Messy in the middle, tidy at the end.'],
   review: ['Look at that recall!', 'Remembered! The kana are settling in.'],
-  relit: ['Streak relit! Ears up!'],
+  relit: ['Flying again! I am up on my back legs to wave it off.'],
 };
 
 // --- Maths ----------------------------------------------------------------------------------
@@ -541,7 +543,7 @@ export const MATHS_LINES = {
     'Review done. Those tricks are sticking.',
     'Recall like that is how sums get easy.',
   ],
-  relit: ['That review relit your streak. Welcome back to the numbers.'],
+  relit: ['That review has your butterfly flying again. Welcome back to the numbers.'],
 };
 
 /** Ada's end-screen headlines, the same kinds as HEADLINES. */
@@ -567,7 +569,7 @@ export const MATHS_HEADLINES = {
     'Look at that recall. Somebody has been practising.',
     'Remembered! The tricks are moving in to stay.',
   ],
-  relit: ['Streak relit! Ink all round.', 'There it is, the streak is glowing again.'],
+  relit: ['Flying again! Ink all round.', 'Your butterfly is flying again. I am waving all eight arms.'],
 };
 
 /**
@@ -575,13 +577,44 @@ export const MATHS_HEADLINES = {
  * says hello; nothing counts down, nothing is owed, and a day off is just a day.
  */
 export const WIDGET_LINES = {
-  done: ['Done for today. Nice.', 'That was a good one.', 'All set. Enjoy the rest of the day.'],
-  morning: ['Morning. Fancy a lesson?', 'A new day. Pick anything you like.', 'Good morning from Lumi.'],
-  day: ['Got a few minutes? I have a puzzle.', 'Lumi is around if you want a lesson.', 'Something small today?'],
-  evening: ['A calm few minutes before bed?', 'Evening. One small thing, if you like.', 'Lumi saved you a puzzle.'],
-  night: ['Sleep well. See you tomorrow.', 'Lumi is dozing.', 'Rest is good too.'],
-  // The once-a-day note, opted into on the ⋯ screen. Posted only on a day with nothing done.
-  remind: ['Lumi has a puzzle for you, if you fancy one.', 'A few calm minutes are here when you want them.', 'Something small today? Lumi is around.'],
+  // For someone who mostly learns (widget.js leaning).
+  learn: {
+    done: ["Today's wingbeat is done.", 'Done for today. Nice.', 'That was a good one.', 'All set. Enjoy the rest of the day.'],
+    morning: ['Morning. Fancy a lesson?', 'A new day. Pick anything you like.', 'Good morning from Lumi.'],
+    day: ['Got a few minutes? I have a puzzle.', 'Lumi is around if you want a lesson.', 'Something small today?'],
+    evening: ['A calm few minutes before bed?', 'Evening. One small thing, if you like.', 'Lumi saved you a puzzle.'],
+    night: ['Sleep well. See you tomorrow.', 'Lumi is dozing.', 'Rest is good too.'],
+    // The once-a-day note, opted into on the ⋯ screen. Posted only on a day with nothing done.
+    remind: ['Lumi has a puzzle for you, if you fancy one.', 'A few calm minutes are here when you want them.', 'Something small today? Lumi is around.'],
+  },
+  // For someone who mostly keeps habits: no lessons, no puzzles.
+  habits: {
+    done: ["Today's wingbeat is done.", 'Done for today. Nice.', 'That was a good one.', 'All set. Enjoy the rest of the day.'],
+    morning: ['Morning. A few minutes for you?', 'A new day. Pick anything you like.', 'Good morning from Lumi.'],
+    day: ['Got a few minutes? Lumi is around.', 'A small pause, if you fancy one?', 'Something small today?'],
+    evening: ['A calm few minutes before bed?', 'Evening. One small thing, if you like.', 'Lumi saved you a quiet minute.'],
+    night: ['Sleep well. See you tomorrow.', 'Lumi is dozing.', 'Rest is good too.'],
+    remind: ['A few calm minutes are here when you want them.', 'Something small today? Lumi is around.', 'A small pause is here, if you fancy one.'],
+  },
+};
+/**
+ * Your butterfly (src/cast/butterfly.js): its screen from home, and the wingbeat, the end screens'
+ * moment on the first session of a day. "Wingbeat" is said sparingly: there, the intro and the widget.
+ */
+export const WING_WORDS = {
+  wingbeat: ["Today's wingbeat. One more panel on your butterfly."],
+  full: ["Today's wingbeat. Every panel is coloured, and your butterfly is flying."],
+  title: 'Your butterfly',
+  panels: '{n} of {of} panels coloured',
+  none: 'No panels yet. Your first day of practice colours one.',
+  legend: 'Colours on its wings',
+  states: 'How it spends the day',
+  flying: 'Flying: you practised today.',
+  basking: 'Basking: wings open in the sun until you practise.',
+  resting: 'Resting: wings closed on a flower after a day off, ready when you are.',
+  next: 'What comes next',
+  more: "Each day you practise colours the next panel, in the colour of that day's first habit. Nothing fades.",
+  done: 'Every panel is coloured. Nothing fades, and each day you practise, it flies.',
 };
 export const REMINDER_WORDS = {
   title: 'Daily note',
@@ -626,7 +659,7 @@ export const CODING_LINES = {
     'The tricky ones come back in review. That is the plan, not a penalty.',
   ],
   review: ['Review done. Those ideas are sticking.', 'Recall like that is how the ideas settle in.'],
-  relit: ['That review relit your streak. Welcome back to the grid.'],
+  relit: ['That review has your butterfly flying again. Welcome back to the grid.'],
 };
 export const CODING_HEADLINES = {
   complete: ['Lesson done. The flower thanks you.', 'And that is a lesson. My ears approve.'],
@@ -634,7 +667,7 @@ export const CODING_HEADLINES = {
   fast: ['Done already? I had barely started trotting.', 'Zoom! That was a quick little program.'],
   struggled: ['Plenty of bumps. That is how a plan gets better.', 'A bumpy walk, and I saw every step of it. We go again.'],
   review: ['Look at that recall. The plans are in there.', 'Review done. Steps, loops, ifs: all at home.'],
-  relit: ['Streak relit! Ears up.', 'There it is, the streak is glowing again.'],
+  relit: ['Flying again! Ears up.', 'Your butterfly is flying again. My ears followed it all the way.'],
 };
 
 /** Fennel on real code: the JavaScript, TypeScript and test-writing courses. */
@@ -674,7 +707,7 @@ export const CODE_HEADLINES = {
   fast: ['Done already? You read fast.', 'Zoom! That ran quickly.'],
   struggled: ['Some errors, then it ran. That is real coding.', 'You read the errors and got there. That is the job.'],
   review: ['Look at that recall. The code is in there.', 'Review done. It all still runs.'],
-  relit: ['Streak relit! Ears up.', 'There it is, the streak is glowing again.'],
+  relit: ['Flying again! Ears up.', 'Your butterfly is flying again, and the code still runs.'],
 };
 
 /**

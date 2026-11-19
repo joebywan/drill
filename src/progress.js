@@ -30,14 +30,17 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            these first (subjects.js ordered). Absent until the intro is answered or skipped ([])
  *   timings  { habitId: { key: value } }  — the learner's own practice timings (practice/timings.js),
  *            over the path's defaults. Untrusted like the rest: `timed()` ignores a value out of range
+ *   wings    [habitId]  — your butterfly's wing panels (src/cast/butterfly.js), PANELS at most: one is
+ *            added by the first session of each day practised, any habit, in its colour. Nothing fades.
+ *            A one-tap log that added one is marked `wing`, so undoing it takes the panel back
  *   reminders, comeback  — optional, what src/fitting.js learns about fitting the person (see there);
  *            read leniently: a bad reminder record or comeback is dropped, never the whole file
  *   version  the shape's version; `migrate()` brings any older shape up to VERSION
  */
-export const VERSION = 9;
+export const VERSION = 10;
 export const LEARN = 'learn';
 const emptyStreak = () => ({ count: 0, last: null, forgiven: [], days: 0 });
-export const emptyProgress = () => ({ version: VERSION, habits: { [LEARN]: emptyStreak() }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, tracked: [], timings: {}, left: [] });
+export const emptyProgress = () => ({ version: VERSION, habits: { [LEARN]: emptyStreak() }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, tracked: [], timings: {}, left: [], wings: [] });
 
 const isObject = (v) => v != null && typeof v === 'object' && !Array.isArray(v);
 const isDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
@@ -89,7 +92,7 @@ const isTracked = (t) => isObject(t) && typeof t.id === 'string' && /^[a-z0-9-]{
  * nothing was `tracked`, which starts empty; up to version 6 there was no first-visit intro, so
 `picked` becomes [] and someone who already used Wingbeat never sees it; up to version 7 there were
  * no timings of the learner's own, so `timings` becomes {}; up to version 8 no session had its hour
- * and nothing was `left`, which becomes [].
+ * and nothing was `left`, which becomes []; up to version 9 there were no `wings`, which start empty.
  * Unknown fields are kept, so a file from a newer build loses nothing.
  */
 export function migrate(raw) {
@@ -133,6 +136,9 @@ export function migrate(raw) {
   // Version 9: practices closed part-way (none before).
   const left = raw.left ?? [];
   if (!Array.isArray(left) || !left.every(isLeft)) return null;
+  // Version 10: your butterfly's wings (none before).
+  const wings = raw.wings ?? [];
+  if (!Array.isArray(wings) || wings.length > WINGS || !wings.every((id) => typeof id === 'string' && /^[a-z0-9-]{1,40}$/.test(id))) return null;
   // Fitting (src/fitting.js): optional, so no version of their own; a bad record is dropped, not the file.
   delete kept.reminders;
   delete kept.comeback;
@@ -140,7 +146,7 @@ export function migrate(raw) {
     ...(Array.isArray(raw.reminders) && { reminders: raw.reminders.filter(isReminder) }),
     ...(isComeback(raw.comeback) && { comeback: raw.comeback }),
   };
-  return { ...kept, ...fitting, ...(start && { start }), ...(picked && { picked }), version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal, garden, tracked, timings, left };
+  return { ...kept, ...fitting, ...(start && { start }), ...(picked && { picked }), version: Math.max(VERSION, Number(raw.version) || 0), habits, log, journal, garden, tracked, timings, left, wings };
 }
 
 /**
@@ -195,6 +201,22 @@ function logged(list, entry, now) {
   return [...kept, { date, hour: now.getHours(), ...entry }];
 }
 
+/** True until any habit has a session today: the next one is the day's first, its wingbeat. */
+export const firstToday = (progress, now = new Date()) => !(progress.log || []).some((e) => e.date === today(now));
+
+/** How many wing panels your butterfly has (src/cast/butterfly.js PANELS). */
+export const WINGS = 14;
+
+/**
+ * The log with a session's `entry` added, and the wings: the day's first session, any habit, colours
+ * the next panel in its habit's colour.
+ */
+function session(progress, habit, entry, now) {
+  const log = logged(progress.log, entry, now);
+  const wings = progress.wings || [];
+  return { log, wings: firstToday(progress, now) && wings.length < WINGS ? [...wings, habit] : wings };
+}
+
 const habitStreak = (progress, habit) => progress.habits[habit] || emptyStreak();
 
 /** The habit's streak after a session today, with `days` counting today once, however many sessions. */
@@ -226,7 +248,7 @@ export function finishSession(progress, lessonId, results, now = new Date(), abo
   return {
     ...progress,
     habits: { ...progress.habits, [LEARN]: practised(progress, LEARN, now, !lessonId) },
-    log: logged(progress.log, entry, now),
+    ...session(progress, LEARN, entry, now),
     done: lessonId ? { ...progress.done, [lessonId]: true } : progress.done,
     cards,
   };
@@ -241,7 +263,7 @@ export function finishPractice(progress, habit, lessonId, now = new Date(), abou
   return {
     ...progress,
     habits: { ...progress.habits, [habit]: practised(progress, habit, now, true) },
-    log: logged(progress.log, { habit, title: about.title || 'Practice', mins: about.mins || 0 }, now),
+    ...session(progress, habit, { habit, title: about.title || 'Practice', mins: about.mins || 0 }, now),
     done: lessonId ? { ...progress.done, [lessonId]: true } : progress.done,
   };
 }
@@ -258,21 +280,23 @@ export function leavePractice(progress, habit, lessonId, step, of, now = new Dat
 /**
  * One tap on a self-reported habit ("I walked today"): recorded through finishPractice, so the
  * streak, `days` and the log all work as for any habit. Once a day; a second tap changes nothing.
- * The log entry keeps the streak as it was (`was`) so unlogToday can put it back.
+ * The log entry keeps the streak as it was (`was`) so unlogToday can put it back, and `wing` if it
+ * coloured a wing panel.
  */
 export function logToday(progress, habit, title, now = new Date()) {
   const date = today(now);
   if ((progress.log || []).some((e) => e.habit === habit && e.date === date)) return progress;
   const p = finishPractice(progress, habit, null, now, { title });
   const log = [...p.log];
-  log[log.length - 1] = { ...log.at(-1), was: progress.habits[habit] ?? null };
+  log[log.length - 1] = { ...log.at(-1), was: progress.habits[habit] ?? null, ...(p.wings.length > (progress.wings || []).length && { wing: true }) };
   return { ...p, log };
 }
 
 /**
  * Undoes today's one-tap log of `habit`, for a mis-tap: the streak (count, days, forgiven) goes back
- * to exactly what it was before the tap, and the entry leaves the log. Only today's, and only a
- * log entry; anything else is returned unchanged. The garden's `earned` is never touched.
+ * to exactly what it was before the tap, and the entry leaves the log, with the wing panel it added
+ * (handed to the day's next session, if there was one). Only today's, and only a log entry; anything
+ * else is returned unchanged. The garden's `earned` is never touched.
  */
 export function unlogToday(progress, habit, now = new Date()) {
   const date = today(now);
@@ -281,7 +305,14 @@ export function unlogToday(progress, habit, now = new Date()) {
   const { was } = progress.log[at];
   const habits = { ...progress.habits };
   if (was) habits[habit] = was; else delete habits[habit];
-  return { ...progress, habits, log: progress.log.filter((_, i) => i !== at) };
+  let log = progress.log.filter((_, i) => i !== at);
+  let wings = progress.wings || [];
+  if (progress.log[at].wing) { // its panel goes, or to the day's next session if there was one
+    const next = log.findIndex((e) => e.date === date);
+    wings = [...wings.slice(0, -1), ...(next < 0 ? [] : [log[next].habit])];
+    if (next >= 0) log = log.map((e, i) => (i === next ? { ...e, wing: true } : e));
+  }
+  return { ...progress, habits, log, wings };
 }
 
 /**

@@ -70,14 +70,14 @@ test('migrate brings every older shape up to the current one', () => {
   assert.deepEqual(p.cards, roundTrip(first.cards));
   // Today's unversioned shape, without xp, keeps its placement.
   const v0 = { streak: { count: 0, last: null, forgiven: [] }, done: {}, cards: {}, start: 'Forks' };
-  assert.deepEqual(migrate(v0), { version: VERSION, habits: { learn: { ...v0.streak, days: 0 } }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, tracked: [], picked: [], timings: {}, left: [], start: { chess: 'Forks' } });
+  assert.deepEqual(migrate(v0), { version: VERSION, habits: { learn: { ...v0.streak, days: 0 } }, log: [], done: {}, cards: {}, journal: {}, garden: { earned: {} }, tracked: [], picked: [], timings: {}, left: [], wings: [], start: { chess: 'Forks' } });
   // Version 1: the one streak becomes Learning's, and there is no log yet.
   const v1 = { ...v0, version: 1, streak: { count: 4, last: '2026-10-29', forgiven: [] } };
   assert.deepEqual(migrate(v1).habits, { learn: { ...v1.streak, days: 4 } });
   // Version 2: habits and a log, but no journal yet; it gains an empty one and keeps the rest.
   const v2 = { version: 2, habits: { learn: v1.streak, calm: { count: 1, last: '2026-10-29', forgiven: [] } },
     log: [{ date: '2026-10-29', habit: 'calm', title: 'Breathing', mins: 2 }], done: { 'calm:breathe1': true }, cards: {} };
-  assert.deepEqual(migrate(roundTrip(v2)), { ...v2, version: VERSION, journal: {}, garden: { earned: {} }, tracked: [], picked: [], timings: {}, left: [],
+  assert.deepEqual(migrate(roundTrip(v2)), { ...v2, version: VERSION, journal: {}, garden: { earned: {} }, tracked: [], picked: [], timings: {}, left: [], wings: [],
     habits: { learn: { ...v1.streak, days: 4 }, calm: { ...v2.habits.calm, days: 1 } } });
   // The current shape passes through unchanged, and so does one from a newer build.
   assert.deepEqual(migrate(roundTrip(p)), p);
@@ -240,4 +240,53 @@ test('placement is offered per subject until answered or dismissed', () => {
   const firstUnit = Object.fromEntries(chess.units[0].lessons.map((l) => [`chess:${l.id}`, true]));
   assert.equal(offersPlacement({ ...fresh, done: firstUnit }, chess), false, 'moot once the first unit is done');
   assert.deepEqual(placeAt(placed, 'other', 'x').start, { chess: 'Forks', other: 'x' });
+});
+
+import { WINGS, logToday, unlogToday } from '../src/progress.js';
+import { PANELS } from '../src/cast/butterfly.js';
+import { merge } from '../src/sync/merge.js';
+
+test("your butterfly's wings: a panel for each day's first session, any habit, in order, 14 at most", () => {
+  assert.equal(WINGS, PANELS);
+  let p = emptyProgress();
+  assert.deepEqual(p.wings, []);
+  p = finishPractice(p, 'calm', null, day(1, 8));
+  assert.deepEqual(p.wings, ['calm'], "the day's first session, whatever the habit");
+  p = finishSession(p, 'a', [], day(1, 20));
+  p = logToday(p, 'walk', 'Walked', day(1, 21));
+  assert.deepEqual(p.wings, ['calm'], 'a second session the same day adds nothing');
+  p = logToday(p, 'walk', 'Walked', day(2, 7));
+  p = finishSession(p, 'b', [], day(2, 9));
+  p = finishSession(p, null, [], day(5)); // days off add nothing, and take nothing away
+  assert.deepEqual(p.wings, ['calm', 'walk', 'learn']);
+  for (let d = 6; d < 30; d++) p = finishPractice(p, 'move', null, day(d));
+  assert.equal(p.wings.length, 14, 'full at 14');
+  assert.deepEqual(p.wings.slice(0, 4), ['calm', 'walk', 'learn', 'move'], 'nothing fades or moves');
+  assert.deepEqual(migrate(roundTrip(p)), p);
+});
+
+test('undoing a one-tap log takes back the panel it added, or hands it to the day’s next session', () => {
+  let p = finishSession(emptyProgress(), 'a', [], day(1));
+  const before = roundTrip(p);
+  p = logToday(p, 'walk', 'Walked', day(2, 8));
+  assert.deepEqual(p.wings, ['learn', 'walk']);
+  assert.deepEqual(unlogToday(p, 'walk', day(2, 9)), before, 'exactly as before the tap');
+  // A lesson later the same day keeps the day practised: the panel becomes the lesson's.
+  const q = unlogToday(finishSession(p, 'b', [], day(2, 10)), 'walk', day(2, 11));
+  assert.deepEqual(q.wings, ['learn', 'learn']);
+  // A tap that wasn't the day's first took no panel, so its undo gives none back.
+  const r = unlogToday(logToday(finishSession(emptyProgress(), 'a', [], day(3, 8)), 'walk', 'Walked', day(3, 9)), 'walk', day(3, 10));
+  assert.deepEqual(r.wings, ['learn']);
+});
+
+test('migrate gives older saves empty wings and refuses bad ones; sync keeps the longer list', () => {
+  const v9 = { ...roundTrip(emptyProgress()), version: 9 };
+  delete v9.wings;
+  assert.deepEqual(migrate(v9).wings, []);
+  for (const bad of [{}, 'calm', [1], ['Calm!'], Array(15).fill('calm')]) assert.equal(migrate({ ...emptyProgress(), wings: bad }), null, JSON.stringify(bad));
+  const a = finishPractice(emptyProgress(), 'calm', null, day(1));
+  const b = finishSession(finishSession(emptyProgress(), 'x', [], day(2)), 'y', [], day(3));
+  assert.deepEqual(merge(a, b).wings, ['learn', 'learn']);
+  assert.deepEqual(merge(b, a).wings, ['learn', 'learn']);
+  assert.deepEqual(merge(a, a).wings, a.wings);
 });

@@ -67,7 +67,7 @@ const pick = (page, name) => page.getByRole('button', { name, exact: true });
 async function toStepTwo(page) {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'What can Wingbeat do for you?' })).toBeFocused();
-  for (const text of ['Calm: slow breathing', 'Track: one tap', 'nothing ever wilts', 'Everything stays on this device'])
+  for (const text of ['Small beats go a long way.', 'Calm: slow breathing', 'Track: one tap', "colours a panel on your butterfly's wings", 'Everything stays on this device'])
     await expect(page.getByText(text)).toBeVisible();
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page.getByRole('heading', { name: 'What would you like out of Wingbeat?' })).toBeFocused();
@@ -266,6 +266,32 @@ test('finishing the first lesson shows the summary, starts the streak, and survi
   await page.reload();
   await expect(streak).toHaveAccessibleName('Learning, 1-day streak');
   await expect(page.getByRole('button', { name: `${first.title}, done` })).toBeVisible();
+});
+
+test("the day's first lesson is a wingbeat: a panel on your butterfly, a butterfly for the 🔥, and home's butterfly opens its screen", async ({ page }) => {
+  await firstVisit(page);
+  await expect(page.locator('.yours-link')).toHaveCount(0); // nothing practised, nothing to show yet
+  await finishFirstLesson(page);
+  const moment = page.locator('.wingbeat-moment');
+  await expect(moment).toHaveText("Today's wingbeat. One more panel on your butterfly.");
+  await expect(moment.locator('[data-new]')).toHaveCSS('opacity', '1'); // reduced motion: simply there, no pop
+  const chip = page.locator('.chip.fire');
+  await expect(chip).toContainText('DAY STREAK');
+  await expect(chip.locator('b')).toHaveText('1');
+  await expect(chip.locator('b svg')).toHaveCount(1);
+  await expect(page.locator('main')).not.toContainText('🔥');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).wings)).toEqual(['learn']);
+  await continueButton(page).click();
+  const yours = page.getByRole('button', { name: 'Your butterfly, flying' });
+  await expect(yours).toBeVisible();
+  await yours.click();
+  await expect(page.getByRole('heading', { name: 'Your butterfly' })).toBeFocused();
+  await expect(page.getByText('1 of 14 panels coloured')).toBeVisible();
+  await expect(page.locator('.legend')).toHaveText(/Learning/);
+  for (const state of ['Flying', 'Basking', 'Resting']) await expect(page.getByText(new RegExp(`^${state}: `))).toBeVisible();
+  await expect(page.locator('main')).not.toContainText(/streak|\d+ days?/i); // no per-habit counts
+  await page.goBack(); // the phone's back (nav.js) presses the screen's own
+  await expect(yours).toBeFocused();
 });
 
 test('the "5 in a row" flare plays, then leaves nothing behind', async ({ page }) => {
@@ -523,6 +549,9 @@ async function breathe(page) {
 
 test('a Calm breathing session keeps its own streak, and asks how you feel', async ({ page }) => {
   await firstBreathing(page);
+  // The day's first session, so the wingbeat, with Lumi beside it for her flipper-flap.
+  await expect(page.locator('.wingbeat-moment')).toContainText("Today's wingbeat");
+  await expect(page.locator('.wingbeat-moment .wing-lumi svg')).toBeVisible();
   await expect(page.getByText(/^3 breaths · \d+ min$/)).toBeVisible();
   await expect(page.locator('.chip.calm')).toContainText('🌿 1');
   await page.getByRole('button', { name: 'Calmer' }).click();

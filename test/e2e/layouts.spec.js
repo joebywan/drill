@@ -20,6 +20,20 @@ test.describe('at 360x640', () => {
     expect(new Set(ys).size).toBe(1);
   });
 
+  test("after a session, your butterfly sits on the streak line's row and the next lesson stays on the first screen", async ({ page }) => {
+    await page.addInitScript(() => {
+      const d = new Date();
+      const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 10, picked: [], done: {}, cards: {}, wings: ['learn'],
+        habits: { learn: { count: 1, last: date, forgiven: [], days: 1 } }, log: [{ date, habit: 'learn', title: 'Review', mins: 1 }] }));
+    });
+    await page.goto('/');
+    await expect(page.locator('.offer')).toBeVisible();
+    const [node, cta, yours, line] = await Promise.all(['.node.here', '.cta', '.yours-link', '.streak-line'].map((s) => page.locator(s).boundingBox()));
+    expect(node.y + node.height).toBeLessThan(cta.y);
+    expect(Math.abs(yours.y + yours.height / 2 - (line.y + line.height / 2))).toBeLessThan(2); // one row
+  });
+
   test('a course pill and the ✕ answer a thumb that lands just outside them', async ({ page }) => {
     await seed(page);
     await page.goto('/');
