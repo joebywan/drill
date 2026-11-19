@@ -4,13 +4,14 @@ import { lifeArt } from './cast/butterfly.js';
 import { fieldGuide } from './guide.js';
 import { PLANTS, animateLandmarks, animateScene, animateVisitor, drawGarden, flower, landmark, plant, sway, visitor } from './garden/art.js';
 import { COMEBACK_WORDS, PAUSED_WORDS, activeComeback, answerComeback, noteReminder, preferred, reminderHour, remindersPaused, shorter, shouldRemind, startComeback, usualHours, usualLine } from './fitting.js';
-import { emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, track, unlogToday, writeJournal, finishSession, meetsCoach, metCoach, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
+import { WINGS, firstToday, emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, track, unlogToday, writeJournal, finishSession, meetsCoach, metCoach, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, showsStreak, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
-import { lumi } from './cast/lumi.js';
+import { flap, lumi, lumiPerched } from './cast/lumi.js';
+import { BOX, butterfly, butterflyToday } from './cast/butterfly.js';
 import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, comeBack, dropEchoes, echoes, fresh, warmUps } from './repeat.js';
 import { GOES, easier, flying, helpFor, misses, noteAnswer, struggling, warmedLast } from './adapt.js';
-import { CALM_SOUNDS, DARES_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
+import { CALM_SOUNDS, DARES_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, setSound, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
 import { lessonOf } from './garden/events.js';
@@ -18,7 +19,7 @@ import { moment } from './cast/voice.js';
 import { chip, esc } from './html.js';
 import { helpHtml } from './practice/kit.js';
 import { TIMINGS, TIMING_WORDS, pathTimings, setTiming, spread, timed } from './practice/timings.js';
-import { bridge, passNotes, sendArt, tellAndroid, tellBars } from './widget.js';
+import { bridge, passNotes, sendArt, tellAndroid, tellBars, wingColours, wingState } from './widget.js';
 import { profile as syncProfile, sync } from './sync/sync.js';
 import { merge } from './sync/merge.js';
 import { navigation } from './nav.js';
@@ -37,6 +38,9 @@ const habitOf = (id) => habits().find((h) => h.id === id);
 /** Whose timings a habit plays by: its subject's `timings` (Wind down plays Calm's), or its own. */
 const timingsOf = (id) => subjects.find((s) => s.habit === id)?.timings ?? id;
 
+/** The widget's summary, with a quiet habit's streak count hidden unless the ⋯ switch shows it (decision 17). */
+const tellWidget = () => tellAndroid(progress, (id) => showsStreak(id, pref('quiet-streaks', false)));
+
 function load() {
   let raw = null;
   try { raw = localStorage.getItem(STORE); } catch { /* private mode */ }
@@ -50,7 +54,8 @@ function load() {
 let persistAsked = false;
 function save(synced = false) {
   try { localStorage.setItem(STORE, JSON.stringify(progress)); } catch { /* private mode: progress lasts the visit */ }
-  tellAndroid(progress);
+  tellWidget();
+  sendArt(progress).catch(console.warn);
   if (!synced) syncSoon();
   // Ask the browser, quietly and once a visit, not to evict progress (Safari clears it after a week away).
   if (persistAsked) return;
@@ -245,8 +250,8 @@ function home(arrived = null, newly = []) {
         `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === courseShown}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
       ${learning && courseShown.games ? `<nav class="courses games" aria-label="Games"><span>Games</span>${courseShown.games.map((g) => `<button class="course" data-game="${g.id}">${esc(g.label)}</button>`).join('')}</nav>` : ''}
       ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : invite ? '' : greeting(shownHabit)}
-      ${progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true, showsStreak(habitShown, pref('quiet-streaks', false))))}</button>`
-        : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : ''}
+      ${streakRow(progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true, showsStreak(habitShown, pref('quiet-streaks', false))))}</button>`
+        : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : '')}
       ${invite ? comebackCard(invite) : ''}
       ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly, raised) : ''}
       ${shownSubjects[0]?.lookBack?.(progress, new Date()) ?? ''}
@@ -300,6 +305,7 @@ function home(arrived = null, newly = []) {
   app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); focusOn('.sound'); });
   app.querySelector('.menu').addEventListener('click', () => { stopHome(); keep(); });
   app.querySelector('.streak-line')?.addEventListener('click', () => habitView(habitShown));
+  app.querySelector('.yours-link')?.addEventListener('click', yoursView);
   app.querySelector('.look-back')?.addEventListener('click', () => habitView(habitShown));
   // Before a habit's first session there is no habit view yet, so its timings are offered here.
   app.querySelector('.timings-link')?.addEventListener('click', () => { stopHome(); timingsView(timingsOf(habitShown), () => { home(); focusOn('.timings-link'); }); });
@@ -361,6 +367,63 @@ function home(arrived = null, newly = []) {
     home();
     focusOn('.cta .next');
   });
+}
+
+/** Your butterfly drawn as it is today, or `state`; small on home, the end screens and the chip. */
+const yours = (state = wingState(progress)) => `<svg viewBox="${BOX}" aria-hidden="true">${butterflyToday(state, wingColours(progress))}</svg>`;
+
+/** Home's streak line (or what stands in its place) with your butterfly beside it, once there is anything to show. */
+const streakRow = (line) => (!line && !progress.log.length ? '' : `<div class="streak-row">
+  <button class="yours-link" aria-label="${esc(WING_WORDS.title)}, ${wingState(progress)}">${yours()}</button>${line}</div>`);
+
+/**
+ * "Your butterfly", from home: the wings so far, the habits whose colours are on them, what its three
+ * states mean and what comes next. No streak counts here.
+ */
+function yoursView() {
+  stopHome();
+  const wings = progress.wings || [];
+  const colours = wingColours(progress);
+  const legend = [...new Map(wings.map((id, i) => [id, colours[i]]))].map(([id, colour]) => {
+    const h = habitOf(id);
+    return `<li><i style="background:${colour}"></i><span aria-hidden="true">${esc(h?.icon ?? '')}</span> ${esc(h?.name ?? id)}</li>`;
+  }).join('');
+  const state = (s) => `<li>${yours(s)}<span>${esc(WING_WORDS[s])}</span></li>`;
+  app.innerHTML = `
+    <header class="bar"><button class="back" aria-label="Back">←</button></header>
+    <main class="yours-page">
+      <h1>${esc(WING_WORDS.title)}</h1>
+      <svg class="yours-wings" viewBox="${BOX}" aria-hidden="true">${butterfly(colours, wings.length >= WINGS)}</svg>
+      <p class="said">${esc(wings.length ? WING_WORDS.panels.replace('{n}', wings.length).replace('{of}', WINGS) : WING_WORDS.none)}</p>
+      ${legend ? `<h2>${esc(WING_WORDS.legend)}</h2><ul class="legend">${legend}</ul>` : ''}
+      <h2>${esc(WING_WORDS.states)}</h2>
+      <ul class="does states">${['flying', 'basking', 'resting'].map(state).join('')}</ul>
+      <h2>${esc(WING_WORDS.next)}</h2>
+      <p>${esc(wings.length >= WINGS ? WING_WORDS.done : WING_WORDS.more)}</p>
+    </main>`;
+  scrollTo(0, 0);
+  focusOn('h1');
+  app.querySelector('.back').addEventListener('click', () => { home(); focusOn('.yours-link'); });
+}
+
+/**
+ * The wingbeat: on the first session of a day, the end screen shows your butterfly with the panel
+ * that session coloured (`newPanel`; none once the wings are full) and one line. `lumiToo` draws Lumi
+ * beside it, where she isn't on the screen already. `beat()` then pops the panel in, plays the flutter
+ * and has Lumi flipper-flap; under reduced motion the panel is simply there.
+ */
+const wingbeat = (lumiToo, newPanel) => `<section class="wingbeat-moment">
+    ${lumiToo ? `<div class="wing-lumi">${lumi('complete')}</div>` : ''}
+    <svg viewBox="${BOX}" aria-hidden="true">${butterfly(wingColours(progress), progress.wings.length >= WINGS)}</svg>
+    <p>${esc(line(newPanel ? 'wingbeat' : 'full', Math.random(), WING_WORDS))}</p></section>`;
+function beat(section, newPanel, lumiEl, wait) {
+  const panel = newPanel && section.querySelector(':scope > svg [data-new]');
+  move(panel, [{ opacity: 0 }, { opacity: 1 }], { duration: 450, delay: wait, easing: 'ease-out', fill: 'backwards' });
+  setTimeout(() => {
+    flourish(section.querySelector(':scope > svg'), 'pop');
+    cue('flutter');
+    flap(lumiEl());
+  }, wait + 300);
 }
 
 /** Runs a path node's lesson; `timings` goes over the learner's own for this session only. */
@@ -938,11 +1001,13 @@ function run(lessonId, queue, title, extra = null) {
   const finishRoutine = () => {
     const { subject, topic: technique } = queue[0];
     const firstTime = lessonId && !progress.done[lessonId];
+    const beats = firstToday(progress), panels = progress.wings.length;
     const mins = Math.max(1, Math.round((Date.now() - started) / 60000));
     progress = answerComeback(writeJournal(finishPractice(progress, subject.habit, lessonId, new Date(), { title: technique, mins }), journal), subject.habit);
     let newly;
     ({ progress, newly } = award(progress));
     save();
+    const newPanel = progress.wings.length > panels;
     const h = habitOf(subject.habit);
     const n = currentStreak(progress, new Date(), h.id);
     app.innerHTML = `
@@ -954,6 +1019,7 @@ function run(lessonId, queue, title, extra = null) {
         <div class="chips">
           ${showsStreak(h.id, pref('quiet-streaks', false)) ? chip(h.id, `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`) : ''}
         </div>
+        ${beats ? wingbeat(true, newPanel) : ''}
         ${arrivals(newly)}
         ${subject.readBack?.(progress, new Date()) ?? ''}
         <section class="feel" aria-labelledby="feel-q">
@@ -965,6 +1031,7 @@ function run(lessonId, queue, title, extra = null) {
       <footer class="cta"><button class="next">Continue</button></footer>`;
     const endCoach = coach(app.querySelector('.hero'), who.draw);
     endCoach.set('done');
+    if (beats) beat(app.querySelector('.wingbeat-moment'), newPanel, () => app.querySelector('.wing-lumi'), 600);
     arrive(newly, 400);
     focusOn('h1');
     for (const b of app.querySelectorAll('[data-feel]')) {
@@ -1008,12 +1075,14 @@ function run(lessonId, queue, title, extra = null) {
   const perfectRun = () => results.length > 0 && results.every((r) => r.correct);
   const finish = () => {
     const relit = needsRepair(progress);
+    const beats = firstToday(progress), panels = progress.wings.length;
     const firstTime = lessonId && !progress.done[lessonId];
     const seconds = Math.round((Date.now() - started) / 1000);
     progress = finishSession(progress, lessonId, results, new Date(), { title: title || 'Review', mins: Math.max(1, Math.round(seconds / 60)) });
     let newly;
     ({ progress, newly } = award(progress));
     save();
+    const newPanel = progress.wings.length > panels;
     const right = results.filter((r) => r.correct).length;
     const perfect = perfectRun();
     const missed = results.some((r) => !r.correct);
@@ -1039,9 +1108,10 @@ function run(lessonId, queue, title, extra = null) {
         <div class="chips">
           ${percent === null ? '' : chip('acc', accuracyLabel(percent), `${percent}%`)}
           ${chip('time', pace, clock)}
-          ${chip('fire', STREAK_LABEL, `🔥 ${currentStreak(progress)}`)}
+          ${chip('fire', STREAK_LABEL, currentStreak(progress), yours('flying'))}
         </div>
         <p class="learned">${Object.keys(progress.cards).length} learned so far · ${right} of ${results.length} ${lessonId ? 'right first try' : 'recalled'}</p>
+        ${beats ? wingbeat(false, newPanel) : ''}
         ${arrivals(newly)}
       </main>
       <footer class="cta"><button class="next">Continue</button></footer>`;
@@ -1073,6 +1143,9 @@ function run(lessonId, queue, title, extra = null) {
       setTimeout(() => !left && cast[1].hop(), 140);
     };
     if (leanIn) leanIn.finished.then(settle, () => {}); else settle();
+    // The wingbeat, and Lumi's signature flipper-flap on a perfect lesson, once she has settled.
+    if (beats) beat(app.querySelector('.wingbeat-moment'), newPanel, () => (left ? null : lumiEl), 1200);
+    else if (perfect) setTimeout(() => !left && flap(lumiEl), 1500);
     focusOn('h1');
     cue('done');
     arrive(newly, 900);
@@ -1171,6 +1244,7 @@ function keep(note = '') {
       setPref(b.dataset.pref, on);
       b.setAttribute('aria-pressed', on);
       if (on && b.dataset.pref === 'bell') play('bell');
+      if (b.dataset.pref === 'quiet-streaks') tellWidget();
     });
   }
   // Android only: the once-a-day note is off until turned on here.
@@ -1228,15 +1302,16 @@ function confirmLoad(p) {
  * (`progress.picked` records it); Skip leaves the default home.
  */
 function intro() {
-  const row = (icon, text) => `<li><span aria-hidden="true">${esc(icon)}</span><span>${esc(text)}</span></li>`;
+  const row = (icon, text, art = esc(icon)) => `<li><span aria-hidden="true">${art}</span><span>${esc(text)}</span></li>`;
   app.innerHTML = `
     <main class="survey intro">
-      <div class="hero"></div>
+      <div class="hero perched"></div>
       <h1>${esc(INTRO_WORDS.title)}</h1>
+      <p class="tagline">${esc(INTRO_WORDS.tagline)}</p>
       <ul class="does">
         ${HABITS.filter((h) => INTRO_WORDS.does[h.id]).map((h) => row(h.icon, INTRO_WORDS.does[h.id])).join('')}
         ${row('👆', INTRO_WORDS.does.track)}
-        ${row('🌻', INTRO_WORDS.garden)}
+        ${row('', INTRO_WORDS.butterfly, yours('basking'))}
         ${row('🔒', INTRO_WORDS.privacy)}
       </ul>
     </main>
@@ -1244,7 +1319,7 @@ function intro() {
       <button class="next" data-next>${esc(INTRO_WORDS.next)}</button>
       <button class="link" data-skip>${esc(INTRO_WORDS.skip)}</button>
     </footer>`;
-  const guide = coach(app.querySelector('.hero'), lumi);
+  const guide = coach(app.querySelector('.hero'), (mood) => lumiPerched(mood));
   guide.set('teach');
   focusOn('h1');
   app.querySelector('[data-next]').addEventListener('click', () => { guide.stop(); want(); });
@@ -1345,8 +1420,8 @@ window.wingbeat = {
   },
 };
 
-tellAndroid(progress); // the widget catches up with a new day even when nothing is saved
-sendArt().catch(console.warn);
+tellWidget(); // the widget catches up with a new day even when nothing is saved
+sendArt(progress).catch(console.warn);
 passNotes();
 addEventListener('visibilitychange', () => document.hidden || passNotes()); // a note tapped while the app was open
 navigation(app);

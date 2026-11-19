@@ -101,11 +101,15 @@ class MainActivity : ComponentActivity() {
             Daily.refresh(this@MainActivity)
         }
 
-        /** One of Lumi's poses as a PNG, drawn by the page from the app's own SVG. */
+        /** One of Lumi's poses, or one of your butterfly's states, as a PNG drawn by the page from the app's own SVG. */
         @JavascriptInterface
-        fun art(pose: String, png: String) {
-            if (pose !in Daily.POSES) return
-            File(filesDir, "lumi-$pose.png").writeBytes(Base64.decode(png, Base64.DEFAULT))
+        fun art(name: String, png: String) {
+            val file = when (name) {
+                in Daily.POSES -> "lumi-$name.png"
+                in Daily.BUTTERFLIES -> "$name.png"
+                else -> return
+            }
+            File(filesDir, file).writeBytes(Base64.decode(png, Base64.DEFAULT))
             Daily.render(this@MainActivity)
         }
 

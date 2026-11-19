@@ -122,10 +122,10 @@ const NEXT = ['', 'hatching', 'its chrysalis', 'emerging'];
  */
 export const LIFE_WORDS = {
   arrived: [
-    (by, name) => `${by} brought ${an(name)} egg`,
-    (by, name) => `The ${name} from ${by} hatched`,
-    (by, name) => `The ${name} from ${by} made its chrysalis`,
-    (by, name) => `${by} raised ${an(name)}`,
+    (by, name) => `Your ${by} egg arrived: ${an(name)}`,
+    (by) => `Your ${by} egg hatched into a caterpillar`,
+    (by) => `Your ${by} caterpillar made its chrysalis`,
+    (by, name) => `Your ${by} butterfly is out: ${an(name)}`,
   ],
   raising: (c) => (c.k === 3 ? `${c.name} raised ${an(c.species.name)}` : `${c.name} is raising ${an(c.species.name)}`),
   next: (n) => (n ? `${n.in} more ${n.unit}${n.in === 1 ? '' : 's'} to ${NEXT[n.stage]}` : ''),

@@ -12,6 +12,8 @@ import data from '../data/butterflies.json' with { type: 'json' };
  *                              them in fill order (left, right, left, …); `full` adds the dark edge
  *                              and the spots. The app icon draws it (tools/icon.js).
  *   butterflySide(filled)      the player's own, side-on with its wings closed
+ *   butterflyToday(state, filled)   the player's own as it is today (widget.js wingState): 'flying',
+ *                              'basking' in the sun, or 'resting' on a flower with its wings closed
  *   open(art), side(art)       a species from its drawing spec (SPECIES[n].art), from above and side-on
  *   egg(), caterpillar(growth, spot), chrysalis(band)   the life cycle; growth 0 to 1
  *   HABIT_COLOURS, habitColour(id, own)   the wing panel colour for a habit; `own` is the index of
@@ -64,9 +66,10 @@ const FROOT = [57, 40], HROOT = [57, 52];
 const FW = [[100, 185], [185, 203], [203, 222], [222, 275]], HW = [[80, 118], [118, 145], [145, 275]];
 const SEQ = [['f', 1], ['h', 1], ['f', 2], ['f', 0], ['h', 0], ['f', 3], ['h', 2]];
 const polar = ([x, y], a, R = 90) => { const r = (a * Math.PI) / 180; return `${(x + R * Math.cos(r)).toFixed(1)} ${(y + R * Math.sin(r)).toFixed(1)}`; };
-const panels = (root, fan, cs, part) => fan.map(([a, b], i) => {
+// The newest coloured panel (side index `newest`) carries `data-new`, so the wingbeat can pop it in.
+const panels = (root, fan, cs, part, newest) => fan.map(([a, b], i) => {
   const k = SEQ.findIndex(([p, j]) => p === part && j === i);
-  return `<path d="M${root.join(' ')} L${polar(root, a)} L${polar(root, b)} Z" fill="${cs[k] || EMPTY}"/>`;
+  return `<path${k === newest ? ' data-new=""' : ''} d="M${root.join(' ')} L${polar(root, a)} L${polar(root, b)} Z" fill="${cs[k] || EMPTY}"/>`;
 }).join('') + `<path d="${fan.slice(1).map(([a]) => `M${root.join(' ')} L${polar(root, a)}`).join(' ')}" stroke="${VEIN}" stroke-width="1.5"/>`;
 const DOTS = [[11.5, 30, 1.4, '#fff'], [9, 23.5, 1.2, '#fff'], [14, 16.5, 1.2, '#fff'], [31, 82, 3.2, EDGE], [31, 82, 1.6, '#F2D04A']].map(dot).join('');
 
@@ -76,10 +79,11 @@ export function butterfly(filled = ORDER, full = true, body = BODY_INK) {
   filled.forEach((c, k) => sides[k % 2].push(c));
   // One pair of clips serves both halves: a clip is read in the user space of what it clips, mirrored too.
   const id = `bf${++uid}`;
-  const half = (cs) => `<g clip-path="url(#${id}f)">${panels(FROOT, FW, cs, 'f')}</g><g clip-path="url(#${id}h)">${panels(HROOT, HW, cs, 'h')}</g>`
+  const newest = (s) => ((filled.length - 1) % 2 === s ? (filled.length - 1) >> 1 : -1);
+  const half = (cs, s) => `<g clip-path="url(#${id}f)">${panels(FROOT, FW, cs, 'f', newest(s))}</g><g clip-path="url(#${id}h)">${panels(HROOT, HW, cs, 'h', newest(s))}</g>`
     + (full ? edge(EDGE, 2.8) + DOTS : edge(SOFT, 1.4));
   return `<defs><clipPath id="${id}f"><path d="${FORE}"/></clipPath><clipPath id="${id}h"><path d="${HIND}"/></clipPath></defs>`
-    + fly(half(sides[0]), half(sides[1]), body);
+    + fly(half(sides[0], 0), half(sides[1], 1), body);
 }
 
 // --- A species, from its drawing spec (all optional but `fore`):
@@ -154,4 +158,23 @@ export function lifeArt(species, stage, growth = 0, body = BODY_INK) {
   if (stage === 'caterpillar') return caterpillar(growth, tintOf(species.art), body);
   if (stage === 'chrysalis') return chrysalis(tintOf(species.art));
   return open(species.art, body);
+}
+
+// --- The player's butterfly today: flying once today is done, basking in the sun until then, resting
+// on a flower with its wings closed after a missed day. Never sad. From the approved sketches.
+const SUN = '<circle cx="104" cy="16" r="8" fill="#FFD27A"/>' + [0, 45, 90, 135, 180, 225, 270, 315]
+  .map((a) => `<path d="M${polar([104, 16], a, 11)} L${polar([104, 16], a, 15)}" stroke="#FFD27A" stroke-width="2.2" stroke-linecap="round"/>`).join('');
+const GRASS = '<ellipse cx="58" cy="70" rx="54" ry="17" fill="#6CBF6A"/><path d="M8 70 L108 70" stroke="#4E8E4A" stroke-width="1.6"/>';
+const TRAIL = '<path d="M6 86 Q22 70 34 80 M14 96 Q30 84 42 92" stroke="#9AA6B8" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-dasharray="0.5 6"/>';
+const FLOWER = '<path d="M24 8 A12 12 0 1 0 24 32 A9.5 9.5 0 1 1 24 8 Z" fill="#F6E7B0"/>'
+  + '<path d="M60 100 L60 66" stroke="#5FA35A" stroke-width="3"/><ellipse cx="68" cy="88" rx="9" ry="3.6" fill="#6CBF6A" transform="rotate(-30 68 88)"/>'
+  + [0, 72, 144, 216, 288].map((a) => {
+    const r = (a * Math.PI) / 180, cx = (60 + 8 * Math.sin(r)).toFixed(1), cy = (64 - 8 * Math.cos(r)).toFixed(1);
+    return `<ellipse cx="${cx}" cy="${cy}" rx="6" ry="9" fill="#F49AC1" transform="rotate(${a} ${cx} ${cy})"/>`;
+  }).join('') + '<circle cx="60" cy="64" r="5.5" fill="#FFE07A"/>';
+export function butterflyToday(state, filled = [], body = BODY_INK) {
+  if (state === 'resting') return FLOWER + `<g transform="translate(30.4 9.3) scale(.562)">${butterflySide(filled, body)}</g>`;
+  const wings = butterfly(filled, filled.length >= PANELS, body);
+  if (state === 'flying') return TRAIL + `<g transform="rotate(-14 60 50) translate(6 2) scale(.9)">${wings}</g>`;
+  return SUN + GRASS + `<g transform="translate(10 18) scale(.8)">${wings}</g>`;
 }

@@ -43,7 +43,7 @@ test('every way a session ends has a headline, and chip bands cover every value'
   assert.equal(accuracyLabel(100), 'SPOT ON');
   assert.equal(accuracyLabel(85), 'SOLID');
   assert.equal(accuracyLabel(0), 'GETTING THERE');
-  assert.equal(paceLabel(5), 'BLAZING');
+  assert.equal(paceLabel(5), 'SPEEDY');
   assert.equal(paceLabel(10), 'SWIFT');
   assert.equal(paceLabel(600), 'STEADY');
 });
@@ -52,7 +52,7 @@ test("a Learn coach's own lines cover every kind the lesson runner and end scree
   for (const [kind, list] of Object.entries(LINES)) if (!['repair', 'welcome', 'lumi'].includes(kind)) assert.ok(KAEDE_LINES[kind]?.length, `Kaede: ${kind}`);
   for (const kind of Object.keys(HEADLINES)) assert.ok(KAEDE_HEADLINES[kind]?.length, `Kaede headline: ${kind}`);
   for (const s of subjects.filter((x) => x.kind === 'learn' && x.coach.lines))
-    for (const kind of [...CELEBRATIONS, 'correct', 'wrong', 'tapped']) assert.ok(s.coach.lines[kind]?.length, `${s.id}: ${kind}`);
+    for (const kind of [...CELEBRATIONS.filter((k) => !WING_WORDS[k]), 'correct', 'wrong', 'tapped']) assert.ok(s.coach.lines[kind]?.length, `${s.id}: ${kind}`);
 });
 
 test('no character line praises ability', () => {
@@ -103,8 +103,9 @@ test('celebrations fire only on whitelisted learning events', () => {
       [true, false].flatMap((fast) => [true, false].map((missed) => finished({ review, perfect, relit, fast, missed })))))),
   ]);
   for (const kind of fired) assert.ok(CELEBRATIONS.includes(kind) || ['correct', 'complete', 'review', 'struggled'].includes(kind), kind);
-  for (const kind of CELEBRATIONS) assert.ok(LINES[kind]?.length, `${kind} has lines`);
+  for (const kind of CELEBRATIONS) assert.ok((LINES[kind] ?? WING_WORDS[kind])?.length, `${kind} has lines`);
 });
+
 
 test('there are no points: no XP anywhere in the app', () => {
   for (const file of ['src/app.js', 'src/progress.js', 'src/cast/lines.js']) {
@@ -304,7 +305,8 @@ test('garden text has no loss, guilt, urgency or ability words', () => {
   // Every raised butterfly at every stage, on home, the garden's cards and the field guide.
   const raised = [0, 1, 2, 3].flatMap((k) => gardenCreatures({ done: {}, habits: {}, garden: { earned: Object.fromEntries(GARDEN_RULES.filter((r) => r.stage === k).map((r) => [r.id, '2026-10-01'])) } }));
   const life = [...raised.flatMap((c) => [LIFE_WORDS.raising(c), LIFE_WORDS.card(c), LIFE_WORDS.by(c.name)]), LIFE_WORDS.by(null), LIFE_WORDS.title, LIFE_WORDS.open, LIFE_WORDS.source,
-    ...[1, 2, 3].flatMap((stage) => [1, 2].flatMap((n) => ['unit', 'day'].map((unit) => LIFE_WORDS.next({ stage, in: n, unit }))))];
+    ...[1, 2, 3].flatMap((stage) => [1, 2].flatMap((n) => ['unit', 'day'].map((unit) => LIFE_WORDS.next({ stage, in: n, unit })))),
+    ...LIFE_WORDS.arrived.map((line) => line('Chess', 'Australian Painted Lady'))];
   assert.ok(raised.length > 50);
   const texts = [...GARDEN_RULES.map((r) => r.text), ...GARDEN_STAGES.map((s) => s.name), ...screen, ...life, moreArrived(4), 'Your garden'];
   assert.ok(texts.length > 10);
@@ -458,8 +460,11 @@ test('the comeback card invites, never guilts, and the fitting lines are plain',
 // The Android widget and its once-a-day note: no nagging, no hurry, nothing about a day off.
 import { REMINDER_WORDS, WIDGET_LINES } from '../src/cast/lines.js';
 test('the widget and the daily note never nag, hurry or judge', () => {
-  const texts = [...Object.values(WIDGET_LINES).flat(), ...Object.values(REMINDER_WORDS)];
-  assert.ok(texts.length > 15);
+  const texts = [...strings(WIDGET_LINES), ...Object.values(REMINDER_WORDS)];
+  assert.ok(texts.length > 30);
+  // A habits-only learner hears nothing of lessons or puzzles; the done pool says "wingbeat" once.
+  assert.doesNotMatch(strings(WIDGET_LINES.habits).join(' '), /lesson|puzzle/i);
+  for (const pool of Object.values(WIDGET_LINES)) assert.equal(strings(pool).filter((t) => /wingbeat/i.test(t)).length, 1);
   for (const text of texts) for (const lint of [NAGGING, LOSS, ABILITY, URGENCY]) assert.doesNotMatch(text, lint, text);
 });
 
@@ -531,4 +536,14 @@ test('the wrapper can buzz and speak, and stays offline', () => {
   assert.match(manifest, /android\.permission\.VIBRATE/); // or the WebView drops navigator.vibrate
   assert.match(manifest, /android\.intent\.action\.TTS_SERVICE/); // or Android 11+ hides the TTS engine
   assert.doesNotMatch(manifest, /permission\.INTERNET/);
+});
+
+// Your butterfly: the wingbeat moment and its screen. Never sad, never counting a streak, no hurry.
+import { WING_WORDS } from '../src/cast/lines.js';
+test('the wingbeat and your butterfly never nag, hurry, judge or count a streak', () => {
+  const texts = strings(WING_WORDS);
+  assert.ok(texts.length > 12);
+  for (const text of texts) for (const lint of [NAGGING, LOSS, ABILITY, URGENCY]) assert.doesNotMatch(text, lint, text);
+  // "Wingbeat" is used sparingly: the moment itself, nowhere else on the screen.
+  assert.deepEqual(texts.filter((t) => /wingbeat/i.test(t)), [...WING_WORDS.wingbeat, ...WING_WORDS.full]);
 });

@@ -182,7 +182,7 @@ test('a stage never goes back, and an emerged butterfly is recorded once, with i
   ({ progress: p, newly } = award(p, day(3)));
   assert.deepEqual(newly.filter((r) => r.raiser).map((r) => r.id), ['emerged:chess'], 'stages skipped at once announce only the latest');
   assert.ok(['egg', 'hatched', 'chrysalis', 'emerged'].every((k) => p.garden.earned[`${k}:chess`] === '2026-10-03'), 'but every one is kept');
-  assert.equal(newly.find((r) => r.id === 'emerged:chess').text, 'Chess raised a Chequered Swallowtail');
+  assert.equal(newly.find((r) => r.id === 'emerged:chess').text, 'Your Chess butterfly is out: a Chequered Swallowtail');
   assert.ok(award(p, day(9)).newly.every((r) => r.raiser !== 'chess'), 'once');
   // Progress that says less (a course growing a unit, a done lesson cleared) keeps the butterfly.
   const less = { ...p, done: {} };

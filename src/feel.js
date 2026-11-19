@@ -20,6 +20,8 @@ const SOUNDS = {
   unlock: [[784, 0, 0.1, 'triangle', 0.12], [1175, 0.07, 0.25, 'sine', 0.1]], // a path node opening up
   tap: [[1400, 0, 0.04, 'triangle']],
   done: [[523, 0, 0.14], [659, 0.12, 0.14], [784, 0.24, 0.14], [1047, 0.36, 0.4]],
+  // The wingbeat: a soft flutter, quick light wingbeats that fade.
+  flutter: [0, 0.07, 0.14, 0.21, 0.28].map((t, i) => [i % 2 ? 1320 : 1170, t, 0.06, 'triangle', 0.1]),
   // Calm's breath cues: low, long and quiet (the fifth value is the peak volume).
   inhale: [[392, 0, 1.2, 'sine', 0.04]],
   exhale: [[294, 0, 1.6, 'sine', 0.04]],
@@ -93,7 +95,7 @@ export function rain() {
   } catch { return () => {}; }
 }
 
-const BUZZ = { bell: [15, 60, 30], unlock: 8, right: 12, run: 12, wrong: [20, 60, 20], done: [15, 50, 15, 50, 30], inhale: 8, exhale: [6, 80, 6] };
+const BUZZ = { bell: [15, 60, 30], unlock: 8, right: 12, run: 12, wrong: [20, 60, 20], done: [15, 50, 15, 50, 30], flutter: [6, 60, 6], inhale: 8, exhale: [6, 80, 6] };
 export const buzz = (name) => { try { navigator.vibrate?.(BUZZ[name]); } catch { /* no haptics */ } };
 
 /** `el.animate`, skipped under reduced motion. */
