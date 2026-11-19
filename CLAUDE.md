@@ -201,8 +201,13 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   habit's permanent count of dates practised, never the streak); `RULES` is the achievement table
   (one line of data each), `award()` records what is earned in `progress.garden.earned` and never
   removes it; `mood()` maps the habits' lights; `garden()` is all the garden screen needs.
-  Each habit earns a butterfly (7 in a row) and a bee (its first session, not Learning), each its
-  own species; the whole garden earns `LANDMARKS` (path, bench, birdhouse with birds, a frog at
+  Every Learn course and every other habit raises a butterfly, a real species from the kit
+  (`raisers()`, `grown()`, `creatures()`): a course by units finished (egg at its first lesson,
+  caterpillar from 1 to n − 2, chrysalis at n − 1, butterfly at n), a habit by days at its plant's
+  STAGES (1, 5, 14, 30). Each stage reached is a rule (`egg:`, `hatched:`, `chrysalis:`, `emerged:<id>`),
+  so it is an arrival and never goes back; `guide()` feeds the field guide (`src/guide.js`, opened
+  from the garden's bar and from home's "Chess is raising a…" line). Each habit also earns a bee (its
+  first session, not Learning), its own species; the whole garden earns `LANDMARKS` (path, bench, birdhouse with birds, a frog at
   Lumi's pond, fence, lanterns, hive with bees, more birds) from `gardenDays()`, every habit's days added
   up. Each landmark is a different piece so every one changes the picture. The old per-habit
   `birds:<habit>` stays in saves but is no longer drawn. app.js gives a save any landmark it had
@@ -221,7 +226,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   closed })` (tree, lavender, sunflower, vine on a trellis, daisies, evening primrose; five stages, scaled by `GROW` so a
   sprout is about a third of full height and a sapling about half; up to 6 blooms that
   never overlap), `sway()`, `visitor(kind, species)`/`animateVisitor()` (butterfly, bee, birds;
-  `BUTTERFLIES`, `BEES`, `BIRDS` are the species) and, from `landmarks.js`, `layout()` (the path
+  a butterfly is the kit's species, `BEES` and `BIRDS` the others') and, from `landmarks.js`, `layout()` (the path
   and fence behind the plants, each other piece at the nearest free spot, smaller when crowded),
   `landmark(gift)` and `animateLandmarks()`; and, from
   `scene.js`, `scene(mood, 'strip' | 'tall')`, `slots(shape, n)` and `place()`. Scene colours carry

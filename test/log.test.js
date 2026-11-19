@@ -63,8 +63,9 @@ test('logToday is one tap a day through the finish path: streak, days, log and a
   assert.equal(logToday(p, 'walk', 'Walked', day(1, 20)), p, 'a second tap the same day changes nothing');
   assert.equal(light(p, day(1), 'walk'), 'bright');
   const { newly } = award(p, day(1));
-  assert.deepEqual(newly.map((r) => r.id), ['bee:walk']);
-  assert.equal(newly[0].text, 'A bee found Walk');
+  assert.deepEqual(newly.map((r) => r.id), ['egg:walk', 'bee:walk']);
+  assert.equal(newly[1].text, 'A bee found Walk');
+  assert.equal(newly[0].text, 'Walk brought a Caper White egg');
   // It follows the same forgiving rules as any habit.
   p = logToday(p, 'walk', 'Walked', day(3));
   assert.equal(p.habits.walk.count, 2, 'one missed day forgiven');
@@ -148,13 +149,14 @@ test('rules and the garden follow the habit list: own habits earn visitors, hidd
   let p = track(emptyProgress(), { name: 'Stretch', plant: 'mushroom' });
   for (let d = 1; d <= 30; d++) p = logToday(p, 'own-1', 'Stretch', day(d));
   const { progress, newly } = award(p, day(30));
-  assert.deepEqual(newly.filter((r) => r.habit).map((r) => r.id).sort(), ['bee:own-1', 'butterfly:own-1']);
+  assert.deepEqual(newly.filter((r) => r.habit).map((r) => r.id).sort(), ['bee:own-1', 'emerged:own-1']);
   assert.equal(newly.find((r) => r.gift === 'bee').text, 'A bee found Stretch');
   assert.ok(startedHabits(progress, ids(progress)).includes('own-1'));
   const plant = garden(progress, day(30)).plants.find((x) => x.habit === 'own-1');
   assert.equal(plant.plant, 'mushroom');
   assert.equal(plant.name, 'full grown');
-  assert.equal(plant.visitors.length, 2);
+  assert.equal(plant.visitors.length, 1);
+  assert.equal(plant.creatures[0].stage, 'butterfly');
   assert.equal(garden(progress, day(30)).plants.find((x) => x.habit === 'learn').plant, undefined);
   const renamed = track(progress, { id: 'own-1', name: 'Morning stretch' });
   assert.equal(garden(renamed, day(30)).plants.find((x) => x.habit === 'own-1').visitors.find((v) => v.gift === 'bee').text, 'A bee found Morning stretch');

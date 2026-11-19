@@ -20,6 +20,19 @@ test.describe('at 360x640', () => {
     expect(new Set(ys).size).toBe(1);
   });
 
+  // Before a finished lesson there is nothing being raised, so the test above holds the first screen; after
+  // one, the next node already sat below the fold (home scrolls it into view), with or without the line.
+  test('a started course shows what it is raising, and its next lesson is still in view', async ({ page }) => {
+    await page.addInitScript(() => {
+      if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 3, picked: [], done: { 'chess:board-0': true }, cards: {}, habits: {}, log: [] }));
+    });
+    await page.goto('/');
+    await expect(page.locator('.raising')).toHaveText('Chess is raising a Chequered Swallowtail');
+    const [node, cta] = await Promise.all(['.node.here', '.cta'].map((s) => page.locator(s).boundingBox()));
+    expect(node.y).toBeGreaterThan(0);
+    expect(node.y + node.height).toBeLessThan(cta.y);
+  });
+
   test('a course pill and the ✕ answer a thumb that lands just outside them', async ({ page }) => {
     await seed(page);
     await page.goto('/');

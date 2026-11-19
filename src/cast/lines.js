@@ -356,7 +356,7 @@ export const LOG_WORDS = {
   done: 'Done for today.',
   undo: 'Undo',
   edit: 'Edit',
-  add: 'Pick one to keep track of. Each one grows its own plant in your garden.',
+  add: 'Pick one to keep track of. Each one grows its own plant in your garden and raises a butterfly.',
   addTab: '+ Habit',
   own: 'Make your own',
   ownTitle: 'Make your own',
@@ -367,7 +367,7 @@ export const LOG_WORDS = {
   create: 'Add habit',
   save: 'Save',
   hide: 'Hide this habit',
-  hideNote: 'Hiding keeps its days and its plant. Add it again any time from + Habit.',
+  hideNote: 'Hiding keeps its days, its plant and its butterfly. Add it again any time from + Habit.',
 };
 
 /**

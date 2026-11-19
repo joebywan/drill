@@ -1,9 +1,12 @@
 // The garden with all five habits started: the header fits, the tabs swipe inside themselves,
 // the full garden in this season with Lumi's pond, the ⋯ season toggle, a plant's habit view, and a
-// Calm session that brings what arrives (heard: its chime).
+// Calm session that brings what arrives (heard: its chime): its caterpillar hatching. Maths is
+// finished and chess started, so the garden has every stage, and the field guide opens from the
+// garden and from home.
 import { award } from '../../src/garden/model.js';
 import { emptyProgress, finishPractice, finishSession } from '../../src/progress.js';
 import { season, southern } from '../../src/garden/season.js';
+import { subjects } from '../../src/subjects.js';
 
 /** `p` with `habit` practised on each of the days `from`…`to` days ago (from > to). */
 const practised = (p, habit, from, to = 1) => {
@@ -20,9 +23,14 @@ export default async ({ page, seed, touch, btn, swipe, shot, run, check, checkSo
   p = practised(p, 'move', 12);
   p = practised(p, 'break', 2);
   p = practised(p, 'reflect', 5);
-  p = practised(p, 'calm', 7, 2);
+  p = practised(p, 'calm', 4, 2);
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  for (const id of ['maths', 'chess']) {
+    const s = subjects.find((x) => x.id === id);
+    for (const l of id === 'maths' ? s.units.flatMap((u) => u.lessons) : s.units[0].lessons) p = finishSession(p, `${id}:${l.id}`, [], yesterday);
+  }
   p = award(p).progress; // what that much practice has earned, as if done in the app…
-  p = practised(p, 'calm', 1); // …then yesterday's Calm makes the 7-day streak, not yet rewarded
+  p = practised(p, 'calm', 1); // …then yesterday's Calm, so today's is its fifth day: it hatches
   await seed(p);
   await shot('home');
 
@@ -58,13 +66,31 @@ export default async ({ page, seed, touch, btn, swipe, shot, run, check, checkSo
   await page.evaluate(() => document.querySelector('.plant-cards').scrollIntoView()); await page.waitForTimeout(500); await shot('garden-cards');
   await touch(page.locator('.plant-card[data-plant="calm"]')); await shot('calm-view');
   check('plant card opens the habit view', await page.getByRole('heading', { name: 'Calm', exact: true }).isVisible());
-  await touch(btn('Back')); await touch(btn('Back')); await shot('home-again');
+  await touch(btn('Back'));
+
+  // The field guide from the garden: emerged, being raised, and silhouettes; a page, then back.
+  await page.evaluate(() => scrollTo(0, 0));
+  check('garden: every stage is drawn', await page.locator('.garden-view svg.creature').count() >= 3
+    && await page.locator('.garden-view svg.visitor-butterfly').count() >= 1);
+  await touch(btn('Field guide')); await shot('guide');
+  check('guide: every kind of tile', await page.locator('.guide-tile:not(.waiting)').count() >= 4 && await page.locator('.guide-tile.waiting svg.silhouette').count() > 10);
+  await touch(page.locator('[data-species="blue-triangle"]')); await shot('guide-page');
+  check('guide page: the raised one, its source a link', await page.getByRole('heading', { name: 'Blue Triangle' }).isVisible()
+    && /^https:/.test(await page.locator('.source a').first().getAttribute('href')));
+  await touch(btn('Back')); await touch(btn('Back')); await touch(btn('Back')); await shot('home-again');
+
+  // From home: what the shown course is raising, into its page.
+  await touch(btn(/^Learning(,|$)/));
+  await page.evaluate(() => scrollTo(0, 0));
+  await touch(page.locator('.raising')); await shot('guide-from-home');
+  check('home: its line opens that species', await page.locator('.guide-page h1').innerText().then((t) => /Swallowtail|Triangle|Emperor/.test(t)));
+  await touch(btn('Back'));
 
   await touch(btn(/^Calm(,|$)/));
   await touch(btn(/^Continue · /));
   await touch(btn('Start')); await run(45000);
   const arrived = await page.locator('.arrivals').innerText().catch(() => '');
-  check('end screen: something arrived', /arrived|found|opened|came/.test(arrived), arrived.replace(/\s+/g, ' ').trim());
+  check('end screen: something arrived', /hatched/.test(arrived), arrived.replace(/\s+/g, ' ').trim());
   await shot('end');
   checkSound(); // the arrival's chime
   await touch(btn('Calmer')); await touch(btn(/^Continue/)); await shot('home-after');
