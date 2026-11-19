@@ -11,6 +11,18 @@ const rngOf = (...values) => () => values.length > 1 ? values.shift() : values[0
 const base = { habit: 'calm', today: '2026-10-30', hour: 'morning', light: 'not yet', streak: 'short', first: false, comeback: false };
 const pools = (coach, pick) => VOICES[coach].lines.filter(({ when }) => pick(when)).flatMap((p) => p.lines);
 
+test('a hidden streak leaves its count out of the facts, so no line can state it', () => {
+  let p = emptyProgress();
+  for (let d = 1; d <= 20; d++) p = finishPractice(p, 'calm', null, day(d, 8), { title: 'Breathing', mins: 2 });
+  const calm = habitsFor(p).find((h) => h.id === 'calm');
+  const shown = moment(p, calm, day(21, 9));
+  const hidden = moment(p, calm, day(21, 9), undefined, false);
+  assert.equal(shown.facts.count, 20);
+  assert.equal(hidden.facts.count, null);
+  for (let i = 0; i < 50; i++) assert.doesNotMatch(say(hidden.coach, { ...hidden.state, daredToday: true }, hidden.facts, rngOf(i / 50), []).text, /\b20\b/);
+  assert.ok([...Array(50).keys()].some((i) => /\b20 days/.test(say(shown.coach, { ...shown.state, daredToday: true }, shown.facts, rngOf(i / 50), []).text)));
+});
+
 test('every coach in a subject has a voice, with the same layout for all', () => {
   for (const s of subjects) assert.ok(VOICES[s.coach.name.toLowerCase()], s.coach.name);
   for (const s of subjects) assert.equal(VOICES[coachOf(s.habit)].name, s.habit === 'learn' ? 'Rosa' : s.coach.name, s.habit);

@@ -524,7 +524,7 @@ async function breathe(page) {
 test('a Calm breathing session keeps its own streak, and asks how you feel', async ({ page }) => {
   await firstBreathing(page);
   await expect(page.getByText(/^3 breaths · \d+ min$/)).toBeVisible();
-  await expect(page.locator('.chip.calm')).toContainText('🌿 1');
+  await expect(page.locator('.chip.calm')).toHaveCount(0); // the number is hidden until the ⋯ switch is on
   await page.getByRole('button', { name: 'Calmer' }).click();
   await expect(page.getByRole('button', { name: 'Calmer' })).toHaveCount(0);
   await continueButton(page).click();
@@ -543,6 +543,12 @@ test('a Calm breathing session keeps its own streak, and asks how you feel', asy
   await expect(tab(page, 'Calm')).toHaveAttribute('aria-pressed', 'true');
   await tab(page, 'Learning').click();
   await expect(page.getByRole('button', { name: `Continue · ${first.title}` })).toBeVisible();
+});
+
+test('with the quiet-streak switch on, the Calm end screen shows its streak chip', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('wingbeat.quiet-streaks', 'on'));
+  await firstBreathing(page);
+  await expect(page.locator('.chip.calm')).toContainText('🌿 1');
 });
 
 test('a Calm practice closed part-way is kept in `left`, with how far it got, and never logged', async ({ page }) => {
@@ -1658,6 +1664,22 @@ test('a quiet habit with its number hidden shows a light dot, and says "done tod
   await expect(page.getByRole('button', { name: 'Calm, done today' }).locator('b.streak-bright')).toHaveText('');
   await expect(tab(page, 'Reflect')).toHaveAccessibleName('Reflect');
   await expect(tab(page, 'Reflect').locator('b.streak-soft')).toHaveText('');
+});
+
+test('a quiet habit\'s count stays out of the greeting and the end screen unless the switch is on', async ({ page }) => {
+  await page.clock.setFixedTime(new Date(2026, 9, 30, 9));
+  await page.addInitScript(() => { Math.random = () => 0.5; });
+  let p = emptyProgress();
+  for (let d = 10; d <= 29; d++) p = finishPractice(p, 'calm', null, new Date(2026, 9, d, 8), { title: 'Breathing', mins: 2 });
+  await page.addInitScript((saved) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', saved); }, JSON.stringify(p));
+  await page.goto('/');
+  await tab(page, 'Calm').click();
+  await expect(page.locator('.greeting')).not.toContainText('20');
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Streak numbers on Calm, Reflect and Wind down' }).click();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await tab(page, 'Calm').click();
+  await expect(page.locator('.greeting')).toContainText('20 days');
 });
 
 // Coding: tap-to-build programs Fennel runs on a grid. Answers come from the same runner the app uses.
