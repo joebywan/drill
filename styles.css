@@ -913,3 +913,28 @@ body:has(main.night) {
   .code-tray .chips { max-height: 24vh; }
   .quiz.code-look .glyph { max-height: 28vh; }
 }
+
+/* ---- Your butterfly (app.js yours, yoursView, wingbeat): beside home's streak line, its own screen, the end screens' moment ---- */
+.streak-row { display: flex; align-items: center; justify-content: center; gap: 2px; margin-top: 6px; }
+.streak-row .streak-line, .streak-row .link { margin: 0; }
+.yours-link { flex: none; width: 48px; height: 40px; padding: 0; border: 0; border-radius: 12px; background: none; }
+.yours-link svg { display: block; width: 100%; height: 100%; }
+.chip b svg { height: 1em; width: auto; margin-right: 4px; vertical-align: -.1em; }
+.yours-page { padding: 24px 16px 48px; text-align: center; }
+.yours-page h2 { margin: 24px 0 8px; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.yours-page p { margin: 0 auto; max-width: 30em; }
+.yours-page .said { margin-top: 4px; }
+.yours-wings { display: block; width: 200px; margin: 8px auto 0; }
+.legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin: 0; padding: 0; list-style: none; }
+.legend i { display: inline-block; width: 14px; height: 14px; margin-right: 6px; border-radius: 4px; vertical-align: -2px; }
+.states li { align-items: center; }
+.states svg { flex: none; width: 60px; }
+.wingbeat-moment { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 14px auto 0; max-width: 340px; }
+.wingbeat-moment > svg { flex: none; width: 64px; }
+.wingbeat-moment p { margin: 0; text-align: left; font-weight: 600; }
+.wing-lumi { flex: none; width: 52px; }
+.wing-lumi svg { width: 100%; }
+.intro .tagline { margin: -4px 0 12px; font-style: italic; color: var(--muted); }
+.does li > span:first-child svg { width: 1.6em; vertical-align: middle; }
+.hero.perched svg { overflow: visible; }
+.survey .hero.perched { margin-top: 24px; }

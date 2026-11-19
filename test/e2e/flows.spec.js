@@ -68,7 +68,7 @@ const pick = (page, name) => page.getByRole('button', { name, exact: true });
 async function toStepTwo(page) {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'What can Wingbeat do for you?' })).toBeFocused();
-  for (const text of ['Calm: slow breathing', 'Track: one tap', 'nothing ever wilts', 'Everything stays on this device'])
+  for (const text of ['Small beats go a long way.', 'Calm: slow breathing', 'Track: one tap', "colours a panel on your butterfly's wings", 'Everything stays on this device'])
     await expect(page.getByText(text)).toBeVisible();
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page.getByRole('heading', { name: 'What would you like out of Wingbeat?' })).toBeFocused();
@@ -267,6 +267,32 @@ test('finishing the first lesson shows the summary, starts the streak, and survi
   await page.reload();
   await expect(streak).toHaveAccessibleName('Learning, 1-day streak');
   await expect(page.getByRole('button', { name: `${first.title}, done` })).toBeVisible();
+});
+
+test("the day's first lesson is a wingbeat: a panel on your butterfly, a butterfly for the 🔥, and home's butterfly opens its screen", async ({ page }) => {
+  await firstVisit(page);
+  await expect(page.locator('.yours-link')).toHaveCount(0); // nothing practised, nothing to show yet
+  await finishFirstLesson(page);
+  const moment = page.locator('.wingbeat-moment');
+  await expect(moment).toHaveText("Today's wingbeat. One more panel on your butterfly.");
+  await expect(moment.locator('[data-new]')).toHaveCSS('opacity', '1'); // reduced motion: simply there, no pop
+  const chip = page.locator('.chip.fire');
+  await expect(chip).toContainText('DAY STREAK');
+  await expect(chip.locator('b')).toHaveText('1');
+  await expect(chip.locator('b svg')).toHaveCount(1);
+  await expect(page.locator('main')).not.toContainText('🔥');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).wings)).toEqual(['learn']);
+  await continueButton(page).click();
+  const yours = page.getByRole('button', { name: 'Your butterfly, flying' });
+  await expect(yours).toBeVisible();
+  await yours.click();
+  await expect(page.getByRole('heading', { name: 'Your butterfly' })).toBeFocused();
+  await expect(page.getByText('1 of 14 panels coloured')).toBeVisible();
+  await expect(page.locator('.legend')).toHaveText(/Learning/);
+  for (const state of ['Flying', 'Basking', 'Resting']) await expect(page.getByText(new RegExp(`^${state}: `))).toBeVisible();
+  await expect(page.locator('main')).not.toContainText(/streak|\d+ days?/i); // no per-habit counts
+  await page.goBack(); // the phone's back (nav.js) presses the screen's own
+  await expect(yours).toBeFocused();
 });
 
 test('the "5 in a row" flare plays, then leaves nothing behind', async ({ page }) => {
@@ -524,6 +550,9 @@ async function breathe(page) {
 
 test('a Calm breathing session keeps its own streak, and asks how you feel', async ({ page }) => {
   await firstBreathing(page);
+  // The day's first session, so the wingbeat, with Lumi beside it for her flipper-flap.
+  await expect(page.locator('.wingbeat-moment')).toContainText("Today's wingbeat");
+  await expect(page.locator('.wingbeat-moment .wing-lumi svg')).toBeVisible();
   await expect(page.getByText(/^3 breaths · \d+ min$/)).toBeVisible();
   await expect(page.locator('.chip.calm')).toHaveCount(0); // the number is hidden until the ⋯ switch is on
   await page.getByRole('button', { name: 'Calmer' }).click();
@@ -2070,6 +2099,20 @@ test('Japanese taps get the same pop and shake as every lesson', async ({ page }
 });
 
 // The Android wrapper's bridge, faked: the app tells it about each save and offers the daily note.
+test("with the Android bridge, a quiet habit's count stays off the widget until its switch is on", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.sums = [];
+    window.WingbeatBridge = { summary: (json) => window.sums.push(JSON.parse(json)), art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]' };
+  });
+  await firstBreathing(page);
+  const latest = () => page.evaluate(() => window.sums.at(-1).looks[0]);
+  expect(await latest()).toMatchObject({ habit: 'calm', light: 'bright', streak: null, butterfly: 'flying' });
+  await continueButton(page).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Streak numbers on Calm, Reflect and Wind down' }).click();
+  expect(await latest()).toMatchObject({ habit: 'calm', streak: 1 });
+});
+
 test('with the Android bridge, a finished lesson sends a summary and the ⋯ screen offers the note', async ({ page }) => {
   await page.addInitScript(() => {
     const calls = (window.bridgeCalls = []);
@@ -2085,11 +2128,15 @@ test('with the Android bridge, a finished lesson sends a summary and the ⋯ scr
     window.wingbeat ??= { noteReminder: (n) => calls.push(['heard', n]) };
   });
   await firstVisit(page);
-  await expect.poll(() => page.evaluate(() => bridgeCalls.filter((c) => c[0] === 'art').map((c) => c[1]))).toEqual(['teach', 'sleepy', 'complete']);
+  const drawings = ['teach', 'sleepy', 'complete', ...['flying', 'basking', 'resting'].flatMap((s) => [`butterfly-${s}`, `butterfly-${s}-night`])];
+  const sent = () => page.evaluate(() => bridgeCalls.filter((c) => c[0] === 'art').map((c) => c[1]));
+  await expect.poll(sent).toEqual(drawings); // Lumi's poses, then your butterfly's states, empty wings
+
   expect(await page.evaluate(() => bridgeCalls.some((c) => c[0] === 'notes')), 'opened/cleared notes go to the reminder brain').toBe(true);
   await finishFirstLesson(page);
   const last = await page.evaluate(() => bridgeCalls.filter((c) => c[0] === 'summary').at(-1)[1]);
-  expect(last.looks[0]).toMatchObject({ light: 'bright', streak: 1, pose: 'complete' });
+  expect(last.looks[0]).toMatchObject({ light: 'bright', streak: 1, pose: 'complete', butterfly: 'flying' });
+  await expect.poll(sent).toEqual([...drawings, ...drawings.slice(3)]); // the butterfly again, with its first panel
   expect(last.doneOn).toMatch(/^\d{4}-\d\d-\d\d$/);
   await continueButton(page).click();
   await page.getByRole('button', { name: 'Settings' }).click();

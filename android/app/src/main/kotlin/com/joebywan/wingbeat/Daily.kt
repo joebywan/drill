@@ -44,6 +44,8 @@ object Daily {
     private const val CHANNEL = "daily"
     private const val TAG = "WingbeatDaily"
     val POSES = setOf("teach", "sleepy", "complete")
+    /** Your butterfly's drawings, `look.art` (src/widget.js): each state, and again with a pale body for the night sky. */
+    val BUTTERFLIES = listOf("flying", "basking", "resting").flatMap { listOf("butterfly-$it", "butterfly-$it-night") }.toSet()
 
     fun prefs(ctx: Context): SharedPreferences = ctx.getSharedPreferences("wingbeat", Context.MODE_PRIVATE)
 
@@ -79,17 +81,23 @@ object Daily {
         val ink = Color.parseColor(look.getString("ink"))
         val views = RemoteViews(ctx.packageName, R.layout.widget).apply {
             setInt(R.id.bg, "setColorFilter", Color.parseColor(look.getString("bg")))
-            setInt(R.id.flame, "setColorFilter", Color.parseColor(look.getString("flame")))
-            setTextViewText(R.id.streak, look.getInt("streak").toString())
+            // A quiet habit's count is hidden (null): no number, the butterfly stands alone.
+            if (look.isNull("streak")) setViewVisibility(R.id.streak, android.view.View.GONE)
+            else {
+                setViewVisibility(R.id.streak, android.view.View.VISIBLE)
+                setTextViewText(R.id.streak, look.getInt("streak").toString())
+            }
             setTextColor(R.id.streak, ink)
             setTextViewText(R.id.line, lineOf(look.getJSONArray("lines"), look.getLong("at")))
             setTextColor(R.id.line, ink)
             File(ctx.filesDir, "lumi-${look.getString("pose")}.png").takeIf { it.exists() }
                 ?.let { BitmapFactory.decodeFile(it.path) }?.let { setImageViewBitmap(R.id.lumi, it) }
+            File(ctx.filesDir, "${look.optString("art")}.png").takeIf { it.exists() }
+                ?.let { BitmapFactory.decodeFile(it.path) }?.let { setImageViewBitmap(R.id.butterfly, it) }
             setOnClickPendingIntent(R.id.root, openApp(ctx))
         }
         manager.updateAppWidget(ids, views)
-        Log.i(TAG, "widget: ${look.getString("light")} ${look.getInt("streak")} ${look.getString("pose")}")
+        Log.i(TAG, "widget: ${look.getString("light")} ${look.opt("streak")} ${look.getString("pose")} ${look.optString("art")}")
     }
 
     private fun openApp(ctx: Context) = PendingIntent.getActivity(
@@ -142,7 +150,7 @@ object Daily {
         manager.createNotificationChannel(NotificationChannel(CHANNEL, ctx.getString(R.string.channel_name), NotificationManager.IMPORTANCE_LOW))
         val text = lineOf(s!!.getJSONArray("remind"), System.currentTimeMillis() / 86_400_000 * 3_600_000)
         val note = NotificationCompat.Builder(ctx, CHANNEL)
-            .setSmallIcon(R.drawable.flame)
+            .setSmallIcon(R.drawable.ic_butterfly)
             .setContentTitle(ctx.getString(R.string.app_name))
             .setContentText(text)
             .setContentIntent(PendingIntent.getActivity(
