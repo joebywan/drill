@@ -408,7 +408,7 @@ function chooseView(h, finishedUnits, away) {
       <h1>${esc(CHOOSE_WORDS.else)}</h1>
       ${finishedUnits.map((u) => `<h2>${esc(u.title)}</h2>
         ${u.nodes.map((n) => `<button class="choice" data-lesson="${n.id}">${esc(n.lesson.title)}</button>`).join('')}`).join('')}
-      ${away ? `<button class="choice" data-away>${esc(CHOOSE_WORDS.away)}</button>` : ''}
+      ${away ? `<button class="link away-row" data-away>${esc(CHOOSE_WORDS.away)}</button>` : ''}
     </main>`;
   focusOn('h1');
   app.querySelector('.back').addEventListener('click', () => { home(); focusOn('[data-choose]'); });

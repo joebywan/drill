@@ -2502,7 +2502,8 @@ test('a finished Calm path suggests the routine done least recently, and "Someth
   await expect(page.getByRole('button', { name: 'Breathe · A slower scan' })).toBeVisible();
   await page.getByRole('button', { name: 'Something else' }).click();
   await expect(page.getByRole('heading', { name: 'Grounding' })).toBeVisible();
-  await expect(page.locator('.choice')).toHaveCount(12); // eleven routines and the away row
+  await expect(page.locator('.choice')).toHaveCount(11); // the routines; the away link is not a row
+  expect((await page.locator('.away-row').boundingBox()).height).toBeGreaterThanOrEqual(44);
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Breathe · A slower scan' })).toBeVisible();
   await page.getByRole('button', { name: 'Something else' }).click();

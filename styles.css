@@ -971,4 +971,5 @@ body:has(main.night) {
 
 /* Choosing another routine (CHOOSE_WORDS): the sheet's unit headings, and the quiet "counted" line with its Undo. */
 .add-habit h2 { margin: 20px 0 0; font-size: 1rem; text-align: left; color: var(--muted); }
+.add-habit .away-row { margin-top: 40px; }
 .away-line .link { display: inline; min-height: 0; margin: 0; padding: 0 4px; }
