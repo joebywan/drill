@@ -25,7 +25,7 @@ async function play(page, { from, to }) {
 }
 
 /** A habit's tab on home: "Calm", or "Calm, 3-day streak" once it has had a session. */
-const tab = (page, name) => page.getByRole('button', { name: new RegExp(`^${name}(, \\d+-day streak)?$`) });
+const tab = (page, name) => page.getByRole('button', { name: new RegExp(`^${name}(, \\d+-day streak|, done today)?$`) });
 /** The line over the path that opens the shown habit's view. */
 const week = (page, n) => page.getByRole('button', { name: `${n}-day streak · See your week` });
 
@@ -1631,7 +1631,9 @@ test('streak numbers on Calm, Reflect and Wind down are off until the switch is 
   await firstVisit(page);
   await expect(tab(page, 'Learning')).toHaveAccessibleName('Learning, 3-day streak');
   await expect(tab(page, 'Calm')).toHaveAccessibleName('Calm');
-  await expect(tab(page, 'Calm').locator('b')).toHaveCount(0);
+  await expect(tab(page, 'Calm').locator('b')).toHaveText(''); // a dot in today's light, no number
+  await expect(tab(page, 'Calm').locator('b')).toHaveClass(/streak-(bright|soft|ember)/);
+  await expect(tab(page, 'Calm').locator('b')).toHaveAttribute('aria-hidden', 'true');
   await tab(page, 'Calm').click();
   await page.getByRole('button', { name: 'See your week' }).click();
   await expect(page.getByText('3-day streak').first()).toBeVisible(); // the habit view still shows it
@@ -1644,6 +1646,18 @@ test('streak numbers on Calm, Reflect and Wind down are off until the switch is 
   await expect(tab(page, 'Calm')).toHaveAccessibleName('Calm, 3-day streak');
   await tab(page, 'Calm').click();
   await expect(week(page, 3)).toBeVisible();
+});
+
+test('a quiet habit with its number hidden shows a light dot, and says "done today" once it is', async ({ page }) => {
+  let p = finishPractice(emptyProgress(), 'calm', null, new Date());
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  p = finishPractice(p, 'reflect', null, y);
+  await page.addInitScript((saved) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', saved); }, JSON.stringify(p));
+  await firstVisit(page);
+  await expect(page.getByRole('button', { name: 'Calm, done today' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Calm, done today' }).locator('b.streak-bright')).toHaveText('');
+  await expect(tab(page, 'Reflect')).toHaveAccessibleName('Reflect');
+  await expect(tab(page, 'Reflect').locator('b.streak-soft')).toHaveText('');
 });
 
 // Coding: tap-to-build programs Fennel runs on a grid. Answers come from the same runner the app uses.

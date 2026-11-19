@@ -434,9 +434,12 @@ function comebackLesson(c) {
  */
 function habitTab(h) {
   const n = currentStreak(progress, new Date(), h.id);
-  const started = !!progress.habits[h.id]?.last && showsStreak(h.id, pref('quiet-streaks', false));
+  const started = !!progress.habits[h.id]?.last;
+  const number = started && showsStreak(h.id, pref('quiet-streaks', false));
+  const lit = light(progress, new Date(), h.id);
+  const label = number ? `, ${n}-day streak` : started && lit === 'bright' ? ', done today' : '';
   return `<button class="path-tab" data-path="${esc(h.id)}" aria-pressed="${h.id === habitShown}"
-    aria-label="${esc(h.name)}${started ? `, ${n}-day streak` : ''}">${esc(h.icon)} ${esc(h.name)}${started ? ` <b class="streak-${light(progress, new Date(), h.id)}">${n}</b>` : ''}</button>`;
+    aria-label="${esc(h.name)}${label}">${esc(h.icon)} ${esc(h.name)}${started ? ` <b class="streak-${lit}"${number ? `>${n}` : ' aria-hidden="true">'}</b>` : ''}</button>`;
 }
 
 /**
