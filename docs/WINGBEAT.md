@@ -134,18 +134,18 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
 - [x] **T3. Your butterfly.** (#140) The wing panels; today's three states on home, the end screen and the
   widget; the flame retired; the intro and tagline; Lumi's flipper-flap; widget and daily-note lines
   that follow what the person does. Needs T1.
-- [ ] **T4. Course and habit butterflies.** The stages on the path and in the garden, emerged
+- [x] **T4. Course and habit butterflies.** (#138) The stages on the path and in the garden, emerged
   butterflies with Lumi, and the field guide. Needs T1.
-- [ ] **T5. Lumi's skins**, with a wardrobe to choose from. After T3 and T4.
+- [x] **T5. Lumi's skins**, (#144) with a wardrobe to choose from. After T3 and T4.
 - [ ] **T6. The cast brief, README and CLAUDE.md** brought up to date. Last.
 
 **Habits**
 
-- [ ] **H1. Choose today's routine.** A finished Calm or Move path suggests the routine done least
+- [x] **H1. Choose today's routine.** (#142) A finished Calm or Move path suggests the routine done least
   recently and offers the rest. One tap counts a guided habit done away from the app.
 - [x] **H2. Move grows.** (#139) Back and neck, seated, and balance. Clover demonstrates every new move.
 - [x] **H3. Reflect.** (#137) A middle prompt that rotates, and a line from a week ago on Reflect's home.
-- [ ] **H4. One-tap habits.** Five more presets and an optional "when" for any habit.
+- [x] **H4. One-tap habits.** (#143) Five more presets and an optional "when" for any habit.
 - [x] **H5. Quiet counts.** (#136) A quiet habit's count leaves the greeting and the end screen.
 
 **Courses**
@@ -156,7 +156,10 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
 
 **Phone**
 
-- [ ] **P1. Coding** played end to end on the emulator.
+- [x] **P1. Coding** (#145) played end to end on the emulator. All 64 lessons play; what it found is in
+  TODO.md under "Coding: played".
+- [ ] **P1a. Tall Coding programs** stay clear of the answer tray and the verdict, which P1 found they
+  don't on a short screen.
 - [ ] **P2. JavaScript, TypeScript and Test writing.**
 - [ ] **P3. Chess, Maths, Japanese, the practice habits,** the new butterfly screens and the live
   site.
