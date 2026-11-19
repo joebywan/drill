@@ -306,6 +306,15 @@ test('garden text has no loss, guilt, urgency or ability words', () => {
   for (const text of texts) assert.doesNotMatch(text, /\b(missing|locked|wilt\w*|die[sd]?|dying|dead)\b/i, text);
 });
 
+// The field guide (src/data/butterflies.json): for all ages, so the garden's lint and no alarm.
+import butterflies from '../src/data/butterflies.json' with { type: 'json' };
+test('field-guide lines have no loss, urgency, ability or alarm words', () => {
+  const texts = butterflies.species.flatMap((s) => [s.name, ...s.lines.map((l) => l.text)]);
+  assert.ok(texts.length > 40);
+  for (const text of texts) for (const lint of [LOSS, URGENCY, ABILITY]) assert.doesNotMatch(text, lint, text);
+  for (const text of texts) assert.doesNotMatch(text, /\b(missing|locked|wilt\w*|die[sd]?|dying|dead|death|kill\w*|endangered|threat\w*|extinct\w*|declin\w*|rare)\b/i, text);
+});
+
 // Self-reported habits: one tap means "yes, today". No nagging, no reminders, no counting toward a
 // target ("8 glasses"), and the preset names and button words get the same lint as everything else.
 // What learners name their own habits is theirs and is never linted.

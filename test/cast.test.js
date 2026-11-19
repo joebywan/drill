@@ -33,9 +33,9 @@ test('every character draws every mood, with no holes in the geometry', () => {
 test('every butterfly gets its own clip-path ids, and uses only ones it defines', () => {
   const ids = (s) => [...s.matchAll(/<clipPath id="([^"]+)"/g)].map((m) => m[1]);
   const a = butterfly(), b = butterfly();
-  assert.equal(ids(a).length, 4, 'a fore and a hind wing each side');
-  assert.equal(new Set([...ids(a), ...ids(b)]).size, 8);
-  for (const s of [a, b]) assert.deepEqual([...s.matchAll(/url\(#([^)]+)\)/g)].map((m) => m[1]).sort(), ids(s).sort());
+  assert.equal(ids(a).length, 2, 'a fore and a hind wing, shared by both sides');
+  assert.equal(new Set([...ids(a), ...ids(b)]).size, 4);
+  for (const s of [a, b]) assert.deepEqual([...new Set([...s.matchAll(/url\(#([^)]+)\)/g)].map((m) => m[1]))].sort(), ids(s).sort());
   assert.doesNotMatch(a, /undefined|NaN/);
 });
 
