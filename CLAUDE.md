@@ -42,7 +42,8 @@ touches (`adb shell input tap`), for what a desktop browser can't show. Not part
 A plain `npm run phone` runs every scenario in `test/phone/*.js` but the `*-all` ones. There is one per habit and
 course, plus onboarding, first-visit, walkthrough, garden, wardrobe, timings, fitting, voice, sync, scan, left and drag,
 and the Wingbeat screens: butterfly, yours, home-states, stages, field-guide, skins, choose, reflect-days, presets and
-looks (the dark theme; `LOOKS=large` for large text).
+looks (the dark theme) and home-days (home from day 0 to day 60, with where the path starts; `HOME_SMALL=1080x1700` for
+a short phone). Large text is the Android app's to show (`app`): Chrome does not pass the phone's font size on to this page.
 - Scenarios named `*-all` play a whole course through `tools/play.js` and run only by name, one unit at a time:
   `coding-all` (`CODING_UNIT`), `chess-all` (`CHESS_UNIT`), `maths-all` (`MATHS_UNIT`), `japanese-all`
   (`JAPANESE_UNIT`) and `code-all` (`CODE_COURSE=javascript|typescript|testing` with `CODE_UNIT`). Each also takes
@@ -95,7 +96,7 @@ looks (the dark theme; `LOOKS=large` for large text).
   reads, each with its local `hour`. `finishSession` records Learning, `finishPractice` a practice routine.
   A practice closed part-way goes in `left` instead (`leavePractice`, with the step `ctx.reached`
   last reported), so nothing that reads the log sees it. The object carries `version`; `migrate()`
-  validates and upgrades every older shape, on load and on import (the home bar's ⋯ saves and
+  validates and upgrades every older shape, on load and on import (home's ⋯ saves and
   loads a file). Bump `VERSION` and extend `migrate()` whenever the shape changes.
 - `src/chess/puzzle.js` — pure puzzle rules on chess.js. `src/chess/items.js` — the item types
   (teach, tap, move, true/false, stars, find), their answers and explanations, and `problem()`, the
@@ -275,7 +276,8 @@ looks (the dark theme; `LOOKS=large` for large text).
   caterpillar from 1 to n − 2, chrysalis at n − 1, butterfly at n), a habit by days at its plant's
   STAGES (1, 5, 14, 30). Each stage reached is a rule (`egg:`, `hatched:`, `chrysalis:`, `emerged:<id>`),
   so it is an arrival and never goes back; `guide()` feeds the field guide (`src/guide.js`, opened
-  from the garden's bar and from home's "Chess is raising a…" line). Each habit also earns a bee (its
+  from the garden's bar and from home: the picture at the end of the streak row, `raising(c, true)`, drawn close up by
+  `lifeBox()`, while a path is still raising its butterfly, and a one-tap habit's "Walk is raising a…" pill). Each habit also earns a bee (its
   first session, not Learning), its own species; the whole garden earns `LANDMARKS` (path, bench, birdhouse with birds, a frog at
   Lumi's pond, fence, lanterns, hive with bees, more birds) from `gardenDays()`, every habit's days added
   up. Each landmark is a different piece so every one changes the picture. The old per-habit
@@ -323,10 +325,13 @@ looks (the dark theme; `LOOKS=large` for large text).
   and from every habit view ("Tie it to your day" / "Change when"). Shown on a one-tap habit's panel and in
   the habit view, never on a guided habit's home. The learner's words: escaped, never linted, never sent
   unsealed. Our words are `LOG_WORDS.when*`.
-- Home's top is kept short so the next lesson's node shows without scrolling at 360x640 (`layouts.spec.js`):
-  a cropped garden strip, the courses in one row, and "Skip ahead" in the footer, under Continue.
+- Home's top is kept short so the path starts in the top half of the page and the next lesson's node shows without
+  scrolling at 360x640 (`layouts.spec.js`): no title bar (the `<h1>` is for screen readers), a cropped garden strip
+  that nothing may cover, the courses in one row, the coach's line, then one row for your butterfly, the streak line
+  and what the path is raising, and "Skip ahead" in the footer, under Continue. **Before adding a row to home, take
+  one off** (docs/WINGBEAT.md, decisions 22 to 24).
 - Home lists each habit once: one row of tabs (icon, name, streak coloured by `light()`) that
-  scrolls inside itself. The bar is just the title, Sound and ⋯, and fits at 360px with every habit.
+  scrolls inside itself, with ⋯ (Settings) pinned at its right end. Sound is a switch on the ⋯ screen.
 - `src/fitting.js` — pure: fitting the person from the on-device log (docs/TODO.md "Fitting the
   person"). `usualHours`/`reminderHour` (the log's `hour`s; nothing under five sessions);
   `shouldRemind` thins reminders that are only ever cleared (every other day after 3, every third

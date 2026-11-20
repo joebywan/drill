@@ -81,10 +81,7 @@ export async function playMaths(lesson, { page, touch, btn, swipe, shot }) {
   }
 }
 
-/**
- * The dark theme, as the phone's own setting, put back by `off()`. Reload after either. Large text is not here: Chrome
- * replaces its page when the font scale changes, so the runner sets it before Chrome starts (PHONE_FONT_SCALE).
- */
+/** The dark theme, as the phone's own setting, put back by `off()`. Reload after either. */
 export const looks = (adb) => ({
   dark: () => adb('shell', 'cmd', 'uimode', 'night', 'yes'),
   off: () => adb('shell', 'cmd', 'uimode', 'night', 'no'),

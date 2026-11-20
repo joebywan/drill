@@ -412,10 +412,9 @@ Found, not fixed (design calls or bigger than a few lines):
   light green, and the wardrobe's dimmed skins turn into grey blobs on the dark card. **Fixed** (fix/walk-findings): the pressed
   tab's words measure 6.6:1 (5.0:1 in light); its quiet dot, 2.3:1 on the green, now has a ring of the page round it. A skin not yet
   given keeps its shape and full tone, its colour muted (Lumi 3.9:1 on the dark card; it was faded to grey).
-- **Large text in Chrome**: setting `font_scale` mid-run makes Chrome close its page and open a new one, which Playwright's page
-  doesn't follow. The runner now sets it before Chrome starts (`PHONE_FONT_SCALE`; `LOOKS=large` means 1.3), and the page stays.
-  But this emulator's Chrome doesn't apply the phone's font scale to the page (a tab is 42px at 1.3 as at 1.0), so `looks` at
-  large fails its "Chrome takes notice" check. Large text is checked in the app's WebView instead (`app`, 1.3 and 2.0).
+- **Large text in Chrome** can't be shown: Chrome does not pass the phone's font size on to a page like this one (a tab is 42px at
+  1.3 as at 1.0), and changing `font_scale` mid-run makes Chrome replace its page, which Playwright's page doesn't follow. So `looks`
+  is the dark theme only, and large text is checked where it does apply: the app's WebView (`app`, at 1.3 and 2.0, home with a course being raised too).
 - **The garden's Learning card lists every flower** (low, crowding): a finished Maths adds ten "A flower opened for …" lines, one
   per unit, under the Learning plant, pushing the other plants' cards far down. **Fixed** (fix/walk-findings): past three, one line
   with the number.
