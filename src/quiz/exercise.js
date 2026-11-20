@@ -35,7 +35,7 @@ export function mount(el, item, ctx) {
   el.querySelector('.get-voice')?.addEventListener('click', installVoice);
   if (item.type === 'pairs' && !art) card.remove();
   const cleanup = TYPES[item.type]({ card, choices, item, hear, ...ctx });
-  if (!/code-/.test(ctx.look ?? '')) fitCard(el.querySelector('.quiz'), item, ctx.coach); // a code card keeps its own boxes
+  fitCard(el.querySelector('.quiz'), item, ctx.coach);
   return cleanup;
 }
 
