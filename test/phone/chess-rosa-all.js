@@ -1,3 +1,4 @@
+// A long scenario (about 10 minutes), so `npm run phone` with no name skips it: `npm run phone -- chess-rosa-all`.
 // Play Rosa on the phone, at each of her four levels (LEVELS in src/chess/engine.js), by real touch. Our side is chosen by a
 // plain rule on chess.js (legal, prefer captures and safe squares, never hang the queen if it can be helped); a mirror game
 // follows what the page's board shows, so every reply of hers must be a legal move from where the game was. Checks: she answers

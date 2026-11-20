@@ -1,7 +1,7 @@
 // Chess's Mate and Scramble games (src/chess/games.js) by real touch. Mate: a mate in 2, 3 and 4 solved with the lines
 // src/chess/prover.js finds (a drag for the first move), the Hint, then a wrong first move and Undo. The opponent's reply is
 // read off the page's board and must be a legal move. Scramble: a round played to the end of its clock (page.clock runs the
-// 90 s), the score on the banner, the best kept in storage and shown on the next round. Play Rosa is chess-rosa.
+// 90 s), the score on the banner, the best kept in storage and shown on the next round. Play Rosa is chess-rosa-all.
 import { Chess } from 'chess.js';
 import { forcedMate } from '../../src/chess/prover.js';
 import { VALUE } from '../../src/chess/capture.js';

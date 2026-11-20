@@ -1,4 +1,4 @@
-// Shared by the Chess phone scenarios (chess-all, chess-wrong, chess-rosa, chess-games): the moves an item is won by,
+// Shared by the Chess phone scenarios (chess-all, chess-wrong-all, chess-rosa-all, chess-games): the moves an item is won by,
 // the board as the page shows it, and a mirror game kept in step with it. Not a scenario itself.
 import { Chess } from 'chess.js';
 import { kind, solutions, starPath } from '../../../src/chess/items.js';

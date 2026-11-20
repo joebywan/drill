@@ -1,3 +1,4 @@
+// A long scenario (about 25 minutes), so `npm run phone` with no name skips it: `npm run phone -- chess-wrong-all`.
 // Plays Chess's lessons by real touch with a WRONG answer first, and checks the app does what the rules promise
 // (src/chess/puzzle.js tryMove, items.js): a puzzle's wrong move snaps back and is said so, a hint after two; the right
 // square with the wrong promotion is explained and free; any other mate counts; a move item, stars, tap and true/false
