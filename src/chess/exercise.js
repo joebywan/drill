@@ -438,6 +438,10 @@ const MOUNTS = {
     };
     const open = () => b.enableMoveInput(input, b.getOrientation());
     const attempt = (from, to, promotion) => {
+      if (!state.game.moves({ square: from, verbose: true }).some((m) => m.to === to)) { // not a move at all: explained, never counted as a miss
+        say(cantMove(state.game.get(from)?.type), 'think');
+        return false;
+      }
       const result = tryMove(state, from, to, promotion);
       if (result === 'piece') {
         say(`Right move, another piece. This position needs a ${PIECE[needed(state)]}, not a ${PIECE[promotion]}.`, 'think');

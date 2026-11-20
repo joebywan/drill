@@ -148,3 +148,25 @@ test('a puzzle solved after its hint is logged as that, plays as a miss and come
   expect(last).toMatchObject({ key: `chess:${item.id}`, right: true, hinted: true, warm: true });
   expect(+await page.getByRole('progressbar').getAttribute('aria-valuemax')).toBe(before + 1);
 });
+
+test('a puzzle turns down a move that is no move, and does not count it as a miss', async ({ page }) => {
+  const courses = JSON.parse(readFileSync(new URL('../../src/data/chess.json', import.meta.url)));
+  const item = courses.units.flatMap((u) => u.lessons).flatMap((l) => l.items).find((i) => i.moves?.length === 2 && i.fen.split(' ')[2] === '-');
+  await seedCard(page, 'chess', `chess:${item.id}`);
+  await page.goto('/');
+  await page.locator('.node.here').click();
+  await expect(page.locator('.topic')).toHaveText('Warm up');
+  await page.waitForTimeout(600);
+  const mirror = vary(item);
+  const game = new Chess(mirror.fen);
+  game.move({ from: mirror.moves[0].slice(0, 2), to: mirror.moves[0].slice(2, 4) });
+  const from = game.moves({ verbose: true })[0].from;
+  const legal = game.moves({ square: from, verbose: true }).map((m) => m.to);
+  const to = ['a1', 'a2', 'h8', 'h7', 'd4', 'e5'].find((s) => s !== from && !legal.includes(s));
+  await page.locator(`.board rect[data-square="${from}"]`).click();
+  await page.locator(`.board rect[data-square="${to}"]`).click();
+  await expect(page.locator('.bubble')).toContainText("can't move like that");
+  await page.locator(`.board rect[data-square="${from}"]`).click();
+  await page.locator(`.board rect[data-square="${to}"]`).click();
+  await expect(page.locator('.bubble')).toContainText("can't move like that"); // still not "the marked piece": no misses were counted
+});

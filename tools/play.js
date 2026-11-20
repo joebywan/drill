@@ -10,6 +10,7 @@
  *   options.answer   async (h, item) => void
  *   options.small    wm size to play at, e.g. '1080x1700', for a short phone
  *   options.parts    selectors of the parts of the course's screen that must not sit on each other (default: Coding's)
+ *   options.wrongOk  a run that answers wrongly on purpose: a wrong answer is not a failed check
  *   options.tray     of those, the ones the verdict may cover: the answer tray (default: '.tiles')
  *
  * Time is an estimate at a steady human pace, since the harness taps faster than a person: reading
@@ -65,7 +66,7 @@ const scan = ({ parts: all, tray }) => {
   return [...new Set(out)];
 };
 
-export async function playCourse(h, { course, unit = 1, only, answer, small, parts = PARTS, tray = ['.tiles'] }) {
+export async function playCourse(h, { course, unit = 1, only, answer, small, parts = PARTS, tray = ['.tiles'], wrongOk = false }) {
   const { page, adb, touch, btn, shot, seed, run, check } = h;
   const unitAt = course.units[unit - 1];
   if (!unitAt) throw new Error(`${course.id} has ${course.units.length} units, not ${unit}`);
@@ -208,7 +209,7 @@ export async function playCourse(h, { course, unit = 1, only, answer, small, par
     check(`${r.lesson}: played to the end`, !r.stuck, r.stuck ?? '');
     check(`${r.lesson}: no page errors or failed requests`, !r.errors.length, r.errors.join('; '));
     check(`${r.lesson}: nothing covered`, !r.untappable.length, r.untappable.join('; '));
-    check(`${r.lesson}: every answer right`, !r.wrong);
+    check(`${r.lesson}: every answer right`, wrongOk || !r.wrong);
     check(`${r.lesson}: nothing clipped, overlapping or sideways`, !r.odd.some((o) => !/answered wrongly/.test(o)), r.odd.filter((o) => !/answered wrongly/.test(o)).slice(0, 3).join('; '));
   }
   return report;
