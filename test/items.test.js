@@ -217,3 +217,18 @@ test('the teach boards show what their cards say', () => {
 test('a teach card that walks through a move has a board to show it on', () => {
   for (const i of path.filter((x) => kind(x) === 'teach' && /\bto [a-h][1-8]\b/.test(x.text))) assert.ok(i.fen, i.id);
 });
+
+test('a stars item\'s arrows go through the squares its first sentence names, in order', () => {
+  for (const item of all.filter((i) => kind(i) === 'stars' && i.explain)) {
+    const names = (item.explain.split(/\.\s/)[0].match(/\b[a-h][1-8]\b/g) || []).filter((sq, i, a) => sq !== a[i - 1]);
+    const path = starPath(item);
+    const route = [path[0].from, ...path.map((m) => m.to)];
+    let at = 0;
+    for (const sq of names) {
+      at = route.indexOf(sq, at);
+      assert.ok(at >= 0, `${item.id}: "${item.explain}" names ${sq}, the arrows go ${route.join(' ')}`);
+      at++;
+    }
+    assert.equal(problem(item), null, item.id);
+  }
+});

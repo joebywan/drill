@@ -151,10 +151,33 @@ export const starsPrompt = (item) => item.prompt ||
   `Collect ${item.stars.length === 1 ? 'the star' : `all ${item.stars.length} stars`} in ${item.moves} move${item.moves === 1 ? '' : 's'}.`;
 
 /**
- * A shortest way to collect every star within the budget, as chess.js moves, or null.
- * Breadth-first over (position, stars left); positions seen before are skipped.
+ * The route an item's own words give: the squares its first sentence names, in order, played as moves (a square a piece of
+ * yours already stands on is where it starts). The arrows must show what the words say, so this is tried before the search.
+ */
+function namedRoute(item) {
+  const names = ((item.explain || '').split(/\.\s/)[0].match(/\b[a-h][1-8]\b/g) || []).filter((sq, i, all) => sq !== all[i - 1]);
+  const turn = item.fen.split(' ')[1];
+  let fen = item.fen;
+  const path = [];
+  for (const sq of names) {
+    const game = load(fen);
+    if (!path.length && game.get(sq)?.color === turn) continue;
+    const m = game.moves({ verbose: true }).find((x) => x.to === sq && (!x.promotion || x.promotion === 'q'));
+    if (!m) return null;
+    path.push(m);
+    fen = handBack((game.move(m), game.fen()), turn);
+  }
+  const reached = new Set(path.map((m) => m.to));
+  return path.length && path.length <= item.moves && item.stars.every((sq) => reached.has(sq)) ? path : null;
+}
+
+/**
+ * A way to collect every star within the budget, as chess.js moves, or null: the route the item's words give if they
+ * give one that works, else a shortest one. Breadth-first over (position, stars left); positions seen before are skipped.
  */
 export function starPath(item) {
+  const named = namedRoute(item);
+  if (named) return named;
   const turn = item.fen.split(' ')[1];
   let frontier = [{ fen: item.fen, left: [...item.stars], path: [] }];
   const seen = new Set();

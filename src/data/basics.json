@@ -194,7 +194,7 @@
                 "c5"
               ],
               "moves": 2,
-              "explain": "c5 isn't on a diagonal from c1, so turn once: c1 to e3, then e3 to c5."
+              "explain": "A bishop can't reach that star in one move, so turn once: c1 to e3, then e3 to c5."
             },
             {
               "id": "moves-0-bishop-3",
@@ -207,7 +207,7 @@
                 "h3"
               ],
               "moves": 3,
-              "explain": "Your pawn blocks the way to a6, so go round: h3, then c8, then a6."
+              "explain": "Your pawn blocks the way, so go round: h3, then c8, then a6."
             }
           ]
         },
@@ -258,7 +258,7 @@
                 "e4"
               ],
               "moves": 4,
-              "explain": "e4 is on the diagonal from a8 to h1, so collect it on the way between those corners: a8, e4, h1, then h8."
+              "explain": "a8, e4, h1, then h8. e4 is on the diagonal from a8 to h1, so collect it on the way between those corners."
             },
             {
               "id": "moves-1-king",
@@ -422,7 +422,7 @@
               ],
               "moves": 2,
               "prompt": "The king can't step where the pawn attacks. Star in 2.",
-              "explain": "d5 is attacked, so go up to e5 first, then across to d6."
+              "explain": "The square in front is attacked, so go up to e5 first, then across to d6."
             },
             {
               "id": "moves-3-blocked",
@@ -434,7 +434,7 @@
               ],
               "moves": 2,
               "prompt": "Blocked straight ahead. Get the star in 2.",
-              "explain": "The pawn on e5 blocks you, so take on d5 first, then step to d6."
+              "explain": "The pawn in front blocks you, so take on d5 first, then step to d6."
             },
             {
               "id": "moves-3-promote",
