@@ -73,30 +73,32 @@ Widget and reminder mechanics, from a friend's Android habit app (Fizz) reviewed
 **The Android app: played** (2026-11-20, emulator Pixel 6 API 36, debug APK, `npm run phone -- app`, `test/phone/app.js`)
 
 Installed and played with real taps through the WebView (`attach()` in `tools/phone.js`). The launcher icon is Lumi close up
-with the butterfly on her head; the app opens on the intro ("Small beats go a long way.") about 5 s after the tap on a cold
-emulator; no INTERNET permission; no error from `WingbeatBridge` or `WingbeatDaily` and no failed request all run. A first day
-(`butterfly.js` and `calm.js` played in the app) passes: sound and haptics come through for the app's own package, the end
-screen shows today's wingbeat with its new panel, home shows the butterfly. The widget was placed through the launcher
-(long-press, Widgets, Wingbeat, Add) and is right in all its states: flying, basking, resting, with the streak number for
-Learning and none for Calm or Reflect. The daily note posts "Something small today? Lumi is around.", in the shade under a
-butterfly seen from the side, opens the app when tapped, and posts nothing on a day with something done, forced or not. The
-bars take the page's colour in light and in Wind down. Back from a routine lands on home, a quick second back stays, a third
-leaves. Large text was played on a build with `textZoom` unpinned, to see what the phone's font size would do.
+with the butterfly on her head; the app opens on the intro ("Small beats go a long way.") 5 to 14 s after the tap on a busy, cold
+emulator, on the page's own background colour meanwhile, light or dark, never white; no INTERNET permission; no error from
+`WingbeatBridge` or `WingbeatDaily` and no failed request all run. A first day (`butterfly.js` and `calm.js` played in the
+app) passes: sound and haptics come through for the app's own package, the end screen shows today's wingbeat with its new
+panel, home shows the butterfly. Japanese speaks through the phone's engine (it logs each utterance it starts). The widget
+was placed through the launcher (long-press, Widgets, Wingbeat, Add): it lands one row high, stretches to two, shows its own
+layout in the launcher's list, and is right in all its states: flying, basking, resting, the streak number for Learning,
+none for Calm or Reflect, and none before there is a streak. The daily note posts "Something small today? Lumi is around.",
+in the shade under a butterfly seen from the side, opens the app when tapped, and posts nothing on a day with something done,
+forced or not. The page and the bars follow the phone's theme, live and from a cold start, and Wind down's night palette.
+Back from a routine lands on home, a quick second back stays, a third leaves. The WebView follows the phone's font size
+(`textZoom` is no longer pinned): at 1.3 and 2.0 every screen with much text was walked (home for each habit, a lesson in
+five courses, a Calm and a Move routine to their end screens, "Your butterfly", the field guide and a species, ⋯, the
+wardrobe, "+ Habit") with nothing wider than the page, cut off, out of its node or out of reach under a fixed bar.
 
-- **Dark theme never reaches the app** (high). With the phone in dark mode (`cmd uimode night yes`, "Night mode: yes")
-  `prefers-color-scheme: dark` is false in the WebView, live and after a cold start, so the app and its bars stay light
-  (`#f6f7f9`). Chrome follows the phone's theme. Setting `android:isLightTheme` in both themes did not change it. Needs a
-  look at how this WebView decides (`WebSettingsCompat`, algorithmic darkening, the theme).
-- **The phone's font size is ignored** (medium, a design call). `MainActivity` pins `settings.textZoom = 100`, so at
-  `font_scale 1.3` 16px text is still 18.7px tall (24.4px with the line removed). Unpinned, most screens hold, but the Calm
-  path's labels run into the next node ("Five slow breaths") and on the end screen "Not really" sits under the fixed Continue
-  until scrolled.
-- **The widget lands 3x2 and mostly empty** (low). `minHeight` 80dp makes the launcher give it two rows; Lumi, the butterfly
-  and the line sit in a strip in the middle. The picker shows a blank card with the launcher icon (no `previewLayout` or
-  `previewImage`). A new learner's widget shows "0".
-- **The Daily note switch showed no On or Off** (low, fixed here): the On/Off styling was for `[data-pref]` only.
-- **Not checked:** the "Get a Japanese voice" offer (this image has a ja-JP voice); the TTS engine's sound after "Hear it
-  again" was seen in one run of three, so speech is unproven; a real launcher other than this image's; a release build.
+- **Dark theme looked broken, and wasn't** (fixed in the runner). Playwright pins `prefers-color-scheme` to light on every
+  page it drives; `helpersFor` now lets the phone's own night mode through.
+- **Large text** (fixed): the path's rows and nodes, and the room kept under fixed bars, grow with the text (`--text-scale`,
+  set by app.js only when text is scaled, so a browser is unchanged).
+- **The widget** (fixed): one row on landing, Lumi sized to the space, `previewLayout`, no "0".
+- **The Daily note switch showed no On or Off** (low, fixed).
+- **At 2.0 it is cramped**: a home screen shows the path's first node and little else above Continue, and an end screen's
+  feelings sit under Continue until scrolled. Everything is reachable; whether the fixed bars should shrink at 2.0 is a
+  design call.
+- **Not checked:** the "Get a Japanese voice" offer (this image has a ja-JP voice); a launcher other than this image's; a
+  release build.
 
 ## Fitting the person
 
