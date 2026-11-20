@@ -7,6 +7,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import butterfly from './butterfly.js';
 import calm from './calm.js';
+import { fitter, textTour, uiNode } from './lib/fits.js';
 
 const PKG = 'com.joebywan.wingbeat';
 const APK = process.env.APP_APK || new URL('../../android/app/build/outputs/apk/debug/app-debug.apk', import.meta.url).pathname;
@@ -38,13 +39,7 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
   const node = async (re, save) => {
     const xml = await screenXml();
     if (save) keep(`ui-${save}.xml`, xml);
-    for (const [tag] of xml.matchAll(/<node [^>]*>/g)) {
-      const [t, d] = [/ text="([^"]*)"/, / content-desc="([^"]*)"/].map((r) => tag.match(r)?.[1] ?? '');
-      if (!re.test(t) && !re.test(d)) continue;
-      const b = tag.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/).slice(1).map(Number);
-      return [(b[0] + b[2]) >> 1, (b[1] + b[3]) >> 1];
-    }
-    return null;
+    return uiNode(xml, re)?.at ?? null;
   };
   const tap = async ([x, y]) => { sh(`input tap ${x} ${y}`); await sleep(1500); };
   /** One screen pixel as #rrggbb, from a raw screencap (its header is whatever precedes W*H*4 bytes of RGBA). */
@@ -324,77 +319,13 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
   check('back on home leaves the app', !front());
 
   // 8. Large text: the WebView follows the phone's font size. At 1.3 and at 2.0 (Android's largest), every screen
-  // with much text fits: nothing wider than the page or cut off, no path label running into the next node, and
-  // every control reachable above the fixed bars when scrolled to the end.
+  // with much text fits (misfits() in lib/fits.js).
   const probe = () => app.page.evaluate(() => {
     const s = Object.assign(document.createElement('span'), { textContent: 'Mg' });
     s.style.cssText = 'font:16px sans-serif;position:absolute';
     document.body.append(s); const h = s.getBoundingClientRect().height; s.remove(); return h;
   });
-  const misfits = () => app.page.evaluate(() => {
-    const out = [];
-    const what = (e) => `${e.tagName.toLowerCase()}${e.className && typeof e.className === 'string' ? `.${e.className.trim().split(/\s+/).join('.')}` : ''} "${e.textContent.trim().slice(0, 28)}"`;
-    const scrolls = (e) => { for (let p = e.parentElement; p; p = p.parentElement) if (/auto|scroll/.test(getComputedStyle(p).overflowX)) return true; return false; };
-    if (document.documentElement.scrollWidth > innerWidth + 1) out.push(`page ${document.documentElement.scrollWidth - innerWidth}px too wide`);
-    for (const e of document.querySelectorAll('#app :is(button, a, .label, h1, h2, h3, p, li)')) {
-      const r = e.getBoundingClientRect();
-      if (!r.width || scrolls(e) || e.closest('.visually-hidden')) continue; // hidden-for-eyes text is for screen readers
-      if (r.right > innerWidth + 1 || r.left < -1) out.push(`off the side: ${what(e)}`);
-      const cs = getComputedStyle(e);
-      // A box that scrolls is reachable: only one that hides its overflow cuts text off.
-      if ((/hidden|clip/.test(cs.overflowX) && e.scrollWidth > e.clientWidth + 1) || (/hidden|clip/.test(cs.overflowY) && e.scrollHeight > e.clientHeight + 1)) out.push(`cut off: ${what(e)}`);
-    }
-    const rows = [...document.querySelectorAll('.path li')];
-    rows.forEach((li, i) => {
-      const label = li.querySelector('.label')?.getBoundingClientRect(), next = rows[i + 1]?.querySelector('.node')?.getBoundingClientRect();
-      if (label && next && label.bottom > next.top + 1) out.push(`label into the next node: ${what(li.querySelector('.label'))}`);
-      const node = li.querySelector('.node'), mark = node?.querySelector('span')?.getBoundingClientRect(), box = node?.getBoundingClientRect();
-      if (mark && (mark.bottom > box.bottom + 1 || mark.top < box.top - 1)) out.push(`mark out of its node: ${what(node)}`);
-    });
-    scrollTo(0, document.documentElement.scrollHeight);
-    const bars = [...document.querySelectorAll('#app *')].filter((e) => {
-      const cs = getComputedStyle(e), r = e.getBoundingClientRect();
-      return cs.position === 'fixed' && cs.visibility !== 'hidden' && r.height && r.top > innerHeight / 2 && r.top < innerHeight;
-    });
-    const top = Math.min(innerHeight, ...bars.map((b) => b.getBoundingClientRect().top));
-    for (const e of document.querySelectorAll('#app :is(button, a)')) {
-      const r = e.getBoundingClientRect();
-      if (r.height && !bars.some((b) => b.contains(e)) && getComputedStyle(e).visibility !== 'hidden' && r.bottom > top + 1) out.push(`under a fixed bar at the end: ${what(e)}`);
-    }
-    scrollTo(0, 0);
-    return out;
-  });
-  /** What stands above the fixed bar, top to bottom, as the page lays it out now: [class, top, bottom] in CSS px of a `innerHeight` page. */
-  const stack = () => app.page.evaluate(() => {
-    const cs = (e) => getComputedStyle(e);
-    const bar = [...document.querySelectorAll('#app *')].filter((e) => cs(e).position === 'fixed' && cs(e).visibility !== 'hidden' && e.getBoundingClientRect().top > innerHeight / 2 && e.getBoundingClientRect().top < innerHeight)
-      .reduce((m, e) => Math.min(m, e.getBoundingClientRect().top), innerHeight);
-    const root = document.querySelector('#app main') ?? document.querySelector('#app');
-    const home = root.matches('.home'); // home's rows are nested in its rail and pane
-    const rows = (home ? [...root.querySelectorAll(':scope .garden-link, :scope .tabs-row, :scope .courses:not(.games), :scope .said, :scope .streak-row, :scope .street > h2')] : [...root.children]).filter((e) => e.getBoundingClientRect().height).map((e) => `${e.className.toString().split(' ')[0] || e.tagName.toLowerCase()} ${Math.round(e.getBoundingClientRect().top)}-${Math.round(e.getBoundingClientRect().bottom)}`);
-    const node = document.querySelector('.path .node');
-    return `height ${innerHeight}, bar from ${Math.round(bar)}; ${rows.join(', ')}${node ? `; first node ${Math.round(node.getBoundingClientRect().top)}-${Math.round(node.getBoundingClientRect().bottom)}` : ''}`;
-  });
-  const fits = async (scale, name) => {
-    await app.run(400); await app.shot(`text-${scale}-${name}`);
-    console.log(`  layout ${scale} ${name}: ${await stack()}`);
-    const m = await misfits();
-    check(`text ${scale}: ${name} fits`, !m.length, m.slice(0, 4).join('; '));
-  };
-  const pressed = (name) => app.page.getByRole('button', { name, exact: true });
-  const done = { learn: { count: 3, last: day(0), forgiven: [] }, calm: { count: 2, last: day(1), forgiven: [] }, move: { count: 1, last: day(1), forgiven: [] } };
-  const home = (patch = {}) => app.seed({ start: {}, picked: [], habits: done, wings: ['learn', 'learn', 'calm'], ...patch });
-  /** Plays a timed routine (Calm, Move) from home's Continue to its end screen. */
-  const routine = async (scale, tab, tag) => {
-    await home(); await app.touch(app.btn(new RegExp(`^${tab}(,|$)`))); await app.touch(app.btn(/^Continue · /)); await fits(scale, `${tag}-teach`);
-    await app.touch(app.btn('Start')); await app.run(1500); await fits(scale, `${tag}-running`);
-    for (let i = 0; i < 12 && !(await app.page.locator('.summary').count()); i++) {
-      await app.run(30000);
-      const next = app.page.getByRole('button', { name: /^(Next|Done|I did it|Goodnight)/ });
-      if (await next.count()) await app.touch(next);
-    }
-    await fits(scale, `${tag}-end`);
-  };
+  const fits = (tag, name) => fitter(app, check)(tag, name); // `app` is the WebView as last launched
   await launch(true);
   const normal = await probe();
   for (const scale of ['1.3', '2.0']) {
@@ -402,29 +333,10 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
     await launch(true);
     const big = await probe();
     check(`text ${scale}: the WebView takes the phone's font size`, big > normal * (+scale - 0.1), `16px text ${normal.toFixed(1)}px tall at 1.0, ${big.toFixed(1)}px at ${scale}`);
-    await fits(scale, 'intro');
+    await fits(`text ${scale}`, 'intro');
     await butterfly({ ...app, check }); // a first lesson to its end screen, home, then "Your butterfly"
-    await fits(scale, 'your-butterfly');
-    await home();
-    for (const tab of await app.page.locator('.path-tab[data-path]').evaluateAll((t) => t.map((x) => x.dataset.path))) {
-      await app.touch(app.page.locator(`.path-tab[data-path="${tab}"]`)); await fits(scale, `home-${tab}`);
-    }
-    // A course being raised: its picture ends the streak row, at this text size too.
-    await home({ done: { 'chess:board-0': true } }); await app.touch(app.btn(/^Learning(,|$)/)); await app.touch(pressed('Chess'));
-    await app.page.evaluate(() => scrollTo(0, 0)); await fits(scale, 'home-raising');
-    check(`text ${scale}: the streak row ends with what Chess is raising`, await app.page.locator('.streak-row > .raising:last-child svg').isVisible());
-    for (const course of ['Chess', 'Maths', 'Japanese', 'Coding', 'JavaScript']) {
-      await home(); await app.touch(app.btn(/^Learning(,|$)/)); await app.touch(pressed(course));
-      await app.touch(app.btn(/^Continue · /)); await fits(scale, `lesson-${course.toLowerCase()}`);
-      await app.touch(pressed('Continue')); await fits(scale, `lesson-${course.toLowerCase()}-next`);
-    }
-    await routine(scale, 'Calm', 'calm');
-    await routine(scale, 'Move', 'move');
-    await home(); await app.touch(app.btn(/^Your garden/)); await app.touch(app.page.locator('.guide-link')); await fits(scale, 'field-guide');
-    await app.touch(app.page.locator('.guide-tile')); await fits(scale, 'species');
-    await home(); await app.touch(app.btn('Settings')); await fits(scale, 'settings');
-    await app.touch(app.btn("Lumi's wardrobe")); await fits(scale, 'wardrobe');
-    await home(); await app.touch(app.page.locator('[data-add]')); await fits(scale, 'add-habit');
+    await fits(`text ${scale}`, 'your-butterfly');
+    await textTour(app, check, `text ${scale}`);
   }
   sh('settings put system font_scale 1.0');
 

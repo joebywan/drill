@@ -175,3 +175,18 @@ test('the teach boards show what their cards say', () => {
   assert.ok(new Chess(card('capture-0-turns').fen).attackers('d4', 'b').includes('c5'), 'the knight is defended by the pawn');
   assert.ok(new Chess(card('discovered-teach').fen.replace('4N3', '8')).attackers('e8', 'w').includes('e1'), 'the rook is behind the knight');
 });
+
+test('a stars item\'s arrows go through the squares its first sentence names, in order', () => {
+  for (const item of all.filter((i) => kind(i) === 'stars' && i.explain)) {
+    const names = (item.explain.split(/\.\s/)[0].match(/\b[a-h][1-8]\b/g) || []).filter((sq, i, a) => sq !== a[i - 1]);
+    const path = starPath(item);
+    const route = [path[0].from, ...path.map((m) => m.to)];
+    let at = 0;
+    for (const sq of names) {
+      at = route.indexOf(sq, at);
+      assert.ok(at >= 0, `${item.id}: "${item.explain}" names ${sq}, the arrows go ${route.join(' ')}`);
+      at++;
+    }
+    assert.equal(problem(item), null, item.id);
+  }
+});
