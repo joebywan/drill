@@ -181,13 +181,23 @@ export function starPath(item) {
   return null;
 }
 
+// ponytail: characters, not pixels. Four lines of the verdict on a 412x533 page under the longest headline;
+// test/e2e/chess-short.spec.js measures the real thing for every puzzle.
+export const ROOM = 185;
+
 /**
  * What is said after an answer. Every marked item has one; a puzzle falls back to its line in words and why it
- * works (why.js), worked out from the position.
+ * works (why.js), worked out from the position: in fewer words if the line is long, and left out if even those
+ * would push the verdict over the board.
  */
-export const explanation = (item) => item.explain ||
-  (kind(item) === 'stars' ? `One way: ${starPath(item).map((m) => words(m.san)).join(', then ')}.`
-    : [`The line: ${played(item).moves.slice(1).map((m) => words(m.san, m.to)).join('. ')}.`, why(item)?.text].filter(Boolean).join(' '));
+export function explanation(item) {
+  if (item.explain) return item.explain;
+  if (kind(item) === 'stars') return `One way: ${starPath(item).map((m) => words(m.san)).join(', then ')}.`;
+  const moves = `${played(item).moves.slice(1).map((m) => words(m.san, m.to)).join('. ')}.`;
+  const said = why(item);
+  const fits = [said?.text, said?.short].find((t) => t && `${moves} ${t}`.length <= ROOM);
+  return fits ? `${moves} ${fits}` : moves;
+}
 
 /** Why an item can't be shipped, or null. chess.js checks every position and move. */
 export function problem(item) {

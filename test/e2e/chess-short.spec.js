@@ -85,6 +85,8 @@ test('every Chess item fits a 412x533 phone while asked, a teach card clear of C
   const bad = await page.evaluate(async (items) => {
     const { mount } = await import('/src/chess/exercise.js');
     const { kind, explanation } = await import('/src/chess/items.js');
+    const { LINES } = await import('/src/cast/lines.js');
+    const head = ['correct', 'run3', 'run5', 'wrong'].flatMap((k) => LINES[k] ?? []).reduce((a, b) => (b.length > a.length ? b : a), '');
     const app = document.getElementById('app');
     const out = [];
     for (const { item } of items) {
@@ -109,9 +111,11 @@ test('every Chess item fits a 412x533 phone while asked, a teach card clear of C
       if (board.bottom > low + 1) why.push(`the board runs ${Math.round(board.bottom - low)}px under the ${foot.classList.contains('show') ? 'Continue bar' : 'answers'}`);
       if (['tap', 'move', 'stars', 'find'].includes(kind(item)) && board.width / 8.7 < 39.5) why.push(`squares of ${Math.round(board.width / 8.7)}px`);
       if (document.documentElement.scrollHeight > innerHeight + 1 && foot.classList.contains('show') === false && ['tap', 'move', 'stars', 'find', 'truefalse'].includes(kind(item))) why.push(`the page scrolls ${document.documentElement.scrollHeight - innerHeight}px, bubble ${Math.round(bubble.height)}, board top ${Math.round(board.top)}`);
-      // Answered, a real-game puzzle's verdict carries its line and why it works: the board still sits above it.
+      // Answered, a real-game puzzle's verdict carries its line and why it works, under the longest headline Rosa
+      // has (as verdictHeight() measures it): the board still sits above it.
       if (kind(item) === 'find') {
         foot.className = 'foot show';
+        foot.querySelector('strong').textContent = head;
         foot.querySelector('p').textContent = explanation(item);
         dispatchEvent(new Event('resize'));
         await new Promise((r) => setTimeout(r, 30));

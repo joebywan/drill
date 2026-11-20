@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Chess } from 'chess.js';
 import { subjects } from '../src/subjects.js';
-import { explanation, kind } from '../src/chess/items.js';
+import { ROOM, explanation, kind, words } from '../src/chess/items.js';
 import { GENERAL, why } from '../src/chess/why.js';
 
 // Every sentence why.js says about a real-game puzzle is checked here against the board, by rules written
@@ -64,7 +64,7 @@ const CHECK = {
       assert.ok(g.get(t).color !== us && g.get(t).type !== 'p', `${t} is an enemy piece`);
       assert.ok(g.attackers(t, us).includes(c.from), `${c.from} attacks ${t}`);
     }
-    assert.equal(/checks the king/.test(text), c.targets.some((t) => g.get(t).type === 'k'));
+    assert.equal(/checked the king/.test(text), c.targets.some((t) => g.get(t).type === 'k'));
     assert.ok(c.targets.some((t) => g.get(t).type !== 'k' && takenLater(p, c.at, t)), 'the line takes one of them');
   },
   free({ boards, moves, us }, c) {
@@ -86,7 +86,7 @@ const CHECK = {
       const loose = new Chess(g.fen());
       loose.remove(c.pinner);
       assert.ok(!takes(g) && takes(loose), `only the pin stops it taking on ${c.stuck}`);
-      assert.match(text, new RegExp(`can't take on ${c.stuck}`));
+      assert.match(text, new RegExp(`couldn't take on ${c.stuck}`));
     } else assert.ok(takenLater(p, c.at, c.pinned) || c.at === p.moves.length, 'the pin matters');
   },
   skewer({ boards, moves, us }, c, text, p) {
@@ -107,7 +107,7 @@ const CHECK = {
     assert.ok(g.get(c.target).color !== us);
     assert.ok(sees(g, c.behind, c.target), 'the piece behind now sees the target');
     assert.ok(between(c.behind, c.target).includes(c.mover), 'the piece that moved stood in between');
-    if (g.get(c.target).type === 'k') assert.ok(g.inCheck() && /gives check/.test(text));
+    if (g.get(c.target).type === 'k') assert.ok(g.inCheck() && /a check from/.test(text));
     else assert.ok(takenLater(p, c.at, c.target), 'the line takes the target');
   },
   double({ boards, us }, c, text) {
@@ -179,7 +179,6 @@ test('every real-game puzzle says why its line works, and every fact it states h
   for (const item of puzzles) {
     const said = why(item);
     assert.ok(said, item.id);
-    assert.ok(explanation(item).endsWith(said.text), item.id);
     if (!said.claim) {
       assert.equal(said.text, GENERAL[item.theme], `${item.id}: a general sentence is the theme's own`);
       continue;
@@ -188,14 +187,32 @@ test('every real-game puzzle says why its line works, and every fact it states h
     const c = said.claim;
     try {
       CHECK[c.kind](p, c, said.text, p);
-      // Every "the knight on f6" in the sentence is that piece on that square, on the board the claim is about.
-      for (const [, name, sq] of said.text.matchAll(/\b(pawn|knight|bishop|rook|queen|king) on ([a-h][1-8])/g)) {
-        assert.equal(p.boards[c.at].get(sq)?.type, NAME[name], `${name} on ${sq}`);
+      // Every "the knight on f6" in either wording is that piece on that square, on the board the claim is about.
+      for (const text of [said.text, said.short]) {
+        for (const [, name, sq] of text.matchAll(/\b(pawn|knight|bishop|rook|queen|king) on ([a-h][1-8])/g)) {
+          assert.equal(p.boards[c.at].get(sq)?.type, NAME[name], `${name} on ${sq}`);
+        }
       }
     } catch (e) {
       throw new Error(`${item.id} (${item.theme}): "${said.text}" ${e.message}`);
     }
   }
+});
+
+test('the verdict says the line, then why in full, in fewer words if the line is long, or not at all if even that would not fit', () => {
+  let shown = 0;
+  for (const item of puzzles) {
+    const said = why(item);
+    const line = `${replay(item).moves.slice(1).map((m) => words(m.san, m.to)).join('. ')}.`;
+    const text = explanation(item);
+    assert.ok(text.startsWith(line), item.id);
+    const tail = text.slice(line.length).trim();
+    assert.ok([said.text, said.short, ''].includes(tail), `${item.id}: ${tail}`);
+    if (tail) { shown++; assert.ok(text.length <= ROOM, `${item.id}: ${text.length} characters`); }
+    if (tail === said.short) assert.ok(`${line} ${said.text}`.length > ROOM, `${item.id}: the full sentence fitted`);
+    if (!tail) assert.ok(`${line} ${said.short ?? said.text}`.length > ROOM, `${item.id}: a sentence fitted`);
+  }
+  assert.ok(shown / puzzles.length > 0.95, `${shown} of ${puzzles.length} show why`);
 });
 
 test('most puzzles get a sentence worked out from their own position', () => {

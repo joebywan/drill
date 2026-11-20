@@ -84,7 +84,7 @@ test('moves read as words', () => {
 
 test('a puzzle with no written explanation explains with its line', () => {
   const { explain, ...bare } = byId['fork-0-find'];
-  assert.equal(explanation(bare), 'The line: Knight to c7, check.');
+  assert.equal(explanation(bare), 'Knight to c7, check.');
 });
 
 test('a fork claim the board does not back up is caught', () => {

@@ -91,8 +91,9 @@ function fork({ boards, moves, us }) {
     const hit = theirs(g, us).filter((p) => p.type !== 'p' && g.attackers(p.square, us).includes(to)).sort(byValue).slice(0, 3);
     if (hit.length < 2 || !hit.some((p) => p.type !== 'k' && takes(moves, i, p.square) > 0)) continue;
     const named = hit.filter((p) => p.type !== 'k').map((p) => the(p, p.square));
-    const what = hit[0].type === 'k' ? `checks the king and attacks ${list(named)}` : `attacks ${list(named)}`;
-    return { kind: 'fork', at: i + 1, from: to, targets: hit.map((p) => p.square), text: `The ${NAMES[g.get(to).type]} on ${to} ${what} at once.` };
+    const what = hit[0].type === 'k' ? `checked the king and attacked ${list(named)}` : `attacked ${list(named)}`;
+    return { kind: 'fork', at: i + 1, from: to, targets: hit.map((p) => p.square), text: `The ${NAMES[g.get(to).type]} on ${to} ${what} at once.`,
+      short: `The ${NAMES[g.get(to).type]} on ${to} forked ${list(hit.map((p) => `the ${NAMES[p.type]}`))}.` };
   }
 }
 
@@ -106,7 +107,7 @@ function hanging({ boards, moves, us }) {
   }
   if (!best) return;
   const { i, m } = best;
-  return { kind: 'free', at: i, square: m.to, text: `Nothing defended ${the({ type: m.captured }, m.to)}, so it was free to take.` };
+  return { kind: 'free', at: i, square: m.to, text: `Nothing defended ${the({ type: m.captured }, m.to)}, so it was free to take.`, short: `${cap(the({ type: m.captured }, m.to))} was free.` };
 }
 
 /** Every pin of theirs by one of ours on board `g`: [pinner, pinned, behind] squares, a pin to the king first. */
@@ -136,9 +137,10 @@ function pin({ boards, moves, us }) {
       free.remove(pinner);
       const stuck = !takesOn(g) && takesOn(free); // the pin, and only the pin, stops it
       if (!stuck && !(pinner === to && i === moves.length - 1) && takes(moves, i, pinned) < 0) continue;
-      const end = stuck ? `, so it can't take on ${to}` : '';
+      const end = stuck ? `, so it couldn't take on ${to}` : '';
       return { kind: 'pin', at: i + 1, pinner, pinned, behind, stuck: stuck ? to : null,
-        text: `The ${NAMES[g.get(pinner).type]} on ${pinner} pins ${the(g.get(pinned), pinned)} to the ${NAMES[g.get(behind).type]} behind it${end}.` };
+        text: `The ${NAMES[g.get(pinner).type]} on ${pinner} pinned ${the(g.get(pinned), pinned)} to the ${NAMES[g.get(behind).type]}${end}.`,
+        short: `The ${NAMES[g.get(pinner).type]} on ${pinner} pinned ${the(g.get(pinned), pinned)}.` };
     }
   }
 }
@@ -154,9 +156,10 @@ function skewer({ boards, moves, us }) {
       if (moves[i + 1]?.from !== a[0]) continue; // the piece in front has to be the one that moves
       const taken = takes(moves, i + 1, b[0]);
       if (taken < 0) continue;
-      const front = a[1].type === 'k' ? 'checks the king, and once he steps aside' : `attacks ${the(a[1], a[0])}, and once it moves`;
+      const front = a[1].type === 'k' ? 'checked the king; once he moved,' : `attacked ${the(a[1], a[0])}; once it moved,`;
       return { kind: 'skewer', at: i + 1, from: to, front: a[0], back: b[0], taken,
-        text: `The ${NAMES[g.get(to).type]} on ${to} ${front} ${the(b[1], b[0])} behind ${a[1].type === 'k' ? 'him' : 'it'} is taken.` };
+        text: `The ${NAMES[g.get(to).type]} on ${to} ${front} ${the(b[1], b[0])} behind ${a[1].type === 'k' ? 'him' : 'it'} was taken.`,
+        short: `The ${NAMES[g.get(to).type]} on ${to} skewered the ${NAMES[a[1].type]} and ${the(b[1], b[0])}.` };
     }
   }
 }
@@ -178,8 +181,8 @@ function discovered({ boards, moves, us }) {
     const [hit] = found.sort((x, y) => VALUE[y[1][1].type] - VALUE[x[1][1].type]);
     if (!hit) continue;
     const [p, [tsq, t]] = hit;
-    const does = t.type === 'k' ? 'gives check' : `now attacks ${the(t, tsq)}`;
-    return { kind: 'discovered', at: i + 1, mover: m.from, behind: p.square, target: tsq, text: `The ${NAMES[m.piece]} moves out of the way, and ${the(p, p.square)} behind it ${does}.` };
+    const does = t.type === 'k' ? `a check from ${the(p, p.square)}` : `${the(p, p.square)}, which then attacked ${the(t, tsq)}`;
+    return { kind: 'discovered', at: i + 1, mover: m.from, behind: p.square, target: tsq, text: `Moving the ${NAMES[m.piece]} uncovered ${does}.`, short: `Moving the ${NAMES[m.piece]} uncovered ${the(p, p.square)}.` };
   }
 }
 
@@ -190,8 +193,8 @@ function double({ boards, moves, us }) {
     const checkers = g.attackers(kingOf(g, other(us)), us).sort((a, b) => (b === moves[i].to) - (a === moves[i].to)); // the piece that moved first
     if (checkers.length < 2) continue;
     const [a, b] = checkers.map((sq) => the(g.get(sq), sq));
-    const end = g.isCheckmate() ? 'and the king has no square to go to: checkmate' : 'so the king has to move';
-    return { kind: 'double', at: i + 1, checkers, mate: g.isCheckmate(), text: `${cap(a)} and ${b} check at once, ${end}.` };
+    const end = g.isCheckmate() ? 'and the king had no square: checkmate' : 'so the king had to move';
+    return { kind: 'double', at: i + 1, checkers, mate: g.isCheckmate(), text: `${cap(a)} and ${b} checked at once, ${end}.`, short: g.isCheckmate() ? 'A double check, and no square: checkmate.' : 'A double check: the king had to move.' };
   }
 }
 
@@ -210,7 +213,7 @@ function trapped({ boards, moves, us }) {
       if (!stuck) continue;
       const taken = takes(moves, i, p.square);
       if (taken < 0) continue;
-      return { kind: 'trapped', at: i + 1, square: p.square, taken, text: `${cap(the(p, p.square))} is attacked and has no safe square to run to.` };
+      return { kind: 'trapped', at: i + 1, square: p.square, taken, text: `${cap(the(p, p.square))} was attacked and had no safe square to run to.`, short: `${cap(the(p, p.square))} had no safe square.` };
     }
   }
 }
@@ -223,7 +226,7 @@ function deflection({ boards, moves, us }) {
     const forcing = g.inCheck() ? 'check' : moves[i].captured ? 'capture' : null;
     if (!forcing || target === reply.to || !g.attackers(target, other(us)).includes(reply.from)) continue;
     if (board(boards[i + 2]).attackers(target, other(us)).includes(reply.to)) continue;
-    return { kind: 'deflection', at: i + 1, defender: reply.from, guarded: target, forcing, text: `Your ${forcing} pulled ${the(g.get(reply.from), reply.from)} away from guarding ${target}.` };
+    return { kind: 'deflection', at: i + 1, defender: reply.from, guarded: target, forcing, text: `Your ${forcing} pulled ${the(g.get(reply.from), reply.from)} away from guarding ${target}.`, short: `Your ${forcing} pulled the ${NAMES[g.get(reply.from).type]} off ${target}.` };
   }
 }
 
@@ -235,8 +238,8 @@ function attraction({ boards, moves, us }) {
     const g = board(boards[i + 3]);
     if (!g.attackers(m.to, us).length) continue;
     const king = reply.piece === 'k';
-    const next = g.isCheckmate() ? 'is checkmate' : king ? 'checks him' : 'attacks it';
-    return { kind: 'attraction', at: i + 1, square: m.to, mate: g.isCheckmate(), text: `Your ${NAMES[m.piece === 'p' && m.promotion ? m.promotion : m.piece]} on ${m.to} draws the ${NAMES[reply.piece]} there to take it, and your next move ${next}.` };
+    const into = g.isCheckmate() ? 'checkmate' : king ? 'check' : 'your attack';
+    return { kind: 'attraction', at: i + 1, square: m.to, mate: g.isCheckmate(), text: `Taking your ${NAMES[m.promotion || m.piece]} drew the ${NAMES[reply.piece]} to ${m.to}, into ${into}.`, short: `Taking drew the ${NAMES[reply.piece]} to ${m.to}.` };
   }
 }
 
@@ -244,7 +247,7 @@ function attraction({ boards, moves, us }) {
 function promotion({ moves }) {
   for (let i = 1; ours(i, moves); i += 2) {
     const m = moves[i];
-    if (m.promotion) return { kind: 'promotion', at: i + 1, square: m.to, piece: m.promotion, text: `The pawn reaches the last rank on ${m.to} and becomes a ${NAMES[m.promotion]}.` };
+    if (m.promotion) return { kind: 'promotion', at: i + 1, square: m.to, piece: m.promotion, text: `Reaching the last rank, the pawn became a ${NAMES[m.promotion]}.`, short: `The pawn became a ${NAMES[m.promotion]}.` };
   }
 }
 
@@ -271,8 +274,12 @@ function mate({ boards, moves, us }, backRank) {
   const blocked = `his own ${kinds(own.map((sq) => g.get(sq)))} ${guards.length ? `block${one} the king in` : `fill${one} every square around the king`}`;
   const guarded = `your ${kinds(guards.map((sq) => g.get(sq)))} ${guards.length > 1 ? 'guard' : 'guards'} ${own.length ? 'the rest' : 'every square around the king'}`;
   const parts = [own.length && blocked, guards.length && guarded].filter(Boolean);
-  const text = `${backRank && onRow ? 'On his back rank, ' : ''}${list(parts)}.`.replace(/^./, (c) => c.toUpperCase());
-  return { kind: 'mate', at: moves.length, king: k, checkers, own, guards, backRank: backRank && onRow, text };
+  const row = backRank && onRow ? 'On his back rank, ' : '';
+  const text = cap(`${row}${list(parts)}.`);
+  // For a long line, the same facts in fewer words.
+  const short = row && own.length ? `His own ${kinds(own.map((sq) => g.get(sq)))} boxed him in on his back rank.`
+    : cap(`${list([own.length && `his own ${kinds(own.map((sq) => g.get(sq)))}`, guards.length && `your ${kinds(guards.map((sq) => g.get(sq)))}`].filter(Boolean))} leave the king no square.`);
+  return { kind: 'mate', at: moves.length, king: k, checkers, own, guards, backRank: backRank && onRow, text, short };
 }
 
 const RULES = {
@@ -281,10 +288,13 @@ const RULES = {
   backRankMate: (p) => mate(p, true),
 };
 
-/** The sentence for a puzzle: { text, claim } with a worked-out claim, { text } with the theme's general idea, or null with no theme and no mate. */
+/**
+ * The sentence for a puzzle: { text, short?, claim } with a worked-out claim (`short`, the same facts in fewer words),
+ * { text } with the theme's general idea, or null with no theme and no mate.
+ */
 export function why(item) {
   const p = played(item);
   const claim = RULES[item.theme]?.(p) || mate(p, false);
-  if (claim) return { text: claim.text, claim };
+  if (claim) return { text: claim.text, short: claim.short, claim };
   return GENERAL[item.theme] ? { text: GENERAL[item.theme] } : null;
 }

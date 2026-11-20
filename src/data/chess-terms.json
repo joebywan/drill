@@ -18,7 +18,7 @@
     { "term": "checkmate", "pattern": "\\bcheckmat", "taught": "check-1-teach" },
     { "term": "mate", "pattern": "\\bmates?\\b", "taught": "check-1-teach" },
     { "term": "fork", "pattern": "\\bfork", "taught": "fork-0-teach" },
-    { "term": "the line", "pattern": "\\bline of moves\\b|\\bthe line:", "taught": "real-0-how" },
+    { "term": "the line", "pattern": "\\bline of moves\\b", "taught": "real-0-how" },
     { "term": "pin", "pattern": "\\bpin(s|ned)?\\b", "taught": "pin-teach" },
     { "term": "skewer", "pattern": "\\bskewer", "taught": "skewer-teach" },
     { "term": "back rank", "pattern": "\\bback[- ]rank\\b", "taught": "backrank-teach" },
