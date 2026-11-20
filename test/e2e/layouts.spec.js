@@ -1,4 +1,5 @@
 import { test, expect, calmFinished } from './fixtures.js';
+import { daysIn } from '../phone/lib/seed.js';
 
 const seed = (page) => page.addInitScript(() => {
   if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 3, picked: [], done: {}, cards: {}, habits: {}, log: [] }));
@@ -38,10 +39,13 @@ test.describe('at 360x640', () => {
   // one, the next node already sat below the fold (home scrolls it into view), with or without the line.
   test('a started course shows what it is raising, and its next lesson is still in view', async ({ page }) => {
     await page.addInitScript(() => {
-      if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 3, picked: [], done: { 'chess:board-0': true }, cards: {}, habits: {}, log: [] }));
+      const d = new Date();
+      const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 10, picked: [], done: { 'chess:board-0': true }, cards: {},
+        habits: { learn: { count: 1, last: date, forgiven: [], days: 1 } }, log: [{ date, habit: 'learn', lesson: 'chess:board-0', title: 'Squares and coordinates', mins: 1 }] }));
     });
     await page.goto('/');
-    await expect(page.locator('.raising')).toHaveText('Chess is raising a Chequered Swallowtail');
+    await expect(page.locator('.streak-row .raising')).toHaveAccessibleName('Chess is raising a Chequered Swallowtail');
     const [node, cta] = await Promise.all(['.node.here', '.cta'].map((s) => page.locator(s).boundingBox()));
     expect(node.y).toBeGreaterThan(0);
     expect(node.y + node.height).toBeLessThan(cta.y);
@@ -188,3 +192,49 @@ test.describe('a finished practice path at 360x640', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
   });
 });
+
+// A month in (and 131 days in, a three-digit streak), home's rows above the path stay few: the first unit's title starts in
+// the top half of the page on every path tab, and your butterfly, the streak line and what the path is raising share one
+// row. The font is pinned (as in code-courses.spec.js) so this machine and CI measure the same text: with it the streak
+// line is one line at 412 wide and at most two, between the pictures, at 360.
+for (const [width, height] of [[412, 786], [360, 640]]) {
+  test.describe(`a month in at ${width}x${height}`, () => {
+    test.use({ viewport: { width, height } });
+    for (const days of [30, 131]) {
+      test(`${days} days in: every path tab starts its path in the top half, and the streak row is one row`, async ({ page }) => {
+        await page.addInitScript((saved) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', saved); }, JSON.stringify(daysIn(days)));
+        await page.goto('/');
+        for (const [path, course] of [['learn', 'chess'], ['learn', 'maths'], ['calm'], ['move'], ['reflect']]) {
+          const what = `${days} days, ${course ?? path}`;
+          await page.locator(`[data-path="${path}"]`).click();
+          if (course) await page.locator(`[data-course="${course}"]`).click();
+          await page.addStyleTag({ content: 'body, button { font-family: "DejaVu Sans", Verdana, sans-serif; }' });
+          await page.evaluate(() => scrollTo(0, 0));
+          const top = await page.locator('.street h2').first().evaluate((h) => h.getBoundingClientRect().top);
+          // ponytail: Chess at 360x640 is the one miss: its Games row (44px) puts the title at about 55% of 640. Accepted
+          // by the owner; held below 60% so it can't creep further.
+          expect(top, what).toBeLessThan(course === 'chess' && height < 700 ? height * 0.6 : height / 2);
+          const { lines, apart, out, cut } = await page.locator('.streak-row').evaluate((row) => {
+            const r = document.createRange();
+            const line = row.querySelector('.streak-line');
+            r.selectNodeContents(line);
+            const box = row.getBoundingClientRect(), mid = box.top + box.height / 2;
+            const kids = [...row.children].map((c) => c.getBoundingClientRect());
+            return {
+              lines: new Set([...r.getClientRects()].map((b) => Math.round(b.top))).size,
+              // Level: each item (the pictures and the text) overlaps the row's middle.
+              apart: kids.filter((b) => b.top > mid || b.bottom < mid).length,
+              out: kids.filter((b) => b.left < 0 || b.right > innerWidth).length,
+              cut: line.scrollWidth > line.clientWidth + 1 || line.scrollHeight > line.clientHeight + 1,
+            };
+          });
+          expect(lines, what).toBeLessThanOrEqual(width >= 412 ? 1 : 2);
+          expect(apart, what).toBe(0);
+          expect(out, what).toBe(0);
+          expect(cut, what).toBe(false);
+        }
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+      });
+    }
+  });
+}

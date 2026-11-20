@@ -264,6 +264,8 @@ export const WINDDOWN_LINES = {
   'no different': ["That's alright. Thanks for telling me. Some nights are heavy, and that's not on you."],
 };
 
+/** The ⋯ switch for every sound: chimes, Calm's bell and rain, and words read aloud (feel.js `soundOn`). */
+export const SOUND_LABEL = 'Sounds and spoken words';
 /** Calm's optional sounds, set from the ⋯ screen: [preference, label]. */
 // The ⋯ screen's season toggle: on when the timezone guesses south, and it can be changed.
 export const SOUTH_LABEL = 'Southern hemisphere seasons';

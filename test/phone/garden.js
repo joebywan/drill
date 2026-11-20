@@ -32,8 +32,8 @@ export default async ({ page, seed, touch, btn, swipe, shot, run, check, checkSo
     const r = document.querySelector(sel).getBoundingClientRect();
     return r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight;
   }, sel);
-  check('header: Sound fully on screen', await inView('.bar .sound'));
-  check('header: ⋯ fully on screen', await inView('.bar .menu'));
+  check('home: no title bar, no sound button', await page.locator('.bar, .sound').count() === 0);
+  check('home: ⋯ fully on screen, at the end of the tabs row', await inView('.tabs-row > .menu'));
 
   const tabs = page.locator('.paths');
   const before = await page.evaluate(() => [scrollX, scrollY, document.querySelector('.paths').scrollLeft]);

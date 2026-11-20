@@ -184,7 +184,14 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
   sh(`pm grant ${PKG} android.permission.POST_NOTIFICATIONS`);
   sh(`am start -W -n ${PKG}/.MainActivity`);
   await app.seed({ habits: { learn: { count: 4, last: day(1), forgiven: [] } } });
+  // Home has no title bar: the garden strip starts the page, and it and ⋯ on its corner sit clear of the status bar.
+  await app.page.evaluate(() => scrollTo(0, 0)); await app.shot('home-top');
+  const statusBar = +(sh('dumpsys window').match(/type=statusBars frame=\[0,0\]\[\d+,(\d+)\]/)?.[1] ?? NaN);
+  const top = async (re) => { const xml = await screenXml(); for (const [tag] of xml.matchAll(/<node [^>]*>/g)) if (re.test(tag.match(/ content-desc="([^"]*)"/)?.[1] ?? '') || re.test(tag.match(/ text="([^"]*)"/)?.[1] ?? '')) return +tag.match(/bounds="\[\d+,(\d+)\]/)[1]; return NaN; };
+  const [stripTop, menuTop] = [await top(/^Your garden/), await top(/^Settings$/)];
+  check('home: the strip and ⋯ sit below the status bar', stripTop >= statusBar && menuTop >= statusBar, `status bar to ${statusBar}, strip at ${stripTop}, ⋯ at ${menuTop}`);
   await app.touch(app.btn('Settings'));
+  check('home: ⋯ opens Settings with a tap', await app.page.getByRole('heading', { name: 'Settings' }).isVisible());
   const toggle = app.page.locator('[data-remind]');
   await app.touch(toggle); await app.shot('daily-note-on');
   check('the daily note is on, and says so', await toggle.getAttribute('aria-pressed') === 'true'
@@ -278,7 +285,7 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
     if (document.documentElement.scrollWidth > innerWidth + 1) out.push(`page ${document.documentElement.scrollWidth - innerWidth}px too wide`);
     for (const e of document.querySelectorAll('#app :is(button, a, .label, h1, h2, h3, p, li)')) {
       const r = e.getBoundingClientRect();
-      if (!r.width || scrolls(e)) continue;
+      if (!r.width || scrolls(e) || e.closest('.visually-hidden')) continue; // hidden-for-eyes text is for screen readers
       if (r.right > innerWidth + 1 || r.left < -1) out.push(`off the side: ${what(e)}`);
       const cs = getComputedStyle(e);
       // A box that scrolls is reachable: only one that hides its overflow cuts text off.
@@ -337,6 +344,10 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
     for (const tab of await app.page.locator('.path-tab[data-path]').evaluateAll((t) => t.map((x) => x.dataset.path))) {
       await app.touch(app.page.locator(`.path-tab[data-path="${tab}"]`)); await fits(scale, `home-${tab}`);
     }
+    // A course being raised: its picture ends the streak row, at this text size too.
+    await home({ done: { 'chess:board-0': true } }); await app.touch(app.btn(/^Learning(,|$)/)); await app.touch(pressed('Chess'));
+    await app.page.evaluate(() => scrollTo(0, 0)); await fits(scale, 'home-raising');
+    check(`text ${scale}: the streak row ends with what Chess is raising`, await app.page.locator('.streak-row > .raising:last-child svg').isVisible());
     for (const course of ['Chess', 'Maths', 'Japanese', 'Coding', 'JavaScript']) {
       await home(); await app.touch(app.btn(/^Learning(,|$)/)); await app.touch(pressed(course));
       await app.touch(app.btn(/^Continue · /)); await fits(scale, `lesson-${course.toLowerCase()}`);

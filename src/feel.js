@@ -7,7 +7,6 @@ import { reducedMotion } from './cast/kit.js';
 export const pref = (name, dflt) => { try { const v = localStorage.getItem(`wingbeat.${name}`); return v ? v === 'on' : dflt; } catch { return dflt; } };
 export const setPref = (name, on) => { try { localStorage.setItem(`wingbeat.${name}`, on ? 'on' : 'off'); } catch { /* lasts the visit */ } };
 export const soundOn = () => pref('sound', true);
-export const setSound = (on) => setPref('sound', on);
 /** Calm's bell and rain, each off until turned on, and never when muted or under reduced motion. */
 export const calmPref = (name) => pref(name, false);
 export const calmSound = (name) => soundOn() && !reducedMotion() && calmPref(name);

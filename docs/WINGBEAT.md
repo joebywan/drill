@@ -120,6 +120,17 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
 21. **Nothing the learner is working on sits under a fixed bar**, on a short phone too. Fit first (the
     coach, the gaps and the pictures give up room), then that part scrolls in its own box, never the
     page.
+22. **Home has no title bar.** The garden starts the page and nothing covers it. ⋯ is pinned at the right
+    end of the tabs row, and Sound is a switch on the ⋯ screen.
+23. **What a path is raising is a picture, not a row**: its egg, caterpillar or chrysalis, drawn close up
+    at the end of the streak row, into the field guide. Once it has emerged it is in the garden, and
+    home says nothing more. A one-tap habit keeps the words, where there is room for them.
+24. **A hint leaves once it has done its job.** A one-tap habit's "One tap when it happens" goes after
+    its first day.
+
+Decisions 22 to 24 came out of the pass to take things off home, which the owner asked for; what came
+off was chosen in review, and each can go back on its own. Kept on purpose: the Games row and the course
+chips, because one tap to play or to switch course is worth more than their row.
 
 ### Rules for this work
 
@@ -197,11 +208,15 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
   nothing a person would notice differs. `npm run e2e:firefox` runs it, silently. Firefox for Android itself
   is still unplayed.
 
+**A lighter home**
+
+- [x] **L1. Three things off home.** (#168) The title bar, the "is raising" row and a hint that had done
+  its job (decisions 22 to 24). A month in, the first unit of Chess starts at 329px of a 786px page
+  where it started at 448, and on a short phone the next lesson is in sight where it was under
+  Continue. `npm run phone -- home-days` shows home from day 0 to day 60.
+
 **Waiting on the owner** (found by playing, not changed)
 
-- Home is crowded for someone 30 days in: on Learning the path starts below the middle of the screen.
-  About ten things in the app now grow, arrive or unlock. A pass to take things off home is suggested,
-  not started.
 - The wardrobe opens from ⋯ and from the garden, not from home itself.
 
 What is still open and small is in TODO.md, in each "played" block.

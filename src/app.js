@@ -1,6 +1,6 @@
 import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
 import { GARDEN_WORDS, LIFE, LIFE_WORDS, SKIN_RULES, award, creatures, garden, flowersOpened, guide, listed, moreArrived, plantWords } from './garden/model.js';
-import { lifeArt } from './cast/butterfly.js';
+import { lifeArt, lifeBox } from './cast/butterfly.js';
 import { fieldGuide } from './guide.js';
 import { PLANTS, animateLandmarks, animateScene, animateVisitor, drawGarden, flower, landmark, plant, sway, visitor } from './garden/art.js';
 import { COMEBACK_WORDS, PAUSED_WORDS, activeComeback, answerComeback, noteReminder, preferred, reminderHour, remindersPaused, shorter, shouldRemind, startComeback, usualHours, usualLine } from './fitting.js';
@@ -12,8 +12,8 @@ import { worn } from './cast/skins.js';
 import { BOX, butterfly, butterflyToday } from './cast/butterfly.js';
 import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, comeBack, dropEchoes, echoes, fresh, warmUps } from './repeat.js';
 import { GOES, easier, flying, helpFor, misses, noteAnswer, struggling, warmedLast } from './adapt.js';
-import { CALM_SOUNDS, DARES_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, CHOOSE_WORDS, SKIN_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
-import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, setSound, soundOn } from './feel.js';
+import { CALM_SOUNDS, DARES_LABEL, SOUND_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, CHOOSE_WORDS, SKIN_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
+import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
 import { lessonOf } from './garden/events.js';
 import { moment } from './cast/voice.js';
@@ -255,20 +255,20 @@ function home(arrived = null, newly = []) {
   };
 
   const g = garden(progress, new Date(), south());
-  const raised = raising(creatures(progress).find((c) => c.id === (learning ? courseShown.id : habitShown)));
+  const raised = creatures(progress).find((c) => c.id === (learning ? courseShown.id : habitShown));
+  // Home has no title bar: the strip starts the page, and ⋯ is pinned at the right end of the tabs row.
   app.innerHTML = `
-    <header class="bar">
-      <h1>Wingbeat</h1>
-      <button class="sound" aria-pressed="${soundOn()}" aria-label="Sound">${soundOn() ? '🔊' : '🔇'}</button>
-      <button class="menu" aria-label="Settings">⋯</button>
-    </header>
     <main class="home">
+      <h1 class="visually-hidden">Wingbeat</h1>
       <div class="rail">
       <button class="garden-link" aria-label="Your garden: ${g.plants.length} plant${g.plants.length === 1 ? '' : 's'}">${drawGarden(g, 'strip', newly.map((r) => r.id))}${g.event ? `<span class="event-tag">${esc(g.event.name)}</span>` : ''}</button>
+      <div class="tabs-row">
       <nav class="paths" aria-label="Show the path for">
         ${habits().filter((h) => !h.hidden).map(habitTab).join('')}
         <button class="path-tab add-tab" data-add aria-label="Add a habit">${esc(LOG_WORDS.addTab)}</button>
       </nav>
+      <button class="menu" aria-label="Settings">⋯</button>
+      </div>
       </div><div class="pane">
       ${learning && courses.length > 1 ? `<nav class="courses" aria-label="Course">${courses.map((s) =>
         `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === courseShown}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
@@ -276,11 +276,11 @@ function home(arrived = null, newly = []) {
       ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : invite ? ''
         : countedAway ? `<p class="said away-line" role="status" tabindex="-1">${esc(CHOOSE_WORDS.counted)} <button class="link" data-unaway>${esc(CHOOSE_WORDS.undo)}</button></p>` : greeting(shownHabit)}
       ${streakRow(progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true, showsStreak(habitShown, pref('quiet-streaks', false))))}</button>`
-        : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : '')}
+        : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : '',
+        shownHabit.kind === 'log' ? '' : raising(raised, true))}
       ${invite ? comebackCard(invite) : ''}
-      ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly, raised) : ''}
+      ${shownHabit.kind === 'log' ? logPanel(shownHabit, logged, newly, raising(raised)) : ''}
       ${shownSubjects[0]?.lookBack?.(progress, new Date()) ?? ''}
-      ${shownHabit.kind === 'log' ? '' : raised}
       ${units.map((u) => `
         <section class="street">
           <h2>${esc(u.title)}</h2>
@@ -331,7 +331,6 @@ function home(arrived = null, newly = []) {
   }
   app.querySelector('.garden-link').addEventListener('click', () => gardenView());
   app.querySelector('.raising')?.addEventListener('click', (e) => guideView(e.currentTarget.dataset.species, () => { home(); focusOn('.raising'); }));
-  app.querySelector('.sound').addEventListener('click', () => { setSound(!soundOn()); home(); focusOn('.sound'); });
   app.querySelector('.menu').addEventListener('click', () => { stopHome(); keep(); });
   app.querySelector('.streak-line')?.addEventListener('click', () => habitView(habitShown));
   app.querySelector('.yours-link')?.addEventListener('click', yoursView);
@@ -440,8 +439,8 @@ function chooseView(h, finishedUnits, away) {
 const yours = (state = wingState(progress)) => `<svg viewBox="${BOX}" aria-hidden="true">${butterflyToday(state, wingColours(progress))}</svg>`;
 
 /** Home's streak line (or what stands in its place) with your butterfly beside it, once there is anything to show. */
-const streakRow = (line) => (!line && !progress.log.length ? '' : `<div class="streak-row">
-  <button class="yours-link" aria-label="${esc(WING_WORDS.title)}, ${wingState(progress)}">${yours()}</button>${line}</div>`);
+const streakRow = (line, after = '') => (!line && !progress.log.length ? '' : `<div class="streak-row">
+  <button class="yours-link" aria-label="${esc(WING_WORDS.title)}, ${wingState(progress)}">${yours()}</button>${line}${after}</div>`);
 
 /**
  * "Your butterfly", from home: the wings so far, the habits whose colours are on them, what its three
@@ -741,10 +740,16 @@ const arrival = ({ gift, text, on, species: kind, skin }, habit) => {
 };
 
 /** A raised butterfly at its stage, drawn small by the kit (cropped close); the caterpillar at `growth`. */
-const lifeSvg = (species, stage, growth = 0) => `<svg class="creature" viewBox="12 6 96 84" aria-hidden="true">${lifeArt(species, stage, growth)}</svg>`;
+const lifeSvg = (species, stage, growth = 0, box = '12 6 96 84') => `<svg class="creature" viewBox="${box}" aria-hidden="true">${lifeArt(species, stage, growth)}</svg>`;
 
-/** Home's line for the creature the path shown is raising ("Chess is raising a Chequered Swallowtail"), into the field guide. */
-const raising = (c) => (!c ? '' : `<button class="raising" data-species="${esc(c.species.id)}">${lifeSvg(c.species, c.stage, c.growth)}<span>${esc(LIFE_WORDS.raising(c))}</span></button>`);
+/**
+ * The creature the habit shown is raising, into the field guide: a one-tap habit's pill ("Walk is raising a Caper
+ * White"), or on a path (`small`) just its picture, close up (`lifeBox`), at the end of the streak row, named by the same
+ * words, until it emerges.
+ */
+const raising = (c, small = false) => (!c || small && c.k === 3 ? ''
+  : small ? `<button class="raising" data-species="${esc(c.species.id)}" aria-label="${esc(LIFE_WORDS.raising(c))}">${lifeSvg(c.species, c.stage, c.growth, lifeBox(c.stage, c.growth))}</button>`
+  : `<button class="raising" data-species="${esc(c.species.id)}">${lifeSvg(c.species, c.stage, c.growth)}<span>${esc(LIFE_WORDS.raising(c))}</span></button>`);
 
 /** The field guide (src/guide.js), on `id`'s page when given; its back runs `back`. */
 function guideView(id, back) {
@@ -874,7 +879,7 @@ function logPanel(h, logged, newly, raised = '') {
       <div class="chips">${chip('log', `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`)}</div>
       ${arrivals(newly)}
       <button class="link" data-undo>${esc(LOG_WORDS.undo)}</button>`
-    : `<p class="said">${esc(LOG_WORDS.hint)}</p>`}
+    : progress.log.some((e) => e.habit === h.id) ? '' : `<p class="said">${esc(LOG_WORDS.hint)}</p>`}
     <button class="link" data-edit>${esc(LOG_WORDS.edit)}</button>
   </section>`;
 }
@@ -1372,6 +1377,8 @@ function keep(note = '') {
       <p class="said" role="status">${esc(note)}</p>
       <button class="choice" data-change>${esc(INTRO_WORDS.change)}</button>
       ${syncMenuHtml()}
+      <h2>Sound</h2>
+      <button class="choice" data-pref="sound" aria-pressed="${soundOn()}">${esc(SOUND_LABEL)}</button>
       <h2>Calm sounds</h2>
       ${CALM_SOUNDS.map(([name, label]) => `<button class="choice" data-pref="${name}" aria-pressed="${calmPref(name)}">${esc(label)}</button>`).join('')}
       <h2>Coaches and streaks</h2>
