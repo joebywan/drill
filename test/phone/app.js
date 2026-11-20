@@ -272,7 +272,7 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
     s.style.cssText = 'font:16px sans-serif;position:absolute';
     document.body.append(s); const h = s.getBoundingClientRect().height; s.remove(); return h;
   });
-  const fits = fitter(app, check);
+  const fits = (tag, name) => fitter(app, check)(tag, name); // `app` is the WebView as last launched
   await launch(true);
   const normal = await probe();
   for (const scale of ['1.3', '2.0']) {
