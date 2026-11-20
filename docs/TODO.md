@@ -228,8 +228,34 @@ sessions run longer. A quarter to a third of every session is repeats (2 warm-up
 
 **Code courses: to judge by playing**
 
-- **Pacing and tone.** 49 lessons have automated proofs (every item solvable, decoys fail, nothing asked before it is taught, 8 taps at most but
-  for a construct's first build) but only six have been played, and only by e2e. Judge whether chips are the right size.
+- **Pacing and tone: played, see below.** All 68 lessons have now been played on the emulator (JavaScript, TypeScript, Test writing); a real
+  beginner, a real finger and a real keyboard have not. Judging whether the chips are the right size still wants one.
+
+**Code courses: played** (2026-11, emulator Pixel 6, `CODE_COURSE=javascript|typescript|testing CODE_UNIT=n npm run phone -- code-all`, `tools/play.js`)
+
+All 21 units, 68 lessons (JavaScript 39, TypeScript 15, Test writing 14, checkpoints included, 724 items), by real touch with warm-ups and echoes
+on, answers worked out from the item with `src/code/items.js` (`wayOf`, `chipsOf`, `optionsOf`): no wrong verdict for a right answer, no page error,
+no failed request, no sideways overflow, nothing untappable. Sessions are 8 to 13 items (checkpoint 8) and about 0:40 to 1:35 at a steady pace;
+none near 6 minutes or 20 items. The longest are `jsn-1` and `jsl-3` (~1:35 each; `jsn-1` has the most taps, 59), `jse-2`, `tb-2`
+(~1:27, 56 taps) and `ts-1` (~1:25). The estimate is a learner who knows the answer, so real sessions run longer. The short phone
+(412x533) played the two longest lessons of each course (`jsn-1`, `jsl-1`, `tsa-1`, `tsi-1`, `tb-2`, `ts-1`) with the same result.
+
+- **What a build printed is hidden under the verdict** (medium). The "What it printed" line sits just above the tray, and the verdict banner covers
+  the same place, so after Run the learner never sees the result they made (49 lessons, every print item; the goal "It should print" stays in view
+  above, and a miss says what it printed). Coding's last-line problem, in another part. Fix: put the printed line above the answer, or in the verdict.
+- **A tall answer runs under the verdict** (medium). Fill-in (gap) programs set every line with a blank line between, so a 7-line function is as tall as
+  the screen: `tsi-2-5` loses its closing `}`, `tb-2-5` its last `});`, `jse-3-7` the same. Same fix as Coding's: scroll inside the box, or
+  tighter lines.
+- **The tray scrolls in a small box and shows half a chip** (medium, short phone worse). Test writing items with 8 or more long chips (`tb-2-4`, `tb-2-7`,
+  `ts-1-3`, `te-1-9`, `tsi-1-9`) fill the tray's space, so the last row is cut in half under Run and only a thin scrollbar says there is more. On
+  a short phone the code under test (`band(n)` in `tb-2-7`) also shows 4 lines in a scrolling box, so the function being tested is partly out of sight.
+- **A long answer scrolls inside its own box with its top hidden** (low). `jse-1-8` shows the lines after `function run(f) {`; the first line is
+  scrolled out. The page does not scroll, so nothing is lost, but it looks as if the chip was not placed.
+- **A filled block is 32px high** (low): a placed word in the answer (`button.block`); the tray's chips are all 40 or more.
+- **Wording** (low): "For example `cost({"name":"a"}) gives 0`" writes the input as JSON (quoted keys) before the course has shown that form;
+  "Five! Those lines run like clockwork." and "Five in a row." appear on a streak with no mention of what the five are.
+- **Harness bug found and fixed in passing:** `btn(name)` in `tools/phone.js` ignored `{ exact: true }`, so `btn('Continue', { exact: true })` could hit a
+  chip named `continue` and `btn('Run')` a chip named `run(`, stalling `jsl-4` and `jse-1` until the fix.
 - **Fresh versions in Test writing** mostly rename: its numbers would need the expected answers worked out again.
 - **The type checker is a small subset.** It follows strict TypeScript for what the course teaches. A valid but unusual arrangement could be misjudged outside that.
 - **Wrong code in a branch that never runs passes.** Graded by running, so an `else` that never runs is not looked at. Any arrangement that does the job is right, by decision; hidden `cases` close it where it matters, and `print` items could run a second input if play shows it matters.
