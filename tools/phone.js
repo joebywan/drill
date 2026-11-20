@@ -97,7 +97,7 @@ try {
   {
     serial = `emulator-${port}`;
     console.log(`booting ${AVD} as ${serial}…`);
-    const emu = spawn(`${SDK}/emulator/emulator`, ['-avd', AVD, '-port', String(port), '-read-only', '-no-window', '-no-boot-anim', '-gpu', 'swiftshader_indirect'], { stdio: 'ignore' });
+    const emu = spawn(`${SDK}/emulator/emulator`, ['-avd', AVD, '-port', String(port), '-read-only', '-no-window', '-no-audio', '-no-boot-anim', '-gpu', 'swiftshader_indirect'], { stdio: 'ignore' });
     cleanup.push(async () => {
       try { adb('emu', 'kill'); } catch { emu.kill(); }
       for (let i = 0; i < 30 && emu.exitCode === null; i++) await sleep(1000);
