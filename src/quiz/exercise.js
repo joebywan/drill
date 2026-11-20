@@ -1,5 +1,6 @@
 import { dragTile } from '../drag.js';
 import { esc } from '../html.js';
+import { fitCard } from '../fit.js';
 import { cue, flourish, installVoice, move, offerVoice, play, speak, voice } from '../feel.js';
 import { nearestTick, nextTile, onLine, paired, picked, shuffle, tick, tilesOf } from './items.js';
 
@@ -33,7 +34,9 @@ export function mount(el, item, ctx) {
   el.querySelector('.hear')?.addEventListener('click', () => hear(item.speak));
   el.querySelector('.get-voice')?.addEventListener('click', installVoice);
   if (item.type === 'pairs' && !art) card.remove();
-  return TYPES[item.type]({ card, choices, item, hear, ...ctx });
+  const cleanup = TYPES[item.type]({ card, choices, item, hear, ...ctx });
+  if (!/code-/.test(ctx.look ?? '')) fitCard(el.querySelector('.quiz'), item, ctx.coach); // a code card keeps its own boxes
+  return cleanup;
 }
 
 /** The right tap's juice: a pop, and a star off the card. Both skip under reduced motion. */
