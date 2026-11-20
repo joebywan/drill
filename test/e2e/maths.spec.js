@@ -73,6 +73,18 @@ test('picking Maths in the intro opens its path on Learning; a whole lesson play
   await expect(page.getByRole('heading', { name: 'The board' })).toBeVisible();
 });
 
+test('every item starts at the top of the page, however far the last one was left scrolled', async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 533 });
+  await pickMaths(page);
+  await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
+  await solve(page, first.items[0]);
+  await page.evaluate(() => { document.body.style.minHeight = '2000px'; scrollTo(0, 300); }); // as a finger left it
+  await continueButton(page).click();
+  await expect(page.locator('.foot.show')).toHaveCount(0); // the next item is up
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+  await expect(page.locator('.bar .close')).toBeInViewport({ ratio: 1 });
+});
+
 test('a teach card draws the number line before the first line item asks for one', async ({ page }) => {
   await pickMaths(page);
   await page.getByRole('button', { name: `Continue · ${first.title}` }).click();

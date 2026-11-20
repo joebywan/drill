@@ -621,8 +621,10 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 .play:has(:is(.program, .quiz, .board.lesson).tall) .topic { position: absolute; clip-path: inset(50%); }
 .play:has(:is(.program, .quiz, .board.lesson).tall) .who { width: 44px; }
 .play:has(:is(.program, .quiz, .board.lesson).tall) .coach { margin-bottom: 4px; }
-.play:has(:is(.program, .quiz, .board.lesson).tall) .bubble { min-height: 5.5em; margin-bottom: 6px; padding: 6px 10px; }
+.play:has(:is(.program, .quiz, .board.lesson).tall) .bubble { margin-bottom: 6px; padding: 6px 10px; }
 .play:has(:is(.program, .quiz, .board.lesson).tall) .grid-world { margin-bottom: 4px; }
+/* How tall her words stay is each screen's own rule, never the shared one above: a longer list there once outranked a quiz's. */
+.play:has(.program.tall) .bubble { min-height: 5.5em; }
 .play:has(.quiz.tall) .bubble { min-height: 0; }
 /* A chess board that is too tall: the coach gives way as above, her words keep two lines so the board never jumps (fitBoard, src/chess/exercise.js). */
 .play:has(.board.lesson.tall) { padding-bottom: 8px; }

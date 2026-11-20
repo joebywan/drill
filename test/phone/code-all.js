@@ -3,7 +3,6 @@
 //   CODE_COURSE=javascript CODE_UNIT=3 npm run phone -- code-all     (javascript | typescript | testing; unit n continues the progress unit n-1 saved)
 //   CODE_COURSE=testing CODE_UNIT=1 CODE_LESSONS=tb-1,tb-2 ...         only those lessons
 //   CODE_SMALL=1080x1700 ...                                           a short phone (under 700 px of page)
-//   CODE_SHOTS=tsi-2-4,jse-3-9 ...                                     a screenshot of those items asked and answered, whatever the scan finds
 import { chipsOf, optionsOf, wayOf } from '../../src/code/items.js';
 import { chipName } from '../../src/code/exercise.js';
 import { withCheckpoint } from '../../src/repeat.js';
@@ -18,20 +17,14 @@ const PARTS = ['.bubble', '.grid-world', '.code-given', '.code-program', '.code-
 const TRAY = ['.tiles', '.quiz .choices'];
 
 /** Taps one code item in, worked out from the item itself with the functions test/code-courses.test.js proves it with. */
-const SHOTS = process.env.CODE_SHOTS?.split(',') ?? [];
-
-async function answerCode({ page, tap, btn, shot, run }, item) {
+async function answerCode({ page, tap, btn }, item) {
   if (item.type === 'teach') return;
-  const looked = SHOTS.includes(item.id.replace(/~.*$/, ''));
-  if (looked) await shot(`${item.id}-asked`);
   if (item.type === 'predict') {
     const { answer } = optionsOf(item);
     const texts = await page.locator('.choices .choice').allTextContents(); // exact: "one two" is not "one\ntwo"
     const at = texts.indexOf(answer);
     if (at < 0) throw new Error(`${item.id}: "${answer}" is not among ${JSON.stringify(texts)}`);
-    await tap(page.locator('.choices .choice').nth(at));
-    if (looked) { await run(900); await shot(`${item.id}-answered`); }
-    return;
+    return tap(page.locator('.choices .choice').nth(at));
   }
   if (item.type !== 'build' && item.type !== 'gap') throw new Error(`no way to answer a ${item.type} item`);
   for (const w of item.type === 'gap' ? item.fill : chipsOf(wayOf(item), item.chunks)) await tap(page.locator('.tiles').getByRole('button', { name: chipName(w), exact: true }));
