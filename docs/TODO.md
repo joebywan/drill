@@ -180,6 +180,21 @@ What playing has covered and what it hasn't. Every course (281 lessons), the hab
 installed Android app were played by touch on the emulator in November 2026. Each one's results are in its "played"
 block below; the fixes that came out of them are in docs/WINGBEAT.md under "Found by playing".
 
+**Next up** (from Joseph, 2026-11-20; start here)
+
+- **See the chrysalis on a phone page.** The close-up picture at the end of home's streak row (#168) has been seen as an egg and as a
+  caterpillar on the emulator, but the chrysalis only in an enlarged render: no seeded learner has a course with just its last unit left.
+  Add that learner to `test/phone/lib/seed.js`, show their home in `home-days` (light and dark, and on a short phone), and look at the picture.
+  If it doesn't read at that size, redraw it. Joseph: "Emulator should solve that."
+- **Large text in the browser.** #168 took `LOOKS=large` out of the `looks` scenario because the phone's font size, set with `font_scale`, did not
+  change Chrome's page on the emulator. That shows one route doesn't work, not that a browser never shows the app with larger text, and the check
+  should not have been dropped on it. Joseph: "Why not? You can test browser look." Find the routes that do change the page and look at home, a
+  lesson of each kind and an end screen through each: Chrome's own text scaling or zoom (its Accessibility settings), Firefox's font sizing that
+  follows the phone (Firefox is what Joseph uses), and plain zoom to 200%. Put a working check back, on the phone or in the e2e suite.
+- **The emulator is the phone.** Stop writing "no real phone" or "a real finger" as something not covered. Joseph: "No, but you have the emulator."
+  Go through every "Not played", "Not covered" and "Not seen" line below: play it on the emulator, or say exactly what the emulator cannot show
+  and why. That includes Firefox for Android itself, which has only been stood in for by desktop Firefox.
+
 **Test by playing**
 
 - **Blank button label in Firefox for Android.** Joseph has seen it a few times, on the JavaScript Meet screen: the green button at full height with no text. It stayed blank until he left and opened the course again, so it is a stuck draw that a rebuilt screen clears, not a slow one. The text and colour are right, so it isn't being drawn. Not reproduced: 39 runs of the old code in Firefox 159 on the emulator, which renders in software, including scrolling during the entrance and a shorter screen.
