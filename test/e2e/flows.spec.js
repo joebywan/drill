@@ -1123,7 +1123,7 @@ test('a fresh garden is one seed; the first lesson grows a sprout and opens a fl
   await finishFirstLesson(page);
   // The first unit is one lesson long, so finishing it is a finished unit: a flower opens.
   // That unit is chess's first, so its egg is laid and hatches at once: only the hatching is said.
-  await expect(page.locator('.arrivals li')).toHaveText([`A flower opened for ${basics.units[0].title}`, 'Your Chess egg hatched into a caterpillar']);
+  await expect(page.locator('.arrivals li')).toHaveText(['Your Chess egg hatched into a caterpillar', `A flower opened for ${basics.units[0].title}`]);
   await expect(page.locator('.arrivals svg.creature')).toBeVisible();
   await continueButton(page).click();
   await expect(strip(page, 1).locator('svg.plant-tree.stage-1')).toBeVisible();
@@ -1165,12 +1165,12 @@ test('a fifth day of Calm hatches its caterpillar, shown on the end screen and i
   await expect(strip(page, 2)).toBeFocused();
 });
 
-test('a backlog of arrivals shows three lines, then the rest in one', async ({ page }) => {
+test('a backlog of arrivals after a practice shows two lines, then the rest in one', async ({ page }) => {
   await grown(page, ['calm', 'move', 'break'], 30);
   await page.clock.install();
   await firstVisit(page);
   await breathe(page);
-  await expect(page.locator('.arrivals li')).toHaveCount(4);
+  await expect(page.locator('.arrivals li')).toHaveCount(3);
   await expect(page.locator('.arrivals li').last()).toHaveText(/^and \d+ more in your garden$/);
 });
 
@@ -1494,7 +1494,8 @@ test('after a drop-off, home offers a gentle comeback: their usual practice at t
   await page.getByRole('button', { name: 'Start Breathing' }).click();
   await page.getByRole('button', { name: 'Start' }).click();
   await page.clock.runFor(40_000);
-  await expect(page.getByText('A ladybird came to visit')).toBeVisible();
+  // Two lines above "How do you feel?": this seed's butterfly and bee, then the ladybird in the rest (drawn in the garden below).
+  await expect(page.locator('.arrivals li')).toHaveText([/butterfly is out/, 'A bee found Calm', 'and 1 more in your garden']);
   await continueButton(page).click();
   await expect(comebackCard(page)).toHaveCount(0); // it ends after one session
   await expect(page.locator('.garden-link svg[data-kind="ladybird"]')).toHaveCount(1);

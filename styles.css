@@ -315,6 +315,8 @@ html { scroll-padding-bottom: 160px; }
 .path-tab b.streak-bright { color: var(--streak); }
 /* A quiet habit's number is hidden: a dot in today's light instead. */
 .path-tab b:empty { min-width: 0; width: .55em; height: .55em; padding: 0; border: 0; background: currentColor; vertical-align: middle; }
+/* On the pressed tab's green the dot keeps a ring of the page, as the number keeps its pill, so it shows in both themes. */
+.path-tab[aria-pressed="true"] b:empty { box-shadow: 0 0 0 2px var(--bg); }
 .streak-line, .link {
   display: block; margin: 10px auto 0; padding: 6px 12px; border: 0; border-radius: 999px; background: none;
   color: var(--muted); font-size: .9rem; text-decoration: underline; text-underline-offset: 3px;
@@ -988,7 +990,8 @@ li.skin-card { border-radius: 12px; border: 2px dashed var(--line); color: var(-
 .skin-card small { font-weight: 400; color: var(--muted); font-size: .85rem; }
 .skin-card[aria-pressed="true"] { border-color: var(--accent); }
 .skin-card[aria-pressed="true"] > span::after { content: ' ✓'; color: var(--accent); }
-.skin-card.later svg { opacity: .4; filter: grayscale(.6); }
+/* Not given yet: quiet but still itself. Muted colour, never faded, so Lumi keeps 3:1 against the card in the dark too. */
+.skin-card.later svg { filter: saturate(.35); }
 .arrival svg.cast { height: 34px; }
 /* Choosing another routine (CHOOSE_WORDS): the sheet's unit headings, and the quiet "counted" line with its Undo. */
 .add-habit h2 { margin: 20px 0 0; font-size: 1rem; text-align: left; color: var(--muted); }
