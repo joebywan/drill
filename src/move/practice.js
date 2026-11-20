@@ -1,6 +1,6 @@
 import course from '../data/move.json' with { type: 'json' };
 import { MOVE_LINES, line } from '../cast/lines.js';
-import { phases, summary } from './routines.js';
+import { needsRoom, phases, summary } from './routines.js';
 import { coached, teach } from '../practice/kit.js';
 import { buzz, play } from '../feel.js';
 
@@ -15,7 +15,7 @@ export function mount(el, item, ctx) {
   const all = phases(item.set, course.moves, ctx.timings).map((p) => (p.kind === 'rest'
     ? { ...p, name: 'Rest', line: say('rest'), mood: 'rest' } : { ...p, line: say('go') }));
   return coached(el, all, ctx, {
-    label: 'Exercises', tone: 'move', summary: summary(item.set, course.moves, ctx.timings), paused: say('paused'), room: say('room'),
+    label: 'Exercises', tone: 'move', summary: summary(item.set, course.moves, ctx.timings), paused: say('paused'), room: needsRoom(item.set, course.moves) ? say('room') : '',
     sound: (p) => { play(p.kind === 'rest' ? 'exhale' : 'inhale'); buzz('inhale'); },
   });
 }

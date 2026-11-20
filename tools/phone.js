@@ -160,8 +160,12 @@ try {
     page.on('pageerror', (e) => errors.push(e.message));
     page.on('response', (r) => r.status() >= 400 && requests.push(`${r.status()} ${r.url()}`));
     page.on('requestfailed', (r) => requests.push(`${r.failure()?.errorText} ${r.url()}`));
+    // Playwright pins prefers-color-scheme to light on every page it drives: let the phone's own night mode through.
+    await page.emulateMedia({ colorScheme: null });
     page.setDefaultTimeout(30_000); // a WebView's page has none of its own: a missing button would wait forever
-    await page.addInitScript(() => { window.WINGBEAT_PLAIN = true; }); // scenarios walk a lesson's own items: no warm-ups or echoes
+    // Scenarios walk a lesson's own items: no warm-ups or echoes. The real requestAnimationFrame is kept before
+    // page.clock replaces it, so shot() can wait for frames the screen will really show.
+    await page.addInitScript(() => { window.WINGBEAT_PLAIN = true; window.__frame = requestAnimationFrame.bind(window); });
     await page.clock.install(); // timed routines run on page.clock, so minutes take seconds
     await load();
     await declinePrompts();
@@ -186,7 +190,7 @@ try {
       }
       const [cx, cy] = await page.evaluate(() => window.__tap);
       Object.assign(origin, { x: (sw >> 1) - cx * dpr, y: Math.round(sh * 0.6) - cy * dpr });
-      console.log(`page origin on screen (${pkg}): ${Math.round(origin.x)},${Math.round(origin.y)} (dpr ${dpr}, screen ${sw}x${sh})`);
+      console.log(`page origin on screen (${pkg}): ${Math.round(origin.x)},${Math.round(origin.y)} (dpr ${dpr}, screen ${sw}x${sh}); real frames for shot(): ${await page.evaluate(() => String(window.__frame).includes('[native code]'))}`);
     };
     await calibrate();
 
@@ -232,6 +236,10 @@ try {
     const shot = async (label) => {
       // At most 3 s: a page out of sight (another app in front) may never finish an animation.
       await Promise.race([page.evaluate(() => Promise.all(document.querySelector('.guide')?.getAnimations().map((a) => a.finished.catch(() => {})) ?? [])).catch(() => {}), sleep(3000)]);
+      // Then until the page has painted (two real frames, at most 1 s), and 400 ms more: on the software-rendered
+      // emulator the screen shows a heavy frame a few hundred ms after the page has drawn it.
+      await Promise.race([page.evaluate(() => new Promise((r) => (window.__frame ?? requestAnimationFrame)(() => (window.__frame ?? requestAnimationFrame)(r)))).catch(() => {}), sleep(1000)]);
+      await sleep(400);
       return device.screenshot({ path: `${out}/${String(n++).padStart(2, '0')}-${label}.png` });
     };
     const uids = () => adb('shell', 'cmd', 'package', 'list', 'packages', '-U', pkg).match(/uid:\d+/g)?.map((u) => u.slice(4)) || [];

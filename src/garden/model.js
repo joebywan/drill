@@ -205,10 +205,17 @@ export const rules = (progress) => [
 export const RULES = rules(null);
 
 /**
+ * What matters most comes first: a raised butterfly's stage (emerged, chrysalis, hatched, egg), then a
+ * skin, then a landmark, then a visitor, then a flower. Ties keep rule order.
+ */
+const weight = (r) => (r.raiser ? 3 - r.stage : r.skin ? 4 : r.habit === null ? 5 : r.gift === 'flower' ? 7 : 6);
+
+/**
  * Adds every achievement now earned to `progress.garden.earned`, dated today, and returns
  * { progress, newly: [rule…] }. Never removes one: a streak starting again or the log trimming
  * changes nothing already given. `only` limits it to some rules. A creature that skips stages at
- * once (an old save, a placement) records every one but announces only the latest.
+ * once (an old save, a placement) records every one but announces only the latest. `newly` is in
+ * weight() order, so an end screen lists, and sounds, the biggest moment first.
  */
 export function award(progress, now = new Date(), only = () => true) {
   const earned = progress.garden?.earned || {};
@@ -217,7 +224,7 @@ export function award(progress, now = new Date(), only = () => true) {
   const date = today(now);
   const more = Object.fromEntries(newly.map((r) => [r.id, date]));
   const latest = newly.filter((r) => !newly.some((o) => o.raiser === r.raiser && o.stage > r.stage));
-  return { progress: { ...progress, garden: { ...progress.garden, earned: { ...earned, ...more } } }, newly: latest };
+  return { progress: { ...progress, garden: { ...progress.garden, earned: { ...earned, ...more } } }, newly: latest.sort((a, b) => weight(a) - weight(b)) };
 }
 
 /**
@@ -275,8 +282,18 @@ export const plantWords = (p) => ({
   next: p.next ? `${dayCount(p.next.in, 'more ')} to ${p.next.name}` : '',
 });
 
-/** After three arrival lines on an end screen, the rest in one. */
+/** After the arrival lines an end screen has room for, the rest in one. */
 export const moreArrived = (n) => `and ${n} more in your garden`;
+
+/** A plant's card past three flowers says them in one line. */
+export const flowersOpened = (n) => `${n} flowers opened, one for each unit finished`;
+
+/**
+ * What an end screen lists of award()'s `newly`: the first `max` lines, skins included, and how many
+ * more go in one line. Three after a lesson; two above a practice's "How do you feel?", so its
+ * buttons stay clear of Continue. The rest are still in the garden, the field guide and the wardrobe.
+ */
+export const listed = (newly, max = 3) => (newly.length > max ? { shown: newly.slice(0, max), more: newly.length - max } : { shown: newly, more: 0 });
 
 /** The garden screen's card for the landmarks, under the plants' cards. */
 export const GARDEN_WORDS = { kicker: 'The whole garden' };

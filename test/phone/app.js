@@ -14,6 +14,7 @@ const OUT = new URL('../../test-results/phone/app/', import.meta.url).pathname;
 const japanese = JSON.parse(readFileSync(new URL('../../src/data/japanese.json', import.meta.url))).units[0].lessons[0];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const day = (back) => { const d = new Date(); d.setDate(d.getDate() - back); return d.toLocaleDateString('en-CA'); };
+const LIGHT_BG = '#f6f7f9', DARK_BG = '#151a22'; // the page's background, and the window's (android/app/src/main/res/values*/themes.xml)
 const hex = (rgb) => `#${rgb.match(/\d+/g).slice(0, 3).map((v) => (+v).toString(16).padStart(2, '0')).join('')}`;
 // What the note must never say: absence, loss or a streak at stake.
 const ABSENCE = /miss|lost|lose|gone|away|absen|forgot|been a while|streak|come back|haven't/i;
@@ -64,12 +65,18 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
   await shot('launcher-drawer');
   const icon = await node(/^Wingbeat$/, 'drawer');
   check('the launcher lists Wingbeat', !!icon);
-  if (icon) await tap(icon); else sh(`am start -W -n ${PKG}/.MainActivity`);
+  if (icon) sh(`input tap ${icon.join(' ')}`); else sh(`am start -n ${PKG}/.MainActivity`);
   const opened = Date.now();
-  await shot('first-launch');
+  // While the WebView starts, the window shows the page's own background, never white.
+  const loading = [];
+  for (const at of [1, 3]) {
+    await sleep(opened + at * 1000 - Date.now()); await shot(`first-launch-${at}s`);
+    loading.push(pixel(12, H >> 1));
+  }
+  check('first launch: the page\'s light background while it loads, at 1 s and 3 s', loading.every((c) => c === LIGHT_BG), loading.join(', '));
   let shown = false;
   while (!(shown = /Small beats go a long way/.test(await screenXml())) && Date.now() - opened < 30000) await sleep(500);
-  check('first launch: the intro shows within 10 s of the tap', shown && Date.now() - opened < 10000, `${((Date.now() - opened) / 1000).toFixed(1)} s`);
+  check('first launch: the intro shows within 15 s of the tap on a cold emulator', shown && Date.now() - opened < 15000, `${((Date.now() - opened) / 1000).toFixed(1)} s`);
   await shot('first-launch-intro');
   check('first launch: the app is in front', front());
   app = await attach(PKG); // clears storage and reloads: a first visit again
@@ -86,11 +93,14 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
   await app.touch(app.btn(`Continue · ${japanese.title}`)); await app.run(400); await app.shot('japanese-teach');
   const getVoice = app.page.getByRole('button', { name: 'Get a Japanese voice' });
   if (hasVoice) {
+    // The engine logs each utterance it starts (MainActivity's UtteranceProgressListener): count them.
+    const spoken = () => (logs().match(/voice: speaking/g) || []).length;
+    const before = spoken();
+    console.log(`  utterances so far: ${before} (${logs().match(/voice: engine .*/)?.[0] ?? 'no engine line'})`);
     await app.touch(app.btn('Hear it again'));
-    const engines = sh('cmd package list packages -U').split('\n').filter((l) => /tts|pico|speech/i.test(l)).flatMap((l) => l.match(/uid:(\d+)/)?.[1] ?? []);
-    let started = false;
-    for (let i = 0; i < 20 && !started; i++) { started = sh('dumpsys audio').split('\n').some((l) => l.includes('state:started') && engines.some((u) => l.includes(`u/pid:${u}/`))); if (!started) await sleep(250); }
-    check('voice: the TTS engine plays after "Hear it again" (dumpsys audio)', started);
+    let heard = false;
+    for (let i = 0; i < 20 && !heard; i++) { heard = spoken() > before; if (!heard) await sleep(250); }
+    check('voice: "Hear it again" is spoken by the TTS engine (logcat)', heard);
   } else {
     check('no ja-JP voice: "Get a Japanese voice" is offered', await getVoice.isVisible());
     await app.touch(getVoice); await sleep(2000); await shot('voice-install-screen');
@@ -124,6 +134,25 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
   keep('dumpsys-appwidget.txt', hosted);
   const placed = /Widgets:[\s\S]*com\.joebywan\.wingbeat/.test(hosted);
   check('the widget is on the home screen (dumpsys appwidget)', placed);
+
+  /** The widget's box on screen [left, top, right, bottom], from the launcher's UI tree. */
+  const widgetBox = (xml) => xml.match(new RegExp(`resource-id="${PKG}:id/root"[^>]*bounds="\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]"`))?.slice(1).map(Number);
+  if (placed) {
+    // It lands one row high, and the resize frame is up: stretch it a row taller by its bottom handle.
+    const xml = await screenXml(); keep('ui-widget-placed.xml', xml);
+    const box = widgetBox(xml);
+    const none = !new RegExp(`resource-id="${PKG}:id/streak"`).test(xml);
+    check('the widget lands one row high, and a new learner sees no number', !!box && box[3] - box[1] < H / 8 && none, `${box?.join(',')}${none ? '' : ', a number shows'}`);
+    if (box) {
+      const cx = (box[0] + box[2]) >> 1;
+      sh(`input swipe ${cx} ${box[3]} ${cx} ${box[3] + (box[3] - box[1]) + 60} 1500`); await sleep(1500);
+      const tall = widgetBox(await screenXml());
+      await shot('widget-two-rows');
+      check('it stretches to two rows', !!tall && tall[3] - tall[1] > (box[3] - box[1]) * 1.5, `${tall?.join(',')}`);
+      sh(`input swipe ${cx} ${tall?.[3] ?? box[3]} ${cx} ${box[3]} 1500`); await sleep(1500); // back to one row for the rest
+      await shot('widget-one-row');
+    }
+  }
 
   /** The widget's own views, as the launcher's UI tree has them: streak and line (a GONE view is absent). */
   const widgetText = async (name) => {
@@ -198,13 +227,29 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
   await app.touch(app.btn('Continue · Lights low'));
   await bars('wind-down');
   await app.touch(app.page.locator('.close, .back, [data-back]').first());
-  sh('cmd uimode night yes'); await sleep(2000);
-  console.log(`  ${sh('cmd uimode night').trim()}; uiMode ${sh('dumpsys activity configuration | grep -m1 -o "mUiMode=[^ ]*\\|uimode=[^ ]*\\|night[^ ]*"; true').trim()}`);
-  const dark = await app.page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches);
-  check('dark theme reaches the open app (prefers-color-scheme)', dark);
-  await bars('dark');
-  if (!dark) { await launch(true); await app.seed({ picked: [] }); check('dark theme after a fresh start', await app.page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)); await bars('dark-fresh'); }
-  sh('cmd uimode night no'); await sleep(1500);
+  // Dark: the phone switched to night mode with the app open (it handles uiMode itself, so it isn't recreated)…
+  const isDark = () => app.page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches);
+  sh('cmd uimode night yes'); await sleep(2500);
+  check('dark: a live switch reaches the open page (prefers-color-scheme)', await isDark());
+  await bars('dark-live');
+  check('dark: the page is dark', hex(await app.page.evaluate(() => getComputedStyle(document.body).backgroundColor)) === DARK_BG);
+  // …and back to light, live.
+  sh('cmd uimode night no'); await sleep(2500);
+  check('light again: a live switch back reaches the page', !(await isDark()));
+  await bars('light-again');
+  // A cold start in night mode, with nothing driving the page: the window, then the page, are dark.
+  sh('cmd uimode night yes'); sh(`am force-stop ${PKG}`);
+  sh(`am start -n ${PKG}/.MainActivity`);
+  const started = Date.now(), cold = [];
+  for (const at of [1, 3, 8]) {
+    await sleep(started + at * 1000 - Date.now()); await shot(`dark-cold-${at}s`);
+    cold.push(pixel(12, H >> 1));
+  }
+  check('dark: a cold start is dark from the first second, page included (adb, no driver)', cold.every((c) => c === DARK_BG), cold.join(', '));
+  await launch(false); await app.seed({ picked: [] });
+  check('dark: after a cold start, prefers-color-scheme is dark', await isDark());
+  await bars('dark-cold');
+  sh('cmd uimode night no'); await sleep(2500);
 
   // 6. Back: from a routine to home; on home it leaves, except within a second of the back that landed there.
   await app.seed();
@@ -218,40 +263,99 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
   sh('input keyevent KEYCODE_BACK'); await sleep(1500);
   check('back on home leaves the app', !front());
 
-  // 8. Large text: the phone's font size at 1.3, on the screens with the most text.
+  // 8. Large text: the WebView follows the phone's font size. At 1.3 and at 2.0 (Android's largest), every screen
+  // with much text fits: nothing wider than the page or cut off, no path label running into the next node, and
+  // every control reachable above the fixed bars when scrolled to the end.
   const probe = () => app.page.evaluate(() => {
     const s = Object.assign(document.createElement('span'), { textContent: 'Mg' });
     s.style.cssText = 'font:16px sans-serif;position:absolute';
     document.body.append(s); const h = s.getBoundingClientRect().height; s.remove(); return h;
   });
+  const misfits = () => app.page.evaluate(() => {
+    const out = [];
+    const what = (e) => `${e.tagName.toLowerCase()}${e.className && typeof e.className === 'string' ? `.${e.className.trim().split(/\s+/).join('.')}` : ''} "${e.textContent.trim().slice(0, 28)}"`;
+    const scrolls = (e) => { for (let p = e.parentElement; p; p = p.parentElement) if (/auto|scroll/.test(getComputedStyle(p).overflowX)) return true; return false; };
+    if (document.documentElement.scrollWidth > innerWidth + 1) out.push(`page ${document.documentElement.scrollWidth - innerWidth}px too wide`);
+    for (const e of document.querySelectorAll('#app :is(button, a, .label, h1, h2, h3, p, li)')) {
+      const r = e.getBoundingClientRect();
+      if (!r.width || scrolls(e)) continue;
+      if (r.right > innerWidth + 1 || r.left < -1) out.push(`off the side: ${what(e)}`);
+      const cs = getComputedStyle(e);
+      // A box that scrolls is reachable: only one that hides its overflow cuts text off.
+      if ((/hidden|clip/.test(cs.overflowX) && e.scrollWidth > e.clientWidth + 1) || (/hidden|clip/.test(cs.overflowY) && e.scrollHeight > e.clientHeight + 1)) out.push(`cut off: ${what(e)}`);
+    }
+    const rows = [...document.querySelectorAll('.path li')];
+    rows.forEach((li, i) => {
+      const label = li.querySelector('.label')?.getBoundingClientRect(), next = rows[i + 1]?.querySelector('.node')?.getBoundingClientRect();
+      if (label && next && label.bottom > next.top + 1) out.push(`label into the next node: ${what(li.querySelector('.label'))}`);
+      const node = li.querySelector('.node'), mark = node?.querySelector('span')?.getBoundingClientRect(), box = node?.getBoundingClientRect();
+      if (mark && (mark.bottom > box.bottom + 1 || mark.top < box.top - 1)) out.push(`mark out of its node: ${what(node)}`);
+    });
+    scrollTo(0, document.documentElement.scrollHeight);
+    const bars = [...document.querySelectorAll('#app *')].filter((e) => {
+      const cs = getComputedStyle(e), r = e.getBoundingClientRect();
+      return cs.position === 'fixed' && cs.visibility !== 'hidden' && r.height && r.top > innerHeight / 2 && r.top < innerHeight;
+    });
+    const top = Math.min(innerHeight, ...bars.map((b) => b.getBoundingClientRect().top));
+    for (const e of document.querySelectorAll('#app :is(button, a)')) {
+      const r = e.getBoundingClientRect();
+      if (r.height && !bars.some((b) => b.contains(e)) && getComputedStyle(e).visibility !== 'hidden' && r.bottom > top + 1) out.push(`under a fixed bar at the end: ${what(e)}`);
+    }
+    scrollTo(0, 0);
+    return out;
+  });
+  const fits = async (scale, name) => {
+    await app.run(400); await app.shot(`text-${scale}-${name}`);
+    const m = await misfits();
+    check(`text ${scale}: ${name} fits`, !m.length, m.slice(0, 4).join('; '));
+  };
+  const pressed = (name) => app.page.getByRole('button', { name, exact: true });
+  const done = { learn: { count: 3, last: day(0), forgiven: [] }, calm: { count: 2, last: day(1), forgiven: [] }, move: { count: 1, last: day(1), forgiven: [] } };
+  const home = (patch = {}) => app.seed({ start: {}, picked: [], habits: done, wings: ['learn', 'learn', 'calm'], ...patch });
+  /** Plays a timed routine (Calm, Move) from home's Continue to its end screen. */
+  const routine = async (scale, tab, tag) => {
+    await home(); await app.touch(app.btn(new RegExp(`^${tab}(,|$)`))); await app.touch(app.btn(/^Continue · /)); await fits(scale, `${tag}-teach`);
+    await app.touch(app.btn('Start')); await app.run(1500); await fits(scale, `${tag}-running`);
+    for (let i = 0; i < 12 && !(await app.page.locator('.summary').count()); i++) {
+      await app.run(30000);
+      const next = app.page.getByRole('button', { name: /^(Next|Done|I did it|Goodnight)/ });
+      if (await next.count()) await app.touch(next);
+    }
+    await fits(scale, `${tag}-end`);
+  };
   await launch(true);
   const normal = await probe();
-  sh('settings put system font_scale 1.3');
-  await launch(true);
-  const large = await probe();
-  check('the WebView takes the phone\'s font size', large > normal * 1.2, `16px text ${normal.toFixed(1)}px tall at 1.0, ${large.toFixed(1)}px at 1.3`);
-  const done = { learn: { count: 3, last: day(0), forgiven: [] }, calm: { count: 2, last: day(1), forgiven: [] } };
-  await app.seed({ start: {}, habits: done, wings: ['learn', 'learn', 'calm'] });
-  await app.shot('large-home');
-  for (const course of ['Chess', 'Maths']) {
-    await app.touch(app.btn(/^Learning(,|$)/)); await app.touch(app.page.getByRole('button', { name: course, exact: true })); await app.touch(app.btn(/^Continue · /)); await app.run(400); await app.shot(`large-lesson-${course.toLowerCase()}`);
-    await app.seed({ start: {}, habits: done, wings: ['learn', 'learn', 'calm'] });
+  for (const scale of ['1.3', '2.0']) {
+    sh(`settings put system font_scale ${scale}`);
+    await launch(true);
+    const big = await probe();
+    check(`text ${scale}: the WebView takes the phone's font size`, big > normal * (+scale - 0.1), `16px text ${normal.toFixed(1)}px tall at 1.0, ${big.toFixed(1)}px at ${scale}`);
+    await fits(scale, 'intro');
+    await butterfly({ ...app, check }); // a first lesson to its end screen, home, then "Your butterfly"
+    await fits(scale, 'your-butterfly');
+    await home();
+    for (const tab of await app.page.locator('.path-tab[data-path]').evaluateAll((t) => t.map((x) => x.dataset.path))) {
+      await app.touch(app.page.locator(`.path-tab[data-path="${tab}"]`)); await fits(scale, `home-${tab}`);
+    }
+    for (const course of ['Chess', 'Maths', 'Japanese', 'Coding', 'JavaScript']) {
+      await home(); await app.touch(app.btn(/^Learning(,|$)/)); await app.touch(pressed(course));
+      await app.touch(app.btn(/^Continue · /)); await fits(scale, `lesson-${course.toLowerCase()}`);
+      await app.touch(pressed('Continue')); await fits(scale, `lesson-${course.toLowerCase()}-next`);
+    }
+    await routine(scale, 'Calm', 'calm');
+    await routine(scale, 'Move', 'move');
+    await home(); await app.touch(app.btn(/^Your garden/)); await app.touch(app.page.locator('.guide-link')); await fits(scale, 'field-guide');
+    await app.touch(app.page.locator('.guide-tile')); await fits(scale, 'species');
+    await home(); await app.touch(app.btn('Settings')); await fits(scale, 'settings');
+    await app.touch(app.btn("Lumi's wardrobe")); await fits(scale, 'wardrobe');
+    await home(); await app.touch(app.page.locator('[data-add]')); await fits(scale, 'add-habit');
   }
-  await app.touch(app.btn(/^Calm(,|$)/));
-  await app.touch(app.btn(/^Continue · /)); await app.shot('large-routine-teach');
-  await app.touch(app.btn('Start')); await app.run(1500); await app.shot('large-routine');
-  await app.run(60000); await app.shot('large-end');
-  await app.seed({ start: {}, habits: done, wings: ['learn', 'learn', 'calm'] });
-  await app.run(1500); await app.touch(app.page.locator('.yours-link')); await app.shot('large-your-butterfly');
-  check('"Your butterfly" opens from home', await app.page.locator('.yours-page').count() === 1);
-  await app.seed({ start: {}, habits: done, wings: ['learn', 'learn', 'calm'] });
-  await app.touch(app.btn(/^Your garden/));
-  await app.touch(app.page.locator('.guide-link')); await app.shot('large-field-guide');
   sh('settings put system font_scale 1.0');
 
   // 1 again, over the whole run: nothing from the bridge or the widget's side went wrong.
   const all = earlier + logs();
   keep('logcat.txt', all);
-  const bad = all.split('\n').filter((l) => /^[EF]\/|^W\/Wingbeat/.test(l));
+  // Errors and warnings from the app's own tags, and a crash of the app's process (not uiautomator's, say).
+  const bad = all.split('\n').filter((l) => /^[EFW]\/Wingbeat|Process: com\.joebywan\.wingbeat/.test(l));
   check('logcat: no error from WingbeatBridge or WingbeatDaily, no crash', !bad.length, bad.slice(0, 3).join(' | '));
 };

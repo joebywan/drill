@@ -73,30 +73,32 @@ Widget and reminder mechanics, from a friend's Android habit app (Fizz) reviewed
 **The Android app: played** (2026-11-20, emulator Pixel 6 API 36, debug APK, `npm run phone -- app`, `test/phone/app.js`)
 
 Installed and played with real taps through the WebView (`attach()` in `tools/phone.js`). The launcher icon is Lumi close up
-with the butterfly on her head; the app opens on the intro ("Small beats go a long way.") about 5 s after the tap on a cold
-emulator; no INTERNET permission; no error from `WingbeatBridge` or `WingbeatDaily` and no failed request all run. A first day
-(`butterfly.js` and `calm.js` played in the app) passes: sound and haptics come through for the app's own package, the end
-screen shows today's wingbeat with its new panel, home shows the butterfly. The widget was placed through the launcher
-(long-press, Widgets, Wingbeat, Add) and is right in all its states: flying, basking, resting, with the streak number for
-Learning and none for Calm or Reflect. The daily note posts "Something small today? Lumi is around.", in the shade under a
-butterfly seen from the side, opens the app when tapped, and posts nothing on a day with something done, forced or not. The
-bars take the page's colour in light and in Wind down. Back from a routine lands on home, a quick second back stays, a third
-leaves. Large text was played on a build with `textZoom` unpinned, to see what the phone's font size would do.
+with the butterfly on her head; the app opens on the intro ("Small beats go a long way.") 5 to 14 s after the tap on a busy, cold
+emulator, on the page's own background colour meanwhile, light or dark, never white; no INTERNET permission; no error from
+`WingbeatBridge` or `WingbeatDaily` and no failed request all run. A first day (`butterfly.js` and `calm.js` played in the
+app) passes: sound and haptics come through for the app's own package, the end screen shows today's wingbeat with its new
+panel, home shows the butterfly. Japanese speaks through the phone's engine (it logs each utterance it starts). The widget
+was placed through the launcher (long-press, Widgets, Wingbeat, Add): it lands one row high, stretches to two, shows its own
+layout in the launcher's list, and is right in all its states: flying, basking, resting, the streak number for Learning,
+none for Calm or Reflect, and none before there is a streak. The daily note posts "Something small today? Lumi is around.",
+in the shade under a butterfly seen from the side, opens the app when tapped, and posts nothing on a day with something done,
+forced or not. The page and the bars follow the phone's theme, live and from a cold start, and Wind down's night palette.
+Back from a routine lands on home, a quick second back stays, a third leaves. The WebView follows the phone's font size
+(`textZoom` is no longer pinned): at 1.3 and 2.0 every screen with much text was walked (home for each habit, a lesson in
+five courses, a Calm and a Move routine to their end screens, "Your butterfly", the field guide and a species, ⋯, the
+wardrobe, "+ Habit") with nothing wider than the page, cut off, out of its node or out of reach under a fixed bar.
 
-- **Dark theme never reaches the app** (high). With the phone in dark mode (`cmd uimode night yes`, "Night mode: yes")
-  `prefers-color-scheme: dark` is false in the WebView, live and after a cold start, so the app and its bars stay light
-  (`#f6f7f9`). Chrome follows the phone's theme. Setting `android:isLightTheme` in both themes did not change it. Needs a
-  look at how this WebView decides (`WebSettingsCompat`, algorithmic darkening, the theme).
-- **The phone's font size is ignored** (medium, a design call). `MainActivity` pins `settings.textZoom = 100`, so at
-  `font_scale 1.3` 16px text is still 18.7px tall (24.4px with the line removed). Unpinned, most screens hold, but the Calm
-  path's labels run into the next node ("Five slow breaths") and on the end screen "Not really" sits under the fixed Continue
-  until scrolled.
-- **The widget lands 3x2 and mostly empty** (low). `minHeight` 80dp makes the launcher give it two rows; Lumi, the butterfly
-  and the line sit in a strip in the middle. The picker shows a blank card with the launcher icon (no `previewLayout` or
-  `previewImage`). A new learner's widget shows "0".
-- **The Daily note switch showed no On or Off** (low, fixed here): the On/Off styling was for `[data-pref]` only.
-- **Not checked:** the "Get a Japanese voice" offer (this image has a ja-JP voice); the TTS engine's sound after "Hear it
-  again" was seen in one run of three, so speech is unproven; a real launcher other than this image's; a release build.
+- **Dark theme looked broken, and wasn't** (fixed in the runner). Playwright pins `prefers-color-scheme` to light on every
+  page it drives; `helpersFor` now lets the phone's own night mode through.
+- **Large text** (fixed): the path's rows and nodes, and the room kept under fixed bars, grow with the text (`--text-scale`,
+  set by app.js only when text is scaled, so a browser is unchanged).
+- **The widget** (fixed): one row on landing, Lumi sized to the space, `previewLayout`, no "0".
+- **The Daily note switch showed no On or Off** (low, fixed).
+- **At 2.0 it is cramped**: a home screen shows the path's first node and little else above Continue, and an end screen's
+  feelings sit under Continue until scrolled. Everything is reachable; whether the fixed bars should shrink at 2.0 is a
+  design call.
+- **Not checked:** the "Get a Japanese voice" offer (this image has a ja-JP voice); a launcher other than this image's; a
+  release build.
 
 ## Fitting the person
 
@@ -240,6 +242,44 @@ sessions run longer. A quarter to a third of every session is repeats (2 warm-up
 - **Tune the numbers from real play.** `tools/sessions.js` models a fixed miss rate; nobody has played the new limits
   (2 echoes, 4 goes, 5 repeats a session). "One step back" has only run in tests and an E2E flow.
 
+**Maths: played** (2026-11, emulator Pixel 6, `MATHS_UNIT=n npm run phone -- maths-all`, `tools/play.js`, `tools/play-quiz.js`)
+
+All 9 units, 36 lessons (checkpoints included), by real touch with warm-ups and echoes on, answers worked out from each sum or picture
+with `toQuiz`: no wrong verdict for a right answer, no page error, no failed request, no sideways overflow, nothing untappable, no tap
+target under 40px. Sessions are 7 to 14 items (checkpoint 8) and 0:36 to 1:25 at a steady pace; none near 6 minutes or 20 items. The longest
+are `ten-2` (13 items, ~1:25), `ten-0` (~1:21) and `ten-1` (12 items, 37 taps, the most). A right drop on a number line leaves one marker
+everywhere it was checked, below zero included (`neg-0-line`, `neg-1-drop`, `neg-1-rise`, `neg-2-line`; 52 checks pass, units 1 and 2 not checked
+this way). Looked at by eye: ten frames, arrays, the 100 grid, single and stacked fraction bars, lines 0 to 1, 0 to 0.1 and -10 to 10,
+money and long sums (1480 to the nearest 100): all drawn cleanly, centred and readable. Every sum and explanation in the 36 lessons was
+read: none wrong.
+
+- **Stacked bars sit under the verdict on a short phone** (medium). At 412x533 the third bar of `frac-1-biggest` (and the lower bars of
+  `frac-1-biggest2`) is hidden behind the verdict banner once answered. Fine at 412x786. The page scrolls, nothing is lost.
+- **Short phone, otherwise clean:** `ten-1`, `ten-2` and `neg-0` at 412x533 had no flag.
+- **Not covered:** a real finger, and Firefox.
+
+**Japanese: played** (2026-11, emulator Pixel 6, `JAPANESE_UNIT=n npm run phone -- japanese-all`, `tools/play.js`, `tools/play-quiz.js`)
+
+All 11 units, 44 lessons (checkpoints included), by real touch with warm-ups and echoes on: every answer right, no page error, no failed
+request, no sideways overflow, nothing untappable. Sessions are 8 to 16 items (checkpoint 8) and 0:29 to 1:33; none near 6 minutes or 20
+items. The longest are `s1` (16 items, ~1:33), `wn` (~1:29), `y1` (~1:27), `se3` (~1:26, 57 taps, the most) and `k1`. Sound: of 145 cards
+that carry a sound, every one called `speechSynthesis.speak` with its text when shown, and 142 were also caught with an audio stream
+`state:started` in `dumpsys audio` (the 3 missed were the first card of the first run, a slow start). Looked at by eye: kana are about
+110px and sharp; a small っ is plainly smaller and raised against つ, in the card, in a word and among the tiles (ゃ against や likewise);
+が, ぱ and the rest of the changed sounds read clearly; the first-sentence unit (これは ねこです, five-word builds) fits and wraps by word.
+
+- **Long romaji options run off the edge** (high). `hi-pick-295` (こんにちは) and `ty-pick-304` (すみません): the three options sit in one row and the third
+  ("konnichiwa", "sumimasen") is cut at the screen edge on a 412 page, and again at 412x533. The option cannot be read in full. Fix is a
+  design call: let long options stack, or wrap the row.
+- **Sentence builds on a short phone** (medium). At 412x533 `se3-build-332` and `se3-build-335`: the answer slots are pushed under the tile
+  tray and the verdict, so the learner cannot see the tiles laid. Fine at 412x786.
+- **Build slots are thin** (low). The empty slots of a build card are faint underline bars about 50px wide with no box, and the card above them is mostly empty;
+  next to 64px tiles they are easy to miss.
+- **Matched pairs go under the verdict** (low). A 5-pair item has 5 rows; once answered the verdict hides the lower rows, so the last matches
+  turning green are not seen.
+- **Typo fixed:** the explanations of `se1-pairs-323`, `se2-pairs-330` and `se3-pairs-337` read "This is a cat., ..." and ended "tea..". No other content problem found.
+- **Not covered:** a real finger, Firefox, and a voice other than the emulator's.
+
 **Layouts from phone testing**
 
 - **Play Rosa's top level gets shallower on a slow CPU.** It always answers in its 3 s budget and the page stays live (worst frame
@@ -275,28 +315,40 @@ Found, not fixed (design calls or bigger than a few lines):
   stage isn't put first. In real play a unit's flower and its creature arrive together, so both show (seen); only a save that earns
   many things at once (a placement, an import) folds the creature's line into "and N more in your garden". A first pass reported
   this as medium from a seed that hadn't awarded earlier units; with what those units earned, the lines show.
+  **Fixed** (fix/walk-findings): `award()` returns what arrived most important first (a raised butterfly's stage, then a skin,
+  a landmark, a visitor, a flower) and `listed()` caps an end screen at three lines (two above "How do you feel?"); the sound follows the first.
 - **End screens are crowded on milestone days** (medium). Calm on its 14th day shows the headline, the wingbeat with Lumi and your
   butterfly, a bow tie for Lumi, the chrysalis, a bee, a birdhouse, then three feelings and Continue: the last feeling sits under the
   fixed Continue until scrolled. A Maths checkpoint has three chips, the wingbeat, a skin and four lines. About ten things now grow,
-  arrive or unlock, and on these days most of them arrive at once.
+  arrive or unlock, and on these days most of them arrive at once. **Fixed** (fix/walk-findings): two lines and "and N more" on a
+  practice end screen, and its coach drawn smaller and higher, so all three feelings sit above Continue at 412x786.
 - **Home for someone 30 days in** (low, crowding): garden strip, seven tabs, the course and Games rows (Learning), the greeting, the
   butterfly and streak line, the raising line, then the path. The path starts below half the screen.
 - **Numbers still show for the other habits** next to a quiet one (by design: only Calm, Reflect and Wind down are quiet), so a
   30-day home reads "Move 30", "Walk 30", "Learning 31" beside Calm's dot. Fine; noted because the plan's "no count" reads wider.
 - **No way into the wardrobe from home**: it is in ⋯ (last, under Garden) and on the garden screen. Fine if intended.
 - **"Moves need space, so check there's room around you"** shows during Seated march and the other chair moves (low).
+  **Fixed** (fix/walk-findings): left off a routine done all on a chair (`needsRoom()`).
 - **Sit to stand: Clover stays seated** in the still we caught, and heel raises, side leg lifts and one-leg stand look alike at the
-  wall (low; motion may tell them apart).
+  wall (low; motion may tell them apart). **Fixed** (fix/walk-findings): sampled across a rep, Clover barely rose or lifted a foot.
+  She now sits lower on a lower seat and stands up on long legs, rises tall onto her toes, lifts a leg well out, and holds a foot
+  clear of the floor.
 - **Floss's 🦷 and Music's 🎵 are faint**: white on white on the tab, and the note is dark on the pressed tab's dark green (low).
+  **Fixed** (fix/walk-findings): 🪥 and 🎸, which read on a light, a dark and a pressed tab.
 - **Seven skins**: worn on home (Reflect's path) and on the end screen; in the garden Lumi is in the pond and not dressed, as
   CLAUDE.md says. A skin worn hides the butterfly that sits on Lumi's head in the intro (intro only shows on a first visit).
+  **Fixed** (fix/walk-findings): the learner's butterfly rides on Lumi's head wherever she is drawn dressed, on top of a hat or the
+  crown, in every skin but the costume.
 - **Dark theme** (emulated: `cmd uimode night yes` turns Chrome's bar dark but the page keeps `prefers-color-scheme: light` on
   this emulator, so `looks` tells the page directly). Everything reads, with two weak spots (low): the pressed tab is white text on a
-  light green, and the wardrobe's dimmed skins turn into grey blobs on the dark card.
+  light green, and the wardrobe's dimmed skins turn into grey blobs on the dark card. **Fixed** (fix/walk-findings): the pressed
+  tab's words measure 6.6:1 (5.0:1 in light); its quiet dot, 2.3:1 on the green, now has a ring of the page round it. A skin not yet
+  given keeps its shape and full tone, its colour muted (Lumi 3.9:1 on the dark card; it was faded to grey).
 - **Large text not checked**: setting `font_scale 1.3` mid-run closes Chrome's page under Playwright (twice, `LOOKS=large npm run
   phone -- looks`). It needs the setting before Chrome starts, which the runner doesn't offer.
 - **The garden's Learning card lists every flower** (low, crowding): a finished Maths adds ten "A flower opened for …" lines, one
-  per unit, under the Learning plant, pushing the other plants' cards far down.
+  per unit, under the Learning plant, pushing the other plants' cards far down. **Fixed** (fix/walk-findings): past three, one line
+  with the number.
 - **The live site** (knowhowit.com.au/wingbeat, serving today's `main`: `src/cast/skins.js` and the changed modules match):
   `first-visit`, `walkthrough`, `butterfly`, `garden`, `wardrobe` and `log` all pass with no page error or failed request. The
   first attempt failed at once with `ERR_NAME_NOT_RESOLVED` inside the fresh emulator; the retry was clean.

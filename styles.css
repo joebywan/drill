@@ -44,7 +44,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* Headings take focus when a screen opens, for screen readers; they aren't controls. */
 [tabindex="-1"]:focus { outline: none; }
 /* Fixed footers cover the bottom of the page: keep a focused control clear of them. */
-html { scroll-padding-bottom: 160px; }
+html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 
 .bar {
   display: flex; align-items: center; gap: 12px;
@@ -57,7 +57,7 @@ html { scroll-padding-bottom: 160px; }
 .meter { flex: 1; height: 12px; border-radius: 6px; background: var(--line); overflow: hidden; }
 .fill { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
 
-.home { padding: 0 16px 120px; }
+.home { padding: 0 16px calc(120px * var(--text-scale, 1)); }
 .street h2 {
   margin: 28px auto 12px; width: fit-content; padding: 6px 16px; border-radius: 999px;
   background: var(--card); border: 1px solid var(--line); font-size: 1rem;
@@ -68,10 +68,12 @@ html { scroll-padding-bottom: 160px; }
 .trail .ahead { stroke: var(--line); }
 .trail .walked { stroke: var(--accent); opacity: .55; }
 .path { position: relative; list-style: none; margin: 0; padding: 0; }
-.path li { position: relative; width: fit-content; margin-inline: auto; height: 112px; display: flex; flex-direction: column; align-items: center; transform: translateX(var(--x)); }
+.path li { position: relative; width: fit-content; margin-inline: auto; height: calc(112px * var(--text-scale, 1)); display: flex; flex-direction: column; align-items: center; transform: translateX(var(--x)); }
 /* Quest markers: a raised round button, "!" until done, then a tick. */
 .node {
-  width: 64px; height: 64px; flex: none; border-radius: 50%; border: 0; padding: 0;
+  /* Grows with the phone's font size (--text-scale, app.js), so its mark stays inside it. The WebView's text zoom
+     already scales a px line-height, so that one stays as it is. */
+  width: calc(64px * var(--text-scale, 1)); height: calc(64px * var(--text-scale, 1)); flex: none; border-radius: 50%; border: 0; padding: 0;
   font-size: 32px; font-weight: 900; line-height: 64px;
   background: var(--card); color: #B9741A; box-shadow: inset 0 0 0 4px #F5A524, 0 5px 0 #C77B2F;
 }
@@ -81,11 +83,11 @@ html { scroll-padding-bottom: 160px; }
 .node:active:not(:disabled) { transform: translateY(4px); box-shadow: none; }
 @keyframes beckon { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-5px) scale(1.05); } } /* the next node gently bobs */
 @media (prefers-reduced-motion: reduce) { .node.here { animation: none; } }
-.path .label { margin-top: 10px; max-width: 120px; padding: 1px 6px; border-radius: 6px; background: var(--bg); font-size: .8rem; color: var(--muted); text-align: center; }
+.path .label { margin-top: 10px; max-width: calc(120px * var(--text-scale, 1)); /* as wide as its text is big: the same lines, so the row holds it */ padding: 1px 6px; border-radius: 6px; background: var(--bg); font-size: .8rem; color: var(--muted); text-align: center; }
 .path li:has(.here) .label { color: var(--text); font-weight: 700; }
 .guide { position: absolute; top: -6px; width: 72px; }
-.guide.left { right: 50%; margin-right: 40px; }
-.guide.right { left: 50%; margin-left: 40px; }
+.guide.left { right: 50%; margin-right: calc(32px * var(--text-scale, 1) + 8px); } /* half a node, and 8px */
+.guide.right { left: 50%; margin-left: calc(32px * var(--text-scale, 1) + 8px); }
 .guide svg { display: block; width: 100%; transform-origin: 50% 100%; }
 .due {
   display: block; margin: 0 auto 8px; padding: 6px 12px; border-radius: 999px; font-size: .85rem; font-weight: 600;
@@ -104,7 +106,7 @@ html { scroll-padding-bottom: 160px; }
   border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-text); font-weight: 700;
 }
 
-.play { padding: 0 16px 220px; display: flex; flex-direction: column; }
+.play { padding: 0 16px calc(220px * var(--text-scale, 1)); display: flex; flex-direction: column; }
 .topic { font-weight: 700; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 4px 0 8px; }
 .coach { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 12px; }
 .who { flex: none; width: 64px; padding: 0; border: 0; background: none; }
@@ -246,7 +248,7 @@ html { scroll-padding-bottom: 160px; }
 }
 .meter[data-heat="2"] .flare { background: var(--heat-ember); }
 
-.summary { padding-bottom: 110px; }
+.summary { padding-bottom: calc(110px * var(--text-scale, 1)); }
 .duo { position: relative; display: flex; justify-content: center; align-items: flex-end; gap: 4px; margin: 8px auto 4px; }
 .duo .hero { margin: 0; }
 .duo .rosa { width: 132px; }
@@ -315,6 +317,8 @@ html { scroll-padding-bottom: 160px; }
 .path-tab b.streak-bright { color: var(--streak); }
 /* A quiet habit's number is hidden: a dot in today's light instead. */
 .path-tab b:empty { min-width: 0; width: .55em; height: .55em; padding: 0; border: 0; background: currentColor; vertical-align: middle; }
+/* On the pressed tab's green the dot keeps a ring of the page, as the number keeps its pill, so it shows in both themes. */
+.path-tab[aria-pressed="true"] b:empty { box-shadow: 0 0 0 2px var(--bg); }
 .streak-line, .link {
   display: block; margin: 10px auto 0; padding: 6px 12px; border: 0; border-radius: 999px; background: none;
   color: var(--muted); font-size: .9rem; text-decoration: underline; text-underline-offset: 3px;
@@ -368,7 +372,9 @@ html { scroll-padding-bottom: 160px; }
 .bubble-tap { width: 60px; height: 60px; border-radius: 50%; border: 3px dashed var(--calm); background: var(--card); }
 .bubble-tap[aria-pressed="true"] { border-style: solid; background: var(--calm); }
 
-.practice-end .hero { width: 130px; }
+/* Smaller and higher than a lesson's, so two arrival lines and all three feelings sit above Continue at 412x786. */
+.practice-end { padding-top: 12px; }
+.practice-end .hero { width: 100px; }
 .chip.calm { --c: var(--chip-calm); flex: 0 1 180px; margin: 0 auto; }
 
 /* ---- Screen break: the step list in its own blue ---- */
@@ -495,7 +501,7 @@ html { scroll-padding-bottom: 160px; }
 .survey .link { display: block; margin: 16px auto 0; }
 
 /* The first-visit intro (app.js intro, want): a list of what Wingbeat does, then two branches of picks. */
-.intro { padding-bottom: 150px; } /* room to scroll the last line above the button bar */
+.intro { padding-bottom: calc(150px * var(--text-scale, 1)); } /* room to scroll the last line above the button bar */
 /* A solid bar, so a long list scrolls under it instead of showing through the fade. */
 .intro + .cta { padding-top: 12px; background: var(--bg); border-top: 1px solid var(--line); }
 .does { margin: 0; padding: 0; list-style: none; text-align: left; }
@@ -800,7 +806,7 @@ body:has(main.night) {
 .cta .links .link { margin: 4px 0 0; }
 .habit .usual { margin: 4px 0 0; color: var(--muted); }
 .paused { margin-top: 16px; }
-.home:has(~ .cta :is(.short, .offer, .choose)) { padding-bottom: 170px; } /* room for the offer under Continue */
+.home:has(~ .cta :is(.short, .offer, .choose)) { padding-bottom: calc(170px * var(--text-scale, 1)); } /* room for the offer under Continue */
 
 /* ---- Sync and friends (src/sync/ui.js): pairing and recovery codes, the friend list. ---- */
 .survey.sync { text-align: left; }
@@ -874,7 +880,7 @@ body:has(main.night) {
 .next-step { margin: 8px 0 0; color: var(--muted); }
 /* A timed routine's pause: small and round, beside the coach. Nothing waits at the bottom of the screen. */
 .play:has(.practice-pause) { position: relative; padding-bottom: 16px; }
-.play:has(.focus-early) { padding-bottom: 90px; } /* its "I'm done" stays in the thumb zone */
+.play:has(.focus-early) { padding-bottom: calc(90px * var(--text-scale, 1)); } /* its "I'm done" stays in the thumb zone */
 .play:has(.practice-pause) .coach:not(.demonstrates) { padding-right: 54px; }
 .practice-pause { position: absolute; top: 32px; right: 16px; z-index: 1; width: 44px; height: 44px; margin: 0; padding: 0; border-radius: 50%; font-size: 1rem; }
 /* Level with the X, on the other side of a coach the learner copies. */
@@ -1007,7 +1013,8 @@ li.skin-card { border-radius: 12px; border: 2px dashed var(--line); color: var(-
 .skin-card small { font-weight: 400; color: var(--muted); font-size: .85rem; }
 .skin-card[aria-pressed="true"] { border-color: var(--accent); }
 .skin-card[aria-pressed="true"] > span::after { content: ' ✓'; color: var(--accent); }
-.skin-card.later svg { opacity: .4; filter: grayscale(.6); }
+/* Not given yet: quiet but still itself. Muted colour, never faded, so Lumi keeps 3:1 against the card in the dark too. */
+.skin-card.later svg { filter: saturate(.35); }
 .arrival svg.cast { height: 34px; }
 /* Choosing another routine (CHOOSE_WORDS): the sheet's unit headings, and the quiet "counted" line with its Undo. */
 .add-habit h2 { margin: 20px 0 0; font-size: 1rem; text-align: left; color: var(--muted); }

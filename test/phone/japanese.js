@@ -3,6 +3,7 @@
 // the TTS engine, so its stream is checked as well as Chrome's). Then a later kana lesson and a
 // sentence lesson, opened by marking everything before them done, with nothing poking out sideways.
 import { readFileSync } from 'node:fs';
+import { streamStarted } from '../../tools/sound.js';
 
 const course = JSON.parse(readFileSync(new URL('../../src/data/japanese.json', import.meta.url)));
 const lessons = course.units.flatMap((u) => [...u.lessons, ...(u.lessons.length > 1 ? [{ id: `${u.lessons[0].id}-checkpoint` }] : [])]);
@@ -30,12 +31,10 @@ export default async ({ page, adb, touch, btn, shot, run, seed, check }) => {
     // "Hear it again" is a real tap, so speech has the user activation Chrome asks for. Then the
     // TTS engine's (or Chrome's) audio stream is started while it plays.
     await touch(btn('Hear it again'));
-    const uids = ['com.android.chrome', 'com.google.android.tts'].flatMap((p) =>
-      adb('shell', 'cmd', 'package', 'list', 'packages', '-U', p).match(/uid:\d+/g)?.map((u) => u.slice(4)) || []);
     let started = false, speaking = false;
     for (let i = 0; i < 8 && !started; i++) {
       speaking ||= await page.evaluate(() => speechSynthesis.speaking);
-      started = adb('shell', 'dumpsys', 'audio').split('\n').some((l) => l.includes('state:started') && uids.some((u) => l.includes(`u/pid:${u}/`)));
+      started = streamStarted(adb);
       if (!started) await new Promise((r) => setTimeout(r, 250));
     }
     check('speech: speechSynthesis.speaking after "Hear it again"', speaking);

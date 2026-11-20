@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import { EVENTS } from '../src/garden/events.js';
 import assert from 'node:assert/strict';
 import { emptyProgress, finishPractice, finishSession, migrate } from '../src/progress.js';
-import { LANDMARKS, LIFE, LIFE_WORDS, RULES, STAGES, award, courseStage, creatures, garden, gardenDays, grown, guide, mood, raisers, stage } from '../src/garden/model.js';
+import { LANDMARKS, LIFE, LIFE_WORDS, RULES, STAGES, award, listed, courseStage, creatures, garden, gardenDays, grown, guide, mood, raisers, stage } from '../src/garden/model.js';
 import { SPECIES } from '../src/cast/butterfly.js';
 import { subjects } from '../src/subjects.js';
 
@@ -59,7 +59,7 @@ test('achievements: a flower per finished unit, an egg on the first day, a bee f
   assert.deepEqual(progress.garden.earned, { 'bee:calm': '2026-10-01', 'egg:calm': '2026-10-01', [`flower:calm:${unit.title}`]: '2026-10-01' });
   assert.deepEqual(award(progress, day(1)).newly, [], 'earned once');
   progress = practise(progress, 'calm', 6, 2);
-  assert.deepEqual(award(progress, day(7)).newly.map((r) => r.id), ['hatched:calm', 'garden:path', 'skin:daisy'], 'and 7 days bring the path, and a daisy for Lumi');
+  assert.deepEqual(award(progress, day(7)).newly.map((r) => r.id), ['hatched:calm', 'skin:daisy', 'garden:path'], 'and 7 days bring the path, and a daisy for Lumi');
   assert.equal(award(practise(emptyProgress(), 'learn', 1), day(1)).newly.length, 0, 'no bee and no egg for Learning itself');
   const g = garden(award(practise(emptyProgress(), 'move', 30), day(30)).progress, day(30)).plants.find((x) => x.habit === 'move');
   assert.deepEqual(g.visitors.map((v) => v.gift), ['bee']);
@@ -208,4 +208,24 @@ test('the field guide has every species once: raised, being raised, or what woul
   assert.equal(LIFE_WORDS.by(null), 'Raised by a habit of your own');
   assert.equal(LIFE_WORDS.raising(of('move').creature), 'Move is raising a Wanderer');
   assert.equal(LIFE_WORDS.raising(of('calm').creature), 'Calm raised a Common Brown');
+});
+
+test('arrivals: the biggest moment first (a stage, then a skin, a landmark, a visitor, a flower), and an end screen lists only so many', () => {
+  // A whole Maths course at once: ten flowers, the chrysalis passed, the butterfly out, and Lumi's daisy and costume.
+  const maths = subjects.find((s) => s.id === 'maths');
+  let p = emptyProgress();
+  for (const u of maths.units) for (const l of u.lessons) p = finishSession(p, `maths:${l.id}`, [], day(1));
+  p = practise(p, 'calm', 14, 2);
+  const { newly } = award(p, day(15));
+  const ids = newly.map((r) => r.id);
+  assert.deepEqual(ids.slice(0, 3), ['emerged:maths', 'chrysalis:calm', 'skin:daisy']);
+  const kind = (id) => id.split(':')[0];
+  const order = ['emerged', 'chrysalis', 'skin', 'garden', 'bee', 'flower'];
+  assert.deepEqual(ids.map(kind).filter((k, i, a) => a.indexOf(k) === i), order.filter((k) => ids.some((id) => kind(id) === k)), 'grouped in that order');
+  assert.ok(ids.indexOf('garden:path') < ids.indexOf('bee:calm') && ids.indexOf('bee:calm') < ids.findIndex((id) => id.startsWith('flower:')));
+  const lesson = listed(newly);
+  assert.deepEqual(lesson.shown.map((r) => r.id), ids.slice(0, 3), 'three lines after a lesson, skins included');
+  assert.equal(lesson.more, newly.length - 3);
+  assert.deepEqual(listed(newly, 2).shown.map((r) => r.id), ['emerged:maths', 'chrysalis:calm'], 'two above "How do you feel?"');
+  assert.deepEqual(listed(newly.slice(0, 2), 2), { shown: newly.slice(0, 2), more: 0 }, 'no "more" line when everything fits');
 });

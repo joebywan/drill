@@ -4466,7 +4466,7 @@
                   "This is tea."
                 ]
               ],
-              "explain": "これは ねこです This is a cat., これは いぬです This is a dog., これは おちゃです This is tea.."
+              "explain": "これは ねこです This is a cat, これは いぬです This is a dog, これは おちゃです This is tea."
             }
           ]
         },
@@ -4567,7 +4567,7 @@
                   "This is my grandchild."
                 ]
               ],
-              "explain": "わたしは おばあちゃんです I am Grandma., わたしは おじいちゃんです I am Grandpa., これは まごです This is my grandchild.."
+              "explain": "わたしは おばあちゃんです I am Grandma, わたしは おじいちゃんです I am Grandpa, これは まごです This is my grandchild."
             }
           ]
         },
@@ -4692,7 +4692,7 @@
                   "I am Grandpa."
                 ]
               ],
-              "explain": "これは みずです This is water., これは りんごです This is an apple., わたしは おじいちゃんです I am Grandpa.."
+              "explain": "これは みずです This is water, これは りんごです This is an apple, わたしは おじいちゃんです I am Grandpa."
             }
           ]
         }
