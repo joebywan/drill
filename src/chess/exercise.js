@@ -35,8 +35,8 @@ const FRAME = 8.7; // a board is its eight squares and a frame of about 0.7 of o
  * Keeps the board on the screen. Asked, the coach's words and the whole board show together (the page has
  * nothing to scroll), the board giving up size down to SQUARE_MIN squares (to tap) to do it; answered (or a teach card),
  * the whole board sits above the verdict banner, and nobody needs to tap it then, so it may shrink further.
- * A board that already fits is left as it is. The coach and the gaps compact themselves in styles.css on a
- * short phone. Returns `stop`, with `refit` and the `ctx` to mount with (its say and done refit afterwards).
+ * A board that already fits is left as it is; one that does not first compacts the coach and the gaps (`tall`, styles.css).
+ * Returns `stop`, with `refit` and the `ctx` to mount with (its say and done refit afterwards).
  */
 function fitBoard(boardEl, choices, item, ctx) {
   const refit = () => {
@@ -44,10 +44,13 @@ function fitBoard(boardEl, choices, item, ctx) {
     boardEl.style.width = '';
     const natural = boardEl.getBoundingClientRect().width;
     const foot = document.querySelector('.foot.show');
+    const tapped = ['tap', 'move', 'stars', 'find'].includes(kind(item)); // a true/false board is only looked at
     const tray = choices.isConnected && choices.children.length ? choices.offsetHeight : 0;
     const low = innerHeight - (foot ? foot.offsetHeight : tray);
-    const room = low - boardEl.getBoundingClientRect().top - 6;
-    const tapped = ['tap', 'move', 'stars', 'find'].includes(kind(item)); // a true/false board is only looked at
+    const roomNow = () => low - boardEl.getBoundingClientRect().top - 6;
+    // Too tall for the screen: first the coach and the gaps give way (the shared `.tall` rules in styles.css), then the board.
+    if (roomNow() < natural && !(foot && tapped)) boardEl.classList.add('tall');
+    const room = roomNow();
     const least = foot || !tapped ? 150 : SQUARE_MIN * FRAME;
     const side = Math.floor(Math.min(natural, Math.max(room, least)));
     if (side < natural) { boardEl.style.width = `${side}px`; boardEl.style.marginInline = 'auto'; }
