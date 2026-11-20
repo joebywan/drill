@@ -147,7 +147,8 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
 - [x] **T4. Course and habit butterflies.** (#138) The stages on the path and in the garden, emerged
   butterflies with Lumi, and the field guide. Needs T1.
 - [x] **T5. Lumi's skins**, (#144) with a wardrobe to choose from. After T3 and T4.
-- [ ] **T6. The cast brief, README and CLAUDE.md** brought up to date. Last.
+- [x] **T6. The cast brief, README and CLAUDE.md** (#149, #159, #163) brought up to date. The brief's new
+  section is "The name".
 
 **Habits**
 
@@ -180,8 +181,18 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
 
 - [x] **F1. The end screen, Move, the tabs, the dark theme and Lumi's butterfly.** (#153)
 - [x] **F2. The Android app:** the phone's font size, the widget, and night mode confirmed. (#155)
-- [ ] **F3. Japanese and Maths:** an answer option that ran off the screen; sentence builds and
-  fraction bars on a short phone.
-- [ ] **F4. Chess on a short phone,** and the coach's line going stale once a puzzle is solved.
-- [ ] **F5. The code courses:** what a Run printed hidden under the verdict, tall programs, the tray
-  cutting a row of chips in half.
+- [x] **F3. Japanese and Maths:** (#160) an answer option that ran off the screen now wraps onto another
+  row; sentence builds and fraction bars fit on a short phone.
+- [x] **F4. Chess on a short phone:** (#162) the whole board sits above the verdict, and the coach's line
+  no longer goes stale once a puzzle is solved.
+- [x] **F5. The code courses:** (#161) what a Run printed shows under the goal, tall programs fit, and the
+  tray shows whole rows of chips.
+
+**Waiting on the owner** (found by playing, not changed)
+
+- Home is crowded for someone 30 days in: on Learning the path starts below the middle of the screen.
+  About ten things in the app now grow, arrive or unlock. A pass to take things off home is suggested,
+  not started.
+- The wardrobe opens from ⋯ and from the garden, not from home itself.
+
+What is still open and small is in TODO.md, in each "played" block.
