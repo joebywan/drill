@@ -39,7 +39,12 @@ export default async ({ page, adb, touch, btn, shot, run, seed, check, calibrate
       const square = (sq) => page.locator(`.board rect[data-square="${sq}"]`);
       await touch(square(wrong.from)); await touch(square(wrong.to)); await run(600);
       await shot(`${id}-${item.id}-missed`);
-      for (const m of line) { await touch(square(m.from)); await touch(square(m.to)); await run(900); }
+      const PIECES = { q: 'Queen', r: 'Rook', b: 'Bishop', n: 'Knight' };
+      for (const m of line) {
+        await touch(square(m.from)); await touch(square(m.to));
+        if (m.promotion) await touch(page.locator(`.promotion-dialog-button-group[aria-label="${PIECES[m.promotion]}"]`));
+        await run(900);
+      }
       await page.locator('.foot.show').waitFor({ timeout: 30000 });
       await run(900);
       await shot(`${id}-${item.id}-explained`);
