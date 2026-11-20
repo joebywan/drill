@@ -32,3 +32,21 @@ jobs:
         run: npm test --prefix server
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
+
+  # The same browser suite in Firefox (silent: playwright.firefox.config.js cuts off sound and speech).
+  e2e-firefox:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+
+      - run: npm ci
+      - run: npx playwright install --with-deps firefox
+      - run: npm run e2e:firefox
