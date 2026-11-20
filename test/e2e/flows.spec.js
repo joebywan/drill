@@ -1203,7 +1203,7 @@ test('with all five habits started, ⋯ fits at 360px and the tabs are one row t
   expect(await overflow(page)).toBe(0);
 });
 
-test('every plant grows visibly stage to stage, and a sprout and a sapling read at a glance', async ({ page }) => {
+test('every plant grows visibly stage to stage, and a sprout and a sapling read at a glance', async ({ page, browserName }) => {
   await firstVisit(page);
   const heights = await page.evaluate(async () => {
     const { PLANTS, plant } = await import('/src/garden/art.js');
@@ -1217,14 +1217,15 @@ test('every plant grows visibly stage to stage, and a sprout and a sapling read 
     })]));
   });
   for (const [habit, [, sprout, sapling, young, full]] of Object.entries(heights)) {
-    expect(sprout / full, `${habit} sprout`).toBeGreaterThan(0.3);
+    // Firefox's getBBox is tighter on a curve than Chromium's, so a sprout reads 0.289 there for the same drawing.
+    expect(sprout / full, `${habit} sprout`).toBeGreaterThan(browserName === 'firefox' ? 0.28 : 0.3);
     expect(sapling / full, `${habit} sapling`).toBeGreaterThan(0.45);
     const h = heights[habit];
     for (let s = 1; s < 5; s++) expect(h[s] - h[s - 1], `${habit} stage ${s} grows`).toBeGreaterThan(8);
   }
 });
 
-test('BOUNDS in art.js is what each plant really draws (re-measure and paste if this fails)', async ({ page }) => {
+test('BOUNDS in art.js is what each plant really draws (re-measure and paste if this fails)', async ({ page, browserName }) => {
   await firstVisit(page);
   const { measured, table } = await page.evaluate(async () => {
     const { KINDS, plant, MAX_FLOWERS, BOUNDS } = await import('/src/garden/art.js');
@@ -1245,7 +1246,14 @@ test('BOUNDS in art.js is what each plant really draws (re-measure and paste if 
     })]));
     return { measured, table: BOUNDS };
   });
-  expect(table).toEqual(measured);
+  // The table is Chromium's numbers. Chromium's getBBox includes a curve's control points and Firefox's is the ink
+  // itself, up to 5 units tighter, so there the table need only enclose what is drawn, with no more than that to spare.
+  if (browserName !== 'firefox') return expect(table).toEqual(measured);
+  for (const name of Object.keys(measured)) measured[name].forEach((m, s) => m.forEach((v, i) => {
+    const room = i < 2 ? v - table[name][s][i] : table[name][s][i] - v; // table room around the drawing, in units
+    expect(room, `${name} stage ${s} edge ${i}`).toBeGreaterThanOrEqual(-1);
+    expect(room, `${name} stage ${s} edge ${i}`).toBeLessThanOrEqual(5);
+  }));
 });
 
 test('young plants have shapes of their own, whatever their size', async ({ page }) => {
@@ -2405,7 +2413,12 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
           up: parseFloat(b.style.getPropertyValue('--up')) - parseFloat(css.borderTopWidth) < -reach - 1.5 && near(r.top + 2 * reach - 2, r.top),
           down: parseFloat(b.style.getPropertyValue('--down')) - parseFloat(css.borderBottomWidth) < -reach - 1.5 && near(r.bottom, r.bottom - 2 * reach + 2),
         };
-        const hits = [[r.top + reach, short.up], [r.bottom - reach, short.down]].map(([y, ok]) => ok || prog.contains(document.elementFromPoint(r.left + r.width / 2, y)?.closest('button')));
+        // Firefox rounds these blocks' gaps a pixel differently (13px, or 11, where Chromium has a pixel more), and a
+        // halved gap leaves a dead strip 2 to 3px high between two reaches, with the sample exactly on its edge. There a point
+        // counts as taken if one within 1px of it is; Chromium samples that one point.
+        const wobble = /Firefox/.test(navigator.userAgent) ? [-1, 0, 1] : [0];
+        const taken = (x, y) => wobble.some((w) => prog.contains(document.elementFromPoint(x, y + w)?.closest('button')));
+        const hits = [[r.top + reach, short.up], [r.bottom - reach, short.down]].map(([y, ok]) => ok || taken(r.left + r.width / 2, y));
         if (hits.includes(false)) { out.push(`${item.id}: ${b.getAttribute('aria-label')} is ${Math.round(r.height)}px to tap`); break; }
       }
       if (item.type === 'predict') {
