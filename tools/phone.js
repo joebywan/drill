@@ -12,13 +12,18 @@
  * run several times over, and shuts it down at the end, then lets go of the lock, on error and Ctrl-C
  * too. Screenshots: test-results/phone/<scenario>/NN-name.png. A scenario gets the same helpers for an app's
  * WebView from `attach(pkg)` once the app is up (test/phone/app.js).
+ * `--browser firefox` plays the same scenarios in Firefox for Android instead: its APK (FIREFOX_APK, else the newest
+ * ~/Android/wingbeat-test/fenix-*.apk) is installed on the read-only emulator for the run, and the page is driven
+ * through tools/bridge.js, a script the test server adds to the page, since Firefox does not speak Playwright's
+ * protocol; `--browser chrome-bridge` drives Chrome the same way. PHONE_FONT=1.3 sets the phone's font size first.
  * Exits non-zero on page errors or a failed device check.
  */
 import { execFileSync, spawn } from 'node:child_process';
-import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { homedir, tmpdir } from 'node:os';
 import { _android as android } from 'playwright';
+import { bridged } from './bridge.js';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const SDK = process.env.ANDROID_HOME || `${homedir()}/Android/Sdk`;
@@ -30,6 +35,18 @@ const args = process.argv.slice(2);
 const option = (name) => { const at = args.indexOf(name); return at >= 0 ? args.splice(at, 2)[1] : null; };
 let base = option('--url');
 const AVD = option('--avd') || process.env.PHONE_AVD || 'splendor36';
+// The browser: Chrome through Playwright, or a package driven through the bridge (tools/bridge.js).
+const BROWSER = option('--browser') || process.env.PHONE_BROWSER || 'chrome';
+const BRIDGED = { firefox: 'org.mozilla.firefox', 'chrome-bridge': 'com.android.chrome' };
+if (BROWSER !== 'chrome' && !BRIDGED[BROWSER]) { console.error(`--browser is chrome, firefox or chrome-bridge, not ${BROWSER}`); process.exit(2); }
+const PKG = BRIDGED[BROWSER] ?? 'com.android.chrome';
+const firefoxApk = () => {
+  if (process.env.FIREFOX_APK) return process.env.FIREFOX_APK;
+  const dir = `${homedir()}/Android/wingbeat-test/`;
+  const apk = (existsSync(dir) ? readdirSync(dir) : []).filter((f) => /^fenix-.*\.apk$/.test(f)).sort((a, b) => a.localeCompare(b, 'en', { numeric: true })).at(-1);
+  if (!apk) throw new Error(`no Firefox APK: set FIREFOX_APK or put fenix-*.apk in ${dir}`);
+  return dir + apk;
+};
 const all = readdirSync(`${ROOT}test/phone`).filter((f) => f.endsWith('.js')).map((f) => f.slice(0, -3));
 const names = args.length ? args : all.filter((n) => !n.endsWith('-all')); // `-all` scenarios play a whole course: ask for them by name
 const unknown = names.filter((n) => !all.includes(n));
@@ -86,10 +103,17 @@ try {
   const port = await takeSlot();
   // Serve this checkout unless told where to go.
   let served = null; // the local port, forwarded to the phone once it is up
-  if (!base) {
+  let bridge = null; // in a bridged browser: the server, which carries the page's bridge, and its `page`
+  if (!base || BRIDGED[BROWSER]) {
     const port = await new Promise((r) => { const s = createServer().listen(0, () => { const { port } = s.address(); s.close(() => r(port)); }); });
-    const server = spawn(process.execPath, [`${ROOT}tools/serve.js`], { env: { ...process.env, HOST: '0.0.0.0', PORT: String(port) }, stdio: 'ignore' });
-    cleanup.push(() => server.kill());
+    if (BRIDGED[BROWSER]) {
+      if (base) throw new Error('--url: a bridged browser plays this checkout, served with its bridge');
+      bridge = await bridged(port, (url) => launch(url));
+      cleanup.push(() => bridge.close());
+    } else {
+      const server = spawn(process.execPath, [`${ROOT}tools/serve.js`], { env: { ...process.env, HOST: '0.0.0.0', PORT: String(port) }, stdio: 'ignore' });
+      cleanup.push(() => server.kill());
+    }
     served = port;
   }
 
@@ -124,6 +148,13 @@ try {
     await sleep(1000);
   }
 
+  if (BROWSER === 'firefox') {
+    const apk = firefoxApk();
+    console.log(`installing ${apk.split('/').at(-1)} (gone when the read-only emulator shuts down)…`);
+    adb('install', '-r', '-g', apk); // -g: its runtime permissions granted, so Android's own notification dialog doesn't stand over the page
+  }
+  if (process.env.PHONE_FONT) adb('shell', 'settings', 'put', 'system', 'font_scale', process.env.PHONE_FONT);
+
   // localhost on the phone is this machine's port: a secure context, unlike http://10.0.2.2.
   if (served) {
     adb('reverse', `tcp:${served}`, `tcp:${served}`);
@@ -132,14 +163,17 @@ try {
   }
 
   // Ours among the emulators up. Listing asks each one its model, so one shutting down in another slot can fail it: ask again.
-  let device = null;
+  let device = null, ctx = null;
+  if (bridge) device = { screenshot: async ({ path }) => writeFileSync(path, execFileSync(`${SDK}/platform-tools/adb`, ['-s', serial, 'exec-out', 'screencap', '-p'], { maxBuffer: 1 << 28 })) };
   for (let i = 0; !device; i++) {
     try { device = (await android.devices()).find((d) => d.serial() === serial); } catch (e) { if (i === 5) throw e; }
     if (!device) { if (i === 5) throw new Error(`${serial} is not among adb's devices`); await sleep(1000); }
   }
-  const ctx = await device.launchBrowser();
-  // At most 10 s: Chrome may have frozen its page while an app was in front, and then closing it never returns.
-  cleanup.unshift(() => Promise.race([(async () => { for (const p of ctx.pages()) await p.close(); await ctx.close(); await device.close(); })(), sleep(10_000)]));
+  if (!bridge) {
+    ctx = await device.launchBrowser();
+    // At most 10 s: Chrome may have frozen its page while an app was in front, and then closing it never returns.
+    cleanup.unshift(() => Promise.race([(async () => { for (const p of ctx.pages()) await p.close(); await ctx.close(); await device.close(); })(), sleep(10_000)]));
+  }
   const errors = [], requests = [];
   const results = [];
   const check = (name, ok, detail = '') => { results.push(`${ok ? 'PASS' : 'FAIL'} ${name}${detail ? ` (${detail})` : ''}`); failed ||= !ok; };
@@ -151,13 +185,56 @@ try {
     }
     return '';
   };
-  // Chrome's own prompts ("Chrome notifications make things easier", …) sit over the page.
+  /** The screen's nodes: text, content-desc, resource-id, centre, and whether the page drew it (under a WebView or GeckoView). */
+  const uiNodes = (xml) => {
+    const out = [];
+    const un = (s) => s.replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+    let depth = 0, inside = Infinity; // the depth of the page's view, while in it
+    for (const m of xml.matchAll(/<(\/?)node\b([^>]*?)(\/?)>/g)) {
+      if (m[1]) { if (depth === inside) inside = Infinity; depth--; continue; }
+      const d = depth + 1;
+      const a = (k) => un(m[2].match(new RegExp(` ${k}="([^"]*)"`))?.[1] ?? '');
+      if (inside === Infinity && /GeckoView|android\.webkit\.WebView/.test(a('class'))) inside = d;
+      const b = a('bounds').match(/\d+/g)?.map(Number) ?? [0, 0, 0, 0];
+      out.push({ text: a('text'), desc: a('content-desc'), rid: a('resource-id'), cls: a('class'), page: d >= inside, at: [(b[0] + b[2]) >> 1, (b[1] + b[3]) >> 1], box: { left: b[0], top: b[1], right: b[2], bottom: b[3] } });
+      if (!m[3]) depth = d; else if (inside === d) inside = Infinity;
+    }
+    return out;
+  };
+  // The browser's own prompts sit over the page: Chrome's ("Chrome notifications make things easier", …) and Firefox's first run.
+  // Chrome's own views have a resource-id, the page's (e.g. a × labelled "No thanks") none; Firefox's are those outside its GeckoView.
+  const PROMPTS = BROWSER === 'firefox' ? ['Not now', 'Not Now', 'No thanks', 'No, thanks', 'Skip', 'Maybe later', 'Dismiss', 'Got it'] : ['No thanks', 'No, thanks', 'Not now'];
+  const own = (node) => (BROWSER === 'firefox' ? !node.page : !!node.rid);
+  /** Taps the browser's own control (never the page's) whose text or description `label` matches: true if there was one. */
+  const tapUi = async (label, xml) => {
+    const hit = uiNodes(xml ?? await screenXml()).find((x) => own(x) && [x.text, x.desc].some((t) => (label instanceof RegExp ? label.test(t) : t === label)));
+    if (!hit) return false;
+    adb('shell', 'input', 'tap', String(hit.at[0]), String(hit.at[1])); await sleep(800);
+    return true;
+  };
   const declinePrompts = async () => {
-    for (const label of ['No thanks', 'No, thanks', 'Not now']) {
-      const ui = await screenXml();
-      // Chrome's own views have a resource-id; the page's (e.g. a × labelled "No thanks") have none.
-      const m = ui.match(new RegExp(`text="${label}" resource-id="[^"]+"[^>]*bounds="\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]"`));
-      if (m) { adb('shell', 'input', 'tap', String((+m[1] + +m[3]) >> 1), String((+m[2] + +m[4]) >> 1)); await sleep(800); console.log(`  declined Chrome prompt: ${label}`); }
+    for (let i = 0; i < 6; i++) {
+      const xml = await screenXml();
+      const label = PROMPTS.find((l) => uiNodes(xml).some((x) => own(x) && (x.text === l || x.desc === l)));
+      if (!label || !(await tapUi(label, xml))) return;
+      console.log(`  declined ${BROWSER} prompt: ${label}`);
+    }
+  };
+  /** Opens `url` in a bridged browser and gets past its first-run screens until the page says hello. */
+  const launch = async (url) => {
+    // Chrome's first run is switched off as Playwright does it (its command-line file); Firefox's is got past by declinePrompts.
+    if (PKG === 'com.android.chrome') {
+      adb('shell', 'am', 'force-stop', PKG); // it reads the file as it starts, and may already be up
+      adb('shell', "echo '_ --disable-fre --no-default-browser-check --no-first-run' > /data/local/tmp/chrome-command-line");
+    }
+    adb('shell', 'am', 'start', '-a', 'android.intent.action.VIEW', '-d', url, PKG);
+    const seen = new Set();
+    for (let i = 0; i < 60 && !bridge.page.loads(); i++) {
+      await sleep(1500);
+      if (bridge.page.loads()) break;
+      await declinePrompts();
+      const shown = uiNodes(await screenXml()).filter((x) => !x.page && (x.text || x.desc)).map((x) => x.text || x.desc).join(' | ');
+      if (!seen.has(shown)) { seen.add(shown); console.log(`  waiting for the page; on screen: ${shown.slice(0, 400)}`); }
     }
   };
 
@@ -189,6 +266,7 @@ try {
     // after the screen size changes (`wm size`, a short phone): Chrome's toolbar moves with it. Leaves the page blank.
     const dpr = await page.evaluate(() => devicePixelRatio);
     const origin = { x: 0, y: 0 };
+    const shown = { height: 0, y: 0, top: false }; // the page as calibrated: its height, where it starts, the toolbar over it
     const calibrate = async () => {
       const [sw, sh] = adb('shell', 'wm', 'size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number);
       await page.evaluate(() => {
@@ -204,7 +282,12 @@ try {
       }
       const [cx, cy] = await page.evaluate(() => window.__tap);
       Object.assign(origin, { x: (sw >> 1) - cx * dpr, y: Math.round(sh * 0.6) - cy * dpr });
+      // A browser's toolbar slides away as a finger scrolls the page, and the page grows by its height: at the top, it
+      // moves the page up the screen too. Where the toolbar is, and the page's height with it showing, aim taps after.
+      const bar = uiNodes(await screenXml()).find((x) => !x.page && /localhost:\d+/.test(x.text + x.desc));
+      Object.assign(shown, { height: await page.evaluate(() => innerHeight), y: origin.y, top: !!bar && bar.at[1] < sh / 2 });
       console.log(`page origin on screen (${pkg}): ${Math.round(origin.x)},${Math.round(origin.y)} (dpr ${dpr}, screen ${sw}x${sh}); real frames for shot(): ${await page.evaluate(() => String(window.__frame).includes('[native code]'))}`);
+      if (bridge) console.log(`  page ${JSON.stringify(await page.evaluate(() => ({ inner: [innerWidth, innerHeight], visual: [visualViewport.width, visualViewport.height, visualViewport.offsetTop], screen: [mozInnerScreenX, mozInnerScreenY], vh: CSS.supports('height', '1dvh') })).catch((e) => e.message))}`);
     };
     await calibrate();
 
@@ -220,9 +303,28 @@ try {
       loc = loc.first();
       await loc.waitFor();
       await loc.scrollIntoViewIfNeeded();
-      const b = await loc.boundingBox();
-      adb('shell', 'input', 'tap', String(Math.round(origin.x + (b.x + b.width / 2) * dpr)), String(Math.round(origin.y + (b.y + b.height / 2) * dpr)));
-      await sleep(700); await page.clock.runFor(700);
+      const [b, height] = await Promise.all([loc.boundingBox(), page.evaluate(() => innerHeight)]);
+      // The toolbar at the top slid away (or back): the page grew by at most its height. Shrinking is the keyboard: no move.
+      if (shown.top) origin.y = shown.y - (height > shown.height && height - shown.height <= 80 ? height - shown.height : 0) * dpr;
+      const [x, y] = [Math.round(origin.x + (b.x + b.width / 2) * dpr), Math.round(origin.y + (b.y + b.height / 2) * dpr)];
+      await loc.evaluate((el) => {
+        window.__hit = null;
+        addEventListener('pointerdown', (e) => {
+          const t = e.target instanceof Element ? e.target : null;
+          window.__hit = [e.clientX, e.clientY, !t || el.contains(t) || t.contains(el) ? '' : `${t.tagName.toLowerCase()} "${(t.getAttribute('aria-label') || t.textContent).trim().slice(0, 30)}"`];
+        }, { once: true, capture: true });
+      });
+      adb('shell', 'input', 'tap', String(x), String(y));
+      await sleep(700);
+      // Where the finger landed in the page: a page that has moved on screen since calibrating (a browser's toolbar
+      // sliding away as the page scrolls) shows as a tap off where it was aimed, and the next tap is aimed anew.
+      const hit = await page.evaluate(() => window.__hit).catch(() => null);
+      if (hit?.[2]) console.log(`  a tap aimed at ${loc} landed on ${hit[2]}`);
+      if (hit) {
+        const off = [x - origin.x - hit[0] * dpr, y - origin.y - hit[1] * dpr];
+        if (Math.hypot(...off) > 2 * dpr) { origin.x += off[0]; origin.y += off[1]; shown.y += off[1]; console.log(`  a tap landed ${off.map(Math.round)} px from where it was aimed: the page moved on screen; origin now ${Math.round(origin.x)},${Math.round(origin.y)}`); }
+      }
+      await page.clock.runFor(700);
     };
     const btn = (name, opts) => page.getByRole('button', { name, ...opts }); // opts: e.g. { exact: true }, so 'Run' isn't a chip named run(
     /** A real finger drag across the middle of `loc`, `dx` CSS px sideways. */
@@ -267,15 +369,23 @@ try {
       check(`sound: active ${pkg} track (dumpsys media.audio_flinger)`, ids.some((u) => new RegExp(`\\byes\\s+\\d+/\\s*${u}\\b`).test(flinger)));
     };
     const vibrations = () => (adb('shell', 'dumpsys', 'vibrator_manager').match(new RegExp(pkg.replaceAll('.', '\\.'), 'g')) || []).length;
-    return { page, touch, btn, swipe, dragTo, shot, run, seed, fresh, checkSound, vibrations, calibrate };
+    return { page, touch, btn, swipe, dragTo, shot, run, seed, fresh, checkSound, vibrations, calibrate, origin, dpr };
   };
-  const page = await ctx.newPage();
-  const chrome = await helpersFor(page, 'com.android.chrome', () => page.goto(base, { waitUntil: 'networkidle' }));
+  const page = bridge ? bridge.page : await ctx.newPage();
+  const chrome = await helpersFor(page, PKG, () => page.goto(base, { waitUntil: 'networkidle' }));
   /** An app's WebView, once the app is up (`device.webView`), with the same helpers as Chrome's page. */
   const attach = async (pkg) => {
+    if (bridge) throw new Error('attach: the installed app is played with --browser chrome');
     const view = await device.webView({ pkg });
     const p = await view.page();
     return helpersFor(p, pkg, () => p.reload({ waitUntil: 'networkidle' }));
+  };
+  /** The screen as raw pixels (`screencap` without -p): `at(x, y)` is a screen pixel's [r, g, b]. */
+  const grab = () => {
+    const raw = execFileSync(`${SDK}/platform-tools/adb`, ['-s', serial, 'exec-out', 'screencap'], { maxBuffer: 1 << 28 });
+    const [width, height] = [raw.readUInt32LE(0), raw.readUInt32LE(4)];
+    const head = raw.length - width * height * 4; // the header's length differs between Android versions
+    return { width, height, at: (x, y) => { const i = head + (y * width + x) * 4; return [raw[i], raw[i + 1], raw[i + 2]]; } };
   };
   const type = async (text) => { adb('shell', 'input', 'text', text.replaceAll(' ', '%s')); await sleep(800); };
 
@@ -289,7 +399,7 @@ try {
     await declinePrompts();
     try {
       const { default: scenario } = await import(`${ROOT}test/phone/${name}.js`);
-      await scenario({ ...chrome, device, adb, type, check, declinePrompts, screenXml, attach });
+      await scenario({ ...chrome, device, adb, type, check, declinePrompts, screenXml, uiNodes, tapUi, grab, attach, browser: BROWSER, pkg: PKG });
     } catch (e) {
       errors.push(`scenario ${name}: ${e.message.split('\n').filter((l) => !/^Call log:|^\s*$/.test(l)).slice(0, 2).join(' ')}`);
       await chrome.shot('failed').catch(() => {});

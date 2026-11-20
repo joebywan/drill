@@ -5,6 +5,7 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const PORT = Number(process.env.PORT) || 8124;
@@ -20,14 +21,25 @@ const TYPES = {
   '.webmanifest': 'application/manifest+json',
 };
 
-createServer(async (req, res) => {
+/**
+ * Answers one request with a file from this checkout, and gives its status. `head`, test-only, goes at the end of
+ * index.html's <head>: the phone runner's bridge (tools/bridge.js) is the one user, and `npm start` never passes it.
+ */
+export async function answer(req, res, head = '') {
   let path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (path === '/') path = '/index.html';
   try {
-    const body = await readFile(join(ROOT, normalize(path).replace(/^(\.\.[/\\])+/, '')));
+    let body = await readFile(join(ROOT, normalize(path).replace(/^(\.\.[/\\])+/, '')));
+    if (head && path === '/index.html') body = String(body).replace('</head>', `${head}\n</head>`);
     res.writeHead(200, { 'Content-Type': TYPES[extname(path)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
     res.end(body);
+    return 200;
   } catch {
     res.writeHead(404).end('404 Not Found');
+    return 404;
   }
-}).listen(PORT, process.env.HOST || '127.0.0.1', () => console.log(`Wingbeat running at http://${process.env.HOST || 'localhost'}:${PORT}`));
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  createServer((req, res) => answer(req, res)).listen(PORT, process.env.HOST || '127.0.0.1', () => console.log(`Wingbeat running at http://${process.env.HOST || 'localhost'}:${PORT}`));
+}
