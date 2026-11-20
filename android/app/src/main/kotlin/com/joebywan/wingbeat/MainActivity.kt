@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.util.Base64
 import android.util.Log
 import android.view.ViewGroup
@@ -25,6 +26,8 @@ import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
 import java.io.File
 import java.util.Locale
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * One WebView showing the web app from the APK's assets, as Saffron Road does. ES modules will not
@@ -35,13 +38,25 @@ import java.util.Locale
 class MainActivity : ComponentActivity() {
     private lateinit var web: WebView
     private var tts: TextToSpeech? = null // set once the engine is ready: until then, no voice
+    private val engineUp = CountDownLatch(1) // counted down when the engine has answered, ready or not
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (BuildConfig.DEBUG) WebView.setWebContentsDebuggingEnabled(true)
 
         lateinit var engine: TextToSpeech
-        engine = TextToSpeech(this) { if (it == TextToSpeech.SUCCESS) tts = engine }
+        engine = TextToSpeech(this) {
+            Log.i(TAG, "voice: engine ${if (it == TextToSpeech.SUCCESS) "ready" else "failed ($it)"}")
+            if (it != TextToSpeech.SUCCESS) return@TextToSpeech engineUp.countDown()
+            engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                override fun onStart(id: String) { Log.i(TAG, "voice: speaking") }
+                override fun onDone(id: String) { Log.i(TAG, "voice: done") }
+                @Deprecated("Deprecated in Java")
+                override fun onError(id: String) { Log.w(TAG, "voice: error") }
+            })
+            tts = engine
+            engineUp.countDown()
+        }
 
         val loader = WebViewAssetLoader.Builder()
             .addPathHandler("/", WebViewAssetLoader.AssetsPathHandler(this))
@@ -52,7 +67,6 @@ class MainActivity : ComponentActivity() {
             settings.allowFileAccess = false
             settings.allowContentAccess = false
             settings.setSupportZoom(false)
-            settings.textZoom = 100
             webViewClient = object : WebViewClientCompat() {
                 override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
                     loader.shouldInterceptRequest(request.url)
@@ -65,6 +79,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
             addJavascriptInterface(Bridge(), "WingbeatBridge")
+            // Until the page paints, the window's background (the page's own, light or dark) shows, not white.
+            setBackgroundColor(Color.TRANSPARENT)
         }
         setContentView(web)
         // targetSdk 35+ is edge to edge: keep the page out from under the system bars.
@@ -115,11 +131,16 @@ class MainActivity : ComponentActivity() {
 
         /** Whether the phone can speak `lang` ('ja-JP'): feel.js shows the written reading if not. */
         @JavascriptInterface
-        fun hasVoice(lang: String): Boolean = (tts?.isLanguageAvailable(Locale.forLanguageTag(lang)) ?: TextToSpeech.LANG_NOT_SUPPORTED) >= TextToSpeech.LANG_AVAILABLE
+        fun hasVoice(lang: String): Boolean {
+            // Asked on a cold start, the engine may still be starting: wait for it a little rather than say
+            // "no voice" (which would also spend the one "Get a voice" offer). Called on a WebView thread.
+            engineUp.await(3, TimeUnit.SECONDS)
+            return (tts?.isLanguageAvailable(Locale.forLanguageTag(lang)) ?: TextToSpeech.LANG_NOT_SUPPORTED) >= TextToSpeech.LANG_AVAILABLE
+        }
 
         @JavascriptInterface
         fun speak(text: String, lang: String, rate: Float) {
-            val t = tts ?: return
+            val t = tts ?: run { Log.w(TAG, "voice: no engine yet"); return }
             t.language = Locale.forLanguageTag(lang)
             t.setSpeechRate(rate)
             t.speak(text, TextToSpeech.QUEUE_FLUSH, null, "wingbeat")

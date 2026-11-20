@@ -158,7 +158,21 @@ function showCourse(id) {
   try { localStorage.setItem(COURSE_KEY, courseShown.id); } catch { /* lasts the visit */ }
 }
 
-const ROW = 112; // px from one node to the next; the drawn path assumes it
+/**
+ * How much the phone's font size scales text: 1 in a browser, 1.3 in the Android app with the phone's
+ * text at 130% (the WebView follows it). Set as --text-scale, so the room kept for text that px can't see
+ * (a path row, the space under a fixed bar) grows with it; unset, the CSS falls back to 1.
+ */
+const TEXT = (() => {
+  const probe = Object.assign(document.createElement('div'), { textContent: 'x' });
+  probe.style.cssText = 'position:absolute;visibility:hidden;font-size:100px;line-height:1';
+  document.body.append(probe);
+  const k = probe.getBoundingClientRect().height / 100;
+  probe.remove();
+  return Math.max(1, Math.round(k * 100) / 100);
+})();
+if (TEXT > 1) document.documentElement.style.setProperty('--text-scale', TEXT);
+const ROW = 112 * TEXT; // px from one node to the next; the drawn path assumes it (and .path li's height)
 const SWAY = 70; // px a node sits off centre at most
 
 /**
@@ -224,7 +238,7 @@ function home(arrived = null, newly = []) {
   // The line through every node centre; the stretch up to the last finished node is drawn in green.
   // Just after a lesson, its stretch to the next node is its own path (.fresh), which walkTo() fills.
   const trail = (nodes) => {
-    const pts = nodes.map((_, i) => [xAt(i), i * ROW + 32]);
+    const pts = nodes.map((_, i) => [xAt(i), i * ROW + 32 * TEXT]); // through each node's centre
     const d = (to, from = 0) => pts.slice(from, to).map(([x, y], k) => {
       const i = from + k;
       if (!k) return `M${x} ${y}`;
@@ -234,7 +248,7 @@ function home(arrived = null, newly = []) {
     const walked = Math.min(nodes.filter((n) => n.state === 'done').length + 1, pts.length);
     const a = nodes.findIndex((n) => n.id === arrived);
     const fresh = a >= 0 && nodes[a + 1] === current && walked === a + 2;
-    const h = (nodes.length - 1) * ROW + 64;
+    const h = (nodes.length - 1) * ROW + 64 * TEXT;
     return `<svg class="trail" viewBox="-160 0 320 ${h}" width="320" height="${h}" aria-hidden="true">
       <path d="${d(pts.length)}" class="ahead"/>${walked > 1 ? `<path d="${d(fresh ? a + 1 : walked)}" class="walked"/>` : ''}${fresh ? `<path d="${d(a + 2, a)}" class="walked fresh"/>` : ''}
     </svg>`;
