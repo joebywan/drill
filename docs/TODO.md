@@ -234,6 +234,44 @@ sessions run longer. A quarter to a third of every session is repeats (2 warm-up
 - **Tune the numbers from real play.** `tools/sessions.js` models a fixed miss rate; nobody has played the new limits
   (2 echoes, 4 goes, 5 repeats a session). "One step back" has only run in tests and an E2E flow.
 
+**Maths: played** (2026-11, emulator Pixel 6, `MATHS_UNIT=n npm run phone -- maths-all`, `tools/play.js`, `tools/play-quiz.js`)
+
+All 9 units, 36 lessons (checkpoints included), by real touch with warm-ups and echoes on, answers worked out from each sum or picture
+with `toQuiz`: no wrong verdict for a right answer, no page error, no failed request, no sideways overflow, nothing untappable, no tap
+target under 40px. Sessions are 7 to 14 items (checkpoint 8) and 0:36 to 1:25 at a steady pace; none near 6 minutes or 20 items. The longest
+are `ten-2` (13 items, ~1:25), `ten-0` (~1:21) and `ten-1` (12 items, 37 taps, the most). A right drop on a number line leaves one marker
+everywhere it was checked, below zero included (`neg-0-line`, `neg-1-drop`, `neg-1-rise`, `neg-2-line`; 52 checks pass, units 1 and 2 not checked
+this way). Looked at by eye: ten frames, arrays, the 100 grid, single and stacked fraction bars, lines 0 to 1, 0 to 0.1 and -10 to 10,
+money and long sums (1480 to the nearest 100): all drawn cleanly, centred and readable. Every sum and explanation in the 36 lessons was
+read: none wrong.
+
+- **Stacked bars sit under the verdict on a short phone** (medium). At 412x533 the third bar of `frac-1-biggest` (and the lower bars of
+  `frac-1-biggest2`) is hidden behind the verdict banner once answered. Fine at 412x786. The page scrolls, nothing is lost.
+- **Short phone, otherwise clean:** `ten-1`, `ten-2` and `neg-0` at 412x533 had no flag.
+- **Not covered:** a real finger, and Firefox.
+
+**Japanese: played** (2026-11, emulator Pixel 6, `JAPANESE_UNIT=n npm run phone -- japanese-all`, `tools/play.js`, `tools/play-quiz.js`)
+
+All 11 units, 44 lessons (checkpoints included), by real touch with warm-ups and echoes on: every answer right, no page error, no failed
+request, no sideways overflow, nothing untappable. Sessions are 8 to 16 items (checkpoint 8) and 0:29 to 1:33; none near 6 minutes or 20
+items. The longest are `s1` (16 items, ~1:33), `wn` (~1:29), `y1` (~1:27), `se3` (~1:26, 57 taps, the most) and `k1`. Sound: of 145 cards
+that carry a sound, every one called `speechSynthesis.speak` with its text when shown, and 142 were also caught with an audio stream
+`state:started` in `dumpsys audio` (the 3 missed were the first card of the first run, a slow start). Looked at by eye: kana are about
+110px and sharp; a small っ is plainly smaller and raised against つ, in the card, in a word and among the tiles (ゃ against や likewise);
+が, ぱ and the rest of the changed sounds read clearly; the first-sentence unit (これは ねこです, five-word builds) fits and wraps by word.
+
+- **Long romaji options run off the edge** (high). `hi-pick-295` (こんにちは) and `ty-pick-304` (すみません): the three options sit in one row and the third
+  ("konnichiwa", "sumimasen") is cut at the screen edge on a 412 page, and again at 412x533. The option cannot be read in full. Fix is a
+  design call: let long options stack, or wrap the row.
+- **Sentence builds on a short phone** (medium). At 412x533 `se3-build-332` and `se3-build-335`: the answer slots are pushed under the tile
+  tray and the verdict, so the learner cannot see the tiles laid. Fine at 412x786.
+- **Build slots are thin** (low). The empty slots of a build card are faint underline bars about 50px wide with no box, and the card above them is mostly empty;
+  next to 64px tiles they are easy to miss.
+- **Matched pairs go under the verdict** (low). A 5-pair item has 5 rows; once answered the verdict hides the lower rows, so the last matches
+  turning green are not seen.
+- **Typo fixed:** the explanations of `se1-pairs-323`, `se2-pairs-330` and `se3-pairs-337` read "This is a cat., ..." and ended "tea..". No other content problem found.
+- **Not covered:** a real finger, Firefox, and a voice other than the emulator's.
+
 **Layouts from phone testing**
 
 - **Play Rosa's top level gets shallower on a slow CPU.** It always answers in its 3 s budget and the page stays live (worst frame
