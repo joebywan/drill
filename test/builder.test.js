@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { canPlace, listAt, moveTo, newState, place, placed, takeOut, wordsOf } from '../src/builder.js';
+import { canPlace, listAt, moveTo, newState, place, placed, reachOf, takeOut, wordsOf } from '../src/builder.js';
 
 // Word chips and a chip with arms: nothing here knows what a chip means.
 const chips = [{ face: 'a' }, { face: 'b', uses: 1 }, { face: 'loop', arms: [''] }, { face: 'if', arms: ['', 'else'] }];
@@ -58,4 +58,23 @@ test('a part-written answer: chips fill the holes in order, tapping one empties 
   assert.equal(canPlace(s, chips, 0), true);
   place(s, chips, 0);
   assert.deepEqual(placed(s.tree), [0, 1]);
+});
+
+test('a thumb target reaches toward 44px into empty space, and only halfway to another tappable thing', () => {
+  const box = (top, left, h = 28, w = 28) => ({ top, left, bottom: top + h, right: left + w });
+  assert.deepEqual(reachOf([box(100, 100)], 0), { up: 8, down: 8, left: 8, right: 8 }, 'alone: 44px each way');
+  assert.deepEqual(reachOf([box(100, 100, 44, 44)], 0), { up: 0, down: 0, left: 0, right: 0 }, 'already big enough');
+  // A row below 4px away, overlapping sideways: each stops at the middle of the gap.
+  const rows = [box(100, 100), box(132, 110)];
+  assert.equal(reachOf(rows, 0).down, 2);
+  assert.equal(reachOf(rows, 1).up, 2);
+  assert.equal(reachOf(rows, 0).up, 8, 'nothing above');
+  // Touching: no reach that way at all. Side by side 6px apart: 3px each.
+  assert.equal(reachOf([box(100, 100), box(128, 100)], 0).down, 0);
+  const pair = [box(100, 100), box(100, 134)];
+  assert.deepEqual([reachOf(pair, 0).right, reachOf(pair, 1).left], [3, 3]);
+  // A neighbour that reaches nowhere itself (a loop's head): all the way to it.
+  assert.equal(reachOf([box(100, 100), { ...box(132, 110), fixed: true }], 0).down, 4);
+  // Far off to the side, something below is not in the way.
+  assert.equal(reachOf([box(100, 100), box(132, 300)], 0).down, 8);
 });

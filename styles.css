@@ -573,9 +573,11 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 .block .head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 40px; font-weight: 700; }
 .block .head .list { display: inline-flex; flex-wrap: wrap; gap: 3px; }
 .block .head .list .block { min-width: 30px; height: 30px; padding: 0 4px; font-size: 1rem; border-radius: 7px; }
-/* A value to tap stays compact in its line, but answers a thumb anywhere in the 44px around it. */
+/* A value to tap stays compact in its line, but answers a thumb in up to 44px around it. */
 .program button.block { position: relative; }
-.program button.block::after { content: ''; position: absolute; inset: min(0px, calc(50% - 22px)) 0; }
+.program button.block::after { /* reachOf() in src/builder.js sets how far, short of any other tappable thing */
+  content: ''; position: absolute; inset: calc(-1 * var(--up, 0px)) calc(-1 * var(--right, 0px)) calc(-1 * var(--down, 0px)) calc(-1 * var(--left, 0px));
+}
 .block .head b { display: inline-grid; place-items: center; min-width: 36px; height: 36px; border-radius: 8px; background: var(--code); color: var(--code-text); }
 .block .head b { padding: 0 6px; }
 .block.go.call { font-size: 1rem; }
@@ -599,7 +601,6 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 /* The builder (src/builder.js): placed blocks wrap like a program, the tray and Run stay in the thumb zone. */
 .answer { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 6px; width: 100%; min-height: 44px; }
 .block.slot { min-width: 28px; width: 28px; border: 2px dashed var(--line); background: transparent; padding: 0; cursor: pointer; }
-.program button.block.slot::after { left: -8px; right: -8px; } /* 44px wide to a thumb */
 .block.slot.here { min-width: 40px; width: 40px; border-color: var(--code); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--code) 35%, transparent); }
 .caret { align-self: stretch; width: 4px; min-height: 36px; border-radius: 2px; background: var(--code); }
 .block .take { border: 0; padding: 0 4px; background: none; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }

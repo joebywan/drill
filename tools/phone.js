@@ -171,21 +171,28 @@ try {
     await declinePrompts();
     const home = page.url();
 
-    // Where the page's (0,0) is on screen: blank the page, tap, and read where the tap landed.
+    // Where the page's (0,0) is on screen: blank the page, tap, and read where the tap landed. Again (`calibrate`)
+    // after the screen size changes (`wm size`, a short phone): Chrome's toolbar moves with it. Leaves the page blank.
     const dpr = await page.evaluate(() => devicePixelRatio);
-    await page.evaluate(() => {
-      document.body.replaceChildren();
-      document.body.style.cssText = 'height:100vh;margin:0';
-      addEventListener('pointerdown', (e) => { window.__tap = [e.clientX, e.clientY]; }, { once: true, capture: true });
-    });
-    for (let i = 0; !(await page.evaluate(() => window.__tap)); i++) { // the first tap after launch can go missing
-      if (i === 5) throw new Error('calibration tap never reached the page');
-      adb('shell', 'input', 'tap', String(w >> 1), String(Math.round(h * 0.6)));
-      await sleep(1000);
-    }
-    const [cx, cy] = await page.evaluate(() => window.__tap);
-    const origin = { x: (w >> 1) - cx * dpr, y: Math.round(h * 0.6) - cy * dpr };
-    console.log(`page origin on screen (${pkg}): ${Math.round(origin.x)},${Math.round(origin.y)} (dpr ${dpr}); real frames for shot(): ${await page.evaluate(() => String(window.__frame).includes('[native code]'))}`);
+    const origin = { x: 0, y: 0 };
+    const calibrate = async () => {
+      const [sw, sh] = adb('shell', 'wm', 'size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number);
+      await page.evaluate(() => {
+        window.__tap = null;
+        document.body.replaceChildren();
+        document.body.style.cssText = 'height:100vh;margin:0';
+        addEventListener('pointerdown', (e) => { window.__tap = [e.clientX, e.clientY]; }, { once: true, capture: true });
+      });
+      for (let i = 0; !(await page.evaluate(() => window.__tap)); i++) { // the first tap after launch can go missing
+        if (i === 5) throw new Error('calibration tap never reached the page');
+        adb('shell', 'input', 'tap', String(sw >> 1), String(Math.round(sh * 0.6)));
+        await sleep(1000);
+      }
+      const [cx, cy] = await page.evaluate(() => window.__tap);
+      Object.assign(origin, { x: (sw >> 1) - cx * dpr, y: Math.round(sh * 0.6) - cy * dpr });
+      console.log(`page origin on screen (${pkg}): ${Math.round(origin.x)},${Math.round(origin.y)} (dpr ${dpr}, screen ${sw}x${sh}); real frames for shot(): ${await page.evaluate(() => String(window.__frame).includes('[native code]'))}`);
+    };
+    await calibrate();
 
     const run = async (ms) => { await page.clock.runFor(ms); await sleep(300); };
     /** Back to the page as a first visit sees it: storage cleared, reloaded. */
@@ -246,7 +253,7 @@ try {
       check(`sound: active ${pkg} track (dumpsys media.audio_flinger)`, ids.some((u) => new RegExp(`\\byes\\s+\\d+/\\s*${u}\\b`).test(flinger)));
     };
     const vibrations = () => (adb('shell', 'dumpsys', 'vibrator_manager').match(new RegExp(pkg.replaceAll('.', '\\.'), 'g')) || []).length;
-    return { page, touch, btn, swipe, dragTo, shot, run, seed, fresh, checkSound, vibrations };
+    return { page, touch, btn, swipe, dragTo, shot, run, seed, fresh, checkSound, vibrations, calibrate };
   };
   const page = await ctx.newPage();
   const chrome = await helpersFor(page, 'com.android.chrome', () => page.goto(base, { waitUntil: 'networkidle' }));
