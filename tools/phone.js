@@ -187,10 +187,12 @@ try {
 
     // Where the page's (0,0) is on screen: blank the page, tap, and read where the tap landed. Again (`calibrate`)
     // after the screen size changes (`wm size`, a short phone): Chrome's toolbar moves with it. Leaves the page blank.
-    const dpr = await page.evaluate(() => devicePixelRatio);
+    // Chrome's Default zoom changes devicePixelRatio too (test/phone/zoom.js), so it is read again each time.
+    let dpr = 1;
     const origin = { x: 0, y: 0 };
     const calibrate = async () => {
       const [sw, sh] = adb('shell', 'wm', 'size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number);
+      dpr = await page.evaluate(() => devicePixelRatio);
       await page.evaluate(() => {
         window.__tap = null;
         document.body.replaceChildren();

@@ -292,6 +292,13 @@ function walker(level) {
   };
 }
 
+/** What each matcher asks of the value expect was handed. */
+const MATCH = {
+  toBe: (got, want) => Object.is(got, want) || got === want,
+  toEqual: (got, want) => same(got, want),
+  toContain: (got, want) => (Array.isArray(got) ? got.some((x) => same(x, want)) : typeof got === 'string' && got.includes(want)),
+};
+
 /** `test` and `expect`, for the courses' learners to write tests with. `results` fills up as they run. */
 function tester(results) {
   return ({ tryCall }) => {
@@ -311,12 +318,13 @@ function tester(results) {
         if (current) current.expects++;
         const was = (word, want) => `I expected ${word}${show(want, false)}, and got ${show(got, false)}.`;
         return {
-          toBe: (want) => { if (!(Object.is(got, want) || got === want)) fail(was('', want)); },
-          toEqual: (want) => { if (!same(got, want)) fail(was('', want)); },
-          toContain: (want) => {
-            const has = Array.isArray(got) ? got.some((x) => same(x, want)) : typeof got === 'string' && got.includes(want);
-            if (!has) fail(was('something holding ', want));
+          toBe: (want) => {
+            if (MATCH.toBe(got, want)) return;
+            const two = MATCH.toEqual(got, want) && Array.isArray(got) ? 'list' : MATCH.toEqual(got, want) ? 'object' : null;
+            fail(two ? `I got ${show(got, false)}, the same insides, but toBe asks for the very same ${two}, and this is another one.` : was('', want));
           },
+          toEqual: (want) => { if (!MATCH.toEqual(got, want)) fail(was('', want)); },
+          toContain: (want) => { if (!MATCH.toContain(got, want)) fail(was('something holding ', want)); },
           toThrow: () => {
             const r = tryCall(got, []);
             if (!r.error?.thrown) fail(r.error ? r.error.message : 'I expected it to stop with an error, and it finished quietly.');
@@ -378,7 +386,7 @@ function gradeTests(item, src) {
   const real = ask(item.given);
   if (real.error) return { right: false, why: real.error.message };
   if (!real.results.length) return { right: false, why: 'There is no test here yet: a test starts with test(...).' };
-  const empty = real.results.find((t) => !t.expects);
+  const empty = real.results.find((t) => !t.expects && !t.failed); // one that stopped before its expect fails, below
   if (empty) return { right: false, why: `The test "${empty.name}" has no expect in it, so it checks nothing.` };
   const wrong = real.results.find((t) => t.failed);
   if (wrong) return { right: false, why: `The test "${wrong.name}" fails on the real code, so the test is the one that is off. ${wrong.failed}`, results: real.results };
@@ -526,14 +534,21 @@ const rewrite = (src, f) => {
 };
 const prose = (text, map) => text?.replace(/[A-Za-z_]\w*|\d+/g, (w) => map[w] ?? w);
 
+/** The names `src` declares, and which of them are functions (`function f` or `const f = () => ...`). */
+const declared = new Map();
 const declaredIn = (src, ts) => {
-  const found = new Set();
+  const key = `${ts}${src}`;
+  if (declared.has(key)) return declared.get(key);
+  if (declared.size >= 2000) declared.clear();
+  const names = new Set(), fns = new Set();
   JSON.stringify(parse(src, { ts }), (_, v) => {
-    if ((v?.n === 'Let' || v?.n === 'ForOf' || (v?.n === 'Func' && v.name)) && v.name) found.add(v.name);
-    v?.params?.forEach((p) => found.add(p.name));
+    if ((v?.n === 'Let' || v?.n === 'ForOf' || (v?.n === 'Func' && v.name)) && v.name) names.add(v.name);
+    if ((v?.n === 'Func' && v.name) || (v?.n === 'Let' && v.init?.n === 'Func')) fns.add(v.name);
+    v?.params?.forEach((p) => names.add(p.name));
     return v;
   });
-  return found;
+  declared.set(key, { names, fns });
+  return declared.get(key);
 };
 
 const sourcesOf = (item) => [item.type === 'predict' || item.type === 'teach' ? item.code : wayOf(item), item.given, ...(item.mutants ?? []).map((m) => m.code)].filter(Boolean);
@@ -570,8 +585,165 @@ function flipped(item, flip) {
   return out;
 }
 
+/** Numbers from `least` up moved upward and in order, so a comparison keeps its answer; those in `keep` stay. Next to one of `edges`, 17 and 18 stay neighbours. */
+function upward(taken, keep, random, edges = new Set(), least = 2) {
+  const nums = {};
+  let floor = 0, last;
+  for (const n of [...new Set(taken)].sort((x, y) => x - y)) {
+    const swap = n >= least && Number.isInteger(n) && !keep.has(n);
+    const beside = n === last + 1 && (edges.has(n) || edges.has(last)) && nums[last] !== undefined; // just past an edge stays just past it
+    const to = !swap ? n : beside ? floor + 1 : Math.max(floor + 1, n + 1 + Math.floor(random() * 3));
+    if (to !== n) nums[n] = to;
+    floor = to;
+    last = n;
+  }
+  return nums;
+}
+
+/** The tokens inside the brackets after each `name(`: a call's arguments, or a matcher's. */
+function inside(toks, names) {
+  const at = new Set();
+  toks.forEach((t, i) => {
+    if (!names.includes(t.raw) || toks[i + 1]?.raw !== '(') return;
+    for (let j = i + 2, depth = 1; j < toks.length; j++) {
+      depth += toks[j].raw === '(' ? 1 : toks[j].raw === ')' ? -1 : 0;
+      if (!depth) break;
+      at.add(toks[j]);
+    }
+  });
+  return at;
+}
+
+/** Each expect(...) in `src`, in order, run on `given`: what it was handed, and whether its check held. */
+function handed(item, src, given) {
+  const seen = [];
+  const r = run(withGiven(item, src, given), {
+    ts: !!item.ts,
+    globals: ({ tryCall }) => ({
+      test: (name, f) => { tryCall(f, []); },
+      expect: (got) => {
+        const one = { got };
+        seen.push(one);
+        const asks = Object.fromEntries(Object.entries(MATCH).map(([k, f]) => [k, (want) => { one.ok = f(got, want); }]));
+        return { ...asks, toThrow: () => { one.ok = !!tryCall(got, []).error?.thrown; } };
+      },
+    }),
+  });
+  return r.error?.kind === 'parse' ? null : seen;
+}
+
+/** Two values side by side, leaf by leaf, into `out`: false if they differ in shape. A function is skipped. */
+function paired(o, n, out) {
+  if (Array.isArray(o) || Array.isArray(n)) return Array.isArray(o) && Array.isArray(n) && o.length === n.length && o.every((x, i) => paired(x, n[i], out));
+  const plain = (v) => v !== null && typeof v === 'object' && Object.getPrototypeOf(v) === null;
+  if (plain(o) || plain(n)) return plain(o) && plain(n) && Object.keys(o).join() === Object.keys(n).join() && Object.keys(o).every((k) => paired(o[k], n[k], out));
+  if (typeof o === 'object' || typeof n === 'object') return typeof o === typeof n;
+  out.push([o, n]);
+  return typeof o === typeof n;
+}
+
+/** `f` worked out once per item: the original's facts are read on every attempt at a fresh version. */
+const once = (f) => { const kept = new WeakMap(); return (item) => { if (!kept.has(item)) kept.set(item, f(item)); return kept.get(item); }; };
+/** What each decoy does when tried: right, or which faulty versions it catches. A fresh version must keep them all. */
+const decoyFacts = once((item) => [...withDecoy(item)].map(({ src }) => { const g = grade(item, src); return `${g.right}${g.caught?.map((c) => +c.caught).join('') ?? ''}`; }).join());
+/** The item's tests, and each decoy that is a whole check, as sources to run. */
+const tried = (item) => [wayOf(item), ...(item.decoys ?? []).filter((d) => d.startsWith('expect(')).map((d) => `test("x", () => { ${d.replace(/;$/, '')}; });`)];
+/** Which checks hold, on the real code and on each faulty copy. */
+const checks = once((item) => tried(item).map((src) => [item.given, ...item.mutants.map((m) => m.code)].map((g) => handed(item, src, g)?.map((x) => +!!x.ok).join('')).join()).join());
+
+/** Every number and string any field of the item holds. */
+const valueSets = once((item) => {
+  const texts = [wayOf(item), item.code, item.given, ...(item.fill ?? []), ...(item.decoys ?? []), ...(item.chunks ?? []), ...(item.mutants ?? []).map((m) => m.code)];
+  const all = texts.filter(Boolean).flatMap((s) => tokenize(s));
+  return { num: new Set(all.filter((t) => t.t === 'num').map((t) => t.v)), str: new Set(all.filter((t) => t.t === 'str').map((t) => t.v)) };
+});
+const valuesOf = (item, kind) => valueSets(item)[kind];
+
+const COMPARE = new Set(['<', '>', '<=', '>=']);
+/**
+ * A test-writing item with new values. A test's inputs move, and so does an edge the code compares with
+ * (18 becomes 21 in the real code, every faulty copy and the tests together); a number the code computes
+ * with stays, or the function would mean something else. What each test expects is then worked out by
+ * running `given` on the new inputs, never by hand, and what the faulty copies give moves with it, so a
+ * decoy that was one of their answers still is. Null when the values can't move cleanly: two values
+ * would end up the same, a true would turn false, or a decoy would now catch something it didn't.
+ */
+function testValues(item, ids, random) {
+  if (item.fixed) return null;
+  const way = wayOf(item);
+  const wayToks = tokenize(way).slice(0, -1);
+  const expected = inside(wayToks, ['toBe', 'toEqual']);
+  const free = [], keep = new Set(), edges = new Set();
+  for (const t of wayToks) if (t.t === 'num' && !expected.has(t)) free.push(t.v);
+  // A decoy's input moves with the rest (19 stays just past the edge); one that stands for an answer is worked out below.
+  const codeToks = item.type === 'gap' ? tokenize(item.code).slice(0, -1) : [];
+  const holes = codeToks.filter((t) => t.raw === '___');
+  const answers = holes.length && holes.every((h) => inside(codeToks, ['toBe', 'toEqual']).has(h));
+  for (const d of item.decoys ?? []) {
+    const toks = tokenize(d).slice(0, -1);
+    const theirs = inside(toks, ['toBe', 'toEqual']);
+    if (!(answers && toks.length === 1)) for (const t of toks) if (t.t === 'num' && !theirs.has(t)) free.push(t.v);
+  }
+  for (const src of [item.given, ...item.mutants.map((m) => m.code)]) {
+    const toks = tokenize(src).slice(0, -1);
+    toks.forEach((t, i) => { if (t.t !== 'num') return; if (COMPARE.has(toks[i - 1]?.raw)) edges.add(t.v); else keep.add(t.v); });
+  }
+  // Some stay, so a decoy like add(2, 2) keeps its point; 17 and 18 at an edge of 18 stay or move together.
+  let last, kept;
+  for (const n of [...new Set(free)].sort((x, y) => x - y)) {
+    kept = n === last + 1 && (edges.has(n) || edges.has(last)) ? kept : random() < 0.25;
+    if (kept) keep.add(n);
+    last = n;
+  }
+  const nums = upward([...free, ...edges], keep, random, edges, 1); // a 1 the code doesn't use may move: pos(1) is no edge
+  const strs = {};
+  const words = STRINGS.filter((s) => !valuesOf(item, 'str').has(s));
+  for (const t of inside(wayToks, ['expect'])) {
+    if (t.t === 'str' && /^[a-z]{2,}$/.test(t.v) && !strs[t.v] && words.length) strs[t.v] = words.splice(Math.floor(random() * words.length), 1)[0];
+  }
+  if (!Object.keys(nums).length && !Object.keys(strs).length) return null;
+  // The code under test keeps its parameters' names too: the prose talks about age, and the values are what is new.
+  const mine = declaredIn(item.given, !!item.ts).names;
+  ids = Object.fromEntries(Object.entries(ids).filter(([k]) => !mine.has(k)));
+  const moved = swapped(item, { ids, nums, strs });
+  // Expected values, from running the real code (and any decoy that is a whole check) old and new.
+  const pairs = [], loose = [];
+  const was = tried(item), now = tried(moved);
+  for (let k = 0; k < was.length; k++) {
+    const a = handed(item, was[k], item.given), b = handed(moved, now[k], moved.given);
+    if (!a || !b || a.length !== b.length || !a.every((x, i) => paired(x.got, b[i].got, pairs))) return null;
+    // What a faulty copy gives moves too, when nothing else says otherwise.
+    item.mutants.forEach((m, j) => {
+      const c = handed(item, was[k], m.code), d = handed(moved, now[k], moved.mutants[j].code);
+      if (c && d && c.length === d.length) c.forEach((x, i) => paired(x.got, d[i].got, loose));
+    });
+  }
+  const map = { number: { ...nums }, string: { ...strs } };
+  const settled = (o, n, strict) => {
+    if (typeof o === 'boolean' || o === undefined || o === null) return o === n || !strict;
+    const m = map[typeof o];
+    if (!m) return !strict;
+    const to = o in m ? m[o] : o;
+    if (to === n) return true;
+    if (o in m || (typeof o === 'number' && keep.has(o))) return !strict;
+    m[o] = n;
+    return true;
+  };
+  if (!pairs.every(([o, n]) => settled(o, n, true))) return null;
+  loose.forEach(([o, n]) => settled(o, n, false));
+  // A test's name may say a number ("18 is an adult"): it moves with the code.
+  const said = Object.fromEntries(Object.entries(map.number).map(([a, b]) => [a, String(b)]));
+  for (const t of wayToks) if (t.t === 'str' && /\d/.test(t.v) && !map.string[t.v]) map.string[t.v] = prose(t.v, said);
+  const out = swapped(item, { ids, nums: map.number, strs: map.string });
+  const lits = (src) => tokenize(src).filter((t) => t.t === 'num' || t.t === 'str').map((t) => t.raw).join();
+  if (lits(wayOf(out)) === lits(way)) return null; // the answer itself must be worked out again
+  for (const kind of ['num', 'str']) if (valuesOf(out, kind).size !== valuesOf(item, kind).size) return null; // two chips alike
+  // Every check, the item's own and each decoy's, holds and catches exactly as before: add(2, 2) stays weak.
+  return checks(out) === checks(item) && decoyFacts(out) === decoyFacts(item) ? out : null;
+}
+
 /** One attempt at a fresh version: new names everywhere, new numbers and words where the goal is worked out. */
-function attempt(item, random) {
+function attempt(item, random, values = true) {
   let next = item;
   const pick = (list) => list[Math.floor(random() * list.length)];
   const all = sourcesOf(item).flatMap((s) => tokenize(s).slice(0, -1));
@@ -579,24 +751,21 @@ function attempt(item, random) {
   const ids = {};
   const pool = NAMES.filter((n) => !present.has(n));
   const short = SHORT.filter((n) => !present.has(n));
-  for (const name of sourcesOf(item).flatMap((s) => [...declaredIn(s, !!item.ts)])) {
-    if (name === item.name || WORDS.has(name) || ids[name] || PROSEY.has(name) || name === 'a' || name === 'i') continue;
+  const fns = new Set(sourcesOf(item).flatMap((s) => [...declaredIn(s, !!item.ts).fns]));
+  for (const name of sourcesOf(item).flatMap((s) => [...declaredIn(s, !!item.ts).names])) {
+    // A function keeps its name: evens renamed stack would say something untrue about its own code.
+    if (fns.has(name) || name === item.name || WORDS.has(name) || ids[name] || PROSEY.has(name) || name === 'a' || name === 'i') continue;
     const from = name.length < 3 ? short : pool;
     if (from.length) ids[name] = from.splice(Math.floor(random() * from.length), 1)[0];
   }
+  if (item.goal === 'tests') return values ? testValues(item, ids, random) : swapped(item, { ids });
   const worked = item.type === 'predict' ? item.asks !== 'check' : item.goal === 'print' && !item.level;
-  const nums = {}, strs = {};
+  let nums = {};
+  const strs = {};
   if (worked && !item.fixed) {
     // Upward and in order, so a comparison keeps its answer. A place in a list and a % keep their number.
     const held = all.filter((t, i) => t.t === 'num' && (all[i - 1]?.raw === '[' || all[i - 1]?.raw === '%')).map((t) => t.v);
-    const taken = [...new Set(all.filter((t) => t.t === 'num').map((t) => t.v))].sort((x, y) => x - y);
-    let floor = 0;
-    for (const n of taken) {
-      const swap = n >= 2 && Number.isInteger(n) && !held.includes(n);
-      const to = swap ? Math.max(floor + 1, n + 1 + Math.floor(random() * 3)) : n;
-      if (to !== n) nums[n] = to;
-      floor = to;
-    }
+    nums = upward(all.filter((t) => t.t === 'num').map((t) => t.v), new Set(held), random);
     const words = STRINGS.filter((s) => !present.has(s));
     for (const t of all) {
       if (t.t === 'str' && /^[a-z]{2,}$/.test(t.v) && !KEEP_STRINGS.has(t.v) && !strs[t.v] && words.length) strs[t.v] = words.splice(Math.floor(random() * words.length), 1)[0];
@@ -614,13 +783,17 @@ const sameVerdict = (a, b) => verdicts(a).join() === verdicts(b).join();
 /**
  * A subject's `vary` (repeat.js): the same idea with new names, numbers and words, or a flipped map.
  * It is checked with `problem`, so a version that stopped working is never played. Teach cards don't
- * repeat; an item nothing can be swapped in stays as written.
+ * repeat; an item nothing can be swapped in stays as written. A test-writing item gets new values with
+ * its expected answers worked out by running (`testValues`), and only new names if no values can move.
  */
 export function vary(item, random = Math.random) {
   if (item.type === 'teach') return null;
-  for (let i = 0; i < 6; i++) {
-    const v = attempt(item, random);
-    if (JSON.stringify(v) !== JSON.stringify(item) && !problem(v) && sameVerdict(item, v)) return v;
+  // A test-writing item tries new values first, and keeps to new names if none hold.
+  for (const values of item.goal === 'tests' ? [true, false] : [true]) {
+    for (let i = 0; i < (values && item.goal === 'tests' ? 10 : 6); i++) {
+      const v = attempt(item, random, values);
+      if (v && JSON.stringify(v) !== JSON.stringify(item) && !problem(v) && sameVerdict(item, v)) return v;
+    }
   }
   return item;
 }

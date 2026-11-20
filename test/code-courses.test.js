@@ -150,3 +150,31 @@ test('which-line questions offer every line, so the choices never hint', () => {
     assert.equal(checkOptions(item).length, pretty(item.code).split('\n').length + 1, item.id);
   }
 });
+
+test('no item carries a chunk its way is never cut into: a wrong choice belongs in decoys, where the tray shows it', () => {
+  for (const c of COURSES) for (const item of itemsOf(c).filter((i) => i.chunks)) {
+    const chips = chipsOf(wayOf(item), item.chunks);
+    for (const k of item.chunks) assert.ok(chips.includes(k), `${item.id}: chunk ${k} is never on a chip`);
+  }
+});
+
+test('every Test writing build offers a wrong choice, and building with one is a miss that names what went wrong', () => {
+  const kind = (x) => (x.startsWith('expect(') ? 'expect' : x.startsWith('.to') ? 'matcher' : 'other');
+  for (const item of itemsOf(testingCourse).filter((i) => i.type === 'build')) {
+    const chips = chipsOf(item.way, item.chunks);
+    const wrong = trayOf(item).filter((t) => !chips.includes(t));
+    assert.ok(wrong.length, `${item.id}: the tray holds only the right chips`);
+    // Each wrong chip in place of one of its kind, and a wrong call with a wrong matcher together.
+    const builds = [];
+    for (const d of wrong) chips.forEach((ch, i) => { if (kind(ch) === kind(d)) builds.push(chips.with(i, d)); });
+    for (const a of wrong.filter((d) => kind(d) === 'expect' && !d.includes('.to'))) for (const b of wrong.filter((d) => kind(d) === 'matcher')) {
+      chips.forEach((ch, i) => { if (kind(ch) === 'expect' && kind(chips[i + 1] ?? '') === 'matcher') builds.push(chips.with(i, a).with(i + 1, b)); });
+    }
+    const graded = builds.map((b) => grade(item, b.join(' ')));
+    assert.ok(graded.length && graded.every((g) => !g.right), `${item.id}: a wrong choice passes`);
+    // Where the prompt asks to catch or choose, some wrong choice lets a faulty copy through, and the miss says which.
+    if (/catch|choose/i.test(item.prompt)) {
+      assert.ok(graded.some((g) => item.mutants.some((m) => g.why.endsWith(m.says))), `${item.id}: no wrong choice lets a faulty copy through`);
+    }
+  }
+});

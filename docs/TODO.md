@@ -180,20 +180,20 @@ What playing has covered and what it hasn't. Every course (281 lessons), the hab
 installed Android app were played by touch on the emulator in November 2026. Each one's results are in its "played"
 block below; the fixes that came out of them are in docs/WINGBEAT.md under "Found by playing".
 
-**Next up** (from Joseph, 2026-11-20; start here)
+**Next up** (from Joseph, 2026-11-20: "you have the emulator"; worked through on 2026-11-21)
 
-- **See the chrysalis on a phone page.** The close-up picture at the end of home's streak row (#168) has been seen as an egg and as a
-  caterpillar on the emulator, but the chrysalis only in an enlarged render: no seeded learner has a course with just its last unit left.
-  Add that learner to `test/phone/lib/seed.js`, show their home in `home-days` (light and dark, and on a short phone), and look at the picture.
-  If it doesn't read at that size, redraw it. Joseph: "Emulator should solve that."
-- **Large text in the browser.** #168 took `LOOKS=large` out of the `looks` scenario because the phone's font size, set with `font_scale`, did not
-  change Chrome's page on the emulator. That shows one route doesn't work, not that a browser never shows the app with larger text, and the check
-  should not have been dropped on it. Joseph: "Why not? You can test browser look." Find the routes that do change the page and look at home, a
-  lesson of each kind and an end screen through each: Chrome's own text scaling or zoom (its Accessibility settings), Firefox's font sizing that
-  follows the phone (Firefox is what Joseph uses), and plain zoom to 200%. Put a working check back, on the phone or in the e2e suite.
-- **The emulator is the phone.** Stop writing "no real phone" or "a real finger" as something not covered. Joseph: "No, but you have the emulator."
-  Go through every "Not played", "Not covered" and "Not seen" line below: play it on the emulator, or say exactly what the emulator cannot show
-  and why. That includes Firefox for Android itself, which has only been stood in for by desktop Firefox.
+- **See the chrysalis on a phone page: done** (#171). A seeded learner at each of the five stages (`mathsRaising()` in `test/phone/lib/seed.js`,
+  `npm run phone -- chrysalis`, light, dark and a short phone). The egg and the caterpillars read; the chrysalis did not (a thin shape in a mostly
+  empty box), so it was redrawn in the kit: a plump body with a bold band and dots, whole from twig to tip.
+- **Large text in the browser: done** (#177). Chrome 133 for Android offers Default zoom (whole-page zoom; 200% makes a 412px page 206px) and no
+  text scaling, which is why `font_scale` never reached its page. `npm run phone -- zoom` sets it by taps and tours 150% and 200%. A browser's own
+  font size now reaches every line (body in rem) and sets `--text-scale`, a minimum font size included; `test/e2e/large-text.spec.js` checks 125% and
+  200% text and 320 and 206 wide in both browsers. **Being built:** at 200% text a verdict takes over half the screen and covers what was asked; it
+  is being held to half the screen, its words scrolling in their own box.
+- **The emulator is the phone.** Each "Not played", "Not covered" and "Not seen" line below is being played on the emulator, or replaced by what
+  exactly it cannot show: Firefox for Android itself, a finger (off-centre taps, swipes, the keyboard, links out), device conditions (landscape,
+  put down and picked up, screen off, a call, no network), Chess's games and wrong moves, and the Android app's leftovers. Results go in each block
+  as they land.
 
 **Test by playing**
 
@@ -289,7 +289,8 @@ none near 6 minutes or 20 items. The longest are `jsn-1` and `jsl-3` (~1:35 each
   "Five! Those lines run like clockwork." and "Five in a row." appear on a streak with no mention of what the five are.
 - **Harness bug found and fixed in passing:** `btn(name)` in `tools/phone.js` ignored `{ exact: true }`, so `btn('Continue', { exact: true })` could hit a
   chip named `continue` and `btn('Run')` a chip named `run(`, stalling `jsl-4` and `jse-1` until the fix.
-- **Fresh versions in Test writing** mostly rename: its numbers would need the expected answers worked out again.
+- **Fresh versions in Test writing** change their values (#174): inputs and the code's edges move together, and what each test expects is worked out by running the real code (48 of 59 items). Eleven still only rename, where the values are the point or the code computes with them (0 and 1, % 2, + 1, one-letter text); the list and the reasons are in `test/test-writing-vary.test.js`. No fresh version in any code course renames a function.
+- **Test writing's builds offered no wrong choice: fixed** (#174). Fourteen of its seventeen builds had their wrong chips filed where the tray never shows them, or had none, so "Choose the values with care" had nothing to choose between. Every build now offers a wrong choice, building with it is a miss, and where the prompt says to catch or choose, the miss names the faulty copy that got through (tests hold all three). `jsf-3-5` is the one item with nothing left to vary.
 - **The type checker is a small subset.** It follows strict TypeScript for what the course teaches. A valid but unusual arrangement could be misjudged outside that.
 - **Wrong code in a branch that never runs passes.** Graded by running, so an `else` that never runs is not looked at. Any arrangement that does the job is right, by decision; hidden `cases` close it where it matters, and `print` items could run a second input if play shows it matters.
 
@@ -427,9 +428,8 @@ Found, not fixed (design calls or bigger than a few lines):
   light green, and the wardrobe's dimmed skins turn into grey blobs on the dark card. **Fixed** (fix/walk-findings): the pressed
   tab's words measure 6.6:1 (5.0:1 in light); its quiet dot, 2.3:1 on the green, now has a ring of the page round it. A skin not yet
   given keeps its shape and full tone, its colour muted (Lumi 3.9:1 on the dark card; it was faded to grey).
-- **Large text in Chrome** can't be shown: Chrome does not pass the phone's font size on to a page like this one (a tab is 42px at
-  1.3 as at 1.0), and changing `font_scale` mid-run makes Chrome replace its page, which Playwright's page doesn't follow. So `looks`
-  is the dark theme only, and large text is checked where it does apply: the app's WebView (`app`, at 1.3 and 2.0, home with a course being raised too).
+- **Large text in Chrome** is its Default zoom (`npm run phone -- zoom`), not the phone's font size, which Chrome 133 does not pass on to a page. `looks` is the
+  dark theme only. The app's WebView does follow the phone's font size (`app`, at 1.3 and 2.0), and a larger font size in a desktop browser is checked by `test/e2e/large-text.spec.js`.
 - **The garden's Learning card lists every flower** (low, crowding): a finished Maths adds ten "A flower opened for …" lines, one
   per unit, under the Learning plant, pushing the other plants' cards far down. **Fixed** (fix/walk-findings): past three, one line
   with the number.

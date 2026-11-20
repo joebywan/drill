@@ -25,8 +25,8 @@ const words = (s) => (String(s ?? '').match(/\S+/g) || []).length;
 
 const PARTS = ['.bubble', '.grid-world', '.vars', '.program', '.tiles']; // Coding's screen
 
-/** What is wrong with the screen right now: clipped or overlapping text, things off the side or behind each other. */
-const scan = ({ parts: all, tray }) => {
+/** What is wrong with the screen right now: clipped or overlapping text, things off the side or behind each other. Run in the page (`page.evaluate(scan, { parts, tray })`); test/e2e/large-text.spec.js uses it too. */
+export const scan = ({ parts: all, tray }) => {
   const out = [];
   const app = document.getElementById('app');
   const shown = (el) => { const s = getComputedStyle(el); const r = el.getBoundingClientRect(); return s.visibility !== 'hidden' && s.display !== 'none' && r.width > 0 && r.height > 0; };
@@ -43,7 +43,7 @@ const scan = ({ parts: all, tray }) => {
   // Things that must not sit on each other: the parts of the screen, and the buttons in them.
   const area = (r) => Math.max(0, r.width) * Math.max(0, r.height);
   const cut = (a, b) => area({ width: Math.min(a.right, b.right) - Math.max(a.left, b.left), height: Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) });
-  const parts = all.map((q) => app.querySelector(q)).filter((e) => e && shown(e));
+  const parts = [...new Set(all.map((q) => app.querySelector(q)))].filter((e) => e && shown(e)); // one element can match two selectors
   for (const [i, a] of parts.entries()) for (const b of parts.slice(i + 1)) if (cut(a.getBoundingClientRect(), b.getBoundingClientRect()) > 16) out.push(`overlap: ${label(a)} and ${label(b)}`);
   const foot = app.querySelector('.foot.show');
   if (foot) for (const e of app.querySelectorAll(all.filter((q) => !tray.includes(q)).join(', '))) if (shown(e) && cut(foot.getBoundingClientRect(), e.getBoundingClientRect()) > 16) out.push(`verdict covers: ${label(e)}`);
