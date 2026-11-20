@@ -188,8 +188,10 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
 - **Large text in the browser: done** (#177). Chrome 133 for Android offers Default zoom (whole-page zoom; 200% makes a 412px page 206px) and no
   text scaling, which is why `font_scale` never reached its page. `npm run phone -- zoom` sets it by taps and tours 150% and 200%. A browser's own
   font size now reaches every line (body in rem) and sets `--text-scale`, a minimum font size included; `test/e2e/large-text.spec.js` checks 125% and
-  200% text and 320 and 206 wide in both browsers. **Being built:** at 200% text a verdict takes over half the screen and covers what was asked; it
-  is being held to half the screen, its words scrolling in their own box.
+  200% text and 320 and 206 wide in both browsers. At 200% text a verdict used to take over half the screen and cover what was asked: it is now held
+  to half the screen, its headline giving way and then its words scrolling in their own box (#183, decision 25), and every item is in view above it, in a browser
+  and in the app at the phone's largest text. On a 206x393 page (Chrome at 200% zoom, past what the app promises) the board, a ten frame and a program are still partly
+  covered once answered, and a build sits under its tray while asked: all of it can be scrolled clear.
 - **The emulator is the phone.** Each "Not played", "Not covered" and "Not seen" line below is being played on the emulator, or replaced by what
   exactly it cannot show: Firefox for Android itself, a finger (off-centre taps, swipes, the keyboard, links out), device conditions (landscape,
   put down and picked up, screen off, a call, no network), Chess's games and wrong moves, and the Android app's leftovers. Results go in each block
@@ -323,10 +325,13 @@ Short phone (412x533, `CHESS_SMALL=1080x1700`): `mateIn3-1`, `attraction-0`, `fo
   phone: all 18 units at 412x533 with an earlier form of the fix, none flagged; then, on the final code, units 5, 16 and 18 at 412x533 and 1, 5, 11 and 18 at 412x786, none flagged.
 - **Fixed: the coach's bubble after an item is done.** A solved or missed puzzle, tap, move or stars item says "That's it." (right) or "Here's how it
   goes." (missed, or solved after the hint) instead of "Good. Keep going" or "Found 2 of 3." A true/false keeps its claim, which the explanation is about.
-- **A teach card without a board is a big empty page** (low): `mate2-teach`, `promotion-teach` and the like are a bubble and Continue.
-- **Wording for a beginner** (low): the Attraction unit opens with "One more rule, castling" in a card that is not about castling; explanations
-  say "h-pawn", "a-file", "the far side" before any lesson names them (they are taught in the board unit, but the Lichess lessons use them
-  freely); every puzzle explanation is a bare line ("Queen to a5, check. King to e8.") with no word on why it works.
+- **Chess in plain words: done** (#176). Every chess word is on a card before a prompt or an explanation uses it (`src/data/chess-terms.json` lists each
+  word with the card that teaches it, or marks it never to be used; a test walks the path in order). The castling card, which showed under "Attraction",
+  and the en passant card, under "Discovered attacks", are headed by their own names. Six teach cards that were a bubble and Continue have a board that walks
+  through their line. And every real-game puzzle says why its line works (`src/chess/why.js`): the facts are worked out from the position and proved against it
+  in a test, 329 of 336 with a sentence of their own and 7 with their theme's general idea. Which wording shows is chosen by measuring the verdict on the page
+  (the full sentence, a shorter one, the line alone), so the board is never under it: at 412x533, 291 show the full sentence, 26 the shorter, 14 less.
+  **Left:** the hand-written Forks unit keeps its written explanations; under the coach's longest headline a short headline could have fitted a longer wording.
 - **Wrong moves, Play Rosa, Mate and Scramble: played** (#179; `chess-wrong-all`, `chess-rosa-all`, `chess-games`, `chess-games-small`; the two `-all` ones run by name only).
   Twelve lessons from eleven units were each answered wrongly first: nothing wrong was accepted, a wrong move snaps back and the second miss marks the piece to move,
   the right square with a piece the line doesn't need is explained and free, and a mate other than the stored line counts. Play Rosa at all four levels, both colours,

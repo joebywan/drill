@@ -68,7 +68,8 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
 - What a finger does has its own scenarios: `touch-swipe`, `touch-keyboard`, `touch-links`, `touch-press`. On any `*-all`
   scenario `PLAY_JITTER=0.85` lands each tap at a seeded random point out to that share of the way to its target's edge
   (`PLAY_SEED` varies it) and `PLAY_SWIPE=1` swipes each box that scrolls in itself. Run the jittered taps after changing the
-  size of anything tapped. Chess also has `chess-games` and `chess-games-small` (Mate and Scramble), and by name only
+  size of anything tapped. Chess also has `chess-games` and `chess-games-small` (Mate and Scramble), `chess-miss` (a puzzle
+  missed on purpose, to read its explanation; `CHESS_MISS`, `CHESS_SMALL`), and by name only
   `chess-wrong-all` (each lesson answered wrongly first) and `chess-rosa-all` (Play Rosa at every level).
 
 - With no `--url` it serves this checkout on a free port forwarded with `adb reverse`; Chrome opens
@@ -121,6 +122,13 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
 - `src/chess/puzzle.js` — pure puzzle rules on chess.js. `src/chess/items.js` — the item types
   (teach, tap, move, true/false, stars, find), their answers and explanations, and `problem()`, the
   rules check every shipped item passes. `src/chess/exercise.js` — the board and buttons.
+  A real-game puzzle's explanation is its line and then why it works: `src/chess/why.js` works the reason out from the
+  position by its theme (which two pieces a fork hits, what a pin holds to what, why the king had no square) and
+  `test/why.test.js` proves every sentence against its board. `explanation()` returns the wordings best first (the full
+  why, a shorter one, the line alone) and `worded()` in exercise.js shows the first whose verdict, measured on the page,
+  leaves the board clear. Never choose by counting characters: the font differs from machine to machine. Every chess word
+  is taught on a card before it is used (`src/data/chess-terms.json`, held by `test/items.test.js`); a teach card's
+  `topic` heads it in place of its unit's title.
 - **Promotion:** `withPromotion()` in exercise.js is the one picker (cm-chessboard's dialog, on every `board()`), used by puzzles, move items, stars, Mate and Play Rosa; Scramble has no pawns of yours. `tryMove()` returns `'piece'` for the right square with a piece the line doesn't need, explained and free; any mate still counts.
 - **Stars** teach pieces by play: move your piece onto every gold star within a move budget; the
   other side never moves, and kings are optional (chess.js `skipValidation`). A piece's first
@@ -155,6 +163,10 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   in the box's own colour (`--fade`) over that edge. **Never a CSS mask on a box that scrolls:** it crashes the
   emulator's software renderer (#164), and scroll-driven animations don't run in Firefox. A screen that
   fits is left as it is. On a short phone (a 412x533 page) every course is played this way: `…_SMALL=1080x1700`.
+  The verdict gives way too (`giveWay(foot)`): it is at most half the screen (`.foot`, 50dvh); past that its headline is
+  held to two lines and to the explanation's size, then its words `scrollBox()`. `verdictHeight()` measures it that way,
+  under the coach's longest headline (`longestVerdict()`; tests pin that line with `WINGBEAT_LONGEST`). A program is
+  never boxed to under a line: if the verdict would leave less, the coach gives way first.
 - `src/quiz/` also has `line` (drag a marker on a number line, snapped to its ticks, answered on
   release) and takes a `picture` the course draws through the mount's `ctx.art`, plus `ctx.look`
   for a course's own styling.
