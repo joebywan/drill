@@ -190,7 +190,12 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
 - **Sound and motion in the new units.** Live values and the drawing trail under normal motion were
   only seen in a one-off script: e2e runs with reduced motion.
 - **The live site** was played on the emulator (first visit, the walkthrough, the butterfly, the garden, the wardrobe, a one-tap habit). Not yet from another network.
-- **Firefox** hasn't been played at all since these changes. The gradients that show a box has more above or below are plain CSS now (`scrollBox()` in `src/fit.js`) and were seen in a headless Firefox.
+- **Firefox:** the whole browser suite and a walk through the main screens were run in desktop Firefox 157 (`npm run e2e:firefox`, which is silent; 2026-11-20).
+  Nothing a person would notice differs from Chromium: no page errors, no missing glyphs, the same layout at 412x786 and 412x533, light and dark.
+  Seven specs fail there, all from what the tests assume, not from the app: the last `goBack()` expects `about:blank` (2, `back.spec.js`); a click on the board's
+  frame doesn't focus the svg (1, `board.spec.js`); `getBBox` differs by a few px (2 plant specs in `flows.spec.js`); a tap point sits 1px inside a dead strip
+  (2, "every Coding item fits"). Making those pass is what stands between this and a Firefox job in CI.
+  **Not covered:** Firefox for Android itself (its fonts, touch scrolling, `vibrate`, wake lock), which is what Joseph uses.
 
 **Coding: played** (2026-11, emulator Pixel 6, `CODING_UNIT=n npm run phone -- coding-all`, `tools/play.js`)
 

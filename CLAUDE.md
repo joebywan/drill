@@ -25,7 +25,15 @@ chess teacher, so that name and the draft knight are retired.
 npm install && npm start   # http://localhost:8124
 npm test                   # node --test, no framework
 npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second worktree
+npm run e2e:firefox        # the same suite in Firefox, silent; first `npx playwright install firefox`. Not in CI: 7 specs differ (TODO.md)
 ```
+
+**Nothing a test run starts may be heard on this computer.** Chromium's headless shell is mute and the phone emulator
+starts with `-no-audio`, but Firefox (and WebKit, or any headed browser) plays sound for real: the app's chimes, and
+`speechSynthesis` through the system's speech service, which reads lesson text aloud. Launch Firefox only through
+`playwright.firefox.config.js` (no route to the sound server, volume at nothing, Firefox's own silent test voices), or
+with the same env and prefs in a one-off script, and check while it runs that `pactl list sink-inputs` shows no stream
+from it and no `speech-dispatcher-*` stream with `Corked: no`.
 
 ## Phone testing
 
