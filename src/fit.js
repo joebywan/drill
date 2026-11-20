@@ -102,8 +102,12 @@ export function fitter({ program, tray, world = null, g = null, lines }) {
  */
 export function fitCard(quiz, item, coach) {
   const card = quiz.querySelector('.card');
-  if (!card) return; // a pairs item without a picture has none
   const tray = quiz.querySelector('.choices');
+  if (!card) { // a pairs item without a picture has none: if its pairs reach her words, only the coach can give way
+    const bubble = document.querySelector('.play .bubble');
+    if (tray && bubble && tray.getBoundingClientRect().top < bubble.getBoundingClientRect().bottom) quiz.classList.add('tall');
+    return;
+  }
   const slots = [...card.querySelectorAll('.slot')];
   const was = slots.map((s) => s.textContent);
   slots.forEach((s, i) => { s.textContent = item.answer[i]; });

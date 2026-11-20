@@ -72,6 +72,14 @@ test.describe('at 412x533', () => {
     await expect(slots).toBeVisible();
   });
 
+  test("a five-pair match sits clear of the coach's words", async ({ page }) => {
+    await reach(page, 'japanese', 'gn', 'gn-pairs-315');
+    const [bubble, pairs] = [await rect(page, '.play .bubble'), await rect(page, '.quiz .choices')];
+    expect(bubble.top, 'her words are on the screen').toBeGreaterThanOrEqual(0);
+    expect(pairs.top, 'the pairs start below her words').toBeGreaterThanOrEqual(bubble.bottom);
+    expect(pairs.bottom, 'and end on the screen').toBeLessThanOrEqual(533);
+  });
+
   test('stacked fraction bars stay above the verdict', async ({ page }) => {
     const item = await reach(page, 'maths', 'frac-1', 'frac-1-biggest');
     await page.locator('.quiz .choices .choice').filter({ hasText: /^1\/3$/ }).click();
