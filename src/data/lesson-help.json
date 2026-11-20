@@ -3,7 +3,8 @@
     "moves-0": "A rook slides along its row or column. A bishop slides along a diagonal, so it stays on one colour all game. Neither can pass a piece. Trace the line with your finger before you move.",
     "moves-1": "A queen slides along any straight line or diagonal, as far as it's clear: a rook and a bishop in one. A king goes the same ways, one square at a time.",
     "moves-2": "A knight moves in an L: two squares one way, then one to the side. It jumps over anything in between, and it always lands on the other colour.",
-    "moves-3": "A pawn walks one square forward, or two from its starting row, and never back. It takes one square diagonally forward. On the far row it becomes a stronger piece."
+    "moves-3": "A pawn walks one square forward, or two from its starting row, and never back. At the far end of the board it becomes a stronger piece.",
+    "check-1": "Checkmate is check with no way out: no safe square for the king, nothing can block, nothing can take the attacker. If any one of them works, it is only check."
   },
   "maths": {
     "ten-0": "Find the pair that makes 10: 1 and 9, 2 and 8, 3 and 7, 4 and 6. Fill one number up to 10 from the other, then add what's over. 6 + 7 is 10 + 3.",
