@@ -1,5 +1,5 @@
 import { test, expect, calmFinished } from './fixtures.js';
-import { thirtyDays } from '../phone/lib/seed.js';
+import { daysIn } from '../phone/lib/seed.js';
 
 const seed = (page) => page.addInitScript(() => {
   if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 3, picked: [], done: {}, cards: {}, habits: {}, log: [] }));
@@ -193,37 +193,48 @@ test.describe('a finished practice path at 360x640', () => {
   });
 });
 
-// A month in, home's rows above the path stay few: the first unit's title starts in the top half of the page on every
-// path tab, and your butterfly, the streak line and what the path is raising share one line.
+// A month in (and 131 days in, a three-digit streak), home's rows above the path stay few: the first unit's title starts in
+// the top half of the page on every path tab, and your butterfly, the streak line and what the path is raising share one
+// row. The font is pinned (as in code-courses.spec.js) so this machine and CI measure the same text: with it the streak
+// line is one line at 412 wide and at most two, between the pictures, at 360.
 for (const [width, height] of [[412, 786], [360, 640]]) {
   test.describe(`a month in at ${width}x${height}`, () => {
     test.use({ viewport: { width, height } });
-    test('every path tab starts its path in the top half, and the streak row is one line', async ({ page }) => {
-      await page.addInitScript((saved) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', saved); }, JSON.stringify(thirtyDays()));
-      await page.goto('/');
-      for (const [path, course] of [['learn', 'chess'], ['learn', 'maths'], ['calm'], ['move'], ['reflect']]) {
-        const what = course ?? path;
-        await page.locator(`[data-path="${path}"]`).click();
-        if (course) await page.locator(`[data-course="${course}"]`).click();
-        await page.evaluate(() => scrollTo(0, 0));
-        const top = await page.locator('.street h2').first().evaluate((h) => h.getBoundingClientRect().top);
-        // ponytail: Chess at 360x640 is the one miss: its Games row (44px) puts the title at about 352 of 640. Left for
-        // the owner to decide what comes off; until then it is held below 60% so it can't creep further.
-        expect(top, what).toBeLessThan(course === 'chess' && height < 700 ? height * 0.6 : height / 2);
-        // One line: the streak line's text sits on one row, and each item in the row overlaps the row's middle.
-        const { lines, apart } = await page.locator('.streak-row').evaluate((row) => {
-          const r = document.createRange();
-          r.selectNodeContents(row.querySelector('.streak-line'));
-          const mid = row.getBoundingClientRect().top + row.getBoundingClientRect().height / 2;
-          return {
-            lines: new Set([...r.getClientRects()].map((b) => Math.round(b.top))).size,
-            apart: [...row.children].filter((c) => { const b = c.getBoundingClientRect(); return b.top > mid || b.bottom < mid; }).length,
-          };
-        });
-        expect(lines, what).toBe(1);
-        expect(apart, what).toBe(0);
-      }
-      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-    });
+    for (const days of [30, 131]) {
+      test(`${days} days in: every path tab starts its path in the top half, and the streak row is one row`, async ({ page }) => {
+        await page.addInitScript((saved) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', saved); }, JSON.stringify(daysIn(days)));
+        await page.goto('/');
+        for (const [path, course] of [['learn', 'chess'], ['learn', 'maths'], ['calm'], ['move'], ['reflect']]) {
+          const what = `${days} days, ${course ?? path}`;
+          await page.locator(`[data-path="${path}"]`).click();
+          if (course) await page.locator(`[data-course="${course}"]`).click();
+          await page.addStyleTag({ content: 'body, button { font-family: "DejaVu Sans", Verdana, sans-serif; }' });
+          await page.evaluate(() => scrollTo(0, 0));
+          const top = await page.locator('.street h2').first().evaluate((h) => h.getBoundingClientRect().top);
+          // ponytail: Chess at 360x640 is the one miss: its Games row (44px) puts the title at about 55% of 640. Accepted
+          // by the owner; held below 60% so it can't creep further.
+          expect(top, what).toBeLessThan(course === 'chess' && height < 700 ? height * 0.6 : height / 2);
+          const { lines, apart, out, cut } = await page.locator('.streak-row').evaluate((row) => {
+            const r = document.createRange();
+            const line = row.querySelector('.streak-line');
+            r.selectNodeContents(line);
+            const box = row.getBoundingClientRect(), mid = box.top + box.height / 2;
+            const kids = [...row.children].map((c) => c.getBoundingClientRect());
+            return {
+              lines: new Set([...r.getClientRects()].map((b) => Math.round(b.top))).size,
+              // Level: each item (the pictures and the text) overlaps the row's middle.
+              apart: kids.filter((b) => b.top > mid || b.bottom < mid).length,
+              out: kids.filter((b) => b.left < 0 || b.right > innerWidth).length,
+              cut: line.scrollWidth > line.clientWidth + 1 || line.scrollHeight > line.clientHeight + 1,
+            };
+          });
+          expect(lines, what).toBeLessThanOrEqual(width >= 412 ? 1 : 2);
+          expect(apart, what).toBe(0);
+          expect(out, what).toBe(0);
+          expect(cut, what).toBe(false);
+        }
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+      });
+    }
   });
 }

@@ -1015,7 +1015,7 @@ body:has(main.night) {
 
 /* ---- Your butterfly (app.js yours, yoursView, wingbeat): beside home's streak line, its own screen, the end screens' moment ---- */
 .streak-row { display: flex; align-items: center; justify-content: center; gap: 2px; margin-top: 6px; }
-.streak-row .streak-line, .streak-row .link { margin: 0; min-width: 0; }
+.streak-row .streak-line, .streak-row .link { margin: 0; min-width: 0; text-wrap: balance; } /* two even lines when a narrow page wraps it */
 .yours-link { flex: none; width: 48px; height: 40px; padding: 0; border: 0; border-radius: 12px; background: none; }
 .yours-link svg { display: block; width: 100%; height: 100%; }
 .chip b svg { height: 1em; width: auto; margin-right: 4px; vertical-align: -.1em; }
