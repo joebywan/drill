@@ -1,9 +1,9 @@
 import { reducedMotion } from './cast/kit.js';
 
 /**
- * Fitting a program on a phone, for Coding (src/coding/exercise.js) and the code courses (src/code/exercise.js):
- * fit first (the coach, the gaps and a map give room), then the program scrolls in its own box, never the page,
- * and once answered the verdict covers neither the program's end nor the part that matters.
+ * Fitting a screen on a phone: a program for Coding (src/coding/exercise.js) and the code courses (src/code/exercise.js),
+ * a card for the quiz items (src/quiz/exercise.js). Fit first (the coach, the gaps, a map or pictures give room), then
+ * it scrolls in its own box, never the page, and once answered the verdict covers neither its end nor the part that matters.
  */
 
 /**
@@ -91,4 +91,34 @@ export function fitter({ program, tray, world = null, g = null, lines }) {
     keep(el);
   };
   return { fit, settle, keep };
+}
+
+/**
+ * Fits a quiz card above whatever will cover the bottom of the screen: the answer tray while asked, the verdict
+ * once answered (the same rule as Coding's `fit()`: fit first, never let the page scroll under a fixed bar). A card
+ * that fits is left alone. Otherwise, in turn: the card gives up its spare room (`tight`), the coach shrinks
+ * (`tall`), slots and the sentence above them shrink (`tighter`), pictures shrink, and last the card scrolls in its own box. A build's slots are measured full, as they
+ * will be once answered.
+ */
+export function fitCard(quiz, item, coach) {
+  const card = quiz.querySelector('.card');
+  if (!card) return; // a pairs item without a picture has none
+  const tray = quiz.querySelector('.choices');
+  const slots = [...card.querySelectorAll('.slot')];
+  const was = slots.map((s) => s.textContent);
+  slots.forEach((s, i) => { s.textContent = item.answer[i]; });
+  const limit = () => Math.min(tray?.children.length ? tray.getBoundingClientRect().top + scrollY : innerHeight,
+    innerHeight - verdictHeight(item.type === 'teach' ? null : item.explain, coach?.lines));
+  const over = () => card.getBoundingClientRect().bottom + scrollY - limit() + 8;
+  if (over() > 0) {
+    for (const c of ['tight', 'tall', 'tighter']) { quiz.classList.add(c); if (over() <= 0) break; }
+    const pics = [...card.querySelectorAll('.pic')];
+    if (over() > 0 && pics.length) {
+      const high = pics.reduce((n, p) => n + p.getBoundingClientRect().height, 0);
+      const k = Math.max(0.45, (high - over()) / high);
+      for (const p of pics) p.style.maxWidth = `${Math.floor(p.getBoundingClientRect().width * k)}px`;
+    }
+    if (over() > 0) { card.style.maxHeight = `${Math.floor(card.getBoundingClientRect().height - over())}px`; card.style.overflowY = 'auto'; }
+  }
+  slots.forEach((s, i) => { s.textContent = was[i]; });
 }
