@@ -276,8 +276,7 @@ this way). Looked at by eye: ten frames, arrays, the 100 grid, single and stacke
 money and long sums (1480 to the nearest 100): all drawn cleanly, centred and readable. Every sum and explanation in the 36 lessons was
 read: none wrong.
 
-- **Stacked bars sit under the verdict on a short phone** (medium). At 412x533 the third bar of `frac-1-biggest` (and the lower bars of
-  `frac-1-biggest2`) is hidden behind the verdict banner once answered. Fine at 412x786. The page scrolls, nothing is lost.
+- **Stacked bars under the verdict on a short phone: fixed** (`fitCard` in `src/fit.js`, `test/e2e/quiz-layout.spec.js`). At 412x533 all three bars of `frac-1-biggest` now sit above the verdict; the bars and their gaps shrink first. `frac-1` played again at 412x533 with no flag.
 - **Short phone, otherwise clean:** `ten-1`, `ten-2` and `neg-0` at 412x533 had no flag.
 - **Not covered:** a real finger, and Firefox.
 
@@ -291,15 +290,10 @@ that carry a sound, every one called `speechSynthesis.speak` with its text when 
 110px and sharp; a small っ is plainly smaller and raised against つ, in the card, in a word and among the tiles (ゃ against や likewise);
 が, ぱ and the rest of the changed sounds read clearly; the first-sentence unit (これは ねこです, five-word builds) fits and wraps by word.
 
-- **Long romaji options run off the edge** (high). `hi-pick-295` (こんにちは) and `ty-pick-304` (すみません): the three options sit in one row and the third
-  ("konnichiwa", "sumimasen") is cut at the screen edge on a 412 page, and again at 412x533. The option cannot be read in full. Fix is a
-  design call: let long options stack, or wrap the row.
-- **Sentence builds on a short phone** (medium). At 412x533 `se3-build-332` and `se3-build-335`: the answer slots are pushed under the tile
-  tray and the verdict, so the learner cannot see the tiles laid. Fine at 412x786.
-- **Build slots are thin** (low). The empty slots of a build card are faint underline bars about 50px wide with no box, and the card above them is mostly empty;
-  next to 64px tiles they are easy to miss.
-- **Matched pairs go under the verdict** (low). A 5-pair item has 5 rows; once answered the verdict hides the lower rows, so the last matches
-  turning green are not seen.
+- **Long romaji options cut off: fixed.** A pick's options wrap onto another row when they don't fit side by side, each at full size, in `styles.css` (`.quiz-pick`), for every pick in Japanese and Maths. All 11 units played again at 412x786 with nothing off the side or clipped.
+- **Sentence builds on a short phone: fixed.** At 412x533 the slots sit above the tray while building and above the verdict once answered (`se1` to `se3` and their checkpoint played again at 412x533). The card gives up its spare room, then the coach shrinks, then the slots and the sentence above them; if that were not enough, pictures shrink, then the card scrolls in its own box.
+- **Empty build slots: fixed.** An empty slot is an outlined dashed box the height of a tile (as the Coding builder's), solid once filled.
+- **Matched pairs go under the verdict** (low, left as it is). A 5-pair item has 5 rows; once answered the verdict hides the lower rows, so the last matches turning green are not seen.
 - **Typo fixed:** the explanations of `se1-pairs-323`, `se2-pairs-330` and `se3-pairs-337` read "This is a cat., ..." and ended "tea..". No other content problem found.
 - **Not covered:** a real finger, Firefox, and a voice other than the emulator's.
 
