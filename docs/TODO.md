@@ -209,3 +209,50 @@ sessions run longer. A quarter to a third of every session is repeats (2 warm-up
   depth 3 takes 5-9 s, so it plays its depth-2 move (after 1 e4 it plays d5 instead of e5; at 6x a middlegame's depth 2 took 3.3 s,
   so it fell back to depth 1). Throttled, the top level plays about like level 2. Not broken; if slow phones need it, search
   on fewer positions per node (chess.js `moves()` is the cost) or run it in a Worker, rather than raising the budget.
+
+**Habits and the new screens: played** (2026-11-20, emulator Pixel 6, `npm run phone`; notes and screenshots in `wingbeat-wt/notes/walk/`)
+
+Every scenario but the `-all` ones, on `main` as of #146, in three runs: no page error, no failed request, no sideways overflow. The
+only failures were `japanese`'s two speech checks (`speechSynthesis.speaking` after "Hear it again", and no TTS stream in dumpsys),
+on an emulator whose Japanese voice is installed, and once `calm`'s haptics check on a busy machine (it passed on `main`). New
+scenarios fill what the old ones missed: `home-states` (30 days in: the butterfly flying, basking and resting, what each path is
+raising, Walk's "when", the quiet dot, the switch on ⋯), `yours` (0, 1, 7 and 14 panels), `stages` (every stage on Maths' path and
+Move's plant, and the end-screen line as each arrives), `field-guide` (all 27 species emerged, each page drawn with its source a
+link), `skins` (nothing given, all seven, each worn on home, in the garden and on an end screen), `choose` (Move's finished path),
+`reflect-days` (three dates, the line from a week ago, "Read back your week"), `presets` (the five newest; a "when" set, changed and
+cleared) and `looks` (dark theme, large text); `move` now shoots every move of the new units. Shared seeds are in `test/phone/lib/seed.js`.
+
+Fixed in the same pull request:
+
+- **The butterfly basked after a missed day** for anyone who never opened Learning: `best()` (widget.js) counted the never-started
+  Learning habit, whose light is always soft. Now only habits with a session count, so a day off rests it, as the widget says.
+- **A quiet habit's greeting still counted days** ("31 days of slow breaths") once today was done: the streak was hidden but `days`
+  was not. `moment()` now leaves both out (voice.test.js).
+- **Rosa "beat" people**: "Every opponent I ever beat" and "has not beaten me". Reworded; the guardrail lint now catches beating someone.
+
+Found, not fixed (design calls or bigger than a few lines):
+
+- **A course's own butterfly line goes missing on a busy end screen** (medium). Finishing Maths' eighth or last unit lists its
+  flowers first ("A flower opened for Mental maths", two more, "and 6 more in your garden"), so "made its chrysalis" and "is out"
+  are folded into "and N more" and never shown. A habit's lines come in time order and show. The creature's line should lead.
+- **End screens are crowded on milestone days** (medium). Calm on its 14th day shows the headline, the wingbeat with Lumi and your
+  butterfly, a bow tie for Lumi, the chrysalis, a bee, a birdhouse, then three feelings and Continue: the last feeling sits under the
+  fixed Continue until scrolled. A Maths checkpoint has three chips, the wingbeat, a skin and four lines. About ten things now grow,
+  arrive or unlock, and on these days most of them arrive at once.
+- **Home for someone 30 days in** (low, crowding): garden strip, seven tabs, the course and Games rows (Learning), the greeting, the
+  butterfly and streak line, the raising line, then the path. The path starts below half the screen.
+- **Numbers still show for the other habits** next to a quiet one (by design: only Calm, Reflect and Wind down are quiet), so a
+  30-day home reads "Move 30", "Walk 30", "Learning 31" beside Calm's dot. Fine; noted because the plan's "no count" reads wider.
+- **No way into the wardrobe from home**: it is in ⋯ (last, under Garden) and on the garden screen. Fine if intended.
+- **"Moves need space, so check there's room around you"** shows during Seated march and the other chair moves (low).
+- **Sit to stand: Clover stays seated** in the still we caught, and heel raises, side leg lifts and one-leg stand look alike at the
+  wall (low; motion may tell them apart).
+- **Floss's 🦷 and Music's 🎵 are faint**: white on white on the tab, and the note is dark on the pressed tab's dark green (low).
+- **Seven skins**: worn on home (Reflect's path) and on the end screen; in the garden Lumi is in the pond and not dressed, as
+  CLAUDE.md says. A skin worn hides the butterfly that sits on Lumi's head in the intro (intro only shows on a first visit).
+- **Dark theme** (emulated: `cmd uimode night yes` turns Chrome's bar dark but the page keeps `prefers-color-scheme: light` on
+  this emulator, so `looks` tells the page directly). Everything reads, with two weak spots (low): the pressed tab is white text on a
+  light green, and the wardrobe's dimmed skins turn into grey blobs on the dark card.
+- **Large text not checked**: setting `font_scale 1.3` mid-run closes Chrome's page under Playwright (twice, `LOOKS=large npm run
+  phone -- looks`). It needs the setting before Chrome starts, which the runner doesn't offer.
+- **Not seen:** a real phone and finger, the widget and daily note, Firefox, the field guide's source links opening in a browser.

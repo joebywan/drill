@@ -50,12 +50,16 @@ export function leaning(progress) {
 
 const LIGHTS = ['ember', 'soft', 'bright'];
 
-/** The widget and your butterfly follow the learner's best habit: the brightest light, then the longest streak. */
+/**
+ * The widget and your butterfly follow the learner's best habit: the brightest light, then the longest streak.
+ * Only habits that have had a session count (one never started is always 'soft', which would hide a missed day);
+ * before any session, soft.
+ */
 function best(progress, at) {
-  const ids = Object.keys(progress.habits);
+  const ids = Object.keys(progress.habits).filter((id) => progress.habits[id]?.last);
   return ids.map((id) => ({ habit: id, light: light(progress, at, id), streak: currentStreak(progress, at, id) }))
     .sort((a, b) => LIGHTS.indexOf(b.light) - LIGHTS.indexOf(a.light) || b.streak - a.streak)[0]
-    ?? { habit: LEARN, light: 'ember', streak: 0 };
+    ?? { habit: LEARN, light: 'soft', streak: 0 };
 }
 
 /** Your butterfly today (src/cast/butterfly.js butterflyToday), from the best habit's light. Before any session, basking. */
