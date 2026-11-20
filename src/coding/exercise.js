@@ -3,13 +3,10 @@ import { builder, thumbTargets } from '../builder.js';
 import { gridHtml, walkerOn } from './grid.js';
 import { dragTile } from '../drag.js';
 import { flourish, play } from '../feel.js';
-import { reducedMotion } from '../cast/kit.js';
+import { fitter } from '../fit.js';
 import { esc } from '../html.js';
-import { verdictHeight } from '../fit.js';
 
 const DEMO_WAIT_MS = 900; // long enough to see the grid before a teach card's program plays
-const SQUARE = 28, PICK_SQUARE = 36; // the smallest a map's squares get for a tall program: Fennel stays easy to see, a square to tap thumb-sized
-
 /** The bubble's line for a failed run: a loop that never ends is said out loud, or it just looks stuck. */
 const afterFail = (result) => (result.end === 'endless' ? 'That loop never ends, so I stopped it. Here is one way that works.'
   : result.end === 'spare' ? 'I got there with steps to spare. Here is one way that works.' : 'Here is one way that works.');
@@ -36,49 +33,10 @@ export function mount(el, item, { say, done, coach }) {
     if (varsEl) varsEl.innerHTML = names(item.program ?? item.way, item.tiles, item.chips).map((n) => `<span class="var"><i>${esc(n)}</i> <b>${esc(String(now[n] ?? '?'))}</b></span>`).join('');
   };
   showValues();
-  /** The program's own box scrolls (never the page) to show `block`: smoothly, unless motion is reduced. */
-  const keep = (block) => {
-    if (!block || programEl.scrollHeight <= programEl.clientHeight) return;
-    const box = programEl.getBoundingClientRect(), r = block.getBoundingClientRect();
-    const by = r.top < box.top ? r.top - box.top - 6 : r.bottom > box.bottom ? Math.min(r.bottom - box.bottom + 6, r.top - box.top - 6) : 0;
-    if (by) programEl.scrollBy({ top: by, behavior: reducedMotion() ? 'auto' : 'smooth' });
-  };
   /** A block by its place in reading order (`at` and `next` in a run): drawn by blocks(), or laid out in the builder. */
   const blockAt = (n) => (n == null ? null : programEl.querySelector(`[data-at="${n}"]`) ?? programEl.querySelectorAll('[data-take]')[n]);
+  const { fit, settle, keep } = fitter({ program: programEl, tray: tilesEl, world, g, lines: coach?.lines });
   const { walk, backToStart, cellAt, stop } = walkerOn(world, g, showValues, (result, i) => keep(blockAt(result.at[i])));
-  /** Past `bottom` (a y on the page) the program scrolls in its own box. */
-  const box = (bottom) => {
-    const room = Math.floor(bottom - programEl.getBoundingClientRect().top - scrollY - 8);
-    if (programEl.scrollHeight <= room + 1 || room >= parseFloat(programEl.style.maxHeight)) return; // a box only ever shrinks
-    programEl.style.maxHeight = `${room}px`;
-    programEl.classList.add('scrolls');
-  };
-  /**
-   * A program too tall for the space above the tray and the verdict to come (`words` long) first gets the room the
-   * coach and the gaps can give, then the map's. If even that can't fit it above the verdict (a short phone), the map
-   * gives only what fits it above the tray, so it reads whole while asked, and its box shrinks when the verdict comes.
-   * What can't fit scrolls in its own box. A program that fits is left as it is.
-   */
-  const fit = (words) => {
-    const tray = tilesEl.isConnected && tilesEl.children.length ? tilesEl.getBoundingClientRect().top : innerHeight;
-    const verdict = Math.min(tray, innerHeight - verdictHeight(words, coach?.lines));
-    const over = (bottom) => programEl.scrollHeight - (bottom - programEl.getBoundingClientRect().top - scrollY - 8);
-    if (over(verdict) <= 0) return;
-    programEl.classList.add('tall');
-    const map = world.isConnected;
-    const high = map ? world.getBoundingClientRect().height : 0;
-    const least = map ? g.h * (world.classList.contains('picking') ? PICK_SQUARE : SQUARE) : 0;
-    const bottom = over(verdict) <= high - least ? verdict : tray;
-    const fits = Math.max(least, high - over(bottom) - 4); // 4: the squares round to whole pixels
-    if (map && fits < high) world.style.width = `${(fits * g.w) / g.h}px`;
-    box(bottom);
-  };
-  /** Once answered: the program ends above the verdict as it really came, with the block that matters in view. */
-  const settle = (block) => {
-    const foot = document.querySelector('.foot.show');
-    if (foot) box(innerHeight - foot.offsetHeight);
-    keep(block);
-  };
   /** The block that matters once a run is over: where it stopped, or a hole's fill (the fix, or the way after a miss). */
   const matters = (result, right, fixed) => (fixed || !right ? programEl.querySelector('.filled') : null) ?? blockAt(result.next ?? result.at.at(-1));
   const show = (program, picks = [], locked = true, tappable = null) => (item.view === 'js' ? '' : blocks(program, picks, locked, tappable))

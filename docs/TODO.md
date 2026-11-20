@@ -240,17 +240,17 @@ none near 6 minutes or 20 items. The longest are `jsn-1` and `jsl-3` (~1:35 each
 (~1:27, 56 taps) and `ts-1` (~1:25). The estimate is a learner who knows the answer, so real sessions run longer. The short phone
 (412x533) played the two longest lessons of each course (`jsn-1`, `jsl-1`, `tsa-1`, `tsi-1`, `tb-2`, `ts-1`) with the same result.
 
-- **What a build printed is hidden under the verdict** (medium). The "What it printed" line sits just above the tray, and the verdict banner covers
-  the same place, so after Run the learner never sees the result they made (49 lessons, every print item; the goal "It should print" stays in view
-  above, and a miss says what it printed). Coding's last-line problem, in another part. Fix: put the printed line above the answer, or in the verdict.
-- **A tall answer runs under the verdict** (medium). Fill-in (gap) programs set every line with a blank line between, so a 7-line function is as tall as
-  the screen: `tsi-2-5` loses its closing `}`, `tb-2-5` its last `});`, `jse-3-7` the same. Same fix as Coding's: scroll inside the box, or
-  tighter lines.
-- **The tray scrolls in a small box and shows half a chip** (medium, short phone worse). Test writing items with 8 or more long chips (`tb-2-4`, `tb-2-7`,
-  `ts-1-3`, `te-1-9`, `tsi-1-9`) fill the tray's space, so the last row is cut in half under Run and only a thin scrollbar says there is more. On
-  a short phone the code under test (`band(n)` in `tb-2-7`) also shows 4 lines in a scrolling box, so the function being tested is partly out of sight.
-- **A long answer scrolls inside its own box with its top hidden** (low). `jse-1-8` shows the lines after `function run(f) {`; the first line is
-  scrolled out. The page does not scroll, so nothing is lost, but it looks as if the chip was not placed.
+- **What a build printed is hidden under the verdict: fixed.** "It printed" now sits right under "It should print", the two lined up and the
+  result's line as tall as the goal's, so a run moves nothing. Every print item shows the goal, the result, the program and the verdict
+  together on a 412x786 page; on the short phone the goal and the result come first and the program scrolls in its box.
+- **A tall answer runs under the verdict: fixed.** A fill-in program has no blank line between its lines any more (text lines are as close as
+  code, a line with a gap as tall as its chip), and the code courses fit their program with Coding's rule, now shared in `src/fit.js`: fit first,
+  then the program scrolls in its own box, and once answered the box ends above the verdict with the filled gap or the answer's end in view.
+- **The tray shows half a chip: fixed.** It grows to show every chip while there is room above it; when it can't, it ends on a whole row and
+  fades at the bottom while there is more, like the program's box. The code under test gets as many whole lines as fit, with the same fade,
+  instead of a fixed box. On a short phone both still scroll in `tb-2-7` (six lines of code, two rows of chips): there is not room for all of it.
+- **A long answer with its top hidden: fixed.** The answer's box fades at the top once scrolled, so a hidden first line shows as hidden, and
+  keeps the line being built in view without moving the page (the builder no longer calls `scrollIntoView`). It opens at its first line.
 - **A filled block is 32px high** (low): a placed word in the answer (`button.block`); the tray's chips are all 40 or more.
 - **Wording** (low): "For example `cost({"name":"a"}) gives 0`" writes the input as JSON (quoted keys) before the course has shown that form;
   "Five! Those lines run like clockwork." and "Five in a row." appear on a streak with no mention of what the five are.

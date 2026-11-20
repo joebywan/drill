@@ -1,3 +1,5 @@
+import { keepInView } from './fit.js';
+
 /**
  * A tap-only builder: a tray of chips and an ordered answer with a cursor. It knows nothing about
  * what the chips mean, so a block program, a line of JavaScript words or a Japanese sentence all
@@ -176,7 +178,7 @@ export function builder(answerEl, trayEl, { chips, limit, meter, onChange, onTap
     for (const b of answerEl.querySelectorAll('button')) b.disabled = locked;
     for (const b of trayEl.querySelectorAll('[data-chip]')) b.disabled = locked || !canPlace(state, chips, +b.dataset.chip, limit);
     if (line) line.textContent = meter(api.used(), limit);
-    answerEl.querySelector('.here')?.scrollIntoView?.({ block: 'nearest' });
+    keepInView(answerEl, answerEl.querySelector('.here')); // the line being built shows, and the page never moves
     onChange?.(api);
   };
   const changed = () => { onTap?.(); paint(); };

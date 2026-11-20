@@ -1,4 +1,5 @@
 import { builder } from '../builder.js';
+import { boxTo, fitter, topOf, wholeRows } from '../fit.js';
 import { flourish, play } from '../feel.js';
 import { esc } from '../html.js';
 import { parse as parseLevel } from '../coding/program.js';
@@ -7,6 +8,13 @@ import { mount as mountQuiz } from '../quiz/exercise.js';
 import { grade, layout, limitOf, optionsOf, pretty, runIt, startOf, trayOf, walkOf, wayOf, withOut } from './items.js';
 
 const DEMO_WAIT_MS = 900;
+
+/** The tallest height up to `limit` that shows whole lines of the code in `pre`. */
+function wholeLines(pre, limit) {
+  const css = getComputedStyle(pre);
+  const line = parseFloat(css.lineHeight), pad = parseFloat(css.paddingTop) + parseFloat(css.borderTopWidth);
+  return Math.floor((limit - 2 * pad) / line) * line + 2 * pad;
+}
 
 /** Reads a chip aloud sensibly: code characters a screen reader would drop are said in words. */
 const SPOKEN = { '(': 'open bracket', ')': 'close bracket', '{': 'open brace', '}': 'close brace', '[': 'open square', ']': 'close square', ';': 'semicolon', ',': 'comma', '=': 'equals', '=>': 'arrow', ':': 'colon' };
@@ -27,12 +35,18 @@ function quizPick(item, show) {
   return { id: item.id, type: 'pick', show, options, answer, prompt: item.prompt ?? 'What does this print?', explain: withOut(item, item.explain) };
 }
 
-/** What the goal is, above the answer: nothing to say for a walk, the grid says it. */
+/**
+ * What the goal is, above the answer: nothing to say for a walk, the grid says it. A print goal has a line under it
+ * for what a run printed, lined up with it so the two compare at a glance.
+ */
 function goalHtml(item) {
-  if (item.goal === 'print') return `<p class="code-goal"><span>It should print</span><code>${esc(runIt(item, wayOf(item)).output.join('\n'))}</code></p>`;
+  if (item.goal === 'print') {
+    return `<div class="code-goal"><span>It should print</span><code>${esc(runIt(item, wayOf(item)).output.join('\n'))}</code>`
+      + '<span>It printed</span><pre class="code-out" aria-label="What it printed" aria-live="polite"></pre></div>';
+  }
   if (item.goal === 'returns') {
     const [args, want] = item.cases[0];
-    return `<p class="code-goal"><span>For example</span><code>${esc(item.name)}(${esc(args.map((a) => JSON.stringify(a)).join(', '))}) gives ${esc(JSON.stringify(want))}</code></p>`;
+    return `<div class="code-goal"><span>For example</span><code>${esc(item.name)}(${esc(args.map((a) => JSON.stringify(a)).join(', '))}) gives ${esc(JSON.stringify(want))}</code></div>`;
   }
   return '';
 }
@@ -47,18 +61,21 @@ export function mount(el, item, ctx) {
   const { say, done } = ctx;
   if (!item.level && (item.type === 'teach' || item.type === 'predict')) return mountQuiz(el, asQuiz(item), { ...ctx, look: item.asks === 'check' ? 'code-look code-check' : 'code-look' });
   const g = item.level ? parseLevel(item.level) : null;
-  const printing = item.goal === 'print';
   el.innerHTML = `<div class="code-item">
     ${g ? gridHtml(g) : ''}${item.type !== 'teach' ? goalHtml(item) : ''}
     ${item.given ? `<pre class="code code-given" tabindex="0" aria-label="Code already written">${esc(pretty(item.given))}</pre>` : ''}
     <div class="program code-program" aria-label="Your code"></div>
-    ${printing ? '<pre class="code-out" aria-label="What it printed" aria-live="polite"></pre>' : ''}
     <div class="choices tiles tray code-tray"><div class="chips"></div><button class="next run" disabled>Run</button></div>
   </div>`;
   const programEl = el.querySelector('.program');
   const foot = el.querySelector('.tiles');
   const outEl = el.querySelector('.code-out');
-  const walker = g ? walkerOn(el.querySelector('.grid-world'), g) : null;
+  // As tall as what it should print, so a run moves nothing; something longer scrolls inside it.
+  if (outEl) outEl.style.height = `${el.querySelector('.code-goal code').offsetHeight}px`;
+  const world = el.querySelector('.grid-world');
+  const walker = g ? walkerOn(world, g) : null;
+  const givenEl = el.querySelector('.code-given');
+  const { fit, settle } = fitter({ program: programEl, tray: foot, world, g, lines: ctx.coach?.lines });
   let gone = false;
   const cleanup = () => { gone = true; walker?.stop(); };
 
@@ -73,8 +90,31 @@ export function mount(el, item, ctx) {
   }
 
   const runEl = foot.querySelector('.run');
+  const chipsEl = foot.querySelector('.chips');
+  /**
+   * Room between what is above (the goal, the grid) and Run: the tray grows to show every chip while there is room,
+   * else it ends on a whole row and scrolls; the code under test gets as many whole lines as fit; the answer the rest.
+   * The code keeps at least four lines and the answer one, and grows past it in its box, the line being built in view.
+   * Nothing is limited on a screen where everything fits.
+   */
+  const share = (known) => {
+    const LINE = 36; // an answer's line of chips
+    const want = { given: givenEl?.scrollHeight ?? 0, answer: known ? programEl.scrollHeight : LINE + 16, tray: chipsEl.scrollHeight };
+    const fixed = (givenEl ? 6 : 0) + 8 + (foot.offsetHeight - chipsEl.offsetHeight) + 8; // margins, Run and the tray's padding
+    const room = () => innerHeight - topOf(givenEl ?? programEl) - fixed;
+    if (want.given + want.answer + want.tray <= room()) return;
+    programEl.classList.add('tall'); // the coach gives room first
+    if (want.given + want.answer + want.tray <= room()) return;
+    const least = { given: Math.min(want.given, 4 * 18 + 16), answer: Math.min(want.answer, LINE + 16) };
+    const tray = wholeRows(chipsEl, Math.min(want.tray, room() - least.given - least.answer + 2 /* rounding */));
+    if (tray < want.tray) { chipsEl.style.maxHeight = `${Math.max(tray, 44)}px`; chipsEl.classList.add('scrolls'); }
+    if (givenEl) {
+      const lines = Math.max(least.given, room() - chipsEl.offsetHeight - least.answer);
+      if (lines < want.given) { givenEl.style.maxHeight = `${wholeLines(givenEl, lines)}px`; givenEl.classList.add('scrolls'); }
+    }
+  };
   const words = trayOf(item);
-  const board = builder(programEl, foot.querySelector('.chips'), {
+  const board = builder(programEl, chipsEl, {
     chips: words.map((w) => ({ face: w, name: chipName(w), chipClass: 'code-chip', placedClass: 'block token' })),
     limit: limitOf(item),
     start: item.type === 'gap' ? startOf(item) : undefined,
@@ -84,13 +124,11 @@ export function mount(el, item, ctx) {
     onTap: () => play('tap'),
     onChange: (api) => { runEl.disabled = item.type === 'gap' ? api.open() > 0 : api.used() === 0; },
   });
-  // A long answer scrolls inside the space between what's above it and the tray, so neither moves.
-  const fit = () => {
-    const floor = (outEl ?? foot).getBoundingClientRect().top;
-    programEl.style.maxHeight = `${Math.max(48, floor - programEl.getBoundingClientRect().top - 8)}px`;
-  };
-  if (outEl) outEl.style.bottom = `${foot.offsetHeight + 4}px`;
-  fit();
+  say(item.prompt, 'think'); // first: the bubble's size is part of the room
+  share(item.type === 'gap');
+  if (item.type === 'gap') fit(withOut(item, item.explain));
+  // Past the tray, an answer scrolls inside its own space, so neither moves: one laid out from nothing, or a gap filled longer.
+  if (!programEl.style.maxHeight) boxTo(programEl, foot.getBoundingClientRect().top, true);
   runEl.addEventListener('click', async () => {
     runEl.disabled = true;
     board.lock();
@@ -109,8 +147,10 @@ export function mount(el, item, ctx) {
     const lesson = withOut(item, item.explain);
     done(result.right, result.right ? lesson : `${result.why} ${lesson}`.trim());
     foot.style.visibility = 'hidden'; // Continue takes the thumb zone
+    // The verdict covers neither the answer's end nor what matters: a filled gap, the end of what was built, or the way's start.
+    settle(result.right ? programEl.querySelector('.filled') ?? [...programEl.querySelectorAll('[data-take]')].at(-1) : null, true);
+    if (!result.right) programEl.scrollTop = 0;
   });
-  say(item.prompt, 'think');
   return cleanup;
 }
 

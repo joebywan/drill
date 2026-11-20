@@ -46,7 +46,17 @@ const scan = ({ parts: all, tray }) => {
   for (const [i, a] of parts.entries()) for (const b of parts.slice(i + 1)) if (cut(a.getBoundingClientRect(), b.getBoundingClientRect()) > 16) out.push(`overlap: ${label(a)} and ${label(b)}`);
   const foot = app.querySelector('.foot.show');
   if (foot) for (const e of app.querySelectorAll(all.filter((q) => !tray.includes(q)).join(', '))) if (shown(e) && cut(foot.getBoundingClientRect(), e.getBoundingClientRect()) > 16) out.push(`verdict covers: ${label(e)}`);
-  const buttons = [...app.querySelectorAll('.stage button')].filter((b) => shown(b) && getComputedStyle(b).visibility !== 'hidden');
+  // A button scrolled out of its own box (a tray's rows past the last whole one) is out of sight, not under anything.
+  const scrolledAway = (el) => {
+    const r = el.getBoundingClientRect();
+    for (let p = el.parentElement; p && p !== app; p = p.parentElement) {
+      if (!/auto|scroll|hidden/.test(getComputedStyle(p).overflowY)) continue;
+      const q = p.getBoundingClientRect();
+      if (r.top >= q.bottom - 1 || r.bottom <= q.top + 1) return true;
+    }
+    return false;
+  };
+  const buttons = [...app.querySelectorAll('.stage button')].filter((b) => shown(b) && getComputedStyle(b).visibility !== 'hidden' && !scrolledAway(b));
   for (const [i, a] of buttons.entries()) for (const b of buttons.slice(i + 1)) {
     if (a.contains(b) || b.contains(a)) continue;
     const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
