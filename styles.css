@@ -38,7 +38,11 @@ body {
   font: 1rem/1.4 system-ui, sans-serif; /* rem: the browser's own font size setting reaches every line */
 }
 #app { position: relative; max-width: 520px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
+/* A pull down from the top of a screen must not hand the page to Chrome's pull-to-refresh, which reloads it and loses the lesson or screen (phone run touch-swipe). */
+html, body { overscroll-behavior-y: none; }
 button { font: inherit; color: inherit; cursor: pointer; }
+/* A held finger on a button or the board must not select its glyph and raise the system's Copy / Share toolbar over the controls. */
+button, .cm-chessboard { -webkit-user-select: none; user-select: none; }
 /* One focus ring for every control, in the text colour so it reads on both themes. */
 :focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
 /* Headings take focus when a screen opens, for screen readers; they aren't controls. */

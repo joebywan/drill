@@ -5,34 +5,13 @@
 //   CHESS_SMALL=1080x1700 ...                         a short phone (under 700 px of page)
 // Each unit's first move is made by dragging the piece; every other move by tapping the piece, then the square.
 import { subjects } from '../../src/subjects.js';
-import { kind, solutions, starPath } from '../../src/chess/items.js';
-import { startPuzzle, tryMove } from '../../src/chess/puzzle.js';
+import { kind } from '../../src/chess/items.js';
+import { movesOf, promote, square } from './lib/chess.js';
 import { playCourse } from '../../tools/play.js';
 
 const course = subjects.find((s) => s.id === 'chess');
-const uci = (m) => ({ from: m.slice(0, 2), to: m.slice(2, 4), promotion: m[4] });
-
-/** The moves a move, stars or find item is won by, worked out with the course's own functions. */
-function movesOf(item) {
-  const k = kind(item);
-  if (k === 'stars') return starPath(item).map(({ from, to, promotion }) => ({ from, to, promotion }));
-  if (k === 'move') {
-    const all = solutions(item);
-    const m = all.find((x) => !x.promotion) ?? all[0];
-    return [{ from: m.from, to: m.to, promotion: m.promotion }];
-  }
-  const state = startPuzzle(item); // find: the stored line, played through the puzzle's own rules
-  const out = [];
-  for (;;) {
-    const m = uci(item.moves[state.ply]);
-    out.push(m);
-    if (tryMove(state, m.from, m.to, m.promotion) !== 'next') return out;
-  }
-}
-
 let dragged = false;
 const looked = new Set(); // what has been photographed this run: the first item of each kind, every demo, every long puzzle, every card with a board
-const NAMES = { q: 'Queen', r: 'Rook', b: 'Bishop', n: 'Knight' };
 
 async function answerChess(h, item) {
   const { page, shot } = h;
@@ -47,8 +26,7 @@ async function answerChess(h, item) {
 async function play(h, item, k) {
   const { page, tap, btn, run, dragTo, check } = h;
   if (k === 'teach') return;
-  // The board's own overlay square is what a finger meets, even where a piece stands.
-  const at = async (sq) => page.locator(`.board rect[data-square="${sq}"]`);
+    const at = async (sq) => square(page, sq);
   if (k === 'tap') {
     const { answer } = await import('../../src/chess/items.js');
     for (const sq of answer(item)) await tap(await at(sq));
@@ -67,17 +45,12 @@ async function play(h, item, k) {
       const moved = await page.locator(`.board g[data-piece][data-square="${m.from}"]`).count() === 0
         || await page.locator('.foot.show').count() > 0;
       check(`drag: ${item.id} ${m.from}-${m.to} moved the piece`, moved);
-      if (moved) { await run(700); if (m.promotion) await promote(h, m); continue; }
+      if (moved) { await run(700); if (m.promotion) await promote(h, m.promotion); continue; }
     }
     await tap(await at(m.from));
     await tap(await at(m.to));
-    if (m.promotion) await promote(h, m);
+    if (m.promotion) await promote(h, m.promotion);
   }
-}
-
-async function promote({ page, tap }, m) {
-  const choice = page.locator(`.promotion-dialog-button-group[aria-label="${NAMES[m.promotion]}"]`);
-  if (await choice.count()) await tap(choice);
 }
 
 export default async (h) => {

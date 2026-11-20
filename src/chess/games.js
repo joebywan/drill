@@ -336,7 +336,7 @@ function mountRosa(el, item, { say }) {
     const m = g.move(san);
     refresh(m.from, m.to);
     if (end()) return;
-    say(g.inCheck() ? W.rosa.check : W.rosa.played(words(m.san).replace(/, check$/, '')), 'teach');
+    say(g.inCheck() ? W.rosa.check : W.rosa.played(words(m.san, m.to).replace(/, check$/, '')), 'teach');
     open();
   };
   const input = withDots(b, () => g.fen(), ({ squareFrom: from, squareTo: to }) => withPromotion(b, g.fen(), from, to, (promotion) => {
@@ -371,7 +371,7 @@ function mountRosa(el, item, { say }) {
       const m = new Chess(g.fen()).move(san);
       b.removeArrows();
       b.addArrow(ARROW_TYPE.default, m.from, m.to);
-      say(W.rosa.hinted(words(m.san).replace(/, check(mate)?$/, '')), 'teach');
+      say(W.rosa.hinted(words(m.san, m.to).replace(/, check(mate)?$/, '')), 'teach');
     });
     actions.querySelector('[data-back]')?.addEventListener('click', () => {
       if (!g.history().length) return;

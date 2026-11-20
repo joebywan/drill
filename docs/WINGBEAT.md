@@ -215,6 +215,18 @@ chips, because one tap to play or to switch course is worth more than their row.
   where it started at 448, and on a short phone the next lesson is in sight where it was under
   Continue. `npm run phone -- home-days` shows home from day 0 to day 60.
 
+**The emulator is the phone** (2026-11-21; what each found is in TODO.md)
+
+- [x] **E1. The chrysalis on a phone page** (#171): seen at every stage, and redrawn so it reads at that size.
+- [x] **E2. Large text in a browser** (#177): a browser's font size reaches the page; Chrome's zoom is toured on the phone.
+- [x] **E3. Firefox in CI** (#172): the browser suite passes in Firefox on every pull request.
+- [x] **E4. The live site from another network** (#170): GitHub plays it after every deploy.
+- [x] **E5. Test writing** (#174): repeats change their values, and every build offers a wrong choice.
+- [x] **E6. Phone runs keep one network** (#175): the emulators' shared Wi-Fi dropping could fail a page mid-load.
+- [x] **E7. Chess with wrong moves, and its three games** (#179): nothing wrong is accepted; every Rosa reply is legal.
+- [x] **E8. What a finger does** (#180): off-centre taps, swipes, the keyboard, links out, long press. A long press no
+  longer raises the copy toolbar, and a pull down no longer reloads the page.
+
 **Waiting on the owner** (found by playing, not changed)
 
 - The wardrobe opens from ⋯ and from the garden, not from home itself.

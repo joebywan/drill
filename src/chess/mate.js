@@ -1,6 +1,7 @@
 import { Chess } from 'chess.js';
 import { words } from './items.js';
 import { uci } from './puzzle.js';
+import { NAMES as PIECE } from './why.js';
 
 /**
  * Mate, ported from Daybook: a forced checkmate in 2, 3 or 4 against the best defence, and its
@@ -24,8 +25,7 @@ export function dailyIndex(date, tier, size) {
 
 export const sideName = (fen) => (fen.split(' ')[1] === 'w' ? 'White' : 'Black');
 const other = (fen) => (fen.split(' ')[1] === 'w' ? 'Black' : 'White');
-const PIECE = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
-const said = (fen, m) => words(new Chess(fen).move(uci(m)).san).replace(/, check(mate)?$/, '');
+const said = (fen, m) => { const move = new Chess(fen).move(uci(m)); return words(move.san, move.to).replace(/, check(mate)?$/, ''); };
 const pick = (fen, keys) => keys.find((k) => new Chess(fen).move(uci(k)).san.endsWith('+')) ?? keys[0];
 
 /**

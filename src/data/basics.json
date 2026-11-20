@@ -12,7 +12,7 @@
               "type": "teach",
               "side": "w",
               "fen": "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
-              "text": "A square is named by its letter, then its number: e4. Letters run along the bottom, numbers up the side. A column is called a file, a row a rank."
+              "text": "A square is named by its letter, then its number: e4. Letters run along the bottom, numbers up the side. A column is called a file, a row a rank: e4 is on the e-file and rank 4."
             },
             {
               "id": "board-0-e4",
@@ -86,7 +86,7 @@
               "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
               "answer": "h8",
               "prompt": "Tap the square h8.",
-              "explain": "h8 is the top-right corner: the last file and the last rank."
+              "explain": "h8 is the top-right corner: file h, rank 8."
             }
           ]
         }
@@ -194,7 +194,7 @@
                 "c5"
               ],
               "moves": 2,
-              "explain": "c5 isn't on a diagonal from c1, so turn once: c1 to e3, then e3 to c5."
+              "explain": "A bishop can't reach that star in one move, so turn once: c1 to e3, then e3 to c5."
             },
             {
               "id": "moves-0-bishop-3",
@@ -207,7 +207,7 @@
                 "h3"
               ],
               "moves": 3,
-              "explain": "Your pawn blocks the way to a6, so go round: h3, then c8, then a6."
+              "explain": "Your pawn blocks the way, so go round: h3, then c8, then a6."
             }
           ]
         },
@@ -258,7 +258,7 @@
                 "e4"
               ],
               "moves": 4,
-              "explain": "e4 is on the long diagonal, so stop there first. Then h1, h8 and a8."
+              "explain": "a8, e4, h1, then h8. e4 is on the diagonal from a8 to h1, so collect it on the way between those corners."
             },
             {
               "id": "moves-1-king",
@@ -391,7 +391,7 @@
               "type": "teach",
               "side": "w",
               "fen": "8/8/8/3p4/4P3/8/8/8 w - - 0 1",
-              "text": "Black's pieces are the enemy. Move onto one to take it, and it leaves the board. Pawns are the odd ones: they walk straight, but take one square diagonally forward."
+              "text": "Black's pieces are the enemy. Move onto one to take, or capture, it, and it leaves the board. Pawns are the odd ones: they walk straight, but take one square diagonally forward."
             },
             {
               "id": "moves-3-take",
@@ -422,7 +422,7 @@
               ],
               "moves": 2,
               "prompt": "The king can't step where the pawn attacks. Star in 2.",
-              "explain": "d5 is guarded, so go up to e5 first, then across to d6."
+              "explain": "The square in front is attacked, so go up to e5 first, then across to d6."
             },
             {
               "id": "moves-3-blocked",
@@ -434,7 +434,7 @@
               ],
               "moves": 2,
               "prompt": "Blocked straight ahead. Get the star in 2.",
-              "explain": "The pawn on e5 blocks you, so take on d5 first, then step to d6."
+              "explain": "The pawn in front blocks you, so take on d5 first, then step to d6."
             },
             {
               "id": "moves-3-promote",
@@ -446,7 +446,7 @@
                 "h2"
               ],
               "moves": 3,
-              "prompt": "A pawn reaching the far side becomes any piece but a king: you pick. Here, take the queen. 3 moves.",
+              "prompt": "A pawn that reaches the last rank (rank 8 for White) becomes any piece but a king: you pick. Here, take the queen. 3 moves.",
               "explain": "b7, b8 makes a queen, and the queen runs down the diagonal to h2."
             }
           ]
@@ -537,7 +537,7 @@
               "type": "teach",
               "side": "w",
               "fen": "4k3/8/8/2p5/3n4/8/8/3RK3 w - - 0 1",
-              "text": "In a real game the sides take turns, so what you take can be taken back. This knight is defended: take it and the pawn on c5 takes your rook. With nothing defending it, a piece is free."
+              "text": "In a real game the sides take turns, so what you take can be taken back. This knight is defended, or guarded: take it and the pawn on c5 takes your rook. With nothing defending it, a piece is free."
             },
             {
               "id": "capture-0-free",
@@ -619,7 +619,7 @@
             {
               "id": "check-1-teach",
               "type": "teach",
-              "text": "Checkmate: in check, with no way out. No safe square, nothing can take the attacker, nothing can block. It wins the game.",
+              "text": "Checkmate, or mate for short: in check, with no way out. No safe square, nothing can take the attacker, nothing can block. It wins the game.",
               "side": "w",
               "fen": "3R2k1/5ppp/8/8/8/8/8/6K1 b - - 0 1"
             },
@@ -630,7 +630,7 @@
               "fen": "3R2k1/5ppp/8/8/8/8/8/6K1 b - - 0 1",
               "claim": "mate",
               "prompt": "True or false: Black is checkmated.",
-              "explain": "The rook on d8 checks along the back rank, Black's own pawns block every escape, and nothing can take or block the rook."
+              "explain": "The rook on d8 checks along rank 8, Black's own pawns block every escape, and nothing can take or block the rook."
             },
             {
               "id": "check-1-no",
@@ -639,7 +639,7 @@
               "fen": "3R2k1/5pp1/7p/8/8/8/8/6K1 b - - 0 1",
               "claim": "mate",
               "prompt": "True or false: Black is checkmated.",
-              "explain": "It's check, but the king can step to h7, where the h-pawn used to stand. Mate needs no way out at all."
+              "explain": "It's check, but the king can step to h7, which the pawn on h6 left open. Mate needs no way out at all."
             },
             {
               "id": "check-1-rook",
@@ -647,7 +647,7 @@
               "fen": "6k1/5ppp/8/8/8/8/8/3R2K1 w - - 0 1",
               "goal": "mate",
               "prompt": "Checkmate in one move.",
-              "explain": "Rook to d8 is checkmate: the black pawns trap their own king on the back rank."
+              "explain": "Rook to d8 is checkmate: the black pawns trap their own king on rank 8."
             },
             {
               "id": "check-1-kings",
@@ -662,7 +662,7 @@
               "fen": "k7/8/1K6/8/8/8/8/7Q w - - 0 1",
               "goal": "mate",
               "prompt": "Checkmate in one move.",
-              "explain": "Queen to b7, guarded by your king, or queen to h8 along the back rank: either way the black king has nowhere to go."
+              "explain": "Queen to b7, guarded by your king, or queen to h8 along rank 8: either way the black king has nowhere to go."
             },
             {
               "id": "check-1-ladder",
@@ -670,7 +670,7 @@
               "fen": "7k/8/6K1/8/8/8/8/R7 w - - 0 1",
               "goal": "mate",
               "prompt": "Checkmate in one move.",
-              "explain": "Rook to a8 covers the whole back rank, and your king guards g7 and h7."
+              "explain": "Rook to a8 attacks all of rank 8, and your king guards g7 and h7."
             }
           ]
         }
