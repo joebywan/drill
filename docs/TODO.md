@@ -204,13 +204,13 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
 - **Real touch on a real phone:** the emulator covered tapping, dragging and a short phone (a 412x533 page) for every course; a real finger and a real keyboard still haven't.
 - **Sound and motion in the new units.** Live values and the drawing trail under normal motion were
   only seen in a one-off script: e2e runs with reduced motion.
-- **The live site** was played on the emulator (first visit, the walkthrough, the butterfly, the garden, the wardrobe, a one-tap habit). Not yet from another network.
-- **Firefox:** the whole browser suite and a walk through the main screens were run in desktop Firefox 157 (`npm run e2e:firefox`, which is silent; 2026-11-20).
-  Nothing a person would notice differs from Chromium: no page errors, no missing glyphs, the same layout at 412x786 and 412x533, light and dark.
-  Seven specs fail there, all from what the tests assume, not from the app: the last `goBack()` expects `about:blank` (2, `back.spec.js`); a click on the board's
-  frame doesn't focus the svg (1, `board.spec.js`); `getBBox` differs by a few px (2 plant specs in `flows.spec.js`); a tap point sits 1px inside a dead strip
-  (2, "every Coding item fits"). Making those pass is what stands between this and a Firefox job in CI.
-  **Not covered:** Firefox for Android itself (its fonts, touch scrolling, `vibrate`, wake lock), which is what Joseph uses.
+- **The live site** was played on the emulator (first visit, the walkthrough, the butterfly, the garden, the wardrobe, a one-tap habit), and GitHub now plays it from its own network after every deploy (`.github/workflows/live.yml`, `npm run e2e:live`: a first visit, the first Maths lesson to its end, and the served `app.js` and `styles.css` matching the commit; first run passed 2026-11-21).
+- **Firefox:** the whole browser suite passes in desktop Firefox and CI runs it on every pull request (`npm run e2e:firefox`, silent; job `e2e-firefox`; #172).
+  A walk through the main screens (2026-11-20) showed nothing a person would notice differing from Chromium: no page errors, no missing glyphs, the same layout at
+  412x786 and 412x533, light and dark. What does differ, and the specs now allow for: Firefox has no history entry before the first page, so the last back stays on
+  home; a click on the board's frame doesn't focus the board (Tab does; mouse-then-arrow-keys on a desktop is the only one a person could meet); `getBBox` is tighter on curves;
+  a 2 to 3px strip between two tap targets in a few tight Coding rows.
+  **Still to play:** Firefox for Android itself (its fonts, touch scrolling, `vibrate`, wake lock), which is what Joseph uses. It is not on the emulator image; installing it there waits on his say-so.
 
 **Coding: played** (2026-11, emulator Pixel 6, `CODING_UNIT=n npm run phone -- coding-all`, `tools/play.js`)
 

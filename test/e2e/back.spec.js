@@ -6,10 +6,19 @@ const seed = (page, extra = {}) => page.addInitScript((p) => {
   localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 3, picked: [], done: {}, cards: {}, habits: {}, log: [], ...p }));
 }, extra);
 const back = (page) => page.evaluate(() => history.back());
+// Past home the browser has nowhere in the app to go. Chromium leaves for its blank page; Firefox has no entry before
+// the first page, so it stays on the app's URL, and "no app screen left behind" is then home, on its first entry.
+const lastStop = async (page, browserName) => {
+  await page.goBack();
+  if (browserName === 'firefox') {
+    await onHome(page);
+    expect(await page.evaluate(() => history.state?.depth ?? 0)).toBe(0);
+  } else await expect(page).toHaveURL('about:blank');
+};
 const onHome = (page) => expect(page.locator('main.home')).toBeVisible();
 const tab = (page, name) => page.locator(`[data-path="${name}"]`).click();
 
-test('back steps through nested screens one at a time, and home is the last stop', async ({ page }) => {
+test('back steps through nested screens one at a time, and home is the last stop', async ({ page, browserName }) => {
   await seed(page, { habits: { calm: { count: 1, last: '2026-10-01', forgiven: [], days: 1 } } });
   await page.goto('/');
   await onHome(page);
@@ -30,11 +39,10 @@ test('back steps through nested screens one at a time, and home is the last stop
   // Home sits on the first entry, so the next back leaves the app.
   await expect.poll(() => page.evaluate(() => history.state?.depth ?? 0)).toBe(0);
   expect(await page.evaluate(() => history.length)).toBeGreaterThan(start);
-  await page.goBack();
-  await expect(page).toHaveURL('about:blank');
+  await lastStop(page, browserName);
 });
 
-test('an X or ← leaves no back press behind: home is still the last stop', async ({ page }) => {
+test('an X or ← leaves no back press behind: home is still the last stop', async ({ page, browserName }) => {
   await seed(page);
   await page.goto('/');
   await page.locator('.garden-link').click();
@@ -45,8 +53,7 @@ test('an X or ← leaves no back press behind: home is still the last stop', asy
   await page.locator('[data-back]').click();
   await onHome(page);
   await expect.poll(() => page.evaluate(() => history.state?.depth ?? 0)).toBe(0);
-  await page.goBack();
-  await expect(page).toHaveURL('about:blank');
+  await lastStop(page, browserName);
 });
 
 test('back from a lesson does what its X does', async ({ page }) => {
