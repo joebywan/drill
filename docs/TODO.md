@@ -176,18 +176,21 @@ permission, and the pool stays the fallback even then.
 
 ## To test or improve
 
-From the repetition work and the Coding expansion, 2026-10-30. None of it is confirmed as a bug yet.
+What playing has covered and what it hasn't. Every course (281 lessons), the habits, the new butterfly screens and the
+installed Android app were played by touch on the emulator in November 2026. Each one's results are in its "played"
+block below; the fixes that came out of them are in docs/WINGBEAT.md under "Found by playing".
 
 **Test by playing**
 
 - **Blank button label in Firefox for Android.** Joseph has seen it a few times, on the JavaScript Meet screen: the green button at full height with no text. It stayed blank until he left and opened the course again, so it is a stuck draw that a rebuilt screen clears, not a slow one. The text and colour are right, so it isn't being drawn. Not reproduced: 39 runs of the old code in Firefox 159 on the emulator, which renders in software, including scrolling during the entrance and a shorter screen.
-- **Session length, on a real phone and a real beginner.** The emulator played all 64 Coding lessons (see "Coding: played" below), but at an
-  idealised pace. Check a first-time learner still feels small wins, not a slog, with warm-ups, "Once more" and checkpoints in.
-  Chess, Maths, Japanese and the code courses haven't had the same pass: `tools/play.js` is the harness.
-- **Real touch on a real phone:** the emulator covered tapping, drag and the small-phone size for Coding; a real finger and a real keyboard still haven't.
+- **Session length, on a real phone and a real beginner.** The emulator played every lesson of every course at an
+  idealised pace, and none is near 6 minutes or 20 items (each course's "played" block has its numbers). Check a
+  first-time learner still feels small wins, not a slog, with warm-ups, "Once more" and checkpoints in.
+- **Real touch on a real phone:** the emulator covered tapping, dragging and a short phone (a 412x533 page) for every course; a real finger and a real keyboard still haven't.
 - **Sound and motion in the new units.** Live values and the drawing trail under normal motion were
   only seen in a one-off script: e2e runs with reduced motion.
-- **The live site** beyond its start screen, on a phone and from another network.
+- **The live site** was played on the emulator (first visit, the walkthrough, the butterfly, the garden, the wardrobe, a one-tap habit). Not yet from another network.
+- **Firefox** hasn't been played at all since these changes. The fades that show a box has more below use scroll-driven animations, which it lacks; there the boxes just scroll.
 
 **Coding: played** (2026-11, emulator Pixel 6, `CODING_UNIT=n npm run phone -- coding-all`, `tools/play.js`)
 

@@ -112,6 +112,12 @@ looks (the dark theme; `LOOKS=large` for large text).
   greetings, and a first sentence with は: これは ねこです), coached by Kaede, a red panda (`src/cast/kaede.js`,
   rig-posed). Sentences are `build` items with word tiles. `test/quiz.test.js` checks every answer against its own kana
   table (small kana, and は said "wa" at the end of a part) and that no kana is asked before a teach card shows it.
+- `src/fit.js` — the one module for fitting a screen, behind the rule that **nothing the learner is working on sits
+  under a fixed bar**: fit first (the coach, the gaps and the pictures give up room), then that part scrolls in its
+  own box, never the page. `verdictHeight()` measures the verdict before it comes; `fitter()` gives Coding and the
+  code courses `fit`, `settle` and `keep` (the block being run stays in view); `fitCard()` fits a quiz card (Maths,
+  Japanese); a box that scrolls ends on a whole row or line and fades where there is more (`.scrolls`). A screen that
+  fits is left as it is. On a short phone (a 412x533 page) every course is played this way: `…_SMALL=1080x1700`.
 - `src/quiz/` also has `line` (drag a marker on a number line, snapped to its ticks, answered on
   release) and takes a `picture` the course draws through the mount's `ctx.art`, plus `ctx.look`
   for a course's own styling.

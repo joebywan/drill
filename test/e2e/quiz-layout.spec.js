@@ -72,6 +72,20 @@ test.describe('at 412x533', () => {
     await expect(slots).toBeVisible();
   });
 
+  // Twice: with the machine's own font, and with rows far taller than any font makes them, when the pairs must scroll.
+  for (const [how, tall] of [['as it comes', 0], ['with every label wrapped', 96]]) {
+    test(`a five-pair match sits clear of the coach's words, ${how}`, async ({ page }) => {
+      if (tall) await page.addInitScript((h) => addEventListener('DOMContentLoaded', () => document.head.append(Object.assign(document.createElement('style'), { textContent: `.quiz .quiz-pairs .choice { min-height: ${h}px !important; }` }))), tall);
+      await reach(page, 'japanese', 'gn', 'gn-pairs-315');
+      const [bubble, pairs] = [await rect(page, '.play .bubble'), await rect(page, '.quiz .choices')];
+      expect(bubble.top, 'her words are on the screen').toBeGreaterThanOrEqual(0);
+      expect(pairs.top, 'the pairs start below her words').toBeGreaterThanOrEqual(bubble.bottom - 1);
+      expect(pairs.bottom, 'and end on the screen').toBeLessThanOrEqual(533);
+      // Every pair can still be reached and matched.
+      for (const c of await page.locator('.quiz .choices .choice').all()) { await c.scrollIntoViewIfNeeded(); await expect(c).toBeInViewport(); }
+    });
+  }
+
   test('stacked fraction bars stay above the verdict', async ({ page }) => {
     const item = await reach(page, 'maths', 'frac-1', 'frac-1-biggest');
     await page.locator('.quiz .choices .choice').filter({ hasText: /^1\/3$/ }).click();

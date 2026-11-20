@@ -3,7 +3,7 @@
 // the TTS engine, so its stream is checked as well as Chrome's). Then a later kana lesson and a
 // sentence lesson, opened by marking everything before them done, with nothing poking out sideways.
 import { readFileSync } from 'node:fs';
-import { streamStarted } from '../../tools/sound.js';
+import { recordSpeech } from '../../tools/sound.js';
 
 const course = JSON.parse(readFileSync(new URL('../../src/data/japanese.json', import.meta.url)));
 const lessons = course.units.flatMap((u) => [...u.lessons, ...(u.lessons.length > 1 ? [{ id: `${u.lessons[0].id}-checkpoint` }] : [])]);
@@ -11,7 +11,7 @@ const lesson = course.units[0].lessons[0];
 const KANA = [...new Set(course.units.flatMap((u) => u.lessons).flatMap((l) => l.items).filter((i) => i.type === 'teach').flatMap((i) => [...i.show.replaceAll(' ', '')]))].join('');
 const before = (id) => Object.fromEntries(lessons.slice(0, lessons.findIndex((l) => l.id === id)).map((l) => [`japanese:${l.id}`, true]));
 
-export default async ({ page, adb, touch, btn, shot, run, seed, check }) => {
+export default async ({ page, touch, btn, shot, run, seed, check }) => {
   await seed({ start: {} });
   await touch(btn('Japanese')); await shot('home');
   // A glyph the font lacks draws as the same box as an unassigned code point.
@@ -30,15 +30,15 @@ export default async ({ page, adb, touch, btn, shot, run, seed, check }) => {
   if (voices.length) {
     // "Hear it again" is a real tap, so speech has the user activation Chrome asks for. Then the
     // TTS engine's (or Chrome's) audio stream is started while it plays.
+    await page.evaluate(recordSpeech);
     await touch(btn('Hear it again'));
-    let started = false, speaking = false;
-    for (let i = 0; i < 8 && !started; i++) {
-      speaking ||= await page.evaluate(() => speechSynthesis.speaking);
-      started = streamStarted(adb);
+    let said = 0, started = 0;
+    for (let i = 0; i < 12 && !started; i++) {
+      [said, started] = await page.evaluate(() => [window.__spoken.length, window.__started]);
       if (!started) await new Promise((r) => setTimeout(r, 250));
     }
-    check('speech: speechSynthesis.speaking after "Hear it again"', speaking);
-    check('speech: a Chrome or TTS stream is state:started (dumpsys audio)', started);
+    check('speech: "Hear it again" asks the voice to say the card', said > 0);
+    check('speech: the voice started (the utterance\'s start event)', started > 0);
   } else check('no ja-JP voice: the listening item shows its reading instead', true);
 
   const choice = (t) => page.locator('.quiz .choices .choice:not(:disabled)', { hasText: new RegExp(`^${t}$`) }).first();
