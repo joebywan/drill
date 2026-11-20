@@ -862,7 +862,7 @@ body:has(main.night) {
   .play:has(.board.lesson) .topic { position: absolute; clip-path: inset(50%); }
   .play:has(.board.lesson) .who { width: 44px; }
   .play:has(.board.lesson) .coach { margin-bottom: 4px; }
-  .play:has(.board.lesson) .bubble { min-height: 4.2em; margin-bottom: 6px; padding: 6px 10px; font-size: .9rem; }
+  .play:has(.board.lesson) .bubble { min-height: 3.4em; margin-bottom: 6px; padding: 6px 10px; font-size: .9rem; line-height: 1.3; }
   .play:has(.board.lesson) .choices { padding-block: 8px; }
   .tray .tile { min-height: 38px; }
   /* The count of blocks shares Run's row, so the answer keeps the room. */

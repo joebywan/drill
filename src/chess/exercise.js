@@ -33,7 +33,7 @@ const FRAME = 8.7; // a board is its eight squares and a frame of about 0.7 of o
 
 /**
  * Keeps the board on the screen. Asked, the coach's words and the whole board show together (the page has
- * nothing to scroll), the board giving up size down to SQUARE_MIN squares to do it; answered (or a teach card),
+ * nothing to scroll), the board giving up size down to SQUARE_MIN squares (to tap) to do it; answered (or a teach card),
  * the whole board sits above the verdict banner, and nobody needs to tap it then, so it may shrink further.
  * A board that already fits is left as it is. The coach and the gaps compact themselves in styles.css on a
  * short phone. Returns `stop`, with `refit` and the `ctx` to mount with (its say and done refit afterwards).
@@ -47,7 +47,8 @@ function fitBoard(boardEl, choices, item, ctx) {
     const tray = choices.isConnected && choices.children.length ? choices.offsetHeight : 0;
     const low = innerHeight - (foot ? foot.offsetHeight : tray);
     const room = low - boardEl.getBoundingClientRect().top - 6;
-    const least = foot ? 150 : SQUARE_MIN * FRAME;
+    const tapped = ['tap', 'move', 'stars', 'find'].includes(kind(item)); // a true/false board is only looked at
+    const least = foot || !tapped ? 150 : SQUARE_MIN * FRAME;
     const side = Math.floor(Math.min(natural, Math.max(room, least)));
     if (side < natural) { boardEl.style.width = `${side}px`; boardEl.style.marginInline = 'auto'; }
     if (document.documentElement.scrollHeight <= innerHeight) scrollTo(0, 0);

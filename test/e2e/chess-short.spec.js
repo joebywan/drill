@@ -77,3 +77,40 @@ test('a finished tap item no longer counts "Found 2 of 3"', async ({ page }) => 
   await expect(page.locator('#ended')).toHaveText('true');
   await expect(page.locator('#said')).not.toContainText('Found');
 });
+
+test('every Chess item fits a 412x533 phone while asked, and a teach card clear of Continue', async ({ page }) => {
+  test.setTimeout(240000);
+  await page.goto('/');
+  const items = chess.units.flatMap((u) => u.lessons).filter((l) => !l.mix).flatMap((l) => l.items.map((item) => ({ item, topic: l.title })));
+  const bad = await page.evaluate(async (items) => {
+    const { mount } = await import('/src/chess/exercise.js');
+    const { kind } = await import('/src/chess/items.js');
+    const app = document.getElementById('app');
+    const out = [];
+    for (const { item } of items) {
+      app.innerHTML = `<header class="bar"><button class="close" aria-label="Quit lesson">✕</button><div class="meter"><div class="fill"></div></div></header>
+        <main class="play"><p class="topic">Topic</p><div class="coach"><button class="who" aria-label="Rosa"></button><p class="bubble" id="said"></p></div><div class="stage"></div></main>
+        <footer class="foot"><div class="verdict"><strong></strong><p></p></div><button class="next">Continue</button></footer>`;
+      const foot = app.querySelector('.foot');
+      const stop = mount(app.querySelector('.stage'), item, {
+        say: (t) => { app.querySelector('.bubble').textContent = t; },
+        done: (right, text) => { foot.className = 'foot show'; foot.querySelector('p').textContent = text; },
+      });
+      await new Promise((r) => setTimeout(r, 50));
+      if (!app.querySelector('div.board')) { stop(); continue; } // a card with no board
+      const board = app.querySelector('div.board').getBoundingClientRect();
+      const bubble = app.querySelector('.bubble').getBoundingClientRect();
+      const tray = app.querySelector('.choices');
+      const low = foot.classList.contains('show') ? innerHeight - foot.offsetHeight : tray?.children.length ? tray.getBoundingClientRect().top : innerHeight;
+      const why = [];
+      if (bubble.top < 0) why.push('the coach is off the top');
+      if (board.bottom > low + 1) why.push(`the board runs ${Math.round(board.bottom - low)}px under the ${foot.classList.contains('show') ? 'Continue bar' : 'answers'}`);
+      if (['tap', 'move', 'stars', 'find'].includes(kind(item)) && board.width / 8.7 < 39.5) why.push(`squares of ${Math.round(board.width / 8.7)}px`);
+      if (document.documentElement.scrollHeight > innerHeight + 1 && foot.classList.contains('show') === false && ['tap', 'move', 'stars', 'find', 'truefalse'].includes(kind(item))) why.push(`the page scrolls ${document.documentElement.scrollHeight - innerHeight}px, bubble ${Math.round(bubble.height)}, board top ${Math.round(board.top)}`);
+      if (why.length) out.push(`${item.id}: ${why.join(', ')}`);
+      stop();
+    }
+    return out;
+  }, items);
+  expect(bad).toEqual([]);
+});
