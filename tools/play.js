@@ -31,7 +31,7 @@ const scan = ({ parts: all, tray }) => {
   const shown = (el) => { const s = getComputedStyle(el); const r = el.getBoundingClientRect(); return s.visibility !== 'hidden' && s.display !== 'none' && r.width > 0 && r.height > 0; };
   const label = (el) => `${el.tagName.toLowerCase()}${typeof el.className === 'string' && el.className.trim() ? `.${el.className.trim().split(/\s+/).join('.')}` : ''} "${(el.getAttribute('aria-label') || el.textContent).trim().slice(0, 30)}"`;
   for (const el of app.querySelectorAll('*')) {
-    if (!shown(el) || el.closest('svg') && el.tagName !== 'svg') continue;
+    if (!shown(el) || el.closest('svg') && el.tagName !== 'svg' || el.closest('.visually-hidden')) continue; // hidden-for-eyes text is for screen readers
     const s = getComputedStyle(el);
     const clip = (axis, size, client) => s[axis] !== 'visible' && s[axis] !== 'auto' && s[axis] !== 'scroll' && client > 0 && size > client + 2;
     if (el.textContent.trim() && clip('overflowX', el.scrollWidth, el.clientWidth)) out.push(`text clipped sideways: ${label(el)}`);
@@ -69,10 +69,11 @@ export async function playCourse(h, { course, unit = 1, only, answer, small, par
   // Unplayed lessons ahead of this one count as done, so the path asks for this unit's.
   const done = Object.fromEntries([...before, ...skipped].map((l) => [key(l), true]));
   const restored = unit > 1 && saved && before.every((l) => saved.done?.[key(l)]) ? saved : null;
+  // A short phone first, so the taps are aimed where its smaller screen puts the page (`calibrate` blanks the page; seed loads it).
+  if (small) { adb('shell', 'wm', 'size', small); await run(1500); await h.calibrate?.(); }
   await seed(restored ? { ...restored, done } : { done }); // only what is behind this unit counts as done, so a unit can be played again
 
   await page.evaluate(() => { window.WINGBEAT_PLAIN = false; }); // the app reads it as it goes: warm-ups, echoes and checkpoints on, as a learner has them
-  if (small) { adb('shell', 'wm', 'size', small); await run(1500); }
   const events = [];
   const onError = (e) => events.push(`page error: ${e.message}`);
   const onResponse = (r) => r.status() >= 400 && events.push(`failed request: ${r.status()} ${r.url()}`);
@@ -91,13 +92,32 @@ export async function playCourse(h, { course, unit = 1, only, answer, small, par
     const hit = await at.evaluate((el) => {
       const r = el.getBoundingClientRect();
       const t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-      return { ok: !!t && (el === t || el.contains(t) || t.contains(el)), w: r.width, h: r.height, name: `${el.tagName.toLowerCase()}.${String(el.className).split(/\s+/)[0]}`, covered: t && `${t.tagName.toLowerCase()}.${String(t.className).split(/\s+/)[0]}` };
+      const name = (e) => `${e.tagName.toLowerCase()}.${String(e.className).split(/\s+/)[0]}`;
+      // A real finger is not a point: another control's (invisible) target over any of this one's box can take the tap.
+      let part = null;
+      for (let i = 0; i < 10 && !part; i++) { // across the middle each way, edge to edge: the rounded corners are no one's
+        const f = (i % 5) / 4, x = i < 5 ? r.x + 1 + f * (r.width - 2) : r.x + r.width / 2, y = i < 5 ? r.y + r.height / 2 : r.y + 1 + f * (r.height - 2);
+        const o = document.elementFromPoint(x, y)?.closest('button, a, input, [role="button"]');
+        if (o && o !== el && !o.contains(el) && !el.contains(o)) part = name(o);
+      }
+      return { ok: !!t && (el === t || el.contains(t) || t.contains(el)), w: r.width, h: r.height, name: name(el), covered: t && name(t), part };
     });
     if (!hit.ok) trouble.push(`${hit.name} is covered by ${hit.covered}`);
+    else if (hit.part) trouble.push(`${hit.name} is partly covered by ${hit.part}`);
     const least = Math.round(Math.min(hit.w, hit.h));
     if (least < 40) { const was = targets.get(hit.name); targets.set(hit.name, { least: Math.min(least, was?.least ?? 99), n: (was?.n ?? 0) + 1 }); }
     taps++;
+    // Where the finger really landed: a tap aimed here that a neighbour takes is the worst kind of covered.
+    await at.evaluate((el) => {
+      window.__landed = null;
+      addEventListener('pointerdown', (e) => {
+        const t = e.target instanceof Element ? e.target : null;
+        window.__landed = !t || el.contains(t) || t.contains(el) ? 'ok' : `${t.tagName.toLowerCase()}.${String(t.className).split(/\s+/)[0]} "${(t.getAttribute('aria-label') || t.textContent).trim().slice(0, 30)}"`;
+      }, { once: true, capture: true });
+    });
     await touch(at);
+    const landed = await page.evaluate(() => window.__landed).catch(() => 'ok'); // a tap that leaves the page is fine
+    if (landed && landed !== 'ok') trouble.push(`${hit.name} was tapped, but ${landed} took it`);
     tapEnd = Date.now();
   };
 
@@ -169,7 +189,7 @@ export async function playCourse(h, { course, unit = 1, only, answer, small, par
     if (row.stuck) break; // the path is not where the next lesson expects it
   }
   page.off('pageerror', onError); page.off('response', onResponse); page.off('requestfailed', onFailed);
-  if (small) adb('shell', 'wm', 'size', 'reset');
+  if (small) { adb('shell', 'wm', 'size', 'reset'); await run(1500); await h.calibrate?.(); }
   const progress = await page.evaluate(() => localStorage.getItem('wingbeat.progress'));
   if (!small && !only) writeFileSync(`${dir}progress.json`, progress);
   writeFileSync(`${dir}unit-${unit}${small ? '-small' : only ? '-some' : ''}.json`, JSON.stringify({ unit, title: unitAt.title, page: height, lessons: report }, null, 1));

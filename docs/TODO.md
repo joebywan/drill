@@ -73,30 +73,32 @@ Widget and reminder mechanics, from a friend's Android habit app (Fizz) reviewed
 **The Android app: played** (2026-11-20, emulator Pixel 6 API 36, debug APK, `npm run phone -- app`, `test/phone/app.js`)
 
 Installed and played with real taps through the WebView (`attach()` in `tools/phone.js`). The launcher icon is Lumi close up
-with the butterfly on her head; the app opens on the intro ("Small beats go a long way.") about 5 s after the tap on a cold
-emulator; no INTERNET permission; no error from `WingbeatBridge` or `WingbeatDaily` and no failed request all run. A first day
-(`butterfly.js` and `calm.js` played in the app) passes: sound and haptics come through for the app's own package, the end
-screen shows today's wingbeat with its new panel, home shows the butterfly. The widget was placed through the launcher
-(long-press, Widgets, Wingbeat, Add) and is right in all its states: flying, basking, resting, with the streak number for
-Learning and none for Calm or Reflect. The daily note posts "Something small today? Lumi is around.", in the shade under a
-butterfly seen from the side, opens the app when tapped, and posts nothing on a day with something done, forced or not. The
-bars take the page's colour in light and in Wind down. Back from a routine lands on home, a quick second back stays, a third
-leaves. Large text was played on a build with `textZoom` unpinned, to see what the phone's font size would do.
+with the butterfly on her head; the app opens on the intro ("Small beats go a long way.") 5 to 14 s after the tap on a busy, cold
+emulator, on the page's own background colour meanwhile, light or dark, never white; no INTERNET permission; no error from
+`WingbeatBridge` or `WingbeatDaily` and no failed request all run. A first day (`butterfly.js` and `calm.js` played in the
+app) passes: sound and haptics come through for the app's own package, the end screen shows today's wingbeat with its new
+panel, home shows the butterfly. Japanese speaks through the phone's engine (it logs each utterance it starts). The widget
+was placed through the launcher (long-press, Widgets, Wingbeat, Add): it lands one row high, stretches to two, shows its own
+layout in the launcher's list, and is right in all its states: flying, basking, resting, the streak number for Learning,
+none for Calm or Reflect, and none before there is a streak. The daily note posts "Something small today? Lumi is around.",
+in the shade under a butterfly seen from the side, opens the app when tapped, and posts nothing on a day with something done,
+forced or not. The page and the bars follow the phone's theme, live and from a cold start, and Wind down's night palette.
+Back from a routine lands on home, a quick second back stays, a third leaves. The WebView follows the phone's font size
+(`textZoom` is no longer pinned): at 1.3 and 2.0 every screen with much text was walked (home for each habit, a lesson in
+five courses, a Calm and a Move routine to their end screens, "Your butterfly", the field guide and a species, ⋯, the
+wardrobe, "+ Habit") with nothing wider than the page, cut off, out of its node or out of reach under a fixed bar.
 
-- **Dark theme never reaches the app** (high). With the phone in dark mode (`cmd uimode night yes`, "Night mode: yes")
-  `prefers-color-scheme: dark` is false in the WebView, live and after a cold start, so the app and its bars stay light
-  (`#f6f7f9`). Chrome follows the phone's theme. Setting `android:isLightTheme` in both themes did not change it. Needs a
-  look at how this WebView decides (`WebSettingsCompat`, algorithmic darkening, the theme).
-- **The phone's font size is ignored** (medium, a design call). `MainActivity` pins `settings.textZoom = 100`, so at
-  `font_scale 1.3` 16px text is still 18.7px tall (24.4px with the line removed). Unpinned, most screens hold, but the Calm
-  path's labels run into the next node ("Five slow breaths") and on the end screen "Not really" sits under the fixed Continue
-  until scrolled.
-- **The widget lands 3x2 and mostly empty** (low). `minHeight` 80dp makes the launcher give it two rows; Lumi, the butterfly
-  and the line sit in a strip in the middle. The picker shows a blank card with the launcher icon (no `previewLayout` or
-  `previewImage`). A new learner's widget shows "0".
-- **The Daily note switch showed no On or Off** (low, fixed here): the On/Off styling was for `[data-pref]` only.
-- **Not checked:** the "Get a Japanese voice" offer (this image has a ja-JP voice); the TTS engine's sound after "Hear it
-  again" was seen in one run of three, so speech is unproven; a real launcher other than this image's; a release build.
+- **Dark theme looked broken, and wasn't** (fixed in the runner). Playwright pins `prefers-color-scheme` to light on every
+  page it drives; `helpersFor` now lets the phone's own night mode through.
+- **Large text** (fixed): the path's rows and nodes, and the room kept under fixed bars, grow with the text (`--text-scale`,
+  set by app.js only when text is scaled, so a browser is unchanged).
+- **The widget** (fixed): one row on landing, Lumi sized to the space, `previewLayout`, no "0".
+- **The Daily note switch showed no On or Off** (low, fixed).
+- **At 2.0 it is cramped**: a home screen shows the path's first node and little else above Continue, and an end screen's
+  feelings sit under Continue until scrolled. Everything is reachable; whether the fixed bars should shrink at 2.0 is a
+  design call.
+- **Not checked:** the "Get a Japanese voice" offer (this image has a ja-JP voice); a launcher other than this image's; a
+  release build.
 
 ## Fitting the person
 
@@ -205,9 +207,15 @@ sessions run longer. A quarter to a third of every session is repeats (2 warm-up
   **Left:** on a 412x533 page the verdict takes most of the screen, so an answered tall program shows in a box 27 to 120px high (part of a row to a few
   rows, the block that matters among them); the program reads whole while asked, short of 3 to 4px in `var-3-grow`, `bug-3-count` and `bug-3-sign`. A laid-out answer (palette, free) that
   is long still scrolls in its box at 412x786, as before. The fade uses scroll-driven animation, which Firefox lacks (there it just scrolls).
-- **Small tap targets** (low): the empty slot in a laid-out answer and the tray's tiles on a short phone now answer a thumb across 44px (invisible
-  targets). Still narrow: a placed or filled block is 28 to 30px wide, and blocks in a row sit 3 to 6px apart, so widening their targets would steal
-  taps from the neighbour; that needs wider blocks, a layout change. The harness measures drawn sizes, so it still lists these.
+- **Small tap targets and mis-taps** (low): every block to tap in a program (Coding and the code courses) gets an invisible target sized by
+  `reachOf()` in `src/builder.js`: toward 44px each way into empty space, but only halfway to any other block to tap, so no target lies over
+  another's box. Before, on a short phone, `bug-3-sign`'s `<` had the value below's target over its bottom edge, and a tap on it emptied
+  "change steps by 1" instead, so the harness got stuck. Most of that was the harness: it aimed every short-phone tap 37 screen px (14 CSS px) low,
+  measuring where the page sits before `wm size` moved Chrome's toolbar. It now measures again after the resize, flags a target partly covered by
+  another, and flags a tap that a different element took. Short-phone runs before this (`small-u8`, `small-u11`) were aimed low too. A wrong pick in
+  find-the-bug was never a trap: tapping another block picks that one instead, and filling the wrong one counts as a miss with the explanation.
+  Still narrow: blocks 28 to 30px wide or tall that sit 0 to 6px from a neighbour get only half the gap, so a tight row on a short phone gives
+  a thumb less than 44px; that needs more room between rows, a layout change. The harness measures drawn sizes, so it still lists these.
 - **Not played yet:** a real beginner, a real finger, Firefox, and sound with the new motion. The drawing trail and live values were seen only
   in passing.
 **Coding: bigger improvements**
@@ -226,6 +234,29 @@ sessions run longer. A quarter to a third of every session is repeats (2 warm-up
 - **The type checker is a small subset.** It follows strict TypeScript for what the course teaches. A valid but unusual arrangement could be misjudged outside that.
 - **Wrong code in a branch that never runs passes.** Graded by running, so an `else` that never runs is not looked at. Any arrangement that does the job is right, by decision; hidden `cases` close it where it matters, and `print` items could run a second input if play shows it matters.
 
+**Chess: played** (2026-11, emulator Pixel 6, `CHESS_UNIT=n npm run phone -- chess-all`, `tools/play.js`)
+
+All 18 units of the Chess course as the app builds it (the brief said 14; `src/subjects.js` gives basics 4 + forks + 13 themes), 69 lessons with
+their checkpoints, by real touch with warm-ups and echoes on. Answers come from `src/chess/items.js` and `puzzle.js` (`answer`, `solutions`,
+`starPath`, and `tryMove` for the puzzles' own lines), nothing stored. No wrong verdict for a right answer, no page error, no failed request,
+no sideways overflow, nothing untappable, nothing under 40px. Each unit's first move was made by dragging (17 of 17 worked); every
+other move by tapping the piece, then the square. Sessions are 7 to 12 items, 24 to 78 taps, about 0:44 to 2:07 at a steady pace; none near 6
+minutes or 20 items. Longest: `mateIn3-1` and `attraction-0` (~2:07), `backRankMate-2` and `promotion-2` (~2:04; `promotion-2` has the most taps, 78),
+`attraction-2`, `skewer-2` (~2:00). The Lichess lessons ("Real games", the theme lessons) are the long ones: a puzzle is 2 to 4 of your own
+moves. Not tested: a puzzle accepting a move it shouldn't (every move played was the line or a mate), and "Play Rosa".
+Short phone (412x533, `CHESS_SMALL=1080x1700`): `mateIn3-1`, `attraction-0`, `forks-0`, `moves-0` all play through the same.
+
+- **The verdict banner covers the bottom of the board** (low at 412x786, medium at 412x533). At 786 it hides only the frame under rank 1 and the
+  file letters on some True/False and tap items. At 533 the page is the board plus coach and does not fit: you scroll to the board, the coach's words
+  are off the top, and the answered banner hides ranks 1 and 8 (the checkmate in a long puzzle's last position, the "NEW PIECE" badge on a star
+  demo). Nothing is lost (the page scrolls), but a teach card with a board (`attraction-0`'s castling card) shows the board under Continue. Design call.
+- **The coach keeps the old line after a puzzle is solved** (low). A finished puzzle's bubble still says "Good. Keep going - White to play." and a
+  tap item's still says "Found 2 of 3." while the banner says it is done. The banner is right; the bubble is stale.
+- **A teach card without a board is a big empty page** (low): `mate2-teach`, `promotion-teach` and the like are a bubble and Continue.
+- **Wording for a beginner** (low): the Attraction unit opens with "One more rule, castling" in a card that is not about castling; explanations
+  say "h-pawn", "a-file", "the far side" before any lesson names them (they are taught in the board unit, but the Lichess lessons use them
+  freely); every puzzle explanation is a bare line ("Queen to a5, check. King to e8.") with no word on why it works.
+- **Not played:** a real beginner, a real finger, Firefox, the engine's mates beyond what the puzzles check, and sound.
 **Repetition engine**
 
 - **A second miss of a mirrored item sees the same mirror.** Chess has only two versions of an item; a third go

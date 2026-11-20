@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- updatePeriodMillis is 0: Ticker's boundary alarms and a 15-minute WorkManager job refresh it. -->
+<!-- updatePeriodMillis is 0: Ticker's boundary alarms and a 15-minute WorkManager job refresh it.
+     minHeight 40dp: one row, so it lands without an empty band; it can be stretched taller.
+     The launcher's widget list shows the layout itself, with its placeholders (previewLayout, API 31+). -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/widget"
     android:minWidth="180dp"
-    android:minHeight="80dp"
+    android:minHeight="40dp"
+    android:minResizeHeight="40dp"
+    android:previewLayout="@layout/widget"
     android:targetCellWidth="3"
     android:targetCellHeight="1"
     android:resizeMode="horizontal|vertical"
