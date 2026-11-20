@@ -1,7 +1,8 @@
 // What only a phone shows: the new screens in the phone's dark theme. Home (Calm, and Learning with what Chess is
 // raising in the streak row), "Your butterfly", the field guide and a species page, the wardrobe, Move's routine
-// chooser and Walk's habit view with its "when". Night mode is put back at the end. Large text is not here: Chrome
-// does not pass the phone's font size on to a page like this one, the Android app does, and test/phone/app.js plays that.
+// chooser and Walk's habit view with its "when". Night mode is put back at the end. Large text has its own scenarios:
+// Chrome 133 doesn't pass the phone's font size on to a page, it offers Default zoom (zoom.js); the Android app follows
+// the font size (app.js).
 import { looks, moveDone, thirtyDays } from './lib/seed.js';
 
 export default async ({ page, adb, seed, touch, btn, shot, check }) => {

@@ -1,42 +1,8 @@
-import { test, expect } from './fixtures.js';
-import { readFileSync } from 'node:fs';
-import { toQuiz } from '../../src/maths/items.js';
+import { test, expect, reach } from './fixtures.js';
 
 // What a learner is working on stays in view and readable in the quiz items (src/quiz/, src/fit.js): every option of
 // a pick is whole on the screen, a sentence build's slots sit clear of the tray and the verdict, and stacked bars
 // clear the verdict, on a short phone too. Reached by playing the lesson up to the item, as a learner does.
-const load = (name) => JSON.parse(readFileSync(new URL(`../../src/data/${name}.json`, import.meta.url)));
-const COURSES = { japanese: load('japanese'), maths: load('maths') };
-const continueButton = (page) => page.getByRole('button', { name: 'Continue', exact: true });
-
-async function solve(page, course, item) {
-  const q = course === 'maths' ? toQuiz(item) : item;
-  const choice = (t, side) => page.locator(`.quiz .choices .choice:not(:disabled)${side == null ? '' : `[data-side="${side}"]`}`).filter({ hasText: new RegExp(`^${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`) }).first();
-  if (q.type === 'pick') await choice(q.answer).click();
-  if (q.type === 'build') for (const t of q.answer) await choice(t).click();
-  if (q.type === 'pairs') for (const [l, r] of q.pairs) { await choice(l, 0).click(); await choice(r, 1).click(); }
-  await expect(continueButton(page), item.id).toBeInViewport();
-}
-
-/** Plays `lessonId` up to (not through) item `itemId`, which is left asked. */
-async function reach(page, course, lessonId, itemId) {
-  const unit = COURSES[course].units.find((u) => u.lessons.some((l) => l.id === lessonId));
-  const lesson = unit.lessons.find((l) => l.id === lessonId);
-  await page.goto('/');
-  await page.evaluate(([c, start, done]) => {
-    localStorage.setItem('wingbeat.course', c);
-    localStorage.setItem('wingbeat.progress', JSON.stringify({ ...JSON.parse(localStorage.getItem('wingbeat.progress') || '{}'), version: 3, picked: [], done, cards: {}, habits: {}, log: [], start: { [c]: start }, met: { [c]: true } }));
-  }, [course, unit.title, Object.fromEntries(unit.lessons.slice(0, unit.lessons.indexOf(lesson)).map((l) => [`${course}:${l.id}`, true]))]);
-  await page.reload();
-  await page.getByRole('button', { name: `Continue · ${lesson.title}` }).click();
-  for (const item of lesson.items) {
-    if (item.id === itemId) return item;
-    await solve(page, course, item);
-    await continueButton(page).click();
-  }
-  throw new Error(`no ${itemId}`);
-}
-
 const rect = (page, sel) => page.locator(sel).first().evaluate((e) => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right }; });
 
 test.describe('at 412x786', () => {

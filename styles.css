@@ -35,7 +35,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.4 system-ui, sans-serif;
+  font: 1rem/1.4 system-ui, sans-serif; /* rem: the browser's own font size setting reaches every line */
 }
 #app { position: relative; max-width: 520px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
 /* A pull down from the top of a screen must not hand the page to Chrome's pull-to-refresh, which reloads it and loses the lesson or screen (phone run touch-swipe). */
@@ -68,7 +68,7 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
   margin: 28px auto 12px; width: fit-content; padding: 6px 16px; border-radius: 999px;
   background: var(--card); border: 1px solid var(--line); font-size: 1rem;
 }
-.trailhead { position: relative; width: 320px; margin: 0 auto; }
+.trailhead { position: relative; width: min(320px, 100%); margin: 0 auto; } /* narrower than 320 (a 320px phone, zoomed), the drawn path crops its empty sides (slice) */
 .trail { position: absolute; top: 0; left: 0; }
 .trail path { fill: none; stroke-width: 12; stroke-linecap: round; }
 .trail .ahead { stroke: var(--line); }
@@ -89,9 +89,9 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 .node:active:not(:disabled) { transform: translateY(4px); box-shadow: none; }
 @keyframes beckon { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-5px) scale(1.05); } } /* the next node gently bobs */
 @media (prefers-reduced-motion: reduce) { .node.here { animation: none; } }
-.path .label { margin-top: 10px; max-width: calc(120px * var(--text-scale, 1)); /* as wide as its text is big: the same lines, so the row holds it */ padding: 1px 6px; border-radius: 6px; background: var(--bg); font-size: .8rem; color: var(--muted); text-align: center; }
+.path .label { margin-top: 10px; max-width: calc(128px * var(--text-scale, 1)); /* as wide as its text is big: the same lines, so the row holds it */ padding: 1px 6px; border-radius: 6px; background: var(--bg); font-size: .8rem; color: var(--muted); text-align: center; }
 .path li:has(.here) .label { color: var(--text); font-weight: 700; }
-.guide { position: absolute; top: -6px; width: 72px; }
+.guide { position: absolute; top: -6px; width: min(72px, 22vw); } /* smaller on a narrow page (206px at 200% zoom), so it stays beside its node on the page */
 .guide.left { right: 50%; margin-right: calc(32px * var(--text-scale, 1) + 8px); } /* half a node, and 8px */
 .guide.right { left: 50%; margin-left: calc(32px * var(--text-scale, 1) + 8px); }
 .guide svg { display: block; width: 100%; transform-origin: 50% 100%; }
@@ -261,7 +261,7 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 .duo .lumi { width: 104px; }
 .spark { position: absolute; left: 50%; top: 18%; margin-left: -12px; font-size: 28px; font-style: normal; color: var(--heat-gold); opacity: 0; pointer-events: none; }
 .cheer {
-  position: absolute; right: calc(50% - 128px); top: -6px; margin: 0; padding: 3px 10px; border-radius: 12px;
+  position: absolute; right: max(0px, calc(50% - 128px)); top: -6px; /* on the page at 206px (200% zoom) */ margin: 0; padding: 3px 10px; border-radius: 12px;
   background: var(--card); border: 2px solid var(--line); font-size: .85rem; font-weight: 700; white-space: nowrap;
 }
 .summary h1 { font-size: 1.45rem; line-height: 1.25; margin: 4px 0 8px; text-wrap: balance; }
@@ -1001,7 +1001,7 @@ body:has(main.night) {
 .bar .guide-link { margin: 0 0 0 auto; }
 .field-guide { padding: 0 16px 40px; }
 .field-guide h1 { margin: 0 0 12px; font-size: 1.6rem; }
-.guide-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.guide-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(140px * var(--text-scale, 1))), 1fr)); } /* wider with larger text, so a name stays whole */
 .guide-tile {
   display: grid; justify-items: center; gap: 2px; width: 100%; height: 100%; padding: 8px 8px 10px; border-radius: 14px;
   border: 1px solid var(--line); background: var(--card); color: var(--text); text-align: center; font-size: .85rem;
@@ -1044,6 +1044,7 @@ body:has(main.night) {
 
 /* Lumi's wardrobe: a grid of Lumi in every skin; one not given yet is dimmed, with what gives it. */
 .bar .wardrobe-link { margin: 0; }
+.bar:has(.wardrobe-link) { flex-wrap: wrap; row-gap: 4px; } /* on a narrow page (200% zoom) its links take a second row */
 .wardrobe { padding: 0 16px 40px; }
 .wardrobe h1 { margin: 0 0 4px; font-size: 1.6rem; }
 .skins { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }

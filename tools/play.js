@@ -10,6 +10,7 @@
  *   options.answer   async (h, item) => void
  *   options.small    wm size to play at, e.g. '1080x1700', for a short phone
  *   options.parts    selectors of the parts of the course's screen that must not sit on each other (default: Coding's)
+ *   options.wrongOk  a run that answers wrongly on purpose: a wrong answer is not a failed check
  *   options.tray     of those, the ones the verdict may cover: the answer tray (default: '.tiles')
  *
  * PLAY_JITTER=0.85 lands each tap at a random spot out to that share of the way to its target's edge (PLAY_SEED varies
@@ -30,8 +31,8 @@ const words = (s) => (String(s ?? '').match(/\S+/g) || []).length;
 
 const PARTS = ['.bubble', '.grid-world', '.vars', '.program', '.tiles']; // Coding's screen
 
-/** What is wrong with the screen right now: clipped or overlapping text, things off the side or behind each other. */
-const scan = ({ parts: all, tray }) => {
+/** What is wrong with the screen right now: clipped or overlapping text, things off the side or behind each other. Run in the page (`page.evaluate(scan, { parts, tray })`); test/e2e/large-text.spec.js uses it too. */
+export const scan = ({ parts: all, tray }) => {
   const out = [];
   const app = document.getElementById('app');
   const shown = (el) => { const s = getComputedStyle(el); const r = el.getBoundingClientRect(); return s.visibility !== 'hidden' && s.display !== 'none' && r.width > 0 && r.height > 0; };
@@ -48,7 +49,7 @@ const scan = ({ parts: all, tray }) => {
   // Things that must not sit on each other: the parts of the screen, and the buttons in them.
   const area = (r) => Math.max(0, r.width) * Math.max(0, r.height);
   const cut = (a, b) => area({ width: Math.min(a.right, b.right) - Math.max(a.left, b.left), height: Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) });
-  const parts = all.map((q) => app.querySelector(q)).filter((e) => e && shown(e));
+  const parts = [...new Set(all.map((q) => app.querySelector(q)))].filter((e) => e && shown(e)); // one element can match two selectors
   for (const [i, a] of parts.entries()) for (const b of parts.slice(i + 1)) if (cut(a.getBoundingClientRect(), b.getBoundingClientRect()) > 16) out.push(`overlap: ${label(a)} and ${label(b)}`);
   const foot = app.querySelector('.foot.show');
   if (foot) for (const e of app.querySelectorAll(all.filter((q) => !tray.includes(q)).join(', '))) if (shown(e) && cut(foot.getBoundingClientRect(), e.getBoundingClientRect()) > 16) out.push(`verdict covers: ${label(e)}`);
@@ -112,7 +113,7 @@ async function swipeBoxes({ page, swipe, shot }, id, seen) {
   return out;
 }
 
-export async function playCourse(h, { course, unit = 1, only, answer, small, parts = PARTS, tray = ['.tiles'] }) {
+export async function playCourse(h, { course, unit = 1, only, answer, small, parts = PARTS, tray = ['.tiles'], wrongOk = false }) {
   const { page, adb, touch, btn, shot, seed, run, check } = h;
   const swipeSeen = new Set();
   const unitAt = course.units[unit - 1];
@@ -261,7 +262,7 @@ export async function playCourse(h, { course, unit = 1, only, answer, small, par
     check(`${r.lesson}: played to the end`, !r.stuck, r.stuck ?? '');
     check(`${r.lesson}: no page errors or failed requests`, !r.errors.length, r.errors.join('; '));
     check(`${r.lesson}: nothing covered`, !r.untappable.length, r.untappable.join('; '));
-    check(`${r.lesson}: every answer right`, !r.wrong);
+    check(`${r.lesson}: every answer right`, wrongOk || !r.wrong);
     check(`${r.lesson}: nothing clipped, overlapping or sideways`, !r.odd.some((o) => !/answered wrongly/.test(o)), r.odd.filter((o) => !/answered wrongly/.test(o)).slice(0, 3).join('; '));
   }
   return report;
