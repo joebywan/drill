@@ -2,6 +2,7 @@
 // comeback card on home), and the five-breath lesson left at the same step three times (a shorter
 // one offered). The shorter session answers the comeback, so a ladybird arrives; the habit view
 // names the usual hour, and the Android bridge reads and records.
+import { award } from '../../src/garden/model.js';
 import { emptyProgress, finishPractice, leavePractice } from '../../src/progress.js';
 
 const daysAgo = (n, h = 19) => { const d = new Date(); d.setDate(d.getDate() - n); d.setHours(h, 0, 0, 0); return d; };
@@ -10,7 +11,9 @@ export default async ({ page, seed, touch, btn, shot, run, check }) => {
   let p = emptyProgress();
   for (let n = 49; n >= 9; n--) if (n % 7 !== 3) p = finishPractice(p, 'calm', null, daysAgo(n), { title: 'Breathing', mins: 2 });
   for (const [n, step] of [[4, 6], [3, 7], [2, 6]]) p = leavePractice(p, 'calm', 'calm:breathe2', step, 10, daysAgo(n), { title: 'Breathing' });
-  await seed({ ...p, done: { 'calm:breathe1': true } });
+  // What those weeks earned is already in the garden, as it would be for someone who really did them: then the end
+  // screen has only what this session brings, and the ladybird isn't folded into "and N more".
+  await seed(award({ ...p, done: { 'calm:breathe1': true } }).progress);
   await shot('home-comeback');
   check('comeback card on home', await page.locator('.comeback').isVisible());
   check('it names their practice and hour', (await page.locator('.comeback').textContent()).includes('Some Breathing around 7 pm'));

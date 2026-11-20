@@ -9,18 +9,14 @@ import { readFileSync } from 'node:fs';
 import { withCheckpoint } from '../../src/repeat.js';
 import { answerQuiz, answerShown } from '../../tools/play-quiz.js';
 import { playCourse } from '../../tools/play.js';
-import { streamStarted } from '../../tools/sound.js';
+import { recordSpeech, streamStarted } from '../../tools/sound.js';
 
 const course = { id: 'japanese', units: JSON.parse(readFileSync(new URL('../../src/data/japanese.json', import.meta.url))).units.map(withCheckpoint) };
 
 export default async (h) => {
   const { page, adb, check } = h;
   const only = process.env.JAPANESE_LESSONS?.split(',');
-  await page.addInitScript(() => { // what the page asks the voice to say, kept across the reloads a seed makes
-    window.__spoken = [];
-    const speak = speechSynthesis.speak.bind(speechSynthesis);
-    speechSynthesis.speak = (u) => { window.__spoken.push(u.text); return speak(u); };
-  });
+  await page.addInitScript(recordSpeech); // what the page asks the voice to say, kept across the reloads a seed makes
   const voiced = await page.evaluate(() => speechSynthesis.getVoices().some((v) => /^ja/i.test(v.lang)));
   console.log(`  ja voice: ${voiced ? 'yes' : 'none (readings are shown instead)'}`);
   const seen = new Set();
