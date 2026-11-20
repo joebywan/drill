@@ -70,6 +70,34 @@ Widget and reminder mechanics, from a friend's Android habit app (Fizz) reviewed
   mascot (guilt, against the guardrails), and `USE_EXACT_ALARM`, which Play reserves for
   alarm and calendar apps. Inexact alarms are fine for a once-a-day reminder.
 
+**The Android app: played** (2026-11-20, emulator Pixel 6 API 36, debug APK, `npm run phone -- app`, `test/phone/app.js`)
+
+Installed and played with real taps through the WebView (`attach()` in `tools/phone.js`). The launcher icon is Lumi close up
+with the butterfly on her head; the app opens on the intro ("Small beats go a long way.") about 5 s after the tap on a cold
+emulator; no INTERNET permission; no error from `WingbeatBridge` or `WingbeatDaily` and no failed request all run. A first day
+(`butterfly.js` and `calm.js` played in the app) passes: sound and haptics come through for the app's own package, the end
+screen shows today's wingbeat with its new panel, home shows the butterfly. The widget was placed through the launcher
+(long-press, Widgets, Wingbeat, Add) and is right in all its states: flying, basking, resting, with the streak number for
+Learning and none for Calm or Reflect. The daily note posts "Something small today? Lumi is around.", in the shade under a
+butterfly seen from the side, opens the app when tapped, and posts nothing on a day with something done, forced or not. The
+bars take the page's colour in light and in Wind down. Back from a routine lands on home, a quick second back stays, a third
+leaves. Large text was played on a build with `textZoom` unpinned, to see what the phone's font size would do.
+
+- **Dark theme never reaches the app** (high). With the phone in dark mode (`cmd uimode night yes`, "Night mode: yes")
+  `prefers-color-scheme: dark` is false in the WebView, live and after a cold start, so the app and its bars stay light
+  (`#f6f7f9`). Chrome follows the phone's theme. Setting `android:isLightTheme` in both themes did not change it. Needs a
+  look at how this WebView decides (`WebSettingsCompat`, algorithmic darkening, the theme).
+- **The phone's font size is ignored** (medium, a design call). `MainActivity` pins `settings.textZoom = 100`, so at
+  `font_scale 1.3` 16px text is still 18.7px tall (24.4px with the line removed). Unpinned, most screens hold, but the Calm
+  path's labels run into the next node ("Five slow breaths") and on the end screen "Not really" sits under the fixed Continue
+  until scrolled.
+- **The widget lands 3x2 and mostly empty** (low). `minHeight` 80dp makes the launcher give it two rows; Lumi, the butterfly
+  and the line sit in a strip in the middle. The picker shows a blank card with the launcher icon (no `previewLayout` or
+  `previewImage`). A new learner's widget shows "0".
+- **The Daily note switch showed no On or Off** (low, fixed here): the On/Off styling was for `[data-pref]` only.
+- **Not checked:** the "Get a Japanese voice" offer (this image has a ja-JP voice); the TTS engine's sound after "Hear it
+  again" was seen in one run of three, so speech is unproven; a real launcher other than this image's; a release build.
+
 ## Fitting the person
 
 Agreed 2026-10-30: Wingbeat learns from its own on-device log how to fit the person, so it reacts
