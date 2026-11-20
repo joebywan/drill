@@ -44,6 +44,10 @@ test("your butterfly's state comes from the best habit's light: flying, basking,
   assert.equal(wingState(p, day(12)), 'resting', 'after a missed day, never sad');
   assert.equal(wingState(p, day(12)), STATES[summary(p, day(12)).looks[0].light], 'the widget agrees');
   assert.deepEqual(wingColours(p), [habitColour('learn'), habitColour('own-2', 0)]);
+  // Someone who only keeps habits: Learning, never started, doesn't hold the butterfly basking.
+  const calm = finishPractice(emptyProgress(), 'calm', null, day(9));
+  assert.equal(wingState(calm, day(10)), 'basking');
+  assert.equal(wingState(calm, day(12)), 'resting', 'after a missed day, with Learning never started');
 });
 
 test('summary() schedules the widget across midnight, when the light turns', () => {

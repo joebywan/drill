@@ -59,6 +59,14 @@ test('no character line praises ability', () => {
   for (const [kind, text] of lines) assert.doesNotMatch(text, ABILITY, `${kind}: ${text}`);
 });
 
+test('"beat" means a rhythm or a wing, never winning: no character says it', () => {
+  const voices = readdirSync('src/cast/voice').map((f) => JSON.parse(readFileSync(`src/cast/voice/${f}`, 'utf8')));
+  const said = [...lines.map(([, text]) => text), ...strings(GAME_WORDS), ...voices.flatMap((v) => strings([v.lines, v.dares]))];
+  // A kana is "one beat" (rhythm, fine); beating someone is winning.
+  const WINNING = /\b(beaten|(ever|never|still|can|to) beat|beat(s|ing)? (me|you|him|her|them|us|every\w*))\b/i;
+  for (const text of said) assert.doesNotMatch(text, WINNING, text);
+});
+
 test('no character line mentions absence, loss or guilt', () => {
   for (const [kind, text] of lines) assert.doesNotMatch(text, LOSS, `${kind}: ${text}`);
 });
