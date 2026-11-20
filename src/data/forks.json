@@ -10,7 +10,7 @@
           "type": "teach",
           "side": "w",
           "fen": "r3k3/2N5/8/8/8/8/8/4K3 b - - 0 1",
-          "text": "A fork is one piece attacking two enemy pieces at once. Here the knight on c7 checks the king and attacks the rook. The king must move, so the rook is lost."
+          "text": "A fork is one piece attacking two enemy pieces at once. Here the knight on c7 checks the king and attacks the rook. The king must move, and the knight takes the rook."
         },
         {
           "id": "fork-0-tap",
@@ -95,7 +95,7 @@
             "h8",
             "d6"
           ],
-          "explain": "Knight to f7 checks the king on h8 and attacks the queen on d6. The king must deal with the check first, so the queen is lost.",
+          "explain": "Knight to f7 checks the king on h8 and attacks the queen on d6. The king must deal with the check first, and the knight takes the queen.",
           "goal": "fork"
         },
         {
@@ -136,7 +136,7 @@
             "a8",
             "a6"
           ],
-          "explain": "Knight to c7 hits the king, the rook on a8 and the queen on a6 at once: a family fork. Whatever Black does, the queen falls.",
+          "explain": "Knight to c7 hits the king, the rook on a8 and the queen on a6 at once. Whatever Black does, the queen falls.",
           "prompt": "Black moved the queen to a6. Find a fork that hits three pieces."
         }
       ]

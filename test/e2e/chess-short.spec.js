@@ -78,13 +78,13 @@ test('a finished tap item no longer counts "Found 2 of 3"', async ({ page }) => 
   await expect(page.locator('#said')).not.toContainText('Found');
 });
 
-test('every Chess item fits a 412x533 phone while asked, and a teach card clear of Continue', async ({ page }) => {
+test('every Chess item fits a 412x533 phone while asked, a teach card clear of Continue, and a puzzle board clear of its verdict', async ({ page }) => {
   test.setTimeout(240000);
   await page.goto('/');
   const items = chess.units.flatMap((u) => u.lessons).filter((l) => !l.mix).flatMap((l) => l.items.map((item) => ({ item, topic: l.title })));
   const bad = await page.evaluate(async (items) => {
     const { mount } = await import('/src/chess/exercise.js');
-    const { kind } = await import('/src/chess/items.js');
+    const { kind, explanation } = await import('/src/chess/items.js');
     const app = document.getElementById('app');
     const out = [];
     for (const { item } of items) {
@@ -109,6 +109,16 @@ test('every Chess item fits a 412x533 phone while asked, and a teach card clear 
       if (board.bottom > low + 1) why.push(`the board runs ${Math.round(board.bottom - low)}px under the ${foot.classList.contains('show') ? 'Continue bar' : 'answers'}`);
       if (['tap', 'move', 'stars', 'find'].includes(kind(item)) && board.width / 8.7 < 39.5) why.push(`squares of ${Math.round(board.width / 8.7)}px`);
       if (document.documentElement.scrollHeight > innerHeight + 1 && foot.classList.contains('show') === false && ['tap', 'move', 'stars', 'find', 'truefalse'].includes(kind(item))) why.push(`the page scrolls ${document.documentElement.scrollHeight - innerHeight}px, bubble ${Math.round(bubble.height)}, board top ${Math.round(board.top)}`);
+      // Answered, a real-game puzzle's verdict carries its line and why it works: the board still sits above it.
+      if (kind(item) === 'find') {
+        foot.className = 'foot show';
+        foot.querySelector('p').textContent = explanation(item);
+        dispatchEvent(new Event('resize'));
+        await new Promise((r) => setTimeout(r, 30));
+        const after = app.querySelector('div.board').getBoundingClientRect();
+        if (after.bottom > foot.getBoundingClientRect().top + 0.5) why.push(`answered, the board runs ${Math.round(after.bottom - foot.getBoundingClientRect().top)}px under the verdict`);
+        if (after.width < 150) why.push(`answered, a board of ${Math.round(after.width)}px`);
+      }
       if (why.length) out.push(`${item.id}: ${why.join(', ')}`);
       stop();
     }

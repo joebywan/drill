@@ -6,12 +6,12 @@ import { Accessibility } from 'cm-chessboard/src/extensions/accessibility/Access
 import { PromotionDialog } from 'cm-chessboard/src/extensions/promotion-dialog/PromotionDialog.js';
 import { startPuzzle, playerColor, tryMove, hint, needed } from './puzzle.js';
 import { answer, explanation, grade, hop, kind, load, meets, solutions, starPath, starsPrompt, targets } from './items.js';
+import { NAMES as PIECE } from './why.js';
 import { move as animate, play } from '../feel.js';
 import { reducedMotion } from '../cast/kit.js';
 
 const ASSETS = new URL('../../node_modules/cm-chessboard/assets/', import.meta.url).href;
 const REPLY_DELAY = 450;
-const PIECE = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
 
 /**
  * Mounts one item in `el`. `say(text, mood?)` sets what the coach says, and how she looks;
