@@ -4,18 +4,10 @@
 // finished and chess started, so the garden has every stage, and the field guide opens from the
 // garden and from home.
 import { award } from '../../src/garden/model.js';
-import { emptyProgress, finishPractice, finishSession } from '../../src/progress.js';
+import { emptyProgress, finishSession } from '../../src/progress.js';
 import { season, southern } from '../../src/garden/season.js';
 import { subjects } from '../../src/subjects.js';
-
-/** `p` with `habit` practised on each of the days `from`…`to` days ago (from > to). */
-const practised = (p, habit, from, to = 1) => {
-  for (let i = from; i >= to; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    p = habit === 'learn' ? finishSession(p, null, [], d) : finishPractice(p, habit, null, d);
-  }
-  return p;
-};
+import { practised } from './lib/seed.js';
 
 export default async ({ page, seed, touch, btn, swipe, shot, run, check, checkSound }) => {
   let p = { ...emptyProgress(), start: 'x' };

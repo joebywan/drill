@@ -1,5 +1,6 @@
 /** Move's routines as timelines (see src/practice/timeline.js, which plays them). Pure. */
 import { TIMINGS, timed } from '../practice/timings.js';
+import { seated } from '../cast/clover.js';
 
 export const REST = TIMINGS.move.rest.def; // seconds between exercises
 export const PACE = 3; // seconds a rep takes, unless the move says otherwise
@@ -29,3 +30,6 @@ export function summary(set, moves, own) {
   for (const x of yours(set, own)) if (x.reps) reps.set(moves[x.move].unit, (reps.get(moves[x.move].unit) ?? 0) + x.reps);
   return [`${set.length} moves`, ...[...reps].map(([unit, n]) => `${n} ${unit}`)].join(' · ');
 }
+
+/** Whether a set needs the room check ("Moves need space…"): not when every move is done on a chair. */
+export const needsRoom = (set, moves) => !set.every((x) => seated(moves[x.move].pose));

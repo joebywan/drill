@@ -315,6 +315,8 @@ html { scroll-padding-bottom: 160px; }
 .path-tab b.streak-bright { color: var(--streak); }
 /* A quiet habit's number is hidden: a dot in today's light instead. */
 .path-tab b:empty { min-width: 0; width: .55em; height: .55em; padding: 0; border: 0; background: currentColor; vertical-align: middle; }
+/* On the pressed tab's green the dot keeps a ring of the page, as the number keeps its pill, so it shows in both themes. */
+.path-tab[aria-pressed="true"] b:empty { box-shadow: 0 0 0 2px var(--bg); }
 .streak-line, .link {
   display: block; margin: 10px auto 0; padding: 6px 12px; border: 0; border-radius: 999px; background: none;
   color: var(--muted); font-size: .9rem; text-decoration: underline; text-underline-offset: 3px;
@@ -346,9 +348,9 @@ html { scroll-padding-bottom: 160px; }
   width: min(36vw, 130px); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
   background: var(--card); border: 2px solid var(--line); font-weight: 700; color: var(--muted); transition: background .3s, color .3s;
 }
-.choice[data-pref]::after { content: ' · Off'; color: var(--muted); }
-.choice[data-pref][aria-pressed="true"] { border-color: var(--calm); }
-.choice[data-pref][aria-pressed="true"]::after { content: ' · On'; color: inherit; }
+.choice:is([data-pref], [data-remind])::after { content: ' · Off'; color: var(--muted); }
+.choice:is([data-pref], [data-remind])[aria-pressed="true"] { border-color: var(--calm); }
+.choice:is([data-pref], [data-remind])[aria-pressed="true"]::after { content: ' · On'; color: inherit; }
 .sides span.on { background: #6FA86A; border-color: #6FA86A; color: #10241a; }
 
 @property --fill { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
@@ -368,7 +370,9 @@ html { scroll-padding-bottom: 160px; }
 .bubble-tap { width: 60px; height: 60px; border-radius: 50%; border: 3px dashed var(--calm); background: var(--card); }
 .bubble-tap[aria-pressed="true"] { border-style: solid; background: var(--calm); }
 
-.practice-end .hero { width: 130px; }
+/* Smaller and higher than a lesson's, so two arrival lines and all three feelings sit above Continue at 412x786. */
+.practice-end { padding-top: 12px; }
+.practice-end .hero { width: 100px; }
 .chip.calm { --c: var(--chip-calm); flex: 0 1 180px; margin: 0 auto; }
 
 /* ---- Screen break: the step list in its own blue ---- */
@@ -593,14 +597,32 @@ html { scroll-padding-bottom: 160px; }
 /* The builder (src/builder.js): placed blocks wrap like a program, the tray and Run stay in the thumb zone. */
 .answer { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 6px; width: 100%; min-height: 44px; }
 .block.slot { min-width: 28px; width: 28px; border: 2px dashed var(--line); background: transparent; padding: 0; cursor: pointer; }
+.program button.block.slot::after { left: -8px; right: -8px; } /* 44px wide to a thumb */
 .block.slot.here { min-width: 40px; width: 40px; border-color: var(--code); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--code) 35%, transparent); }
 .caret { align-self: stretch; width: 4px; min-height: 36px; border-radius: 2px; background: var(--code); }
 .block .take { border: 0; padding: 0 4px; background: none; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
 /* Laying out needs the room: a smaller map, and the answer scrolls inside its own space when it is long. */
 .play:has(.answer) .grid-world { width: min(100%, calc(var(--w) * 44px), calc(var(--w) * 22vh / var(--h))); margin-bottom: 6px; }
-.program:has(.answer) { overflow-y: auto; }
+.program:is(:has(.answer), .scrolls) { overflow-y: auto; }
+/* Coding's program in its own box (fit() in src/coding/exercise.js) scrolls without moving the page, and fades out at
+   the bottom while there is more below. */
+@property --more { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@keyframes more-below { 0%, 90% { --more: 20px; } to { --more: 0px; } }
+.program.scrolls {
+  overscroll-behavior: contain; animation: more-below linear both; animation-timeline: scroll(self);
+  mask-image: linear-gradient(#000 calc(100% - var(--more)), transparent);
+}
+/* A program too tall for the screen: the coach and the gaps give it room, as on a short phone. */
+.play:has(.program.tall) .topic { position: absolute; clip-path: inset(50%); }
+.play:has(.program.tall) .who { width: 44px; }
+.play:has(.program.tall) .coach { margin-bottom: 4px; }
+.play:has(.program.tall) .bubble { min-height: 5.5em; margin-bottom: 6px; padding: 6px 10px; }
+.play:has(.program.tall) .grid-world { margin-bottom: 4px; }
 .choices.tray { flex-wrap: wrap; gap: 6px; padding-top: 8px; }
 .tray .tile { flex: 1 1 auto; min-width: 22%; min-height: 44px; padding: 4px 8px; white-space: nowrap; }
+/* A tile drawn shorter (a short phone) still answers a thumb across 44px: its rows are 6px apart. */
+.tray .tile { position: relative; }
+.tray .tile::after { content: ''; position: absolute; inset: min(0px, calc(50% - 22px)) 0; }
 .tray .tile.word { font-size: .95rem; }
 .tray .run { flex: 1 0 100%; margin: 2px 0 0; padding: 10px; }
 .tray .run:disabled { opacity: .45; }
@@ -988,7 +1010,8 @@ li.skin-card { border-radius: 12px; border: 2px dashed var(--line); color: var(-
 .skin-card small { font-weight: 400; color: var(--muted); font-size: .85rem; }
 .skin-card[aria-pressed="true"] { border-color: var(--accent); }
 .skin-card[aria-pressed="true"] > span::after { content: ' ✓'; color: var(--accent); }
-.skin-card.later svg { opacity: .4; filter: grayscale(.6); }
+/* Not given yet: quiet but still itself. Muted colour, never faded, so Lumi keeps 3:1 against the card in the dark too. */
+.skin-card.later svg { filter: saturate(.35); }
 .arrival svg.cast { height: 34px; }
 /* Choosing another routine (CHOOSE_WORDS): the sheet's unit headings, and the quiet "counted" line with its Undo. */
 .add-habit h2 { margin: 20px 0 0; font-size: 1rem; text-align: left; color: var(--muted); }

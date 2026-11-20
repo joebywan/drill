@@ -1,5 +1,5 @@
 import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
-import { GARDEN_WORDS, LIFE, LIFE_WORDS, SKIN_RULES, award, creatures, garden, guide, moreArrived, plantWords } from './garden/model.js';
+import { GARDEN_WORDS, LIFE, LIFE_WORDS, SKIN_RULES, award, creatures, garden, flowersOpened, guide, listed, moreArrived, plantWords } from './garden/model.js';
 import { lifeArt } from './cast/butterfly.js';
 import { fieldGuide } from './guide.js';
 import { PLANTS, animateLandmarks, animateScene, animateVisitor, drawGarden, flower, landmark, plant, sway, visitor } from './garden/art.js';
@@ -36,8 +36,8 @@ let progress = award(load(), new Date(), (r) => r.habit === null).progress;
 /** Every habit this learner has (built in, then their own; what the intro picked first), and one of them by id. */
 const habits = () => ordered(habitsFor(progress), preferred(progress)); // picks first, then the ones finished most
 const habitOf = (id) => habits().find((h) => h.id === id);
-/** Lumi in what she wears (the wardrobe), the costume's wings in your own colours; a coach's drawing, Lumi dressed. */
-const dressed = (mood, skin = worn(progress)) => lumi(mood, skin, wingColours(progress));
+/** Lumi in what she wears (the wardrobe) with your butterfly on her head, or in the costume, its wings in your colours; a coach's drawing, Lumi dressed. */
+const dressed = (mood, skin = worn(progress)) => lumi(mood, skin, wingColours(progress), wingColours(progress));
 const drawOf = (c) => (c.draw === lumi ? dressed : c.draw);
 /** Whose timings a habit plays by: its subject's `timings` (Wind down plays Calm's), or its own. */
 const timingsOf = (id) => subjects.find((s) => s.habit === id)?.timings ?? id;
@@ -742,15 +742,12 @@ function guideView(id, back) {
 /** What arrived in the garden is heard: the first thing's own sound, after `wait` ms. */
 const arrive = (newly, wait = 0) => { if (newly.length) setTimeout(() => chime(newly[0].sound || newly[0].gift), wait); };
 
-/**
- * What a session brought, quietly: a skin for Lumi first, then the garden's in three lines at most and
- * "and N more in your garden". A skin isn't in the garden, so it never counts towards the three.
- */
-const arrivals = (newly) => {
-  const garden = newly.filter((r) => !r.skin);
+/** What a session brought, quietly: award()'s order, `max` lines (listed()), then "and N more in your garden". */
+const arrivals = (newly, max) => {
+  const { shown, more } = listed(newly, max);
   return !newly.length ? '' : `<ul class="arrivals">
-  ${[...newly.filter((r) => r.skin), ...garden.slice(0, 3)].map((r) => `<li>${arrival(r, r.habit)}</li>`).join('')}
-  ${garden.length > 3 ? `<li>${esc(moreArrived(garden.length - 3))}</li>` : ''}</ul>`;
+  ${shown.map((r) => `<li>${arrival(r, r.habit)}</li>`).join('')}
+  ${more ? `<li>${esc(moreArrived(more))}</li>` : ''}</ul>`;
 };
 
 /**
@@ -820,7 +817,8 @@ function gardenView(from = null) {
       ${words.days ? `<span>${esc(words.days)}</span>` : ''}
       ${words.next ? `<span class="hint">${esc(words.next)}</span>` : ''}
       ${p.creatures.map((c) => `<span class="arrival">${lifeSvg(c.species, c.stage, c.growth)}<span>${esc(LIFE_WORDS.card(c))}${c.k === 3 && c.on ? ` ${shortDate(c.on)}` : ''}</span></span>`).join('')}
-      ${[...p.flowers, ...p.visitors].sort((a, b) => a.on.localeCompare(b.on)).map((a) => arrival(a, p.habit)).join('')}
+      ${[...(p.flowers.length > 3 ? [] : p.flowers), ...p.visitors].sort((a, b) => a.on.localeCompare(b.on)).map((a) => arrival(a, p.habit)).join('')}
+      ${p.flowers.length > 3 ? `<span class="arrival">${flower(p.habit)}<span>${esc(flowersOpened(p.flowers.length))}</span></span>` : ''}
     </button></li>`;
   };
   app.innerHTML = `
@@ -1152,7 +1150,7 @@ function run(lessonId, queue, title, extra = null) {
           ${showsStreak(h.id, pref('quiet-streaks', false)) ? chip(h.id, `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`) : ''}
         </div>
         ${beats ? wingbeat(true, newPanel) : ''}
-        ${arrivals(newly)}
+        ${arrivals(newly, 2)}
         ${subject.readBack?.(progress, new Date()) ?? ''}
         <section class="feel" aria-labelledby="feel-q">
           <h2 id="feel-q">${esc(who.ask ?? 'How do you feel?')}</h2>
@@ -1453,7 +1451,6 @@ function intro() {
       <button class="next" data-next>${esc(INTRO_WORDS.next)}</button>
       <button class="link" data-skip>${esc(INTRO_WORDS.skip)}</button>
     </footer>`;
-  // Wearing a skin, she leaves the butterfly off her crown: a hat would sit under it.
   const guide = coach(app.querySelector('.hero'), (mood) => (worn(progress) ? dressed(mood) : lumiPerched(mood)));
   guide.set('teach');
   focusOn('h1');
