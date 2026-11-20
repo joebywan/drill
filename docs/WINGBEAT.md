@@ -223,6 +223,9 @@ chips, because one tap to play or to switch course is worth more than their row.
 - [x] **E4. The live site from another network** (#170): GitHub plays it after every deploy.
 - [x] **E5. Test writing** (#174): repeats change their values, and every build offers a wrong choice.
 - [x] **E6. Phone runs keep one network** (#175): the emulators' shared Wi-Fi dropping could fail a page mid-load.
+- [x] **E7. Chess with wrong moves, and its three games** (#179): nothing wrong is accepted; every Rosa reply is legal.
+- [x] **E8. What a finger does** (#180): off-centre taps, swipes, the keyboard, links out, long press. A long press no
+  longer raises the copy toolbar, and a pull down no longer reloads the page.
 
 **Waiting on the owner** (found by playing, not changed)
 
