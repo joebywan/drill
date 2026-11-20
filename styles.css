@@ -768,6 +768,8 @@ body:has(main.night) {
 .quiz.tight .hear.big { width: 72px; height: 72px; font-size: 2rem; }
 .quiz.tight .pic + .pic { margin-top: 2px; }
 .quiz.tighter .slot { height: 40px; min-width: 36px; font-size: min(24px, 6vw); border-radius: 10px; }
+.quiz.tighter .quiz-pairs { gap: 6px; padding-top: 6px; }
+.quiz.tighter .quiz-pairs .choice { font-size: 1.15rem; line-height: 1.2; padding: 6px; min-height: 44px; }
 .quiz.tighter .meaning { padding: 0 40px; font-size: .9rem; line-height: 1.25; }
 .quiz.tighter .hear:not(.big) { top: 4px; right: 4px; width: 36px; height: 36px; font-size: 1rem; }
 .quiz .hear { position: absolute; top: 8px; right: 8px; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--line); background: var(--bg); font-size: 1.3rem; }

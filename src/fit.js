@@ -103,9 +103,13 @@ export function fitter({ program, tray, world = null, g = null, lines }) {
 export function fitCard(quiz, item, coach) {
   const card = quiz.querySelector('.card');
   const tray = quiz.querySelector('.choices');
-  if (!card) { // a pairs item without a picture has none: if its pairs reach her words, only the coach can give way
+  if (!card) { // a pairs item without a picture has none: if its pairs reach her words, she gives way, then they do
     const bubble = document.querySelector('.play .bubble');
-    if (tray && bubble && tray.getBoundingClientRect().top < bubble.getBoundingClientRect().bottom) quiz.classList.add('tall');
+    if (!tray || !bubble) return;
+    const over = () => bubble.getBoundingClientRect().bottom - tray.getBoundingClientRect().top;
+    for (const c of ['tall', 'tighter']) { if (over() <= 0) break; quiz.classList.add(c); }
+    // Whatever the font does to the labels, the last of it scrolls in the tray's own box.
+    if (over() > 0) { tray.style.maxHeight = `${Math.floor(tray.getBoundingClientRect().height - over())}px`; tray.style.overflowY = 'auto'; }
     return;
   }
   const slots = [...card.querySelectorAll('.slot')];
