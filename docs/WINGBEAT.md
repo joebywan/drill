@@ -190,6 +190,12 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
 - [x] **F6. The emulator crashed on a short phone in the code courses:** (#164) a CSS mask on a box that
   scrolls brought down the emulator's software renderer. A box that scrolls now shows there is more above
   or below with a plain gradient, which Firefox draws too.
+- [x] **F7. Code quiz cards on a short phone:** (#166) a "which line" card no longer ends under its answers or
+  the verdict; every item starts at the top of the page; and a card that has to give way shortens the coach's
+  bubble again (it had been growing since F4).
+- [x] **F8. Firefox:** (#167) the browser suite and a walk through the main screens, run in desktop Firefox:
+  nothing a person would notice differs. `npm run e2e:firefox` runs it, silently. Firefox for Android itself
+  is still unplayed.
 
 **Waiting on the owner** (found by playing, not changed)
 
