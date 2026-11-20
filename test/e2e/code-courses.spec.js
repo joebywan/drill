@@ -56,7 +56,7 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
         const words = item.type === 'gap' ? item.fill : chipsOf(wayOf(item), item.chunks);
         for (const w of words) [...tiles.querySelectorAll('[data-chip]')].find((c) => c.textContent === w).click();
         const prog = app.querySelector('.program');
-        const roof = (app.querySelector('.code-out') ?? tiles).getBoundingClientRect().top;
+        const roof = tiles.getBoundingClientRect().top;
         const r = prog.getBoundingClientRect();
         if (r.bottom > roof + 1) note(`the answer runs under the tray: ${Math.round(r.bottom)} over ${Math.round(roof)}`);
         if (r.height < 44) note(`only ${Math.round(r.height)}px for the answer`);
@@ -80,6 +80,67 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
     }
     return out;
   }, items);
+  expect(bad).toEqual([]);
+});
+
+test('at 412x786, what a Run printed shows next to what it should print, clear of the verdict', async ({ page }) => {
+  test.setTimeout(60000);
+  await page.setViewportSize({ width: 412, height: 786 });
+  const all = typescript.units.flatMap((u) => u.lessons);
+  const lesson = all.find((l) => l.id === 'tsi-2');
+  const unit = typescript.units.find((u) => u.lessons.includes(lesson));
+  await page.goto('/');
+  await page.evaluate(([start, done]) => {
+    localStorage.setItem('wingbeat.course', 'typescript');
+    localStorage.setItem('wingbeat.progress', JSON.stringify({ ...JSON.parse(localStorage.getItem('wingbeat.progress') || '{}'), version: 3, picked: [], done, cards: {}, habits: {}, log: [], start: { typescript: start } }));
+  }, [unit.title, Object.fromEntries(unit.lessons.slice(0, unit.lessons.indexOf(lesson)).map((l) => [`typescript:${l.id}`, true]))]);
+  await page.reload();
+  await page.getByRole('button', { name: `Continue · ${lesson.title}` }).click();
+  const box = (sel) => page.locator(sel).first().evaluate((e) => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left }; });
+  let printed = 0;
+  for (const item of lesson.items) {
+    await solve(page, item);
+    if (item.goal === 'print') {
+      printed++;
+      const [want, got, foot] = [await box('.code-goal code'), await box('.code-out'), await box('.foot')];
+      expect(got.bottom, `${item.id}: the verdict covers what it printed`).toBeLessThanOrEqual(foot.top);
+      expect(got.top - want.bottom, `${item.id}: what it printed sits right under what it should print`).toBeLessThan(10);
+      expect(Math.abs(got.left - want.left), `${item.id}: the two line up`).toBeLessThan(1);
+      await expect(page.locator('.code-out')).toHaveText(await page.locator('.code-goal code').textContent());
+    }
+    await continueButton(page).click();
+  }
+  expect(printed).toBeGreaterThan(0);
+});
+
+test('the Test writing tray never shows a chip cut in half above Run', async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 786 });
+  await page.goto('/');
+  await page.addStyleTag({ content: ':root { --mono: "DejaVu Sans Mono", monospace; }' });
+  const item = itemsOf(testing).find((i) => i.id === 'tb-2-4');
+  const bad = await page.evaluate(async (item) => {
+    const { mount } = await import('/src/code/exercise.js');
+    const app = document.getElementById('app');
+    const out = [];
+    let seed = 7;
+    const random = Math.random;
+    for (let n = 0; n < 12; n++) { // the tray is shuffled: some orders take more rows than others
+      Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+      app.innerHTML = `<header class="bar" style="height:44px"></header><main class="play"><p class="topic">Topic</p>
+        <div class="coach"><button class="who"></button><p class="bubble"></p></div><div class="stage"></div></main>`;
+      const stop = mount(app.querySelector('.stage'), item, { say(t) { app.querySelector('.bubble').textContent = t; }, done() {} });
+      Math.random = random;
+      const chips = app.querySelector('.code-tray .chips').getBoundingClientRect();
+      const run = app.querySelector('.code-tray .run').getBoundingClientRect();
+      for (const c of app.querySelectorAll('.code-tray [data-chip]')) {
+        const r = c.getBoundingClientRect();
+        if (r.top < chips.bottom - 1 && r.bottom > chips.bottom + 1) out.push(`order ${n}: ${c.textContent} is cut in half`);
+        if (r.bottom > run.top && r.top < chips.bottom) out.push(`order ${n}: ${c.textContent} runs under Run`);
+      }
+      stop?.();
+    }
+    return out;
+  }, item);
   expect(bad).toEqual([]);
 });
 

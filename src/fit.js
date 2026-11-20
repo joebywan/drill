@@ -1,0 +1,94 @@
+import { reducedMotion } from './cast/kit.js';
+
+/**
+ * Fitting a program on a phone, for Coding (src/coding/exercise.js) and the code courses (src/code/exercise.js):
+ * fit first (the coach, the gaps and a map give room), then the program scrolls in its own box, never the page,
+ * and once answered the verdict covers neither the program's end nor the part that matters.
+ */
+
+/**
+ * How tall the runner's verdict banner will be with `words` in it (null: a teach card's, Continue alone) under the
+ * longest verdict the coach's `lines` could give, by measuring a hidden copy, so a tall program can be fitted above
+ * it before it comes. 0 with no banner on the page.
+ */
+export function verdictHeight(words, lines = {}) {
+  const foot = document.querySelector('.foot');
+  if (!foot) return 0;
+  const copy = foot.cloneNode(true);
+  copy.className = `foot show${words === null ? ' plain' : ''}`;
+  copy.style.visibility = 'hidden';
+  copy.querySelectorAll('[id]').forEach((e) => e.removeAttribute('id'));
+  copy.querySelector('strong').textContent = ['correct', 'run3', 'run5', 'wrong'].flatMap((k) => lines[k] ?? []).reduce((a, b) => (b.length > a.length ? b : a), 'x');
+  copy.querySelector('p').textContent = words ?? '';
+  foot.after(copy);
+  const height = copy.offsetHeight;
+  copy.remove();
+  return height;
+}
+
+/** Scrolls `box` (never the page) so `el` in it shows: smoothly, unless motion is reduced. */
+export function keepInView(box, el) {
+  if (!el || box.scrollHeight <= box.clientHeight) return;
+  const b = box.getBoundingClientRect(), r = el.getBoundingClientRect();
+  const by = r.top < b.top ? r.top - b.top - 6 : r.bottom > b.bottom ? Math.min(r.bottom - b.bottom + 6, r.top - b.top - 6) : 0;
+  if (by) box.scrollBy({ top: by, behavior: reducedMotion() ? 'auto' : 'smooth' });
+}
+
+/** Where `el`'s top is on the page (as if scrolled to the top, where a lesson is seen). */
+export const topOf = (el) => el.getBoundingClientRect().top + scrollY;
+
+/**
+ * Past `bottom` (a y on the page) `el` scrolls in its own box (the `.scrolls` class), if it is taller than that; a box
+ * only ever shrinks. With `always`, the box ends at `bottom` whatever `el` holds now or was before (an answer that grows).
+ */
+export function boxTo(el, bottom, always = false) {
+  const room = Math.floor(bottom - topOf(el) - 8);
+  if (!always && (el.scrollHeight <= room + 1 || room >= parseFloat(el.style.maxHeight))) return;
+  el.style.maxHeight = `${room}px`;
+  el.classList.add('scrolls');
+}
+
+/** The tallest height up to `limit` that ends on a whole row of `el`'s children (measured from its content's top). */
+export function wholeRows(el, limit) {
+  const top = el.getBoundingClientRect().top - el.scrollTop + parseFloat(getComputedStyle(el).paddingTop);
+  const ends = [...el.children].map((c) => c.getBoundingClientRect().bottom - top).filter((b) => b <= limit);
+  return Math.max(0, ...ends);
+}
+
+const SQUARE = 28, PICK_SQUARE = 36; // the smallest a map's squares get for a tall program: Fennel stays easy to see, a square to tap thumb-sized
+
+/**
+ * Fits `program` (an element) between what is above it and `tray` (fixed at the bottom; none: the screen's bottom).
+ * `world` and `g` are a map and its level (parse() in src/coding/program.js), if there is one; `lines` the coach's.
+ * Returns:
+ *   fit(words)   a program too tall for the space above the tray and above the verdict to come (`words` long)
+ *                first gets the room the coach and the gaps can give (`.tall`), then the map's. If even that can't fit
+ *                it above the verdict (a short phone), the map gives only what fits it above the tray, so it reads
+ *                whole while asked, and its box shrinks when the verdict comes. What can't fit scrolls in its own box.
+ *                A program that fits is left as it is.
+ *   settle(el, always)  once answered: the program's box ends above the verdict as it really came (`boxTo`), with `el` in view
+ *   keep(el)     scrolls the program's box to `el`
+ */
+export function fitter({ program, tray, world = null, g = null, lines }) {
+  const trayTop = () => (tray?.isConnected && tray.children.length ? tray.getBoundingClientRect().top : innerHeight);
+  const fit = (words) => {
+    const verdict = Math.min(trayTop(), innerHeight - verdictHeight(words, lines));
+    const over = (bottom) => program.scrollHeight - (bottom - topOf(program) - 8);
+    if (over(verdict) <= 0) return;
+    program.classList.add('tall');
+    const map = !!world?.isConnected;
+    const high = map ? world.getBoundingClientRect().height : 0;
+    const least = map ? g.h * (world.classList.contains('picking') ? PICK_SQUARE : SQUARE) : 0;
+    const bottom = over(verdict) <= high - least ? verdict : trayTop();
+    const fits = Math.max(least, high - over(bottom) - 4); // 4: the squares round to whole pixels
+    if (map && fits < high) world.style.width = `${(fits * g.w) / g.h}px`;
+    boxTo(program, bottom);
+  };
+  const keep = (el) => keepInView(program, el);
+  const settle = (el, always = false) => {
+    const foot = document.querySelector('.foot.show');
+    if (foot) boxTo(program, innerHeight - foot.offsetHeight, always);
+    keep(el);
+  };
+  return { fit, settle, keep };
+}
