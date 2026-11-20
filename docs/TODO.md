@@ -269,28 +269,40 @@ Found, not fixed (design calls or bigger than a few lines):
   stage isn't put first. In real play a unit's flower and its creature arrive together, so both show (seen); only a save that earns
   many things at once (a placement, an import) folds the creature's line into "and N more in your garden". A first pass reported
   this as medium from a seed that hadn't awarded earlier units; with what those units earned, the lines show.
+  **Fixed** (fix/walk-findings): `award()` returns what arrived most important first (a raised butterfly's stage, then a skin,
+  a landmark, a visitor, a flower) and `listed()` caps an end screen at three lines (two above "How do you feel?"); the sound follows the first.
 - **End screens are crowded on milestone days** (medium). Calm on its 14th day shows the headline, the wingbeat with Lumi and your
   butterfly, a bow tie for Lumi, the chrysalis, a bee, a birdhouse, then three feelings and Continue: the last feeling sits under the
   fixed Continue until scrolled. A Maths checkpoint has three chips, the wingbeat, a skin and four lines. About ten things now grow,
-  arrive or unlock, and on these days most of them arrive at once.
+  arrive or unlock, and on these days most of them arrive at once. **Fixed** (fix/walk-findings): two lines and "and N more" on a
+  practice end screen, and its coach drawn smaller and higher, so all three feelings sit above Continue at 412x786.
 - **Home for someone 30 days in** (low, crowding): garden strip, seven tabs, the course and Games rows (Learning), the greeting, the
   butterfly and streak line, the raising line, then the path. The path starts below half the screen.
 - **Numbers still show for the other habits** next to a quiet one (by design: only Calm, Reflect and Wind down are quiet), so a
   30-day home reads "Move 30", "Walk 30", "Learning 31" beside Calm's dot. Fine; noted because the plan's "no count" reads wider.
 - **No way into the wardrobe from home**: it is in ⋯ (last, under Garden) and on the garden screen. Fine if intended.
 - **"Moves need space, so check there's room around you"** shows during Seated march and the other chair moves (low).
+  **Fixed** (fix/walk-findings): left off a routine done all on a chair (`needsRoom()`).
 - **Sit to stand: Clover stays seated** in the still we caught, and heel raises, side leg lifts and one-leg stand look alike at the
-  wall (low; motion may tell them apart).
+  wall (low; motion may tell them apart). **Fixed** (fix/walk-findings): sampled across a rep, Clover barely rose or lifted a foot.
+  She now sits lower on a lower seat and stands up on long legs, rises tall onto her toes, lifts a leg well out, and holds a foot
+  clear of the floor.
 - **Floss's 🦷 and Music's 🎵 are faint**: white on white on the tab, and the note is dark on the pressed tab's dark green (low).
+  **Fixed** (fix/walk-findings): 🪥 and 🎸, which read on a light, a dark and a pressed tab.
 - **Seven skins**: worn on home (Reflect's path) and on the end screen; in the garden Lumi is in the pond and not dressed, as
   CLAUDE.md says. A skin worn hides the butterfly that sits on Lumi's head in the intro (intro only shows on a first visit).
+  **Fixed** (fix/walk-findings): the learner's butterfly rides on Lumi's head wherever she is drawn dressed, on top of a hat or the
+  crown, in every skin but the costume.
 - **Dark theme** (emulated: `cmd uimode night yes` turns Chrome's bar dark but the page keeps `prefers-color-scheme: light` on
   this emulator, so `looks` tells the page directly). Everything reads, with two weak spots (low): the pressed tab is white text on a
-  light green, and the wardrobe's dimmed skins turn into grey blobs on the dark card.
+  light green, and the wardrobe's dimmed skins turn into grey blobs on the dark card. **Fixed** (fix/walk-findings): the pressed
+  tab's words measure 6.6:1 (5.0:1 in light); its quiet dot, 2.3:1 on the green, now has a ring of the page round it. A skin not yet
+  given keeps its shape and full tone, its colour muted (Lumi 3.9:1 on the dark card; it was faded to grey).
 - **Large text not checked**: setting `font_scale 1.3` mid-run closes Chrome's page under Playwright (twice, `LOOKS=large npm run
   phone -- looks`). It needs the setting before Chrome starts, which the runner doesn't offer.
 - **The garden's Learning card lists every flower** (low, crowding): a finished Maths adds ten "A flower opened for …" lines, one
-  per unit, under the Learning plant, pushing the other plants' cards far down.
+  per unit, under the Learning plant, pushing the other plants' cards far down. **Fixed** (fix/walk-findings): past three, one line
+  with the number.
 - **The live site** (knowhowit.com.au/wingbeat, serving today's `main`: `src/cast/skins.js` and the changed modules match):
   `first-visit`, `walkthrough`, `butterfly`, `garden`, `wardrobe` and `log` all pass with no page error or failed request. The
   first attempt failed at once with `ERR_NAME_NOT_RESOLVED` inside the fresh emulator; the retry was clean.

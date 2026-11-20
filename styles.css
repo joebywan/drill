@@ -370,7 +370,9 @@ html { scroll-padding-bottom: 160px; }
 .bubble-tap { width: 60px; height: 60px; border-radius: 50%; border: 3px dashed var(--calm); background: var(--card); }
 .bubble-tap[aria-pressed="true"] { border-style: solid; background: var(--calm); }
 
-.practice-end .hero { width: 130px; }
+/* Smaller and higher than a lesson's, so two arrival lines and all three feelings sit above Continue at 412x786. */
+.practice-end { padding-top: 12px; }
+.practice-end .hero { width: 100px; }
 .chip.calm { --c: var(--chip-calm); flex: 0 1 180px; margin: 0 auto; }
 
 /* ---- Screen break: the step list in its own blue ---- */
