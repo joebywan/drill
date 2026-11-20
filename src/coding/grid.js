@@ -7,7 +7,8 @@ import { reached } from './program.js';
 /**
  * The grid Fennel walks and the walking, for any item with a level (`parse` in program.js): Coding's
  * blocks and the code courses' chips both run here. `gridHtml(g)` draws it, and `walkerOn(world, g,
- * showValues)` gives { walk(result), backToStart(), cellAt([x, y]), stop() } for a `run()` result.
+ * showValues, onStep)` gives { walk(result), backToStart(), cellAt([x, y]), stop() } for a `run()` result.
+ * `onStep(result, i)` is told each square Fennel lands on, so a screen can follow the program along.
  */
 const STEP_MS = 380;
 const ROCK = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1.2 8.6 Q.6 5.2 3 3.6 Q4.4 1.6 6.6 2.6 Q9 3.4 8.9 6.4 Q9.2 8.6 7.4 8.8 Z" fill="var(--rock)"/><path d="M3.2 4.4 Q4.6 3 6.4 3.6" fill="none" stroke="var(--rock-shine)" stroke-width=".7" stroke-linecap="round"/></svg>';
@@ -26,12 +27,13 @@ export const gridHtml = (g) => `<div class="grid-world" style="--w:${g.w};--h:${
       <div class="walker" aria-hidden="true">${fennel('think')}</div>
     </div>`;
 
-export function walkerOn(world, g, showValues = () => {}) {
+export function walkerOn(world, g, showValues = () => {}, onStep = () => {}) {
   const walker = world.querySelector('.walker');
   const cellAt = ([x, y]) => world.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
   /** What standing on a square does: a value updates, a drawing grows, one of several flowers is picked. */
   const arrive = (result, i) => {
     showValues(result.values[i]);
+    onStep(result, i);
     const cell = cellAt(result.path[i]);
     if (g.shape) cell.classList.add('trail');
     if (g.flowers.length > 1) cell.classList.add('picked');
