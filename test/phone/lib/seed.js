@@ -49,6 +49,18 @@ export function daysIn(days, to = 1) {
   return award(p).progress;
 }
 
+/**
+ * A learner whose Maths path is raising a creature at `stage`: units finished (or -1: one lesson, an egg) for each of
+ * egg, hatchling, half-grown, full-grown (a nine-unit course: 1, 4, 7) and chrysalis (all but the last). Learning
+ * has a streak, so the row has its line; what is earned goes through `award()`.
+ */
+export const RAISED = { egg: -1, hatchling: 1, 'half-grown': 4, 'full-grown': 7, chrysalis: 8 };
+export function mathsRaising(stage, p = { ...emptyProgress(), start: 'x', picked: ['learn'] }) {
+  const units = subjects.find((s) => s.id === 'maths').units;
+  const d = RAISED[stage];
+  return award(lessons(p, 'maths', (all) => (d < 0 ? all.slice(0, 1) : units.slice(0, d).flatMap((u) => u.lessons)))).progress;
+}
+
 /** Someone 30 days in (`daysIn`): Chess and Maths a unit each and the next all but its last lesson. */
 export const thirtyDays = (to = 1) => daysIn(30, to);
 
