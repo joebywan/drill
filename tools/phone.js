@@ -147,22 +147,28 @@ try {
   };
   await declinePrompts();
 
-  // Where the page's (0,0) is on screen: blank the page, tap, and read where the tap landed.
+  // Where the page's (0,0) is on screen: blank the page, tap, and read where the tap landed. Again after the
+  // screen size changes (`wm size`, a short phone): Chrome's toolbar moves with it. Leaves the page blank.
   const dpr = await page.evaluate(() => devicePixelRatio);
-  const [w, h] = adb('shell', 'wm', 'size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number);
-  await page.evaluate(() => {
-    document.body.replaceChildren();
-    document.body.style.cssText = 'height:100vh;margin:0';
-    addEventListener('pointerdown', (e) => { window.__tap = [e.clientX, e.clientY]; }, { once: true, capture: true });
-  });
-  for (let i = 0; !(await page.evaluate(() => window.__tap)); i++) { // the first tap after launch can go missing
-    if (i === 5) throw new Error('calibration tap never reached the page');
-    adb('shell', 'input', 'tap', String(w >> 1), String(Math.round(h * 0.6)));
-    await sleep(1000);
-  }
-  const [cx, cy] = await page.evaluate(() => window.__tap);
-  const origin = { x: (w >> 1) - cx * dpr, y: Math.round(h * 0.6) - cy * dpr };
-  console.log(`page origin on screen: ${Math.round(origin.x)},${Math.round(origin.y)} (dpr ${dpr})`);
+  const origin = { x: 0, y: 0 };
+  const calibrate = async () => {
+    const [w, h] = adb('shell', 'wm', 'size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number);
+    await page.evaluate(() => {
+      window.__tap = null;
+      document.body.replaceChildren();
+      document.body.style.cssText = 'height:100vh;margin:0';
+      addEventListener('pointerdown', (e) => { window.__tap = [e.clientX, e.clientY]; }, { once: true, capture: true });
+    });
+    for (let i = 0; !(await page.evaluate(() => window.__tap)); i++) { // the first tap after launch can go missing
+      if (i === 5) throw new Error('calibration tap never reached the page');
+      adb('shell', 'input', 'tap', String(w >> 1), String(Math.round(h * 0.6)));
+      await sleep(1000);
+    }
+    const [cx, cy] = await page.evaluate(() => window.__tap);
+    Object.assign(origin, { x: (w >> 1) - cx * dpr, y: Math.round(h * 0.6) - cy * dpr });
+    console.log(`page origin on screen: ${Math.round(origin.x)},${Math.round(origin.y)} (dpr ${dpr}, screen ${w}x${h})`);
+  };
+  await calibrate();
 
   // The helpers every scenario gets.
   const run = async (ms) => { await page.clock.runFor(ms); await sleep(300); };
@@ -227,7 +233,7 @@ try {
     await declinePrompts();
     try {
       const { default: scenario } = await import(`${ROOT}test/phone/${name}.js`);
-      await scenario({ page, device, adb, touch, btn, swipe, dragTo, type, shot, run, seed, check, checkSound, vibrations, declinePrompts });
+      await scenario({ page, device, adb, touch, btn, swipe, dragTo, type, shot, run, seed, check, checkSound, vibrations, declinePrompts, calibrate });
     } catch (e) {
       errors.push(`scenario ${name}: ${e.message.split('\n').filter((l) => !/^Call log:|^\s*$/.test(l)).slice(0, 2).join(' ')}`);
       await shot('failed').catch(() => {});

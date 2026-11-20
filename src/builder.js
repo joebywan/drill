@@ -78,6 +78,62 @@ export function moveTo(state, path) {
   state.cursor = { path, at: listAt(state.tree, path).length };
 }
 
+const THUMB = 44; // px a tap target should span, each way
+
+/**
+ * How far the tappable box `boxes[i]` ({ top, bottom, left, right, fixed? }) may reach past its edges, invisibly,
+ * toward a thumb's 44px each way: into empty space, but only halfway to any other tappable box in its way (all the
+ * way to a `fixed` one, which reaches nowhere itself), so none covers another. Returns { up, down, left, right } in px.
+ */
+export function reachOf(boxes, i) {
+  const a = boxes[i];
+  const v = Math.max(0, (THUMB - (a.bottom - a.top)) / 2), h = Math.max(0, (THUMB - (a.right - a.left)) / 2);
+  const out = { up: v, down: v, left: h, right: h };
+  const others = boxes.filter((_, j) => j !== i);
+  for (const b of others) {
+    const share = b.fixed ? 1 : 2;
+    if (b.left < a.right && b.right > a.left) { // above or below
+      if (b.bottom <= a.top) out.up = Math.min(out.up, (a.top - b.bottom) / share);
+      if (b.top >= a.bottom) out.down = Math.min(out.down, (b.top - a.bottom) / share);
+    } else if (b.top < a.bottom && b.bottom > a.top) { // beside
+      if (b.right <= a.left) out.left = Math.min(out.left, (a.left - b.right) / share);
+      if (b.left >= a.right) out.right = Math.min(out.right, (b.left - a.right) / share);
+    }
+  }
+  // Something off at a corner: the reach gives way sideways, where a thumb has more room than up and down.
+  for (const b of others) {
+    const share = b.fixed ? 1 : 2;
+    if (b.left < a.right + out.right && b.right > a.left - out.left && b.top < a.bottom + out.down && b.bottom > a.top - out.up) {
+      if (b.right <= a.left) out.left = Math.min(out.left, (a.left - b.right) / share);
+      if (b.left >= a.right) out.right = Math.min(out.right, (b.left - a.right) / share);
+    }
+  }
+  return out;
+}
+
+/**
+ * Gives every `button.block` in `el` its invisible thumb target (`reachOf`, drawn by `.program button.block::after`
+ * from --up/--down/--left/--right), and keeps them right as `el` is redrawn or resized.
+ */
+export function thumbTargets(el) {
+  if (el.thumbs) return;
+  el.thumbs = true;
+  const fit = () => {
+    const buttons = [...el.querySelectorAll('button')];
+    const boxes = buttons.map((b) => { const r = b.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right, fixed: !b.classList.contains('block') }; });
+    buttons.forEach((b, i) => {
+      if (!b.classList.contains('block')) return;
+      const css = getComputedStyle(b);
+      const border = { up: css.borderTopWidth, down: css.borderBottomWidth, left: css.borderLeftWidth, right: css.borderRightWidth };
+      // ::after is placed from the padding box, so its reach starts behind the border
+      for (const [side, px] of Object.entries(reachOf(boxes, i))) b.style.setProperty(`--${side}`, `${px + parseFloat(border[side])}px`);
+    });
+  };
+  new ResizeObserver(fit).observe(el);
+  new MutationObserver(fit).observe(el, { childList: true, subtree: true });
+  fit();
+}
+
 const same = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
 const attr = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
@@ -142,6 +198,7 @@ export function builder(answerEl, trayEl, { chips, limit, meter, onChange, onTap
     place(state, chips, +b.dataset.chip);
     changed();
   };
+  thumbTargets(answerEl);
   answerEl.addEventListener('click', onAnswer);
   trayEl.addEventListener('click', onTray);
   paint();

@@ -1,5 +1,5 @@
 import { ARROW, answer, armsOf, fill, fixBug, fromTree, holes, isBuilt, isStep, jsFace, kind, listKind, names, parse, punch, reached, runItem, solve, tileKind, tileName, toJS, writeLook } from './program.js';
-import { builder } from '../builder.js';
+import { builder, thumbTargets } from '../builder.js';
 import { gridHtml, walkerOn } from './grid.js';
 import { dragTile } from '../drag.js';
 import { flourish, play } from '../feel.js';
@@ -48,6 +48,7 @@ export function mount(el, item, { say, done, coach }) {
     <div class="choices tiles"></div>`;
   const world = el.querySelector('.grid-world');
   const programEl = el.querySelector('.program');
+  thumbTargets(programEl);
   const tilesEl = el.querySelector('.tiles');
   const varsEl = el.querySelector('.vars');
   const showValues = (now = {}) => {
