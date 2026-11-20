@@ -255,4 +255,9 @@ Found, not fixed (design calls or bigger than a few lines):
   light green, and the wardrobe's dimmed skins turn into grey blobs on the dark card.
 - **Large text not checked**: setting `font_scale 1.3` mid-run closes Chrome's page under Playwright (twice, `LOOKS=large npm run
   phone -- looks`). It needs the setting before Chrome starts, which the runner doesn't offer.
+- **The garden's Learning card lists every flower** (low, crowding): a finished Maths adds ten "A flower opened for …" lines, one
+  per unit, under the Learning plant, pushing the other plants' cards far down.
+- **The live site** (knowhowit.com.au/wingbeat, serving today's `main`: `src/cast/skins.js` and the changed modules match):
+  `first-visit`, `walkthrough`, `butterfly`, `garden`, `wardrobe` and `log` all pass with no page error or failed request. The
+  first attempt failed at once with `ERR_NAME_NOT_RESOLVED` inside the fresh emulator; the retry was clean.
 - **Not seen:** a real phone and finger, the widget and daily note, Firefox, the field guide's source links opening in a browser.
