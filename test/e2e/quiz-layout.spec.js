@@ -81,6 +81,10 @@ test.describe('at 412x533', () => {
       expect(bubble.top, 'her words are on the screen').toBeGreaterThanOrEqual(0);
       expect(pairs.top, 'the pairs start below her words').toBeGreaterThanOrEqual(bubble.bottom - 1);
       expect(pairs.bottom, 'and end on the screen').toBeLessThanOrEqual(533);
+      if (tall) { // she has given way, so her bubble is only as tall as her words
+        await expect(page.locator('.quiz')).toHaveClass(/\btall\b/);
+        await expect(page.locator('.play .bubble')).toHaveCSS('min-height', '0px');
+      }
       // Every pair can still be reached and matched.
       for (const c of await page.locator('.quiz .choices .choice').all()) { await c.scrollIntoViewIfNeeded(); await expect(c).toBeInViewport(); }
     });

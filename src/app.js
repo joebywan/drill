@@ -1073,6 +1073,7 @@ function run(lessonId, queue, title, extra = null) {
     if (at === queue.length) { sessionCoach.stop(); return practice ? finishRoutine() : finish(); }
     const entry = queue[at];
     const shownAt = Date.now();
+    scrollTo(0, 0); // every item starts at the top of the page: its question is there, and src/fit.js measures from it
     topic.textContent = entry.topic;
     sessionCoach.set(who.start);
     cleanup = entry.subject.mount(stage, entry.item, {

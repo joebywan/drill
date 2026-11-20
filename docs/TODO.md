@@ -254,6 +254,16 @@ none near 6 minutes or 20 items. The longest are `jsn-1` and `jsl-3` (~1:35 each
   instead of a fixed box. On a short phone both still scroll in `tb-2-7` (six lines of code, two rows of chips): there is not room for all of it.
 - **A long answer with its top hidden: fixed.** The answer's box fades at the top once scrolled, so a hidden first line shows as hidden, and
   keeps the line being built in view without moving the page (the builder no longer calls `scrollIntoView`). It opens at its first line.
+- **A code card ran under its answers or the verdict: fixed.** The teach, predict and check cards (the quiz, `code-look`) had their code and
+  answers capped in vh, and Chrome on a phone measures vh with the address bar hidden, so on a 412x533 page the 8-line check card `tsi-2-4` ended
+  11px into the answers' box, and once answered the verdict covered the last lines of many cards (`jsc-2-6`, `jse-3-9`, `tsu-2-5`: 44px). `fitCard()` now fits them like every quiz card:
+  the coach and the gaps give way, then the code scrolls in its own box (the answers too, if there are more than leave four lines of code).
+  Whether the playthrough reported it varied from run to run with the page's scroll offset when the card was measured, not with the card:
+  the page kept whatever offset the last item left it at, which could also cut the ✕ off at the top. Every item now starts at the top of the page (`step()` in `src/app.js`).
+- **The coach's bubble grew when a quiz card had to give way: fixed.** Since the Chess fix (#162) the shared rule for a tall screen outranked the quiz's own,
+  so a Maths, Japanese or code card that was too tall got a bubble 88px high where it should have been as short as her words. With it right, `tsi-2-4` shows all 8 lines on a 412x533 page.
+- **Answers a little taller than the verdict** (low): on a 412x533 page a check card's three rows of answers stand about 10px taller than a verdict with a one-line
+  heading, so the top edge of the first row shows above it once answered.
 - **A filled block is 32px high** (low): a placed word in the answer (`button.block`); the tray's chips are all 40 or more.
 - **Wording** (low): "For example `cost({"name":"a"}) gives 0`" writes the input as JSON (quoted keys) before the course has shown that form;
   "Five! Those lines run like clockwork." and "Five in a row." appear on a streak with no mention of what the five are.
