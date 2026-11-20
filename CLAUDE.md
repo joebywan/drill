@@ -25,7 +25,8 @@ chess teacher, so that name and the draft knight are retired.
 npm install && npm start   # http://localhost:8124
 npm test                   # node --test, no framework
 npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second worktree
-npm run e2e:firefox        # the same suite in Firefox, silent; first `npx playwright install firefox`. Not in CI: 7 specs differ (TODO.md)
+npm run e2e:firefox        # the same suite in Firefox, silent; first `npx playwright install firefox`. CI runs it too (`e2e-firefox`)
+npm run e2e:live           # the deployed site, three smoke tests; GitHub runs it after every deploy (`live.yml`). LIVE_URL=<base> to aim elsewhere
 ```
 
 **Nothing a test run starts may be heard on this computer.** Chromium's headless shell is mute and the phone emulator
@@ -34,6 +35,10 @@ starts with `-no-audio`, but Firefox (and WebKit, or any headed browser) plays s
 `playwright.firefox.config.js` (no route to the sound server, volume at nothing, Firefox's own silent test voices), or
 with the same env and prefs in a one-off script, and check while it runs that `pactl list sink-inputs` shows no stream
 from it and no `speech-dispatcher-*` stream with `Corked: no`.
+
+The suite must pass in both browsers. Where Firefox really differs (no history entry before the first page, `getBBox` tighter
+on curves, a click on an svg's frame not focusing it), the spec branches on `browserName` and says why in a comment; Chromium's
+check stays as strict as it was.
 
 ## Phone testing
 
