@@ -70,6 +70,34 @@ Widget and reminder mechanics, from a friend's Android habit app (Fizz) reviewed
   mascot (guilt, against the guardrails), and `USE_EXACT_ALARM`, which Play reserves for
   alarm and calendar apps. Inexact alarms are fine for a once-a-day reminder.
 
+**The Android app: played** (2026-11-20, emulator Pixel 6 API 36, debug APK, `npm run phone -- app`, `test/phone/app.js`)
+
+Installed and played with real taps through the WebView (`attach()` in `tools/phone.js`). The launcher icon is Lumi close up
+with the butterfly on her head; the app opens on the intro ("Small beats go a long way.") about 5 s after the tap on a cold
+emulator; no INTERNET permission; no error from `WingbeatBridge` or `WingbeatDaily` and no failed request all run. A first day
+(`butterfly.js` and `calm.js` played in the app) passes: sound and haptics come through for the app's own package, the end
+screen shows today's wingbeat with its new panel, home shows the butterfly. The widget was placed through the launcher
+(long-press, Widgets, Wingbeat, Add) and is right in all its states: flying, basking, resting, with the streak number for
+Learning and none for Calm or Reflect. The daily note posts "Something small today? Lumi is around.", in the shade under a
+butterfly seen from the side, opens the app when tapped, and posts nothing on a day with something done, forced or not. The
+bars take the page's colour in light and in Wind down. Back from a routine lands on home, a quick second back stays, a third
+leaves. Large text was played on a build with `textZoom` unpinned, to see what the phone's font size would do.
+
+- **Dark theme never reaches the app** (high). With the phone in dark mode (`cmd uimode night yes`, "Night mode: yes")
+  `prefers-color-scheme: dark` is false in the WebView, live and after a cold start, so the app and its bars stay light
+  (`#f6f7f9`). Chrome follows the phone's theme. Setting `android:isLightTheme` in both themes did not change it. Needs a
+  look at how this WebView decides (`WebSettingsCompat`, algorithmic darkening, the theme).
+- **The phone's font size is ignored** (medium, a design call). `MainActivity` pins `settings.textZoom = 100`, so at
+  `font_scale 1.3` 16px text is still 18.7px tall (24.4px with the line removed). Unpinned, most screens hold, but the Calm
+  path's labels run into the next node ("Five slow breaths") and on the end screen "Not really" sits under the fixed Continue
+  until scrolled.
+- **The widget lands 3x2 and mostly empty** (low). `minHeight` 80dp makes the launcher give it two rows; Lumi, the butterfly
+  and the line sit in a strip in the middle. The picker shows a blank card with the launcher icon (no `previewLayout` or
+  `previewImage`). A new learner's widget shows "0".
+- **The Daily note switch showed no On or Off** (low, fixed here): the On/Off styling was for `[data-pref]` only.
+- **Not checked:** the "Get a Japanese voice" offer (this image has a ja-JP voice); the TTS engine's sound after "Hear it
+  again" was seen in one run of three, so speech is unproven; a real launcher other than this image's; a release build.
+
 ## Fitting the person
 
 Agreed 2026-10-30: Wingbeat learns from its own on-device log how to fit the person, so it reacts
@@ -169,12 +197,17 @@ sessions run longer. A quarter to a third of every session is repeats (2 warm-up
 `js-0` is the lightest in taps (25 for 12 items: mostly reading) but not slow. The other named lessons (`if-3`, `until-2`, `bug-1`,
 `bug-2`, `logic-2`, `list-2`, `draw-0`, `param-0`, `param-1`, `js-3`, `js-4`) play like their neighbours.
 
-- **A tall program runs under the tray or the verdict** (medium). On a 412x786 page, and worse at 412x533, a long program (`var-3-grow`,
-  `fn-3`, `draw-3`, `bug-3`, `param-2`) reaches under the fixed answer tray when asked and under the verdict banner once answered. The page scrolls
-  (the `.play` bottom padding), so nothing is lost, but the last blocks and the result of a run are off the visible part
-  until you scroll. Fix is a design call: let the program scroll in its own box, as built items already do.
-- **Small tap targets** (low): the empty slot in a laid-out answer is 28px wide, a filled block 28 to 30px, and the tray's tiles 38px on a short
-  phone. Heights are covered by an invisible 44px target; widths are not.
+- **A tall program under the tray or the verdict: fixed on a 412x786 page** (`fit()` in `src/coding/exercise.js`). A program that would reach
+  under the tray, or under the verdict to come (measured with the item's own explanation), gets room from the coach (as on a short phone), the gaps
+  and then the map, down to 28px squares (36px where a square is tapped). `var-3`, `param-2`, `draw-3` and `bug-3` now play with no `overlap` or
+  `verdict covers` and nothing to scroll. Where it still can't fit, the program scrolls in its own box (fading out while there is more below), the
+  block being run is kept in view, and once answered the box ends above the verdict with the block where the run stopped (or the fix) in view.
+  **Left:** on a 412x533 page the verdict takes most of the screen, so an answered tall program shows in a box 27 to 120px high (part of a row to a few
+  rows, the block that matters among them); the program reads whole while asked, short of 3 to 4px in `var-3-grow`, `bug-3-count` and `bug-3-sign`. A laid-out answer (palette, free) that
+  is long still scrolls in its box at 412x786, as before. The fade uses scroll-driven animation, which Firefox lacks (there it just scrolls).
+- **Small tap targets** (low): the empty slot in a laid-out answer and the tray's tiles on a short phone now answer a thumb across 44px (invisible
+  targets). Still narrow: a placed or filled block is 28 to 30px wide, and blocks in a row sit 3 to 6px apart, so widening their targets would steal
+  taps from the neighbour; that needs wider blocks, a layout change. The harness measures drawn sizes, so it still lists these.
 - **Not played yet:** a real beginner, a real finger, Firefox, and sound with the new motion. The drawing trail and live values were seen only
   in passing.
 **Coding: bigger improvements**

@@ -15,7 +15,7 @@ export default async ({ page, seed, touch, btn, shot, run, checkSound, vibration
   await touch(btn('Start')); await run(1500); await shot('inhale');
   checkSound();
   await run(4000); await shot('exhale');
-  check('haptics: new com.android.chrome vibrations (dumpsys vibrator_manager)', vibrations() > buzzed);
+  check('haptics: new vibrations (dumpsys vibrator_manager)', vibrations() > buzzed);
   await run(40000); await shot('end');
   checkSound(); // the closing bell, still ringing out on the end screen
   await touch(btn('Calmer')); await shot('felt');

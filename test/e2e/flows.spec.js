@@ -5,6 +5,7 @@ import { emptyProgress, finishPractice, finishSession, leavePractice } from '../
 import { middleFor } from '../../src/reflect/practice.js';
 import { award } from '../../src/garden/model.js';
 import { answer as stopsAt, fixBug, mirrored, solve as oneWay, tileName } from '../../src/coding/program.js';
+import { withCheckpoint } from '../../src/repeat.js';
 
 // The first lesson on the path. Its answers are worked out from the course data with the same
 // item logic the app uses, so the test follows the content when it changes.
@@ -2390,6 +2391,38 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
     ...[...new Map(items.filter((i) => i.family).flatMap((i) => codingPool[i.family].map((e) => [JSON.stringify([i.view, e]), { id: i.id, type: i.type, ...(i.view && { view: i.view }), ...e }]))).values()]
       .flatMap((v) => [v, mirrored(v, { x: true })])]);
   expect(bad).toEqual([]);
+});
+
+// A tall program on a 412x786 phone: the coach, the gaps and the map make room, so it reads whole above the tray
+// while asked and above the verdict once answered, and nothing needs scrolling.
+test('a tall Coding program fits a 412x786 phone: clear of the tray while asked, and of the verdict once answered', async ({ page }) => {
+  test.setTimeout(60000);
+  await page.setViewportSize({ width: 412, height: 786 });
+  const lessons = codingCourse.units.map(withCheckpoint).flatMap((u) => u.lessons);
+  const at = lessons.findIndex((l) => l.id === 'var-3');
+  await page.addInitScript((done) => {
+    if (localStorage.getItem('wingbeat.progress')) return;
+    localStorage.setItem('wingbeat.course', 'coding');
+    localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 2, habits: {}, log: [], cards: {}, start: 'x', met: { coding: true }, done }));
+  }, Object.fromEntries(lessons.slice(0, at).map((l) => [`coding:${l.id}`, true])));
+  await page.goto('/');
+  await page.locator('.node.here').click();
+  const box = (sel) => page.locator(sel).evaluate((e) => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; });
+  for (const item of lessons[at].items) {
+    await expect(page.locator('.program')).toBeVisible();
+    if (item.type !== 'teach') {
+      if (item.id === 'var-3-grow') expect((await box('.program')).bottom, 'the program meets the tray').toBeLessThanOrEqual((await box('.tiles')).top);
+      await solveCoding(page, item);
+      if (['var-3-read', 'var-3-grow'].includes(item.id)) {
+        const prog = page.locator('.program');
+        expect((await box('.program')).bottom, `${item.id}: the verdict covers the program`).toBeLessThanOrEqual((await box('.foot')).top);
+        expect(await prog.evaluate((e) => e.scrollHeight - e.clientHeight), `${item.id}: the program reads whole`).toBeLessThanOrEqual(1);
+        expect((await box('.grid-world')).bottom).toBeLessThanOrEqual((await box('.foot')).top);
+      }
+    }
+    if (item.id === 'var-3-grow') break;
+    await continueButton(page).click();
+  }
 });
 
 test('Coding, laying out a program: the cursor, a limit, Run, and a run with steps to spare', async ({ page }) => {

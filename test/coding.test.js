@@ -16,6 +16,17 @@ test('a program walks the grid step by step and stops on the flower', () => {
   assert.deepEqual(run(['S..*'], ['right']).path.at(-1), [1, 0]);
 });
 
+test('a run says which block made each step, and which one it stopped on, in reading order', () => {
+  // 0 set, 1 repeat, 2 right (inside it), 3 define, 4 down (inside it), 5 hop, 6 left
+  const program = [{ set: 'n', to: 1 }, { repeat: 2, do: ['right'] }, { define: 'hop', do: ['down'] }, { call: 'hop' }, 'left'];
+  const r = run(['S..', '...'], program);
+  assert.deepEqual(r.at, [null, 2, 2, 4, 6], 'a step inside a define is the one run');
+  assert.equal(r.end, 'short');
+  const bump = run(['S..', '...'], ['right', 'up']);
+  assert.deepEqual([bump.end, bump.at, bump.next], ['bump', [null, 0], 1]);
+  assert.equal(run(['S*.'], ['right', 'right'], undefined, true).next, 1, 'with steps to spare: the one it stopped before');
+});
+
 test('a rock or the edge stops the run where it is, and says where it bumped', () => {
   const r = run(level, ['right', 'right', 'down']);
   assert.equal(r.end, 'bump');
