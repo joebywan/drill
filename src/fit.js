@@ -121,7 +121,9 @@ export function fitter({ program, tray, world = null, g = null, lines }) {
  * once answered (the same rule as Coding's `fit()`: fit first, never let the page scroll under a fixed bar). A card
  * that fits is left alone. Otherwise, in turn: the card gives up its spare room (`tight`), the coach shrinks
  * (`tall`), slots and the sentence above them shrink (`tighter`), pictures shrink, and last the card scrolls in its own box. A build's slots are measured full, as they
- * will be once answered.
+ * will be once answered. A code card (`.code-look`, the code courses' teach, predict and check cards) keeps the card and
+ * scrolls its code instead, so the question under it stays put; and its answers, if there are more than leave the card
+ * four lines of code, scroll in their own box first.
  */
 export function fitCard(quiz, item, coach) {
   const card = quiz.querySelector('.card');
@@ -134,6 +136,12 @@ export function fitCard(quiz, item, coach) {
     // Whatever the font does to the labels, the last of it scrolls in the tray's own box.
     if (over() > 0) { tray.style.maxHeight = `${Math.floor(tray.getBoundingClientRect().height - over())}px`; scrollBox(tray); }
     return;
+  }
+  const code = quiz.classList.contains('code-look') ? card.querySelector('.glyph') : null;
+  if (code && tray?.children.length) {
+    const line = parseFloat(getComputedStyle(code).lineHeight);
+    const room = innerHeight - (card.getBoundingClientRect().top + Math.min(code.scrollHeight, 4 * line) + (card.offsetHeight - code.offsetHeight) + 8);
+    if (tray.offsetHeight > room) { tray.style.maxHeight = `${Math.floor(room)}px`; scrollBox(tray); }
   }
   const slots = [...card.querySelectorAll('.slot')];
   const was = slots.map((s) => s.textContent);
@@ -149,7 +157,8 @@ export function fitCard(quiz, item, coach) {
       const k = Math.max(0.45, (high - over()) / high);
       for (const p of pics) p.style.maxWidth = `${Math.floor(p.getBoundingClientRect().width * k)}px`;
     }
-    if (over() > 0) { card.style.maxHeight = `${Math.floor(card.getBoundingClientRect().height - over())}px`; scrollBox(card); }
+    const box = code ?? card;
+    if (over() > 0) { box.style.maxHeight = `${Math.floor(box.getBoundingClientRect().height - over())}px`; scrollBox(box); }
   }
   slots.forEach((s, i) => { s.textContent = was[i]; });
 }

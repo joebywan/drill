@@ -171,6 +171,58 @@ test('a box that scrolls marks more above and below, and drops the marks as it s
   await expect.poll(marks).toEqual([false, false, false, false]);
 });
 
+// A code card (teach, predict, check) through the quiz, as the runner shows it: asked, its card ends above the answers; answered,
+// above the verdict; code that can't all show scrolls in its own box down to the last line. Chrome on a phone measures vh with
+// its address bar hidden, but lays the page out under it while it shows: a page 533px high has vh of 589px. Playwright has no
+// address bar, so `bar` makes one: the page is that much taller (vh as the phone's) and starts that much lower (room as the phone's).
+for (const [width, height, bar] of [[412, 533, 0], [412, 533, 56], [412, 786, 56]]) test(`every code card fits a ${width}x${height} page${bar ? ' under an address bar' : ''}, asked and answered`, async ({ page }) => {
+  test.setTimeout(120000);
+  await page.setViewportSize({ width, height: height + bar });
+  await page.goto('/');
+  await page.addStyleTag({ content: `body, button { font-family: "DejaVu Sans", Verdana, sans-serif; } :root { --mono: "DejaVu Sans Mono", monospace; } body { padding-top: ${bar}px; }` });
+  const cards = COURSES.flatMap(itemsOf).filter((i) => !i.level && (i.type === 'teach' || i.type === 'predict'));
+  const bad = await page.evaluate(async (items) => {
+    const { mount } = await import('/src/code/exercise.js');
+    const { optionsOf } = await import('/src/code/items.js');
+    const { CODE_LINES } = await import('/src/cast/lines.js');
+    const app = document.getElementById('app');
+    const out = [];
+    for (const item of items) {
+      app.innerHTML = `<header class="bar" style="height:44px"></header><main class="play"><p class="topic">Topic</p>
+        <div class="coach"><button class="who"></button><p class="bubble"></p></div><div class="stage"></div></main>
+        <footer class="foot"><div class="verdict"><strong></strong><p></p></div><button class="next">Continue</button></footer>`;
+      const bubble = app.querySelector('.bubble'), foot = app.querySelector('.foot');
+      const longest = Object.values(CODE_LINES).flat().filter((l) => typeof l === 'string').reduce((a, b) => (b.length > a.length ? b : a), '');
+      const done = (right, why = '') => { foot.className = `foot show ${right === null ? 'plain' : right ? 'right' : 'wrong'}`; foot.querySelector('strong').textContent = longest; foot.querySelector('p').textContent = why; };
+      const stop = mount(app.querySelector('.stage'), item, { say(t) { bubble.textContent = t; }, done, coach: { lines: CODE_LINES } });
+      const note = (why) => out.push(`${item.id}: ${why}`);
+      const card = app.querySelector('.quiz .card');
+      const code = card?.querySelector('.glyph');
+      const choices = app.querySelector('.quiz .choices');
+      if (card?.getClientRects().length) {
+        if (choices?.children.length) {
+          const tray = choices.getBoundingClientRect();
+          if (card.getBoundingClientRect().bottom > tray.top + 1) note(`asked, the card ends ${Math.round(card.getBoundingClientRect().bottom - tray.top)}px under the answers`);
+          if (tray.top < bubble.getBoundingClientRect().bottom) note('the answers reach the coach');
+          const { answer } = optionsOf(item);
+          [...choices.children].find((b) => b.textContent === answer)?.click();
+        }
+        const roof = innerHeight - foot.offsetHeight;
+        if (card.getBoundingClientRect().bottom > roof + 1) note(`answered, the verdict covers ${Math.round(card.getBoundingClientRect().bottom - roof)}px of the card`);
+        if (code) {
+          code.scrollTop = code.scrollHeight;
+          const last = code.getBoundingClientRect();
+          if (code.scrollTop + code.clientHeight < code.scrollHeight - 1) note('the last line of the code cannot be scrolled to');
+          if (last.bottom > Math.min(roof, innerHeight) + 1) note('the last line of the code is under the verdict');
+        }
+      }
+      stop?.();
+    }
+    return out;
+  }, cards);
+  expect(bad).toEqual([]);
+});
+
 for (const [course, id] of [[javascript, 'jsv-1'], [javascript, 'jsl-1'], [javascript, 'jsf-3'], [javascript, 'jse-2'], [typescript, 'tsu-2'], [testing, 'tb-1']]) {
   test(`${course.title}: ${id} plays through as a real session`, async ({ page }) => {
     test.setTimeout(120000);
