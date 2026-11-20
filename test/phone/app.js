@@ -7,6 +7,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import butterfly from './butterfly.js';
 import calm from './calm.js';
+import { thirtyDays } from './lib/seed.js';
 import { fitter, textTour, uiNode } from './lib/fits.js';
 
 const PKG = 'com.joebywan.wingbeat';
@@ -20,7 +21,7 @@ const hex = (rgb) => `#${rgb.match(/\d+/g).slice(0, 3).map((v) => (+v).toString(
 // What the note must never say: absence, loss or a streak at stake.
 const ABSENCE = /miss|lost|lose|gone|away|absen|forgot|been a while|streak|come back|haven't/i;
 
-export default async ({ adb, attach, check, screenXml, shot }) => {
+export default async ({ adb, attach, check, screenXml, shot, type }) => {
   if (!existsSync(APK)) { console.log(`  no APK at ${APK}: build it first (CLAUDE.md, Android)`); return; }
   mkdirSync(OUT, { recursive: true });
   const keep = (name, text) => writeFileSync(`${OUT}${name}`, text);
@@ -339,6 +340,66 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
     await textTour(app, check, `text ${scale}`);
   }
   sh('settings put system font_scale 1.0');
+
+  // 9. A link that leaves the app: the field guide's source link has no INTERNET to load in the WebView, so the wrapper
+  // (shouldOverrideUrlLoading) hands any address that is not its own to the phone's browser, and the page stays as it was.
+  await launch(true);
+  await app.seed(thirtyDays(1)); // thirty days in: common brown has emerged, so its page has a source
+  await app.touch(app.btn(/^Your garden/)); await app.touch(app.page.locator('.guide-link')); await app.touch(app.page.locator('[data-species="common-brown"]'));
+  const source = app.page.locator('.source a');
+  const [heading, hrefs] = [await app.page.locator('h1').first().textContent(), await source.evaluateAll((a) => a.map((x) => `${x.target} ${x.href}`))];
+  check('link: the species page has a source link that opens a new window (target _blank)', hrefs.length > 0 && hrefs[0].startsWith('_blank https://'), hrefs.join(' | '));
+  const pageUrl = app.page.url();
+  clearLogs(); await app.touch(source); await sleep(4000); await shot('link-out');
+  const focus = sh('dumpsys window | grep mCurrentFocus').trim();
+  console.log(`  link: after the tap, ${focus}`);
+  check('link: the tap leaves the app for the phone\'s browser', !front() && /Window\{\S+ u0 \S+/.test(focus) && !focus.includes(PKG), focus);
+  sh('input keyevent KEYCODE_BACK'); await sleep(1500);
+  if (!front()) sh(`am start -W -n ${PKG}/.MainActivity`); await sleep(2000); await shot('link-back');
+  check('link: back in the app, the same page, nothing loaded in the WebView', front() && app.page.url() === pageUrl && await app.page.locator('h1').first().textContent() === heading, `${app.page.url()}`);
+
+  // 10. The keyboard: Reflect's three lines, then "+ Habit", "Make your own". What is being typed in and the button
+  // after it stay above the keyboard (the page is resized to what is left), what was typed is what is kept, and the
+  // screen is whole again when the keyboard goes.
+  const keyboard = () => /mInputShown=true/.test(sh('dumpsys input_method'));
+  /** How far a control's bottom is below the room the page has left (the keyboard's top, any fixed bar): 0 or less is clear. */
+  const below = (sel) => app.page.evaluate((sel) => {
+    const bars = [...document.querySelectorAll('#app *')].filter((e) => getComputedStyle(e).position === 'fixed' && e.getBoundingClientRect().height && e.getBoundingClientRect().top > innerHeight / 2 && e.getBoundingClientRect().top < innerHeight);
+    const limit = Math.min(innerHeight, ...bars.filter((b) => !b.matches(sel) && !b.querySelector(sel)).map((b) => b.getBoundingClientRect().top));
+    return Math.round(document.querySelector(sel).getBoundingClientRect().bottom - limit);
+  }, sel);
+  const hideKeyboard = async () => { if (keyboard()) { sh('input keyevent KEYCODE_BACK'); await sleep(1200); } };
+  const tall = await app.page.evaluate(() => innerHeight);
+  await app.seed({ start: {}, picked: [] });
+  await app.touch(app.btn(/^Reflect(,|$)/)); await app.touch(app.btn(/^Continue · /)); await app.touch(app.btn('Start'));
+  const box = app.page.getByRole('textbox');
+  await app.touch(box); await sleep(1500); await app.run(400); await app.shot('keyboard-reflect');
+  const room = await app.page.evaluate(() => innerHeight);
+  check('keyboard: Reflect: the keyboard is up and the page is resized to what is left', keyboard() && room < tall * 0.8, `innerHeight ${tall} → ${room}`);
+  await type('Coffee with a friend'); await app.run(400);
+  check('keyboard: Reflect: the box and Next are above the keyboard', await below('textarea') <= 0 && await below('.reflect-on') <= 0, `box ${await below('textarea')}, Next ${await below('.reflect-on')} px under`);
+  await app.shot('keyboard-reflect-typed');
+  await app.touch(app.btn('Next')); await app.touch(app.btn('Skip'));
+  await app.touch(box); await sleep(1200); await type('Go for a walk');
+  check('keyboard: Reflect: the third line\'s box and Finish are above the keyboard', await below('textarea') <= 0 && await below('.reflect-on') <= 0, `box ${await below('textarea')}, Finish ${await below('.reflect-on')} px under`);
+  await app.touch(app.btn(/Next|Finish|Done/)); await hideKeyboard(); await app.run(400); await app.shot('keyboard-reflect-end');
+  const kept = await app.page.evaluate(() => Object.values(JSON.parse(localStorage.getItem('wingbeat.progress')).journal ?? {}).flatMap((d) => Object.values(d)));
+  check('keyboard: Reflect: what was typed is what is kept', kept.includes('Coffee with a friend') && kept.includes('Go for a walk'), kept.join(' | '));
+  check('keyboard: Reflect: the keyboard is gone and the page is whole again', !keyboard() && await app.page.evaluate(() => innerHeight) === tall, `innerHeight ${await app.page.evaluate(() => innerHeight)}, was ${tall}`);
+  await app.seed({ start: {}, picked: [] });
+  await app.touch(app.page.locator('[data-add]')); await app.touch(app.page.locator('[data-own]'));
+  await app.touch(app.page.locator('[name="name"]')); await sleep(1500); await app.run(400);
+  await type('Tea time'); await app.run(400); await app.shot('keyboard-own');
+  const [field, create] = [await below('[name="name"]'), await below('.own-habit .next')];
+  console.log(`  keyboard: Make your own: the name field ${field} px, the Add button ${create} px below the room above the keyboard (innerHeight ${await app.page.evaluate(() => innerHeight)})`);
+  // The page is resized to what the keyboard leaves, and the Add button can be past its end until scrolled (Chrome: the same, 130 px).
+  await app.page.locator('.own-habit .next').evaluate((b) => b.scrollIntoView({ block: 'nearest' })); await app.run(400);
+  check('keyboard: Make your own: the field is above the keyboard, and Add habit comes above it once scrolled to', keyboard() && field <= 0 && await below('.own-habit .next') <= 0, `field ${field}, button ${create} px under before scrolling`);
+  await app.shot('keyboard-own-scrolled');
+  await app.touch(app.page.locator('.own-habit .next')); await hideKeyboard(); await app.run(400);
+  const tracked = await app.page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).tracked?.map((t) => t.name));
+  check('keyboard: Make your own: the habit is kept with the name as typed', tracked?.includes('Tea time'), `${tracked}`);
+  check('keyboard: Make your own: the keyboard is gone and the page is whole again', !keyboard() && await app.page.evaluate(() => innerHeight) === tall);
 
   // 1 again, over the whole run: nothing from the bridge or the widget's side went wrong.
   const all = earlier + logs();
