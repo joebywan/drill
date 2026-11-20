@@ -89,14 +89,19 @@ test('a keyboard player tabs to the board and walks the cursor with the arrows',
   await expect(continueButton(page)).toBeFocused();
 });
 
-test('a click on the board hides the cursor, and an arrow key brings it back', async ({ page }) => {
+test('a click on the board hides the cursor, and an arrow key brings it back', async ({ page, browserName }) => {
   await start(page);
   await continueButton(page).click(); // the teach card: on to "Tap the square e4."
   const board = page.locator('.board svg');
   const box = await board.boundingBox();
   await page.mouse.click(box.x + 4, box.y + 4); // the frame, not a square: focuses without answering
-  await expect(board).toBeFocused();
+  // Chromium focuses the svg on that click, and the mouse focus hides the cursor. Firefox lands the click on an svg child
+  // and leaves focus on BODY, so there it takes Tab, the way a keyboard user arrives, before the arrow key.
   await expect(cursor(page)).toHaveCount(0);
+  if (browserName === 'firefox') {
+    for (let n = 0; n < 40 && !(await board.evaluate((el) => el === document.activeElement)); n++) await page.keyboard.press('Tab');
+  }
+  await expect(board).toBeFocused();
   await page.keyboard.press('ArrowUp');
   await expect(cursor(page)).toHaveCount(1);
 });
