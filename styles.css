@@ -346,9 +346,9 @@ html { scroll-padding-bottom: 160px; }
   width: min(36vw, 130px); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
   background: var(--card); border: 2px solid var(--line); font-weight: 700; color: var(--muted); transition: background .3s, color .3s;
 }
-.choice[data-pref]::after { content: ' · Off'; color: var(--muted); }
-.choice[data-pref][aria-pressed="true"] { border-color: var(--calm); }
-.choice[data-pref][aria-pressed="true"]::after { content: ' · On'; color: inherit; }
+.choice:is([data-pref], [data-remind])::after { content: ' · Off'; color: var(--muted); }
+.choice:is([data-pref], [data-remind])[aria-pressed="true"] { border-color: var(--calm); }
+.choice:is([data-pref], [data-remind])[aria-pressed="true"]::after { content: ' · On'; color: inherit; }
 .sides span.on { background: #6FA86A; border-color: #6FA86A; color: #10241a; }
 
 @property --fill { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
