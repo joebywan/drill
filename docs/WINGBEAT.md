@@ -110,6 +110,16 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
     only breathes.
 17. **A quiet habit's count is hidden on the way in and out**: the tab, the greeting and the end
     screen. The week view still shows it.
+18. **Your butterfly stays on Lumi's head whatever she wears**, on top of a hat or a crown. Only the
+    butterfly costume goes without it.
+19. **An end screen says what matters first, and briefly.** A raised butterfly's stage, then a skin, a
+    landmark, a visitor, a flower: three lines at most, two where it asks how you feel, and the rest
+    is "and N more in your garden".
+20. **The Android app follows the phone**: its font size and its night mode. The widget shows no number
+    before there is a streak.
+21. **Nothing the learner is working on sits under a fixed bar**, on a short phone too. Fit first (the
+    coach, the gaps and the pictures give up room), then that part scrolls in its own box, never the
+    page.
 
 ### Rules for this work
 
@@ -158,8 +168,20 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
 
 - [x] **P1. Coding** (#145) played end to end on the emulator. All 64 lessons play; what it found is in
   TODO.md under "Coding: played".
-- [ ] **P1a. Tall Coding programs** stay clear of the answer tray and the verdict, which P1 found they
-  don't on a short screen.
-- [ ] **P2. JavaScript, TypeScript and Test writing.**
-- [ ] **P3. Chess, Maths, Japanese, the practice habits,** the new butterfly screens and the live
-  site.
+- [x] **P1a. Tall Coding programs** (#150, #157) stay clear of the answer tray and the verdict, and a
+  tap lands on the block it is aimed at on a short phone.
+- [x] **P2. JavaScript, TypeScript and Test writing.** (#158) All 68 lessons play.
+- [x] **P3. Chess, Maths, Japanese, the practice habits,** the new butterfly screens and the live
+  site. (#156, #154, #151) Chess's 69 lessons, Maths' 36 and Japanese's 44 all play.
+- [x] **P4. The installed Android app** (#152): the icon, a first day, the widget, the daily note, the
+  bars, back and the voice.
+
+**Found by playing** (each course's and screen's findings are in TODO.md, under "… played")
+
+- [x] **F1. The end screen, Move, the tabs, the dark theme and Lumi's butterfly.** (#153)
+- [x] **F2. The Android app:** the phone's font size, the widget, and night mode confirmed. (#155)
+- [ ] **F3. Japanese and Maths:** an answer option that ran off the screen; sentence builds and
+  fraction bars on a short phone.
+- [ ] **F4. Chess on a short phone,** and the coach's line going stale once a puzzle is solved.
+- [ ] **F5. The code courses:** what a Run printed hidden under the verdict, tall programs, the tray
+  cutting a row of chips in half.
