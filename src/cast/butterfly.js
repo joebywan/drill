@@ -153,6 +153,30 @@ export const chrysalis = (band = '#F3E7B8') => `<path d="M30 20 L92 16" stroke="
 /** A species' colour for its caterpillar's spots and its chrysalis's band: its first patch or spot. */
 export const tintOf = (art) => Object.values(art.cells || {})[0] || art.dots?.[0]?.[3] || '#F3E7B8';
 
+/**
+ * A close-up viewBox for `lifeArt` at that stage (and a caterpillar's growth), `ratio` wide to 1 high: the creature
+ * fills most of it, the leaf only its background. A hatchling is framed from its head end, widening as it grows.
+ * A butterfly keeps the whole box.
+ */
+export function lifeBox(stage, growth = 0, ratio = 1.1) {
+  let b; // [x0, y0, x1, y1] of what is drawn
+  if (stage === 'egg') b = [54.8, 53.2, 65.2, 66.8];
+  else if (stage === 'chrysalis') b = [47, 18, 73, 74];
+  else if (stage === 'caterpillar') {
+    const g = Math.min(1, Math.max(0, Number(growth) || 0)), s = 0.55 + 0.45 * g;
+    const shown = SEGMENTS.slice(-(2 + Math.round(g * 4)));
+    const at = ([x, y]) => [81 + s * (x - 81), 58 + s * (y - 58)];
+    const [x0] = at([Math.min(...shown.map(([x, , r]) => x - r)), 0]);
+    const [, y1] = at([0, Math.max(...shown.map(([, y, r]) => y + r + 2.1))]);
+    const [x1, y0] = at([89.2, 38.5]);
+    b = [x0, y0, x1, y1];
+  } else return '12 6 96 84';
+  // The creature takes about four fifths of the frame's tighter side, centred.
+  const [cx, cy] = [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];
+  const h = Math.max(b[3] - b[1], (b[2] - b[0]) / ratio) / 0.8, w = h * ratio;
+  return [cx - w / 2, cy - h / 2, w, h].map((v) => +v.toFixed(1)).join(' ');
+}
+
 /** A species at a stage of its life ('egg', 'caterpillar', 'chrysalis', 'butterfly'), open once emerged. */
 export function lifeArt(species, stage, growth = 0, body = BODY_INK) {
   if (stage === 'egg') return egg();

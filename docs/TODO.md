@@ -387,8 +387,9 @@ Found, not fixed (design calls or bigger than a few lines):
   practice end screen, and its coach drawn smaller and higher, so all three feelings sit above Continue at 412x786.
 - **Home for someone 30 days in** (low, crowding): garden strip, seven tabs, the course and Games rows (Learning), the greeting, the
   butterfly and streak line, the raising line, then the path. The path starts below half the screen.
-  **Lighter** (feat/lighter-home): no title bar on home (⋯ on the strip's corner, Sound a switch in Settings), what a path is
-  raising a picture at the end of the streak row (nothing once it has emerged), and the one-tap hint only before the first log.
+  **Lighter** (feat/lighter-home): no title bar on home (⋯ pinned at the end of the tabs row, Sound a switch in Settings), what a
+  path is raising a close-up picture at the end of the streak row (nothing once it has emerged), and the one-tap hint only before
+  the first log.
   At 412x786 a month in, the first unit's title now starts at 329 (Chess) and 263 (Calm), from 448 and 337 (`npm run phone --
   home-days`). Chess at 360x640 is still at about 352 of 640, its Games row the difference.
 - **Numbers still show for the other habits** next to a quiet one (by design: only Calm, Reflect and Wind down are quiet), so a
@@ -411,8 +412,10 @@ Found, not fixed (design calls or bigger than a few lines):
   light green, and the wardrobe's dimmed skins turn into grey blobs on the dark card. **Fixed** (fix/walk-findings): the pressed
   tab's words measure 6.6:1 (5.0:1 in light); its quiet dot, 2.3:1 on the green, now has a ring of the page round it. A skin not yet
   given keeps its shape and full tone, its colour muted (Lumi 3.9:1 on the dark card; it was faded to grey).
-- **Large text not checked**: setting `font_scale 1.3` mid-run closes Chrome's page under Playwright (twice, `LOOKS=large npm run
-  phone -- looks`). It needs the setting before Chrome starts, which the runner doesn't offer.
+- **Large text in Chrome**: setting `font_scale` mid-run makes Chrome close its page and open a new one, which Playwright's page
+  doesn't follow. The runner now sets it before Chrome starts (`PHONE_FONT_SCALE`; `LOOKS=large` means 1.3), and the page stays.
+  But this emulator's Chrome doesn't apply the phone's font scale to the page (a tab is 42px at 1.3 as at 1.0), so `looks` at
+  large fails its "Chrome takes notice" check. Large text is checked in the app's WebView instead (`app`, 1.3 and 2.0).
 - **The garden's Learning card lists every flower** (low, crowding): a finished Maths adds ten "A flower opened for …" lines, one
   per unit, under the Learning plant, pushing the other plants' cards far down. **Fixed** (fix/walk-findings): past three, one line
   with the number.

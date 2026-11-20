@@ -1442,6 +1442,31 @@ test('a guided habit\'s "when" is set from its habit view, and stays off home\'s
   await expect(page.getByText('After breakfast')).toHaveCount(0);
 });
 
+for (const width of [412, 360]) {
+  for (const extra of [[], ['walk', 'read', 'water', 'outside']]) {
+    test(`at ${width}px with ${5 + extra.length} habit tabs, ⋯ is pinned at the row's end and each tab picked is brought into view beside it`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 800 });
+      await grown(page, ['learn', 'calm', 'move', 'reflect', 'break', ...extra], 3, false, { tracked: extra.map((id) => ({ id })) });
+      await firstVisit(page);
+      const menu = page.getByRole('button', { name: 'Settings' });
+      const row = page.getByRole('navigation', { name: 'Show the path for' });
+      for (const path of await page.locator('.path-tab[data-path]').evaluateAll((t) => t.map((x) => x.dataset.path))) {
+        await page.locator(`.path-tab[data-path="${path}"]`).click();
+        const [tabBox, rowBox, menuBox, strip] = await Promise.all([page.locator(`.path-tab[data-path="${path}"]`), row, menu, page.locator('.garden-link')].map((l) => l.boundingBox()));
+        expect(tabBox.x, path).toBeGreaterThanOrEqual(rowBox.x - 1);
+        expect(tabBox.x + tabBox.width, path).toBeLessThanOrEqual(rowBox.x + rowBox.width + 1);
+        expect(menuBox.x, 'the scroller ends where ⋯ starts').toBeGreaterThanOrEqual(rowBox.x + rowBox.width);
+        expect(menuBox.x + menuBox.width).toBeLessThanOrEqual(width);
+        expect(menuBox.width).toBeGreaterThanOrEqual(44);
+        expect(menuBox.y, 'not on the garden').toBeGreaterThanOrEqual(strip.y + strip.height);
+      }
+      await menu.click();
+      await page.getByRole('button', { name: 'Back' }).click();
+      await expect(menu).toBeFocused();
+    });
+  }
+}
+
 test('with many habits, the tab row stays one row that scrolls inside itself, and + Habit is last', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 800 });
   const tracked = [...['walk', 'read', 'water', 'outside'].map((id) => ({ id })),

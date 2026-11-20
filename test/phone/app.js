@@ -344,6 +344,10 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
     for (const tab of await app.page.locator('.path-tab[data-path]').evaluateAll((t) => t.map((x) => x.dataset.path))) {
       await app.touch(app.page.locator(`.path-tab[data-path="${tab}"]`)); await fits(scale, `home-${tab}`);
     }
+    // A course being raised: its picture ends the streak row, at this text size too.
+    await home({ done: { 'chess:board-0': true } }); await app.touch(app.btn(/^Learning(,|$)/)); await app.touch(pressed('Chess'));
+    await app.page.evaluate(() => scrollTo(0, 0)); await fits(scale, 'home-raising');
+    check(`text ${scale}: the streak row ends with what Chess is raising`, await app.page.locator('.streak-row > .raising:last-child svg').isVisible());
     for (const course of ['Chess', 'Maths', 'Japanese', 'Coding', 'JavaScript']) {
       await home(); await app.touch(app.btn(/^Learning(,|$)/)); await app.touch(pressed(course));
       await app.touch(app.btn(/^Continue · /)); await fits(scale, `lesson-${course.toLowerCase()}`);

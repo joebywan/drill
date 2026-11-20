@@ -123,6 +123,13 @@ try {
     try { device = (await android.devices()).find((d) => d.serial() === serial); } catch (e) { if (i === 5) throw e; }
     if (!device) { if (i === 5) throw new Error(`${serial} is not among adb's devices`); await sleep(1000); }
   }
+  // The phone's font size has to be set before Chrome starts: a change mid-run makes Chrome close its page and open a
+  // new one, which Playwright's page doesn't follow. PHONE_FONT_SCALE sets it (LOOKS=large means 1.3); put back at the end.
+  const font = process.env.PHONE_FONT_SCALE || (process.env.LOOKS === 'large' ? '1.3' : '');
+  if (font) {
+    adb('shell', 'settings', 'put', 'system', 'font_scale', font);
+    cleanup.unshift(() => adb('shell', 'settings', 'put', 'system', 'font_scale', '1.0'));
+  }
   const ctx = await device.launchBrowser();
   // At most 10 s: Chrome may have frozen its page while an app was in front, and then closing it never returns.
   cleanup.unshift(() => Promise.race([(async () => { for (const p of ctx.pages()) await p.close(); await ctx.close(); await device.close(); })(), sleep(10_000)]));

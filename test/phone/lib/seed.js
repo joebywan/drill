@@ -81,11 +81,13 @@ export async function playMaths(lesson, { page, touch, btn, swipe, shot }) {
   }
 }
 
-/** The dark theme and large text, as the phone's own settings, each put back by `off()`. Reload after either. */
+/**
+ * The dark theme, as the phone's own setting, put back by `off()`. Reload after either. Large text is not here: Chrome
+ * replaces its page when the font scale changes, so the runner sets it before Chrome starts (PHONE_FONT_SCALE).
+ */
 export const looks = (adb) => ({
   dark: () => adb('shell', 'cmd', 'uimode', 'night', 'yes'),
-  large: () => adb('shell', 'settings', 'put', 'system', 'font_scale', '1.3'),
-  off: () => { adb('shell', 'cmd', 'uimode', 'night', 'no'); adb('shell', 'settings', 'put', 'system', 'font_scale', '1.0'); },
+  off: () => adb('shell', 'cmd', 'uimode', 'night', 'no'),
 });
 
 /** Shows home's tab for habit `id`, by a real tap, once it is pressed. */

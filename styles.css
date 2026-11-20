@@ -431,10 +431,11 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 .garden-view { border-radius: 16px; overflow: hidden; }
 .garden-view svg.plant { cursor: pointer; }
 .garden-link { position: relative; }
-/* ⋯ on the strip's top right corner, inside its rounding; the event tag keeps the top left. */
-.strip { position: relative; }
-.strip .menu {
-  position: absolute; top: 6px; right: 6px; width: 44px; height: 44px; padding: 0; display: grid; place-items: center;
+/* The tabs scroll in the room ⋯ leaves them: ⋯ is pinned at the row's right end, so the right fade ends at it. */
+.tabs-row { display: flex; align-items: center; gap: 4px; margin: 4px 0 0 -16px; }
+.tabs-row .paths { flex: 1; min-width: 0; margin: 0; padding-right: 4px; }
+.tabs-row .menu {
+  flex: none; width: 44px; height: 44px; padding: 0; display: grid; place-items: center;
   border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--text); font-size: 1.3rem; line-height: 1;
 }
 .event-tag { position: absolute; top: 6px; left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--accent); color: var(--accent-text); font-size: .7rem; font-weight: 800; }
@@ -698,6 +699,9 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
   }
   .pane { display: block; flex: 1; min-width: 0; }
   .rail .paths { flex-direction: column; margin: 0; padding: 0; overflow: visible; mask-image: none; }
+  /* ⋯ closes the tabs column, under + Habit. */
+  .rail .tabs-row { flex-direction: column; align-items: flex-start; gap: 8px; margin: 0; }
+  .rail .tabs-row .paths { align-self: stretch; }
   .rail .path-tab { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 16px; }
   /* Home's Continue bar spans the pane only, so its fade never covers the rail. */
   .home + .cta {
@@ -986,6 +990,7 @@ body:has(main.night) {
 .raising svg { width: 40px; height: 34px; flex: none; }
 /* On a path, only the picture, at the end of the streak row. */
 .streak-row .raising { flex: none; width: 44px; height: 40px; margin: 0; padding: 0; border: 0; justify-content: center; background: none; }
+.streak-row .raising svg { width: 40px; height: 36px; border-radius: 10px; } /* lifeBox's 1.1 to 1 */
 .log-habit .raising { margin-bottom: 8px; }
 .arrival svg.creature { height: 30px; }
 .arrivals .arrival > span { text-align: left; }

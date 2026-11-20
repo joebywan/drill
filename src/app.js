@@ -1,6 +1,6 @@
 import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
 import { GARDEN_WORDS, LIFE, LIFE_WORDS, SKIN_RULES, award, creatures, garden, flowersOpened, guide, listed, moreArrived, plantWords } from './garden/model.js';
-import { lifeArt } from './cast/butterfly.js';
+import { lifeArt, lifeBox } from './cast/butterfly.js';
 import { fieldGuide } from './guide.js';
 import { PLANTS, animateLandmarks, animateScene, animateVisitor, drawGarden, flower, landmark, plant, sway, visitor } from './garden/art.js';
 import { COMEBACK_WORDS, PAUSED_WORDS, activeComeback, answerComeback, noteReminder, preferred, reminderHour, remindersPaused, shorter, shouldRemind, startComeback, usualHours, usualLine } from './fitting.js';
@@ -256,19 +256,19 @@ function home(arrived = null, newly = []) {
 
   const g = garden(progress, new Date(), south());
   const raised = creatures(progress).find((c) => c.id === (learning ? courseShown.id : habitShown));
-  // Home has no title bar: the strip starts the page, with ⋯ on its corner (a sibling, never a button in a button).
+  // Home has no title bar: the strip starts the page, and ⋯ is pinned at the right end of the tabs row.
   app.innerHTML = `
     <main class="home">
       <h1 class="visually-hidden">Wingbeat</h1>
       <div class="rail">
-      <div class="strip">
       <button class="garden-link" aria-label="Your garden: ${g.plants.length} plant${g.plants.length === 1 ? '' : 's'}">${drawGarden(g, 'strip', newly.map((r) => r.id))}${g.event ? `<span class="event-tag">${esc(g.event.name)}</span>` : ''}</button>
-      <button class="menu" aria-label="Settings">⋯</button>
-      </div>
+      <div class="tabs-row">
       <nav class="paths" aria-label="Show the path for">
         ${habits().filter((h) => !h.hidden).map(habitTab).join('')}
         <button class="path-tab add-tab" data-add aria-label="Add a habit">${esc(LOG_WORDS.addTab)}</button>
       </nav>
+      <button class="menu" aria-label="Settings">⋯</button>
+      </div>
       </div><div class="pane">
       ${learning && courses.length > 1 ? `<nav class="courses" aria-label="Course">${courses.map((s) =>
         `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === courseShown}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
@@ -740,14 +740,15 @@ const arrival = ({ gift, text, on, species: kind, skin }, habit) => {
 };
 
 /** A raised butterfly at its stage, drawn small by the kit (cropped close); the caterpillar at `growth`. */
-const lifeSvg = (species, stage, growth = 0) => `<svg class="creature" viewBox="12 6 96 84" aria-hidden="true">${lifeArt(species, stage, growth)}</svg>`;
+const lifeSvg = (species, stage, growth = 0, box = '12 6 96 84') => `<svg class="creature" viewBox="${box}" aria-hidden="true">${lifeArt(species, stage, growth)}</svg>`;
 
 /**
  * The creature the habit shown is raising, into the field guide: a one-tap habit's pill ("Walk is raising a Caper
- * White"), or on a path (`small`) just its picture at the end of the streak row, named by the same words, until it emerges.
+ * White"), or on a path (`small`) just its picture, close up (`lifeBox`), at the end of the streak row, named by the same
+ * words, until it emerges.
  */
 const raising = (c, small = false) => (!c || small && c.k === 3 ? ''
-  : small ? `<button class="raising" data-species="${esc(c.species.id)}" aria-label="${esc(LIFE_WORDS.raising(c))}">${lifeSvg(c.species, c.stage, c.growth)}</button>`
+  : small ? `<button class="raising" data-species="${esc(c.species.id)}" aria-label="${esc(LIFE_WORDS.raising(c))}">${lifeSvg(c.species, c.stage, c.growth, lifeBox(c.stage, c.growth))}</button>`
   : `<button class="raising" data-species="${esc(c.species.id)}">${lifeSvg(c.species, c.stage, c.growth)}<span>${esc(LIFE_WORDS.raising(c))}</span></button>`);
 
 /** The field guide (src/guide.js), on `id`'s page when given; its back runs `back`. */
