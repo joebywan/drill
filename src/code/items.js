@@ -318,7 +318,11 @@ function tester(results) {
         if (current) current.expects++;
         const was = (word, want) => `I expected ${word}${show(want, false)}, and got ${show(got, false)}.`;
         return {
-          toBe: (want) => { if (!MATCH.toBe(got, want)) fail(was('', want)); },
+          toBe: (want) => {
+            if (MATCH.toBe(got, want)) return;
+            const two = MATCH.toEqual(got, want) && Array.isArray(got) ? 'list' : MATCH.toEqual(got, want) ? 'object' : null;
+            fail(two ? `I got ${show(got, false)}, the same insides, but toBe asks for the very same ${two}, and this is another one.` : was('', want));
+          },
           toEqual: (want) => { if (!MATCH.toEqual(got, want)) fail(was('', want)); },
           toContain: (want) => { if (!MATCH.toContain(got, want)) fail(was('something holding ', want)); },
           toThrow: () => {
@@ -382,7 +386,7 @@ function gradeTests(item, src) {
   const real = ask(item.given);
   if (real.error) return { right: false, why: real.error.message };
   if (!real.results.length) return { right: false, why: 'There is no test here yet: a test starts with test(...).' };
-  const empty = real.results.find((t) => !t.expects);
+  const empty = real.results.find((t) => !t.expects && !t.failed); // one that stopped before its expect fails, below
   if (empty) return { right: false, why: `The test "${empty.name}" has no expect in it, so it checks nothing.` };
   const wrong = real.results.find((t) => t.failed);
   if (wrong) return { right: false, why: `The test "${wrong.name}" fails on the real code, so the test is the one that is off. ${wrong.failed}`, results: real.results };
@@ -530,19 +534,21 @@ const rewrite = (src, f) => {
 };
 const prose = (text, map) => text?.replace(/[A-Za-z_]\w*|\d+/g, (w) => map[w] ?? w);
 
+/** The names `src` declares, and which of them are functions (`function f` or `const f = () => ...`). */
 const declared = new Map();
 const declaredIn = (src, ts) => {
   const key = `${ts}${src}`;
   if (declared.has(key)) return declared.get(key);
   if (declared.size >= 2000) declared.clear();
-  const found = new Set();
+  const names = new Set(), fns = new Set();
   JSON.stringify(parse(src, { ts }), (_, v) => {
-    if ((v?.n === 'Let' || v?.n === 'ForOf' || (v?.n === 'Func' && v.name)) && v.name) found.add(v.name);
-    v?.params?.forEach((p) => found.add(p.name));
+    if ((v?.n === 'Let' || v?.n === 'ForOf' || (v?.n === 'Func' && v.name)) && v.name) names.add(v.name);
+    if ((v?.n === 'Func' && v.name) || (v?.n === 'Let' && v.init?.n === 'Func')) fns.add(v.name);
+    v?.params?.forEach((p) => names.add(p.name));
     return v;
   });
-  declared.set(key, found);
-  return found;
+  declared.set(key, { names, fns });
+  return declared.get(key);
 };
 
 const sourcesOf = (item) => [item.type === 'predict' || item.type === 'teach' ? item.code : wayOf(item), item.given, ...(item.mutants ?? []).map((m) => m.code)].filter(Boolean);
@@ -696,8 +702,8 @@ function testValues(item, ids, random) {
     if (t.t === 'str' && /^[a-z]{2,}$/.test(t.v) && !strs[t.v] && words.length) strs[t.v] = words.splice(Math.floor(random() * words.length), 1)[0];
   }
   if (!Object.keys(nums).length && !Object.keys(strs).length) return null;
-  // The code under test keeps its names: the prose talks about isAdult and age, and the values are what is new.
-  const mine = declaredIn(item.given, !!item.ts);
+  // The code under test keeps its parameters' names too: the prose talks about age, and the values are what is new.
+  const mine = declaredIn(item.given, !!item.ts).names;
   ids = Object.fromEntries(Object.entries(ids).filter(([k]) => !mine.has(k)));
   const moved = swapped(item, { ids, nums, strs });
   // Expected values, from running the real code (and any decoy that is a whole check) old and new.
@@ -745,8 +751,10 @@ function attempt(item, random, values = true) {
   const ids = {};
   const pool = NAMES.filter((n) => !present.has(n));
   const short = SHORT.filter((n) => !present.has(n));
-  for (const name of sourcesOf(item).flatMap((s) => [...declaredIn(s, !!item.ts)])) {
-    if (name === item.name || WORDS.has(name) || ids[name] || PROSEY.has(name) || name === 'a' || name === 'i') continue;
+  const fns = new Set(sourcesOf(item).flatMap((s) => [...declaredIn(s, !!item.ts).fns]));
+  for (const name of sourcesOf(item).flatMap((s) => [...declaredIn(s, !!item.ts).names])) {
+    // A function keeps its name: evens renamed stack would say something untrue about its own code.
+    if (fns.has(name) || name === item.name || WORDS.has(name) || ids[name] || PROSEY.has(name) || name === 'a' || name === 'i') continue;
     const from = name.length < 3 ? short : pool;
     if (from.length) ids[name] = from.splice(Math.floor(random() * from.length), 1)[0];
   }

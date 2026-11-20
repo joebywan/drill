@@ -86,11 +86,23 @@ test('an edge moves in the real code, every faulty copy and the tests together',
 });
 
 test('JavaScript and TypeScript fresh versions are as they were (update the prints only when changing vary on purpose)', () => {
+  // Last changed on purpose when functions stopped being renamed.
   const print = (c) => {
     const h = createHash('sha256');
     for (const item of itemsOf(c)) for (const s of [1, 2, 3, 7, 99]) h.update(JSON.stringify(vary(item, seeded(s))));
     return h.digest('hex').slice(0, 16);
   };
-  assert.equal(print(javascript), '4bf03217f3881444');
-  assert.equal(print(typescript), '503e08d2472af8f5');
+  assert.equal(print(javascript), 'b38689d9a8af3d01');
+  assert.equal(print(typescript), '9effaff44941e0e9');
+});
+
+test('a fresh version never renames a function, in any code course', () => {
+  const fns = (src) => [...src.matchAll(/\bfunction (\w+)|\b(?:const|let) (\w+) = (?:\([^)]*\)|\w+) =>/g)].map((m) => m[1] ?? m[2]);
+  const text = (item) => [wayOf(item), item.type === 'predict' ? item.code : '', item.given ?? ''].join('\n');
+  for (const c of [javascript, typescript, testing]) for (const item of itemsOf(c).filter((i) => i.type !== 'teach' && !i.asks)) {
+    for (const s of [1, 2, 3]) {
+      const v = vary(item, seeded(s));
+      for (const f of fns(text(item))) assert.match(text(v), new RegExp(`\\b${f}\\b`), `${item.id}: ${f}`);
+    }
+  }
 });
