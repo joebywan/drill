@@ -27,22 +27,30 @@ export const lessons = (p, id, which, n = 1) => {
 export const allBut = (u) => (_, units) => units.slice(0, u + 1).flatMap((x) => x.lessons).slice(0, -1);
 
 /**
- * Someone 30 days in: Learning (Chess and Maths, a unit each and the next all but its last lesson), Calm, Move and Reflect every day, Walk with a
- * "when"; everything up to yesterday (`to` = 1) or today (`to` = 0), and what that has earned in the garden.
+ * Someone `days` days in: Learning, Calm, Move and Reflect every day, Walk with a "when"; everything up to yesterday
+ * (`to` = 1) or today (`to` = 0), and what that has earned in the garden. Chess and Maths go further the longer it
+ * has been: a lesson at day 1, three at 7,
+ * all but the last lesson of the second unit at 30, of the fourth at 60.
+ * Day 0 is brand new: the habits picked, nothing done.
  */
-export function thirtyDays(to = 1) {
+export function daysIn(days, to = 1) {
   let p = { ...emptyProgress(), start: 'x', picked: ['calm', 'move', 'reflect', 'walk', 'learn'] };
   p = track(p, { id: 'walk', hidden: false });
   p = setWhen(p, 'walk', 'After breakfast');
+  if (!days) return p;
   // Each day's first habit takes a turn, so the wing panels come in several colours.
   const all = ['learn', 'calm', 'move', 'reflect', 'walk'];
-  for (let i = 30; i >= to; i--) {
+  for (let i = days; i >= to; i--) {
     for (const h of [...all.slice(i % 5), ...all.slice(0, i % 5)]) if (h !== 'learn' || i >= 1) p = practised(p, h, i, i);
   }
-  p = lessons(p, 'chess', allBut(1), 2);
-  p = lessons(p, 'maths', allBut(1), 2);
+  const done = days >= 60 ? allBut(3) : days >= 30 ? allBut(1) : (ls) => ls.slice(0, days >= 7 ? 3 : 1);
+  p = lessons(p, 'chess', done, Math.min(2, days));
+  p = lessons(p, 'maths', done, Math.min(2, days));
   return award(p).progress;
 }
+
+/** Someone 30 days in (`daysIn`): Chess and Maths a unit each and the next all but its last lesson. */
+export const thirtyDays = (to = 1) => daysIn(30, to);
 
 /**
  * Every Move routine done, one a day in path order; `first` is the one home should suggest: of the routines a
@@ -79,3 +87,13 @@ export const looks = (adb) => ({
   large: () => adb('shell', 'settings', 'put', 'system', 'font_scale', '1.3'),
   off: () => { adb('shell', 'cmd', 'uimode', 'night', 'no'); adb('shell', 'settings', 'put', 'system', 'font_scale', '1.0'); },
 });
+
+/** Shows home's tab for habit `id`, by a real tap, once it is pressed. */
+export const showTab = async ({ page, touch }, id) => {
+  await touch(page.locator(`.path-tab[data-path="${id}"]`));
+  await page.locator(`.path-tab[data-path="${id}"][aria-pressed="true"]`).waitFor();
+};
+// After a tab change on a heavy home (a 30-day garden) the emulator's screen can lag the page by a second: the DOM is
+// already Calm's at the top while a screenshot still shows the path before. Wait for the screen, not just the page.
+/** Scrolls to the top of the page and waits for the screen to catch up. */
+export const atTop = async (page) => { await page.evaluate(() => scrollTo(0, 0)); await page.waitForTimeout(1500); };

@@ -2,14 +2,12 @@
 // flying and resting, what each path is raising, Walk's "when", the dot a quiet habit shows in place of its
 // number, and the way to the wardrobe (⋯). Then a quiet habit (Calm) keeps its count off the tab, the greeting
 // and the end screen until ⋯ switches it on.
-import { thirtyDays } from './lib/seed.js';
+import { atTop, showTab, thirtyDays } from './lib/seed.js';
 
 export default async ({ page, seed, touch, btn, shot, run, check }) => {
   const label = () => page.locator('.yours-link').getAttribute('aria-label');
-  const show = async (id) => { await touch(page.locator(`.path-tab[data-path="${id}"]`)); await page.locator(`.path-tab[data-path="${id}"][aria-pressed="true"]`).waitFor(); };
-  // After a tab change on a heavy home (a 30-day garden) the emulator's screen can lag the page by a second: the DOM is
-  // already Calm's at the top while a screenshot still shows the path before. Wait for the screen, not just the page.
-  const top = async () => { await page.evaluate(() => scrollTo(0, 0)); await page.waitForTimeout(1500); };
+  const show = (id) => showTab({ page, touch }, id);
+  const top = () => atTop(page);
   // Up to yesterday: basking. Today too: flying. Up to the day before yesterday: resting.
   for (const [state, to] of [['flying', 0], ['resting', 2], ['basking', 1]]) {
     await seed(thirtyDays(to));
