@@ -78,18 +78,29 @@ test('a finished tap item no longer counts "Found 2 of 3"', async ({ page }) => 
   await expect(page.locator('#said')).not.toContainText('Found');
 });
 
-test('every Chess item fits a 412x533 phone while asked, a teach card clear of Continue, and a puzzle board clear of its verdict', async ({ page }) => {
-  test.setTimeout(240000);
+// The widest font a phone is likely to fall back to (what CI has), as the code courses' fit test pins it.
+const WIDE_FONT = 'body, button { font-family: "DejaVu Sans", Verdana, sans-serif; }';
+
+/**
+ * Mounts every Chess item on this page and returns what doesn't fit: asked, the coach and the board on screen with
+ * thumb-sized squares; a teach card clear of Continue; answered, a real-game puzzle's board above its verdict under
+ * Rosa's longest headline, with the wording the board picked (exercise.js `worded`). `counts` is how many puzzles
+ * showed each wording: the full why, the short one, the theme's general idea, the line alone, only your own moves.
+ */
+async function fitAll(page, css, asked = true) {
   await page.goto('/');
-  const items = chess.units.flatMap((u) => u.lessons).filter((l) => !l.mix).flatMap((l) => l.items.map((item) => ({ item, topic: l.title })));
-  const bad = await page.evaluate(async (items) => {
-    const { mount } = await import('/src/chess/exercise.js');
+  await page.addStyleTag({ content: css });
+  const items = chess.units.flatMap((u) => u.lessons).filter((l) => !l.mix).flatMap((l) => l.items);
+  return page.evaluate(async ({ items, asked }) => {
+    const { mount, worded } = await import('/src/chess/exercise.js');
     const { kind, explanation } = await import('/src/chess/items.js');
     const { LINES } = await import('/src/cast/lines.js');
+    const { why: whyOf } = await import('/src/chess/why.js');
     const head = ['correct', 'run3', 'run5', 'wrong'].flatMap((k) => LINES[k] ?? []).reduce((a, b) => (b.length > a.length ? b : a), '');
     const app = document.getElementById('app');
     const out = [];
-    for (const { item } of items) {
+    const counts = { full: 0, short: 0, general: 0, line: 0, mine: 0 };
+    for (const item of items) {
       app.innerHTML = `<header class="bar"><button class="close" aria-label="Quit lesson">✕</button><div class="meter"><div class="fill"></div></div></header>
         <main class="play"><p class="topic">Topic</p><div class="coach"><button class="who" aria-label="Rosa"></button><p class="bubble" id="said"></p></div><div class="stage"></div></main>
         <footer class="foot"><div class="verdict"><strong></strong><p></p></div><button class="next">Continue</button></footer>`;
@@ -107,16 +118,21 @@ test('every Chess item fits a 412x533 phone while asked, a teach card clear of C
       const tray = app.querySelector('.choices');
       const low = foot.classList.contains('show') ? innerHeight - foot.offsetHeight : tray?.children.length ? tray.getBoundingClientRect().top : innerHeight;
       const why = [];
-      if (bubble.top < 0) why.push('the coach is off the top');
-      if (board.bottom > low + 1) why.push(`the board runs ${Math.round(board.bottom - low)}px under the ${foot.classList.contains('show') ? 'Continue bar' : 'answers'}`);
-      if (['tap', 'move', 'stars', 'find'].includes(kind(item)) && board.width / 8.7 < 39.5) why.push(`squares of ${Math.round(board.width / 8.7)}px`);
-      if (document.documentElement.scrollHeight > innerHeight + 1 && foot.classList.contains('show') === false && ['tap', 'move', 'stars', 'find', 'truefalse'].includes(kind(item))) why.push(`the page scrolls ${document.documentElement.scrollHeight - innerHeight}px, bubble ${Math.round(bubble.height)}, board top ${Math.round(board.top)}`);
-      // Answered, a real-game puzzle's verdict carries its line and why it works, under the longest headline Rosa
-      // has (as verdictHeight() measures it): the board still sits above it.
-      if (kind(item) === 'find') {
+      if (asked && bubble.top < 0) why.push('the coach is off the top');
+      if (asked && board.bottom > low + 1) why.push(`the board runs ${Math.round(board.bottom - low)}px under the ${foot.classList.contains('show') ? 'Continue bar' : 'answers'}`);
+      if (asked && ['tap', 'move', 'stars', 'find'].includes(kind(item)) && board.width / 8.7 < 39.5) why.push(`squares of ${Math.round(board.width / 8.7)}px`);
+      if (asked && document.documentElement.scrollHeight > innerHeight + 1 && foot.classList.contains('show') === false && ['tap', 'move', 'stars', 'find', 'truefalse'].includes(kind(item))) why.push(`the page scrolls ${document.documentElement.scrollHeight - innerHeight}px, bubble ${Math.round(bubble.height)}, board top ${Math.round(board.top)}`);
+      // Answered, as fitBoard's done does it: Rosa's short word, the wording the board picks, the longest headline.
+      if (kind(item) === 'find' && item.theme) { // a real-game puzzle; the hand-written ones keep their written words
+        app.querySelector('.bubble').textContent = "That's it.";
+        const wordings = explanation(item);
+        const said = worded(app.querySelector('div.board'), wordings);
+        const at = wordings.indexOf(said);
+        const lineAt = wordings.length - (wordings.at(-1).startsWith('Your moves') ? 2 : 1); // the line alone; after it, only your moves
+        counts[at > lineAt ? 'mine' : at === lineAt ? 'line' : at > 0 ? 'short' : whyOf(item)?.claim ? 'full' : 'general']++;
         foot.className = 'foot show';
         foot.querySelector('strong').textContent = head;
-        foot.querySelector('p').textContent = explanation(item);
+        foot.querySelector('p').textContent = said;
         dispatchEvent(new Event('resize'));
         await new Promise((r) => setTimeout(r, 30));
         const after = app.querySelector('div.board').getBoundingClientRect();
@@ -127,7 +143,26 @@ test('every Chess item fits a 412x533 phone while asked, a teach card clear of C
       stop();
     }
     document.body.style.minHeight = '';
-    return out;
-  }, items);
-  expect(bad).toEqual([]);
+    return { bad: out, counts };
+  }, { items, asked });
+}
+
+test('every Chess item fits a 412x533 phone while asked, a teach card clear of Continue, and a puzzle board clear of its verdict', async ({ page }) => {
+  test.setTimeout(480000);
+  const plain = await fitAll(page, WIDE_FONT);
+  console.log(`  412x533: ${JSON.stringify(plain.counts)}`);
+  expect(plain.bad, 'with the wide font').toEqual([]);
+  // Every verdict line wraps sooner: the board still clears it, because the words give way, and fewer full whys fit.
+  const wider = await fitAll(page, `${WIDE_FONT} .foot { letter-spacing: .02em; }`);
+  console.log(`  412x533, verdict lines wrapping sooner: ${JSON.stringify(wider.counts)}`);
+  expect(wider.bad, 'with every verdict line wrapping sooner').toEqual([]);
+  expect(wider.counts.full).toBeLessThan(plain.counts.full);
+});
+
+test('a taller phone (412x786) shows the full why more often', async ({ page }) => {
+  test.setTimeout(240000);
+  await page.setViewportSize({ width: 412, height: 786 });
+  const tall = await fitAll(page, WIDE_FONT, false); // only the answered board: the asked layouts are held at 412x533 above
+  expect(tall.bad).toEqual([]);
+  console.log(`  412x786: ${JSON.stringify(tall.counts)}`);
 });

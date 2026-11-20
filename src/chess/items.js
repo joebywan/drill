@@ -181,22 +181,19 @@ export function starPath(item) {
   return null;
 }
 
-// ponytail: characters, not pixels. Four lines of the verdict on a 412x533 page under the longest headline;
-// test/e2e/chess-short.spec.js measures the real thing for every puzzle.
-export const ROOM = 185;
-
 /**
- * What is said after an answer. Every marked item has one; a puzzle falls back to its line in words and why it
- * works (why.js), worked out from the position: in fewer words if the line is long, and left out if even those
- * would push the verdict over the board.
+ * What may be said after an answer, best first: every marked item has at least one. A puzzle with no written
+ * explanation gives its line in words with why it works (why.js), then the line with the same facts in fewer words,
+ * then the line alone, then (for a long line) only the player's own moves. The board picks the first whose verdict leaves it room, measured on the page (exercise.js).
  */
 export function explanation(item) {
-  if (item.explain) return item.explain;
-  if (kind(item) === 'stars') return `One way: ${starPath(item).map((m) => words(m.san)).join(', then ')}.`;
-  const moves = `${played(item).moves.slice(1).map((m) => words(m.san, m.to)).join('. ')}.`;
+  if (item.explain) return [item.explain];
+  if (kind(item) === 'stars') return [`One way: ${starPath(item).map((m) => words(m.san)).join(', then ')}.`];
+  const line = played(item).moves.slice(1);
+  const moves = `${line.map((m) => words(m.san, m.to)).join('. ')}.`;
+  const mine = `Your moves: ${line.filter((m, i) => i % 2 === 0).map((m) => words(m.san, m.to)).join('. ')}.`; // a long line, replies left out
   const said = why(item);
-  const fits = [said?.text, said?.short].find((t) => t && `${moves} ${t}`.length <= ROOM);
-  return fits ? `${moves} ${fits}` : moves;
+  return [...new Set([...[said?.text, said?.short].filter(Boolean).map((t) => `${moves} ${t}`), moves, ...(line.length > 1 ? [mine] : [])])];
 }
 
 /** Why an item can't be shipped, or null. chess.js checks every position and move. */

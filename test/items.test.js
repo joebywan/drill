@@ -22,7 +22,7 @@ test('item ids are unique across the whole course', () => {
 });
 
 test('every marked item has an explanation', () => {
-  for (const item of all.filter((i) => kind(i) !== 'teach')) assert.ok(explanation(item), item.id);
+  for (const item of all.filter((i) => kind(i) !== 'teach')) assert.ok(explanation(item).length && explanation(item).every(Boolean), item.id);
 });
 
 test('attacked() finds the enemy pieces a knight hits, and nothing else', () => {
@@ -84,7 +84,7 @@ test('moves read as words', () => {
 
 test('a puzzle with no written explanation explains with its line', () => {
   const { explain, ...bare } = byId['fork-0-find'];
-  assert.equal(explanation(bare), 'Knight to c7, check.');
+  assert.deepEqual(explanation(bare), ['Knight to c7, check.']);
 });
 
 test('a fork claim the board does not back up is caught', () => {
@@ -120,7 +120,7 @@ test('a stars item is checked for its own pieces on stars and an illegal demo', 
 });
 
 test('a stars item with no written explanation explains with a way that works', () => {
-  assert.equal(explanation(rook), 'One way: Rook to h8, then Rook to h1.');
+  assert.deepEqual(explanation(rook), ['One way: Rook to h8, then Rook to h1.']);
 });
 
 // Nothing assumed: the whole chess path, in the order the learner meets it.
@@ -130,7 +130,7 @@ const before = (index) => path.slice(0, index).map(taughtText).join(' ');
 
 // Everything the learner reads, in path order: each item's words and its explanation as shown (a real-game puzzle's is worked
 // out), with each unit's and lesson's help (adapt.js) where it could first come, at the first marked item.
-const shown = (i) => [taughtText(i), kind(i) === 'teach' ? '' : explanation(i)].join(' ');
+const shown = (i) => [taughtText(i), ...(kind(i) === 'teach' ? [] : explanation(i))].join(' '); // every wording the page might pick
 const read = subjects.find((s) => s.id === 'chess').units.flatMap((u) => u.lessons.flatMap((l) => {
   const at = l.items.findIndex((i) => kind(i) !== 'teach');
   const help = [l === u.lessons[0] && helpFor('chess', u.title, ''), helpFor('chess', '', l.id)].filter(Boolean).map((text) => ({ id: `help:${l.id}`, said: text }));

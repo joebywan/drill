@@ -50,7 +50,9 @@ export default async ({ page, adb, touch, btn, shot, run, seed, check, calibrate
       await shot(`${id}-${item.id}-explained`);
       const said = (await page.locator('.foot.show p').textContent()).trim();
       console.log(`  ${item.id} verdict: ${said}`);
-      check(`${item.id}: the verdict is the worked-out explanation`, said === explanation(item));
+      const wordings = explanation(item);
+      console.log(`  ${item.id} wording ${wordings.indexOf(said) + 1} of ${wordings.length}`);
+      check(`${item.id}: the verdict is one of its wordings`, wordings.includes(said));
       const [board, foot] = [await page.locator('div.board').boundingBox(), await page.locator('.foot.show').boundingBox()];
       check(`${item.id}: the board is above the verdict`, board.y + board.height <= foot.y + 1);
     }

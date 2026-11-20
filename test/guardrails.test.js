@@ -96,7 +96,7 @@ test('what Rosa says mid-puzzle passes the same lint', () => {
 test('everything the chess course shows passes the same lint: cards, prompts and explanations, worked-out ones too', () => {
   const chess = subjects.find((x) => x.id === 'chess');
   const said = chess.units.flatMap((u) => u.lessons.flatMap((l) => l.items))
-    .flatMap((i) => [i.text, i.intro, i.prompt, chessKind(i) === 'teach' ? null : chessExplanation(i)]).filter(Boolean);
+    .flatMap((i) => [i.text, i.intro, i.prompt, ...(chessKind(i) === 'teach' ? [] : chessExplanation(i))]).filter(Boolean);
   assert.ok(said.length > 400);
   const WINNING = /\b(beaten|(ever|never|still|can|to) beat|beat(s|ing)? (me|you|him|her|them|us|every\w*))\b/i;
   for (const text of new Set(said)) {

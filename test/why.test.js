@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Chess } from 'chess.js';
 import { subjects } from '../src/subjects.js';
-import { ROOM, explanation, kind, words } from '../src/chess/items.js';
+import { explanation, kind, words } from '../src/chess/items.js';
 import { GENERAL, why } from '../src/chess/why.js';
 
 // Every sentence why.js says about a real-game puzzle is checked here against the board, by rules written
@@ -199,20 +199,15 @@ test('every real-game puzzle says why its line works, and every fact it states h
   }
 });
 
-test('the verdict says the line, then why in full, in fewer words if the line is long, or not at all if even that would not fit', () => {
-  let shown = 0;
+test('the wordings come best first: the line with why in full, in fewer words, the line alone, then only your own moves', () => {
   for (const item of puzzles) {
     const said = why(item);
     const line = `${replay(item).moves.slice(1).map((m) => words(m.san, m.to)).join('. ')}.`;
-    const text = explanation(item);
-    assert.ok(text.startsWith(line), item.id);
-    const tail = text.slice(line.length).trim();
-    assert.ok([said.text, said.short, ''].includes(tail), `${item.id}: ${tail}`);
-    if (tail) { shown++; assert.ok(text.length <= ROOM, `${item.id}: ${text.length} characters`); }
-    if (tail === said.short) assert.ok(`${line} ${said.text}`.length > ROOM, `${item.id}: the full sentence fitted`);
-    if (!tail) assert.ok(`${line} ${said.short ?? said.text}`.length > ROOM, `${item.id}: a sentence fitted`);
+    const played = replay(item).moves.slice(1);
+    const mine = played.length > 1 ? [`Your moves: ${played.filter((m) => m.color === played[0].color).map((m) => words(m.san, m.to)).join('. ')}.`] : [];
+    const want = [...new Set([said.text, said.short].filter(Boolean).map((t) => `${line} ${t}`)), line, ...mine];
+    assert.deepEqual(explanation(item), want, item.id);
   }
-  assert.ok(shown / puzzles.length > 0.95, `${shown} of ${puzzles.length} show why`);
 });
 
 test('most puzzles get a sentence worked out from their own position', () => {
