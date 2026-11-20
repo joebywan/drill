@@ -31,7 +31,7 @@ const scan = ({ parts: all, tray }) => {
   const shown = (el) => { const s = getComputedStyle(el); const r = el.getBoundingClientRect(); return s.visibility !== 'hidden' && s.display !== 'none' && r.width > 0 && r.height > 0; };
   const label = (el) => `${el.tagName.toLowerCase()}${typeof el.className === 'string' && el.className.trim() ? `.${el.className.trim().split(/\s+/).join('.')}` : ''} "${(el.getAttribute('aria-label') || el.textContent).trim().slice(0, 30)}"`;
   for (const el of app.querySelectorAll('*')) {
-    if (!shown(el) || el.closest('svg') && el.tagName !== 'svg') continue;
+    if (!shown(el) || el.closest('svg') && el.tagName !== 'svg' || el.closest('.visually-hidden')) continue; // hidden-for-eyes text is for screen readers
     const s = getComputedStyle(el);
     const clip = (axis, size, client) => s[axis] !== 'visible' && s[axis] !== 'auto' && s[axis] !== 'scroll' && client > 0 && size > client + 2;
     if (el.textContent.trim() && clip('overflowX', el.scrollWidth, el.clientWidth)) out.push(`text clipped sideways: ${label(el)}`);

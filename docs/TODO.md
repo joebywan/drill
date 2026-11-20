@@ -193,6 +193,29 @@ sessions run longer. A quarter to a third of every session is repeats (2 warm-up
 - **The type checker is a small subset.** It follows strict TypeScript for what the course teaches. A valid but unusual arrangement could be misjudged outside that.
 - **Wrong code in a branch that never runs passes.** Graded by running, so an `else` that never runs is not looked at. Any arrangement that does the job is right, by decision; hidden `cases` close it where it matters, and `print` items could run a second input if play shows it matters.
 
+**Chess: played** (2026-11, emulator Pixel 6, `CHESS_UNIT=n npm run phone -- chess-all`, `tools/play.js`)
+
+All 18 units of the Chess course as the app builds it (the brief said 14; `src/subjects.js` gives basics 4 + forks + 13 themes), 69 lessons with
+their checkpoints, by real touch with warm-ups and echoes on. Answers come from `src/chess/items.js` and `puzzle.js` (`answer`, `solutions`,
+`starPath`, and `tryMove` for the puzzles' own lines), nothing stored. No wrong verdict for a right answer, no page error, no failed request,
+no sideways overflow, nothing untappable, nothing under 40px. Each unit's first move was made by dragging (17 of 17 worked); every
+other move by tapping the piece, then the square. Sessions are 7 to 12 items, 24 to 78 taps, about 0:44 to 2:07 at a steady pace; none near 6
+minutes or 20 items. Longest: `mateIn3-1` and `attraction-0` (~2:07), `backRankMate-2` and `promotion-2` (~2:04; `promotion-2` has the most taps, 78),
+`attraction-2`, `skewer-2` (~2:00). The Lichess lessons ("Real games", the theme lessons) are the long ones: a puzzle is 2 to 4 of your own
+moves. Not tested: a puzzle accepting a move it shouldn't (every move played was the line or a mate), and "Play Rosa".
+Short phone (412x533, `CHESS_SMALL=1080x1700`): `mateIn3-1`, `attraction-0`, `forks-0`, `moves-0` all play through the same.
+
+- **The verdict banner covers the bottom of the board** (low at 412x786, medium at 412x533). At 786 it hides only the frame under rank 1 and the
+  file letters on some True/False and tap items. At 533 the page is the board plus coach and does not fit: you scroll to the board, the coach's words
+  are off the top, and the answered banner hides ranks 1 and 8 (the checkmate in a long puzzle's last position, the "NEW PIECE" badge on a star
+  demo). Nothing is lost (the page scrolls), but a teach card with a board (`attraction-0`'s castling card) shows the board under Continue. Design call.
+- **The coach keeps the old line after a puzzle is solved** (low). A finished puzzle's bubble still says "Good. Keep going - White to play." and a
+  tap item's still says "Found 2 of 3." while the banner says it is done. The banner is right; the bubble is stale.
+- **A teach card without a board is a big empty page** (low): `mate2-teach`, `promotion-teach` and the like are a bubble and Continue.
+- **Wording for a beginner** (low): the Attraction unit opens with "One more rule, castling" in a card that is not about castling; explanations
+  say "h-pawn", "a-file", "the far side" before any lesson names them (they are taught in the board unit, but the Lichess lessons use them
+  freely); every puzzle explanation is a bare line ("Queen to a5, check. King to e8.") with no word on why it works.
+- **Not played:** a real beginner, a real finger, Firefox, the engine's mates beyond what the puzzles check, and sound.
 **Repetition engine**
 
 - **A second miss of a mirrored item sees the same mirror.** Chess has only two versions of an item; a third go
