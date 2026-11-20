@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { REST, phases, summary } from '../src/move/routines.js';
+import { REST, needsRoom, phases, summary } from '../src/move/routines.js';
 import { countOf, total } from '../src/practice/timeline.js';
 import { POSES, clover } from '../src/cast/clover.js';
 
@@ -86,4 +86,10 @@ test('Balance keeps a hand on a wall or chair back, and Clover holds the wall', 
     assert.match(course.moves[id].how[0], /wall or a chair back/, id);
     assert.match(clover('guide', course.moves[id].pose), wall, id);
   }
+});
+
+test('the room check is for moves that need space, not for a routine done on a chair', () => {
+  const sets = (unit) => units[unit].filter((i) => i.type === 'routine').map((i) => i.set);
+  for (const set of sets('Seated')) assert.equal(needsRoom(set, course.moves), false, JSON.stringify(set));
+  for (const unit of ['Wake up', 'Strength', 'Stretch', 'Balance']) for (const set of sets(unit)) assert.equal(needsRoom(set, course.moves), true, unit);
 });

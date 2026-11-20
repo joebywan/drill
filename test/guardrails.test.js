@@ -298,7 +298,7 @@ test('every practice habit answers each "How do you feel?" reply in its own coac
 
 // The garden: every achievement line and stage name is gentle. Nothing is lost, nothing is owed.
 import { EVENTS as GARDEN_EVENTS } from '../src/garden/events.js';
-import { LIFE_WORDS, RULES as GARDEN_RULES, STAGES as GARDEN_STAGES, creatures as gardenCreatures, moreArrived, plantWords, stage as gardenStage } from '../src/garden/model.js';
+import { LIFE_WORDS, RULES as GARDEN_RULES, STAGES as GARDEN_STAGES, creatures as gardenCreatures, flowersOpened, moreArrived, plantWords, stage as gardenStage } from '../src/garden/model.js';
 
 test('seasonal events have no loss, guilt, urgency or ability words, and name no end date', () => {
   const strings = (v) => (typeof v === 'string' ? [v] : v && typeof v === 'object' ? Object.values(v).flatMap(strings) : []);
@@ -316,7 +316,7 @@ test('garden text has no loss, guilt, urgency or ability words', () => {
     ...[1, 2, 3].flatMap((stage) => [1, 2].flatMap((n) => ['unit', 'day'].map((unit) => LIFE_WORDS.next({ stage, in: n, unit })))),
     ...LIFE_WORDS.arrived.map((line) => line('Chess', 'Australian Painted Lady'))];
   assert.ok(raised.length > 50);
-  const texts = [...GARDEN_RULES.map((r) => r.text), ...GARDEN_STAGES.map((s) => s.name), ...screen, ...life, moreArrived(4), 'Your garden'];
+  const texts = [...GARDEN_RULES.map((r) => r.text), ...GARDEN_STAGES.map((s) => s.name), ...screen, ...life, moreArrived(4), flowersOpened(10), 'Your garden'];
   assert.ok(texts.length > 10);
   for (const text of texts) for (const lint of [LOSS, URGENCY, ABILITY]) assert.doesNotMatch(text, lint, text);
   for (const text of texts) assert.doesNotMatch(text, /\b(missing|locked|wilt\w*|die[sd]?|dying|dead)\b/i, text);
