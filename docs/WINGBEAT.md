@@ -187,6 +187,9 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
   no longer goes stale once a puzzle is solved.
 - [x] **F5. The code courses:** (#161) what a Run printed shows under the goal, tall programs fit, and the
   tray shows whole rows of chips.
+- [x] **F6. The emulator crashed on a short phone in the code courses:** (#164) a CSS mask on a box that
+  scrolls brought down the emulator's software renderer. A box that scrolls now shows there is more above
+  or below with a plain gradient, which Firefox draws too.
 
 **Waiting on the owner** (found by playing, not changed)
 
