@@ -3,7 +3,7 @@
  * from the lesson and the place in it. Add new items at a lesson's end, so a card keeps its key.
  * See src/code/items.js for what each item is.
  */
-import { CONSTRUCTS, WALK_API, chunksFor } from '../items.js';
+import { CONSTRUCTS, WALK_API, chipsOf, chunksFor } from '../items.js';
 
 export const lesson = (id, title, items) => ({ id, title, items: items.map((item, i) => ({ id: `${id}-${i + 1}`, ...item })) });
 export const unit = (title, ...lessons) => ({ title, lessons });
@@ -28,6 +28,7 @@ export const Q = (code, wrong, explain, extra) => ({ type: 'predict', code, wron
 /**
  * Sets each build's chips in path order: a construct is single tokens the first time it is built (the
  * item's `learns` says which), and one chip from then on. `known` is what a course may assume at its start.
+ * Only the chunks the way is cut into are kept.
  */
 export function coarsened(course, known = []) {
   const seen = new Set(known);
@@ -37,8 +38,10 @@ export function coarsened(course, known = []) {
       const { chunks, used } = chunksFor(item.way, seen, item.decoys);
       const learns = [...used].filter((k) => !seen.has(k));
       learns.forEach((k) => seen.add(k));
-      const all = [...(item.chunks ?? []), ...chunks];
-      const decoys = item.decoys?.flatMap((d) => (d === '--' && seen.has('for') ? [] : WALK_API.includes(d) && all.some((c) => c.endsWith('();')) ? [`${d}();`] : [d])); // a decoy in the shape of the chips around it
+      const given = [...(item.chunks ?? []), ...chunks];
+      const chips = chipsOf(item.way, given);
+      const all = given.filter((c, i) => given.indexOf(c) === i && chips.includes(c)); // a chunk the way never uses is never on a chip: a wrong choice goes in decoys
+      const decoys = item.decoys?.flatMap((d) => (d === '--' && seen.has('for') ? [] : WALK_API.includes(d) && given.some((c) => c.endsWith('();')) ? [`${d}();`] : [d])); // a decoy in the shape of the chips around it
       return { ...item, chunks: all, ...(decoys && { decoys }), ...(learns.length && { learns }) };
     });
   }
