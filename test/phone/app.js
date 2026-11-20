@@ -24,7 +24,11 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
   mkdirSync(OUT, { recursive: true });
   const keep = (name, text) => writeFileSync(`${OUT}${name}`, text);
   const sh = (cmd) => adb('shell', cmd);
-  const [W, H] = sh('wm size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number);
+  // `APP_ROTATE=1` (or 3) plays the app with the screen turned; `wm size` is the display's natural shape, so swap it.
+  const turned = process.env.APP_ROTATE;
+  if (turned) { sh('settings put system accelerometer_rotation 0'); sh(`settings put system user_rotation ${turned}`); await sleep(2500); }
+  const natural = sh('wm size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number);
+  const [W, H] = turned && turned % 2 ? natural.reverse() : natural;
   const key = async (k) => { sh(`input keyevent ${k}`); await sleep(1200); };
   const front = () => /mCurrentFocus=.*com\.joebywan\.wingbeat/.test(sh('dumpsys window | grep mCurrentFocus'));
   const logs = () => adb('logcat', '-d', '-v', 'brief', 'WingbeatBridge:*', 'WingbeatDaily:*', 'AndroidRuntime:E', '*:S');
@@ -69,7 +73,7 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
     if (widgets) {
       await tap(widgets); await shot('widget-list');
       let entry = await node(/^Wingbeat$/, 'widget-list');
-      for (let i = 0; i < 6 && !entry; i++) { sh(`input swipe ${W >> 1} ${H * 0.8} ${W >> 1} ${H * 0.3} 400`); await sleep(1000); entry = await node(/^Wingbeat$/); }
+      for (let i = 0; i < 6 && !entry; i++) { sh(`input swipe ${W >> 3} ${H * 0.8} ${W >> 3} ${H * 0.3} 400`); await sleep(1000); entry = await node(/^Wingbeat$/); }
       if (entry) { await tap(entry); await shot('widget-wingbeat'); }
       const preview = await node(/Wingbeat streak/, 'widget-entry');
       if (preview) {
