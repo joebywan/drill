@@ -21,8 +21,56 @@ const PIECE = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: '
  * Returns a cleanup function.
  */
 export function mount(el, item, ctx) {
-  el.innerHTML = '<div class="board"></div><div class="choices"></div>';
-  return MOUNTS[kind(item)](el.firstChild, el.lastChild, item, ctx);
+  el.innerHTML = '<div class="board lesson"></div><div class="choices"></div>';
+  const stop = fitBoard(el.firstChild, el.lastChild, item, ctx);
+  const cleanup = MOUNTS[kind(item)](el.firstChild, el.lastChild, item, stop.ctx);
+  stop.refit();
+  return () => { stop(); cleanup(); };
+}
+
+const SQUARE_MIN = 40; // a square to tap stays thumb-sized
+const FRAME = 8.7; // a board is its eight squares and a frame of about 0.7 of one
+
+/**
+ * Keeps the board on the screen. Asked, the coach's words and the whole board show together (the page has
+ * nothing to scroll), the board giving up size down to SQUARE_MIN squares (to tap) to do it; answered (or a teach card),
+ * the whole board sits above the verdict banner, and nobody needs to tap it then, so it may shrink further.
+ * A board that already fits is left as it is; one that does not first compacts the coach and the gaps (`tall`, styles.css).
+ * Returns `stop`, with `refit` and the `ctx` to mount with (its say and done refit afterwards).
+ */
+function fitBoard(boardEl, choices, item, ctx) {
+  const refit = () => {
+    if (!boardEl.isConnected) return;
+    scrollTo(0, 0); // measured from the top of the page, where a board that fits stays
+    boardEl.style.width = '';
+    const natural = boardEl.getBoundingClientRect().width;
+    const foot = document.querySelector('.foot.show');
+    const tapped = ['tap', 'move', 'stars', 'find'].includes(kind(item)); // a true/false board is only looked at
+    const tray = choices.isConnected && choices.children.length ? choices.offsetHeight : 0;
+    const low = innerHeight - (foot ? foot.offsetHeight : tray);
+    const roomNow = () => low - boardEl.getBoundingClientRect().top - 6;
+    // Too tall for the screen: first the coach and the gaps give way (the shared `.tall` rules in styles.css), then the board.
+    if (roomNow() < natural && !(foot && tapped)) boardEl.classList.add('tall');
+    const room = roomNow();
+    const least = foot || !tapped ? 150 : SQUARE_MIN * FRAME;
+    const side = Math.floor(Math.min(natural, Math.max(room, least)));
+    if (side < natural) { boardEl.style.width = `${side}px`; boardEl.style.marginInline = 'auto'; }
+  };
+  const stop = () => removeEventListener('resize', refit);
+  addEventListener('resize', refit);
+  stop.refit = refit;
+  stop.ctx = {
+    ...ctx,
+    say: (...a) => { ctx.say(...a); refit(); },
+    // Over, the bubble stops asking for more or counting ("Keep going", "Found 2 of 3"); the banner has the explanation.
+    // A true/false claim stays: it is what the explanation is about.
+    done: (answered, text, kept) => {
+      if (answered !== null && kind(item) !== 'truefalse') ctx.say(answered && !kept?.hinted ? "That's it." : "Here's how it goes.");
+      ctx.done(answered, text, kept);
+      refit();
+    },
+  };
+  return stop;
 }
 
 // A gold star, drawn by Markers like its own sprites: with cached sprites (cm-chessboard's

@@ -273,14 +273,16 @@ other move by tapping the piece, then the square. Sessions are 7 to 12 items, 24
 minutes or 20 items. Longest: `mateIn3-1` and `attraction-0` (~2:07), `backRankMate-2` and `promotion-2` (~2:04; `promotion-2` has the most taps, 78),
 `attraction-2`, `skewer-2` (~2:00). The Lichess lessons ("Real games", the theme lessons) are the long ones: a puzzle is 2 to 4 of your own
 moves. Not tested: a puzzle accepting a move it shouldn't (every move played was the line or a mate), and "Play Rosa".
-Short phone (412x533, `CHESS_SMALL=1080x1700`): `mateIn3-1`, `attraction-0`, `forks-0`, `moves-0` all play through the same.
+Short phone (412x533, `CHESS_SMALL=1080x1700`): `mateIn3-1`, `attraction-0`, `forks-0`, `moves-0` played through the same; see the fixes below.
 
-- **The verdict banner covers the bottom of the board** (low at 412x786, medium at 412x533). At 786 it hides only the frame under rank 1 and the
-  file letters on some True/False and tap items. At 533 the page is the board plus coach and does not fit: you scroll to the board, the coach's words
-  are off the top, and the answered banner hides ranks 1 and 8 (the checkmate in a long puzzle's last position, the "NEW PIECE" badge on a star
-  demo). Nothing is lost (the page scrolls), but a teach card with a board (`attraction-0`'s castling card) shows the board under Continue. Design call.
-- **The coach keeps the old line after a puzzle is solved** (low). A finished puzzle's bubble still says "Good. Keep going - White to play." and a
-  tap item's still says "Found 2 of 3." while the banner says it is done. The banner is right; the bubble is stale.
+- **Fixed: the board under the verdict on a short phone** (`fitBoard`, `src/chess/exercise.js`; `.tall` rules in `styles.css`). Asked, the coach's
+  words and the whole board show together with nothing to scroll (the coach and the gaps give way first, by the same `.tall` rules Coding and the quizzes
+  use, then the board, never under 40px a square where it is tapped); answered, the whole board with its file letters sits above the verdict (it
+  shrinks, to about 24px a square for a long puzzle on 412x533: readable, not tappable); a teach card's board sits above Continue. A board that already
+  fits is left alone, and at 412x786 the board is now clear of the verdict everywhere too. Checked by `test/e2e/chess-short.spec.js`, and on the
+  phone: all 18 units at 412x533 with an earlier form of the fix, none flagged; then, on the final code, units 5, 16 and 18 at 412x533 and 1, 5, 11 and 18 at 412x786, none flagged.
+- **Fixed: the coach's bubble after an item is done.** A solved or missed puzzle, tap, move or stars item says "That's it." (right) or "Here's how it
+  goes." (missed, or solved after the hint) instead of "Good. Keep going" or "Found 2 of 3." A true/false keeps its claim, which the explanation is about.
 - **A teach card without a board is a big empty page** (low): `mate2-teach`, `promotion-teach` and the like are a bubble and Continue.
 - **Wording for a beginner** (low): the Attraction unit opens with "One more rule, castling" in a card that is not about castling; explanations
   say "h-pawn", "a-file", "the far side" before any lesson names them (they are taught in the board unit, but the Lichess lessons use them
