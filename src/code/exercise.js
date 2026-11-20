@@ -94,17 +94,18 @@ export function mount(el, item, ctx) {
   /**
    * Room between what is above (the goal, the grid) and Run: the tray grows to show every chip while there is room,
    * else it ends on a whole row and scrolls; the code under test gets as many whole lines as fit; the answer the rest.
-   * Each keeps at least a few lines. Nothing is limited on a screen where everything fits.
+   * The code keeps at least four lines and the answer one, and grows past it in its box, the line being built in view.
+   * Nothing is limited on a screen where everything fits.
    */
   const share = (known) => {
     const LINE = 36; // an answer's line of chips
-    const want = { given: givenEl?.scrollHeight ?? 0, answer: known ? programEl.scrollHeight : 2 * LINE + 16, tray: chipsEl.scrollHeight };
+    const want = { given: givenEl?.scrollHeight ?? 0, answer: known ? programEl.scrollHeight : LINE + 16, tray: chipsEl.scrollHeight };
     const fixed = (givenEl ? 6 : 0) + 8 + (foot.offsetHeight - chipsEl.offsetHeight) + 8; // margins, Run and the tray's padding
     const room = () => innerHeight - topOf(givenEl ?? programEl) - fixed;
     if (want.given + want.answer + want.tray <= room()) return;
     programEl.classList.add('tall'); // the coach gives room first
     if (want.given + want.answer + want.tray <= room()) return;
-    const least = { given: Math.min(want.given, 4 * 18 + 16), answer: Math.min(want.answer, 2 * LINE + 16) };
+    const least = { given: Math.min(want.given, 4 * 18 + 16), answer: Math.min(want.answer, LINE + 16) };
     const tray = wholeRows(chipsEl, Math.min(want.tray, room() - least.given - least.answer + 2 /* rounding */));
     if (tray < want.tray) { chipsEl.style.maxHeight = `${Math.max(tray, 44)}px`; chipsEl.classList.add('scrolls'); }
     if (givenEl) {
@@ -113,7 +114,7 @@ export function mount(el, item, ctx) {
     }
   };
   const words = trayOf(item);
-  const board = builder(programEl, foot.querySelector('.chips'), {
+  const board = builder(programEl, chipsEl, {
     chips: words.map((w) => ({ face: w, name: chipName(w), chipClass: 'code-chip', placedClass: 'block token' })),
     limit: limitOf(item),
     start: item.type === 'gap' ? startOf(item) : undefined,
