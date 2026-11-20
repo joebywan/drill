@@ -387,6 +387,10 @@ Found, not fixed (design calls or bigger than a few lines):
   practice end screen, and its coach drawn smaller and higher, so all three feelings sit above Continue at 412x786.
 - **Home for someone 30 days in** (low, crowding): garden strip, seven tabs, the course and Games rows (Learning), the greeting, the
   butterfly and streak line, the raising line, then the path. The path starts below half the screen.
+  **Lighter** (feat/lighter-home): no title bar on home (⋯ on the strip's corner, Sound a switch in Settings), what a path is
+  raising a picture at the end of the streak row (nothing once it has emerged), and the one-tap hint only before the first log.
+  At 412x786 a month in, the first unit's title now starts at 329 (Chess) and 263 (Calm), from 448 and 337 (`npm run phone --
+  home-days`). Chess at 360x640 is still at about 352 of 640, its Games row the difference.
 - **Numbers still show for the other habits** next to a quiet one (by design: only Calm, Reflect and Wind down are quiet), so a
   30-day home reads "Move 30", "Walk 30", "Learning 31" beside Calm's dot. Fine; noted because the plan's "no count" reads wider.
 - **No way into the wardrobe from home**: it is in ⋯ (last, under Garden) and on the garden screen. Fine if intended.
