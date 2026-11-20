@@ -90,12 +90,13 @@ function adopt(synced) {
   if (app.querySelector('.menu')) home();
 }
 
-// Every item by key, so a review can find what it is reviewing.
+// Every item by key, so a review can find what it is reviewing. Its topic is its unit's title, or a teach card's own `topic`
+// (Chess's castling card, in the Attraction unit only because a puzzle there castles).
 const items = new Map();
 for (const s of subjects)
   for (const u of s.units)
     for (const l of u.lessons.filter((x) => !x.mix)) // a checkpoint only repeats its unit's items
-      for (const item of l.items) items.set(`${s.id}:${item.id}`, { subject: s, item, topic: u.title, lesson: l.id });
+      for (const item of l.items) items.set(`${s.id}:${item.id}`, { subject: s, item, topic: item.topic || u.title, lesson: l.id });
 
 /**
  * A new screen replaces the page, so focus would fall back to the top of the document. This puts

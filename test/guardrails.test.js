@@ -4,6 +4,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, streakLine } from '../src/habitview.js';
 import { helpHtml } from '../src/practice/kit.js';
 import { subjects } from '../src/subjects.js';
+import { explanation as chessExplanation, kind as chessKind } from '../src/chess/items.js';
 import unitHelp from '../src/data/help.json' with { type: 'json' };
 import lessonHelp from '../src/data/lesson-help.json' with { type: 'json' };
 import { DARES_LABEL, QUIET_STREAK_LABEL, SOUND_LABEL, GAME_WORDS, MOVE_ON, HELLO, ACCURACY, BREAK_LINES, FOCUS_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, REFLECT_WORDS, MOVE_LINES, MOVE_SAFETY, KAEDE_LINES, KAEDE_HEADLINES, MATHS_LINES, MATHS_HEADLINES, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
@@ -89,6 +90,20 @@ test('what Rosa says mid-puzzle passes the same lint', () => {
   for (const text of said) {
     assert.doesNotMatch(text, ABILITY, text);
     assert.doesNotMatch(text, LOSS, text);
+  }
+});
+
+test('everything the chess course shows passes the same lint: cards, prompts and explanations, worked-out ones too', () => {
+  const chess = subjects.find((x) => x.id === 'chess');
+  const said = chess.units.flatMap((u) => u.lessons.flatMap((l) => l.items))
+    .flatMap((i) => [i.text, i.intro, i.prompt, ...(chessKind(i) === 'teach' ? [] : chessExplanation(i))]).filter(Boolean);
+  assert.ok(said.length > 400);
+  const WINNING = /\b(beaten|(ever|never|still|can|to) beat|beat(s|ing)? (me|you|him|her|them|us|every\w*))\b/i;
+  for (const text of new Set(said)) {
+    assert.doesNotMatch(text, ABILITY, text);
+    assert.doesNotMatch(text, LOSS, text);
+    assert.doesNotMatch(text, WINNING, text);
+    assert.doesNotMatch(text, /\b[KQRBN][a-h]?x?[a-h][1-8]\b|O-O/, `no notation: ${text}`);
   }
 });
 

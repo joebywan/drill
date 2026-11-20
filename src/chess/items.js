@@ -1,10 +1,12 @@
 import { Chess } from 'chess.js';
 import { uci } from './puzzle.js';
+import { played, why } from './why.js';
 
 /**
  * Lesson items. `type` says how one is played; a Lichess puzzle has none and is 'find'.
  *
- *   teach      { text, fen? }                         a card to read: not marked, not reviewed
+ *   teach      { text, fen?, topic? }                 a card to read: not marked, not reviewed; `topic` heads it
+ *                instead of its unit's title, for a rule taught where it is first needed (castling)
  *   tap        { fen, rule, square?, answer?, prompt, explain }
  *                rule 'attacks' (default): every enemy piece the piece on `square` attacks
  *                rule 'moves': every square the piece on `square` can move to
@@ -111,21 +113,20 @@ export const grade = (item, response) =>
 
 const PIECES = { K: 'King', Q: 'Queen', R: 'Rook', B: 'Bishop', N: 'Knight' };
 
-/** A move in plain words, for people who don't read notation: "Nxf7+" is "Knight takes on f7, check". */
-export function words(san) {
+/**
+ * A move in plain words, for people who don't read notation: "Nxf7+" is "Knight takes on f7, check".
+ * Castling says where the king goes, given `king` (a chess.js move's `to`), never "kingside".
+ */
+export function words(san, king) {
   const end = san.endsWith('#') ? ', checkmate' : san.endsWith('+') ? ', check' : '';
-  if (san.startsWith('O-O')) return (san.startsWith('O-O-O') ? 'Castles queenside' : 'Castles kingside') + end;
+  if (san.startsWith('O-O')) return `Castles${king ? `, king to ${king}` : ''}${end}`;
   const [, piece, takes, to, promo] = san.match(/^([KQRBN])?[a-h]?[1-8]?(x?)([a-h][1-8])(?:=([QRBN]))?/);
   const becomes = promo ? `, becomes a ${PIECES[promo].toLowerCase()}` : '';
   return `${PIECES[piece] || 'Pawn'} ${takes ? 'takes on' : 'to'} ${to}${becomes}${end}`;
 }
 
 /** The line a find item is solved by, in SAN, setup move left out. */
-export function line(item) {
-  const game = new Chess(item.fen);
-  game.move(uci(item.moves[0]));
-  return item.moves.slice(1).map((m) => game.move(uci(m)).san);
-}
+export const line = (item) => played(item).moves.slice(1).map((m) => m.san);
 
 /** A stars board: any pieces, kings optional. Legality is still all chess.js. */
 export const load = (fen) => new Chess(fen, { skipValidation: true });
@@ -203,10 +204,20 @@ export function starPath(item) {
   return null;
 }
 
-/** What is said after an answer. Every marked item has one; a puzzle falls back to its line. */
-export const explanation = (item) => item.explain ||
-  (kind(item) === 'stars' ? `One way: ${starPath(item).map((m) => words(m.san)).join(', then ')}.`
-    : `The line: ${line(item).map(words).join('. ')}.`);
+/**
+ * What may be said after an answer, best first: every marked item has at least one. A puzzle with no written
+ * explanation gives its line in words with why it works (why.js), then the line with the same facts in fewer words,
+ * then the line alone, then (for a long line) only the player's own moves. The board picks the first whose verdict leaves it room, measured on the page (exercise.js).
+ */
+export function explanation(item) {
+  if (item.explain) return [item.explain];
+  if (kind(item) === 'stars') return [`One way: ${starPath(item).map((m) => words(m.san)).join(', then ')}.`];
+  const line = played(item).moves.slice(1);
+  const moves = `${line.map((m) => words(m.san, m.to)).join('. ')}.`;
+  const mine = `Your moves: ${line.filter((m, i) => i % 2 === 0).map((m) => words(m.san, m.to)).join('. ')}.`; // a long line, replies left out
+  const said = why(item);
+  return [...new Set([...[said?.text, said?.short].filter(Boolean).map((t) => `${moves} ${t}`), moves, ...(line.length > 1 ? [mine] : [])])];
+}
 
 /** Why an item can't be shipped, or null. chess.js checks every position and move. */
 export function problem(item) {

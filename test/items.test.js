@@ -8,6 +8,8 @@ import { subjects } from '../src/subjects.js';
 import { Chess } from 'chess.js';
 import { uci } from '../src/chess/puzzle.js';
 import { answer, attacked, explanation, grade, hop, kind, meets, problem, solutions, starPath, words } from '../src/chess/items.js';
+import { helpFor } from '../src/adapt.js';
+import terms from '../src/data/chess-terms.json' with { type: 'json' };
 
 const all = [...basics.units, forks, ...chess.units].flatMap((u) => u.lessons.flatMap((l) => l.items)).concat(Object.values(tactics).flat());
 
@@ -20,7 +22,7 @@ test('item ids are unique across the whole course', () => {
 });
 
 test('every marked item has an explanation', () => {
-  for (const item of all.filter((i) => kind(i) !== 'teach')) assert.ok(explanation(item), item.id);
+  for (const item of all.filter((i) => kind(i) !== 'teach')) assert.ok(explanation(item).length && explanation(item).every(Boolean), item.id);
 });
 
 test('attacked() finds the enemy pieces a knight hits, and nothing else', () => {
@@ -76,12 +78,13 @@ test('true/false can claim check and mate, judged by the board', () => {
 test('moves read as words', () => {
   assert.equal(words('Nxf7+'), 'Knight takes on f7, check');
   assert.equal(words('e8=Q#'), 'Pawn to e8, becomes a queen, checkmate');
-  assert.equal(words('O-O-O'), 'Castles queenside');
+  assert.equal(words('O-O-O'), 'Castles');
+  assert.equal(words('O-O+', 'g1'), 'Castles, king to g1, check', 'given where the king goes, it says so: never "kingside"');
 });
 
 test('a puzzle with no written explanation explains with its line', () => {
   const { explain, ...bare } = byId['fork-0-find'];
-  assert.equal(explanation(bare), 'The line: Knight to c7, check.');
+  assert.deepEqual(explanation(bare), ['Knight to c7, check.']);
 });
 
 test('a fork claim the board does not back up is caught', () => {
@@ -117,7 +120,7 @@ test('a stars item is checked for its own pieces on stars and an illegal demo', 
 });
 
 test('a stars item with no written explanation explains with a way that works', () => {
-  assert.equal(explanation(rook), 'One way: Rook to h8, then Rook to h1.');
+  assert.deepEqual(explanation(rook), ['One way: Rook to h8, then Rook to h1.']);
 });
 
 // Nothing assumed: the whole chess path, in the order the learner meets it.
@@ -125,11 +128,27 @@ const path = subjects.find((s) => s.id === 'chess').units.flatMap((u) => u.lesso
 const taughtText = (i) => [i.text, i.intro, i.prompt].filter(Boolean).join(' ');
 const before = (index) => path.slice(0, index).map(taughtText).join(' ');
 
-test('every term is met in a card or prompt before an explanation leans on it', () => {
-  for (const word of ['file', 'rank', 'attack', 'take', 'defend', 'worth', 'check', 'checkmate', 'fork', 'pin', 'skewer', 'en passant', 'castl']) {
-    const seen = new RegExp(`\\b${word}`, 'i');
-    const first = path.find((i) => seen.test(taughtText(i)) || seen.test(i.explain || ''));
-    assert.ok(seen.test(taughtText(first)), `"${word}" first appears in the explanation of ${first.id}`);
+// Everything the learner reads, in path order: each item's words and its explanation as shown (a real-game puzzle's is worked
+// out), with each unit's and lesson's help (adapt.js) where it could first come, at the first marked item.
+const shown = (i) => [taughtText(i), ...(kind(i) === 'teach' ? [] : explanation(i))].join(' '); // every wording the page might pick
+const read = subjects.find((s) => s.id === 'chess').units.flatMap((u) => u.lessons.flatMap((l) => {
+  const at = l.items.findIndex((i) => kind(i) !== 'teach');
+  const help = [l === u.lessons[0] && helpFor('chess', u.title, ''), helpFor('chess', '', l.id)].filter(Boolean).map((text) => ({ id: `help:${l.id}`, said: text }));
+  return l.items.flatMap((i, n) => [...(n === at ? help : []), { id: i.id, said: shown(i), teaches: taughtText(i) }]);
+}));
+
+test('every chess word is taught on a card before anything leans on it (src/data/chess-terms.json)', () => {
+  for (const { term, pattern, taught } of terms.terms) {
+    const word = new RegExp(pattern, 'i');
+    const first = read.findIndex((e) => word.test(e.said));
+    if (taught === null) {
+      assert.equal(first, -1, `"${term}" is said in ${read[first]?.id}: ${read[first]?.said}`);
+      continue;
+    }
+    const card = read.findIndex((e) => e.id === taught);
+    assert.ok(card >= 0, `${taught} is on the path`);
+    assert.match(read[card].teaches, word, `${taught} teaches "${term}"`);
+    assert.ok(first >= card, `"${term}" is said in ${read[first].id} before ${taught} teaches it: ${read[first].said}`);
   }
 });
 
@@ -174,6 +193,29 @@ test('the teach boards show what their cards say', () => {
   assert.ok(new Chess(card('castling-teach').fen).moves({ verbose: true }).some((m) => m.flags.includes('k')));
   assert.ok(new Chess(card('capture-0-turns').fen).attackers('d4', 'b').includes('c5'), 'the knight is defended by the pawn');
   assert.ok(new Chess(card('discovered-teach').fen.replace('4N3', '8')).attackers('e8', 'w').includes('e1'), 'the rook is behind the knight');
+  // A line a card walks through: each move of ours is legal, each reply is their only move, and it ends as the card says.
+  const forced = (id, ours, end) => {
+    const game = new Chess(card(id).fen);
+    ours.forEach((san, n) => {
+      game.move(san);
+      if (n < ours.length - 1) { assert.equal(game.moves().length, 1, `${id}: one reply to ${san}`); game.move(game.moves()[0]); }
+    });
+    end(game);
+  };
+  forced('mate1-teach', ['Qg7'], (g) => assert.ok(g.isCheckmate(), 'queen to g7 mates'));
+  assert.deepEqual(new Chess(card('mate1-teach').fen).moves().filter((m) => m.endsWith('#')), ['Qg7#'], 'and is the only mate');
+  forced('mate2-teach', ['Re8+', 'Rxe8#'], (g) => assert.ok(g.isCheckmate()));
+  forced('mate3-teach', ['Re8+', 'Rxe8+', 'Qxe8#'], (g) => assert.ok(g.isCheckmate()));
+  forced('deflection-teach', ['Re8+', 'Rxd5'], (g) => assert.equal(g.history({ verbose: true }).at(-1).captured, 'q', 'the queen falls'));
+  forced('attraction-teach', ['Rf8+', 'Nd7+'], (g) => assert.deepEqual(attacked(g.fen(), 'd7').filter((sq) => ['f8', 'e5'].includes(sq)), ['e5', 'f8'], 'the knight forks king and queen'));
+  const trap = new Chess(card('trapped-teach').fen);
+  trap.move('Be4');
+  assert.ok(trap.attackers('a8', 'w').length, 'the bishop attacks the knight');
+  for (const m of trap.moves({ square: 'a8', verbose: true })) assert.ok(trap.attackers(m.to, 'w').length, `the knight's ${m.to} is attacked`);
+});
+
+test('a teach card that walks through a move has a board to show it on', () => {
+  for (const i of path.filter((x) => kind(x) === 'teach' && /\bto [a-h][1-8]\b/.test(x.text))) assert.ok(i.fen, i.id);
 });
 
 test('a stars item\'s arrows go through the squares its first sentence names, in order', () => {
