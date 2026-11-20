@@ -97,7 +97,7 @@ try {
   {
     serial = `emulator-${port}`;
     console.log(`booting ${AVD} as ${serial}…`);
-    const emu = spawn(`${SDK}/emulator/emulator`, ['-avd', AVD, '-port', String(port), '-read-only', '-no-window', '-no-audio', '-no-boot-anim', '-gpu', 'swiftshader_indirect'], { stdio: 'ignore' });
+    const emu = spawn(`${SDK}/emulator/emulator`, ['-avd', AVD, '-port', String(port), '-read-only', '-no-window', '-no-audio', '-no-boot-anim', '-gpu', 'swiftshader_indirect'], { stdio: 'ignore', cwd: tmpdir() }); // its shared network daemon outlives the run: not in this checkout
     cleanup.push(async () => {
       try { adb('emu', 'kill'); } catch { emu.kill(); }
       for (let i = 0; i < 30 && emu.exitCode === null; i++) await sleep(1000);
@@ -108,6 +108,20 @@ try {
       if (i > 180) throw new Error('emulator did not finish booting in 3 minutes');
       await sleep(1000);
     }
+  }
+
+  // One network that stays put. The emulators share one simulated Wi-Fi, which drops when another emulator starts or stops;
+  // Android then moves to mobile data, and Chrome fails whatever it is fetching (net::ERR_NETWORK_CHANGED: a page that never
+  // loads, a module that never arrives). So Wi-Fi is off, mobile data is the only network, and nothing probes it to decide
+  // it has gone (captive_portal_mode 0). The emulator is read-only, so none of this outlasts the run.
+  adb('shell', 'settings', 'put', 'global', 'captive_portal_mode', '0');
+  adb('shell', 'svc', 'wifi', 'disable');
+  const defaultNet = () => (adb('shell', 'dumpsys', 'connectivity').match(/Active default network: (\d+)/) || [])[1];
+  for (let i = 0, same = 0, was; i < 30 && same < 3; i++) { // settled: the same network three seconds running
+    const now = defaultNet();
+    same = now && now === was ? same + 1 : 0;
+    was = now;
+    await sleep(1000);
   }
 
   // localhost on the phone is this machine's port: a secure context, unlike http://10.0.2.2.

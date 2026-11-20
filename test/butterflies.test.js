@@ -67,10 +67,10 @@ test("lifeBox frames each stage close up: the creature fills most of it, and a c
   const box = (s, g) => lifeBox(s, g).split(' ').map(Number);
   // What each stage draws (butterfly.js): the egg, a hatchling, a grown caterpillar, the chrysalis.
   for (const [s, g, [x0, y0, x1, y1]] of [['egg', 0, [54.8, 53.2, 65.2, 66.8]], ['caterpillar', 0, [67.2, 47.4, 85.6, 61]],
-    ['caterpillar', 1, [25.1, 38.5, 89.2, 63.6]], ['chrysalis', 0, [47, 18, 73, 74]]]) {
+    ['caterpillar', 1, [25.1, 38.5, 89.2, 63.6]], ['chrysalis', 0, [36, 15.5, 84, 82]]]) {
     const [x, y, w, h] = box(s, g);
     assert.ok(x <= x0 && y <= y0 && x + w >= x1 && y + h >= y1, `${s} ${g} inside its frame`);
-    assert.ok(Math.max((x1 - x0) / w, (y1 - y0) / h) >= 0.75, `${s} ${g} fills its frame`);
+    assert.ok(Math.max((x1 - x0) / w, (y1 - y0) / h) >= (s === 'chrysalis' ? 0.85 : 0.75), `${s} ${g} fills its frame`);
   }
   assert.ok(box('caterpillar', 0)[2] < box('caterpillar', 0.5)[2] && box('caterpillar', 0.5)[2] < box('caterpillar', 1)[2]);
   assert.equal(lifeBox('butterfly'), '12 6 96 84');
