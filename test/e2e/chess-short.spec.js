@@ -91,11 +91,13 @@ test('every Chess item fits a 412x533 phone while asked, and a teach card clear 
       app.innerHTML = `<header class="bar"><button class="close" aria-label="Quit lesson">✕</button><div class="meter"><div class="fill"></div></div></header>
         <main class="play"><p class="topic">Topic</p><div class="coach"><button class="who" aria-label="Rosa"></button><p class="bubble" id="said"></p></div><div class="stage"></div></main>
         <footer class="foot"><div class="verdict"><strong></strong><p></p></div><button class="next">Continue</button></footer>`;
+      document.body.style.minHeight = '2000px'; scrollTo(0, 300); // as the last question left the page, scrolled
       const foot = app.querySelector('.foot');
       const stop = mount(app.querySelector('.stage'), item, {
         say: (t) => { app.querySelector('.bubble').textContent = t; },
         done: (right, text) => { foot.className = 'foot show'; foot.querySelector('p').textContent = text; },
       });
+      document.body.style.minHeight = '';
       await new Promise((r) => setTimeout(r, 50));
       if (!app.querySelector('div.board')) { stop(); continue; } // a card with no board
       const board = app.querySelector('div.board').getBoundingClientRect();
@@ -110,6 +112,7 @@ test('every Chess item fits a 412x533 phone while asked, and a teach card clear 
       if (why.length) out.push(`${item.id}: ${why.join(', ')}`);
       stop();
     }
+    document.body.style.minHeight = '';
     return out;
   }, items);
   expect(bad).toEqual([]);

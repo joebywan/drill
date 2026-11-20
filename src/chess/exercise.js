@@ -41,6 +41,7 @@ const FRAME = 8.7; // a board is its eight squares and a frame of about 0.7 of o
 function fitBoard(boardEl, choices, item, ctx) {
   const refit = () => {
     if (!boardEl.isConnected) return;
+    scrollTo(0, 0); // measured from the top of the page, where a board that fits stays
     boardEl.style.width = '';
     const natural = boardEl.getBoundingClientRect().width;
     const foot = document.querySelector('.foot.show');
@@ -54,7 +55,6 @@ function fitBoard(boardEl, choices, item, ctx) {
     const least = foot || !tapped ? 150 : SQUARE_MIN * FRAME;
     const side = Math.floor(Math.min(natural, Math.max(room, least)));
     if (side < natural) { boardEl.style.width = `${side}px`; boardEl.style.marginInline = 'auto'; }
-    if (document.documentElement.scrollHeight <= innerHeight) scrollTo(0, 0);
   };
   const stop = () => removeEventListener('resize', refit);
   addEventListener('resize', refit);
