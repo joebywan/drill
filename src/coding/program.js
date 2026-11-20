@@ -128,16 +128,23 @@ export function parse(level) {
  * squares stood on are the shape), 'bump' (the next step hit a rock or the edge; `path` stops before
  * it, `bumped` is where it tried to go), 'short' (the blocks ran out with the goal not met) or
  * 'endless' (it would never finish, so it was stopped). `want` is how many of several flowers to pick.
+ * `at[i]` is the block that stepped onto `path[i]`, and `next` the step a 'bump' or 'spare' run stopped on,
+ * each as its place in reading order (every block counted, inner ones after the block that holds them).
  */
 export function run(level, program, want, exact = false) {
   const g = parse(level);
   const defs = Object.fromEntries(program.filter((b) => b?.define).map((b) => [b.define, b]));
   let [x, y] = g.start;
   const path = [[x, y]];
+  const at = [null];
+  const ids = new Map(); // each list of blocks to the reading-order places of its blocks
+  let k = 0;
+  const number = (list) => ids.set(list, list.map((b) => { const id = k++; if (b && typeof b === 'object') armsOf(b).forEach((a) => number(b[a])); return id; }));
+  number(program);
   const vars = {};
   const values = [{}];
   const note = () => { values[path.length - 1] = { ...vars }; };
-  const stop = (end, extra) => ({ path, values, end, ...extra });
+  const stop = (end, extra) => ({ path, values, at, end, ...extra });
   const onFlower = () => g.flowers.some(([fx, fy]) => fx === x && fy === y);
   const value = (v) => (typeof v === 'number' ? v : vars[v] ?? 0);
   let n = 0, work = 0;
@@ -166,18 +173,20 @@ export function run(level, program, want, exact = false) {
     if (had === undefined) delete vars[name]; else vars[name] = had;
   };
   const exec = (list, depth = 0) => {
-    for (const b of list) {
+    for (const [j, b] of list.entries()) {
       if (result) return;
       if (++work > WORK) { result = never(); return; } // a loop of nothing but values never takes a step
       if (typeof b === 'string' || 'go' in b) {
         const way = STEPS[typeof b === 'string' ? b : vars[b.go]];
         if (!way) continue;
-        if (arrived) { result = stop('spare'); return; }
+        const id = ids.get(list)[j];
+        if (arrived) { result = stop('spare', { next: id }); return; }
         const [dx, dy] = way;
         if (++n > LIMIT) { result = stop('endless'); return; }
-        if (g.rock(x + dx, y + dy)) { result = stop('bump', { bumped: [x + dx, y + dy] }); return; }
+        if (g.rock(x + dx, y + dy)) { result = stop('bump', { bumped: [x + dx, y + dy], next: id }); return; }
         x += dx; y += dy;
         path.push([x, y]);
+        at.push(id);
         note();
         if (g.flowers.length === 1 && onFlower()) {
           if (exact) arrived = true;
