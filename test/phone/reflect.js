@@ -2,8 +2,8 @@
 // lines from a week ago (the look back on home) and from two recent days (so today's makes three,
 // and the end screen offers the week).
 import { emptyProgress, finishPractice, today } from '../../src/progress.js';
+import { daysAgo } from './lib/seed.js';
 
-const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d; };
 
 export default async ({ page, seed, touch, btn, type, shot, check }) => {
   let p = emptyProgress();

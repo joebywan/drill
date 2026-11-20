@@ -75,7 +75,7 @@ export const LINES = {
     'Close. Look again, the board is telling you something.',
     "Not this one, love. Read why, then it's yours.",
     'Nope. But that is exactly the mistake worth making today.',
-    'Ah. Every opponent I ever beat tried that one.',
+    'Ah. Every opponent I ever played tried that one.',
     'Not this time. Check what each piece attacks.',
   ],
   run3: [
@@ -91,7 +91,7 @@ export const LINES = {
   tapped: [
     'Take your time. The board will wait. So will I, gorgeously.',
     'Chess is patterns. You are collecting them.',
-    'My grandson still has not beaten me. He is getting closer.',
+    'My grandson still has not won a game off me. He is getting closer.',
     'Before every move, ask: what does it attack?',
     'Park champion eleven summers running. Ask anyone. Well, ask the pigeons.',
     'Yes, the cardigan is hand-knitted. No, you cannot have it.',
