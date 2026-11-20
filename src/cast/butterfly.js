@@ -145,10 +145,11 @@ export function caterpillar(growth = 1, spot = '#F3E7B8', body = BODY_INK) {
     + `<path d="M79 44.5 L77 38.5 M84 44.5 L86 38.5" ${paint(body)('stroke')}${tint(body)} stroke-width="1.2" stroke-linecap="round"/></g>`;
 }
 
-export const chrysalis = (band = '#F3E7B8') => `<path d="M30 20 L92 16" stroke="#8A6A45" stroke-width="3.2" stroke-linecap="round"/><ellipse cx="60" cy="19" rx="3" ry="2" fill="#F6F0DC"/>`
-  + `<g data-part="chrysalis"><path d="M60 21 C71 30 73 52 60 74 C47 52 49 30 60 21 Z" fill="#8ED07A"/><path d="M60 21 C66 30 67 50 60 74 C63 52 63 32 60 21 Z" fill="#7CC26A"/>`
-  + `<path d="M52 40 Q60 44 68 40" stroke="${band}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
-  + [[53, 46], [57, 47], [61, 47], [65, 46]].map(([x, y]) => dot([x, y, 1.1, '#F2D04A'])).join('') + '</g>';
+export const chrysalis = (band = '#F3E7B8') => `<path d="M30 20 L92 16" stroke="#8A6A45" stroke-width="4" stroke-linecap="round"/><ellipse cx="60" cy="19" rx="3.4" ry="2.4" fill="#F6F0DC"/>`
+  + `<g data-part="chrysalis"><path d="M60 21 C70 22 77 30 77 40 C77 54 67 66 60 74 C53 66 43 54 43 40 C43 30 50 22 60 21 Z" fill="#8ED07A" stroke="#5E9E4E" stroke-width="0.8" stroke-linejoin="round"/>`
+  + `<path d="M60 21 C70 22 77 30 77 40 C77 54 67 66 60 74 C63 56 64 36 60 21 Z" fill="#7CC26A"/>`
+  + `<path d="M44 42 Q60 47 76 42" stroke="${band}" stroke-width="3.4" fill="none" stroke-linecap="round"/>`
+  + [[51, 51], [57, 53], [63, 53], [69, 51]].map(([x, y]) => dot([x, y, 1.9, '#F2D04A'])).join('') + '</g>';
 
 /** A species' colour for its caterpillar's spots and its chrysalis's band: its first patch or spot. */
 export const tintOf = (art) => Object.values(art.cells || {})[0] || art.dots?.[0]?.[3] || '#F3E7B8';
@@ -159,9 +160,10 @@ export const tintOf = (art) => Object.values(art.cells || {})[0] || art.dots?.[0
  * A butterfly keeps the whole box.
  */
 export function lifeBox(stage, growth = 0, ratio = 1.1) {
+  // The chrysalis: from just above the twig to a little past three quarters of the body, the body (34 wide) 60% of the width, the tip off the bottom.
+  if (stage === 'chrysalis') { const w = 34 / 0.6, h = w / ratio; return [60 - w / 2, 12.5, w, h].map((v) => +v.toFixed(1)).join(' '); }
   let b; // [x0, y0, x1, y1] of what is drawn
   if (stage === 'egg') b = [54.8, 53.2, 65.2, 66.8];
-  else if (stage === 'chrysalis') b = [47, 18, 73, 74];
   else if (stage === 'caterpillar') {
     const g = Math.min(1, Math.max(0, Number(growth) || 0)), s = 0.55 + 0.45 * g;
     const shown = SEGMENTS.slice(-(2 + Math.round(g * 4)));
