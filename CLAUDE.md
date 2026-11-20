@@ -63,7 +63,13 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   another, and with no APK it does nothing): `attach(pkg)` gives a scenario the same helpers for an app's WebView,
   and `screenXml()` the launcher's UI tree.
 - A new scenario is a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `dragTo`,
-  `type`, `shot`, `run`, `check`, `calibrate`); shared seeds are in `test/phone/lib/seed.js`.
+  `swipe`, `press` (a long press), `doubleTap`, `type`, `shot`, `run`, `check`, `calibrate`); shared seeds are in
+  `test/phone/lib/seed.js`, and Chess's move-playing (a chess.js game kept in step with the page) in `test/phone/lib/chess.js`.
+- What a finger does has its own scenarios: `touch-swipe`, `touch-keyboard`, `touch-links`, `touch-press`. On any `*-all`
+  scenario `PLAY_JITTER=0.85` lands each tap at a seeded random point out to that share of the way to its target's edge
+  (`PLAY_SEED` varies it) and `PLAY_SWIPE=1` swipes each box that scrolls in itself. Run the jittered taps after changing the
+  size of anything tapped. Chess also has `chess-games` and `chess-games-small` (Mate and Scramble), and by name only
+  `chess-wrong-all` (each lesson answered wrongly first) and `chess-rosa-all` (Play Rosa at every level).
 
 - With no `--url` it serves this checkout on a free port forwarded with `adb reverse`; Chrome opens
   `http://localhost:<port>/`, a secure context, so Wake Lock and the like work as on the real site.

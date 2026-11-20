@@ -201,7 +201,17 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
 - **Session length, on a real phone and a real beginner.** The emulator played every lesson of every course at an
   idealised pace, and none is near 6 minutes or 20 items (each course's "played" block has its numbers). Check a
   first-time learner still feels small wins, not a slog, with warm-ups, "Once more" and checkpoints in.
-- **Real touch on a real phone:** the emulator covered tapping, dragging and a short phone (a 412x533 page) for every course; a real finger and a real keyboard still haven't.
+- **What a finger does: played on the emulator** (#180). Taps that are not dead centre (`PLAY_JITTER=0.85`, seeded: each lands out to 85% of the way to its
+  target's edge) played two units of every course, one of them on a short phone: no mis-tap, no covered target. Real swipes (`touch-swipe`, and `PLAY_SWIPE=1` on the
+  `*-all` scenarios) over home's long path, the tabs row, the course chips, the garden, the field guide and a week view, and inside the boxes that scroll in
+  themselves: the page never moves under a box, the edges are right at each end, Continue stays put, a swipe that starts on a button presses nothing. The phone's keyboard
+  (`touch-keyboard`) over Reflect, "Make your own", a habit's "when" and Focus's own words: the field stays above it and what is typed is kept. Links out
+  (`touch-links`) open a new tab and the app's tab is as it was. Long press and double tap (`touch-press`) select nothing and answer once.
+  Two bugs came out of it, both fixed: a long press on a tile or the board selected its glyph and raised Android's Copy / Share toolbar over the controls; a pull down
+  at the top of a screen handed the page to Chrome's pull-to-refresh, which reloaded it and lost the lesson or screen.
+  Run the jittered taps again after any change to a tray, tile, button or board size.
+  **Open (low, design):** "Make your own" leaves its Add habit button about 130px under the keyboard until the page is scrolled; the other forms keep theirs above it.
+  **What the emulator cannot show:** a flick with a real finger's inertia (`adb input swipe` is one even stroke), and a hardware keyboard.
 - **Sound and motion in the new units.** Live values and the drawing trail under normal motion were
   only seen in a one-off script: e2e runs with reduced motion.
 - **The live site** was played on the emulator (first visit, the walkthrough, the butterfly, the garden, the wardrobe, a one-tap habit), and GitHub now plays it from its own network after every deploy (`.github/workflows/live.yml`, `npm run e2e:live`: a first visit, the first Maths lesson to its end, and the served `app.js` and `styles.css` matching the commit; first run passed 2026-11-21).
@@ -239,8 +249,7 @@ sessions run longer. A quarter to a third of every session is repeats (2 warm-up
   find-the-bug was never a trap: tapping another block picks that one instead, and filling the wrong one counts as a miss with the explanation.
   Still narrow: blocks 28 to 30px wide or tall that sit 0 to 6px from a neighbour get only half the gap, so a tight row on a short phone gives
   a thumb less than 44px; that needs more room between rows, a layout change. The harness measures drawn sizes, so it still lists these.
-- **Not played yet:** a real beginner, a real finger, Firefox, and sound with the new motion. The drawing trail and live values were seen only
-  in passing.
+- **Still to play:** Firefox for Android, and the drawing trail and live values seen while they move (both in hand, see "Next up"). A finger's part is under "Test by playing".
 **Coding: bigger improvements**
 
 - **Fresh numbers.** Done for Coding and Maths (#99, `tools/variants.js`), find-the-bug and the one-offs included. `frac-2-4q` stays
@@ -251,8 +260,8 @@ sessions run longer. A quarter to a third of every session is repeats (2 warm-up
 
 **Code courses: to judge by playing**
 
-- **Pacing and tone: played, see below.** All 68 lessons have now been played on the emulator (JavaScript, TypeScript, Test writing); a real
-  beginner, a real finger and a real keyboard have not. Judging whether the chips are the right size still wants one.
+- **Pacing and tone: played, see below.** All 68 lessons have now been played on the emulator (JavaScript, TypeScript, Test writing); off-centre taps
+  found no chip too small or too close ("Test by playing"), and the courses have no typing. Whether the pace suits a first-time learner is still open.
 
 **Code courses: played** (2026-11, emulator Pixel 6, `CODE_COURSE=javascript|typescript|testing CODE_UNIT=n npm run phone -- code-all`, `tools/play.js`)
 
@@ -303,7 +312,7 @@ no sideways overflow, nothing untappable, nothing under 40px. Each unit's first 
 other move by tapping the piece, then the square. Sessions are 7 to 12 items, 24 to 78 taps, about 0:44 to 2:07 at a steady pace; none near 6
 minutes or 20 items. Longest: `mateIn3-1` and `attraction-0` (~2:07), `backRankMate-2` and `promotion-2` (~2:04; `promotion-2` has the most taps, 78),
 `attraction-2`, `skewer-2` (~2:00). The Lichess lessons ("Real games", the theme lessons) are the long ones: a puzzle is 2 to 4 of your own
-moves. Not tested: a puzzle accepting a move it shouldn't (every move played was the line or a mate), and "Play Rosa".
+moves. Wrong moves and the three games were played afterwards (#179, below).
 Short phone (412x533, `CHESS_SMALL=1080x1700`): `mateIn3-1`, `attraction-0`, `forks-0`, `moves-0` played through the same; see the fixes below.
 
 - **Fixed: the board under the verdict on a short phone** (`fitBoard`, `src/chess/exercise.js`; `.tall` rules in `styles.css`). Asked, the coach's
@@ -318,7 +327,16 @@ Short phone (412x533, `CHESS_SMALL=1080x1700`): `mateIn3-1`, `attraction-0`, `fo
 - **Wording for a beginner** (low): the Attraction unit opens with "One more rule, castling" in a card that is not about castling; explanations
   say "h-pawn", "a-file", "the far side" before any lesson names them (they are taught in the board unit, but the Lichess lessons use them
   freely); every puzzle explanation is a bare line ("Queen to a5, check. King to e8.") with no word on why it works.
-- **Not played:** a real beginner, a real finger, Firefox, the engine's mates beyond what the puzzles check, and sound.
+- **Wrong moves, Play Rosa, Mate and Scramble: played** (#179; `chess-wrong-all`, `chess-rosa-all`, `chess-games`, `chess-games-small`; the two `-all` ones run by name only).
+  Twelve lessons from eleven units were each answered wrongly first: nothing wrong was accepted, a wrong move snaps back and the second miss marks the piece to move,
+  the right square with a piece the line doesn't need is explained and free, and a mate other than the stored line counts. Play Rosa at all four levels, both colours,
+  ten or more moves a side: every reply legal, the page still drawing while she thinks (longest gap 136 ms), Hint, Take back and Resign as they should, and one game at
+  Warm-up played to checkmate. Mate in 2, 3 and 4 solved with the prover's lines, a wrong first move refused in words, and a Scramble round to the end of its clock with the best kept.
+  Fixed: in a puzzle, a move the piece cannot make was counted as a miss; it is explained and free, as in the other items. A stars item's arrows now show the route its
+  words name (five items had them differ).
+- **The three games don't fit a short phone** (medium, open): at 412x533 Mate's and Play Rosa's boards are cut off at the bottom of the screen and the coach's line scrolls away
+  to reach them; Scramble's clock and score scroll out of sight while playing; Rosa's end banner sits over her (disabled) buttons. The games aren't fitted by `src/fit.js` yet.
+- **Still to play:** Firefox for Android. Whether a first-time learner follows it is the beginner question under "Test by playing".
 **Repetition engine**
 
 - **A second miss of a mirrored item sees the same mirror.** Chess has only two versions of an item; a third go
@@ -340,7 +358,7 @@ read: none wrong.
 
 - **Stacked bars under the verdict on a short phone: fixed** (`fitCard` in `src/fit.js`, `test/e2e/quiz-layout.spec.js`). At 412x533 all three bars of `frac-1-biggest` now sit above the verdict; the bars and their gaps shrink first. `frac-1` played again at 412x533 with no flag.
 - **Short phone, otherwise clean:** `ten-1`, `ten-2` and `neg-0` at 412x533 had no flag.
-- **Not covered:** a real finger, and Firefox.
+- **Still to play:** Firefox for Android. A finger's part is under "Test by playing".
 
 **Japanese: played** (2026-11, emulator Pixel 6, `JAPANESE_UNIT=n npm run phone -- japanese-all`, `tools/play.js`, `tools/play-quiz.js`)
 
@@ -357,7 +375,7 @@ that carry a sound, every one called `speechSynthesis.speak` with its text when 
 - **Empty build slots: fixed.** An empty slot is an outlined dashed box the height of a tile (as the Coding builder's), solid once filled.
 - **Matched pairs go under the verdict** (low, left as it is). A 5-pair item has 5 rows; once answered the verdict hides the lower rows, so the last matches turning green are not seen.
 - **Typo fixed:** the explanations of `se1-pairs-323`, `se2-pairs-330` and `se3-pairs-337` read "This is a cat., ..." and ended "tea..". No other content problem found.
-- **Not covered:** a real finger, Firefox, and a voice other than the emulator's.
+- **Still to play:** Firefox for Android. **What the emulator cannot show:** a voice other than the image's own Google ja-JP one (no other speech engine is on it).
 
 **Layouts from phone testing**
 
@@ -436,4 +454,5 @@ Found, not fixed (design calls or bigger than a few lines):
 - **The live site** (knowhowit.com.au/wingbeat, serving today's `main`: `src/cast/skins.js` and the changed modules match):
   `first-visit`, `walkthrough`, `butterfly`, `garden`, `wardrobe` and `log` all pass with no page error or failed request. The
   first attempt failed at once with `ERR_NAME_NOT_RESOLVED` inside the fresh emulator; the retry was clean.
-- **Not seen:** a real phone and finger, the widget and daily note, Firefox, the field guide's source links opening in a browser.
+- The widget and the daily note are played in the installed app ("The Android app: played"); the field guide's source link opens the museum's page in a new tab and
+  the app's tab is as it was (`touch-links`, #180). **Still to play:** Firefox for Android.
