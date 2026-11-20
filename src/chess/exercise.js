@@ -55,6 +55,9 @@ function fitBoard(boardEl, choices, item, ctx) {
     const least = foot || !tapped ? 150 : SQUARE_MIN * FRAME;
     const side = Math.floor(Math.min(natural, Math.max(room, least)));
     if (side < natural) { boardEl.style.width = `${side}px`; boardEl.style.marginInline = 'auto'; }
+    // Still under the verdict (a 206px page, Chrome at 200% zoom): the page gets room to scroll the board clear of it.
+    const play = boardEl.closest('.play');
+    if (play) play.style.paddingBottom = foot && boardEl.getBoundingClientRect().bottom > low ? `${innerHeight - low + 8}px` : '';
   };
   const stop = () => removeEventListener('resize', refit);
   addEventListener('resize', refit);

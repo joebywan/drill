@@ -1,6 +1,8 @@
 // Shared by the large-text scenarios (test/phone/app.js, zoom.js): what doesn't fit a screen, a tour of the screens with
 // the most text, and finding Android's own views.
 import { ago } from './seed.js';
+import { subjects } from '../../../src/subjects.js';
+import { scan } from '../../../tools/play.js';
 
 /**
  * Run in the page (`page.evaluate(misfits)`): what doesn't fit the screen as it is. Nothing wider than the page or cut
@@ -52,6 +54,64 @@ export function uiNode(xml, re) {
   return null;
 }
 
+// A lesson's screen, by kind of item: its parts (tools/play.js `scan`), and of those the tray at the bottom.
+export const QUIZ = { parts: ['.bubble', '.card', '.choices'], tray: ['.choices'] };
+export const CODING = { parts: ['.bubble', '.grid-world', '.vars', '.program', '.tiles'], tray: ['.tiles'] };
+export const CODE = { parts: ['.bubble', '.code-given', '.program', '.card', '.tiles', '.choices'], tray: ['.tiles', '.choices'] };
+export const CHESS = { parts: ['.bubble', '.board', '.choices'], tray: ['.choices'] };
+
+/** Run in the page: a part that scrolls in its own box is in view only with a line (32px) of it above whatever is fixed at the bottom. */
+export function inView({ parts, tray }) {
+  const bars = [...document.querySelectorAll('.foot.show, #app .tiles, #app .choices')].filter((e) => getComputedStyle(e).position === 'fixed' && e.getBoundingClientRect().height);
+  const low = Math.min(innerHeight, ...bars.map((b) => b.getBoundingClientRect().top));
+  return parts.filter((q) => !tray.includes(q)).map((q) => document.querySelector(`#app ${q}`)).filter((e) => e?.classList.contains('scrolls'))
+    .map((e) => [e, Math.min(e.getBoundingClientRect().bottom, low) - Math.max(e.getBoundingClientRect().top, 0)])
+    .filter(([, h]) => h < 32).map(([e, h]) => `only ${Math.round(h)}px of ${e.className.split(' ')[0]} in view`);
+}
+
+/**
+ * Run in the page once answered: what breaks the verdict's own rule. At most half the screen, Continue whole on it,
+ * and the explanation's last line reached by scrolling the verdict's box (left scrolled there). The headline at most
+ * two lines once the words have to scroll, and with larger text no bigger than the explanation.
+ */
+export function verdictRule() {
+  const out = [];
+  const foot = document.querySelector('.foot.show'), box = foot.querySelector('.verdict'), p = box.querySelector('p'), head = box.querySelector('strong');
+  const f = foot.getBoundingClientRect(), next = foot.querySelector('.next').getBoundingClientRect();
+  if (f.height > innerHeight / 2 + 1) out.push(`${Math.round(f.height)}px tall, over half of ${innerHeight}`);
+  if (next.top < 0 || next.bottom > innerHeight + 1) out.push('Continue is off the screen');
+  box.scrollTop = box.scrollHeight;
+  const b = box.getBoundingClientRect(), end = p.getBoundingClientRect();
+  if (end.bottom > b.bottom + 1 || end.bottom > next.top + 1) out.push(`the explanation's end is ${Math.round(end.bottom - Math.min(b.bottom, next.top))}px out of reach`);
+  const size = (e) => parseFloat(getComputedStyle(e).fontSize);
+  if (box.scrollHeight > box.clientHeight + 1 && head.getBoundingClientRect().height > 2 * 1.4 * size(head) + 1) out.push('the headline is over two lines while the words scroll');
+  if (getComputedStyle(document.documentElement).getPropertyValue('--text-scale') && size(head) > size(p) + 0.5) out.push(`the headline (${size(head)}px) is bigger than the explanation (${size(p)}px)`);
+  return out;
+}
+
+/**
+ * Run in the page: each part of the screen (`parts`, not the tray) that the verdict or a fixed tray covers, scrolled clear
+ * of it by the page, as a thumb would: whole above it, or one that scrolls in its own box with a line (32px) of it showing.
+ */
+export function reachable({ parts, tray }) {
+  const out = [];
+  const bars = [...document.querySelectorAll('.foot.show, #app .tiles, #app .choices')].filter((e) => getComputedStyle(e).position === 'fixed' && e.getBoundingClientRect().height);
+  const top = Math.min(innerHeight, ...bars.map((b) => b.getBoundingClientRect().top));
+  for (const sel of parts.filter((q) => !tray.includes(q))) {
+    const el = document.querySelector(`#app ${sel}`);
+    if (!el || !el.getBoundingClientRect().height) continue;
+    scrollTo(0, 0);
+    const r0 = el.getBoundingClientRect();
+    if (r0.bottom <= top + 1) continue;
+    scrollTo(0, Math.max(0, r0.bottom - top + 1));
+    const r = el.getBoundingClientRect();
+    const box = el.classList.contains('scrolls');
+    if (box ? Math.min(r.bottom, top) - Math.max(r.top, 0) < 32 : r.top < -1 || r.bottom > top + 1) out.push(`${sel} can't be scrolled clear of the verdict (${Math.round(r.top)}..${Math.round(r.bottom)} over ${Math.round(top)}; the page is ${document.documentElement.scrollHeight}px)`);
+  }
+  scrollTo(0, 0);
+  return out;
+}
+
 /** `fits(tag, name)`: a picture named `<tag>-<name>`, and a check that the screen fits (`misfits`). */
 export const fitter = ({ page, run, shot }, check) => async (tag, name) => {
   await run(400); await shot(`${tag.replaceAll(' ', '-')}-${name}`);
@@ -59,12 +119,18 @@ export const fitter = ({ page, run, shot }, check) => async (tag, name) => {
   check(`${tag}: ${name} fits`, !m.length, m.slice(0, 4).join('; '));
 };
 
+// A lesson of each kind played to its first question and answered by a tap, right or not: course, lesson, its screen.
+const ANSWERED = [['Chess', 'chess', 'check-0', CHESS], ['Maths', 'maths', 'ten-0', QUIZ], ['Japanese', 'japanese', 'v1', QUIZ], ['Coding', 'coding', 'steps-0', CODING], ['JavaScript', 'javascript', 'jsv-1', CODE]];
+
 /**
  * The screens with the most text, each checked by `fitter`: home on every tab and with a course being raised, the first
- * two items of each Learn course, a Calm and a Move routine to their end screens, the field guide and a species, Settings,
- * the wardrobe and the "+ Habit" sheet. `h` is a page's helpers (tools/phone.js), `tag` names the look ("text 1.3").
+ * two items of each Learn course, a question of each kind answered (the item in view above the verdict, the verdict at
+ * most half the screen and read to its end: `verdictRule`), a Calm and a Move routine to their end screens, the field
+ * guide and a species, Settings, the wardrobe and the "+ Habit" sheet. `h` is a page's helpers (tools/phone.js), `tag`
+ * names the look ("text 1.3"). With `reach`, a page past what the app promises (206px wide), what the verdict covers
+ * only has to be reachable by scrolling (`reachable`).
  */
-export async function textTour(h, check, tag) {
+export async function textTour(h, check, tag, { reach = false } = {}) {
   const { page, touch, btn, run, seed } = h;
   const fits = fitter(h, check);
   const pressed = (name) => page.getByRole('button', { name, exact: true });
@@ -93,6 +159,25 @@ export async function textTour(h, check, tag) {
     await home(); await touch(btn(/^Learning(,|$)/)); await touch(pressed(course));
     await touch(btn(/^Continue · /)); await fits(tag, `lesson-${course.toLowerCase()}`);
     await touch(pressed('Continue')); await fits(tag, `lesson-${course.toLowerCase()}-next`);
+  }
+  for (const [name, id, lessonId, parts] of ANSWERED) {
+    const unit = subjects.find((s) => s.id === id).units.find((u) => u.lessons.some((l) => l.id === lessonId));
+    const at = unit.lessons.findIndex((l) => l.id === lessonId);
+    await home({ start: { [id]: unit.title }, done: Object.fromEntries(unit.lessons.slice(0, at).map((l) => [`${id}:${l.id}`, true])) });
+    await touch(btn(/^Learning(,|$)/)); await touch(pressed(name));
+    await touch(btn(`Continue · ${unit.lessons[at].title}`));
+    for (let i = 0; i < 6 && await page.locator('.foot.show.plain').count(); i++) await touch(pressed('Continue')); // teach cards
+    for (let i = 0; i < 10 && !(await page.locator('.foot.show').count()); i++) {
+      const go = page.getByRole('button', { name: 'Run', exact: true });
+      if (await go.count() && await go.isEnabled() && await page.locator('.program [data-take]').count()) await touch(go);
+      else await touch(page.locator('.stage :is(.choices, .tiles) button:not(:disabled):not(.run)'));
+      await run(1500); // Fennel's walk, the verdict sliding in
+    }
+    await run(1000); await h.shot(`${tag.replaceAll(' ', '-')}-answered-${id}`);
+    const found = reach ? await page.evaluate(reachable, parts) : [...await page.evaluate(scan, parts), ...await page.evaluate(inView, parts)];
+    found.push(...await page.evaluate(verdictRule));
+    await h.shot(`${tag.replaceAll(' ', '-')}-answered-${id}-end`); // the verdict's box scrolled to its end
+    check(`${tag}: ${name} answered: the question in view above a verdict of at most half the screen`, !found.length, found.slice(0, 4).join('; '));
   }
   await routine('Calm', 'calm');
   await routine('Move', 'move');

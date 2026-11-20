@@ -1,4 +1,5 @@
 import { reducedMotion } from './cast/kit.js';
+import { LINES } from './cast/lines.js';
 
 /**
  * Fitting a screen on a phone: a program for Coding (src/coding/exercise.js) and the code courses (src/code/exercise.js),
@@ -9,21 +10,41 @@ import { reducedMotion } from './cast/kit.js';
 /**
  * How tall the runner's verdict banner will be with `words` in it (null: a teach card's, Continue alone) under the
  * longest verdict the coach's `lines` could give, by measuring a hidden copy, so a tall program can be fitted above
- * it before it comes. 0 with no banner on the page.
+ * it before it comes. Never more than half the screen: past that its words scroll in their own box (styles.css,
+ * `.foot`), so whatever fits itself above it gets the other half. 0 with no banner on the page.
  */
-export function verdictHeight(words, lines = {}) {
+/** The longest headline the runner's verdict can show of `kinds` with a coach's `lines` (Rosa's, `LINES`, for a coach with none of their own). */
+export const longestVerdict = (lines = LINES, kinds = ['correct', 'run3', 'run5', 'wrong']) => kinds.flatMap((k) => lines[k] ?? []).reduce((a, b) => (b.length > a.length ? b : a), 'x');
+
+export function verdictHeight(words, lines) {
   const foot = document.querySelector('.foot');
   if (!foot) return 0;
   const copy = foot.cloneNode(true);
   copy.className = `foot show${words === null ? ' plain' : ''}`;
   copy.style.visibility = 'hidden';
   copy.querySelectorAll('[id]').forEach((e) => e.removeAttribute('id'));
-  copy.querySelector('strong').textContent = ['correct', 'run3', 'run5', 'wrong'].flatMap((k) => lines[k] ?? []).reduce((a, b) => (b.length > a.length ? b : a), 'x');
+  copy.querySelector('strong').textContent = longestVerdict(lines);
   copy.querySelector('p').textContent = words ?? '';
   foot.after(copy);
+  giveWay(copy, false);
   const height = copy.offsetHeight;
   copy.remove();
   return height;
+}
+
+/**
+ * The verdict banner `foot` is never more than half the screen (styles.css, `.foot`). Past that it gives way: its
+ * headline to two lines (`.clamp`, read whole by a screen reader), then its words scroll in their own box (`scrollBox`,
+ * unless only measuring), Continue staying in view. Call it whenever its words change.
+ */
+export function giveWay(foot, scrolls = true) {
+  const box = foot.querySelector('.verdict');
+  const over = () => box.scrollHeight > box.clientHeight + 1;
+  foot.classList.remove('clamp');
+  box.classList.remove('scrolls');
+  box.scrollTop = 0;
+  if (over()) foot.classList.add('clamp');
+  if (over() && scrolls) scrollBox(box);
 }
 
 /** Scrolls `box` (never the page) so `el` in it shows: smoothly, unless motion is reduced. */
@@ -78,6 +99,7 @@ export function wholeRows(el, limit) {
   return Math.max(0, ...ends);
 }
 
+const LINE = 44; // the least of a program that shows: a row of blocks, two lines of code
 const SQUARE = 28, PICK_SQUARE = 36; // the smallest a map's squares get for a tall program: Fennel stays easy to see, a square to tap thumb-sized
 
 /**
@@ -89,7 +111,8 @@ const SQUARE = 28, PICK_SQUARE = 36; // the smallest a map's squares get for a t
  *                it above the verdict (a short phone), the map gives only what fits it above the tray, so it reads
  *                whole while asked, and its box shrinks when the verdict comes. What can't fit scrolls in its own box.
  *                A program that fits is left as it is.
- *   settle(el, always)  once answered: the program's box ends above the verdict as it really came (`boxTo`), with `el` in view
+ *   settle(el, always)  once answered: the program's box ends above the verdict as it really came (`boxTo`), with `el` in view;
+ *                if that would leave less than a LINE of it, the coach gives way first (`.tall`)
  *   keep(el)     scrolls the program's box to `el`
  */
 export function fitter({ program, tray, world = null, g = null, lines }) {
@@ -110,7 +133,12 @@ export function fitter({ program, tray, world = null, g = null, lines }) {
   const keep = (el) => keepInView(program, el);
   const settle = (el, always = false) => {
     const foot = document.querySelector('.foot.show');
-    if (foot) boxTo(program, innerHeight - foot.offsetHeight, always);
+    if (foot) {
+      const bottom = innerHeight - foot.offsetHeight;
+      // A verdict taller than foreseen (a miss puts its reason first) that leaves under a line: the coach gives way now.
+      if (bottom - topOf(program) - 8 < LINE) program.classList.add('tall');
+      boxTo(program, bottom, always);
+    }
     keep(el);
   };
   return { fit, settle, keep };

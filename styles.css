@@ -147,14 +147,26 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
   padding: 16px; padding-bottom: max(16px, env(safe-area-inset-bottom));
   background: var(--card); border-top: 2px solid var(--line);
   transform: translateY(110%); transition: transform .22s ease-out, visibility 0s .22s; visibility: hidden;
+  /* Never more than half the screen (decision 21 at any text size): past that the verdict's words scroll in their own
+     box (scrollBox() in app.js) and Continue stays in view. verdictHeight() in fit.js measures it so, and what is
+     fitted above it gets the other half. */
+  display: flex; flex-direction: column; max-height: 50dvh;
 }
+.foot .verdict { flex: 0 1 auto; min-height: 0; --fade: var(--card); } /* it scrolls (.scrolls) only when it has to, so a headline's pop isn't clipped */
+.foot.right .verdict { --fade: var(--right-bg); }
+.foot.wrong .verdict { --fade: var(--wrong-bg); }
+.foot .next { flex: none; }
 .foot.show { transform: none; visibility: visible; transition: transform .22s ease-out; }
 .foot.right { background: var(--right-bg); border-color: var(--accent); }
 .foot.wrong { background: var(--wrong-bg); border-color: var(--wrong); }
 .foot.right strong { color: var(--accent); }
 .foot.wrong strong { color: var(--wrong); }
 .foot.plain .verdict { display: none; }
-.verdict strong { display: block; font-size: 1.2rem; }
+/* With larger text the headline (the coach's flourish) stops growing: no bigger than the explanation under it, which is
+   what teaches. 19.2px / --text-scale is 1.2rem at ordinary text; in the Android app the text zoom scales it back up. */
+.verdict strong { display: block; font-size: min(1.2rem, max(1rem, calc(19.2px / var(--text-scale, 1)))); }
+/* Past half the screen it is the first to give way: two lines (giveWay() in fit.js); a screen reader still reads it all. */
+.foot.clamp .verdict strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .verdict p { margin: 6px 0 0; }
 .foot.wrong .next { background: var(--wrong); }
 .foot .next { margin-bottom: 0; }
@@ -633,7 +645,7 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 .play:has(:is(.program, .quiz, .board.lesson).tall) .bubble { margin-bottom: 6px; padding: 6px 10px; }
 .play:has(:is(.program, .quiz, .board.lesson).tall) .grid-world { margin-bottom: 4px; }
 /* How tall her words stay is each screen's own rule, never the shared one above: a longer list there once outranked a quiz's. */
-.play:has(.program.tall) .bubble { min-height: 5.5em; }
+.play:has(.program.tall) .bubble { min-height: calc(5.5em / var(--text-scale, 1)); } /* with larger text, no taller than at 16px: the program needs the room */
 .play:has(.quiz.tall) .bubble { min-height: 0; }
 /* A chess board that is too tall: the coach gives way as above, her words keep two lines so the board never jumps (fitBoard, src/chess/exercise.js). */
 .play:has(.board.lesson.tall) { padding-bottom: 8px; }
