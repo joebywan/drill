@@ -1,57 +1,14 @@
 import { test, expect } from './fixtures.js';
 import { readFileSync } from 'node:fs';
-import { answer, right, toQuiz } from '../../src/maths/items.js';
-import { tick } from '../../src/quiz/items.js';
+import { answer } from '../../src/maths/items.js';
+import { continueButton, pickMaths, playLesson, solve } from './maths-play.js';
 import { emptyProgress, finishSession } from '../../src/progress.js';
 
 // Maths, played the way a learner does: taps on choices and tiles, a drag on the number line. The
 // answers are worked out with the same item logic the app uses, so the test follows the course.
 const course = JSON.parse(readFileSync(new URL('../../src/data/maths.json', import.meta.url)));
 const first = course.units[0].lessons[0];
-const continueButton = (page) => page.getByRole('button', { name: 'Continue', exact: true });
 const marked = (lesson) => lesson.items.filter((i) => i.type !== 'teach');
-
-/** Answers one item right, then waits for the answer banner. */
-async function solve(page, item) {
-  const bottom = page.locator('.choices');
-  switch (item.type) {
-    case 'teach': break;
-    case 'pick': await bottom.getByRole('button', { name: item.options.find((o) => right(item, o)), exact: true }).click(); break;
-    case 'build':
-      for (const c of answer(item)) await bottom.getByRole('button', { name: c, exact: true, disabled: false }).first().click(); // one character a tile
-      break;
-    case 'line': {
-      const k = Array.from({ length: item.ticks + 1 }, (_, i) => i).find((i) => right(item, tick(item, i)));
-      const box = await page.locator('.numline .track').boundingBox();
-      // A drag from the far end to the answer: the marker follows and the drop is the answer.
-      await page.mouse.move(box.x + box.width, box.y + 3);
-      await page.mouse.down();
-      await page.mouse.move(box.x + (box.width * k) / item.ticks, box.y + 3, { steps: 5 });
-      await page.mouse.up();
-      break;
-    }
-    case 'pairs': // one from each column, as worked out for the quiz item
-      for (const pair of toQuiz(item).pairs) for (const x of pair) await bottom.getByRole('button', { name: x, exact: true, disabled: false }).first().click();
-      break;
-  }
-  await expect(continueButton(page), item.id).toBeInViewport();
-}
-
-async function playLesson(page, lesson) {
-  for (const item of lesson.items) {
-    await solve(page, item);
-    await continueButton(page).click();
-  }
-}
-
-/** Into the intro, Learn something, Maths, and home. */
-async function pickMaths(page) {
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByRole('button', { name: 'Learn something' }).click();
-  await page.getByRole('button', { name: 'Maths', exact: true }).click();
-  await page.getByRole('button', { name: 'Show my home' }).click();
-}
 
 test('picking Maths in the intro opens its path on Learning; a whole lesson plays with Ada, right first time', async ({ page }) => {
   await pickMaths(page);
