@@ -31,9 +31,20 @@ npm run e2e                # Playwright; E2E_PORT=8137 npm run e2e for a second 
 
 `npm run phone -- [scenario...] [--url <base>] [--avd <name>]` drives Chrome on an Android emulator with real
 touches (`adb shell input tap`), for what a desktop browser can't show. Not part of `npm test` or CI.
-No scenario runs all of `test/phone/*.js` (one per habit and course, plus onboarding, first-visit, walkthrough, garden, wardrobe, timings, fitting, voice, sync, scan, left, drag; scenarios named `*-all` play a whole course through `tools/play.js` and run only by name, e.g. `CODING_UNIT=3 npm run phone -- coding-all`, one unit at a time, see the header of `test/phone/coding-all.js`); a new one is
-a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `dragTo`, `type`,
-`shot`, `run`, `check`).
+A plain `npm run phone` runs every scenario in `test/phone/*.js` but the `*-all` ones. There is one per habit and
+course, plus onboarding, first-visit, walkthrough, garden, wardrobe, timings, fitting, voice, sync, scan, left and drag,
+and the Wingbeat screens: butterfly, yours, home-states, stages, field-guide, skins, choose, reflect-days, presets and
+looks (the dark theme; `LOOKS=large` for large text).
+- Scenarios named `*-all` play a whole course through `tools/play.js` and run only by name, one unit at a time:
+  `coding-all` (`CODING_UNIT`), `chess-all` (`CHESS_UNIT`), `maths-all` (`MATHS_UNIT`), `japanese-all`
+  (`JAPANESE_UNIT`) and `code-all` (`CODE_COURSE=javascript|typescript|testing` with `CODE_UNIT`). Each also takes
+  `…_LESSONS` (some lesson ids) and `…_SMALL=1080x1700` (a short phone, a 412x533 page). The header of
+  `test/phone/coding-all.js` explains them; `tools/play-quiz.js` taps Maths' and Japanese's items in.
+- `test/phone/app.js` plays the installed Android app (build the debug APK first, see Android; `APP_APK=<path>` for
+  another, and with no APK it does nothing): `attach(pkg)` gives a scenario the same helpers for an app's WebView,
+  and `screenXml()` the launcher's UI tree.
+- A new scenario is a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `dragTo`,
+  `type`, `shot`, `run`, `check`, `calibrate`); shared seeds are in `test/phone/lib/seed.js`.
 
 - With no `--url` it serves this checkout on a free port forwarded with `adb reverse`; Chrome opens
   `http://localhost:<port>/`, a secure context, so Wake Lock and the like work as on the real site.
@@ -53,6 +64,12 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   page, not hard-coded. Timed parts run on `page.clock`. The host's PulseAudio may fail to open
   while Android audio still runs, so judge sound by the dumpsys checks. **Agents share the
   emulators:** `npm run phone` takes a free slot or waits its turn by itself; never start an emulator by hand or delete a lock.
+- What the runner does so a run can be believed: `shot()` waits for two real frames (`window.__frame`, the real
+  `requestAnimationFrame` kept before `page.clock` replaces it) and 400 ms, so a screenshot isn't a frame behind on
+  the software-rendered emulator. Playwright pins `prefers-color-scheme` to light, so the runner turns that off
+  (`emulateMedia({ colorScheme: null })`) and the phone's own night mode shows. After `wm size` (a short phone)
+  Chrome's toolbar moves and the page sits elsewhere on screen: `calibrate()` measures it again, and `tools/play.js`
+  calls it. `play.js` also flags a tap that another element took, or a target partly under another's.
 
 ## Architecture
 
@@ -114,9 +131,9 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   with her), `front`, `back` (the costume's wings: your own butterfly, by the kit) or `arm` (the costume's
   straps, in each `data-arm` group so `flap()` beats them). `lumi(mood, skin, colours)`; `worn(progress)`
   is `progress.skin` once its `skin:<id>` rule (`SKIN_RULES` in garden/model.js) is earned. Arrive through
-  `award()` like anything else, listed first on an end screen; the wardrobe (`wardrobe()` in app.js, from ⋯
+  `award()` like anything else, listed on an end screen after a raised butterfly's stage; the wardrobe (`wardrobe()` in app.js, from ⋯
   and the garden) wears one with a tap. Worn wherever Lumi is drawn large and in the widget's poses; not
-  in the pond (too small to read) nor on the launcher icon. Words: `SKIN_WORDS`.
+  in the pond (too small to read) nor on the launcher icon. Words: `SKIN_WORDS`. `dressed()` in app.js draws Lumi with the learner's butterfly in her head group (`lumi(mood, skin, colours, perch)`), on top of a hat by the skin's `perch` height, and never with the costume.
 - **Coach voice:** each coach's voice sheet and line pools are data, one file each in
   `src/cast/voice/<coach>.json` (`voice`: personality, how they encourage and dare, `never` words;
   `lines` and `dares`: `{ when, lines }` pools keyed by habit, streak band, hour band, light, and the
@@ -266,7 +283,7 @@ a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, 
   `liven()` in app.js moves them: a gust (`gust()`, scene.js) rolls left to right every few seconds and
   leans the grass and each plant in turn; `animateScene()` drifts clouds, pulses the sun, twinkles glints
   and stars and wanders fireflies; flies in visitors that just arrived (`data-new`), and pauses offscreen or hidden. A plant or its card opens
-  `habitView(id, back)`. Both end screens list what `award()` brought, three lines at most.
+  `habitView(id, back)`. `award()` returns `newly` most important first (a raised butterfly's stage, then a skin, a landmark, a visitor, a flower); `listed()` caps what an end screen lists at three lines, two above "How do you feel?", and the rest is "and N more in your garden".
 - Garden sounds are real files, `assets/sounds/*.wav`, made by `node tools/sounds.js` (plucks,
   bells, chirps, a buzz, all synthesised there, so they are ours to ship). `chime(gift)` in feel.js
   plays one through an `Audio` element (src/ never calls fetch): `plant` when a habit is added, and
@@ -368,6 +385,16 @@ after `npm ci` at the root. App id `com.joebywan.wingbeat`, locked.
 - **System bars follow the page:** on every screen change and theme change app.js hands the body's background to
   `tellBars()` (widget.js), which keeps `<meta name="theme-color">` current and calls `WingbeatBridge.bars(color, light)`,
   so Wind down's night palette darkens the bars in light mode too.
+- **Dark theme:** the page and the system bars follow the phone's night mode, live (the activity handles `uiMode`
+  itself) and from a cold start. While the WebView loads, the window shows the page's own background
+  (`values(-night)/themes.xml`), so the wait isn't a flash.
+- **Large text:** the WebView follows the phone's font size (`textZoom` is not pinned). app.js measures it once, and
+  when it is above 1 sets `--text-scale`, which the path's rows, nodes and labels and the room under fixed bars
+  multiply by. A browser never sets it, so the web app is unchanged. A px `line-height` is already scaled by the text
+  zoom, so don't multiply one.
+- **The widget** lands one row high (`minHeight` 40dp) and can be stretched taller; Lumi is sized to the space, at
+  most 96dp. The launcher's list shows the layout itself (`previewLayout`), with the tagline. A count of 0 is sent as
+  null, so there is no number before there is a streak.
 - **Back:** home leaves the app, except within a second of a back that landed there (MainActivity), so a quick
   double press out of a routine stops on home.
 - The icon is Lumi close up with the butterfly on her crown, on the garden green, generated by
