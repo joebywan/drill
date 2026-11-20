@@ -190,7 +190,7 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
 - **Sound and motion in the new units.** Live values and the drawing trail under normal motion were
   only seen in a one-off script: e2e runs with reduced motion.
 - **The live site** was played on the emulator (first visit, the walkthrough, the butterfly, the garden, the wardrobe, a one-tap habit). Not yet from another network.
-- **Firefox** hasn't been played at all since these changes. The fades that show a box has more below use scroll-driven animations, which it lacks; there the boxes just scroll.
+- **Firefox** hasn't been played at all since these changes. The gradients that show a box has more above or below are plain CSS now (`scrollBox()` in `src/fit.js`) and were seen in a headless Firefox.
 
 **Coding: played** (2026-11, emulator Pixel 6, `CODING_UNIT=n npm run phone -- coding-all`, `tools/play.js`)
 
@@ -209,7 +209,7 @@ sessions run longer. A quarter to a third of every session is repeats (2 warm-up
   block being run is kept in view, and once answered the box ends above the verdict with the block where the run stopped (or the fix) in view.
   **Left:** on a 412x533 page the verdict takes most of the screen, so an answered tall program shows in a box 27 to 120px high (part of a row to a few
   rows, the block that matters among them); the program reads whole while asked, short of 3 to 4px in `var-3-grow`, `bug-3-count` and `bug-3-sign`. A laid-out answer (palette, free) that
-  is long still scrolls in its box at 412x786, as before. The fade uses scroll-driven animation, which Firefox lacks (there it just scrolls).
+  is long still scrolls in its box at 412x786, as before. Its edges show more above or below with `scrollBox()` (plain gradients; the mask it used first crashed the emulator's software renderer).
 - **Small tap targets and mis-taps** (low): every block to tap in a program (Coding and the code courses) gets an invisible target sized by
   `reachOf()` in `src/builder.js`: toward 44px each way into empty space, but only halfway to any other block to tap, so no target lies over
   another's box. Before, on a short phone, `bug-3-sign`'s `<` had the value below's target over its bottom edge, and a tap on it emptied

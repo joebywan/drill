@@ -34,18 +34,41 @@ export function keepInView(box, el) {
   if (by) box.scrollBy({ top: by, behavior: reducedMotion() ? 'auto' : 'smooth' });
 }
 
+/**
+ * Makes `el` a box that scrolls in itself (`.scrolls`) and shows when there is more of it above or below: it is
+ * marked `more-above` / `more-below`, kept right as it scrolls, changes size or is redrawn, and styles.css draws a
+ * plain gradient over that edge in the box's `--fade` colour. Plain DOM and CSS, so every browser shows it; not a
+ * mask, which crashed the emulator's software renderer. Returns `el`.
+ */
+export function scrollBox(el) {
+  el.classList.add('scrolls');
+  if (el.edges) return el;
+  el.edges = true;
+  if (getComputedStyle(el).position === 'static') el.style.position = 'relative'; // the gradients sit on its edges
+  const mark = () => {
+    el.style.setProperty('--scrolled', `${el.scrollTop}px`);
+    el.classList.toggle('more-above', el.scrollTop > 1);
+    el.classList.toggle('more-below', el.scrollHeight - el.clientHeight - el.scrollTop > 1);
+  };
+  el.addEventListener('scroll', mark, { passive: true });
+  new ResizeObserver(mark).observe(el);
+  new MutationObserver(mark).observe(el, { childList: true, subtree: true, characterData: true });
+  mark();
+  return el;
+}
+
 /** Where `el`'s top is on the page (as if scrolled to the top, where a lesson is seen). */
 export const topOf = (el) => el.getBoundingClientRect().top + scrollY;
 
 /**
- * Past `bottom` (a y on the page) `el` scrolls in its own box (the `.scrolls` class), if it is taller than that; a box
+ * Past `bottom` (a y on the page) `el` scrolls in its own box (`scrollBox`), if it is taller than that; a box
  * only ever shrinks. With `always`, the box ends at `bottom` whatever `el` holds now or was before (an answer that grows).
  */
 export function boxTo(el, bottom, always = false) {
   const room = Math.floor(bottom - topOf(el) - 8);
   if (!always && (el.scrollHeight <= room + 1 || room >= parseFloat(el.style.maxHeight))) return;
   el.style.maxHeight = `${room}px`;
-  el.classList.add('scrolls');
+  scrollBox(el);
 }
 
 /** The tallest height up to `limit` that ends on a whole row of `el`'s children (measured from its content's top). */
@@ -109,7 +132,7 @@ export function fitCard(quiz, item, coach) {
     const over = () => bubble.getBoundingClientRect().bottom - tray.getBoundingClientRect().top;
     for (const c of ['tall', 'tighter']) { if (over() <= 0) break; quiz.classList.add(c); }
     // Whatever the font does to the labels, the last of it scrolls in the tray's own box.
-    if (over() > 0) { tray.style.maxHeight = `${Math.floor(tray.getBoundingClientRect().height - over())}px`; tray.style.overflowY = 'auto'; }
+    if (over() > 0) { tray.style.maxHeight = `${Math.floor(tray.getBoundingClientRect().height - over())}px`; scrollBox(tray); }
     return;
   }
   const slots = [...card.querySelectorAll('.slot')];
@@ -126,7 +149,7 @@ export function fitCard(quiz, item, coach) {
       const k = Math.max(0.45, (high - over()) / high);
       for (const p of pics) p.style.maxWidth = `${Math.floor(p.getBoundingClientRect().width * k)}px`;
     }
-    if (over() > 0) { card.style.maxHeight = `${Math.floor(card.getBoundingClientRect().height - over())}px`; card.style.overflowY = 'auto'; }
+    if (over() > 0) { card.style.maxHeight = `${Math.floor(card.getBoundingClientRect().height - over())}px`; scrollBox(card); }
   }
   slots.forEach((s, i) => { s.textContent = was[i]; });
 }

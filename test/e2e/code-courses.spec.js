@@ -144,6 +144,33 @@ test('the Test writing tray never shows a chip cut in half above Run', async ({ 
   expect(bad).toEqual([]);
 });
 
+test('a box that scrolls marks more above and below, and drops the marks as it scrolls to its ends', async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 533 });
+  await page.goto('/');
+  await page.addStyleTag({ content: ':root { --mono: "DejaVu Sans Mono", monospace; }' });
+  const item = itemsOf(testing).find((i) => i.id === 'tb-2-7');
+  await page.evaluate(async (item) => {
+    const { mount } = await import('/src/code/exercise.js');
+    const app = document.getElementById('app');
+    app.innerHTML = `<header class="bar" style="height:44px"></header><main class="play"><p class="topic">Topic</p>
+      <div class="coach"><button class="who"></button><p class="bubble"></p></div><div class="stage"></div></main>`;
+    mount(app.querySelector('.stage'), item, { say(t) { app.querySelector('.bubble').textContent = t; }, done() {} });
+  }, item);
+  const given = page.locator('.code-given');
+  const marks = () => given.evaluate((e) => [e.classList.contains('more-above'), e.classList.contains('more-below'), getComputedStyle(e, '::after').content !== 'none', getComputedStyle(e, '::before').content !== 'none']);
+  expect(await marks()).toEqual([false, true, true, false]); // the code under test is taller than its share here
+  await given.evaluate((e) => { e.scrollTop = 20; });
+  await expect.poll(marks).toEqual([true, true, true, true]);
+  await given.evaluate((e) => { e.scrollTop = e.scrollHeight; });
+  await expect.poll(marks).toEqual([true, false, false, true]);
+  // The gradient stays on the box's edge, not on the content it scrolled past.
+  const [edge, box] = await given.evaluate((e) => [parseFloat(getComputedStyle(e, '::before').top), e.scrollTop]);
+  expect(edge).toBe(box);
+  // A box that grows to hold all it has drops the marks.
+  await given.evaluate((e) => { e.style.maxHeight = 'none'; });
+  await expect.poll(marks).toEqual([false, false, false, false]);
+});
+
 for (const [course, id] of [[javascript, 'jsv-1'], [javascript, 'jsl-1'], [javascript, 'jsf-3'], [javascript, 'jse-2'], [typescript, 'tsu-2'], [testing, 'tb-1']]) {
   test(`${course.title}: ${id} plays through as a real session`, async ({ page }) => {
     test.setTimeout(120000);

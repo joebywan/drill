@@ -3,7 +3,7 @@ import { builder, thumbTargets } from '../builder.js';
 import { gridHtml, walkerOn } from './grid.js';
 import { dragTile } from '../drag.js';
 import { flourish, play } from '../feel.js';
-import { fitter } from '../fit.js';
+import { fitter, scrollBox } from '../fit.js';
 import { esc } from '../html.js';
 
 const DEMO_WAIT_MS = 900; // long enough to see the grid before a teach card's program plays
@@ -98,7 +98,7 @@ export function mount(el, item, { say, done, coach }) {
     tilesEl.append(runEl);
     // A long answer scrolls inside the space between the map and the tray, so neither moves.
     programEl.style.maxHeight = `${tilesEl.getBoundingClientRect().top - programEl.getBoundingClientRect().top - 8}px`;
-    programEl.classList.add('scrolls');
+    scrollBox(programEl);
     runEl.addEventListener('click', async () => {
       runEl.disabled = true;
       board.lock();
