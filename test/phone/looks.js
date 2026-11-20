@@ -25,12 +25,12 @@ export default async ({ page, adb, seed, touch, btn, shot, check }) => {
       // The phone's own night mode, not an emulated one: the runner lets it through (tools/phone.js, helpersFor).
       check("dark: the page sees the phone's night mode", await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches));
     } else {
-      const size = () => page.evaluate(() => [getComputedStyle(document.body).fontSize, Math.round(document.querySelector('.bar h1').getBoundingClientRect().height)].join(' / '));
+      const size = () => page.evaluate(() => [getComputedStyle(document.body).fontSize, Math.round(document.querySelector('.path-tab').getBoundingClientRect().height)].join(' / '));
       await seed(p);
       const normal = await size();
       set.large(); await page.reload();
       await seed(p);
-      check('large: Chrome takes notice (body font / title height)', (await size()) !== normal, `${normal} → ${await size()}`);
+      check('large: Chrome takes notice (body font / tab height)', (await size()) !== normal, `${normal} → ${await size()}`);
     }
     await tour(mode);
   } finally {

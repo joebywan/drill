@@ -22,6 +22,11 @@ export default async ({ page, seed, touch, shot, check, adb, calibrate, run }) =
           return { unit: y('.street h2'), here: y('.node.here'), height: innerHeight, width: innerWidth };
         });
         check(`day ${d}, ${name}: home drew`, await page.locator('.garden-link').count() === 1);
+        const row = await page.evaluate(() => {
+          const r = document.querySelector('.streak-row')?.getBoundingClientRect();
+          return r && [...document.querySelectorAll('.streak-row > *')].every((c) => { const b = c.getBoundingClientRect(); return b.top < r.top + r.height / 2 && b.bottom > r.top + r.height / 2; });
+        });
+        if (row !== undefined) check(`day ${d}, ${name}: the streak row is one line`, row !== false);
         rows.push({ state: `day ${d} ${name}`, ...at });
         await shot(`day${d}-${name}`);
       }

@@ -17,11 +17,12 @@ export default async (h) => {
     await seed(p);
     await touch(btn(/^Learning(,|$)/)); await page.evaluate(() => scrollTo(0, 0));
   };
-  const raising = () => page.locator('.raising').textContent();
+  // The picture at the end of the streak row, named by what it is raising; nothing once it has emerged.
+  const raising = async () => ((await page.locator('.streak-row .raising').count()) ? page.locator('.streak-row .raising').getAttribute('aria-label') : 'nothing');
 
   // On the path: [what, units finished (or -1 for one lesson), the line].
   for (const [what, d, want] of [['egg', -1, /is raising/], ['caterpillar-small', 1, /is raising/], ['caterpillar-grown', 7, /is raising/],
-    ['chrysalis', 8, /is raising/], ['butterfly', 9, /raised a Blue Triangle/]]) {
+    ['chrysalis', 8, /is raising/], ['butterfly', 9, /^nothing$/]]) {
     await maths(lessons(base(), 'maths', (all) => (d < 0 ? all.slice(0, 1) : units.slice(0, d).flatMap((u) => u.lessons))));
     check(`path: ${what}`, want.test(await raising()), await raising());
     await shot(`path-${what}`);

@@ -1,5 +1,5 @@
 // Home for someone 30 days in, with four habits and two courses: the butterfly beside the streak line basking,
-// flying and resting, what each path is raising, Walk's "when", the dot a quiet habit shows in place of its
+// flying and resting, what each path is raising (a picture in the streak row), Walk's "when", the dot a quiet habit shows in place of its
 // number, and the way to the wardrobe (⋯). Then a quiet habit (Calm) keeps its count off the tab, the greeting
 // and the end screen until ⋯ switches it on.
 import { atTop, showTab, thirtyDays } from './lib/seed.js';
@@ -23,19 +23,22 @@ export default async ({ page, seed, touch, btn, shot, run, check }) => {
     await calmTab.getAttribute('aria-label'));
   check('quiet: no count in the greeting', !/\d/.test(await page.locator('.greeting').textContent()), await page.locator('.greeting').textContent());
   check('quiet: no count on the streak line', !/\d/.test(await page.locator('.streak-line').textContent()), await page.locator('.streak-line').textContent());
-  check('Calm: what it is raising', /Calm (is raising|raised)/.test(await page.locator('.raising').textContent()), await page.locator('.raising').textContent());
+  check('Calm: its butterfly has emerged, so nothing for it on the path', await page.locator('.raising').count() === 0);
 
   await show('walk'); await top(); await shot('walk');
   check('Walk: its when on the panel', (await page.locator('.log-habit .when').textContent()) === 'After breakfast');
   check('Walk: what it is raising', await page.locator('.log-habit .raising').count() === 1);
+  check('Walk: no hint once it has been logged', await page.getByText('One tap when it happens').count() === 0);
   await show('reflect'); await top(); await shot('reflect');
   await show('move'); await top(); await shot('move');
   await show('learn'); await top(); await shot('learning');
-  check('Learning: what the course is raising', /is raising/.test(await page.locator('.raising').textContent()), await page.locator('.raising').textContent());
+  const pic = page.locator('.streak-row .raising');
+  check('Learning: what the course is raising, a picture at the end of the streak row', /is raising/.test(await pic.getAttribute('aria-label')), await pic.getAttribute('aria-label'));
   await page.evaluate(() => scrollTo(0, document.body.scrollHeight)); await shot('learning-bottom');
 
   await touch(btn('Settings')); await shot('menu');
   check('the wardrobe is one tap from ⋯', await btn("Lumi's wardrobe").count() === 1);
+  check('Sound is a switch in Settings', await page.locator('[data-pref="sound"][aria-pressed="true"]').count() === 1);
   await touch(btn('Back'));
 
   // A Calm session on a quiet Calm: no streak chip on the end screen.

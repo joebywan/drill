@@ -1062,14 +1062,22 @@ test('Focus with nothing picked, on your own time from the timings', async ({ pa
   await expect(page.getByRole('list', { name: 'What you focused on' })).toHaveCount(0);
 });
 
-test('mute stays muted after a reload', async ({ page }) => {
+test("Settings' Sound switch mutes and unmutes, and stays muted after a reload", async ({ page }) => {
   await firstVisit(page);
-  const sound = page.getByRole('button', { name: 'Sound' });
+  await expect(page.locator('.sound')).toHaveCount(0); // not on home any more
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await expect(page.getByRole('heading', { name: 'Sound', exact: true })).toBeVisible();
+  const sound = page.getByRole('button', { name: 'Sounds and spoken words' });
   await expect(sound).toHaveAttribute('aria-pressed', 'true');
   await sound.click();
   await expect(sound).toHaveAttribute('aria-pressed', 'false');
+  expect(await page.evaluate(() => localStorage.getItem('wingbeat.sound'))).toBe('off');
   await page.reload();
+  await page.getByRole('button', { name: 'Settings' }).click();
   await expect(sound).toHaveAttribute('aria-pressed', 'false');
+  await sound.click();
+  await expect(sound).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.evaluate(() => localStorage.getItem('wingbeat.sound'))).toBe('on');
 });
 
 test('progress saved to a file loads back', async ({ page }) => {
@@ -1143,7 +1151,7 @@ test('a fifth day of Calm hatches its caterpillar, shown on the end screen and i
 
   // Home's line for the habit shown, and the strip keeps to emerged butterflies.
   await tab(page, 'Calm').click();
-  await expect(page.locator('.raising')).toHaveText('Calm is raising a Common Brown');
+  await expect(page.locator('.streak-row .raising')).toHaveAccessibleName('Calm is raising a Common Brown');
   await expect(strip(page, 2).locator('svg.visitor-butterfly, svg.creature')).toHaveCount(0);
   await strip(page, 2).click();
   await expect(page.getByRole('heading', { name: 'Your garden' })).toBeFocused();
@@ -1175,14 +1183,12 @@ test('a backlog of arrivals after a practice shows two lines, then the rest in o
   await expect(page.locator('.arrivals li').last()).toHaveText(/^and \d+ more in your garden$/);
 });
 
-test('with all five habits started, the bar fits at 360px and the tabs are one row that scrolls inside itself', async ({ page }) => {
+test('with all five habits started, ⋯ fits at 360px and the tabs are one row that scrolls inside itself', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 800 });
   await grown(page, ['learn', 'calm', 'move', 'reflect', 'break'], 14);
   await firstVisit(page);
-  for (const name of ['Sound', 'Settings']) {
-    const box = await page.getByRole('button', { name }).boundingBox();
-    expect(box.x >= 0 && box.x + box.width <= 360, name).toBe(true);
-  }
+  const menu = await page.getByRole('button', { name: 'Settings' }).boundingBox();
+  expect(menu.x >= 0 && menu.x + menu.width <= 360).toBe(true);
   const tabs = page.getByRole('navigation', { name: 'Show the path for' });
   const rows = await tabs.getByRole('button').evaluateAll((els) => new Set(els.map((e) => e.offsetTop)).size);
   expect(rows).toBe(1);
@@ -1308,6 +1314,8 @@ test('a self-reported habit: add Walk, one tap, its streak and plant, and Undo t
   const walked = page.getByRole('button', { name: 'I walked today' });
   const box = await walked.boundingBox();
   expect(box.y + box.height).toBeGreaterThan(915 - 160); // in the thumb zone
+  const hint = page.getByText('One tap when it happens. That is all.');
+  await expect(hint).toBeVisible();
   await walked.click();
 
   await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
@@ -1321,6 +1329,7 @@ test('a self-reported habit: add Walk, one tap, its streak and plant, and Undo t
   await expect(week(page, 1)).toBeVisible();
   await page.reload();
   await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
+  await expect(hint).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Undo' }).click();
   await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk');
@@ -1736,9 +1745,11 @@ test('Calm sounds: both are off until turned on, the bell then rings at the star
   await expect(page.getByRole('heading', { name: 'How do you feel?' })).toBeVisible();
   expect(await bells()).toBe(3);
 
-  // Muted on the home bar: no bell and no rain.
+  // Muted in Settings: no bell and no rain.
   await continueButton(page).click();
-  await page.getByRole('button', { name: 'Sound' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Sounds and spoken words' }).click();
+  await page.getByRole('button', { name: 'Back' }).click();
   await page.getByRole('button', { name: 'Continue · Six slow breaths' }).click();
   await expect(page.getByText('Breath 1 of 6')).toBeVisible();
   expect(await bells()).toBe(3);
@@ -2693,6 +2704,44 @@ test('before any routine is finished the link counts the day directly', async ({
   await expect(page.getByRole('button', { name: 'Continue · The long out-breath' })).toBeVisible(); // nothing unlocked
 });
 
+test("a path's streak row ends with what it is raising, into its field guide page, until it has emerged", async ({ page }) => {
+  let p = emptyProgress();
+  for (let i = 30; i >= 1; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    p = finishPractice(p, 'calm', null, d);
+    if (i <= 6) p = finishPractice(p, 'move', null, d);
+  }
+  p = award(p).progress;
+  await page.addInitScript((saved) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', saved); }, JSON.stringify(p));
+  await firstVisit(page);
+  // Move is raising a caterpillar: its picture is the streak row's last item, named by the pill's old words.
+  await tab(page, 'Move').click();
+  const pic = page.locator('.streak-row > .raising');
+  await expect(pic).toHaveAccessibleName('Move is raising a Wanderer');
+  await expect(pic.locator('svg.creature')).toBeVisible();
+  await expect(pic).toHaveText('');
+  expect(await page.locator('.streak-row > *').last().evaluate((e) => e.classList.contains('raising'))).toBe(true);
+  await expect(page.locator('.home > .pane > .raising, .home .raising:not(.streak-row > .raising)')).toHaveCount(0);
+  await pic.click();
+  await expect(page.getByRole('heading', { name: 'Wanderer' })).toBeFocused();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(pic).toBeFocused();
+  // Calm's butterfly has emerged: it is in the garden, so Calm's path shows nothing for it.
+  await tab(page, 'Calm').click();
+  await expect(page.locator('.streak-row')).toBeVisible();
+  await expect(page.locator('.raising')).toHaveCount(0);
+});
+
+test("a one-tap habit's hint goes once it has been logged", async ({ page }) => {
+  await grown(page, ['walk'], 1, true, { tracked: [{ id: 'walk' }] });
+  await firstVisit(page);
+  await tab(page, 'Walk').click();
+  await expect(page.getByRole('button', { name: 'I walked today' })).toBeVisible();
+  await expect(page.getByText('One tap when it happens. That is all.')).toHaveCount(0);
+  await expect(page.locator('.log-habit .raising')).toHaveText('Walk is raising a Caper White'); // the panel keeps its pill
+});
+
 test('the field guide opens from the garden and from home, and shows every kind', async ({ page }) => {
   let p = emptyProgress();
   for (let i = 30; i >= 1; i--) {
@@ -2705,7 +2754,7 @@ test('the field guide opens from the garden and from home, and shows every kind'
   await page.addInitScript((saved) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', saved); }, JSON.stringify(p));
   await firstVisit(page);
   await tab(page, 'Move').click();
-  await expect(page.locator('.raising')).toHaveText('Move is raising a Wanderer');
+  await expect(page.locator('.raising')).toHaveAccessibleName('Move is raising a Wanderer');
   await page.locator('.raising').click();
   await expect(page.getByRole('heading', { name: 'Wanderer' })).toBeFocused();
   await expect(page.locator('main')).toContainText('8 more days to its chrysalis');
