@@ -137,7 +137,8 @@ export function fitter({ program, tray, world = null, g = null, lines }) {
       const bottom = innerHeight - foot.offsetHeight;
       // A verdict taller than foreseen (a miss puts its reason first) that leaves under a line: the coach gives way now.
       if (bottom - topOf(program) - 8 < LINE) program.classList.add('tall');
-      boxTo(program, bottom, always);
+      // Never boxed to less than a LINE: past what the app promises (a 206px page) the page scrolls it clear of the verdict.
+      boxTo(program, Math.max(bottom, topOf(program) + 8 + LINE), always);
     }
     keep(el);
   };
