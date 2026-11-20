@@ -1,5 +1,5 @@
 import { test as base, expect, reach, solve } from './fixtures.js';
-import { misfits } from '../phone/lib/fits.js';
+import { CHESS, CODE, CODING, QUIZ, inView, misfits, reachable, verdictRule } from '../phone/lib/fits.js';
 import { daysIn } from '../phone/lib/seed.js';
 import { scan } from '../../tools/play.js';
 import { subjects } from '../../src/subjects.js';
@@ -18,12 +18,11 @@ const LOOKS = [
   { name: '320 wide', font: 16, viewport: { width: 320, height: 568 } },
   { name: '206 wide (200% zoom)', font: 16, viewport: { width: 206, height: 393 } },
 ];
-// What doesn't fit yet, by look, kind and when: design calls, not bugs (the pull request has the pictures). At 200% text
-// the verdict alone is over half the screen, and at 206 x 393 (200% zoom) there is no room for coach, card and tray.
+// What doesn't fit at 206 x 393 (a 412px phone at 200% zoom), by kind and when. That page is beyond what the app promises:
+// there the bar is nothing lost and everything reachable (`reachable`), not everything in view.
 const LESSON = ['a Chess board (true or false)', 'a quiz pick', 'a match of pairs', 'a sentence build', 'a number line', 'a Coding program', 'a code build with its tray', 'a code quiz card'];
 const OPEN = {
-  'text at 200%': { answered: ['a Chess board (true or false)', 'a Coding program', 'a code build with its tray'] },
-  '206 wide (200% zoom)': { asked: ['a sentence build', 'a code build with its tray'], answered: LESSON },
+  '206 wide (200% zoom)': { asked: ['a quiz pick', 'a code build with its tray'], answered: ['a Chess board (true or false)', 'a quiz pick', 'a Coding program', 'a code build with its tray'] },
 };
 const PIN = 'body, button { font-family: "DejaVu Sans", Verdana, sans-serif; } :root { --mono: "DejaVu Sans Mono", monospace; }';
 
@@ -39,6 +38,8 @@ const test = base.extend({
       page = await (await own.newContext({ ...contextOptions, viewport, baseURL, reducedMotion: 'reduce' })).newPage();
       await page.addInitScript(() => { window.WINGBEAT_PLAIN = true; }); // as fixtures.js does
     }
+    // The verdict says the longest line its coach has (the one fit.js makes room for), not one picked at random.
+    await page.addInitScript(() => { window.WINGBEAT_LONGEST = true; });
     await page.addInitScript((css) => addEventListener('DOMContentLoaded', () => document.head.append(Object.assign(document.createElement('style'), { textContent: css }))), PIN);
     await use(page);
     await own?.close();
@@ -48,10 +49,6 @@ const test = base.extend({
 test.describe.configure({ mode: 'parallel' });
 
 const continueButton = (page) => page.getByRole('button', { name: 'Continue', exact: true });
-const QUIZ = { parts: ['.bubble', '.card', '.choices'], tray: ['.choices'] };
-const CODING = { parts: ['.bubble', '.grid-world', '.vars', '.program', '.tiles'], tray: ['.tiles'] };
-const CODE = { parts: ['.bubble', '.code-given', '.program', '.card', '.tiles', '.choices'], tray: ['.tiles', '.choices'] };
-const CHESS = { parts: ['.bubble', '.board', '.choices'], tray: ['.choices'] };
 
 /**
  * Everything wrong with the screen as it is, `what` naming it: `misfits` (lib/fits.js), and in a lesson `scan` of its
@@ -61,6 +58,7 @@ async function wrong(page, what, parts, answered = false) {
   await page.waitForTimeout(100);
   const found = answered ? await page.evaluate(() => (document.documentElement.scrollWidth > innerWidth ? ['the page scrolls sideways'] : [])) : await page.evaluate(misfits);
   if (parts) found.push(...await page.evaluate(scan, parts));
+  if (parts) found.push(...await page.evaluate(inView, parts));
   return found.map((f) => `${what}: ${f}`);
 }
 
@@ -129,19 +127,23 @@ for (const look of LOOKS) test.describe(look.name, () => {
       const known = OPEN[look.name] ?? {};
       const asked = await reach(page, course, lesson, item);
       const bad = await wrong(page, `${item} asked`, parts);
+      const lostAsked = known.asked?.includes(kind) ? (await page.evaluate(reachable, parts)).map((f) => `${item} asked: ${f}`) : [];
       await page.screenshot({ path: test.info().outputPath(`${item}-asked.png`) });
       if (/pairs/.test(item)) await solve(page, course, asked); // a match needs the right pairs to end
       await answerAnyhow(page);
       const after = await wrong(page, `${item} answered`, parts, true);
       await page.screenshot({ path: test.info().outputPath(`${item}-answered.png`) });
-      // What is still open is reported as an annotation, not failed. Not held either way: the verdict's words are picked
-      // at random, so an item near the edge (200% text, Coding) fits one time and not the next.
+      // The verdict: never more than half the screen, Continue in view, its words read to the end in its own box.
+      const verdict = (await page.evaluate(verdictRule)).map((f) => `${item} verdict: ${f}`);
+      await page.screenshot({ path: test.info().outputPath(`${item}-verdict-end.png`) });
+      // Where not everything fits (206 x 393), nothing may be lost: what the tray or the verdict covers can be scrolled clear.
       for (const [when, found] of [['asked', bad], ['answered', after]]) {
         if (!known[when]?.includes(kind)) continue;
-        test.info().annotations.push({ type: 'open', description: `${when}: ${found.join('; ') || 'fits this time'}` });
+        test.info().annotations.push({ type: 'covered, reachable', description: `${when}: ${found.join('; ') || 'fits'}` });
         found.length = 0;
       }
-      expect([...bad, ...after]).toEqual([]);
+      const lost = [...lostAsked, ...(known.answered?.includes(kind) ? (await page.evaluate(reachable, parts)).map((f) => `${item} answered: ${f}`) : [])];
+      expect([...bad, ...after, ...verdict, ...lost]).toEqual([]);
     });
   }
 

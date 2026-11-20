@@ -8,6 +8,7 @@ import { HINT, LEVELS, thinking } from './engine.js';
 import { words } from './items.js';
 import { uci } from './puzzle.js';
 import { rosa } from '../cast/rosa.js';
+import { giveWay } from '../fit.js';
 import { GAME_WORDS } from '../cast/lines.js';
 import { cue, play } from '../feel.js';
 import { today } from '../progress.js';
@@ -32,6 +33,7 @@ function banner(tone, head, text, label) {
   foot.className = `foot show ${tone}`;
   foot.querySelector('strong').textContent = head;
   foot.querySelector('p').textContent = text;
+  giveWay(foot);
   const next = foot.querySelector('.next');
   next.textContent = label;
   next.setAttribute('aria-describedby', 'verdict');

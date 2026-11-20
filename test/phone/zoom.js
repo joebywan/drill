@@ -48,7 +48,7 @@ export default async (h) => {
       console.log(`  zoom ${pct} %: ${JSON.stringify(m)}`);
       check(`zoom ${pct} %: the page is laid out ${pct / 100}× narrower`, Math.abs(m.w - (before.w * 100) / pct) <= 2, `${before.w} → ${m.w} CSS px`);
       check(`zoom ${pct} %: --text-scale stays unset (everything grows together)`, !m.scale);
-      await textTour(h, check, `zoom ${pct}`);
+      await textTour(h, check, `zoom ${pct}`, { reach: pct === 200 }); // 206px is past what the app promises: nothing lost, all reachable
     }
   } finally {
     await zoom(100).catch((e) => check('Default zoom put back to 100 %', false, e.message.split('\n')[0]));

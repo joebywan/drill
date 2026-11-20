@@ -12,6 +12,7 @@ import { worn } from './cast/skins.js';
 import { BOX, butterfly, butterflyToday } from './cast/butterfly.js';
 import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, comeBack, dropEchoes, echoes, fresh, warmUps } from './repeat.js';
 import { GOES, easier, flying, helpFor, misses, noteAnswer, struggling, warmedLast } from './adapt.js';
+import { giveWay, longestVerdict } from './fit.js';
 import { CALM_SOUNDS, DARES_LABEL, SOUND_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, CHOOSE_WORDS, SKIN_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
@@ -1137,8 +1138,10 @@ function run(lessonId, queue, title, extra = null) {
         meter();
         shine();
         foot.className = `foot show ${correct === null ? 'plain' : correct ? 'right' : 'wrong'}`;
-        foot.querySelector('strong').textContent = kind === 'plain' ? '' : line(kind, Math.random(), who.lines);
+        // WINGBEAT_LONGEST (tests): the longest line of its kind, not one at random, so a check can't pass one run and fail the next.
+        foot.querySelector('strong').textContent = kind === 'plain' ? '' : window.WINGBEAT_LONGEST ? longestVerdict(who.lines, [kind]) : line(kind, Math.random(), who.lines);
         foot.querySelector('p').textContent = leftForReview ? `${text} ${MOVE_ON}` : text;
+        giveWay(foot); // at most half the screen
         // The answer tapped (or, on a board, the verdict) pops when right and gives a small shake when
         // not, unless the item already gave it its own (a quiz's cheer).
         const hit = correct === null ? null : stage.querySelector(correct ? '.choice.right' : '.choice.wrong') || foot.querySelector('strong');

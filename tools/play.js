@@ -42,7 +42,7 @@ export const scan = ({ parts: all, tray }) => {
     const s = getComputedStyle(el);
     const clip = (axis, size, client) => s[axis] !== 'visible' && s[axis] !== 'auto' && s[axis] !== 'scroll' && client > 0 && size > client + 2;
     if (el.textContent.trim() && clip('overflowX', el.scrollWidth, el.clientWidth)) out.push(`text clipped sideways: ${label(el)}`);
-    if (el.textContent.trim() && clip('overflowY', el.scrollHeight, el.clientHeight)) out.push(`text clipped at the bottom: ${label(el)}`);
+    if (el.textContent.trim() && clip('overflowY', el.scrollHeight, el.clientHeight) && !/^\d/.test(s.webkitLineClamp ?? 'none')) out.push(`text clipped at the bottom: ${label(el)}`); // a clamp is meant (the verdict's headline)
     const r = el.getBoundingClientRect();
     if (!el.children.length && el.textContent.trim() && (r.right > innerWidth + 1 || r.left < -1)) out.push(`text off the side: ${label(el)}`);
   }
