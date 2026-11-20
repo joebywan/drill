@@ -7,12 +7,15 @@ import { thirtyDays } from './lib/seed.js';
 export default async ({ page, seed, touch, btn, shot, run, check }) => {
   const label = () => page.locator('.yours-link').getAttribute('aria-label');
   const show = async (id) => { await touch(page.locator(`.path-tab[data-path="${id}"]`)); await page.locator(`.path-tab[data-path="${id}"][aria-pressed="true"]`).waitFor(); };
-  const top = () => page.evaluate(() => scrollTo(0, 0));
+  // After a tab change on a heavy home (a 30-day garden) the emulator's screen can lag the page by a second: the DOM is
+  // already Calm's at the top while a screenshot still shows the path before. Wait for the screen, not just the page.
+  const top = async () => { await page.evaluate(() => scrollTo(0, 0)); await page.waitForTimeout(1500); };
   // Up to yesterday: basking. Today too: flying. Up to the day before yesterday: resting.
   for (const [state, to] of [['flying', 0], ['resting', 2], ['basking', 1]]) {
     await seed(thirtyDays(to));
     await show('calm'); await top();
     check(`home: the butterfly is ${state}`, (await label()) === `Your butterfly, ${state}`, await label());
+    check(`home ${state}: Calm's own path under Calm's tab`, (await page.locator('.greeting b').textContent()) === 'Moss');
     await shot(`calm-${state}`);
   }
 

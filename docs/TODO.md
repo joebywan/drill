@@ -232,9 +232,10 @@ Fixed in the same pull request:
 
 Found, not fixed (design calls or bigger than a few lines):
 
-- **A course's own butterfly line goes missing on a busy end screen** (medium). Finishing Maths' eighth or last unit lists its
-  flowers first ("A flower opened for Mental maths", two more, "and 6 more in your garden"), so "made its chrysalis" and "is out"
-  are folded into "and N more" and never shown. A habit's lines come in time order and show. The creature's line should lead.
+- **A creature's line can fall into "and N more"** (low). `arrivals()` shows skins, then the first three garden lines; the creature's
+  stage isn't put first. In real play a unit's flower and its creature arrive together, so both show (seen); only a save that earns
+  many things at once (a placement, an import) folds the creature's line into "and N more in your garden". A first pass reported
+  this as medium from a seed that hadn't awarded earlier units; with what those units earned, the lines show.
 - **End screens are crowded on milestone days** (medium). Calm on its 14th day shows the headline, the wingbeat with Lumi and your
   butterfly, a bow tie for Lumi, the chrysalis, a bee, a birdhouse, then three feelings and Continue: the last feeling sits under the
   fixed Continue until scrolled. A Maths checkpoint has three chips, the wingbeat, a skin and four lines. About ten things now grow,
