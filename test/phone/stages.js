@@ -5,7 +5,7 @@
 import { award } from '../../src/garden/model.js';
 import { emptyProgress } from '../../src/progress.js';
 import { subjects } from '../../src/subjects.js';
-import { allBut, lessons, playMaths, practised } from './lib/seed.js';
+import { allBut, lessons, mathsRaising, playMaths, practised } from './lib/seed.js';
 
 const units = subjects.find((s) => s.id === 'maths').units; // nine
 const base = () => ({ ...emptyProgress(), start: 'x', picked: [] }); // picked: the intro is done
@@ -21,9 +21,9 @@ export default async (h) => {
   const raising = async () => ((await page.locator('.streak-row .raising').count()) ? page.locator('.streak-row .raising').getAttribute('aria-label') : 'nothing');
 
   // On the path: [what, units finished (or -1 for one lesson), the line].
-  for (const [what, d, want] of [['egg', -1, /is raising/], ['caterpillar-small', 1, /is raising/], ['caterpillar-grown', 7, /is raising/],
-    ['chrysalis', 8, /is raising/], ['butterfly', 9, /^nothing$/]]) {
-    await maths(lessons(base(), 'maths', (all) => (d < 0 ? all.slice(0, 1) : units.slice(0, d).flatMap((u) => u.lessons))));
+  for (const [what, want] of [['egg', /is raising/], ['hatchling', /is raising/], ['half-grown', /is raising/], ['full-grown', /is raising/],
+    ['chrysalis', /is raising/], ['butterfly', /^nothing$/]]) {
+    await maths(what === 'butterfly' ? lessons(base(), 'maths', () => units.flatMap((u) => u.lessons)) : mathsRaising(what, base()));
     check(`path: ${what}`, want.test(await raising()), await raising());
     await shot(`path-${what}`);
   }
