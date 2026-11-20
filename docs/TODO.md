@@ -228,8 +228,34 @@ sessions run longer. A quarter to a third of every session is repeats (2 warm-up
 
 **Code courses: to judge by playing**
 
-- **Pacing and tone.** 49 lessons have automated proofs (every item solvable, decoys fail, nothing asked before it is taught, 8 taps at most but
-  for a construct's first build) but only six have been played, and only by e2e. Judge whether chips are the right size.
+- **Pacing and tone: played, see below.** All 68 lessons have now been played on the emulator (JavaScript, TypeScript, Test writing); a real
+  beginner, a real finger and a real keyboard have not. Judging whether the chips are the right size still wants one.
+
+**Code courses: played** (2026-11, emulator Pixel 6, `CODE_COURSE=javascript|typescript|testing CODE_UNIT=n npm run phone -- code-all`, `tools/play.js`)
+
+All 21 units, 68 lessons (JavaScript 39, TypeScript 15, Test writing 14, checkpoints included, 724 items), by real touch with warm-ups and echoes
+on, answers worked out from the item with `src/code/items.js` (`wayOf`, `chipsOf`, `optionsOf`): no wrong verdict for a right answer, no page error,
+no failed request, no sideways overflow, nothing untappable. Sessions are 8 to 13 items (checkpoint 8) and about 0:40 to 1:35 at a steady pace;
+none near 6 minutes or 20 items. The longest are `jsn-1` and `jsl-3` (~1:35 each; `jsn-1` has the most taps, 59), `jse-2`, `tb-2`
+(~1:27, 56 taps) and `ts-1` (~1:25). The estimate is a learner who knows the answer, so real sessions run longer. The short phone
+(412x533) played the two longest lessons of each course (`jsn-1`, `jsl-1`, `tsa-1`, `tsi-1`, `tb-2`, `ts-1`) with the same result.
+
+- **What a build printed is hidden under the verdict** (medium). The "What it printed" line sits just above the tray, and the verdict banner covers
+  the same place, so after Run the learner never sees the result they made (49 lessons, every print item; the goal "It should print" stays in view
+  above, and a miss says what it printed). Coding's last-line problem, in another part. Fix: put the printed line above the answer, or in the verdict.
+- **A tall answer runs under the verdict** (medium). Fill-in (gap) programs set every line with a blank line between, so a 7-line function is as tall as
+  the screen: `tsi-2-5` loses its closing `}`, `tb-2-5` its last `});`, `jse-3-7` the same. Same fix as Coding's: scroll inside the box, or
+  tighter lines.
+- **The tray scrolls in a small box and shows half a chip** (medium, short phone worse). Test writing items with 8 or more long chips (`tb-2-4`, `tb-2-7`,
+  `ts-1-3`, `te-1-9`, `tsi-1-9`) fill the tray's space, so the last row is cut in half under Run and only a thin scrollbar says there is more. On
+  a short phone the code under test (`band(n)` in `tb-2-7`) also shows 4 lines in a scrolling box, so the function being tested is partly out of sight.
+- **A long answer scrolls inside its own box with its top hidden** (low). `jse-1-8` shows the lines after `function run(f) {`; the first line is
+  scrolled out. The page does not scroll, so nothing is lost, but it looks as if the chip was not placed.
+- **A filled block is 32px high** (low): a placed word in the answer (`button.block`); the tray's chips are all 40 or more.
+- **Wording** (low): "For example `cost({"name":"a"}) gives 0`" writes the input as JSON (quoted keys) before the course has shown that form;
+  "Five! Those lines run like clockwork." and "Five in a row." appear on a streak with no mention of what the five are.
+- **Harness bug found and fixed in passing:** `btn(name)` in `tools/phone.js` ignored `{ exact: true }`, so `btn('Continue', { exact: true })` could hit a
+  chip named `continue` and `btn('Run')` a chip named `run(`, stalling `jsl-4` and `jse-1` until the fix.
 - **Fresh versions in Test writing** mostly rename: its numbers would need the expected answers worked out again.
 - **The type checker is a small subset.** It follows strict TypeScript for what the course teaches. A valid but unusual arrangement could be misjudged outside that.
 - **Wrong code in a branch that never runs passes.** Graded by running, so an `else` that never runs is not looked at. Any arrangement that does the job is right, by decision; hidden `cases` close it where it matters, and `print` items could run a second input if play shows it matters.
@@ -276,8 +302,7 @@ this way). Looked at by eye: ten frames, arrays, the 100 grid, single and stacke
 money and long sums (1480 to the nearest 100): all drawn cleanly, centred and readable. Every sum and explanation in the 36 lessons was
 read: none wrong.
 
-- **Stacked bars sit under the verdict on a short phone** (medium). At 412x533 the third bar of `frac-1-biggest` (and the lower bars of
-  `frac-1-biggest2`) is hidden behind the verdict banner once answered. Fine at 412x786. The page scrolls, nothing is lost.
+- **Stacked bars under the verdict on a short phone: fixed** (`fitCard` in `src/fit.js`, `test/e2e/quiz-layout.spec.js`). At 412x533 all three bars of `frac-1-biggest` now sit above the verdict; the bars and their gaps shrink first. `frac-1` played again at 412x533 with no flag.
 - **Short phone, otherwise clean:** `ten-1`, `ten-2` and `neg-0` at 412x533 had no flag.
 - **Not covered:** a real finger, and Firefox.
 
@@ -291,15 +316,10 @@ that carry a sound, every one called `speechSynthesis.speak` with its text when 
 110px and sharp; a small っ is plainly smaller and raised against つ, in the card, in a word and among the tiles (ゃ against や likewise);
 が, ぱ and the rest of the changed sounds read clearly; the first-sentence unit (これは ねこです, five-word builds) fits and wraps by word.
 
-- **Long romaji options run off the edge** (high). `hi-pick-295` (こんにちは) and `ty-pick-304` (すみません): the three options sit in one row and the third
-  ("konnichiwa", "sumimasen") is cut at the screen edge on a 412 page, and again at 412x533. The option cannot be read in full. Fix is a
-  design call: let long options stack, or wrap the row.
-- **Sentence builds on a short phone** (medium). At 412x533 `se3-build-332` and `se3-build-335`: the answer slots are pushed under the tile
-  tray and the verdict, so the learner cannot see the tiles laid. Fine at 412x786.
-- **Build slots are thin** (low). The empty slots of a build card are faint underline bars about 50px wide with no box, and the card above them is mostly empty;
-  next to 64px tiles they are easy to miss.
-- **Matched pairs go under the verdict** (low). A 5-pair item has 5 rows; once answered the verdict hides the lower rows, so the last matches
-  turning green are not seen.
+- **Long romaji options cut off: fixed.** A pick's options wrap onto another row when they don't fit side by side, each at full size, in `styles.css` (`.quiz-pick`), for every pick in Japanese and Maths. All 11 units played again at 412x786 with nothing off the side or clipped.
+- **Sentence builds on a short phone: fixed.** At 412x533 the slots sit above the tray while building and above the verdict once answered (`se1` to `se3` and their checkpoint played again at 412x533). The card gives up its spare room, then the coach shrinks, then the slots and the sentence above them; if that were not enough, pictures shrink, then the card scrolls in its own box.
+- **Empty build slots: fixed.** An empty slot is an outlined dashed box the height of a tile (as the Coding builder's), solid once filled.
+- **Matched pairs go under the verdict** (low, left as it is). A 5-pair item has 5 rows; once answered the verdict hides the lower rows, so the last matches turning green are not seen.
 - **Typo fixed:** the explanations of `se1-pairs-323`, `se2-pairs-330` and `se3-pairs-337` read "This is a cat., ..." and ended "tea..". No other content problem found.
 - **Not covered:** a real finger, Firefox, and a voice other than the emulator's.
 

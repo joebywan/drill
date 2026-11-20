@@ -5,29 +5,10 @@ import { dragTile } from '../drag.js';
 import { flourish, play } from '../feel.js';
 import { reducedMotion } from '../cast/kit.js';
 import { esc } from '../html.js';
+import { verdictHeight } from '../fit.js';
 
 const DEMO_WAIT_MS = 900; // long enough to see the grid before a teach card's program plays
 const SQUARE = 28, PICK_SQUARE = 36; // the smallest a map's squares get for a tall program: Fennel stays easy to see, a square to tap thumb-sized
-
-/**
- * How tall the runner's verdict banner will be with `words` in it (null: a teach card's, Continue alone) under the
- * longest verdict the coach's `lines` could give, by measuring a hidden copy, so a tall program can be fitted above
- * it before it comes. 0 with no banner on the page.
- */
-function verdictHeight(words, lines = {}) {
-  const foot = document.querySelector('.foot');
-  if (!foot) return 0;
-  const copy = foot.cloneNode(true);
-  copy.className = `foot show${words === null ? ' plain' : ''}`;
-  copy.style.visibility = 'hidden';
-  copy.querySelectorAll('[id]').forEach((e) => e.removeAttribute('id'));
-  copy.querySelector('strong').textContent = ['correct', 'run3', 'run5', 'wrong'].flatMap((k) => lines[k] ?? []).reduce((a, b) => (b.length > a.length ? b : a), 'x');
-  copy.querySelector('p').textContent = words ?? '';
-  foot.after(copy);
-  const height = copy.offsetHeight;
-  copy.remove();
-  return height;
-}
 
 /** The bubble's line for a failed run: a loop that never ends is said out loud, or it just looks stuck. */
 const afterFail = (result) => (result.end === 'endless' ? 'That loop never ends, so I stopped it. Here is one way that works.'

@@ -210,7 +210,7 @@ try {
       adb('shell', 'input', 'tap', String(Math.round(origin.x + (b.x + b.width / 2) * dpr)), String(Math.round(origin.y + (b.y + b.height / 2) * dpr)));
       await sleep(700); await page.clock.runFor(700);
     };
-    const btn = (name) => page.getByRole('button', { name });
+    const btn = (name, opts) => page.getByRole('button', { name, ...opts }); // opts: e.g. { exact: true }, so 'Run' isn't a chip named run(
     /** A real finger drag across the middle of `loc`, `dx` CSS px sideways. */
     const swipe = async (loc, dx) => {
       const b = await loc.first().boundingBox();
