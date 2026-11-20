@@ -615,7 +615,8 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 }
 .scrolls.more-above::before { top: var(--scrolled, 0px); background: linear-gradient(var(--fade), transparent); }
 .scrolls.more-below::after { top: calc(var(--scrolled, 0px) + 100% - 20px); background: linear-gradient(transparent, var(--fade)); }
-.code-given.scrolls, .code-program.scrolls, .quiz .card.scrolls, .quiz .card .scrolls { --fade: var(--card); }
+/* --fade is the colour behind the content at the scroller's own edge: the card's only where the scroller is the card or sits in it. */
+.code-given.scrolls, .quiz .card.scrolls, .quiz .card .scrolls { --fade: var(--card); }
 /* A program too tall for the screen: the coach and the gaps give it room, as on a short phone. */
 .play:has(:is(.program, .quiz, .board.lesson).tall) .topic { position: absolute; clip-path: inset(50%); }
 .play:has(:is(.program, .quiz, .board.lesson).tall) .who { width: 44px; }
