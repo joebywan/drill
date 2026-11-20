@@ -202,23 +202,48 @@ try {
       await page.reload({ waitUntil: 'networkidle' }); await run(800);
     };
     await fresh();
-    const touch = async (loc) => {
+    // A finger is not a point: with PLAY_JITTER=0.85 a tap lands at a random spot out to that share of the way to the
+    // target's edge (seeded by PLAY_SEED, so a run can be repeated); with it unset, dead centre.
+    let seedN = Number(process.env.PLAY_SEED) || 1;
+    const random = () => { seedN = (seedN + 0x6d2b79f5) | 0; let t = Math.imul(seedN ^ (seedN >>> 15), 1 | seedN); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const touch = async (loc, jitter = Number(process.env.PLAY_JITTER) || 0) => {
       loc = loc.first();
       await loc.waitFor();
       await loc.scrollIntoViewIfNeeded();
       const b = await loc.boundingBox();
-      adb('shell', 'input', 'tap', String(Math.round(origin.x + (b.x + b.width / 2) * dpr)), String(Math.round(origin.y + (b.y + b.height / 2) * dpr)));
+      const off = (size) => (random() * 2 - 1) * jitter * size / 2;
+      adb('shell', 'input', 'tap', String(Math.round(origin.x + (b.x + b.width / 2 + off(b.width)) * dpr)), String(Math.round(origin.y + (b.y + b.height / 2 + off(b.height)) * dpr)));
       await sleep(700); await page.clock.runFor(700);
     };
     const btn = (name, opts) => page.getByRole('button', { name, ...opts }); // opts: e.g. { exact: true }, so 'Run' isn't a chip named run(
-    /** A real finger drag across the middle of `loc`, `dx` CSS px sideways. */
-    const swipe = async (loc, dx) => {
+    /** `loc`'s box cut to what is on screen (a page-tall element's middle is far below the glass). */
+    const visible = async (loc) => {
       const b = await loc.first().boundingBox();
-      const at = (x) => String(Math.round(origin.x + x * dpr));
-      const y = String(Math.round(origin.y + (b.y + b.height / 2) * dpr));
-      const x0 = b.x + b.width / 2 - dx / 2;
-      adb('shell', 'input', 'swipe', at(x0), y, at(x0 + dx), y, '400');
+      const [vw, vh] = await page.evaluate(() => [innerWidth, innerHeight]);
+      const x = Math.max(b.x, 0), y = Math.max(b.y, 0);
+      return { x, y, width: Math.min(b.x + b.width, vw) - x, height: Math.min(b.y + b.height, vh) - y };
+    };
+    /** A real finger drag across the middle of `loc`, `dx` CSS px sideways and `dy` down (a negative one scrolls the content up). */
+    const swipe = async (loc, dx, dy = 0) => {
+      const b = await visible(loc);
+      const at = (v, o) => String(Math.round(o + v * dpr));
+      const x0 = b.x + b.width / 2 - dx / 2, y0 = b.y + b.height / 2 - dy / 2;
+      adb('shell', 'input', 'swipe', at(x0, origin.x), at(y0, origin.y), at(x0 + dx, origin.x), at(y0 + dy, origin.y), '400');
       await sleep(800);
+    };
+    /** A finger put down on `loc` and held `ms` (a long press). */
+    const press = async (loc, ms = 800) => {
+      const b = await loc.first().boundingBox();
+      const x = String(Math.round(origin.x + (b.x + b.width / 2) * dpr)), y = String(Math.round(origin.y + (b.y + b.height / 2) * dpr));
+      adb('shell', 'input', 'swipe', x, y, x, y, String(ms));
+      await sleep(500);
+    };
+    /** Two taps on the middle of `loc`, one after the other in a single shell (a double tap). */
+    const doubleTap = async (loc) => {
+      const b = await loc.first().boundingBox();
+      const x = Math.round(origin.x + (b.x + b.width / 2) * dpr), y = Math.round(origin.y + (b.y + b.height / 2) * dpr);
+      adb('shell', `input tap ${x} ${y}; input tap ${x} ${y}`);
+      await sleep(800); await page.clock.runFor(700);
     };
     const dragTo = async (from, to) => {
       const at = async (loc) => { const b = await loc.first().boundingBox(); return [origin.x + (b.x + b.width / 2) * dpr, origin.y + (b.y + b.height / 2) * dpr].map((n) => String(Math.round(n))); };
@@ -253,7 +278,7 @@ try {
       check(`sound: active ${pkg} track (dumpsys media.audio_flinger)`, ids.some((u) => new RegExp(`\\byes\\s+\\d+/\\s*${u}\\b`).test(flinger)));
     };
     const vibrations = () => (adb('shell', 'dumpsys', 'vibrator_manager').match(new RegExp(pkg.replaceAll('.', '\\.'), 'g')) || []).length;
-    return { page, touch, btn, swipe, dragTo, shot, run, seed, fresh, checkSound, vibrations, calibrate };
+    return { page, touch, btn, swipe, press, doubleTap, dragTo, shot, run, seed, fresh, checkSound, vibrations, calibrate };
   };
   const page = await ctx.newPage();
   const chrome = await helpersFor(page, 'com.android.chrome', () => page.goto(base, { waitUntil: 'networkidle' }));
