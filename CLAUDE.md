@@ -38,7 +38,8 @@ looks (the dark theme; `LOOKS=large` for large text).
 - Scenarios named `*-all` play a whole course through `tools/play.js` and run only by name, one unit at a time:
   `coding-all` (`CODING_UNIT`), `chess-all` (`CHESS_UNIT`), `maths-all` (`MATHS_UNIT`), `japanese-all`
   (`JAPANESE_UNIT`) and `code-all` (`CODE_COURSE=javascript|typescript|testing` with `CODE_UNIT`). Each also takes
-  `…_LESSONS` (some lesson ids) and `…_SMALL=1080x1700` (a short phone, a 412x533 page). The header of
+  `…_LESSONS` (some lesson ids) and `…_SMALL=1080x1700` (a short phone, a 412x533 page); `PLAY_SHOTS=1` keeps a
+  picture of every item, asked and answered, where a run otherwise keeps only the odd ones. The header of
   `test/phone/coding-all.js` explains them; `tools/play-quiz.js` taps Maths' and Japanese's items in.
 - `test/phone/app.js` plays the installed Android app (build the debug APK first, see Android; `APP_APK=<path>` for
   another, and with no APK it does nothing): `attach(pkg)` gives a scenario the same helpers for an app's WebView,
@@ -61,8 +62,8 @@ looks (the dark theme; `LOOKS=large` for large text).
   non-zero on a page error or a failed check.
 - Quirks: Chrome's own prompts ("No thanks", "Not now") cover the page and are declined through
   `uiautomator dump`. Taps are real, so the page origin on screen is measured by tapping a blank
-  page, not hard-coded. Timed parts run on `page.clock`. The host's PulseAudio may fail to open
-  while Android audio still runs, so judge sound by the dumpsys checks. **Agents share the
+  page, not hard-coded. Timed parts run on `page.clock`. The emulator starts with `-no-audio`, so nothing
+  it plays reaches this computer's speakers; Android's own audio still runs, so judge sound by the dumpsys checks. **Agents share the
   emulators:** `npm run phone` takes a free slot or waits its turn by itself; never start an emulator by hand or delete a lock.
 - What the runner does so a run can be believed: `shot()` waits for two real frames (`window.__frame`, the real
   `requestAnimationFrame` kept before `page.clock` replaces it) and 400 ms, so a screenshot isn't a frame behind on
@@ -70,6 +71,10 @@ looks (the dark theme; `LOOKS=large` for large text).
   (`emulateMedia({ colorScheme: null })`) and the phone's own night mode shows. After `wm size` (a short phone)
   Chrome's toolbar moves and the page sits elsewhere on screen: `calibrate()` measures it again, and `tools/play.js`
   calls it. `play.js` also flags a tap that another element took, or a target partly under another's.
+- **Judge a run by its exit status, not by looking for FAIL in its log.** When the emulator itself dies, the log
+  has no FAIL: it says STUCK and "Target page, context or browser has been closed", and the run exits non-zero.
+  `coredumpctl list --since today` then shows a `qemu-system-x86_64-headless` SIGSEGV (in `gles_swiftshader`, the
+  software renderer). Treat that as a bug in the page until shown otherwise: bisect the CSS on that screen.
 
 ## Architecture
 
@@ -116,7 +121,10 @@ looks (the dark theme; `LOOKS=large` for large text).
   under a fixed bar**: fit first (the coach, the gaps and the pictures give up room), then that part scrolls in its
   own box, never the page. `verdictHeight()` measures the verdict before it comes; `fitter()` gives Coding and the
   code courses `fit`, `settle` and `keep` (the block being run stays in view); `fitCard()` fits a quiz card (Maths,
-  Japanese); a box that scrolls ends on a whole row or line and fades where there is more (`.scrolls`). A screen that
+  Japanese); a box that scrolls ends on a whole row or line. `scrollBox(el)` is the one way to make a box scroll: it
+  marks the box `more-above` / `more-below` as it scrolls, resizes or is redrawn, and styles.css lays a plain gradient
+  in the box's own colour (`--fade`) over that edge. **Never a CSS mask on a box that scrolls:** it crashes the
+  emulator's software renderer (#164), and scroll-driven animations don't run in Firefox. A screen that
   fits is left as it is. On a short phone (a 412x533 page) every course is played this way: `…_SMALL=1080x1700`.
 - `src/quiz/` also has `line` (drag a marker on a number line, snapped to its ticks, answered on
   release) and takes a `picture` the course draws through the mount's `ctx.art`, plus `ctx.look`

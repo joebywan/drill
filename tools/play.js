@@ -142,6 +142,7 @@ export async function playCourse(h, { course, unit = 1, only, answer, small, par
 
   const report = [];
   let shots = 0;
+  const every = !!process.env.PLAY_SHOTS; // a picture of every item, asked and answered, to look through by eye
   for (const lesson of lessons) {
     const started = Date.now();
     const row = { lesson: lesson.id, title: lesson.title, items: 0, taps: 0, human: 0, kinds: {}, topics: {}, wrong: 0, odd: [], stuck: null, overflow: 0 };
@@ -155,7 +156,7 @@ export async function playCourse(h, { course, unit = 1, only, answer, small, par
       found.forEach((f) => seenOdd.add(f));
       if (over > 0) news.push(`${item.id} (${when}): sideways overflow ${over}px`);
       row.odd.push(...news);
-      if (news.length && shots++ < 40) await shot(`${lesson.id}-${item.id}-${when}`);
+      if ((news.length || every) && shots++ < (every ? 400 : 40)) await shot(`${lesson.id}-${item.id}-${when}`);
     };
     try {
       await tap(btn(`Continue · ${lesson.title}`));
