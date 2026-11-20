@@ -1,5 +1,5 @@
 import { builder } from '../builder.js';
-import { boxTo, fitter, topOf, wholeRows } from '../fit.js';
+import { boxTo, fitter, scrollBox, topOf, wholeRows } from '../fit.js';
 import { flourish, play } from '../feel.js';
 import { esc } from '../html.js';
 import { parse as parseLevel } from '../coding/program.js';
@@ -107,10 +107,10 @@ export function mount(el, item, ctx) {
     if (want.given + want.answer + want.tray <= room()) return;
     const least = { given: Math.min(want.given, 4 * 18 + 16), answer: Math.min(want.answer, LINE + 16) };
     const tray = wholeRows(chipsEl, Math.min(want.tray, room() - least.given - least.answer + 2 /* rounding */));
-    if (tray < want.tray) { chipsEl.style.maxHeight = `${Math.max(tray, 44)}px`; chipsEl.classList.add('scrolls'); }
+    if (tray < want.tray) { chipsEl.style.maxHeight = `${Math.max(tray, 44)}px`; scrollBox(chipsEl); }
     if (givenEl) {
       const lines = Math.max(least.given, room() - chipsEl.offsetHeight - least.answer);
-      if (lines < want.given) { givenEl.style.maxHeight = `${wholeLines(givenEl, lines)}px`; givenEl.classList.add('scrolls'); }
+      if (lines < want.given) { givenEl.style.maxHeight = `${wholeLines(givenEl, lines)}px`; scrollBox(givenEl); }
     }
   };
   const words = trayOf(item);
