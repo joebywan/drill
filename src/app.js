@@ -160,17 +160,23 @@ function showCourse(id) {
 }
 
 /**
- * How much the phone's font size scales text: 1 in a browser, 1.3 in the Android app with the phone's
- * text at 130% (the WebView follows it). Set as --text-scale, so the room kept for text that px can't see
- * (a path row, the space under a fixed bar) grows with it; unset, the CSS falls back to 1.
+ * How much larger than 16px the learner has asked for text: 1.3 in the Android app with the phone's text at 130%
+ * (the WebView's text zoom follows it), 1.25 in a browser whose default font size is 20px (Chrome's "Font size: Large",
+ * Firefox's Fonts setting; they change what 1rem is), more for small text under a minimum font size (a path's labels,
+ * .8rem, at Firefox's or Chrome's "Minimum font size" of 20px: 1.56), 1 otherwise. A browser's zoom isn't text: it
+ * enlarges px too and leaves this at 1. Set as --text-scale, so the room kept for text that px can't see (a path row,
+ * the space under a fixed bar) grows with it; unset, the CSS falls back to 1.
  */
 const TEXT = (() => {
-  const probe = Object.assign(document.createElement('div'), { textContent: 'x' });
-  probe.style.cssText = 'position:absolute;visibility:hidden;font-size:100px;line-height:1';
-  document.body.append(probe);
-  const k = probe.getBoundingClientRect().height / 100;
-  probe.remove();
-  return Math.max(1, Math.round(k * 100) / 100);
+  const k = [6.25, 0.8].map((rem) => { // 100px and a label's 12.8px, at 16px
+    const probe = Object.assign(document.createElement('div'), { textContent: 'x' });
+    probe.style.cssText = `position:absolute;visibility:hidden;font-size:${rem}rem;line-height:1`;
+    document.body.append(probe);
+    const h = probe.getBoundingClientRect().height;
+    probe.remove();
+    return h / (rem * 16);
+  });
+  return Math.max(1, Math.round(Math.max(...k) * 100) / 100);
 })();
 if (TEXT > 1) document.documentElement.style.setProperty('--text-scale', TEXT);
 const ROW = 112 * TEXT; // px from one node to the next; the drawn path assumes it (and .path li's height)
@@ -222,7 +228,10 @@ function home(arrived = null, newly = []) {
   const dueChip = !reviewKeys.length ? ''
     : repair ? `<button class="due" data-review>${esc(line('repair'))} · ${minutes}</button>`
     : `<button class="due" data-review>${due.length} to review · ${minutes}</button>`;
-  const xAt = (i) => Math.round(Math.sin((i * Math.PI) / 3) * SWAY);
+  // On a narrow page (320px, or a phone browser zoomed to 200%: 206px) the path sways less, so a label (half its
+  // max-width, .path .label) stays on the page. ponytail: measured once per drawing; a rotation redraws on the next screen.
+  const sway = Math.max(0, Math.min(SWAY, Math.min(320, app.clientWidth - 32) / 2 - 64 * TEXT));
+  const xAt = (i) => Math.round(Math.sin((i * Math.PI) / 3) * sway);
 
   const node = (n, i) => {
     const here = n === current;
@@ -250,7 +259,7 @@ function home(arrived = null, newly = []) {
     const a = nodes.findIndex((n) => n.id === arrived);
     const fresh = a >= 0 && nodes[a + 1] === current && walked === a + 2;
     const h = (nodes.length - 1) * ROW + 64 * TEXT;
-    return `<svg class="trail" viewBox="-160 0 320 ${h}" width="320" height="${h}" aria-hidden="true">
+    return `<svg class="trail" viewBox="-160 0 320 ${h}" width="100%" height="${h}" preserveAspectRatio="xMidYMin slice" aria-hidden="true">
       <path d="${d(pts.length)}" class="ahead"/>${walked > 1 ? `<path d="${d(fresh ? a + 1 : walked)}" class="walked"/>` : ''}${fresh ? `<path d="${d(a + 2, a)}" class="walked fresh"/>` : ''}
     </svg>`;
   };
