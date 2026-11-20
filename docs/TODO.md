@@ -207,9 +207,15 @@ sessions run longer. A quarter to a third of every session is repeats (2 warm-up
   **Left:** on a 412x533 page the verdict takes most of the screen, so an answered tall program shows in a box 27 to 120px high (part of a row to a few
   rows, the block that matters among them); the program reads whole while asked, short of 3 to 4px in `var-3-grow`, `bug-3-count` and `bug-3-sign`. A laid-out answer (palette, free) that
   is long still scrolls in its box at 412x786, as before. The fade uses scroll-driven animation, which Firefox lacks (there it just scrolls).
-- **Small tap targets** (low): the empty slot in a laid-out answer and the tray's tiles on a short phone now answer a thumb across 44px (invisible
-  targets). Still narrow: a placed or filled block is 28 to 30px wide, and blocks in a row sit 3 to 6px apart, so widening their targets would steal
-  taps from the neighbour; that needs wider blocks, a layout change. The harness measures drawn sizes, so it still lists these.
+- **Small tap targets and mis-taps** (low): every block to tap in a program (Coding and the code courses) gets an invisible target sized by
+  `reachOf()` in `src/builder.js`: toward 44px each way into empty space, but only halfway to any other block to tap, so no target lies over
+  another's box. Before, on a short phone, `bug-3-sign`'s `<` had the value below's target over its bottom edge, and a tap on it emptied
+  "change steps by 1" instead, so the harness got stuck. Most of that was the harness: it aimed every short-phone tap 37 screen px (14 CSS px) low,
+  measuring where the page sits before `wm size` moved Chrome's toolbar. It now measures again after the resize, flags a target partly covered by
+  another, and flags a tap that a different element took. Short-phone runs before this (`small-u8`, `small-u11`) were aimed low too. A wrong pick in
+  find-the-bug was never a trap: tapping another block picks that one instead, and filling the wrong one counts as a miss with the explanation.
+  Still narrow: blocks 28 to 30px wide or tall that sit 0 to 6px from a neighbour get only half the gap, so a tight row on a short phone gives
+  a thumb less than 44px; that needs more room between rows, a layout change. The harness measures drawn sizes, so it still lists these.
 - **Not played yet:** a real beginner, a real finger, Firefox, and sound with the new motion. The drawing trail and live values were seen only
   in passing.
 **Coding: bigger improvements**

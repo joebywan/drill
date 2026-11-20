@@ -2353,15 +2353,23 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
       // A map stays big enough to see Fennel on, however tall it is.
       const square = app.querySelector('.grid-world .cell')?.getBoundingClientRect().width;
       if (square < 24) out.push(`${item.id}: the map's squares are ${Math.round(square)}px`);
-      // Every block to tap answers a thumb across 44px of height, however compact it looks.
+      // Every block to tap answers a thumb across 44px of height, however compact it looks, or up to a neighbour.
+      await null; // the thumb targets follow each redraw (thumbTargets in src/builder.js)
       const seen = prog.getBoundingClientRect();
       const scrolls = getComputedStyle(prog).overflowY !== 'visible';
       for (const b of prog.querySelectorAll('button.block')) {
         const r = b.getBoundingClientRect();
         if (scrolls && (r.top < seen.top + 22 || r.bottom > seen.bottom - 22)) continue; // at the edge of the answer's own space
         const reach = Math.min(0, (r.height - 44) / 2) + 1;
-        // Where two blocks' areas meet one of them takes the tap: what matters is no dead space.
-        const hits = [r.top + reach, r.bottom - reach].map((y) => prog.contains(document.elementFromPoint(r.left + r.width / 2, y)?.closest('button')));
+        // Where two blocks' areas meet one of them takes the tap: what matters is no dead space. A target may stop
+        // short, halfway to another block to tap above or below it (that one may sit off to the side of the middle).
+        const css = getComputedStyle(b);
+        const near = (y0, y1) => [...prog.querySelectorAll('button')].some((o) => { const q = o.getBoundingClientRect(); return o !== b && q.left < r.right && q.right > r.left && q.bottom >= y0 && q.top <= y1; });
+        const short = {
+          up: parseFloat(b.style.getPropertyValue('--up')) - parseFloat(css.borderTopWidth) < -reach - 1.5 && near(r.top + 2 * reach - 2, r.top),
+          down: parseFloat(b.style.getPropertyValue('--down')) - parseFloat(css.borderBottomWidth) < -reach - 1.5 && near(r.bottom, r.bottom - 2 * reach + 2),
+        };
+        const hits = [[r.top + reach, short.up], [r.bottom - reach, short.down]].map(([y, ok]) => ok || prog.contains(document.elementFromPoint(r.left + r.width / 2, y)?.closest('button')));
         if (hits.includes(false)) { out.push(`${item.id}: ${b.getAttribute('aria-label')} is ${Math.round(r.height)}px to tap`); break; }
       }
       if (item.type === 'predict') {
@@ -2424,6 +2432,59 @@ test('a tall Coding program fits a 412x786 phone: clear of the tray while asked,
     if (item.id === 'var-3-grow') break;
     await continueButton(page).click();
   }
+});
+
+// A finger is not a point: every part of a block to tap must take the tap itself, never a neighbour's invisible
+// target. On a short phone the rows of a nested program sit close (a loop's head and the row inside it).
+for (const [width, height] of [[412, 533], [412, 786]]) test(`at ${width}x${height}, every point of a block to tap in a find-the-bug program hits that block`, async ({ page }) => {
+  await page.setViewportSize({ width, height });
+  await page.goto('/');
+  const bugs = codingCourse.units.flatMap((u) => u.lessons.flatMap((l) => l.items)).filter((i) => i.type === 'bug');
+  expect(bugs.map((i) => i.id)).toContain('bug-3-sign');
+  const bad = await page.evaluate(async (items) => {
+    const { mount } = await import('/src/coding/exercise.js');
+    const app = document.getElementById('app');
+    const out = [];
+    for (const item of items) {
+      app.innerHTML = `<header class="bar" style="height:44px"></header><main class="play"><p class="topic">Topic</p>
+        <div class="coach"><button class="who"></button><p class="bubble"></p></div><div class="stage"></div></main>`;
+      const stop = mount(app.querySelector('.stage'), item, { say(t) { app.querySelector('.bubble').textContent = t; }, done() {} });
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      for (const b of app.querySelectorAll('.program button')) {
+        const r = b.getBoundingClientRect();
+        // Across the middle each way, edge to edge (the rounded corners are no one's).
+        for (let i = 0; i < 10; i++) {
+          const f = (i % 5) / 4, x = i < 5 ? r.x + 1 + f * (r.width - 2) : r.x + r.width / 2, y = i < 5 ? r.y + r.height / 2 : r.y + 1 + f * (r.height - 2);
+          const hit = document.elementFromPoint(x, y)?.closest('button');
+          if (hit !== b) { out.push(`${item.id}: ${b.getAttribute('aria-label')} is partly taken by ${hit?.getAttribute('aria-label')}`); break; }
+        }
+      }
+      stop?.();
+    }
+    return out;
+  }, bugs);
+  expect(bad).toEqual([]);
+});
+
+test('find the bug: tapping the wrong block is no trap, another tap picks the right one', async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 533 });
+  await page.goto('/');
+  const item = codingCourse.units.flatMap((u) => u.lessons.flatMap((l) => l.items)).find((i) => i.id === 'bug-3-sign');
+  await page.evaluate(async (item) => {
+    const { mount } = await import('/src/coding/exercise.js');
+    document.body.innerHTML = '<main class="play"><div class="coach"><p class="bubble" id="said"></p></div><div id="t"></div></main>';
+    window.result = null;
+    mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right) { window.result = right; } });
+  }, item);
+  const { part, tile } = fixBug(item);
+  const parts = page.locator('.program [data-part]');
+  const wrong = await parts.evaluateAll((bs, p) => bs.map((b) => +b.dataset.part).find((n) => n !== p), part);
+  await page.locator(`.program [data-part="${wrong}"]`).click();
+  await expect(page.locator('.program .hole')).toHaveCount(1);
+  await expect(page.locator('.tiles').getByRole('button', { name: tileName(tile), exact: true })).toBeDisabled();
+  await page.locator(`.program [data-part="${part}"]`).click();
+  await page.locator('.tiles').getByRole('button', { name: tileName(tile), exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.result)).toBe(true);
 });
 
 test('Coding, laying out a program: the cursor, a limit, Run, and a run with steps to spare', async ({ page }) => {
