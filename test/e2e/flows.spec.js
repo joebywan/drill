@@ -5,6 +5,7 @@ import { emptyProgress, finishPractice, finishSession, leavePractice } from '../
 import { middleFor } from '../../src/reflect/practice.js';
 import { award } from '../../src/garden/model.js';
 import { answer as stopsAt, fixBug, mirrored, solve as oneWay, tileName } from '../../src/coding/program.js';
+import { withCheckpoint } from '../../src/repeat.js';
 
 // The first lesson on the path. Its answers are worked out from the course data with the same
 // item logic the app uses, so the test follows the content when it changes.
@@ -1123,7 +1124,7 @@ test('a fresh garden is one seed; the first lesson grows a sprout and opens a fl
   await finishFirstLesson(page);
   // The first unit is one lesson long, so finishing it is a finished unit: a flower opens.
   // That unit is chess's first, so its egg is laid and hatches at once: only the hatching is said.
-  await expect(page.locator('.arrivals li')).toHaveText([`A flower opened for ${basics.units[0].title}`, 'Your Chess egg hatched into a caterpillar']);
+  await expect(page.locator('.arrivals li')).toHaveText(['Your Chess egg hatched into a caterpillar', `A flower opened for ${basics.units[0].title}`]);
   await expect(page.locator('.arrivals svg.creature')).toBeVisible();
   await continueButton(page).click();
   await expect(strip(page, 1).locator('svg.plant-tree.stage-1')).toBeVisible();
@@ -1165,12 +1166,12 @@ test('a fifth day of Calm hatches its caterpillar, shown on the end screen and i
   await expect(strip(page, 2)).toBeFocused();
 });
 
-test('a backlog of arrivals shows three lines, then the rest in one', async ({ page }) => {
+test('a backlog of arrivals after a practice shows two lines, then the rest in one', async ({ page }) => {
   await grown(page, ['calm', 'move', 'break'], 30);
   await page.clock.install();
   await firstVisit(page);
   await breathe(page);
-  await expect(page.locator('.arrivals li')).toHaveCount(4);
+  await expect(page.locator('.arrivals li')).toHaveCount(3);
   await expect(page.locator('.arrivals li').last()).toHaveText(/^and \d+ more in your garden$/);
 });
 
@@ -1494,7 +1495,8 @@ test('after a drop-off, home offers a gentle comeback: their usual practice at t
   await page.getByRole('button', { name: 'Start Breathing' }).click();
   await page.getByRole('button', { name: 'Start' }).click();
   await page.clock.runFor(40_000);
-  await expect(page.getByText('A ladybird came to visit')).toBeVisible();
+  // Two lines above "How do you feel?": this seed's butterfly and bee, then the ladybird in the rest (drawn in the garden below).
+  await expect(page.locator('.arrivals li')).toHaveText([/butterfly is out/, 'A bee found Calm', 'and 1 more in your garden']);
   await continueButton(page).click();
   await expect(comebackCard(page)).toHaveCount(0); // it ends after one session
   await expect(page.locator('.garden-link svg[data-kind="ladybird"]')).toHaveCount(1);
@@ -2390,6 +2392,38 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
     ...[...new Map(items.filter((i) => i.family).flatMap((i) => codingPool[i.family].map((e) => [JSON.stringify([i.view, e]), { id: i.id, type: i.type, ...(i.view && { view: i.view }), ...e }]))).values()]
       .flatMap((v) => [v, mirrored(v, { x: true })])]);
   expect(bad).toEqual([]);
+});
+
+// A tall program on a 412x786 phone: the coach, the gaps and the map make room, so it reads whole above the tray
+// while asked and above the verdict once answered, and nothing needs scrolling.
+test('a tall Coding program fits a 412x786 phone: clear of the tray while asked, and of the verdict once answered', async ({ page }) => {
+  test.setTimeout(60000);
+  await page.setViewportSize({ width: 412, height: 786 });
+  const lessons = codingCourse.units.map(withCheckpoint).flatMap((u) => u.lessons);
+  const at = lessons.findIndex((l) => l.id === 'var-3');
+  await page.addInitScript((done) => {
+    if (localStorage.getItem('wingbeat.progress')) return;
+    localStorage.setItem('wingbeat.course', 'coding');
+    localStorage.setItem('wingbeat.progress', JSON.stringify({ version: 2, habits: {}, log: [], cards: {}, start: 'x', met: { coding: true }, done }));
+  }, Object.fromEntries(lessons.slice(0, at).map((l) => [`coding:${l.id}`, true])));
+  await page.goto('/');
+  await page.locator('.node.here').click();
+  const box = (sel) => page.locator(sel).evaluate((e) => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; });
+  for (const item of lessons[at].items) {
+    await expect(page.locator('.program')).toBeVisible();
+    if (item.type !== 'teach') {
+      if (item.id === 'var-3-grow') expect((await box('.program')).bottom, 'the program meets the tray').toBeLessThanOrEqual((await box('.tiles')).top);
+      await solveCoding(page, item);
+      if (['var-3-read', 'var-3-grow'].includes(item.id)) {
+        const prog = page.locator('.program');
+        expect((await box('.program')).bottom, `${item.id}: the verdict covers the program`).toBeLessThanOrEqual((await box('.foot')).top);
+        expect(await prog.evaluate((e) => e.scrollHeight - e.clientHeight), `${item.id}: the program reads whole`).toBeLessThanOrEqual(1);
+        expect((await box('.grid-world')).bottom).toBeLessThanOrEqual((await box('.foot')).top);
+      }
+    }
+    if (item.id === 'var-3-grow') break;
+    await continueButton(page).click();
+  }
 });
 
 test('Coding, laying out a program: the cursor, a limit, Run, and a run with steps to spare', async ({ page }) => {

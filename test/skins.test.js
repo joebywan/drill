@@ -104,3 +104,15 @@ test('flap() beats both flippers, straps and all', () => {
   assert.match(arms[0].calls[0][1].transform, /-50deg/);
   assert.match(arms[1].calls[0][1].transform, /\(50deg/);
 });
+
+test("the learner's butterfly rides on Lumi's head in every skin but the costume, over a hat", () => {
+  const up = (svg) => Number(svg.match(/data-part="butterfly" transform="translate\(26\.5 (-?[\d.]+)\)/)?.[1]);
+  assert.equal(up(lumi('teach', null, [], ['#ABCDEF'])), -10.4, 'plain Lumi, as on the icon');
+  for (const s of SKINS.filter((k) => k.id !== 'costume')) {
+    const svg = lumi('teach', s.id, ['#ABCDEF'], ['#ABCDEF']);
+    assert.ok(svg.includes('#ABCDEF') && up(svg) <= -10.4, s.id);
+    assert.ok(svg.indexOf('data-part="butterfly"') > svg.indexOf('data-part="head"'), `${s.id}: in her head group, so it nods with her`);
+  }
+  for (const id of ['crown', 'strawhat', 'beanie']) assert.ok(up(lumi('teach', id, [], ['#ABCDEF'])) < -10.4, `${id}: on top of it`);
+  assert.doesNotMatch(lumi('teach', 'costume', ['#ABCDEF'], ['#ABCDEF']), /data-part="butterfly"/, 'dressed as one, she carries none');
+});

@@ -1,5 +1,5 @@
 import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
-import { GARDEN_WORDS, LIFE, LIFE_WORDS, SKIN_RULES, award, creatures, garden, guide, moreArrived, plantWords } from './garden/model.js';
+import { GARDEN_WORDS, LIFE, LIFE_WORDS, SKIN_RULES, award, creatures, garden, flowersOpened, guide, listed, moreArrived, plantWords } from './garden/model.js';
 import { lifeArt } from './cast/butterfly.js';
 import { fieldGuide } from './guide.js';
 import { PLANTS, animateLandmarks, animateScene, animateVisitor, drawGarden, flower, landmark, plant, sway, visitor } from './garden/art.js';
@@ -36,8 +36,8 @@ let progress = award(load(), new Date(), (r) => r.habit === null).progress;
 /** Every habit this learner has (built in, then their own; what the intro picked first), and one of them by id. */
 const habits = () => ordered(habitsFor(progress), preferred(progress)); // picks first, then the ones finished most
 const habitOf = (id) => habits().find((h) => h.id === id);
-/** Lumi in what she wears (the wardrobe), the costume's wings in your own colours; a coach's drawing, Lumi dressed. */
-const dressed = (mood, skin = worn(progress)) => lumi(mood, skin, wingColours(progress));
+/** Lumi in what she wears (the wardrobe) with your butterfly on her head, or in the costume, its wings in your colours; a coach's drawing, Lumi dressed. */
+const dressed = (mood, skin = worn(progress)) => lumi(mood, skin, wingColours(progress), wingColours(progress));
 const drawOf = (c) => (c.draw === lumi ? dressed : c.draw);
 /** Whose timings a habit plays by: its subject's `timings` (Wind down plays Calm's), or its own. */
 const timingsOf = (id) => subjects.find((s) => s.habit === id)?.timings ?? id;
@@ -158,7 +158,21 @@ function showCourse(id) {
   try { localStorage.setItem(COURSE_KEY, courseShown.id); } catch { /* lasts the visit */ }
 }
 
-const ROW = 112; // px from one node to the next; the drawn path assumes it
+/**
+ * How much the phone's font size scales text: 1 in a browser, 1.3 in the Android app with the phone's
+ * text at 130% (the WebView follows it). Set as --text-scale, so the room kept for text that px can't see
+ * (a path row, the space under a fixed bar) grows with it; unset, the CSS falls back to 1.
+ */
+const TEXT = (() => {
+  const probe = Object.assign(document.createElement('div'), { textContent: 'x' });
+  probe.style.cssText = 'position:absolute;visibility:hidden;font-size:100px;line-height:1';
+  document.body.append(probe);
+  const k = probe.getBoundingClientRect().height / 100;
+  probe.remove();
+  return Math.max(1, Math.round(k * 100) / 100);
+})();
+if (TEXT > 1) document.documentElement.style.setProperty('--text-scale', TEXT);
+const ROW = 112 * TEXT; // px from one node to the next; the drawn path assumes it (and .path li's height)
 const SWAY = 70; // px a node sits off centre at most
 
 /**
@@ -224,7 +238,7 @@ function home(arrived = null, newly = []) {
   // The line through every node centre; the stretch up to the last finished node is drawn in green.
   // Just after a lesson, its stretch to the next node is its own path (.fresh), which walkTo() fills.
   const trail = (nodes) => {
-    const pts = nodes.map((_, i) => [xAt(i), i * ROW + 32]);
+    const pts = nodes.map((_, i) => [xAt(i), i * ROW + 32 * TEXT]); // through each node's centre
     const d = (to, from = 0) => pts.slice(from, to).map(([x, y], k) => {
       const i = from + k;
       if (!k) return `M${x} ${y}`;
@@ -234,7 +248,7 @@ function home(arrived = null, newly = []) {
     const walked = Math.min(nodes.filter((n) => n.state === 'done').length + 1, pts.length);
     const a = nodes.findIndex((n) => n.id === arrived);
     const fresh = a >= 0 && nodes[a + 1] === current && walked === a + 2;
-    const h = (nodes.length - 1) * ROW + 64;
+    const h = (nodes.length - 1) * ROW + 64 * TEXT;
     return `<svg class="trail" viewBox="-160 0 320 ${h}" width="320" height="${h}" aria-hidden="true">
       <path d="${d(pts.length)}" class="ahead"/>${walked > 1 ? `<path d="${d(fresh ? a + 1 : walked)}" class="walked"/>` : ''}${fresh ? `<path d="${d(a + 2, a)}" class="walked fresh"/>` : ''}
     </svg>`;
@@ -742,15 +756,12 @@ function guideView(id, back) {
 /** What arrived in the garden is heard: the first thing's own sound, after `wait` ms. */
 const arrive = (newly, wait = 0) => { if (newly.length) setTimeout(() => chime(newly[0].sound || newly[0].gift), wait); };
 
-/**
- * What a session brought, quietly: a skin for Lumi first, then the garden's in three lines at most and
- * "and N more in your garden". A skin isn't in the garden, so it never counts towards the three.
- */
-const arrivals = (newly) => {
-  const garden = newly.filter((r) => !r.skin);
+/** What a session brought, quietly: award()'s order, `max` lines (listed()), then "and N more in your garden". */
+const arrivals = (newly, max) => {
+  const { shown, more } = listed(newly, max);
   return !newly.length ? '' : `<ul class="arrivals">
-  ${[...newly.filter((r) => r.skin), ...garden.slice(0, 3)].map((r) => `<li>${arrival(r, r.habit)}</li>`).join('')}
-  ${garden.length > 3 ? `<li>${esc(moreArrived(garden.length - 3))}</li>` : ''}</ul>`;
+  ${shown.map((r) => `<li>${arrival(r, r.habit)}</li>`).join('')}
+  ${more ? `<li>${esc(moreArrived(more))}</li>` : ''}</ul>`;
 };
 
 /**
@@ -820,7 +831,8 @@ function gardenView(from = null) {
       ${words.days ? `<span>${esc(words.days)}</span>` : ''}
       ${words.next ? `<span class="hint">${esc(words.next)}</span>` : ''}
       ${p.creatures.map((c) => `<span class="arrival">${lifeSvg(c.species, c.stage, c.growth)}<span>${esc(LIFE_WORDS.card(c))}${c.k === 3 && c.on ? ` ${shortDate(c.on)}` : ''}</span></span>`).join('')}
-      ${[...p.flowers, ...p.visitors].sort((a, b) => a.on.localeCompare(b.on)).map((a) => arrival(a, p.habit)).join('')}
+      ${[...(p.flowers.length > 3 ? [] : p.flowers), ...p.visitors].sort((a, b) => a.on.localeCompare(b.on)).map((a) => arrival(a, p.habit)).join('')}
+      ${p.flowers.length > 3 ? `<span class="arrival">${flower(p.habit)}<span>${esc(flowersOpened(p.flowers.length))}</span></span>` : ''}
     </button></li>`;
   };
   app.innerHTML = `
@@ -1152,7 +1164,7 @@ function run(lessonId, queue, title, extra = null) {
           ${showsStreak(h.id, pref('quiet-streaks', false)) ? chip(h.id, `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`) : ''}
         </div>
         ${beats ? wingbeat(true, newPanel) : ''}
-        ${arrivals(newly)}
+        ${arrivals(newly, 2)}
         ${subject.readBack?.(progress, new Date()) ?? ''}
         <section class="feel" aria-labelledby="feel-q">
           <h2 id="feel-q">${esc(who.ask ?? 'How do you feel?')}</h2>
@@ -1453,7 +1465,6 @@ function intro() {
       <button class="next" data-next>${esc(INTRO_WORDS.next)}</button>
       <button class="link" data-skip>${esc(INTRO_WORDS.skip)}</button>
     </footer>`;
-  // Wearing a skin, she leaves the butterfly off her crown: a hat would sit under it.
   const guide = coach(app.querySelector('.hero'), (mood) => (worn(progress) ? dressed(mood) : lumiPerched(mood)));
   guide.set('teach');
   focusOn('h1');

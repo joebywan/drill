@@ -43,7 +43,7 @@ const WALL_EDGE = '#A99A86';
 
 // A plain kitchen chair from the front, behind her: two back posts and a rail, the seat's edge, two legs.
 const chair = `<rect x="13" y="50" width="6" height="64" rx="3" fill="${WOOD}"/><rect x="81" y="50" width="6" height="64" rx="3" fill="${WOOD}"/>`
-  + `<rect x="11" y="48" width="78" height="8" rx="4" fill="${WOOD_TOP}"/><rect x="8" y="84" width="84" height="9" rx="4.5" fill="${WOOD_TOP}"/>`;
+  + `<rect x="11" y="48" width="78" height="8" rx="4" fill="${WOOD_TOP}"/><rect x="8" y="94" width="84" height="9" rx="4.5" fill="${WOOD_TOP}"/>`;
 
 // Faces in the kit's part settings. Rest is a content pause for breath: eyes closed and smiling.
 const FACES = {
@@ -101,9 +101,10 @@ const POSE = {
 
 // Seated: a chair (the kit's `seat` prop) behind her, her feet dangling short below its seat.
 // Every seated move starts and ends sitting, so its demo never stands her up between reps.
-const SIT = { seat: [0, 0, 0, 1], body: [0, -3], legL: [0, 0, 4, 0.9], legR: [0, 0, 4, 0.9], armL: [10], armR: [-10] };
+// Sitting, she sinks onto the seat's edge and only her shins and feet show below it.
+const SIT = { seat: [0, 0, 0, 1], body: [0, 3], legL: [0, 0, 8, 0.6], legR: [0, 0, 8, 0.6], armL: [10], armR: [-10] };
 const CROSS = { armL: [-112, 4, 0], armR: [112, -4, 0] }; // hands on the opposite shoulders
-const LEAN = { body: [0, 1], head: [0, 0, 3], armL: [30], armR: [-30] };
+const LEAN = { body: [0, 4], head: [0, 0, 3], armL: [30], armR: [-30] };
 const SEATED = {
   'neck-turn': [{ look: [0, -6, 0], head: [-5] }, { look: [0, 6, 0], head: [5] }],
   'chest-stretch': [{ armL: [62, 0, -2], armR: [-62, 0, -2], torso: [0, 0, 0, 1.02], head: [0, 0, 1] }],
@@ -112,23 +113,26 @@ const SEATED = {
     { ...CROSS, torso: [5], look: [0, 6, 0] },
   ],
   'seated-march': [
-    { legL: [8, 0, -7, 0.9] },
-    { legR: [-8, 0, -7, 0.9] },
+    { legL: [24, -2, -2, 0.6] },
+    { legR: [-24, 2, -2, 0.6] },
   ],
   // One leg out straight, the foot up off the floor. The other leg stays down.
-  'ankle-stretch': [{ legL: [70, 0, 2, 1.1] }, { legR: [-70, 0, 2, 1.1] }],
-  // Lean forward, stand up, lean, sit: the chair stays put behind her.
-  'sit-to-stand': [LEAN, { body: [0, -8], legL: [0, 0, -5, 1.25], legR: [0, 0, -5, 1.25], armL: [16], armR: [-16] }, LEAN],
+  'ankle-stretch': [{ legL: [70, 0, 4, 1.1] }, { legR: [-70, 0, 4, 1.1] }],
+  // Lean forward, stand up tall on long legs in front of the chair, lean, sit: the chair stays put behind her.
+  'sit-to-stand': [LEAN, { body: [0, -3], legL: [0, 0, -3, 1.2], legR: [0, 0, -3, 1.2], armL: [16], armR: [-16] },
+    { body: [0, -3], legL: [0, 0, -3, 1.2], legR: [0, 0, -3, 1.2], armL: [16], armR: [-16] }, LEAN],
 };
 
 // Balance: a wall (the `wall` prop) on her right, her right hand resting on it the whole time.
 const HOLD = { wall: [0, 0, 0, 1], armL: [16], armR: [-82, -4, -2] };
 const BALANCE = {
-  'heel-raise': [{ body: [0, -6], legL: [0, 0, -6], legR: [0, 0, -6], armR: [-84, -4, -2] }],
-  'side-leg-lift': [{ legL: [38] }, { legR: [-30] }],
+  // Up onto the toes: she rises while her feet stay down, so her legs grow long under her.
+  'heel-raise': [{ body: [0, -4], legL: [0, 0, -4, 1.18], legR: [0, 0, -4, 1.18], armR: [-86, -4, -4] }, { body: [0, -4], legL: [0, 0, -4, 1.18], legR: [0, 0, -4, 1.18], armR: [-86, -4, -4] }],
+  'side-leg-lift': [{ legL: [58, 0, -2], body: [1, 0] }, { legR: [-50, 0, -2], body: [-1, 0] }],
+  // One foot up off the floor under her, held, then the other: the lifted foot shows clear of the floor.
   'one-leg-stand': [
-    { legL: [14, 0, -13, 0.6] }, { legL: [14, 0, -13, 0.6] },
-    { legR: [-14, 0, -13, 0.6] }, { legR: [-14, 0, -13, 0.6] },
+    { legL: [16, -2, 0, 0.5] }, { legL: [16, -2, 0, 0.5] },
+    { legR: [-20, 3, 0, 0.5] }, { legR: [-20, 3, 0, 0.5] },
   ],
 };
 
@@ -137,6 +141,8 @@ const RIGS = [rig(J, STAND, POSE), rig(J, { ...STAND, ...SIT }, SEATED), rig(J, 
 const RIG = RIGS[0];
 const of = (pose) => RIGS.find((r) => r.POSES.includes(pose)) ?? RIG;
 export const POSES = RIGS.flatMap((r) => r.POSES);
+/** Whether `pose` is done sitting on the chair (the seated rig). */
+export const seated = (pose) => RIGS[1].POSES.includes(pose);
 export const demo = (el, pose, ...rest) => of(pose).demo(el, pose, ...rest);
 const { at } = RIG;
 

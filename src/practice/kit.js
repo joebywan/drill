@@ -180,7 +180,7 @@ export function steps(el, phases, ctx, { label, summary, paused, mood, rising = 
 /**
  * A routine the learner copies from a demonstrating coach (the screen break, Move): the step and its
  * time, how to do it, what's next, all on screen, as nobody should have to tap on a timer. `room` is a
- * line for the first step only, as moves need space. Each phase is { name, line, seconds, how, mood?,
+ * line for the first step only, as moves need space; '' for none (a routine on a chair). Each phase is { name, line, seconds, how, mood?,
  * reps?, loops?, pose? }; one with no pose (a rest) has nothing to demonstrate and isn't named as next.
  */
 export function coached(el, phases, ctx, { room, ...rest }) {
@@ -190,7 +190,7 @@ export function coached(el, phases, ctx, { room, ...rest }) {
       el.querySelector('.how-now').innerHTML = p.how.map((t) => `<li>${esc(t)}</li>`).join('');
       const next = phases.slice(i + 1).find((x) => x.pose);
       el.querySelector('.next-step').textContent = next ? `Next: ${next.name}` : 'Last one';
-      el.querySelector('.room').hidden = i > 0;
+      el.querySelector('.room').hidden = i > 0 || !room;
       return p.pose ? demo(ctx, p.pose, p.seconds, p.loops ?? p.reps) : [];
     },
     detail: `<ul class="how-now"></ul><p class="next-step"></p><p class="room">${esc(room)}</p>`,

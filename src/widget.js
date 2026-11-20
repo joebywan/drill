@@ -50,12 +50,16 @@ export function leaning(progress) {
 
 const LIGHTS = ['ember', 'soft', 'bright'];
 
-/** The widget and your butterfly follow the learner's best habit: the brightest light, then the longest streak. */
+/**
+ * The widget and your butterfly follow the learner's best habit: the brightest light, then the longest streak.
+ * Only habits that have had a session count (one never started is always 'soft', which would hide a missed day);
+ * before any session, soft.
+ */
 function best(progress, at) {
-  const ids = Object.keys(progress.habits);
+  const ids = Object.keys(progress.habits).filter((id) => progress.habits[id]?.last);
   return ids.map((id) => ({ habit: id, light: light(progress, at, id), streak: currentStreak(progress, at, id) }))
     .sort((a, b) => LIGHTS.indexOf(b.light) - LIGHTS.indexOf(a.light) || b.streak - a.streak)[0]
-    ?? { habit: LEARN, light: 'ember', streak: 0 };
+    ?? { habit: LEARN, light: 'soft', streak: 0 };
 }
 
 /** Your butterfly today (src/cast/butterfly.js butterflyToday), from the best habit's light. Before any session, basking. */
@@ -72,7 +76,8 @@ export function wingColours(progress) {
  * reminder stays quiet when it is today), the reminder's line pool, and the widget's looks from
  * now through the next `days` days' boundaries, each with the time it starts. `shows(habit)` says
  * whether that habit's streak count may show (a quiet habit's is hidden unless switched on, as in
- * habitview.js showsStreak); a hidden count is sent as null and the widget shows no number.
+ * habitview.js showsStreak); a hidden count is sent as null and the widget shows no number, as is a
+ * count of 0: no number until there is a streak to show.
  */
 export function summary(progress, now = new Date(), days = 3, brain = globalThis.wingbeat, shows = () => true) {
   const times = [now];
@@ -92,7 +97,7 @@ export function summary(progress, now = new Date(), days = 3, brain = globalThis
     remind: WIDGET_LINES[words].remind,
     looks: times.map((t) => {
       const b = best(progress, t);
-      return { at: +t, ...b, streak: shows(b.habit) ? b.streak : null, ...look(b.light, t.getHours(), words) };
+      return { at: +t, ...b, streak: shows(b.habit) && b.streak > 0 ? b.streak : null, ...look(b.light, t.getHours(), words) };
     }),
   };
 }

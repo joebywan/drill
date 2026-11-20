@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">Wingbeat</string>
     <string name="widget_name">Wingbeat streak</string>
+    <!-- The widget before the app has drawn it, and its preview in the launcher's list. -->
+    <string name="widget_preview">Small beats go a long way.</string>
     <string name="channel_name">Daily note</string>
     <string name="press_back_again">Press back again to leave</string>
 </resources>

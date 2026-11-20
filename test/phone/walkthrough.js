@@ -1,14 +1,12 @@
 // A fresh user, start to finish, with real taps: intro → Learn (Maths) + Calm + Walk, home, one Maths
 // lesson, one Calm session, Walk, the garden and the ⋯ menu. A screenshot of every screen.
 import { readFileSync } from 'node:fs';
-import { answer, right, toQuiz } from '../../src/maths/items.js';
-import { tick } from '../../src/quiz/items.js';
+import { playMaths } from './lib/seed.js';
 
 const first = JSON.parse(readFileSync(new URL('../../src/data/maths.json', import.meta.url))).units[0].lessons[0];
 
 export default async ({ page, touch, btn, swipe, shot, run, check }) => {
   const pick = (name) => page.getByRole('button', { name, exact: true });
-  const bottom = page.locator('.choices');
   const dump = async (label) => console.log(`  [${label}]`, JSON.stringify(await page.evaluate(() =>
     [...document.querySelectorAll('.pane > *, .rail > *, .cta > *')].map((e) => {
       const r = e.getBoundingClientRect();
@@ -24,19 +22,7 @@ export default async ({ page, touch, btn, swipe, shot, run, check }) => {
   await touch(btn('Show my home')); await run(1500); await shot('home'); await dump('home');
 
   await touch(btn(`Continue · ${first.title}`));
-  for (const [i, item] of first.items.entries()) {
-    await shot(`maths${i}-${item.type}`);
-    if (item.type === 'pick') await touch(bottom.getByRole('button', { name: item.options.find((o) => right(item, o)), exact: true }));
-    if (item.type === 'build') for (const c of answer(item)) await touch(bottom.getByRole('button', { name: c, exact: true, disabled: false }));
-    if (item.type === 'pairs') for (const pair of toQuiz(item).pairs) for (const x of pair) await touch(bottom.getByRole('button', { name: x, exact: true, disabled: false }));
-    if (item.type === 'line') {
-      const k = Array.from({ length: item.ticks + 1 }, (_, j) => j).find((j) => right(item, tick(item, j)));
-      const box = await page.locator('.numline .track').boundingBox();
-      await swipe(page.locator('.numline .track'), 2 * ((box.width * k) / item.ticks - box.width / 2));
-    }
-    if (item.type !== 'teach') await page.locator('.foot.show').waitFor();
-    await touch(btn('Continue'));
-  }
+  await playMaths(first, { page, touch, btn, swipe, shot });
   await shot('maths-summary');
   await touch(btn('Continue')); await run(3000); await shot('home-after-maths'); await dump('after maths');
 

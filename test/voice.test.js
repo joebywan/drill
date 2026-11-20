@@ -21,6 +21,12 @@ test('a hidden streak leaves its count out of the facts, so no line can state it
   assert.equal(hidden.facts.count, null);
   for (let i = 0; i < 50; i++) assert.doesNotMatch(say(hidden.coach, { ...hidden.state, daredToday: true }, hidden.facts, rngOf(i / 50), []).text, /\b20\b/);
   assert.ok([...Array(50).keys()].some((i) => /\b20 days/.test(say(shown.coach, { ...shown.state, daredToday: true }, shown.facts, rngOf(i / 50), []).text)));
+  // Once today is done, the days practised ("21 days of slow breaths") are a count too.
+  const done = finishPractice(p, 'calm', null, day(21, 8), { title: 'Breathing', mins: 2 });
+  const after = moment(done, calm, day(21, 9), undefined, false);
+  assert.equal(after.facts.days, null);
+  for (let i = 0; i < 50; i++) assert.doesNotMatch(say(after.coach, { ...after.state, daredToday: true }, after.facts, rngOf(i / 50), []).text, /\b2[01]\b/);
+  assert.equal(moment(done, calm, day(21, 9)).facts.days, 21);
 });
 
 test('every coach in a subject has a voice, with the same layout for all', () => {

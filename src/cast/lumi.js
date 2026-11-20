@@ -26,9 +26,10 @@ const ARMS = {
 
 /**
  * Lumi in `mood`, wearing `skin` (an id from skins.js; none or unknown is just Lumi). `colours` are the
- * learner's wing panels, for the butterfly costume's wings.
+ * learner's wing panels, for the butterfly costume's wings. With `perch` (the panels, or true for the icon's), the learner's
+ * butterfly rides on her head, on top of a hat (the skin's `perch`, how far up), never with the costume.
  */
-export function lumi(mood = 'teach', skin = null, colours = []) {
+export function lumi(mood = 'teach', skin = null, colours = [], perch = null) {
   const [lh, rh] = ARMS[mood] || ARMS.teach;
   const wear = skinOf(skin) ?? {};
   const arm = (shoulder, hand) => limb(shoulder, hand, SEAL, SEAL, 12) + (wear.arm?.(shoulder, hand) ?? '');
@@ -46,7 +47,7 @@ export function lumi(mood = 'teach', skin = null, colours = []) {
         <ellipse cx="44" cy="53" rx="7" ry="5" fill="${MUZZLE}"/><ellipse cx="56" cy="53" rx="7" ry="5" fill="${MUZZLE}"/>
         ${whisker(52, 50)}${whisker(55, 57)}
         ${face(mood, { cx: 50, cy: 39, skin: SEAL, mouthY: 20 })}
-        <ellipse cx="50" cy="48.5" rx="4" ry="3" fill="${INK}"/>${wear.head ?? ''}
+        <ellipse cx="50" cy="48.5" rx="4" ry="3" fill="${INK}"/>${wear.head ?? ''}${perch && !wear.back ? perched(perch, wear.perch) : ''}
       </g>
       ${wear.front ?? ''}<g data-part="arms"><g data-arm="left">${arm(L, lh)}</g><g data-arm="right">${arm(R, rh)}</g></g>
     </g>`);
@@ -67,6 +68,8 @@ export function flap(el) {
   }
 }
 
-/** Lumi with the player's butterfly on her crown, placed as on the app icon (tools/icon.js). */
-export const lumiPerched = (mood, filled) => lumi(mood)
-  .replace('</svg>', `<g data-part="butterfly" transform="translate(26.5 -10.4) scale(.391)">${butterfly(filled, true, INK)}</g></svg>`);
+/** The player's butterfly on her crown, placed as on the app icon (tools/icon.js), `up` higher over a hat; its own parts unnamed so nothing animating Lumi finds them. */
+const perched = (filled, up = 0) => `<g data-part="butterfly" transform="translate(26.5 ${-10.4 - up}) scale(.391)">${butterfly(filled === true ? undefined : filled, true, INK).replace(/ data-(part|new)="[^"]*"/g, '')}</g>`;
+
+/** Lumi with the player's butterfly on her crown. */
+export const lumiPerched = (mood, filled) => lumi(mood, null, [], filled || true);

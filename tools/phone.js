@@ -10,7 +10,8 @@
  * (someone driving it by hand) is waited for the same way. Holding the lock, it boots the AVD (--avd,
  * else PHONE_AVD, default splendor36; e.g. --avd daybook_tablet) read-only, which is what lets one AVD
  * run several times over, and shuts it down at the end, then lets go of the lock, on error and Ctrl-C
- * too. Screenshots: test-results/phone/<scenario>/NN-name.png.
+ * too. Screenshots: test-results/phone/<scenario>/NN-name.png. A scenario gets the same helpers for an app's
+ * WebView from `attach(pkg)` once the app is up (test/phone/app.js).
  * Exits non-zero on page errors or a failed device check.
  */
 import { execFileSync, spawn } from 'node:child_process';
@@ -123,116 +124,157 @@ try {
     if (!device) { if (i === 5) throw new Error(`${serial} is not among adb's devices`); await sleep(1000); }
   }
   const ctx = await device.launchBrowser();
-  cleanup.unshift(async () => { for (const p of ctx.pages()) await p.close(); await ctx.close(); await device.close(); });
-  const page = await ctx.newPage();
+  // At most 10 s: Chrome may have frozen its page while an app was in front, and then closing it never returns.
+  cleanup.unshift(() => Promise.race([(async () => { for (const p of ctx.pages()) await p.close(); await ctx.close(); await device.close(); })(), sleep(10_000)]));
   const errors = [], requests = [];
-  page.on('pageerror', (e) => errors.push(e.message));
-  page.on('response', (r) => r.status() >= 400 && requests.push(`${r.status()} ${r.url()}`));
-  page.on('requestfailed', (r) => requests.push(`${r.failure()?.errorText} ${r.url()}`));
-  await page.addInitScript(() => { window.WINGBEAT_PLAIN = true; }); // scenarios walk a lesson's own items: no warm-ups or echoes
-  await page.clock.install(); // timed routines run on page.clock, so minutes take seconds
-  await page.goto(base, { waitUntil: 'networkidle' });
+  const results = [];
+  const check = (name, ok, detail = '') => { results.push(`${ok ? 'PASS' : 'FAIL'} ${name}${detail ? ` (${detail})` : ''}`); failed ||= !ok; };
 
+  /** The screen's UI tree from `uiautomator dump`, as XML. */
+  const screenXml = async () => {
+    for (let i = 0; i < 3; i++) { // uiautomator is sometimes killed mid-dump (exit 137): try again
+      try { adb('shell', 'uiautomator', 'dump', '/sdcard/ui.xml'); return adb('shell', 'cat', '/sdcard/ui.xml'); } catch { await sleep(1000); }
+    }
+    return '';
+  };
   // Chrome's own prompts ("Chrome notifications make things easier", …) sit over the page.
   const declinePrompts = async () => {
     for (const label of ['No thanks', 'No, thanks', 'Not now']) {
-      let ui = '';
-      for (let i = 0; i < 3 && !ui; i++) { // uiautomator is sometimes killed mid-dump (exit 137): try again
-        try { adb('shell', 'uiautomator', 'dump', '/sdcard/ui.xml'); ui = adb('shell', 'cat', '/sdcard/ui.xml'); } catch { await sleep(1000); }
-      }
+      const ui = await screenXml();
       // Chrome's own views have a resource-id; the page's (e.g. a × labelled "No thanks") have none.
       const m = ui.match(new RegExp(`text="${label}" resource-id="[^"]+"[^>]*bounds="\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]"`));
       if (m) { adb('shell', 'input', 'tap', String((+m[1] + +m[3]) >> 1), String((+m[2] + +m[4]) >> 1)); await sleep(800); console.log(`  declined Chrome prompt: ${label}`); }
     }
   };
-  await declinePrompts();
 
-  // Where the page's (0,0) is on screen: blank the page, tap, and read where the tap landed.
-  const dpr = await page.evaluate(() => devicePixelRatio);
   const [w, h] = adb('shell', 'wm', 'size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number);
-  await page.evaluate(() => {
-    document.body.replaceChildren();
-    document.body.style.cssText = 'height:100vh;margin:0';
-    addEventListener('pointerdown', (e) => { window.__tap = [e.clientX, e.clientY]; }, { once: true, capture: true });
-  });
-  for (let i = 0; !(await page.evaluate(() => window.__tap)); i++) { // the first tap after launch can go missing
-    if (i === 5) throw new Error('calibration tap never reached the page');
-    adb('shell', 'input', 'tap', String(w >> 1), String(Math.round(h * 0.6)));
-    await sleep(1000);
-  }
-  const [cx, cy] = await page.evaluate(() => window.__tap);
-  const origin = { x: (w >> 1) - cx * dpr, y: Math.round(h * 0.6) - cy * dpr };
-  console.log(`page origin on screen: ${Math.round(origin.x)},${Math.round(origin.y)} (dpr ${dpr})`);
+  let out = '', n = 0; // the running scenario's screenshot folder and count
 
-  // The helpers every scenario gets.
-  const run = async (ms) => { await page.clock.runFor(ms); await sleep(300); };
-  const touch = async (loc) => {
-    loc = loc.first();
-    await loc.waitFor();
-    await loc.scrollIntoViewIfNeeded();
-    const b = await loc.boundingBox();
-    adb('shell', 'input', 'tap', String(Math.round(origin.x + (b.x + b.width / 2) * dpr)), String(Math.round(origin.y + (b.y + b.height / 2) * dpr)));
-    await sleep(700); await page.clock.runFor(700);
+  /**
+   * The helpers a scenario drives a page with, for Chrome's page and for an app's WebView alike
+   * (`attach`): page errors are collected, the clock is Playwright's, and taps land where the page
+   * really sits on screen, measured by blanking it and tapping, then `load` brings the page back.
+   * `pkg` is whose sound and vibrations the device checks look for.
+   */
+  const helpersFor = async (page, pkg, load) => {
+    page.on('pageerror', (e) => errors.push(e.message));
+    page.on('response', (r) => r.status() >= 400 && requests.push(`${r.status()} ${r.url()}`));
+    page.on('requestfailed', (r) => requests.push(`${r.failure()?.errorText} ${r.url()}`));
+    // Playwright pins prefers-color-scheme to light on every page it drives: let the phone's own night mode through.
+    await page.emulateMedia({ colorScheme: null });
+    page.setDefaultTimeout(30_000); // a WebView's page has none of its own: a missing button would wait forever
+    // Scenarios walk a lesson's own items: no warm-ups or echoes. The real requestAnimationFrame is kept before
+    // page.clock replaces it, so shot() can wait for frames the screen will really show.
+    await page.addInitScript(() => { window.WINGBEAT_PLAIN = true; window.__frame = requestAnimationFrame.bind(window); });
+    await page.clock.install(); // timed routines run on page.clock, so minutes take seconds
+    await load();
+    await declinePrompts();
+    const home = page.url();
+
+    // Where the page's (0,0) is on screen: blank the page, tap, and read where the tap landed.
+    const dpr = await page.evaluate(() => devicePixelRatio);
+    await page.evaluate(() => {
+      document.body.replaceChildren();
+      document.body.style.cssText = 'height:100vh;margin:0';
+      addEventListener('pointerdown', (e) => { window.__tap = [e.clientX, e.clientY]; }, { once: true, capture: true });
+    });
+    for (let i = 0; !(await page.evaluate(() => window.__tap)); i++) { // the first tap after launch can go missing
+      if (i === 5) throw new Error('calibration tap never reached the page');
+      adb('shell', 'input', 'tap', String(w >> 1), String(Math.round(h * 0.6)));
+      await sleep(1000);
+    }
+    const [cx, cy] = await page.evaluate(() => window.__tap);
+    const origin = { x: (w >> 1) - cx * dpr, y: Math.round(h * 0.6) - cy * dpr };
+    console.log(`page origin on screen (${pkg}): ${Math.round(origin.x)},${Math.round(origin.y)} (dpr ${dpr}); real frames for shot(): ${await page.evaluate(() => String(window.__frame).includes('[native code]'))}`);
+
+    const run = async (ms) => { await page.clock.runFor(ms); await sleep(300); };
+    /** Back to the page as a first visit sees it: storage cleared, reloaded. */
+    const fresh = async () => {
+      await page.goto(home, { waitUntil: 'networkidle' });
+      await page.evaluate(() => localStorage.clear());
+      await page.reload({ waitUntil: 'networkidle' }); await run(800);
+    };
+    await fresh();
+    const touch = async (loc) => {
+      loc = loc.first();
+      await loc.waitFor();
+      await loc.scrollIntoViewIfNeeded();
+      const b = await loc.boundingBox();
+      adb('shell', 'input', 'tap', String(Math.round(origin.x + (b.x + b.width / 2) * dpr)), String(Math.round(origin.y + (b.y + b.height / 2) * dpr)));
+      await sleep(700); await page.clock.runFor(700);
+    };
+    const btn = (name, opts) => page.getByRole('button', { name, ...opts }); // opts: e.g. { exact: true }, so 'Run' isn't a chip named run(
+    /** A real finger drag across the middle of `loc`, `dx` CSS px sideways. */
+    const swipe = async (loc, dx) => {
+      const b = await loc.first().boundingBox();
+      const at = (x) => String(Math.round(origin.x + x * dpr));
+      const y = String(Math.round(origin.y + (b.y + b.height / 2) * dpr));
+      const x0 = b.x + b.width / 2 - dx / 2;
+      adb('shell', 'input', 'swipe', at(x0), y, at(x0 + dx), y, '400');
+      await sleep(800);
+    };
+    const dragTo = async (from, to) => {
+      const at = async (loc) => { const b = await loc.first().boundingBox(); return [origin.x + (b.x + b.width / 2) * dpr, origin.y + (b.y + b.height / 2) * dpr].map((n) => String(Math.round(n))); };
+      adb('shell', 'input', 'swipe', ...await at(from), ...await at(to), '600');
+      await sleep(800);
+    };
+    /** Starts from the home path, skipping placement, with `patch` merged into the saved progress. */
+    const seed = async (patch = {}) => {
+      await page.evaluate((patch) => localStorage.setItem('wingbeat.progress', JSON.stringify({
+        version: 2, habits: { learn: { count: 0, last: null, forgiven: [] } }, log: [], done: {}, cards: {}, start: 'x', met: Object.fromEntries(['chess', 'maths', 'japanese', 'coding', 'javascript', 'typescript', 'testing'].map((c) => [c, true])), ...patch,
+      })), patch);
+      await page.reload({ waitUntil: 'networkidle' }); await run(800);
+    };
+    // Lumi's hop after a lesson (walkTo) runs on real time, 1.65 s: let it land before the shot.
+    const shot = async (label) => {
+      // At most 3 s: a page out of sight (another app in front) may never finish an animation.
+      await Promise.race([page.evaluate(() => Promise.all(document.querySelector('.guide')?.getAnimations().map((a) => a.finished.catch(() => {})) ?? [])).catch(() => {}), sleep(3000)]);
+      // Then until the page has painted (two real frames, at most 1 s), and 400 ms more: on the software-rendered
+      // emulator the screen shows a heavy frame a few hundred ms after the page has drawn it.
+      await Promise.race([page.evaluate(() => new Promise((r) => (window.__frame ?? requestAnimationFrame)(() => (window.__frame ?? requestAnimationFrame)(r)))).catch(() => {}), sleep(1000)]);
+      await sleep(400);
+      return device.screenshot({ path: `${out}/${String(n++).padStart(2, '0')}-${label}.png` });
+    };
+    const uids = () => adb('shell', 'cmd', 'package', 'list', 'packages', '-U', pkg).match(/uid:\d+/g)?.map((u) => u.slice(4)) || [];
+    /** `pkg` is playing sound right now: its stream is started and AudioFlinger has an active track. */
+    const checkSound = () => {
+      const ids = uids();
+      const started = adb('shell', 'dumpsys', 'audio').split('\n').some((l) => l.includes('state:started') && ids.some((u) => l.includes(`u/pid:${u}/`)));
+      check(`sound: ${pkg} audio stream state:started (dumpsys audio)`, started);
+      // A track row: "Id Active Client(pid/uid) ...", e.g. "56    yes    3897/  10160".
+      const flinger = adb('shell', 'dumpsys', 'media.audio_flinger');
+      check(`sound: active ${pkg} track (dumpsys media.audio_flinger)`, ids.some((u) => new RegExp(`\\byes\\s+\\d+/\\s*${u}\\b`).test(flinger)));
+    };
+    const vibrations = () => (adb('shell', 'dumpsys', 'vibrator_manager').match(new RegExp(pkg.replaceAll('.', '\\.'), 'g')) || []).length;
+    return { page, touch, btn, swipe, dragTo, shot, run, seed, fresh, checkSound, vibrations };
   };
-  const btn = (name, opts) => page.getByRole('button', { name, ...opts });
-  /** A real finger drag across the middle of `loc`, `dx` CSS px sideways. */
-  const swipe = async (loc, dx) => {
-    const b = await loc.first().boundingBox();
-    const at = (x) => String(Math.round(origin.x + x * dpr));
-    const y = String(Math.round(origin.y + (b.y + b.height / 2) * dpr));
-    const x0 = b.x + b.width / 2 - dx / 2;
-    adb('shell', 'input', 'swipe', at(x0), y, at(x0 + dx), y, '400');
-    await sleep(800);
-  };
-  const dragTo = async (from, to) => {
-    const at = async (loc) => { const b = await loc.first().boundingBox(); return [origin.x + (b.x + b.width / 2) * dpr, origin.y + (b.y + b.height / 2) * dpr].map((n) => String(Math.round(n))); };
-    adb('shell', 'input', 'swipe', ...await at(from), ...await at(to), '600');
-    await sleep(800);
+  const page = await ctx.newPage();
+  const chrome = await helpersFor(page, 'com.android.chrome', () => page.goto(base, { waitUntil: 'networkidle' }));
+  /** An app's WebView, once the app is up (`device.webView`), with the same helpers as Chrome's page. */
+  const attach = async (pkg) => {
+    const view = await device.webView({ pkg });
+    const p = await view.page();
+    return helpersFor(p, pkg, () => p.reload({ waitUntil: 'networkidle' }));
   };
   const type = async (text) => { adb('shell', 'input', 'text', text.replaceAll(' ', '%s')); await sleep(800); };
-  /** Starts from the home path, skipping placement, with `patch` merged into the saved progress. */
-  const seed = async (patch = {}) => {
-    await page.evaluate((patch) => localStorage.setItem('wingbeat.progress', JSON.stringify({
-      version: 2, habits: { learn: { count: 0, last: null, forgiven: [] } }, log: [], done: {}, cards: {}, start: 'x', met: Object.fromEntries(['chess', 'maths', 'japanese', 'coding', 'javascript', 'typescript', 'testing'].map((c) => [c, true])), ...patch,
-    })), patch);
-    await page.reload({ waitUntil: 'networkidle' }); await run(800);
-  };
-  const results = [];
-  const check = (name, ok, detail = '') => { results.push(`${ok ? 'PASS' : 'FAIL'} ${name}${detail ? ` (${detail})` : ''}`); failed ||= !ok; };
-  /** Chrome is playing sound right now: its stream is started and AudioFlinger has an active track. */
-  const checkSound = () => {
-    const uids = adb('shell', 'cmd', 'package', 'list', 'packages', '-U', 'com.android.chrome').match(/uid:\d+/g)?.map((u) => u.slice(4)) || [];
-    const started = adb('shell', 'dumpsys', 'audio').split('\n').some((l) => l.includes('state:started') && uids.some((u) => l.includes(`u/pid:${u}/`)));
-    check('sound: Chrome audio stream state:started (dumpsys audio)', started);
-    // A track row: "Id Active Client(pid/uid) ...", e.g. "56    yes    3897/  10160".
-    const flinger = adb('shell', 'dumpsys', 'media.audio_flinger');
-    check('sound: active com.android.chrome track (dumpsys media.audio_flinger)', uids.some((u) => new RegExp(`\\byes\\s+\\d+/\\s*${u}\\b`).test(flinger)));
-  };
-  const vibrations = () => (adb('shell', 'dumpsys', 'vibrator_manager').match(/com\.android\.chrome/g) || []).length;
 
   for (const name of names) {
     console.log(`\n▶ ${name}`);
-    const out = `${ROOT}test-results/phone/${name}`;
+    out = `${ROOT}test-results/phone/${name}`;
     rmSync(out, { recursive: true, force: true }); mkdirSync(out, { recursive: true });
-    let n = 0;
-    // Lumi's hop after a lesson (walkTo) runs on real time, 1.65 s: let it land before the shot.
-    const shot = async (label) => {
-      await page.evaluate(() => Promise.all(document.querySelector('.guide')?.getAnimations().map((a) => a.finished.catch(() => {})) ?? [])).catch(() => {});
-      return device.screenshot({ path: `${out}/${String(n++).padStart(2, '0')}-${label}.png` });
-    };
+    n = 0;
     const before = { errors: errors.length, requests: requests.length, results: results.length };
-    await page.goto(base, { waitUntil: 'networkidle' });
-    await page.evaluate(() => localStorage.clear());
-    await page.reload({ waitUntil: 'networkidle' }); await run(800);
+    await chrome.fresh();
     await declinePrompts();
     try {
       const { default: scenario } = await import(`${ROOT}test/phone/${name}.js`);
-      await scenario({ page, device, adb, touch, btn, swipe, dragTo, type, shot, run, seed, check, checkSound, vibrations, declinePrompts });
+      await scenario({ ...chrome, device, adb, type, check, declinePrompts, screenXml, attach });
     } catch (e) {
       errors.push(`scenario ${name}: ${e.message.split('\n').filter((l) => !/^Call log:|^\s*$/.test(l)).slice(0, 2).join(' ')}`);
-      await shot('failed').catch(() => {});
+      await chrome.shot('failed').catch(() => {});
     }
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+    // Chrome may have frozen its page while an app was in front (test/phone/app.js): then skip this.
+    const overflow = await Promise.race([page.evaluate(() => document.documentElement.scrollWidth - innerWidth), sleep(5000).then(() => 0)]);
     check('no sideways overflow', overflow <= 0, overflow > 0 ? `${overflow}px` : '');
     for (const r of results.slice(before.results)) console.log(`  ${r}`);
     for (const e of errors.slice(before.errors)) console.log(`  ERROR ${e}`);

@@ -104,8 +104,8 @@ export const PRESETS = [
   { id: 'water', name: 'Water', icon: '💧', plant: 'rose', did: 'I drank water today', title: 'Drank water' },
   { id: 'outside', name: 'Outside', icon: '🌤️', plant: 'cactus', did: 'I went outside today', title: 'Went outside' },
   { id: 'tidy', name: 'Tidy', icon: '🧹', plant: 'mushroom', did: 'I tidied today', title: 'Tidied' },
-  { id: 'floss', name: 'Floss', icon: '🦷', plant: 'daisies', did: 'I flossed today', title: 'Flossed' },
-  { id: 'music', name: 'Music', icon: '🎵', plant: 'lavender', did: 'I played today', title: 'Played music' },
+  { id: 'floss', name: 'Floss', icon: '🪥', plant: 'daisies', did: 'I flossed today', title: 'Flossed' },
+  { id: 'music', name: 'Music', icon: '🎸', plant: 'lavender', did: 'I played today', title: 'Played music' },
   { id: 'make', name: 'Make', icon: '🎨', plant: 'sunflower', did: 'I made something today', title: 'Made something' },
   { id: 'call', name: 'Call', icon: '📞', plant: 'vine', did: 'I called someone today', title: 'Called someone' },
 ];
