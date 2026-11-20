@@ -31,14 +31,14 @@ function movesOf(item) {
 }
 
 let dragged = false;
-const looked = new Set(); // what has been photographed this run: the first item of each kind, every demo, every long puzzle
+const looked = new Set(); // what has been photographed this run: the first item of each kind, every demo, every long puzzle, every card with a board
 const NAMES = { q: 'Queen', r: 'Rook', b: 'Bishop', n: 'Knight' };
 
 async function answerChess(h, item) {
   const { page, shot } = h;
   const k = kind(item);
   const long = k === 'find' && item.moves.length > 4;
-  const want = looked.size < 14 && (!looked.has(k) || item.demo || long);
+  const want = looked.size < 14 && (!looked.has(k) || item.demo || long || (k === 'teach' && item.fen));
   if (want) { looked.add(k); await shot(`look-${item.id}-asked`).catch(() => {}); }
   await play(h, item, k);
   if (want) { await page.locator('.foot.show').waitFor({ timeout: 30000 }).catch(() => {}); await new Promise((r) => setTimeout(r, 900)); await shot(`look-${item.id}-answered`).catch(() => {}); }
