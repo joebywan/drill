@@ -8,6 +8,7 @@ const Toy = 'interface Toy { name: string; price?: number; }';
 /** TypeScript with the same chips: annotations, unions, interfaces, generics. Graded by src/code/types.js, then by running. */
 const course = {
   id: 'typescript',
+  follows: { course: 'javascript', units: 9 }, // the JavaScript it builds on: its first units (test/code-courses.test.js works it out)
   title: 'TypeScript',
   units: [
     unit('Annotations',
@@ -98,7 +99,7 @@ const course = {
         T('type gives any label a short name, for unions most of all. A function can use one like any other.', 'type Way = "up" | "down"; const w: Way = "up"; console.log(w);'),
         C(`${Toy} const t: Toy = { name: "a" }; console.log(t.name);`, 'price is optional, so leaving it out is fine.'),
         C(`${Toy} function f(t: Toy): number { return t.price + 1; } f({ name: "a" });`, 'price might be undefined, so check first.'),
-        RG('cost', [[[{ name: 'a' }], 0], [[{ name: 'b', price: 4 }], 4]], `${Toy} function cost(t: Toy): number { if (t.price === ___) { return 0; } return t.price; }`, ['undefined'], 'What should be ruled out first?', 'Not every toy has a price. A hidden test leaves it out.', ['0', 'null']),
+        RG('cost', [[[{ name: 'a' }], 0], [[{ name: 'b', price: 4 }], 4]], `${Toy} function cost(t: Toy): number { if (t.price === ___) { return 0; } return t.price; }`, ['undefined'], 'What should be ruled out first?', 'Not every toy has a price. A hidden test leaves it out.', ['0', '""']),
         G('type Size = "s" | "l"; const a: ___ = "s"; console.log(a);', ['Size'], 'Use the short name.', 'A type alias is a label like any other.', ['string[]', 'number']),
         C('type Size = "s" | "l"; const a: Size = "m"; console.log(a);', 'm is not on the list.'),
         G('type Id = number ___ string; const i: Id = "a"; console.log(i);', ['|'], 'Finish the alias.', 'Either one will do.', ['&&', '+'], { fixed: true }),

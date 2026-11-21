@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { VERSION, emptyProgress, finishPractice, meetsCoach, metCoach, migrate, showsIntro, track } from '../src/progress.js';
-import { habitsFor, ordered } from '../src/subjects.js';
+import { VERSION, emptyProgress, finishPractice, meetsCoach, metCoach, migrate, placeAt, showsIntro, track, waits } from '../src/progress.js';
+import { coursesFor, habitsFor, ordered, subjects } from '../src/subjects.js';
 
 const roundTrip = (v) => JSON.parse(JSON.stringify(v));
 const ids = (list) => list.map((h) => h.id);
@@ -45,4 +45,34 @@ test("a course's coach is met once, before its first lesson, and never by someon
   assert.equal(meetsCoach({ ...emptyProgress(), done: { 'coding:steps-0': true } }, subject), false);
   assert.equal(meetsCoach({ ...emptyProgress(), done: { 'chess:l1': true } }, subject), true, 'another course');
   assert.equal(meetsCoach(emptyProgress(), { id: 'calm', coach: {} }), false, 'a coach with no hello');
+});
+
+test("the intro's picks hide the rest the way + Habit does: a built-in or a course, kept, never none", () => {
+  const p = track(track(track(emptyProgress(), { id: 'reflect', hidden: true }), { id: 'maths', hidden: true }), { id: 'walk' });
+  const all = habitsFor(p);
+  assert.equal(all.find((h) => h.id === 'reflect').hidden, true);
+  assert.equal(all.find((h) => h.id === 'calm').hidden, undefined);
+  assert.deepEqual(ids(all), ['learn', 'calm', 'break', 'reflect', 'move', 'winddown', 'focus', 'walk'], 'a course id is not a habit');
+  assert.deepEqual(roundTrip(migrate(roundTrip(p))).tracked, p.tracked, 'kept through a save');
+  const courses = subjects.filter((s) => s.kind === 'learn');
+  assert.deepEqual(ids(coursesFor(p, courses)), ids(courses).filter((id) => id !== 'maths'));
+  assert.deepEqual(ids(coursesFor(track(p, { id: 'maths', hidden: false }), courses)), ids(courses), 'shown again');
+  const none = courses.reduce((q, s) => track(q, { id: s.id, hidden: true }), emptyProgress());
+  assert.deepEqual(coursesFor(none, courses), courses, 'never an empty row');
+  assert.deepEqual(coursesFor(emptyProgress(), courses), courses, 'a save from before shows what it showed');
+});
+
+test('a course that follows another waits for that much of it, unless the learner chooses to start here or already has', () => {
+  const js = subjects.find((s) => s.id === 'javascript');
+  for (const ts of subjects.filter((s) => s.follows)) {
+    assert.equal(waits(emptyProgress(), ts, js), true, ts.id);
+    const done = (n) => ({ ...emptyProgress(), done: Object.fromEntries(js.units.slice(0, n).flatMap((u) => u.lessons.filter((l) => !l.mix)).map((l) => [`javascript:${l.id}`, true])) });
+    assert.equal(waits(done(ts.follows.units - 1), ts, js), true, 'one unit short');
+    assert.equal(waits(done(ts.follows.units), ts, js), false, 'that much done, checkpoints or not');
+    assert.equal(waits(placeAt(emptyProgress(), ts.id, ts.units[0].title), ts, js), false, 'I know JavaScript: start here');
+    assert.equal(waits(placeAt(emptyProgress(), ts.id, ts.units[1].title), ts, js), false, 'its own skip ahead');
+    assert.equal(waits(placeAt(emptyProgress(), ts.id, null), ts, js), true, 'dismissing its skip ahead is not choosing to start');
+    assert.equal(waits({ ...emptyProgress(), done: { [`${ts.id}:${ts.units[0].lessons[0].id}`]: true } }, ts, js), false, 'already started');
+  }
+  assert.equal(waits(emptyProgress(), js, js), false, 'a course that follows nothing never waits');
 });
