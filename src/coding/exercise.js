@@ -47,11 +47,32 @@ export function mount(el, item, { say, done, coach }) {
     for (const b of later) b.classList.add('unrun');
     if (result.bumped) cellAt(result.bumped)?.classList.add('hit');
   };
+  /**
+   * Waits MISS_HOLD_MS, or until the first tap anywhere. That tap only ends the wait: its click is swallowed, so it
+   * never presses what comes up under the finger (the verdict's Continue).
+   */
+  const hold = () => new Promise((resolve) => {
+    const swallow = (e) => { e.preventDefault(); e.stopPropagation(); };
+    const end = (e) => {
+      endHold = null;
+      clearTimeout(timer);
+      removeEventListener('pointerdown', end, true);
+      if (e?.type === 'pointerdown') {
+        addEventListener('click', swallow, { capture: true, once: true });
+        setTimeout(() => removeEventListener('click', swallow, true), 700);
+      }
+      resolve();
+    };
+    const timer = setTimeout(end, MISS_HOLD_MS);
+    addEventListener('pointerdown', end, true);
+    endHold = end;
+  });
   const show = (program, picks = [], locked = true, tappable = null) => (item.view === 'js' ? '' : blocks(program, picks, locked, tappable))
     + (item.view ? code(program, picks, locked) : '');
 
   let gone = false;
-  const cleanup = () => { gone = true; stop(); };
+  let endHold = null; // ends a missed run's hold early, as a tap does
+  const cleanup = () => { gone = true; stop(); endHold?.(); };
 
   if (kind(item) === 'teach') {
     if (!item.level) world.remove();
@@ -72,7 +93,8 @@ export function mount(el, item, { say, done, coach }) {
 
   /**
    * Runs a finished program: Fennel walks it. A miss stays on screen, marked where it stopped and said why, for
-   * MISS_HOLD_MS, then `oneWay()` takes its place and the reason goes first in the verdict. Then the item is done.
+   * MISS_HOLD_MS (or until a tap: nobody waits once they have seen it), then `oneWay()` takes its place and the reason
+   * goes first in the verdict. Then the item is done.
    */
   const perform = async (program, oneWay, fixed = false) => {
     const result = runItem(item, program);
@@ -84,7 +106,7 @@ export function mount(el, item, { say, done, coach }) {
     if (!right) {
       markStop(result);
       say(why, 'wrong');
-      await new Promise((r) => { setTimeout(r, MISS_HOLD_MS); });
+      await hold();
       if (gone) return;
       programEl.innerHTML = oneWay();
       programEl.classList.add('shown');

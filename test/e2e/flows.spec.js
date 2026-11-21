@@ -2031,6 +2031,32 @@ test('Around the rock: the card shows a step into a rock ending the run, and a m
   expect(await page.locator('.foot.wrong p').textContent()).toMatch(new RegExp(`^${RUN_ENDS.rock.replace(/\./g, '\\.')} `));
 });
 
+/** A miss walked into the rock, then a tap (or a finger's touch) where Continue will be, during the hold. */
+async function tapDuringHold(page, finger) {
+  await reach(page, 'coding', 'steps-1', 'steps-1-around');
+  const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
+  for (const step of ['right', 'down', 'right', 'up']) await tile(`Step ${step}`).click();
+  await expect(page.locator('#said')).toHaveText(RUN_ENDS.rock);
+  await expect(page.locator('.foot.show')).toHaveCount(0);
+  // Where Continue will be: the middle of the bottom of the screen.
+  const next = await page.evaluate(() => [innerWidth / 2, innerHeight - 40]);
+  const asked = Date.now();
+  if (finger) await page.touchscreen.tap(next[0], next[1]); else await page.mouse.click(next[0], next[1]);
+  await expect(page.locator('.program.shown')).toBeVisible();
+  await expect(page.locator('.foot.wrong')).toBeVisible();
+  expect(Date.now() - asked, 'well inside the hold').toBeLessThan(1500);
+  await page.waitForTimeout(800);
+  await expect(page.locator('.foot.wrong'), 'the tap did not also press Continue').toBeVisible();
+  await expect(page.locator('#said')).toHaveText(RUN_ENDS.way);
+  await continueButton(page).click(); // and Continue works as ever after it
+  await expect(page.locator('.foot.show')).toHaveCount(0);
+}
+test("a click during a missed run's hold goes straight to the way that works, and does not press the Continue that comes under it", ({ page }) => tapDuringHold(page, false));
+test.describe('with a finger', () => {
+  test.use({ hasTouch: true, isMobile: true });
+  test("a touch during a missed run's hold does the same", ({ page }) => tapDuringHold(page, true));
+});
+
 // Garden seasons: the real calendar, by the device's hemisphere. Australia/* is south.
 test.describe('garden seasons in Sydney', () => {
   test.use({ timezoneId: 'Australia/Sydney' });

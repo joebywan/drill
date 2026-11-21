@@ -121,6 +121,17 @@ export function fitBoard(boardEl, choices, item, ctx, tapped = () => TAPPED.incl
 
 const OVER = ["That's it.", "Here's how it goes."];
 const KING_CHECK = 'That leaves your king in check. Try again.';
+const FOUND = (got, of) => (of > 1 ? ` Found ${got} of ${of}.` : '');
+const FURTHER = (found) => `It can go further that way.${found}`;
+const ALL_STARS = 'Every star collected.';
+const OUT_OF_MOVES = "Out of moves. Here's one way.";
+/** What she says in a puzzle, for `side` ('White' or 'Black') to play. */
+const PUZZLE = {
+  ask: (side) => `${side} to play. Find the best move.`,
+  marked: (side) => `Not that. The marked piece moves — ${side} to play.`,
+  again: (side) => `Not that one. ${side} to play.`,
+  more: (side) => `Good. Keep going — ${side} to play.`,
+};
 const starsLeft = (stars, moves) => `${stars} star${stars === 1 ? '' : 's'} to go, ${moves} move${moves === 1 ? '' : 's'} left.`;
 /** A stars item's first words: a new piece's introduction stays with the prompt until the first move. */
 const starsFirst = (item) => (item.intro ? `${item.intro} ${starsPrompt(item)}` : starsPrompt(item));
@@ -135,18 +146,17 @@ function sayings(item) {
   if (k === 'teach') return [item.text];
   if (k === 'truefalse') return [item.prompt];
   if (k === 'tap') {
-    const n = answer(item).length, found = n > 1 ? ` Found ${n - 1} of ${n}.` : '';
-    return [item.prompt + found, `It can go further that way.${found}`, ...OVER];
+    const n = answer(item).length, found = FOUND(n - 1, n);
+    return [item.prompt + found, FURTHER(found), ...OVER];
   }
   if (k === 'move') return [item.prompt, KING_CHECK, ...cant, ...OVER];
   if (k === 'stars') {
     const s = item.stars.length, m = item.moves;
     return [starsFirst(item), ...[[s - 1, m - 1], [1, 1], [s - 1, 1], [1, m - 1]].filter(([a, b]) => a > 0 && b > 0).map(([a, b]) => starsLeft(a, b)),
-      'Every star collected.', "Out of moves. Here's one way.", ...cant, ...OVER];
+      ALL_STARS, OUT_OF_MOVES, ...cant, ...OVER];
   }
   const side = playerColor(startPuzzle(item)) === 'w' ? 'White' : 'Black'; // find
-  return [item.prompt || `${side} to play. Find the best move.`, ...cant, rightPiece('knight', 'bishop'),
-    `Not that. The marked piece moves — ${side} to play.`, `Not that one. ${side} to play.`, `Good. Keep going — ${side} to play.`, ...OVER];
+  return [item.prompt || PUZZLE.ask(side), ...cant, rightPiece('knight', 'bishop'), PUZZLE.marked(side), PUZZLE.again(side), PUZZLE.more(side), ...OVER];
 }
 const rightPiece = (needs, played) => `Right move, another piece. This position needs a ${needs}, not a ${played}.`;
 
@@ -330,12 +340,12 @@ const MOUNTS = {
     if (item.square) b.addMarker(MARKER_TYPE.square, item.square);
     // For 'ends', a nearer square on a right line is a nudge, not a miss.
     const along = item.rule === 'ends' ? answer({ ...item, rule: 'moves' }) : [];
-    const progress = () => (want.length > 1 ? ` Found ${found.size} of ${want.length}.` : '');
+    const progress = () => FOUND(found.size, want.length);
     let over = false;
     const pick = ({ square }) => {
       if (over || !square || square === item.square || found.has(square)) return;
       const right = want.includes(square);
-      if (!right && along.includes(square)) { say(`It can go further that way.${progress()}`, 'think'); return; }
+      if (!right && along.includes(square)) { say(FURTHER(progress()), 'think'); return; }
       if (right) {
         found.add(square);
         b.addMarker(MARKER_TYPE.framePrimary, square);
@@ -439,11 +449,11 @@ const MOUNTS = {
       if (result.played.promotion) timer = setTimeout(() => b.setPosition(fen), REPLY_DELAY);
       if (!left.size) {
         b.disableMoveInput();
-        say(`Every star collected.`);
+        say(ALL_STARS);
         done(true, explanation(item));
       } else if (!budget) {
         b.disableMoveInput();
-        say(`Out of moves. Here's one way.`, 'think');
+        say(OUT_OF_MOVES, 'think');
         timer = setTimeout(() => {
           b.setPosition(item.fen, true);
           left.clear();
@@ -530,9 +540,9 @@ const MOUNTS = {
         if (mistakes >= 2) {
           b.removeMarkers(MARKER_TYPE.circlePrimary);
           for (const sq of hint(state)) b.addMarker(MARKER_TYPE.circlePrimary, sq);
-          say(`Not that. The marked piece moves — ${side} to play.`, 'struggling');
+          say(PUZZLE.marked(side), 'struggling');
         } else {
-          say(`Not that one. ${side} to play.`, 'wrong');
+          say(PUZZLE.again(side), 'wrong');
         }
         return false;
       }
@@ -547,14 +557,14 @@ const MOUNTS = {
           if (mistakes >= 2) done(true, explanation(item), { hinted: true });
           else done(mistakes === 0, explanation(item));
         } else {
-          say(`Good. Keep going — ${side} to play.`, 'think');
+          say(PUZZLE.more(side), 'think');
           open();
         }
       }, REPLY_DELAY);
       return true;
     };
 
-    say(item.prompt || `${side} to play. Find the best move.`, 'think');
+    say(item.prompt || PUZZLE.ask(side), 'think');
     timer = setTimeout(() => {
       show();
       open();

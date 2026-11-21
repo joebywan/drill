@@ -40,6 +40,20 @@ async function rock(h) {
   check('the way that works comes after, the reason first in the verdict', await page.locator('.program.shown').count() === 1
     && (await page.locator('#said').textContent()) === RUN_ENDS.way && (await page.locator('.foot.show p').textContent()).startsWith(RUN_ENDS.rock));
   await touch(btn('Quit lesson'));
+
+  // Again, and this time a tap during the hold, where Continue will be: it ends the hold, and does not press Continue.
+  await touch(btn(`Continue · ${coding.lessons[1].title}`));
+  await touch(btn('Continue', { exact: true }));
+  for (const step of ['right', 'down', 'right', 'up']) await touch(page.locator('.tiles').getByRole('button', { name: `Step ${step}`, exact: true }));
+  check('the hold is on', await page.locator('.foot.show').count() === 0 && await page.locator('.program .block.stopped').count() === 1);
+  await page.evaluate(() => document.body.insertAdjacentHTML('beforeend', `<i id="pin" style="position:fixed;left:50%;top:${innerHeight - 40}px;width:1px;height:1px;pointer-events:none"></i>`));
+  await touch(page.locator('#pin'));
+  await page.evaluate(() => document.getElementById('pin').remove());
+  await shot('rock-hold-tapped');
+  check('a tap ends the hold: the way and the verdict show', await page.locator('.program.shown').count() === 1 && await page.locator('.foot.show.wrong').count() === 1);
+  await run(800);
+  check('and it did not press Continue', await page.locator('.foot.show.wrong').count() === 1 && await page.locator('.program.shown').count() === 1);
+  await touch(btn('Quit lesson'));
 }
 
 async function stars(h) {

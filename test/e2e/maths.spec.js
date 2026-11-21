@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures.js';
+import { test, expect, reach } from './fixtures.js';
 import { readFileSync } from 'node:fs';
 import { answer } from '../../src/maths/items.js';
 import { continueButton, pickMaths, playLesson, solve } from './maths-play.js';
@@ -82,19 +82,24 @@ test('a miss on a build shows what was put, marked as theirs, with the right ans
   await slip.click();
   await expect(page.locator('.foot.wrong')).toBeVisible();
   await expect(page.locator('.quiz .yours')).toBeVisible();
-  await expect(page.locator('.quiz .yours')).toHaveText(`You put ${right[0]}${put}${'_'.repeat(right.length - 2)}`);
+  await expect(page.locator('.quiz .yours')).toHaveText(`You put ${right[0]}${put}`);
   await expect(page.locator('.quiz .slot')).toHaveText(right);
   expect(await card()).toEqual(asked);
+});
 
-  // Japanese builds share it: word tiles are put back with spaces.
-  await page.evaluate(async () => {
-    const { mount } = await import('/src/quiz/exercise.js');
-    document.getElementById('app').innerHTML = '<main class="play"><div class="stage"></div></main>';
-    mount(document.querySelector('.stage'), { id: 'j', type: 'build', prompt: 'p', answer: ['これは', 'ねこです'], tiles: ['いぬです'], explain: 'e' }, { say() {}, done() {}, lang: 'ja-JP' });
-  });
-  await page.locator('.choices .choice', { hasText: 'これは' }).click();
-  await page.locator('.choices .choice', { hasText: 'いぬです' }).click();
-  await expect(page.locator('.quiz .yours')).toHaveText('You put これは いぬです');
+// Japanese builds share it: a five-word sentence missed on its second tile shows the two words put, and no more.
+for (const [width, height] of [[412, 786], [412, 533]]) test(`a Japanese sentence missed on its second tile shows what was put, at ${width}x${height}`, async ({ page }) => {
+  await page.setViewportSize({ width, height });
+  const item = await reach(page, 'japanese', 'se3', 'se3-build-332');
+  const card = await page.locator('.quiz .card').boundingBox();
+  const tile = (t) => page.locator('.choices .choice:not(:disabled)').filter({ hasText: new RegExp(`^${t}$`) }).first();
+  await tile(item.answer[0]).click();
+  await tile('です').click();
+  await expect(page.locator('.foot.wrong')).toBeVisible();
+  await page.screenshot({ path: test.info().outputPath(`japanese-miss-${width}x${height}.png`) });
+  await expect(page.locator('.quiz .yours')).toHaveText(`You put ${item.answer[0]} です`);
+  await expect(page.locator('.quiz .yours')).toBeInViewport({ ratio: 1 });
+  expect((await page.locator('.quiz .card').boundingBox()).y).toBe(card.y); // full slots may take a second row: the card grows down, never moves
 });
 
 test('maths cards come back in review, on the shared Learning review', async ({ page }) => {

@@ -1,6 +1,6 @@
 import { dragTile } from '../drag.js';
 import { esc } from '../html.js';
-import { fitCard } from '../fit.js';
+import { fitCard, keepInView } from '../fit.js';
 import { cue, flourish, installVoice, move, offerVoice, play, speak, voice } from '../feel.js';
 import { nearestTick, nextTile, onLine, paired, picked, shuffle, tick, tilesOf } from './items.js';
 
@@ -191,10 +191,11 @@ const TYPES = {
       } else {
         b.classList.add('wrong');
         // What they put stays in sight, marked as theirs, over the right answer in the slots (its room was kept from the start).
-        const theirs = slots.map((s) => (s === slot ? b.textContent : s.textContent || '_'));
+        const theirs = slots.slice(0, slots.indexOf(slot) + 1).map((s) => (s === slot ? b.textContent : s.textContent)).filter(Boolean); // only what was placed
         card.querySelector('.yours').innerHTML = `You put <s>${esc(theirs.join(theirs.every((t) => [...t].length === 1) ? '' : ' '))}</s>`;
         card.querySelector('.yours').classList.add('said');
         for (const s of empty()) { s.textContent = item.answer[slots.indexOf(s)]; s.classList.add('shown'); }
+        keepInView(card, card.querySelector('.yours')); // a card that scrolls in its own box (a short phone) shows it
       }
       for (const x of choices.children) x.disabled = true;
       const correct = !card.querySelector('.slot.shown');
