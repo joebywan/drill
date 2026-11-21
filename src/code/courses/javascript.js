@@ -5,7 +5,7 @@ export default coarsened({
   id: 'javascript',
   title: 'JavaScript',
   units: [
-    unit('Printing',
+    unit('Printing to the screen',
       lesson('jsv-1', 'Say something', [
         T('Real code now. No typing, ever: you tap words into place, like a sentence. console.log prints whatever is in its brackets.', 'console.log("hello");'),
         T('Text goes in quote marks. The ; ends the line, like a full stop.', 'console.log("sand");'),

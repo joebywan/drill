@@ -14,9 +14,9 @@ const LIGHTS = { bright: 'done', soft: 'not yet', ember: 'resting' };
 /** Days since the habit was last done that make the next visit a comeback: welcomes, never dares. */
 export const COMEBACK_DAYS = 3;
 
-/** The hour band most of the habit's recent sessions fell in, once there are three to go on. */
-function usualHour(progress, habit) {
-  const bands = progress.log.filter((e) => e.habit === habit && Number.isInteger(e.hour)).slice(-14).map((e) => hourBand(e.hour));
+/** The hour band most of the habit's (or, given `course`, that course's) recent sessions fell in, once there are three to go on. */
+function usualHour(progress, habit, course) {
+  const bands = progress.log.filter((e) => e.habit === habit && (!course || e.course === course) && Number.isInteger(e.hour)).slice(-14).map((e) => hourBand(e.hour));
   if (bands.length < 3) return null;
   const count = (b) => bands.filter((x) => x === b).length;
   return bands.reduce((best, b) => (count(b) > count(best) ? b : best));
@@ -26,10 +26,15 @@ function usualHour(progress, habit) {
  * { coach, state, facts } for `habit` ({ id, name }) at `now`. A fact that isn't known is null.
  * `streakShown` false (a quiet habit, see showsStreak) leaves the streak count and the days practised out of the facts, so no
  * line states a number.
- * `coach` picks one where a habit has several (Learning's courses: the course shown).
+ * `coach` picks one where a habit has several (Learning's courses: the course shown), and `course` is that
+ * course's id: its coach says their course is done today only when a session of it was. With Learning
+ * done today through another course, the state is `elsewhere` (a moment: only pools for it match, and
+ * never a dare), and the usual hour is the course's own.
  */
-export function moment(progress, habit, now = new Date(), coach = coachOf(habit.id), streakShown = true) {
+export function moment(progress, habit, now = new Date(), coach = coachOf(habit.id), streakShown = true, course = null) {
   const date = today(now);
+  const lit = LIGHTS[light(progress, now, habit.id)];
+  const elsewhere = !!course && lit === 'done' && !progress.log.some((e) => e.habit === habit.id && e.date === date && e.course === course);
   const last = progress.habits[habit.id]?.last;
   const count = currentStreak(progress, now, habit.id);
   const days = progress.habits[habit.id]?.days || 0;
@@ -39,11 +44,12 @@ export function moment(progress, habit, now = new Date(), coach = coachOf(habit.
       habit: habit.id,
       today: date,
       hour: hourBand(now.getHours()),
-      light: LIGHTS[light(progress, now, habit.id)],
+      light: lit,
       streak: streakBand(count),
       first: !last,
       comeback: !!last && (Date.parse(date) - Date.parse(last)) / 86400000 >= COMEBACK_DAYS,
+      ...(course && { elsewhere }),
     },
-    facts: { habit: habit.name, usualHour: usualHour(progress, habit.id), count: streakShown && count >= 2 ? count : null, days: streakShown && days >= 2 ? days : null },
+    facts: { habit: habit.name, usualHour: usualHour(progress, habit.id, course), count: streakShown && count >= 2 ? count : null, days: streakShown && days >= 2 ? days : null },
   };
 }

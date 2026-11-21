@@ -1,4 +1,4 @@
-// Your timings with real taps: Breaths starts at the first lesson's 3 and + gives 4; set Calm's breath in to 6, see the orb hold the in-breath for 6 s, then reset.
+// Your timings with real taps: Breaths starts at the first lesson's 3 and + gives 4; set Calm's breath in to 6, see the orb hold the in-breath for 6 s (counting up), then reset.
 export default async ({ page, seed, touch, btn, shot, run, check }) => {
   await seed();
   await touch(btn(/^Calm(,|$)/));
@@ -17,11 +17,12 @@ export default async ({ page, seed, touch, btn, shot, run, check }) => {
   await touch(btn('Back').and(page.locator('.back')));
   await touch(btn('Continue · The long out-breath'));
   await touch(btn('Start')); await shot('inhale');
-  // Real taps let a little real time pass too, so the count is read rather than a precise moment:
-  // the in-breath shows 5 or 6 seconds left, where the default would show 4 at most.
-  const left = Number(await page.locator('.orb .count').textContent());
-  check('the in-breath counts down from 6 s', (await page.locator('.orb').getAttribute('data-phase')) === 'in' && left >= 5, `count ${left}`);
-  await run(6000); await shot('out');
+  // A breath's seconds count up. Real taps let a little real time pass too, so the count is read
+  // rather than a precise moment: 4.2 s in, the in-breath still shows and counts 5, past the default's 4.
+  await run(4200); await shot('inhale-5');
+  const at = Number(await page.locator('.orb .count').textContent());
+  check('the in-breath counts up past 4, to 6 s', (await page.locator('.orb').getAttribute('data-phase')) === 'in' && at >= 5, `count ${at}`);
+  await run(1800); await shot('out');
   check('then the out-breath', (await page.locator('.orb').getAttribute('data-phase')) === 'out');
   await run(40000);
   await touch(btn(/^Continue/));

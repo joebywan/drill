@@ -199,3 +199,41 @@ test('once a habit is done today, every kind and every coach greets from the don
     }
   }
 });
+
+test("a course's coach says their course is done today only after a session of it; another course's lesson gets the elsewhere pool", () => {
+  const learning = { id: 'learn', name: 'Learning' };
+  const now = day(5, 10);
+  const courses = subjects.filter((s) => s.kind === 'learn');
+  // A Chess lesson today, and Maths done on two earlier evenings.
+  let p = emptyProgress();
+  for (const d of [2, 3, 4]) p = finishSession(p, 'maths:x', [{ key: 'k', correct: true }], day(d, 19), { title: 'Sums', course: 'maths' });
+  p = finishSession(p, 'chess:x', [{ key: 'c', correct: true }], day(5, 8), { title: 'The board', course: 'chess' });
+  const lines = (coach, pick) => new Set(pools(coach, pick));
+  for (const s of courses) {
+    const coach = s.coach.name.toLowerCase();
+    const m = moment(p, learning, now, coach, true, s.id);
+    assert.equal(m.state.light, 'done', `${s.id}: Learning is done today`);
+    assert.equal(m.state.elsewhere, s.id !== 'chess', `${s.id}: only Chess was done today`);
+    assert.ok(lines(coach, (w) => w.elsewhere).size >= 3, `${coach} has lines for a day of learning done in another course`);
+    for (let i = 0; i < 40; i++) {
+      const said = say(coach, { ...m.state, dares: true }, m.facts, () => i / 40, []);
+      assert.equal(said.dare, false, 'the habit is done today: no dare');
+      const from = m.state.elsewhere ? lines(coach, (w) => w.elsewhere) : lines(coach, (w) => w.light === 'done' && !w.elsewhere);
+      assert.ok(from.has(said.line), `${s.id} (${coach}) said "${said.line}"`);
+    }
+  }
+  // The usual hour is the course's own: Maths in the evening, Chess too few sessions to say.
+  assert.equal(moment(p, learning, day(6, 9), 'ada', true, 'maths').facts.usualHour, 'evening');
+  assert.equal(moment(p, learning, day(6, 9), 'rosa', true, 'chess').facts.usualHour, null);
+  // The next day nothing is done, so nothing is elsewhere.
+  assert.equal(moment(p, learning, day(6, 9), 'ada', true, 'maths').state.elsewhere, false);
+});
+
+test("a Learn coach's streak and days lines count lessons, never their own course: the streak is Learning's", () => {
+  const COURSE = /\b(days?|week|month) (of|on) (the )?(chess|board|maths|sums|kana|japanese|coding|plans)\b/i;
+  for (const coach of new Set(subjects.filter((s) => s.kind === 'learn').map((s) => s.coach.name.toLowerCase()))) {
+    for (const { when, lines } of VOICES[coach].lines) for (const text of lines) {
+      if (/\{(count|days)\}/.test(text) || (when.streak && when.light !== 'done')) assert.doesNotMatch(text, COURSE, `${coach}: ${text}`);
+    }
+  }
+});

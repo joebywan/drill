@@ -65,7 +65,7 @@ test('logToday is one tap a day through the finish path: streak, days, log and a
   const { newly } = award(p, day(1));
   assert.deepEqual(newly.map((r) => r.id), ['egg:walk', 'bee:walk']);
   assert.equal(newly[1].text, 'A bee found Walk');
-  assert.equal(newly[0].text, 'Your Walk egg arrived: a Caper White');
+  assert.equal(newly[0].text, 'Your Walk butterfly egg arrived: a Caper White');
   // It follows the same forgiving rules as any habit.
   p = logToday(p, 'walk', 'Walked', day(3));
   assert.equal(p.habits.walk.count, 2, 'one missed day forgiven');
@@ -178,7 +178,7 @@ test('the five newer presets: each tracked, read back by habitsFor, logged and r
     assert.deepEqual([h.did, h.title, h.kind, h.hidden], [did, title, 'log', false], id);
     p = logToday(p, id, h.title, day(1));
     assert.equal(p.habits[id].days, 1, id);
-    assert.ok(award(p, day(1)).newly.some((r) => r.text.startsWith(`Your ${h.name} egg arrived: a`) && r.text.endsWith(species[id])), id);
+    assert.ok(award(p, day(1)).newly.some((r) => r.text.startsWith(`Your ${h.name} butterfly egg arrived: a`) && r.text.endsWith(species[id])), id);
   }
   assert.equal(p.log.length, 5);
   assert.ok(migrate(roundTrip(p)));
