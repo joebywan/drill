@@ -1003,6 +1003,17 @@ function walkTo(guide, fromNode, toNode) {
 }
 
 /**
+ * A phone on its side (fit.js SIDEWAYS): a lesson or routine asks to be turned upright (styles.css .upright). The line
+ * is written as it turns and emptied as it comes back, so a screen reader hears it once per turn.
+ */
+function sideways() {
+  const on = !!SIDEWAYS?.matches;
+  document.documentElement.toggleAttribute('data-sideways', on);
+  const line = app.querySelector('.upright');
+  if (line) line.textContent = on ? UPRIGHT : '';
+}
+
+/**
  * Plays a session: a lesson (lessonId set) or a review (null). An item missed the first time
  * comes back once at the end; only the first try counts toward review scheduling.
  */
@@ -1020,7 +1031,7 @@ function run(lessonId, queue, title, extra = null) {
   let cleanup = () => {};
   const started = Date.now();
   app.innerHTML = `
-    <p class="upright" role="status">${esc(UPRIGHT)}</p>
+    <p class="upright" role="status"></p>
     <header class="bar">
       <button class="close" aria-label="${practice ? 'Stop' : 'Quit lesson'}">✕</button>
       <div ${practice ? 'hidden ' : ''}class="meter" data-heat="0" role="progressbar" aria-label="Lesson progress" aria-valuemin="0"><div class="fill"><i class="shine"></i></div><span class="flare" aria-hidden="true"></span></div>
@@ -1037,6 +1048,7 @@ function run(lessonId, queue, title, extra = null) {
       <div class="verdict" id="verdict"><strong></strong><p></p></div>
       <button class="next">Continue</button>
     </footer>`;
+  sideways();
   const $ = (sel) => app.querySelector(sel);
   const [topic, bubble, stage, foot, next] = ['.topic', '.bubble', '.stage', '.foot', '.next'].map($);
   const sessionCoach = coach($('.who'), drawOf(who));
@@ -1601,8 +1613,6 @@ const bars = () => tellBars(getComputedStyle(document.body).backgroundColor);
 new MutationObserver(bars).observe(app, { childList: true });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', bars);
 bars();
-// A phone on its side: a lesson or routine asks to be turned upright (fit.js SIDEWAYS, styles.css .upright).
-const sideways = () => document.documentElement.toggleAttribute('data-sideways', !!SIDEWAYS?.matches);
 SIDEWAYS?.addEventListener('change', sideways);
 sideways();
 const start = () => { if (showsIntro(progress)) intro(); else home(); };

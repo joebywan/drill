@@ -409,6 +409,16 @@ export default async ({ adb, attach, check, screenXml, shot, type }) => {
   const tracked = await app.page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).tracked?.map((t) => t.name));
   check('keyboard: Make your own: the habit is kept with the name as typed', tracked?.includes('Tea time'), `${tracked}`);
   check('keyboard: Make your own: the keyboard is gone and the page is whole again', !keyboard() && await app.page.evaluate(() => innerHeight) === tall);
+  // On a short phone the keyboard leaves the page wider than tall: still upright, so Reflect stays as it is (fit.js SIDEWAYS).
+  sh('wm size 1080x1700'); await sleep(2500); await app.calibrate();
+  try {
+    await app.seed({ start: {}, picked: [] });
+    await app.touch(app.btn(/^Reflect(,|$)/)); await app.touch(app.btn(/^Continue · /)); await app.touch(app.btn('Start'));
+    await app.touch(box); await sleep(1500); await app.run(400); await app.shot('keyboard-reflect-short');
+    const short = await app.page.evaluate(() => ({ page: `${innerWidth}x${innerHeight}`, side: document.documentElement.hasAttribute('data-sideways') }));
+    check(`keyboard, a short phone: the keyboard up is not a phone on its side (page ${short.page})`, keyboard() && !short.side && await below('textarea') <= 0, JSON.stringify(short));
+    await hideKeyboard();
+  } finally { sh('wm size reset'); await sleep(2500); await app.calibrate(); }
 
   // 11. A pull down at the top of a screen must not reload the page, and a long press on a button must not raise the
   // system's Copy toolbar (styles.css: overscroll-behavior-y, user-select on buttons). Both on a real finger in the app.
