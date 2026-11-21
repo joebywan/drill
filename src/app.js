@@ -12,8 +12,8 @@ import { worn } from './cast/skins.js';
 import { BOX, butterfly, butterflyToday } from './cast/butterfly.js';
 import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, comeBack, dropEchoes, echoes, fresh, warmUps } from './repeat.js';
 import { GOES, easier, flying, helpFor, misses, noteAnswer, struggling, warmedLast } from './adapt.js';
-import { giveWay, longestVerdict } from './fit.js';
-import { CALM_SOUNDS, DARES_LABEL, SOUND_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, CHOOSE_WORDS, SKIN_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
+import { SIDEWAYS, giveWay, longestVerdict } from './fit.js';
+import { CALM_SOUNDS, DARES_LABEL, SOUND_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, UPRIGHT, LOG_WORDS, CHOOSE_WORDS, SKIN_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
 import { lessonOf } from './garden/events.js';
@@ -1020,6 +1020,7 @@ function run(lessonId, queue, title, extra = null) {
   let cleanup = () => {};
   const started = Date.now();
   app.innerHTML = `
+    <p class="upright" role="status">${esc(UPRIGHT)}</p>
     <header class="bar">
       <button class="close" aria-label="${practice ? 'Stop' : 'Quit lesson'}">✕</button>
       <div ${practice ? 'hidden ' : ''}class="meter" data-heat="0" role="progressbar" aria-label="Lesson progress" aria-valuemin="0"><div class="fill"><i class="shine"></i></div><span class="flare" aria-hidden="true"></span></div>
@@ -1597,6 +1598,10 @@ const bars = () => tellBars(getComputedStyle(document.body).backgroundColor);
 new MutationObserver(bars).observe(app, { childList: true });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', bars);
 bars();
+// A phone on its side: a lesson or routine asks to be turned upright (fit.js SIDEWAYS, styles.css .upright).
+const sideways = () => document.documentElement.toggleAttribute('data-sideways', !!SIDEWAYS?.matches);
+SIDEWAYS?.addEventListener('change', sideways);
+sideways();
 const start = () => { if (showsIntro(progress)) intro(); else home(); };
 if (!openPairLink({ app, progress: () => progress, adopt, back: start, focusOn })) start();
 syncSoon(0);

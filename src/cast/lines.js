@@ -823,6 +823,8 @@ export const GAME_WORDS = {
     solved: (n) => `Forced in ${n} move${n === 1 ? '' : 's'}.`,
     hint: 'Hint', explain: 'Explain', undo: 'Undo', fresh: 'New board', again: 'Another board',
     busy: 'One moment, I am checking the lines.',
+    offline: 'I fetch these boards from the internet the first time, and this phone has no connection just now.',
+    offlineHead: 'No connection', retryText: 'Try again once the phone is online.', retry: 'Try again',
   },
   capture: {
     title: 'Scramble',
@@ -856,5 +858,7 @@ export const GAME_WORDS = {
     drawn: { head: ['A draw.'], text: 'Nobody could finish it. I have had worse evenings.' },
   },
 };
+/** Over a lesson or routine on a phone turned on its side (app.js run()): Wingbeat is made for an upright phone. */
+export const UPRIGHT = 'Turn your phone upright to carry on, right where you were.';
 /** Said once a missed item has had its goes in a session: it moves on and review brings it back. */
 export const MOVE_ON = "Let's leave this one for a review and move on.";

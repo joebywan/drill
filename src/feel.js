@@ -28,6 +28,12 @@ const SOUNDS = {
   bell: [[528, 0, 4, 'sine', 0.05], [1330, 0, 2.5, 'sine', 0.012]],
 };
 let audio;
+// Sound rests while the page is hidden, and while a routine is held (`hush`): it comes back with the routine, not before.
+let held = false;
+const fitSound = () => { try { if (audio) (document.hidden || held ? audio.suspend() : audio.resume()).catch(() => {}); } catch { /* no audio */ } };
+if (typeof document !== 'undefined') document.addEventListener('visibilitychange', fitSound);
+/** A timed routine holds its sound while paused (true) and lets it go on again when it carries on or ends (false). */
+export const hush = (on) => { held = on; fitSound(); };
 
 export function play(name) {
   if (!soundOn()) return;
@@ -66,7 +72,7 @@ export function chime(name) {
 
 /**
  * Soft rain under a Calm practice, if turned on: looped brown noise, low-passed and quiet. It
- * holds while the page is hidden. Returns the function that fades it out.
+ * rests with every other sound (`hush`, and while the page is hidden). Returns the function that fades it out.
  */
 export function rain() {
   if (!calmSound('rain')) return () => {};
@@ -84,10 +90,7 @@ export function rain() {
     gain.gain.linearRampToValueAtTime(0.25, audio.currentTime + 2);
     src.connect(filter).connect(gain).connect(audio.destination);
     src.start();
-    const hidden = () => (document.hidden ? audio.suspend() : audio.resume());
-    document.addEventListener('visibilitychange', hidden);
     return () => {
-      document.removeEventListener('visibilitychange', hidden);
       gain.gain.setTargetAtTime(0.0001, audio.currentTime, 0.3);
       src.stop(audio.currentTime + 1.5);
     };
@@ -168,10 +171,11 @@ export const voice = (lang) => {
 };
 /**
  * With no voice for `lang` in the wrapper, the phone's TTS engine can fetch one (`installVoice`).
- * True the first time only, so the offer is made once; never in a browser, or with Sound muted.
+ * True the first time only, so the offer is made once; never in a browser, or with Sound muted, nor when nothing on the
+ * phone can open the engine's install screen (`canInstallVoice`: no engine, or it is turned off).
  */
 export function offerVoice(lang) {
-  if (!soundOn() || !bridge()?.installVoice || voice(lang) || !pref('voice-offer', true)) return false;
+  if (!soundOn() || !bridge()?.canInstallVoice?.() || voice(lang) || !pref('voice-offer', true)) return false;
   setPref('voice-offer', false);
   return true;
 }

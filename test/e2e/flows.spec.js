@@ -953,7 +953,9 @@ test('a Focus session: what it is for, a full timer with a pause, the screen kep
   await page.getByRole('button', { name: 'Pause' }).click();
   await page.clock.runFor(300_000);
   await expect(left).toHaveText('9:00');
+  expect(await held(page)).toBe(0); // paused, the screen may sleep
   await page.getByRole('button', { name: 'Carry on' }).click();
+  await expect.poll(() => held(page)).toBe(1);
   await page.clock.runFor(540_000);
   await expect(page.getByRole('heading', { name: 'How did it go?' })).toBeVisible();
   expect(await held(page)).toBe(0);
@@ -1040,6 +1042,58 @@ test('every other habit still pauses when the page is hidden', async ({ page }) 
   await setHidden(page, false);
   await expect(page.getByRole('button', { name: 'Carry on' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.steps li[aria-current="step"]')).toHaveText(/^Look far away/);
+});
+
+// Nobody touches the phone during a routine, so every timed one keeps the screen on while it plays, and only then.
+for (const habit of ['calm', 'move', 'winddown', 'break']) {
+  test(`${habit}: the screen is kept on while the routine plays, and let go on pause, away and ✕`, async ({ page }) => {
+    await fakeWakeLock(page);
+    await page.clock.install();
+    await firstVisit(page);
+    await page.locator(`[data-path="${habit}"]`).click();
+    await page.locator('.cta .next').click();
+    await page.locator('.practice-go').click();
+    await expect.poll(() => held(page)).toBe(1);
+    await page.getByRole('button', { name: 'Pause' }).click();
+    await expect.poll(() => held(page)).toBe(0);
+    await page.getByRole('button', { name: 'Carry on' }).click();
+    await expect.poll(() => held(page)).toBe(1);
+    await setHidden(page, true);
+    await expect.poll(() => held(page)).toBe(0);
+    await setHidden(page, false);
+    await page.clock.runFor(5_000);
+    expect(await held(page)).toBe(0); // back, but paused: it waits for Carry on
+    await page.getByRole('button', { name: 'Carry on' }).click();
+    await expect.poll(() => held(page)).toBe(1);
+    await page.getByRole('button', { name: 'Stop' }).click();
+    await expect.poll(() => held(page)).toBe(0);
+  });
+}
+
+test.describe('sound follows the routine', () => {
+  test.use({ reducedMotion: 'no-preference' }); // Calm's rain is off under reduced motion
+  test("Calm's rain stays quiet after the phone is picked up, until the routine carries on", async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('wingbeat.rain', 'on');
+      const Real = window.AudioContext;
+      window.AudioContext = class extends Real { constructor(...a) { super(...a); window.ctxs = [...(window.ctxs ?? []), this]; } };
+    });
+    await page.clock.install();
+    await firstVisit(page);
+    await tab(page, 'Calm').click();
+    await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
+    await page.getByRole('button', { name: 'Start' }).click();
+    const state = () => page.evaluate(() => window.ctxs?.map((c) => c.state).join());
+    await expect.poll(state).toBe('running');
+    await setHidden(page, true);
+    await expect.poll(state).toBe('suspended');
+    await setHidden(page, false);
+    await page.clock.runFor(3_000);
+    await expect(page.getByRole('button', { name: 'Carry on' })).toBeVisible();
+    expect(await state()).toBe('suspended');
+    await page.getByRole('button', { name: 'Carry on' }).click();
+    await expect.poll(state).toBe('running');
+  });
 });
 
 test('Focus with nothing picked, on your own time from the timings', async ({ page }) => {
@@ -2819,4 +2873,58 @@ test('the field guide opens from the garden and from home, and shows every kind'
   await expect(tiles.nth(0)).toBeFocused();
   await page.goBack();
   await expect(page.getByRole('button', { name: 'Field guide', exact: true })).toBeFocused();
+});
+
+// Wingbeat is made for an upright phone. Turned on its side, a lesson or routine waits under one line asking for it
+// upright, and is exactly where it was when it is; home stays as it is, and a tablet or a desktop window never sees it.
+test.describe('a phone on its side', () => {
+  test.use({ hasTouch: true });
+  const UP = { width: 412, height: 915 }, SIDE = { width: 866, height: 308 };
+  const upright = (page) => page.getByText('Turn your phone upright to carry on');
+
+  test('a routine holds under the line, and carries on from the same breath once upright', async ({ page }) => {
+    await page.clock.install();
+    await firstVisit(page);
+    await page.setViewportSize(SIDE);
+    await expect(upright(page)).toBeHidden(); // home works on its side
+    await expect(tab(page, 'Calm')).toBeVisible();
+    await page.setViewportSize(UP);
+    await tab(page, 'Calm').click();
+    await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
+    await page.getByRole('button', { name: 'Start' }).click();
+    await page.clock.runFor(2_000);
+    await page.setViewportSize(SIDE);
+    await expect(upright(page)).toBeVisible();
+    await expect(page.locator('.orb')).toBeHidden();
+    const count = await page.locator('.orb .count').textContent();
+    await page.clock.runFor(30_000);
+    await page.setViewportSize(UP);
+    await expect(upright(page)).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Carry on' })).toBeVisible();
+    await expect(page.locator('.orb .count')).toHaveText(count);
+  });
+
+  test('a lesson keeps its item, and a tablet or a desktop window is left alone', async ({ page }) => {
+    await firstVisit(page);
+    await page.getByRole('button', { name: /^Continue · / }).click();
+    const topic = await page.locator('.topic').textContent();
+    const said = await page.locator('#said').textContent();
+    await page.setViewportSize(SIDE);
+    await expect(upright(page)).toBeVisible();
+    await expect(page.locator('.stage')).toBeHidden();
+    await page.setViewportSize(UP);
+    await expect(upright(page)).toBeHidden();
+    await expect(page.locator('.topic')).toHaveText(topic);
+    await expect(page.locator('#said')).toHaveText(said);
+    await page.setViewportSize({ width: 1180, height: 820 }); // a tablet on its side
+    await expect(upright(page)).toBeHidden();
+  });
+});
+
+test('a short desktop window is not a phone on its side', async ({ page }) => {
+  await firstVisit(page);
+  await page.getByRole('button', { name: /^Continue · / }).click();
+  await page.setViewportSize({ width: 866, height: 308 });
+  await expect(page.locator('.stage')).toBeVisible();
+  await expect(page.getByText('Turn your phone upright to carry on')).toBeHidden();
 });

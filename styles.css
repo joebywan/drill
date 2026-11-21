@@ -750,6 +750,17 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 }
 /* ---- end wide screens ---- */
 
+/* ---- A phone on its side ----
+   Wingbeat is made for an upright phone. On its side (fit.js SIDEWAYS sets <html data-sideways>) a lesson or routine
+   waits under one line asking for the phone upright, everything kept as it was; home, the garden and the reading
+   screens are left as they are. A tablet or a desktop window never matches. */
+.upright { display: none; }
+[data-sideways] #app:has(> main.play) > .upright {
+  display: grid; place-items: center; position: fixed; inset: 0; z-index: 100; margin: 0; padding: 24px;
+  background: var(--bg); color: var(--text); font-size: 1.25rem; font-weight: 600; text-align: center; text-wrap: balance;
+}
+[data-sideways] #app:has(> main.play) > :not(.upright) { visibility: hidden; }
+
 /* ---- Wind down: the night palette ----
    A Wind down session and its end screen (main.night) are dim and warm in either theme: low amber
    light on a brown-black, no bright white. :has() puts the tokens on body, so the bar, the page and

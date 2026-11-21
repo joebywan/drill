@@ -8,6 +8,13 @@ import { LINES } from './cast/lines.js';
  */
 
 /**
+ * A phone on its side: a short landscape page on a touch screen (about 866x308 in Chrome). Wingbeat is made for an
+ * upright phone, so a lesson or routine asks to be turned back (app.js sets `data-sideways` on <html>, styles.css shows
+ * `.upright` over `main.play`) and a timed routine holds where it is. A tablet or a desktop window never matches.
+ */
+export const SIDEWAYS = typeof matchMedia === 'function' ? matchMedia('(orientation: landscape) and (max-height: 500px) and (pointer: coarse)') : null;
+
+/**
  * How tall the runner's verdict banner will be with `words` in it (null: a teach card's, Continue alone) under the
  * longest verdict the coach's `lines` could give, by measuring a hidden copy, so a tall program can be fitted above
  * it before it comes. Never more than half the screen: past that its words scroll in their own box (styles.css,

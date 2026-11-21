@@ -1,6 +1,6 @@
 import course from '../data/focus.json' with { type: 'json' };
 import { FOCUS_LINES, line } from '../cast/lines.js';
-import { pauseButton, routine, stayAwake, teach } from '../practice/kit.js';
+import { pauseButton, routine, teach } from '../practice/kit.js';
 import { timed } from '../practice/timings.js';
 import { cue, move } from '../feel.js';
 import { esc } from '../html.js';
@@ -46,15 +46,14 @@ function run(el, phases, on, ctx) {
     </div>${pauseButton}<div class="choices"><button class="choice focus-early">${esc(course.early)}</button></div>`;
   const pause = el.querySelector('.practice-pause');
   const kept = on ? { focus: [on] } : null;
-  const awake = stayAwake();
-  const finish = () => { awake(); ctx.done(null, '', kept); };
+  const finish = () => ctx.done(null, '', kept);
   const stop = routine(el, phases, { ...ctx, done: () => { cue('bell'); finish(); } }, (p, i, say) => {
     say(hazel('go'), 'focus');
     return [move(el.querySelector('.focus-dial'), [{ '--fill': '0%' }, { '--fill': '100%' }], { duration: p.seconds * 1000, fill: 'forwards' })];
   }, '', hazel('paused'), { hidden: 'run' });
   el.querySelector('.focus-early').addEventListener('click', () => { stop(); finish(); });
   pause.focus();
-  return () => { awake(); stop(); };
+  return stop;
 }
 
 /** The habit view's hook: what each of a day's sessions was for, or nothing. Read only here and by the file export. */
