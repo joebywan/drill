@@ -1523,7 +1523,7 @@ function keep(note = '') {
       <button class="choice" data-save>Save to a file</button>
       <button class="choice" data-load>Load from a file</button>
       <input type="file" accept=".json,application/json" hidden>
-      ${ASKS ? `<p class="said" data-keep hidden>${esc(KEEP_WORDS.line)} <button class="link">${esc(KEEP_WORDS.ask)}</button></p>` : ''}
+      ${ASKS ? `<p class="said" data-persist hidden>${esc(KEEP_WORDS.line)} <button class="link">${esc(KEEP_WORDS.ask)}</button></p>` : ''}
       <p class="said" role="status">${esc(note)}</p>
       <button class="choice" data-change>${esc(INTRO_WORDS.change)}</button>
       ${syncMenuHtml()}
@@ -1557,7 +1557,7 @@ function keep(note = '') {
     e.currentTarget.setAttribute('aria-pressed', on);
   });
   const status = app.querySelector('[role="status"]');
-  const keepLine = app.querySelector('[data-keep]');
+  const keepLine = app.querySelector('[data-persist]');
   if (keepLine) {
     navigator.storage?.persisted?.().then((kept) => { keepLine.hidden = kept !== false; }).catch(() => {});
     keepLine.querySelector('button').addEventListener('click', () => navigator.storage.persist().then((kept) => {

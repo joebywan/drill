@@ -19,7 +19,7 @@ const calls = (page) => page.evaluate(() => window.persistCalls);
 // Away from the app is a save, and the Calm tab is where a finished path offers it.
 const saveOnce = async (page) => { await page.locator('[data-path="calm"]').click(); await page.locator('[data-choose]').click(); await page.locator('.away-row').click(); };
 const settings = async (page) => { await page.locator('.menu').click(); await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible(); };
-const keepLine = (page) => page.locator('[data-keep]');
+const keepLine = (page) => page.locator('[data-persist]');
 
 test('a browser that asks the person is asked once ever, at home, and has a line on the settings screen', async ({ page }) => {
   await visit(page, { asks: true });
