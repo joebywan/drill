@@ -144,6 +144,11 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
     everything is where it was when it is turned back. Home, the garden and the reading screens work
     on their side as they are. A timed routine keeps the screen on while it plays, and its sound rests
     with it.
+29. **At larger text a screen gives way for what it is for.** Home is for the next lesson and its
+    coach: the bar's second row moves into the page, then the greeting goes, then "See your week". A
+    practice's end screen is for "How do you feel?": the pictures go first, then the words get
+    briefer. Only as much as it takes, nothing at ordinary text, and nothing at all where it could
+    not be enough.
 
 Decisions 22 to 24 came out of the pass to take things off home, which the owner asked for; what came
 off was chosen in review, and each can go back on its own. Decision 25 came out of looking at the app
@@ -151,7 +156,9 @@ with large text in a browser, which the owner asked for; the rule is the review'
 came out of the blind beginner playthrough (a beginner opened TypeScript on day one, and ticked two
 habits and got six); the order, the way past it and hiding what was not picked are the review's
 choices. Decision 28 came out of playing the phone on its side, where lessons could not be finished;
-laying every lesson out a second time was the other choice, and it was not taken. Kept on purpose: the Games row and the course
+laying every lesson out a second time was the other choice, and it was not taken. Decision 29 came out
+of the app at the phone's largest text, where the next lesson and the closing question were off the
+screen; what gives way, and in what order, is the review's choice. Kept on purpose: the Games row and the course
 chips, because one tap to play or to switch course is worth more than their row.
 
 ### Rules for this work
@@ -266,6 +273,8 @@ chips, because one tap to play or to switch course is worth more than their row.
   timings, an example reads the way the course writes code, and a run of five says five of what.
 - [x] **E19. The phone in a hand** (#196, decision 28): the screen stays on through a routine and its sound rests with it,
   Mate says when it has no connection, a phone on its side is asked upright, and a voice is offered only where one can be had.
+- [x] **E20. The largest text and small targets** (#197, decision 29): home and the end screens give way at the largest
+  text, a verdict covers the tray it replaces, a placed word is 40px, and tight Coding blocks reach a thumb's 44px.
 
 **Waiting on the owner** (found by playing, not changed)
 
