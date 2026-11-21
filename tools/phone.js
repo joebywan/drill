@@ -440,6 +440,7 @@ try {
       // as a person would, a finger drag up the page.
       for (let i = 0; i < 3; i++) {
         const under = await loc.evaluate((el) => {
+          if (getComputedStyle(el).pointerEvents === 'none') return 0; // a pin marking a spot: the tap is for whatever is there
           const r = el.getBoundingClientRect();
           const t = document.elementFromPoint(r.x + r.width / 2, Math.min(r.y + r.height / 2, innerHeight - 1));
           return t && (el.contains(t) || t.contains(el)) ? 0 : Math.round(r.y + r.height / 2 - innerHeight / 2);

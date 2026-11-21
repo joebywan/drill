@@ -89,7 +89,7 @@ function client() {
       const r = el.getBoundingClientRect();
       // Out of the viewport, or under something fixed over it (a bar of buttons): to the middle, where a finger can reach it.
       const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-      const under = top && !el.contains(top) && !top.contains(el);
+      const under = top && !el.contains(top) && !top.contains(el) && getComputedStyle(el).pointerEvents !== 'none'; // a pin marks a spot under things
       // Or cut off by a box that scrolls around it (its centre can be past the box's end, over the box's own parent): as
       // Playwright, which scrolls unless the element is wholly visible (IntersectionObserver's ratio).
       let clipped = false;
