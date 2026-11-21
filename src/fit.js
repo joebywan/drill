@@ -19,7 +19,9 @@ export const SIDEWAYS = (() => {
   const turned = globalThis.screen?.orientation;
   if (!turned || typeof matchMedia !== 'function') return null;
   const coarse = matchMedia('(pointer: coarse)');
-  const now = () => coarse.matches && turned.type.startsWith('landscape') && Math.min(screen.width, screen.height) < 500;
+  // The type and the screen's own shape both say landscape (a desktop browser emulating touch reports a landscape type
+  // for any page; a phone turns both together).
+  const now = () => coarse.matches && turned.type.startsWith('landscape') && screen.width > screen.height && screen.height < 500;
   const side = new EventTarget();
   let was = now();
   const check = () => { if (now() !== was) { was = !was; side.dispatchEvent(new Event('change')); } };
