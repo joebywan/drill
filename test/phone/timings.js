@@ -16,6 +16,8 @@ export default async ({ page, seed, touch, btn, shot, run, check }) => {
   check('saved at once', JSON.stringify(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).timings)) === '{"calm":{"inhale":6}}');
   await touch(btn('Back').and(page.locator('.back')));
   await touch(btn('Continue · The long out-breath'));
+  await shot('card-6');
+  check("the teach card states the learner's 6 seconds, not the default 4", /in for 6 seconds, then out slowly for 8/.test(await page.locator('main').innerText()));
   await touch(btn('Start'));
   // A breath's seconds count up, from 1. Real time passes between taps too, so rather than reading one moment the page
   // keeps the highest count the in-breath showed: 6 with the learner's 6 s, where the default would stop at 4.

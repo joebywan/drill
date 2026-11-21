@@ -10,6 +10,12 @@ export const EXHALE = T.exhale.def;
  * merged by `timed()`: the lesson's cycles hold until someone sets their own.
  */
 
+/** A teach card's text with `{in}` and `{out}` as the seconds `breaths()` will play (the learner's own, else the defaults). */
+export function breathWords(text, own) {
+  const t = timed('calm', { inhale: INHALE, exhale: EXHALE }, own);
+  return text.replace(/\{in\}/g, t.inhale).replace(/\{out\}/g, t.exhale);
+}
+
 /** Breathing, 4 in and 8 out, `cycles` times. */
 export function breaths(cycles, own) {
   const t = timed('calm', { breaths: cycles, inhale: INHALE, exhale: EXHALE }, own);

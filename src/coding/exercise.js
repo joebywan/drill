@@ -48,11 +48,11 @@ export function mount(el, item, { say, done, coach }) {
     if (result.bumped) cellAt(result.bumped)?.classList.add('hit');
   };
   /**
-   * Waits MISS_HOLD_MS, or until the first tap anywhere. That tap only ends the wait: its click is swallowed, so it
-   * never presses what comes up under the finger (the verdict's Continue).
+   * Waits MISS_HOLD_MS, or until the first tap anywhere. That tap ends the wait, and its click never presses what
+   * comes up under the finger (the verdict's Continue). A tap on something that was already there (✕) still does its job.
    */
   const hold = () => new Promise((resolve) => {
-    const swallow = (e) => { e.preventDefault(); e.stopPropagation(); };
+    const swallow = (e) => { if (e.target.closest?.('.foot')) { e.preventDefault(); e.stopPropagation(); } };
     const end = (e) => {
       endHold = null;
       clearTimeout(timer);

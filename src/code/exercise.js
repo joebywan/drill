@@ -5,7 +5,7 @@ import { esc } from '../html.js';
 import { parse as parseLevel } from '../coding/program.js';
 import { gridHtml, walkerOn } from '../coding/grid.js';
 import { mount as mountQuiz } from '../quiz/exercise.js';
-import { grade, layout, limitOf, optionsOf, pretty, runIt, startOf, trayOf, walkOf, wayOf, withOut } from './items.js';
+import { exampleOf, grade, layout, limitOf, optionsOf, pretty, runIt, startOf, trayOf, walkOf, wayOf, withOut } from './items.js';
 
 const DEMO_WAIT_MS = 900;
 
@@ -45,8 +45,7 @@ function goalHtml(item) {
       + '<span>It printed</span><pre class="code-out" aria-label="What it printed" aria-live="polite"></pre></div>';
   }
   if (item.goal === 'returns') {
-    const [args, want] = item.cases[0];
-    return `<div class="code-goal"><span>For example</span><code>${esc(item.name)}(${esc(args.map((a) => JSON.stringify(a)).join(', '))}) gives ${esc(JSON.stringify(want))}</code></div>`;
+    return `<div class="code-goal"><span>For example</span><code>${esc(exampleOf(item, item.cases[0]))}</code></div>`;
   }
   return '';
 }

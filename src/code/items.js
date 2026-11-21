@@ -399,6 +399,11 @@ function gradeTests(item, src) {
   return { right: true, caught, why: `Your tests caught ${caught.length === 1 ? 'the faulty version' : `all ${caught.length} faulty versions`}.` };
 }
 
+/** A call as the course writes code: `cost({ name: "a" }, [1, 2])`. The one printer for a value in prose is interp.js's show(). */
+export const called = (item, args) => `${item.name}(${args.map((a) => show(a, false)).join(', ')})`;
+/** The example a `returns` goal shows, from one of its `cases`. */
+export const exampleOf = (item, [args, want]) => `${called(item, args)} gives ${show(want, false)}`;
+
 /**
  * Runs what the learner made and says if it does the job: { right, why, output, walk }. `why` is one
  * plain sentence for a miss (a parse error, the first failing case, the faulty version that got through).
@@ -420,7 +425,7 @@ export function grade(item, src) {
   if (item.goal === 'walk') return { right: reached(walk), why: reached(walk) ? '' : WALK_WHY[walk.end], output: r.output, walk };
   for (const [args, want] of item.cases) {
     const got = r.call(item.name, args);
-    const said = `${item.name}(${args.map((a) => show(a, false)).join(', ')})`;
+    const said = called(item, args);
     if (got.error) return { right: false, why: got.error.message, output: r.output };
     if (!same(got.value, want)) return { right: false, why: `${said} gave ${show(got.value, false)}, and it should give ${show(want, false)}.`, output: r.output };
   }
