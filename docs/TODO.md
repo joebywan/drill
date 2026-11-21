@@ -94,11 +94,23 @@ wardrobe, "+ Habit") with nothing wider than the page, cut off, out of its node 
   set by app.js only when text is scaled, so a browser is unchanged).
 - **The widget** (fixed): one row on landing, Lumi sized to the space, `previewLayout`, no "0".
 - **The Daily note switch showed no On or Off** (low, fixed).
-- **At 2.0 it is cramped**: a home screen shows the path's first node and little else above Continue, and an end screen's
-  feelings sit under Continue until scrolled. Everything is reachable; whether the fixed bars should shrink at 2.0 is a
-  design call.
-- **Not checked:** the "Get a Japanese voice" offer (this image has a ja-JP voice); a launcher other than this image's; a
-  release build.
+- **At 2.0 it is cramped** (being fixed): on Learning about 30px of the first lesson marker shows above a Continue bar 243px tall (its
+  "Skip ahead" pill is a second row), and an end screen's "How do you feel?" starts 144 to 252px below the bar. Home and the end screens are
+  being made to give way at large text, as lessons already do (decision 25).
+- **A release build: played** (#187). `assembleRelease` signed with a throwaway key passes the whole `app` scenario (bundled page, no INTERNET, the bridge, the
+  widget, back, the bars, the voice, large text, a link out, the keyboard). `verify-apk.sh` refuses it for the wrong key and for nothing else; with the real
+  script it stops earlier, on the missing `android/release-key.sha256` (Joseph's step under Still open). The forced daily note is debug-only, so on a release
+  build the scenario checks the once-a-day guard instead. **What the emulator cannot show:** on a retail phone a release build's WebView is closed to a
+  debugger; it can be driven here only because this image is debuggable.
+- **"Get a Japanese voice": played.** Clearing the speech engine's data keeps the voice, so no offer. With the engine disabled the teach card offers it once,
+  and tapping it does nothing, since there is no engine to open (being fixed: offered only when something can answer). The engine's install screen with the
+  engine present but no Japanese data cannot be reached on this image.
+- **Another device and launcher: played.** The tablet image (`--avd daybook_tablet`, 2560x1600, the Pixel Launcher too) runs the app upright and on its side,
+  places the widget, and shows the wide layout (tabs in a column beside the path) with everything fitting at ordinary text. At 2.0 text on its side, ⋯ at the
+  end of the tabs column sits under Continue until the column is scrolled (being fixed). No other launcher is on either image.
+- **In the app:** a species page's source link opens the phone's browser and Back returns to the same page; the keyboard in Reflect and "Make your own" leaves
+  the field in view and what is typed is kept; a pull down does not reload; a long press selects nothing. `privacy.html` is not among the app's bundled files,
+  and nothing reaches it there while sync is hidden.
 
 ## Fitting the person
 
@@ -200,9 +212,21 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
 **Test by playing**
 
 - **Blank button label in Firefox for Android.** Joseph has seen it a few times, on the JavaScript Meet screen: the green button at full height with no text. It stayed blank until he left and opened the course again, so it is a stuck draw that a rebuilt screen clears, not a slow one. The text and colour are right, so it isn't being drawn. Not reproduced: 39 runs of the old code in Firefox 159 on the emulator, which renders in software, including scrolling during the entrance and a shorter screen.
-- **Session length, on a real phone and a real beginner.** The emulator played every lesson of every course at an
-  idealised pace, and none is near 6 minutes or 20 items (each course's "played" block has its numbers). Check a
-  first-time learner still feels small wins, not a slog, with warm-ups, "Once more" and checkpoints in.
+- **A beginner, played blind** (#185, `test/phone/hands.js`; log and pictures in `wingbeat-wt/notes/beginner/`). An agent played from screenshots alone, one real
+  tap at a time, without reading the course data: the first visit, the first lesson of every course, the second of Chess, Coding and Japanese, a Calm and a Move
+  session, a one-tap habit, the garden. With real hesitation and repeats a lesson took 1:37 to 3:40 and 5 to 10 items; Chess, Maths, Japanese, Coding and
+  JavaScript's first lesson were small wins with nothing near a slog. What stumbled, all being fixed:
+  - TypeScript and Test writing are open on day one and assume JavaScript (`function`, `let`, `===`), and the first-visit list is bare names.
+  - Coding's "Around the rock": walking into a rock ended the run with no word that it had, the rule being taught four items later.
+  - Chess: after the first move in a stars puzzle the coach's bubble shrank and the board jumped 21px, so the next tap missed; a new piece's
+    introduction was gone before it could be read.
+  - A listening item was answered with advice about looking; every course's coach said its course was done today after one lesson of another; end screens
+    overstated ("Plenty of bumps" for one miss in eight); nothing said the Blue Triangle was a butterfly; a few lines praise what the learner is.
+  - The intro's picks only ordered the tabs, so a learner who ticked two habits saw six.
+  Worth keeping, in its words: Chess's move dots and stars, Coding's arrow blocks, a miss coming back at the lesson's end, Maths showing its working, Japanese's
+  memory pictures, JavaScript's one idea a card, Calm's "nothing to get right", the one-tap habit.
+  **What this cannot show:** whether a person finds it calming, fun or worth coming back to tomorrow; anything heard (it saw stills, so listening items were
+  guesses); and a second day (streaks, review, comebacks).
 - **What a finger does: played on the emulator** (#180). Taps that are not dead centre (`PLAY_JITTER=0.85`, seeded: each lands out to 85% of the way to its
   target's edge) played two units of every course, one of them on a short phone: no mis-tap, no covered target. Real swipes (`touch-swipe`, and `PLAY_SWIPE=1` on the
   `*-all` scenarios) over home's long path, the tabs row, the course chips, the garden, the field guide and a week view, and inside the boxes that scroll in
@@ -214,8 +238,9 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
   Run the jittered taps again after any change to a tray, tile, button or board size.
   **Open (low, design):** "Make your own" leaves its Add habit button about 130px under the keyboard until the page is scrolled; the other forms keep theirs above it.
   **What the emulator cannot show:** a flick with a real finger's inertia (`adb input swipe` is one even stroke), and a hardware keyboard.
-- **Sound and motion in the new units.** Live values and the drawing trail under normal motion were
-  only seen in a one-off script: e2e runs with reduced motion.
+- **Coding's drawing trail and live values, seen moving** (#186, `npm run phone -- moving`): bursts of screenshots during `draw-0`, `draw-3`, `var-0` and `var-3`
+  show the trail growing behind Fennel, values changing only on the square they belong to, no jump and no flash. **What the emulator cannot show:** whether a
+  sound is heard. `dumpsys` cannot tell an open but silent audio stream from sound; only a stream starting and stopping is evidence.
 - **The live site** was played on the emulator (first visit, the walkthrough, the butterfly, the garden, the wardrobe, a one-tap habit), and GitHub now plays it from its own network after every deploy (`.github/workflows/live.yml`, `npm run e2e:live`: a first visit, the first Maths lesson to its end, and the served `app.js` and `styles.css` matching the commit; first run passed 2026-11-21).
 - **Firefox:** the whole browser suite passes in desktop Firefox and CI runs it on every pull request (`npm run e2e:firefox`, silent; job `e2e-firefox`; #172).
   A walk through the main screens (2026-11-20) showed nothing a person would notice differing from Chromium: no page errors, no missing glyphs, the same layout at
@@ -381,6 +406,25 @@ that carry a sound, every one called `speechSynthesis.speak` with its text when 
 - **Matched pairs go under the verdict** (low, left as it is). A 5-pair item has 5 rows; once answered the verdict hides the lower rows, so the last matches turning green are not seen.
 - **Typo fixed:** the explanations of `se1-pairs-323`, `se2-pairs-330` and `se3-pairs-337` read "This is a cat., ..." and ended "tea..". No other content problem found.
 - **Still to play:** Firefox for Android. **What the emulator cannot show:** a voice other than the image's own Google ja-JP one (no other speech engine is on it).
+
+**Device conditions: played** (#186, 2026-11-21; `away`, `away-bare`, `away-bare-app`, `interrupted`, `moving`, and by name `landscape-all`, `landscape-app-all`, `offline-all`; pictures in `wingbeat-wt/notes/device/`)
+
+- **Put down, locked, picked up:** a Maths answer with its verdict up, a Coding program two tiles in and a Chess puzzle one move in were exactly where they
+  were after Home and after the lock screen. A Calm or Move routine pauses and its count freezes while away; Focus keeps wall-clock time, by design. Chrome killed
+  in the background comes back to home with every finished lesson kept; a lesson in progress is not resumed.
+- **A driven page never goes to the background.** The runner's Chrome is started so that it keeps drawing, and the harness holds the screen on, so Home and the
+  lock screen do nothing to a page it is attached to. `away-bare` and `away-bare-app` start the routine, let go of the page, put the phone down and look
+  again afterwards: use those for anything about being away.
+- **Being fixed:** Calm, Move, Wind down and the screen break do not keep the screen awake (only Focus does), so the phone locks mid-breath; Calm's rain comes
+  back before the paused routine does; with no connection Mate opens an empty screen with an unhandled error; with no speech engine the voice offer does nothing.
+- **On its side** (a page 866x308 in Chrome, 866x364 in the app): home, the garden and Settings hold. Lessons do not: Coding's map shrinks to a thumbnail under
+  the verdict, Maths' picture and number line collapse and `ten-0` cannot be finished, the Chess board is clipped, Calm's circle is cut off. Decided: the app is
+  made for an upright phone (being built: the installed app stays upright on a phone and still turns on a tablet; a browser on its side says so on a lesson screen).
+- **An incoming call** arrives as a banner and the page is never hidden, so a routine and its rain carry on through it; declining or answering leaves a lesson
+  as it was. Whether the rain is heard over the call cannot be told from the emulator.
+- **No network, the live site:** the open page carries on and saves. A reload fails; a new tab loads from the browser's cache for ten minutes and then fails too:
+  there is no service worker, so the web app does not open offline. The installed app carries its files and works throughout. **Open (a decision):** whether
+  the web app should work offline.
 
 **Layouts from phone testing**
 
