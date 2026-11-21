@@ -14,9 +14,27 @@
       "Fancy some coding? I've cleared the sand off the grid."
     ] },
     { "when": { "first": true }, "lines": [
+      "Hi, I'm Fennel. I do just what the steps say. Shall we start?"
+    ] },
+    { "when": { "first": true, "course": "coding" }, "lines": [
       "Hi, I'm Fennel. I follow plans to the letter. Want to write me one?",
       "New to coding? Lovely. We start with one block and see what it does.",
       "Hello. First lesson. You write the steps, I walk them."
+    ] },
+    { "when": { "first": true, "course": "javascript" }, "lines": [
+      "Hello. Real JavaScript from the first card. You place the words, I run them to the letter.",
+      "First lesson of JavaScript. One line, one idea, and we run it to see.",
+      "Hi, I'm Fennel. I do exactly what the code says. Want to write me some?"
+    ] },
+    { "when": { "first": true, "course": "typescript" }, "lines": [
+      "TypeScript is JavaScript with labels on things. I like labels. I follow them to the letter.",
+      "First lesson of TypeScript. The code you know, plus a note on what goes where.",
+      "Here we say what each thing is, and the checker tells us before anything runs."
+    ] },
+    { "when": { "first": true, "course": "testing" }, "lines": [
+      "Here you write the checks, and I bring faulty copies for them to catch.",
+      "First lesson of test writing. A good test passes on the real code and catches a faulty copy.",
+      "I follow code to the letter, faults and all. Your tests are how we find out."
     ] },
     { "when": { "comeback": true }, "lines": [
       "Oh, hello. The grid is just as you left it.",
