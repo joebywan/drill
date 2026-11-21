@@ -71,13 +71,15 @@ function save(synced = false) {
   if (!ASKS) try { navigator.storage?.persisted?.().then((kept) => kept || navigator.storage.persist()).catch(() => {}); } catch { /* unsupported */ }
 }
 
-/** A browser that asks the person: bring its prompt up once ever, at home, never mid-lesson. Recorded first, since a dismissed prompt may never answer. */
+/** A browser that asks the person: bring its prompt up once ever, at home, never mid-lesson, and at most once a visit even with storage blocked. Recorded first, since a dismissed prompt may never answer. */
+let keepAsked = false;
 function askToKeep() {
-  const entries = progress.log.length;
-  if (!ASKS || !entries || pref('kept-asked', false)) return;
+  const know = () => ({ asks: ASKS, asked: keepAsked || pref('kept-asked', false), entries: progress.log.length });
+  if (!shouldAsk(know())) return;
+  keepAsked = true;
   try {
     navigator.storage.persisted().then((kept) => {
-      if (!shouldAsk({ asks: ASKS, asked: pref('kept-asked', false), entries, kept })) return;
+      if (!shouldAsk({ ...know(), asked: false, kept })) return;
       setPref('kept-asked', true);
       navigator.storage.persist().catch(() => {});
     }).catch(() => {});

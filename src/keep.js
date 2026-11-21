@@ -6,5 +6,5 @@
  */
 export const ASKS = globalThis.WINGBEAT_ASKS ?? /Gecko\//.test(globalThis.navigator?.userAgent || '');
 
-/** In a browser that asks: once ever on this device, at home, with something logged to keep, and not kept already. */
-export const shouldAsk = ({ asks, asked, entries, kept }) => asks && !asked && entries > 0 && kept === false;
+/** In a browser that asks: once ever on this device, at home, with something logged to keep, and not kept already (`kept` unknown, undefined, until persisted() answers). */
+export const shouldAsk = ({ asks, asked, entries, kept }) => asks && !asked && entries > 0 && kept !== true;
