@@ -1159,12 +1159,10 @@ function run(lessonId, queue, title, extra = null) {
     copy.removeAttribute('aria-live');
     copy.style.cssText += `;position:absolute;visibility:hidden;width:${bubble.offsetWidth}px`;
     bubble.after(copy);
-    const pool = (who.lines ?? LINES).tapped;
-    const fit = (list) => list.filter((t) => { copy.textContent = t; return copy.offsetHeight <= bubble.offsetHeight; });
-    const fresh = fit(pool.filter((t) => !heard.includes(t)));
+    const fits = (who.lines ?? LINES).tapped.filter((t) => { copy.textContent = t; return copy.offsetHeight <= bubble.offsetHeight; });
     copy.remove();
-    if (!fresh.length) return;
-    heard = [...heard, line('tapped', Math.random(), { tapped: fresh })].slice(-3);
+    if (!fits.length) return;
+    heard = [...heard, line('tapped', Math.random(), { tapped: fits }, heard)].slice(-3); // not one of the last few, unless only those fit
     bubble.textContent = heard.at(-1);
     clearTimeout(aside);
     aside = setTimeout(() => { bubble.textContent = said; }, 2500);
