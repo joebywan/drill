@@ -135,6 +135,9 @@ export async function bareTour(h, pkg, dir) {
         check(`${label}: the routine is paused on return, not run on or ended`, r.after.paused === 'true' && !r.after.end, `paused ${r.after.paused}, ended ${r.after.end}`);
         check(`${label}: the count is frozen on return`, r.after.count === r.later.count, `${r.after.count} then ${r.later.count}`);
         check(`${label}: no sound while away`, !r.away.sound.started && !r.away.sound.track, un(r.away.sound));
+        // Back, the routine waits for Carry on, and so do its sound (Calm's rain) and the screen's lock.
+        check(`${label}: back and paused, no sound until it carries on`, !r.back.sound.started && !r.back.sound.track, un(r.back.sound));
+        check(`${label}: back and paused, the screen may sleep`, r.back.lock.held === 0, `held ${r.back.lock.held}`);
       }
       check(`${label}: the screen is kept awake while it runs, and not while away`, r.running.lock.held > 0 && r.away.lock.held === 0, `running ${r.running.lock.held}, away ${r.away.lock.held}`);
     }

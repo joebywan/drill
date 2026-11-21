@@ -8,6 +8,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import butterfly from './butterfly.js';
 import calm from './calm.js';
 import { thirtyDays } from './lib/seed.js';
+import { turn } from './lib/device.js';
 import { fitter, textTour, uiNode } from './lib/fits.js';
 
 const PKG = 'com.joebywan.wingbeat';
@@ -28,7 +29,7 @@ export default async ({ adb, attach, check, screenXml, shot, type }) => {
   const sh = (cmd) => adb('shell', cmd);
   // `APP_ROTATE=1` (or 3) plays the app with the screen turned; `wm size` is the display's natural shape, so swap it.
   const turned = process.env.APP_ROTATE;
-  if (turned) { sh('settings put system accelerometer_rotation 0'); sh(`settings put system user_rotation ${turned}`); await sleep(2500); }
+  if (turned) await turn({ adb }, turned); // a phone stays upright (MainActivity); a tablet turns
   const natural = sh('wm size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number);
   const [W, H] = turned && turned % 2 ? natural.reverse() : natural;
   const key = async (k) => { sh(`input keyevent ${k}`); await sleep(1200); };
