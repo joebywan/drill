@@ -752,6 +752,12 @@ export const SKIN_WORDS = {
   none: 'Just Lumi',
   open: 'Wardrobe',
 };
+/** The ⋯ screen's line in a browser that asks before keeping storage: what it can do, and a button to ask it. */
+export const KEEP_WORDS = {
+  line: 'Your browser can keep your progress safe on this device if you ask it to.',
+  ask: 'Ask it to keep it',
+  done: 'Your browser is keeping your progress.',
+};
 export const REMINDER_WORDS = {
   title: 'Daily note',
   toggle: 'One quiet note in the evening, only on days with nothing done',

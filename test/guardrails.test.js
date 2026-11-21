@@ -492,9 +492,9 @@ test('the comeback card invites, never guilts, and the fitting lines are plain',
 });
 
 // The Android widget and its once-a-day note: no nagging, no hurry, nothing about a day off.
-import { REMINDER_WORDS, WIDGET_LINES } from '../src/cast/lines.js';
+import { KEEP_WORDS, REMINDER_WORDS, WIDGET_LINES } from '../src/cast/lines.js';
 test('the widget and the daily note never nag, hurry or judge', () => {
-  const texts = [...strings(WIDGET_LINES), ...Object.values(REMINDER_WORDS)];
+  const texts = [...strings(WIDGET_LINES), ...Object.values(REMINDER_WORDS), ...Object.values(KEEP_WORDS)];
   assert.ok(texts.length > 30);
   // A habits-only learner hears nothing of lessons or puzzles; the done pool says "wingbeat" once.
   assert.doesNotMatch(strings(WIDGET_LINES.habits).join(' '), /lesson|puzzle/i);

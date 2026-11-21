@@ -3,6 +3,7 @@ import { GARDEN_WORDS, LIFE, LIFE_WORDS, SKIN_RULES, award, creatures, garden, f
 import { lifeArt, lifeBox } from './cast/butterfly.js';
 import { fieldGuide } from './guide.js';
 import { PLANTS, animateLandmarks, animateScene, animateVisitor, drawGarden, flower, landmark, plant, sway, visitor } from './garden/art.js';
+import { ASKS, shouldAsk } from './keep.js';
 import { COMEBACK_WORDS, PAUSED_WORDS, activeComeback, answerComeback, noteReminder, preferred, reminderHour, remindersPaused, shorter, shouldRemind, startComeback, usualHours, usualLine } from './fitting.js';
 import { WINGS, firstToday, emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, setWhen, track, unlogToday, writeJournal, finishSession, meetsCoach, metCoach, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today, waits } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, showsStreak, dayName, restDays, sessionLine } from './habitview.js';
@@ -13,7 +14,7 @@ import { BOX, butterfly, butterflyToday } from './cast/butterfly.js';
 import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, comeBack, dropEchoes, echoes, fresh, warmUps } from './repeat.js';
 import { GOES, easier, flying, helpFor, misses, noteAnswer, struggling, warmedLast } from './adapt.js';
 import { SIDEWAYS, giveRoom, giveWay, longestVerdict } from './fit.js';
-import { CALM_SOUNDS, DARES_LABEL, SOUND_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, UPRIGHT, LOG_WORDS, CHOOSE_WORDS, SKIN_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, LINES, line, paceLabel, rightAnswer, say, verdicts, VOICES } from './cast/lines.js';
+import { CALM_SOUNDS, DARES_LABEL, SOUND_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, KEEP_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, UPRIGHT, LOG_WORDS, CHOOSE_WORDS, SKIN_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, LINES, line, paceLabel, rightAnswer, say, verdicts, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, soundOn, voice } from './feel.js';
 import { southern } from './garden/season.js';
 import { lessonOf } from './garden/events.js';
@@ -67,7 +68,20 @@ function save(synced = false) {
   // Ask the browser, quietly and once a visit, not to evict progress (Safari clears it after a week away).
   if (persistAsked) return;
   persistAsked = true;
-  try { navigator.storage?.persisted?.().then((kept) => kept || navigator.storage.persist()).catch(() => {}); } catch { /* unsupported */ }
+  if (!ASKS) try { navigator.storage?.persisted?.().then((kept) => kept || navigator.storage.persist()).catch(() => {}); } catch { /* unsupported */ }
+}
+
+/** A browser that asks the person: bring its prompt up once ever, at home, never mid-lesson. Recorded first, since a dismissed prompt may never answer. */
+function askToKeep() {
+  const entries = progress.log.length;
+  if (!ASKS || !entries || pref('kept-asked', false)) return;
+  try {
+    navigator.storage.persisted().then((kept) => {
+      if (!shouldAsk({ asks: ASKS, asked: pref('kept-asked', false), entries, kept })) return;
+      setPref('kept-asked', true);
+      navigator.storage.persist().catch(() => {});
+    }).catch(() => {});
+  } catch { /* unsupported */ }
 }
 
 /**
@@ -203,6 +217,7 @@ const SWAY = 70; // px a node sits off centre at most
  */
 function home(arrived = null, newly = []) {
   stopHome();
+  askToKeep();
   if (!habitOf(habitShown) || habitOf(habitShown).hidden) showHabit(firstTab());
   const fitted = startComeback(progress);
   if (fitted !== progress) { progress = fitted; save(); }
@@ -1506,6 +1521,7 @@ function keep(note = '') {
       <button class="choice" data-save>Save to a file</button>
       <button class="choice" data-load>Load from a file</button>
       <input type="file" accept=".json,application/json" hidden>
+      ${ASKS ? `<p class="said" data-keep hidden>${esc(KEEP_WORDS.line)} <button class="link">${esc(KEEP_WORDS.ask)}</button></p>` : ''}
       <p class="said" role="status">${esc(note)}</p>
       <button class="choice" data-change>${esc(INTRO_WORDS.change)}</button>
       ${syncMenuHtml()}
@@ -1539,6 +1555,13 @@ function keep(note = '') {
     e.currentTarget.setAttribute('aria-pressed', on);
   });
   const status = app.querySelector('[role="status"]');
+  const keepLine = app.querySelector('[data-keep]');
+  if (keepLine) {
+    navigator.storage?.persisted?.().then((kept) => { keepLine.hidden = kept !== false; }).catch(() => {});
+    keepLine.querySelector('button').addEventListener('click', () => navigator.storage.persist().then((kept) => {
+      if (kept) { keepLine.hidden = true; status.textContent = KEEP_WORDS.done; }
+    }).catch(() => {}));
+  }
   const input = app.querySelector('input');
   focusOn('h1');
   app.querySelector('[data-back]').addEventListener('click', () => { home(); focusOn('.menu'); });
