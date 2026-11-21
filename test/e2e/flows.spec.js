@@ -2747,6 +2747,7 @@ test('every Coding bug can be fixed by tapping the block it names, whichever way
 });
 
 test('the first lesson of each new Coding unit plays through as a real session, and so does one laid out from nothing', async ({ page }) => {
+  test.setTimeout(90000); // seven whole lessons: about 22 s on a desktop in Firefox, past 30 s on CI's runners
   const loops = codingCourse.units.find((u) => u.title === 'Loops');
   for (const [unit, lesson] of [...codingCourse.units.slice(3).map((u) => [u, u.lessons[0]]), [{ ...loops, lessons: loops.lessons }, loops.lessons.at(-1)]]) {
     await page.goto('/');
