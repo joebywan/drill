@@ -151,10 +151,18 @@ export default async ({ adb, attach, check, screenXml, shot, type }) => {
       await app.touch(app.btn(`Continue · ${japanese.title}`)); await app.run(400); await app.shot(`voice-${name.replace(/\W+/g, '-')}-${tag}`);
     };
     await open('first');
+    // Offered only when something can open the engine's install screen (WingbeatBridge.canInstallVoice): else just the reading.
+    const can = await app.page.evaluate(() => !!WingbeatBridge.canInstallVoice?.());
+    console.log(`  ${name}: the engine's install screen ${can ? 'can' : 'cannot'} be opened`);
+    if (!can) {
+      check(`${name}: nothing can open the engine's screen, so no button, and the reading shows`, !(await getVoice.count()) && await app.page.locator('.reading').isVisible());
+      return;
+    }
     check(`${name}: "Get a Japanese voice" is offered, with the reading shown`, await getVoice.isVisible() && !(await app.page.getByRole('button', { name: 'Hear it again' }).count()));
     clearLogs();
     await app.touch(getVoice); await sleep(2000); await shot(`voice-${name.replace(/\W+/g, '-')}-engine-screen`);
     console.log(`  ${name}: the app ${front() ? 'is still in front (nothing opened)' : 'gave way to the engine\'s screen'}; focus ${sh('dumpsys window | grep mCurrentFocus').trim()}`);
+    check(`${name}: the offered button opens the engine's screen (a button that does nothing is never offered)`, !front());
     sh(`am start -W -n ${PKG}/.MainActivity`); await sleep(1500);
     check(`${name}: tapping it does not crash the app`, front() && !/AndroidRuntime/.test(logs()));
     await app.seed({ start: {} });

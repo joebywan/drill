@@ -1075,24 +1075,29 @@ test.describe('sound follows the routine', () => {
   test("Calm's rain stays quiet after the phone is picked up, until the routine carries on", async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem('wingbeat.rain', 'on');
+      // What the page asks of its sound (a browser with no audio device, like the silent Firefox run, never reaches 'running').
       const Real = window.AudioContext;
-      window.AudioContext = class extends Real { constructor(...a) { super(...a); window.ctxs = [...(window.ctxs ?? []), this]; } };
+      window.AudioContext = class extends Real {
+        constructor(...a) { super(...a); window.asked = 'made'; }
+        suspend() { window.asked = 'suspend'; return super.suspend(); }
+        resume() { window.asked = 'resume'; return super.resume(); }
+      };
     });
     await page.clock.install();
     await firstVisit(page);
     await tab(page, 'Calm').click();
     await page.getByRole('button', { name: 'Continue · The long out-breath' }).click();
     await page.getByRole('button', { name: 'Start' }).click();
-    const state = () => page.evaluate(() => window.ctxs?.map((c) => c.state).join());
-    await expect.poll(state).toBe('running');
+    const asked = () => page.evaluate(() => window.asked);
+    await expect.poll(asked).toBe('made'); // the rain is playing
     await setHidden(page, true);
-    await expect.poll(state).toBe('suspended');
+    await expect.poll(asked).toBe('suspend');
     await setHidden(page, false);
     await page.clock.runFor(3_000);
     await expect(page.getByRole('button', { name: 'Carry on' })).toBeVisible();
-    expect(await state()).toBe('suspended');
+    expect(await asked()).toBe('suspend'); // back, but the routine waits: so does its sound
     await page.getByRole('button', { name: 'Carry on' }).click();
-    await expect.poll(state).toBe('running');
+    await expect.poll(asked).toBe('resume');
   });
 });
 
