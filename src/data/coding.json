@@ -21,7 +21,7 @@
               "prompt": "The flower is up a row. Build the steps.",
               "explain": "Three steps right and one up. Up first works too: there's more than one way." },
             { "id": "steps-0-left", "family": "walk-line", "type": "build", "level": ["*.S"], "program": [null,null], "tiles": ["left","right","up"],
-              "prompt": "This flower is behind me. Two steps.",
+              "prompt": "This flower is to the left. Two steps.",
               "explain": "Left, left. I walk whichever way the blocks say." },
             { "id": "steps-0-down", "family": "walk-corner", "type": "build", "level": ["S..","..*"], "program": [null,null,null], "tiles": ["right","down","up"],
               "prompt": "Now it sits a row below me. Three steps.",

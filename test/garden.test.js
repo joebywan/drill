@@ -206,8 +206,8 @@ test('the field guide has every species once: raised, being raised, or what woul
   assert.equal(of('walk').by, 'Walk');
   assert.equal(of('own').by, null);
   assert.equal(LIFE_WORDS.by(null), 'Raised by a habit of your own');
-  assert.equal(LIFE_WORDS.raising(of('move').creature), 'Move is raising a Wanderer');
-  assert.equal(LIFE_WORDS.raising(of('calm').creature), 'Calm raised a Common Brown');
+  assert.equal(LIFE_WORDS.raising(of('move').creature), 'Move is raising a Wanderer butterfly');
+  assert.equal(LIFE_WORDS.raising(of('calm').creature), 'Calm raised a Common Brown butterfly');
 });
 
 test('arrivals: the biggest moment first (a stage, then a skin, a landmark, a visitor, a flower), and an end screen lists only so many', () => {
