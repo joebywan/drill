@@ -73,6 +73,7 @@ function client() {
       else if (s.hasText) els = els.filter((el) => matches(s.hasText, el.textContent, false));
       else if ('nth' in s) els = [els.at(s.nth)].filter(Boolean);
       else if (s.visible) els = els.filter(visible);
+      else if (s.and) { const also = new Set(find(s.and)); els = els.filter((el) => also.has(el)); }
       els = [...new Set(els)];
     }
     return els.filter((e) => e !== document);
@@ -256,6 +257,7 @@ export async function bridged(port, launch) {
     getByRole(role, o = {}) { return this.#with({ role, name: matcher(o.name), exact: !!o.exact, disabled: o.disabled, pressed: o.pressed }); }
     getByText(text, o = {}) { return this.#with({ text: matcher(text), exact: !!o.exact }); }
     filter({ hasText }) { return this.#with({ hasText: matcher(hasText) }); }
+    and(other) { return this.#with({ and: other.steps }); }
     first() { return this.#with({ nth: 0 }); }
     last() { return this.#with({ nth: -1 }); }
     nth(i) { return this.#with({ nth: i }); }
