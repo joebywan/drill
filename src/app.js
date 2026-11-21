@@ -339,7 +339,8 @@ function home(arrived = null, newly = []) {
   // footer covers the bottom 160px), so the garden at the top stays in sight when there's room.
   const showHere = () => {
     // With larger text the bar is measured: it grows with the text, and shrinks when its second row gives way.
-    if (TEXT > 1 && app.querySelector('.here')) roomForHere(app.querySelector('.here'));
+    const target = app.querySelector('.here') ?? app.querySelector('.follows-line');
+    if (TEXT > 1 && target) roomForHere(target);
     const r = app.querySelector('.here')?.getBoundingClientRect();
     const bar = TEXT > 1 ? app.querySelector('.cta').getBoundingClientRect().top : innerHeight - 160;
     if (r && (r.top < 0 || r.bottom > bar)) app.querySelector('.here').scrollIntoView({ block: 'center' });
@@ -461,7 +462,8 @@ function home(arrived = null, newly = []) {
  * its top (decisions 22 to 24: the path is the point of the screen). In turn: the bar's second row ("Skip ahead",
  * "Something else") leaves the bar for the page, under the unit being walked; the coach's greeting goes (still read by
  * a screen reader); the streak line keeps its count and lets "See your week" go. Only as much as that takes, and none
- * of it if it can't be enough (a node further down the path is scrolled to instead).
+ * of it if it can't be enough (a node further down the path is scrolled to instead). A follow-on course waiting for
+ * its first (no path yet) does the same for its line: its bar's second row comes up under it.
  */
 function roomForHere(here) {
   const cta = app.querySelector('.cta');
@@ -469,8 +471,8 @@ function roomForHere(here) {
   const moved = Object.assign(document.createElement('div'), { className: 'from-bar' });
   const line = app.querySelector('.streak-line'), words = line?.textContent ?? '';
   giveRoom(() => Math.max(endOf(here), endOf(app.querySelector('.guide'))) - cta.getBoundingClientRect().top, [
-    [() => { here.closest('.street').after(moved); moved.append(...row); }, () => { cta.append(...row); moved.remove(); }],
-    hidden(app.querySelector('.pane > .said.welcome')),
+    [() => { (here.closest('.street') ?? here).after(moved); moved.append(...row); }, () => { cta.append(...row); moved.remove(); }],
+    hidden(app.querySelector('.pane > .said.welcome:not(.follows-line)')),
     [() => { if (words.includes(' · ')) { line.textContent = words.split(' · ')[0]; line.setAttribute('aria-label', words); } },
       () => { if (line) { line.textContent = words; line.removeAttribute('aria-label'); } }],
   ]);
@@ -1281,7 +1283,7 @@ function run(lessonId, queue, title, extra = null) {
     const endCoach = coach(app.querySelector('.hero'), drawOf(who));
     endCoach.set('done');
     // With larger text the question it ends on is in view above Continue (decision 19: what matters first, and briefly).
-    // In turn: the pictures give way, the coach first, then Lumi beside the wingbeat; the headline and the wingbeat's line
+    // In turn: the pictures give way, the coach first, then Lumi and your butterfly beside the wingbeat; the headline and the wingbeat's line
     // are no bigger than the rest; what arrived is one line and "N more"; then the line of what was done, the routine's name,
     // the streak chip.
     if (TEXT > 1) {
@@ -1290,6 +1292,7 @@ function run(lessonId, queue, title, extra = null) {
       giveRoom(() => endOf(app.querySelector('#feel-q')) - app.querySelector('.cta').getBoundingClientRect().top, [
         hidden(main.querySelector(':scope > .hero')),
         hidden(main.querySelector('.wing-lumi')),
+        hidden(main.querySelector('.wingbeat-moment > svg')),
         [() => main.classList.add('brief'), () => main.classList.remove('brief')],
         [() => list?.replaceWith(brief), () => brief?.replaceWith(list)],
         hidden(main.querySelector(':scope > .said')),

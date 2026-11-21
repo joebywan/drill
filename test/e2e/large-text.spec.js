@@ -182,6 +182,26 @@ for (const look of LOOKS) test.describe(look.name, () => {
     expect(await wrong(page, 'end screen')).toEqual([]);
   });
 
+  // The first visit's list, then a follow-on course waiting for its first (no path, so no node to make room for): the
+  // list fits, and the waiting line, Start JavaScript and both links of the bar's second row are in view, nothing thrown.
+  test('the first-visit list, and TypeScript waiting for JavaScript', async ({ page }) => {
+    test.skip(look.font === 16, 'larger text only');
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Next' }).click();
+    await page.locator('[data-want="learn"]').click();
+    await page.locator('[data-pick="typescript"]').click();
+    await expect(page.locator('.picked-too')).toHaveText(/JavaScript comes first/);
+    expect(await wrong(page, 'the first-visit list')).toEqual([]);
+    await page.getByRole('button', { name: 'Show my home' }).click();
+    await page.locator('[data-course="typescript"]').click();
+    const at = await page.evaluate(() => ({ line: document.querySelector('.follows-line').getBoundingClientRect().bottom, bar: document.querySelector('.cta').getBoundingClientRect().top }));
+    expect(at.line, 'the waiting line ends above the bar').toBeLessThanOrEqual(at.bar);
+    for (const b of ['[data-parent]', '[data-start-here]', '[data-place]']) await expect(page.locator(b)).toBeInViewport({ ratio: 1 });
+    expect(errors).toEqual([]);
+  });
+
   // A practice's end screen gives way (finishRoutine in app.js): the pictures first, then the words get briefer, until
   // the question it ends on is in view above Continue, the page at its top. At 125% it fits as it is: nothing goes.
   for (const habit of ['Calm', 'Move']) test(`${habit}'s end screen: "How do you feel?" is in view above Continue`, async ({ page }) => {
