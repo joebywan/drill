@@ -473,7 +473,14 @@ try {
       await sleep(700);
       // Where the finger landed in the page: a page that has moved on screen since calibrating (a browser's toolbar
       // sliding away as the page scrolls) shows as a tap off where it was aimed, and the next tap is aimed anew.
-      let hit = await page.evaluate(() => window.__hit).catch(() => undefined);
+      // A tap on a link out leaves the page for a site with no bridge, which never answers: the browser's address bar says so.
+      let hit = await Promise.race([page.evaluate(() => window.__hit).catch(() => undefined), sleep(3000).then(() => 'gone')]);
+      if (hit === 'gone') {
+        const bar = uiNodes(await screenXml()).find((x) => !x.page && /Search or enter address|url_bar/.test(x.desc + x.rid));
+        const at = bar && (bar.text || bar.desc);
+        if (at && !/localhost:\d+/.test(at)) return console.log(`  a tap aimed at ${loc} left the page: the address bar shows ${at.trim().slice(0, 60)}`);
+        hit = await page.evaluate(() => window.__hit).catch(() => undefined);
+      }
       // A busy page can take a while to hear the finger: up to 2 s more, until it does or shows something new.
       for (let t = 0; hit === null && t < 2000; t += 250) {
         if (await looks() !== before) { hit = undefined; console.log(`  a tap aimed at ${loc} changed the page before its pointerdown was read: not tapped again`); break; }

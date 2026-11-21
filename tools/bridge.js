@@ -72,6 +72,7 @@ function client() {
       } else if (s.text) els = els.flatMap((e) => byText(e, s));
       else if (s.hasText) els = els.filter((el) => matches(s.hasText, el.textContent, false));
       else if ('nth' in s) els = [els.at(s.nth)].filter(Boolean);
+      else if (s.visible) els = els.filter(visible);
       els = [...new Set(els)];
     }
     return els.filter((e) => e !== document);
@@ -240,7 +241,16 @@ export async function bridged(port, launch) {
     constructor(steps) { this.steps = steps; }
     #with(step) { return new Locator([...this.steps, step]); }
     toString() { return JSON.stringify(this.steps); }
-    locator(css) { return this.#with({ css }); }
+    // Playwright's own additions to CSS that scenarios use: `a >> b` (b inside a), `nth=N` and a trailing `:visible`.
+    locator(css) {
+      return css.split('>>').map((p) => p.trim()).reduce((l, p) => {
+        const nth = p.match(/^nth=(-?\d+)$/);
+        if (nth) return l.#with({ nth: Number(nth[1]) });
+        const vis = p.endsWith(':visible');
+        const at = l.#with({ css: vis ? p.slice(0, -':visible'.length) : p });
+        return vis ? at.#with({ visible: true }) : at;
+      }, this);
+    }
     getByRole(role, o = {}) { return this.#with({ role, name: matcher(o.name), exact: !!o.exact, disabled: o.disabled, pressed: o.pressed }); }
     getByText(text, o = {}) { return this.#with({ text: matcher(text), exact: !!o.exact }); }
     filter({ hasText }) { return this.#with({ hasText: matcher(hasText) }); }

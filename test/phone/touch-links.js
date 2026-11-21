@@ -11,8 +11,9 @@ export default async ({ page, seed, touch, btn, shot, check, adb, screenXml, uiN
   const firefox = async () => {
     const xml = await screenXml();
     const own = uiNodes(xml).filter((x) => !x.page).flatMap((x) => [x.text, x.desc]).filter(Boolean);
-    if (!own.some((t) => /open tabs?/i.test(t))) writeFileSync(new URL(`../../test-results/phone/touch-links/ui-${Date.now()}.xml`, import.meta.url), xml); // to teach this reader Firefox's views
-    return { n: Number(own.map((t) => t.match(/^(\d+) open tabs?/i)?.[1]).find(Boolean) ?? 0), url: own.find((t) => /^(https?:\/\/)?(localhost:\d+|[\w-]+(\.[\w-]+)+)(\/\S*)?$/.test(t)) ?? '' };
+    if (!own.some((t) => /Tabs Open/i.test(t))) writeFileSync(new URL(`../../test-results/phone/touch-links/ui-${Date.now()}.xml`, import.meta.url), xml); // to teach this reader Firefox's views
+    // "Non-private Tabs Open: 2. Tap to switch tabs." and " localhost:36101. Search or enter address" (Firefox 160).
+    return { n: Number(own.map((t) => t.match(/Tabs Open: (\d+)/i)?.[1]).find(Boolean) ?? 0), url: own.map((t) => t.match(/^\s*(\S+)\. Search or enter address/)?.[1]).find(Boolean) ?? '' };
   };
   const chrome = async () => { if (browser === 'firefox') return firefox(); const ui = await screenXml(); return { n: Number(ui.match(/(\d+) tabs?/)?.[1] ?? ui.match(/tab_switcher_button[^>]*text="(\d+)"/)?.[1] ?? 0), url: ui.match(/url_bar"[^>]*text="([^"]*)"/)?.[1] ?? ui.match(/text="([^"]*)"[^>]*resource-id="com.android.chrome:id\/url_bar"/)?.[1] ?? '' }; };
   // The addresses open: Playwright's pages in Chrome; a bridged browser has only the address bar.
