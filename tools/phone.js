@@ -191,8 +191,12 @@ try {
     let dpr = 1;
     const origin = { x: 0, y: 0 };
     const calibrate = async () => {
-      let [sw, sh] = adb('shell', 'wm', 'size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number); // always the upright size
-      if (await page.evaluate(() => innerWidth > innerHeight)) [sw, sh] = [sh, sw]; // a phone on its side
+      let [sw, sh] = adb('shell', 'wm', 'size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number); // the device's own way up
+      // The screen as it is now: a tablet whose own way up is upright but that boots on its side reports the upright size
+      // above, and its page can measure either way while Chrome settles, so the display's current size wins when it is there.
+      const cur = adb('shell', 'dumpsys', 'window', 'displays').match(/\bcur=(\d+)x(\d+)/);
+      if (cur) [sw, sh] = cur.slice(1).map(Number);
+      else if (await page.evaluate(() => innerWidth > innerHeight)) [sw, sh] = [sh, sw]; // a phone on its side
       dpr = await page.evaluate(() => devicePixelRatio);
       await page.evaluate(() => {
         window.__tap = null;
@@ -200,13 +204,17 @@ try {
         document.body.style.cssText = 'height:100vh;margin:0';
         addEventListener('pointerdown', (e) => { window.__tap = [e.clientX, e.clientY]; }, { once: true, capture: true });
       });
+      let at = [];
       for (let i = 0; !(await page.evaluate(() => window.__tap)); i++) { // the first tap after launch can go missing
         if (i === 5) throw new Error('calibration tap never reached the page');
-        adb('shell', 'input', 'tap', String(sw >> 1), String(Math.round(sh * 0.6)));
+        // Every other try lands off to the side: a tablet's first-run lesson ("Slow-swipe up to show the Taskbar", not in
+        // uiautomator's tree) can sit over the middle of the screen and take a tap there.
+        at = [i % 2 ? Math.round(sw * 0.12) : sw >> 1, Math.round(sh * 0.6)];
+        adb('shell', 'input', 'tap', ...at.map(String));
         await sleep(1000);
       }
       const [cx, cy] = await page.evaluate(() => window.__tap);
-      Object.assign(origin, { x: (sw >> 1) - cx * dpr, y: Math.round(sh * 0.6) - cy * dpr });
+      Object.assign(origin, { x: at[0] - cx * dpr, y: at[1] - cy * dpr });
       console.log(`page origin on screen (${pkg}): ${Math.round(origin.x)},${Math.round(origin.y)} (dpr ${dpr}, screen ${sw}x${sh}); real frames for shot(): ${await page.evaluate(() => String(window.__frame).includes('[native code]'))}`);
     };
     await calibrate();

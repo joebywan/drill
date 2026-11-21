@@ -1,6 +1,7 @@
 import { test as base, expect, reach, solve } from './fixtures.js';
 import { CHESS, CODE, CODING, QUIZ, inView, misfits, reachable, verdictRule } from '../phone/lib/fits.js';
 import { daysIn } from '../phone/lib/seed.js';
+import { mountChess, plays, playSteps, settles } from './chess-plays.js';
 import { scan } from '../../tools/play.js';
 import { subjects } from '../../src/subjects.js';
 
@@ -185,7 +186,6 @@ for (const look of LOOKS) test.describe(look.name, () => {
   // The first visit's list, then a follow-on course waiting for its first (no path, so no node to make room for): the
   // list fits, and the waiting line, Start JavaScript and both links of the bar's second row are in view, nothing thrown.
   test('the first-visit list, and TypeScript waiting for JavaScript', async ({ page }) => {
-    test.skip(look.font === 16, 'larger text only');
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto('/');
@@ -194,12 +194,33 @@ for (const look of LOOKS) test.describe(look.name, () => {
     await page.locator('[data-pick="typescript"]').click();
     await expect(page.locator('.picked-too')).toHaveText(/JavaScript comes first/);
     expect(await wrong(page, 'the first-visit list')).toEqual([]);
+    if (look.font === 16) return; // the narrow pages: the list is the check (its heading once ran 2px past 206)
     await page.getByRole('button', { name: 'Show my home' }).click();
     await page.locator('[data-course="typescript"]').click();
     const at = await page.evaluate(() => ({ line: document.querySelector('.follows-line').getBoundingClientRect().bottom, bar: document.querySelector('.cta').getBoundingClientRect().top }));
     expect(at.line, 'the waiting line ends above the bar').toBeLessThanOrEqual(at.bar);
     for (const b of ['[data-parent]', '[data-start-here]', '[data-place]']) await expect(page.locator(b)).toBeInViewport({ ratio: 1 });
     expect(errors).toEqual([]);
+  });
+
+  // A chess board answered, right and wrong: still while asked (board-still.spec.js), but once the verdict comes the whole
+  // board is above it: her kept room, the coach and the gaps give way first, then the board (fitBoard, chess/exercise.js).
+  for (const id of ['moves-0-rook', 'board-0-e4', 'fork-0-find']) test(`a chess board (${id}) answered sits whole above the verdict`, async ({ page }) => {
+    test.skip(look.font === 16, 'larger text only');
+    test.setTimeout(60000);
+    const item = subjects.find((s) => s.id === 'chess').units.flatMap((u) => u.lessons).flatMap((l) => l.items).find((i) => i.id === id);
+    await page.goto('/');
+    const bad = [];
+    for (const right of [true, false]) {
+      await page.evaluate(mountChess, item);
+      await page.waitForTimeout(settles(item));
+      await playSteps(page, item, plays(item, right));
+      await expect(page.locator('.foot.show')).toBeAttached();
+      await page.screenshot({ path: test.info().outputPath(`${id}-${right ? 'right' : 'wrong'}.png`) });
+      const at = await page.evaluate(() => ({ board: document.querySelector('div.board').getBoundingClientRect().bottom, verdict: document.querySelector('.foot.show').getBoundingClientRect().top }));
+      if (at.board > at.verdict + 1) bad.push(`${right ? 'right' : 'wrong'}: the board ends at ${Math.round(at.board)}, the verdict starts at ${Math.round(at.verdict)}`);
+    }
+    expect(bad).toEqual([]);
   });
 
   // A practice's end screen gives way (finishRoutine in app.js): the pictures first, then the words get briefer, until

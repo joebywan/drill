@@ -8,5 +8,6 @@ process.env.PULSE_SERVER = 'unix:/nonexistent/pulse';
 
 export default {
   ...base,
+  outputDir: 'test-results/e2e-firefox', // its own, so a Chromium run and a Firefox run don't empty each other's
   use: { ...base.use, browserName: 'firefox', launchOptions: { firefoxUserPrefs: { 'media.volume_scale': '0.0', 'media.webspeech.synth.test': true } } },
 };
