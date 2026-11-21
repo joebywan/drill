@@ -90,8 +90,8 @@ export const LINES = {
   ],
   run5: [
     "Five right in a row! That's patient, tidy work.",
-    'Five right in a row! Somebody fetch my trophy, I may need to defend it.',
-    "Five right in a row. I haven't seen focus like that since my club final.",
+    'Five right! Somebody fetch my trophy, I may need to defend it.',
+    "Five right in a row. That is club-final focus.",
   ],
   tapped: [
     'Take your time. The board will wait. So will I, gorgeously.',
