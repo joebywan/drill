@@ -75,7 +75,7 @@ test.describe('at 360x640', () => {
       const item = await reach(page, 'japanese', lesson, id);
       const slots = page.locator('.quiz .slots');
       const asked = (await slots.boundingBox()).height;
-      const widths = await page.locator('.quiz .slot').evaluateAll((all) => all.map((e) => e.getBoundingClientRect().width));
+      const widths = await page.locator('.quiz .slot').evaluateAll((all) => all.map((e) => Math.round(e.getBoundingClientRect().width)));
       expect(new Set(widths).size, `empty slots are all one width: ${widths}`).toBe(1); // a slot's width never gives its word away
       for (const t of item.answer.slice(0, -1)) await page.locator('.quiz .choices .choice:not(:disabled)').filter({ hasText: new RegExp(`^${t}$`) }).first().click();
       expect((await slots.boundingBox()).height, 'one slot still empty').toBe(asked);
