@@ -35,6 +35,28 @@ test.describe('at 360x640', () => {
     await expect(page.getByRole('button', { name: 'I called someone today' })).toBeInViewport({ ratio: 1 });
   });
 
+  // The phone's keyboard shrinks the page (interactive-widget=resizes-content): 412x786 with the keyboard up is about
+  // 412x426. Typing a name, Add habit stays in view above it, as every other form's button does (test/phone/touch-keyboard.js).
+  test('"Make your own" keeps Add habit in view while the name is typed', async ({ page }) => {
+    await seed(page);
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Add a habit' }).click();
+    await page.getByRole('button', { name: 'Make your own' }).click();
+    await page.setViewportSize({ width: 412, height: 426 });
+    const name = page.getByRole('textbox', { name: 'Name' });
+    await name.fill('Stretch more');
+    const add = page.getByRole('button', { name: 'Add habit' });
+    await expect(name).toBeInViewport({ ratio: 1 });
+    await expect(add).toBeInViewport({ ratio: 1 });
+    const [field, button] = await Promise.all([name.boundingBox(), add.boundingBox()]);
+    expect(field.y + field.height).toBeLessThanOrEqual(button.y); // it covers nothing typed
+    // The picks it floats over can still be scrolled clear of it and tapped.
+    await page.getByText('Mushroom').click();
+    await expect(page.getByRole('radio', { name: 'Mushroom' })).toBeChecked();
+    await add.click();
+    await expect(page.getByRole('heading', { name: 'When will you do it?' })).toBeVisible();
+  });
+
   // Before a finished lesson there is nothing being raised, so the test above holds the first screen; after
   // one, the next node already sat below the fold (home scrolls it into view), with or without the line.
   test('a started course shows what it is raising, and its next lesson is still in view', async ({ page }) => {

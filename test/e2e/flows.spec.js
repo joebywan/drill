@@ -2420,6 +2420,9 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
         const taken = (x, y) => wobble.some((w) => prog.contains(document.elementFromPoint(x, y + w)?.closest('button')));
         const hits = [[r.top + reach, short.up], [r.bottom - reach, short.down]].map(([y, ok]) => ok || taken(r.left + r.width / 2, y));
         if (hits.includes(false)) { out.push(`${item.id}: ${b.getAttribute('aria-label')} is ${Math.round(r.height)}px to tap`); break; }
+        // A narrow one (a slot, a list's value: 28 to 30px) gets the gap beside it to reach 44px across, even beside another to tap.
+        const across = r.width + ['left', 'right'].reduce((n, s) => n + parseFloat(b.style.getPropertyValue(`--${s}`)) - parseFloat(css[`border${s[0].toUpperCase()}${s.slice(1)}Width`]), 0);
+        if (r.width <= 32 && across < 43) { out.push(`${item.id}: ${b.getAttribute('aria-label') ?? b.className} is ${Math.round(across)}px across to tap`); break; }
       }
       if (item.type === 'predict') {
         const cell = app.querySelector('.cell-pick').getBoundingClientRect();

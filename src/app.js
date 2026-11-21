@@ -12,7 +12,7 @@ import { worn } from './cast/skins.js';
 import { BOX, butterfly, butterflyToday } from './cast/butterfly.js';
 import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, comeBack, dropEchoes, echoes, fresh, warmUps } from './repeat.js';
 import { GOES, easier, flying, helpFor, misses, noteAnswer, struggling, warmedLast } from './adapt.js';
-import { giveWay, longestVerdict } from './fit.js';
+import { giveRoom, giveWay, longestVerdict } from './fit.js';
 import { CALM_SOUNDS, DARES_LABEL, SOUND_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, CHOOSE_WORDS, SKIN_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
@@ -316,8 +316,11 @@ function home(arrived = null, newly = []) {
   // The current lesson is brought into view, centred, only when it is out of view (the fixed
   // footer covers the bottom 160px), so the garden at the top stays in sight when there's room.
   const showHere = () => {
+    // With larger text the bar is measured: it grows with the text, and shrinks when its second row gives way.
+    if (TEXT > 1 && app.querySelector('.here')) roomForHere(app.querySelector('.here'));
     const r = app.querySelector('.here')?.getBoundingClientRect();
-    if (r && (r.top < 0 || r.bottom > innerHeight - 160)) app.querySelector('.here').scrollIntoView({ block: 'center' });
+    const bar = TEXT > 1 ? app.querySelector('.cta').getBoundingClientRect().top : innerHeight - 160;
+    if (r && (r.top < 0 || r.bottom > bar)) app.querySelector('.here').scrollIntoView({ block: 'center' });
   };
   const guide = app.querySelector('.guide');
   if (guide) {
@@ -415,6 +418,30 @@ function home(arrived = null, newly = []) {
     focusOn('.cta .next');
   });
 }
+
+/**
+ * With larger text, home gives way so the next lesson's node and its coach are in view above Continue with the page at
+ * its top (decisions 22 to 24: the path is the point of the screen). In turn: the bar's second row ("Skip ahead",
+ * "Something else") leaves the bar for the page, under the unit being walked; the coach's greeting goes (still read by
+ * a screen reader); the streak line keeps its count and lets "See your week" go. Only as much as that takes, and none
+ * of it if it can't be enough (a node further down the path is scrolled to instead).
+ */
+function roomForHere(here) {
+  const cta = app.querySelector('.cta');
+  const row = [...cta.querySelectorAll(':scope > .links, :scope > .offer')].filter((e) => e.children.length);
+  const moved = Object.assign(document.createElement('div'), { className: 'from-bar' });
+  const line = app.querySelector('.streak-line'), words = line?.textContent ?? '';
+  giveRoom(() => Math.max(endOf(here), endOf(app.querySelector('.guide'))) - cta.getBoundingClientRect().top, [
+    [() => { here.closest('.street').after(moved); moved.append(...row); }, () => { cta.append(...row); moved.remove(); }],
+    hidden(app.querySelector('.pane > .said.welcome')),
+    [() => { if (words.includes(' · ')) { line.textContent = words.split(' · ')[0]; line.setAttribute('aria-label', words); } },
+      () => { if (line) { line.textContent = words; line.removeAttribute('aria-label'); } }],
+  ]);
+}
+/** A step for giveRoom(): `el` (if any) goes from sight, still read by a screen reader. */
+const hidden = (el) => [() => el?.classList.add('visually-hidden'), () => el?.classList.remove('visually-hidden')];
+/** Where `el` ends on the page (as if scrolled to the top); 0 if it isn't drawn. */
+const endOf = (el) => (el?.getBoundingClientRect().height ? el.getBoundingClientRect().bottom + scrollY : 0);
 
 /** Counts today for a guided habit done away from the app: the streak, the day and the wing as a session, nothing unlocked. */
 function awayToday(habit) {
@@ -1177,7 +1204,7 @@ function run(lessonId, queue, title, extra = null) {
       <main class="summary practice-end${subject.night ? ' night' : ''}">
         <div class="hero"></div>
         <p class="kicker">${esc(technique)}</p>
-        <h1>${esc(line('done', Math.random(), who.lines))}</h1>
+        <h1>${esc(window.WINGBEAT_LONGEST ? longestVerdict(who.lines, ['done']) : line('done', Math.random(), who.lines))}</h1>
         <p class="said">${esc([...did, `${mins} min`].join(' · '))}</p>
         <div class="chips">
           ${showsStreak(h.id, pref('quiet-streaks', false)) ? chip(h.id, `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`) : ''}
@@ -1194,6 +1221,23 @@ function run(lessonId, queue, title, extra = null) {
       <footer class="cta"><button class="next">Continue</button></footer>`;
     const endCoach = coach(app.querySelector('.hero'), drawOf(who));
     endCoach.set('done');
+    // With larger text the question it ends on is in view above Continue (decision 19: what matters first, and briefly).
+    // In turn: the pictures give way, the coach first, then Lumi beside the wingbeat; the headline and the wingbeat's line
+    // are no bigger than the rest; what arrived is one line and "N more"; then the line of what was done, the routine's name,
+    // the streak chip.
+    if (TEXT > 1) {
+      const main = app.querySelector('.summary'), list = app.querySelector('.arrivals');
+      const brief = list && Object.assign(document.createElement('div'), { innerHTML: arrivals(newly, 1) }).firstElementChild;
+      giveRoom(() => endOf(app.querySelector('#feel-q')) - app.querySelector('.cta').getBoundingClientRect().top, [
+        hidden(main.querySelector(':scope > .hero')),
+        hidden(main.querySelector('.wing-lumi')),
+        [() => main.classList.add('brief'), () => main.classList.remove('brief')],
+        [() => list?.replaceWith(brief), () => brief?.replaceWith(list)],
+        hidden(main.querySelector(':scope > .said')),
+        hidden(main.querySelector(':scope > .kicker')),
+        hidden(main.querySelector(':scope > .chips')),
+      ]);
+    }
     if (beats) beat(app.querySelector('.wingbeat-moment'), newPanel, () => app.querySelector('.wing-lumi'), 600);
     arrive(newly, 400);
     focusOn('h1');

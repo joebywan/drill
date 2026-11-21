@@ -156,7 +156,7 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
      fitted above it gets the other half. */
   display: flex; flex-direction: column; max-height: 50dvh;
 }
-.foot .verdict { flex: 0 1 auto; min-height: 0; --fade: var(--card); } /* it scrolls (.scrolls) only when it has to, so a headline's pop isn't clipped */
+.foot .verdict { flex: 1 1 auto; min-height: 0; --fade: var(--card); } /* it scrolls (.scrolls) only when it has to, so a headline's pop isn't clipped; it takes the room a taller tray gives (giveWay), so Continue stays at the bottom */
 .foot.right .verdict { --fade: var(--right-bg); }
 .foot.wrong .verdict { --fade: var(--wrong-bg); }
 .foot .next { flex: none; }
@@ -496,6 +496,9 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 .when-ask .choice { margin: 0; }
 .when-ask .choice[aria-pressed="true"] { border-color: var(--accent); }
 .own-habit form, .when-ask form { text-align: left; }
+/* Add habit stays in view while the name is typed: the keyboard shrinks the page (resizes-content), and the button keeps
+   to its bottom over the picks, as every other form's button sits above the keyboard. Where it fits it is simply in its place. */
+.own-habit form > .next { position: sticky; bottom: 12px; }
 .field { display: block; margin: 16px 0; font-weight: 700; }
 .field input {
   display: block; box-sizing: border-box; width: 100%; margin-top: 6px; padding: 12px 14px; border-radius: 12px;
@@ -596,10 +599,11 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 /* A block sits on one row when it fits: heads beside what they hold, so long programs stay above the tiles. */
 .block.loop, .block.if, .block.stmt { display: flex; flex-wrap: wrap; align-items: center; column-gap: 8px; height: auto; padding: 4px 8px; background: var(--card); color: var(--text); font-size: 1rem; }
 .block .head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 40px; font-weight: 700; }
-.block .head .list { display: inline-flex; flex-wrap: wrap; gap: 3px; }
+.block .head .list { display: inline-flex; flex-wrap: wrap; gap: 14px; } /* its 30px values, each reaching a thumb's 44px (reachOf) */
 .block .head .list .block { min-width: 30px; height: 30px; padding: 0 4px; font-size: 1rem; border-radius: 7px; }
 /* A value to tap stays compact in its line, but answers a thumb in up to 44px around it. */
 .program button.block { position: relative; }
+.program .block.slot { margin-inline: 2px; } /* a slot 28px wide between blocks to tap: gaps a thumb's 44px can share (reachOf) */
 .program button.block::after { /* reachOf() in src/builder.js sets how far, short of any other tappable thing */
   content: ''; position: absolute; inset: calc(-1 * var(--up, 0px)) calc(-1 * var(--right, 0px)) calc(-1 * var(--down, 0px)) calc(-1 * var(--left, 0px));
 }
@@ -718,6 +722,8 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
   /* ⋯ closes the tabs column, under + Habit. */
   .rail .tabs-row { flex-direction: column; align-items: flex-start; gap: 8px; margin: 0; }
   .rail .tabs-row .paths { align-self: stretch; }
+  /* When the tabs outgrow the screen (larger text), ⋯ keeps to the rail's bottom edge, in reach without scrolling it. */
+  .rail .tabs-row .menu { position: sticky; bottom: 0; z-index: 1; box-shadow: 0 0 0 6px var(--bg); }
   .rail .path-tab { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 16px; }
   /* Home's Continue bar spans the pane only, so its fade never covers the rail. */
   .home + .cta {
@@ -854,8 +860,9 @@ body:has(main.night) {
 .comeback p { margin: 0 40px 12px 0; line-height: 1.45; }
 .comeback .choice { width: 100%; margin: 0; }
 .comeback .link { margin: 4px auto 0; }
-.cta .links { display: flex; flex-wrap: wrap; justify-content: center; column-gap: 8px; }
-.cta .links .link { margin: 4px 0 0; }
+:is(.cta, .from-bar) .links { display: flex; flex-wrap: wrap; justify-content: center; column-gap: 8px; }
+:is(.cta, .from-bar) .links .link { margin: 4px 0 0; }
+.from-bar { margin-bottom: 24px; } /* the bar's second row, given way to the path with larger text (roomForHere in app.js) */
 .habit .usual { margin: 4px 0 0; color: var(--muted); }
 .paused { margin-top: 16px; }
 .home:has(~ .cta :is(.short, .offer, .choose)) { padding-bottom: calc(170px * var(--text-scale, 1)); } /* room for the offer under Continue */
@@ -899,7 +906,7 @@ body:has(main.night) {
   .program { gap: 4px; }
   .block { min-width: 36px; height: 36px; font-size: 1.15rem; }
   .block.loop, .block.if, .block.stmt { padding: 1px 5px; font-size: .95rem; }
-  .answer { gap: 4px; min-height: 36px; }
+  .answer { gap: 4px 8px; min-height: 36px; }
   .answer .head { min-height: 30px; }
   .code { line-height: 1.35; }
   /* A map and a program, or laying out with its tall tray: the coach gives way, or the program has no room.
@@ -915,10 +922,11 @@ body:has(main.night) {
   .tray > .meter-line, .tray:has(> .meter-line) .run { order: 2; }
   .tray > .meter-line { flex: none; align-self: center; }
   .tray:has(> .meter-line) .run { flex: 1 1 0; }
-  .block .head { min-height: 28px; gap: 4px; }
+  .block .head { min-height: 28px; gap: 4px 12px; } /* its 28px values side by side: room for each to reach 44px (reachOf) */
   .block .head b { min-width: 26px; height: 26px; }
   .block .head .block { min-width: 28px; height: 28px; }
-  .block .inner { gap: 4px; margin: 0; }
+  .block .inner { gap: 4px 8px; margin: 0; }
+  .program .block.slot { margin-inline: 4px; } /* a gap a thumb can find, between two blocks to tap */
   .vars { min-height: 1.3em; margin-bottom: 2px; font-size: .85rem; line-height: 1.3; }
 }
 /* A coach the learner copies: the X beside them and no header, so the words below get the room. */
@@ -971,10 +979,10 @@ body:has(main.night) {
 .code-answer { align-items: center; gap: 4px; padding: 6px; min-height: 52px; border-radius: 10px; border: 2px solid var(--line); background: var(--card); }
 .line-break { flex: 0 0 100%; height: 0; }
 .line-indent { flex: none; width: calc(var(--indent) * 14px); margin-right: -4px; }
-.block.token { min-width: 26px; height: 32px; padding: 0 6px; border-radius: 7px; font: 700 .85rem var(--mono); max-width: 100%; overflow-wrap: anywhere; }
-.code-answer .block.hole { min-width: 44px; height: 32px; }
-.code-answer .block.slot { height: 32px; }
-.code-answer .caret { min-height: 28px; }
+.block.token { min-width: 26px; height: 40px; padding: 0 6px; border-radius: 7px; font: 700 .85rem var(--mono); max-width: 100%; overflow-wrap: anywhere; }
+.code-answer .block.hole { min-width: 44px; height: 40px; }
+.code-answer .block.slot { height: 40px; } /* a placed word is as tall as anything else tapped */
+.code-answer .caret { min-height: 36px; }
 /* A fill-in program reads as code: its lines of text sit as close as code does, a line with a gap is as tall as the chip. */
 .fixed-word { font: 600 .85rem/1.5 var(--mono); }
 .code-answer:has(.fixed-word) { row-gap: 1px; }
@@ -1048,6 +1056,9 @@ body:has(main.night) {
 .wingbeat-moment > svg { flex: none; width: 64px; }
 .wingbeat-moment p { margin: 0; text-align: left; font-weight: 600; }
 .wing-lumi { flex: none; width: 52px; }
+/* An end screen giving way with larger text (finishRoutine in app.js): its headline and the wingbeat's line no bigger than the rest. */
+.summary.brief h1 { font-size: 1.2rem; }
+.summary.brief .wingbeat-moment p { font-size: .95rem; }
 .wing-lumi svg { width: 100%; }
 .intro .tagline { margin: -4px 0 12px; font-style: italic; color: var(--muted); }
 .does li > span:first-child svg { width: 1.6em; vertical-align: middle; }

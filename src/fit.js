@@ -39,12 +39,32 @@ export function verdictHeight(words, lines) {
  */
 export function giveWay(foot, scrolls = true) {
   const box = foot.querySelector('.verdict');
+  // It covers the answers it replaces: never shorter than their tray (a code check card's rows), up to half the screen.
+  const tray = Math.max(0, ...[...document.querySelectorAll('.play .choices')].filter((t) => t.children.length && getComputedStyle(t).position === 'fixed').map((t) => t.offsetHeight));
+  foot.style.minHeight = tray ? `${Math.min(tray, Math.floor(innerHeight / 2))}px` : '';
   const over = () => box.scrollHeight > box.clientHeight + 1;
   foot.classList.remove('clamp');
   box.classList.remove('scrolls');
   box.scrollTop = 0;
   if (over()) foot.classList.add('clamp');
   if (over() && scrolls) scrollBox(box);
+}
+
+/**
+ * A screen giving way, in order: each of `steps` ([give, undo]) is taken while `over()` (px of what matters past what
+ * covers it) is above 0. If all of them together can't bring it to 0, none is kept and the screen is as it was (home
+ * then scrolls to it). A screen that fits is left as it is. Returns whether it fits.
+ */
+export function giveRoom(over, steps) {
+  const taken = [];
+  for (const [give, undo] of steps) {
+    if (over() <= 0) return true;
+    give();
+    taken.unshift(undo);
+  }
+  if (over() <= 0) return true;
+  for (const undo of taken) undo();
+  return false;
 }
 
 /** Scrolls `box` (never the page) so `el` in it shows: smoothly, unless motion is reduced. */

@@ -146,11 +146,21 @@ export async function textTour(h, check, tag, { reach = false } = {}) {
       if (await next.count()) await touch(next);
     }
     await fits(tag, `${name}-end`);
+    // With larger text the end screen gives way (finishRoutine in app.js) until the question it ends on is above Continue.
+    const q = await page.evaluate(() => ({ large: !!getComputedStyle(document.documentElement).getPropertyValue('--text-scale'), end: Math.round(document.querySelector('#feel-q').getBoundingClientRect().bottom + scrollY), bar: Math.round(document.querySelector('.cta').getBoundingClientRect().top) }));
+    if (q.large) check(`${tag}: ${name}-end: "How do you feel?" above Continue`, q.end <= q.bar, JSON.stringify(q));
   };
   await home();
   for (const tab of await page.locator('.path-tab[data-path]').evaluateAll((t) => t.map((x) => x.dataset.path))) {
     await touch(page.locator(`.path-tab[data-path="${tab}"]`)); await fits(tag, `home-${tab}`);
   }
+  // With larger text home gives way (roomForHere in app.js): the next lesson and its coach above Continue, the page at its top.
+  await touch(page.locator('.path-tab[data-path="learn"]')); await touch(pressed('Chess')); await run(400);
+  const at = await page.evaluate(() => {
+    const end = (s) => document.querySelector(s)?.getBoundingClientRect().bottom ?? 0;
+    return { large: !!getComputedStyle(document.documentElement).getPropertyValue('--text-scale'), here: Math.round(Math.max(end('.node.here'), end('.guide'))), bar: Math.round(document.querySelector('.cta').getBoundingClientRect().top), y: Math.round(scrollY) };
+  });
+  if (at.large) check(`${tag}: home on Chess, the next lesson and its coach above Continue with the garden in sight`, at.y === 0 && at.here <= at.bar, JSON.stringify(at));
   // A course being raised: its picture ends the streak row, at this text size too.
   await home({ done: { 'chess:board-0': true } }); await touch(btn(/^Learning(,|$)/)); await touch(pressed('Chess'));
   await page.evaluate(() => scrollTo(0, 0)); await fits(tag, 'home-raising');
