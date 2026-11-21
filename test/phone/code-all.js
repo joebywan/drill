@@ -34,7 +34,7 @@ export async function answerCode({ page, tap, btn }, item) {
 export default async (h) => {
   const id = process.env.CODE_COURSE ?? 'javascript';
   if (!COURSES[id]) throw new Error(`CODE_COURSE is javascript, typescript or testing, not ${id}`);
-  const course = { id, units: COURSES[id].units.map(withCheckpoint) };
+  const course = { id, follows: COURSES[id].follows, units: COURSES[id].units.map(withCheckpoint) };
   const only = process.env.CODE_LESSONS?.split(',');
   await playCourse(h, { course, unit: +(process.env.CODE_UNIT ?? 1), only, answer: answerCode, small: process.env.CODE_SMALL, parts: PARTS, tray: TRAY });
 };
