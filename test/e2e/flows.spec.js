@@ -2670,7 +2670,9 @@ test('every Coding bug can be fixed by tapping the block it names, whichever way
   }
 });
 
-test('the first lesson of each new Coding unit plays through as a real session, and so does one laid out from nothing', async ({ page }) => {
+test('the first lesson of each new Coding unit plays through as a real session, and so does one laid out from nothing', async ({ page, browserName }) => {
+  // Seven whole lessons: 25 to 30 s of the 30 s allowed in Firefox here, and over it on CI's runners.
+  test.slow(browserName === 'firefox', 'seven whole lessons');
   const loops = codingCourse.units.find((u) => u.title === 'Loops');
   for (const [unit, lesson] of [...codingCourse.units.slice(3).map((u) => [u, u.lessons[0]]), [{ ...loops, lessons: loops.lessons }, loops.lessons.at(-1)]]) {
     await page.goto('/');
