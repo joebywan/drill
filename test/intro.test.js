@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { VERSION, emptyProgress, finishPractice, meetsCoach, metCoach, migrate, placeAt, showsIntro, track, waits } from '../src/progress.js';
+import { VERSION, emptyProgress, finishPractice, meetsCoach, metCoach, migrate, offersPlacement, placeAt, showsIntro, startHere, track, waits } from '../src/progress.js';
 import { coursesFor, habitsFor, ordered, subjects } from '../src/subjects.js';
 
 const roundTrip = (v) => JSON.parse(JSON.stringify(v));
@@ -69,10 +69,27 @@ test('a course that follows another waits for that much of it, unless the learne
     const done = (n) => ({ ...emptyProgress(), done: Object.fromEntries(js.units.slice(0, n).flatMap((u) => u.lessons.filter((l) => !l.mix)).map((l) => [`javascript:${l.id}`, true])) });
     assert.equal(waits(done(ts.follows.units - 1), ts, js), true, 'one unit short');
     assert.equal(waits(done(ts.follows.units), ts, js), false, 'that much done, checkpoints or not');
-    assert.equal(waits(placeAt(emptyProgress(), ts.id, ts.units[0].title), ts, js), false, 'I know JavaScript: start here');
+    assert.equal(waits(startHere(emptyProgress(), ts.id), ts, js), false, 'I know JavaScript: start here');
+    assert.equal(waits(placeAt(emptyProgress(), ts.id, ts.units[0].title), ts, js), false, 'a save from before, with the title in start');
     assert.equal(waits(placeAt(emptyProgress(), ts.id, ts.units[1].title), ts, js), false, 'its own skip ahead');
     assert.equal(waits(placeAt(emptyProgress(), ts.id, null), ts, js), true, 'dismissing its skip ahead is not choosing to start');
     assert.equal(waits({ ...emptyProgress(), done: { [`${ts.id}:${ts.units[0].lessons[0].id}`]: true } }, ts, js), false, 'already started');
   }
   assert.equal(waits(emptyProgress(), js, js), false, 'a course that follows nothing never waits');
+});
+
+test('"start here" is not a placement answer: the course still offers its own Skip ahead', () => {
+  for (const ts of subjects.filter((s) => s.follows)) {
+    const here = startHere(emptyProgress(), ts.id);
+    assert.equal(offersPlacement(here, ts), true, ts.id);
+    assert.equal(offersPlacement(placeAt(here, ts.id, null), ts), false, 'dismissed');
+    assert.equal(offersPlacement(placeAt(emptyProgress(), ts.id, ts.units[0].title), ts), false, 'the old way asked it once');
+  }
+});
+
+test('migrate keeps `started`, reading it leniently', () => {
+  const p = startHere(emptyProgress(), 'typescript');
+  assert.deepEqual(migrate(JSON.parse(JSON.stringify(p))).started, { typescript: true });
+  assert.equal('started' in migrate({ ...p, started: 'yes' }), false);
+  assert.deepEqual(migrate({ ...p, started: { typescript: true, 'Bad Id': true, testing: 1 } }).started, { typescript: true });
 });

@@ -7,7 +7,7 @@
       "lessons": [
         {
           "id": "focus1",
-          "title": "Ten minutes, one thing",
+          "title": "Ten minutes, one thing", "plain": "One thing",
           "items": [
             {
               "id": "focus-teach",
@@ -22,8 +22,8 @@
             { "id": "focus-10", "type": "session", "minutes": 10 }
           ]
         },
-        { "id": "focus2", "title": "Fifteen minutes", "items": [{ "id": "focus-15", "type": "session", "minutes": 15 }] },
-        { "id": "focus3", "title": "Twenty-five minutes", "items": [{ "id": "focus-25", "type": "session", "minutes": 25 }] }
+        { "id": "focus2", "title": "Fifteen minutes", "plain": "Focus time", "items": [{ "id": "focus-15", "type": "session", "minutes": 15 }] },
+        { "id": "focus3", "title": "Twenty-five minutes", "plain": "Focus time", "items": [{ "id": "focus-25", "type": "session", "minutes": 25 }] }
       ]
     }
   ],

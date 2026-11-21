@@ -1,4 +1,5 @@
 import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
+import { countSet } from './practice/timings.js';
 
 /**
  * Everything the learner has done, as one plain JSON-able object. Pure functions only; the
@@ -38,6 +39,8 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            in `garden.earned`. Absent is just Lumi
  *   when     { habitId: 'After breakfast' }  — optional: the one line the learner tied each habit to, their own
  *            words (setWhen). Read leniently like the two below: a bad entry is dropped, never the whole file
+ *   started  { courseId: true } — optional: a course the learner chose to start here ("I know JavaScript"), which
+ *            is not a placement answer, so its own "Skip ahead" is still offered. Read leniently like `when`
  *   reminders, comeback  — optional, what src/fitting.js learns about fitting the person (see there);
  *            read leniently: a bad reminder record or comeback is dropped, never the whole file
  *   version  the shape's version; `migrate()` brings any older shape up to VERSION
@@ -151,9 +154,12 @@ export function migrate(raw) {
   delete kept.comeback;
   if (typeof kept.skin !== 'string' || !/^[a-z]{1,20}$/.test(kept.skin)) delete kept.skin; // what Lumi wears: optional too
   delete kept.when;
+  delete kept.started;
+  const started = isObject(raw.started) ? Object.fromEntries(Object.entries(raw.started).filter(([id, v]) => /^[a-z0-9-]{1,40}$/.test(id) && v === true)) : {};
   const when = isObject(raw.when) ? Object.fromEntries(Object.entries(raw.when).filter(([id, w]) => /^[a-z0-9-]{1,40}$/.test(id) && isWhen(w))) : {};
   const fitting = {
     ...(Object.keys(when).length && { when }),
+    ...(Object.keys(started).length && { started }),
     ...(Array.isArray(raw.reminders) && { reminders: raw.reminders.filter(isReminder) }),
     ...(isComeback(raw.comeback) && { comeback: raw.comeback }),
   };
@@ -170,12 +176,18 @@ export const offersPlacement = (progress, subject) => !!subject.placement && !(s
 /** Progress with a subject's placement answered (its path starts at `unit`) or dismissed (`unit` null). */
 export const placeAt = (progress, subjectId, unit) => ({ ...progress, start: { ...progress.start, [subjectId]: unit } });
 
+/** Progress with a course the learner chose to start here, apart from any placement answer. */
+export const startHere = (progress, subjectId) => ({ ...progress, started: { ...progress.started, [subjectId]: true } });
+
+/** True when the learner chose to start a course here: the tap above, or (saves from before it) a unit saved as `start`. */
+export const choseStart = (progress, subjectId) => !!progress.started?.[subjectId] || typeof progress.start?.[subjectId] === 'string';
+
 /**
  * True while a course that follows another (`subject.follows`, its `parent`) waits for it: the parent's first
  * `units` units aren't all done, the learner hasn't chosen to start here anyway (a placement answer: a unit, not
  * a dismissal) and hasn't started it already.
  */
-export const waits = (progress, subject, parent) => !!subject.follows && typeof progress.start?.[subject.id] !== 'string'
+export const waits = (progress, subject, parent) => !!subject.follows && !choseStart(progress, subject.id)
   && !Object.keys(progress.done).some((id) => id.startsWith(`${subject.id}:`))
   && !parent.units.slice(0, subject.follows.units).every((u) => u.lessons.every((l) => l.mix || progress.done[`${parent.id}:${l.id}`]));
 
@@ -463,7 +475,8 @@ export function unitsOf(progress, subject) {
       const id = `${subject.id}:${lesson.id}`;
       const state = progress.done[id] ? 'done' : open ? 'open' : 'locked';
       if (state !== 'done' && i >= start) open = false;
-      return { id, subject, lesson, state };
+      // A lesson that names a count the learner has set themselves shows its `plain` title, which names none.
+      return { id, subject, lesson: lesson.plain && countSet(subject.habit, lesson, progress.timings?.[subject.habit]) ? { ...lesson, title: lesson.plain } : lesson, state };
     });
     return { title: unit.title, nodes, placed: i === start };
   });
