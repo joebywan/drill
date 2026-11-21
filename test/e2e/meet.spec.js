@@ -80,7 +80,8 @@ test('two misses in a unit bring a second explanation and a smaller step, and th
   await page.getByRole('button', { name: 'Around the rock, current' }).click();
   // Past the teach card to the first marked item, then tap the first tiles until it runs and fails.
   await page.locator('.foot.show .next').click();
-  for (let i = 0; i < 12 && !(await page.locator('.foot.show').count()); i++) {
+  // Until the tiles lock: the run, its miss held on screen, then the verdict.
+  for (let i = 0; i < 12 && await page.locator('.tiles button:not(:disabled)').count(); i++) {
     await page.locator('.tiles').getByRole('button', { name: 'Step up' }).click();
     await page.waitForTimeout(50);
   }
