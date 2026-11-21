@@ -1,7 +1,7 @@
 import { Chess } from 'chess.js';
 import { MARKER_TYPE } from 'cm-chessboard/src/extensions/markers/Markers.js';
 import { ARROW_TYPE } from 'cm-chessboard/src/extensions/arrows/Arrows.js';
-import { board, cantMove, pop, withDots, withPromotion } from './exercise.js';
+import { board, cantMove, fitBoard, pop, withDots, withPromotion } from './exercise.js';
 import { TIERS, dailyIndex, entry, mistake, sideName, teach } from './mate.js';
 import { HIT_MS, RUN_MS, hunted, play as playCapture, start as startCapture } from './capture.js';
 import { HINT, LEVELS, thinking } from './engine.js';
@@ -27,8 +27,12 @@ const pickOf = (list) => list[Math.floor(Math.random() * list.length)];
 const stored = (key, dflt) => { try { return JSON.parse(localStorage.getItem(key)) ?? dflt; } catch { return dflt; } };
 const store = (key, v) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch { /* lasts the visit */ } };
 
-/** The fixed banner: nothing on the page moves. Its button runs the mode again. */
-function banner(tone, head, text, label) {
+/**
+ * The fixed banner: nothing on the page moves but the board, which `fit` (fitBoard) keeps whole above it. The game's
+ * buttons go, so none is left peeking round it. Its button runs the mode again.
+ */
+function banner(fit, tone, head, text, label) {
+  document.querySelector('.stage .game-actions')?.replaceChildren();
   const foot = document.querySelector('.foot');
   foot.className = `foot show ${tone}`;
   foot.querySelector('strong').textContent = head;
@@ -38,10 +42,27 @@ function banner(tone, head, text, label) {
   next.textContent = label;
   next.setAttribute('aria-describedby', 'verdict');
   next.focus();
+  fit.refit();
 }
 
-/** The session bar's lesson meter means nothing here. */
-const noMeter = () => { const m = document.querySelector('.bar .meter'); if (m) m.hidden = true; };
+/** What a game counts sits in the session bar, in place of the lesson meter (which means nothing here), so the board has the page. */
+function inBar(html) {
+  const bar = document.querySelector('.bar');
+  bar.querySelector('.meter').hidden = true;
+  bar.querySelector('.game-bar')?.remove();
+  bar.insertAdjacentHTML('beforeend', `<div class="game-bar">${html}</div>`);
+  return bar.lastElementChild;
+}
+
+/**
+ * Fits a game's board (`el`'s) on the screen with its buttons, as a lesson's is, from before it is drawn; `played()`: is
+ * the board being played. Returns fitBoard's `stop`, with the `ctx` whose say refits.
+ */
+function fitGame(el, ctx, played = () => true) {
+  const fit = fitBoard(el.querySelector('.board'), el.querySelector('.choices'), null, ctx, played);
+  fit.refit();
+  return fit;
+}
 
 const mark = (b, squares) => {
   b.removeMarkers(MARKER_TYPE.square);
@@ -72,15 +93,14 @@ let tries = 0;
  * prover. A move that gives the mate up is not refused: it plays out, Rosa says so at once, and Undo
  * takes it back. Hint nudges, then explains; the player still moves.
  */
-function mountMate(el, item, { say }) {
-  noMeter();
-  el.innerHTML = `<div class="game-tabs" role="group" aria-label="How many moves">${TIERS.map((n) =>
-    `<button class="course" data-tier="${n}">${W.mate.tier(n)}</button>`).join('')}</div>
-    <div class="board"></div>
-    <div class="choices game-actions"><button class="choice" data-hint>${W.mate.hint}</button><button class="choice" data-undo>${W.mate.undo}</button><button class="choice" data-fresh>${W.mate.fresh}</button></div>
-    <p class="game-note" aria-live="polite"></p>`;
+function mountMate(el, item, ctx) {
+  const tabs = inBar(`<span aria-hidden="true">${W.mate.tiers}</span><span class="game-tabs" role="group" aria-label="How many moves">${TIERS.map((n) =>
+    `<button class="course" data-tier="${n}" aria-label="${W.mate.tier(n)}">${n}</button>`).join('')}</span>`);
+  el.innerHTML = `<div class="board game"></div>
+    <div class="choices game-actions"><button class="choice" data-hint>${W.mate.hint}</button><button class="choice" data-undo>${W.mate.undo}</button><button class="choice" data-fresh>${W.mate.fresh}</button></div>`;
   const boardEl = el.querySelector('.board');
-  const note = el.querySelector('.game-note');
+  const fit = fitGame(el, ctx);
+  const { say } = fit.ctx;
   const [hintBtn, undoBtn] = ['[data-hint]', '[data-undo]'].map((s) => el.querySelector(s));
   let b, gone = false, round = 0; // `round` goes up on anything that makes an answer from the prover stale
   let tier = stored('wingbeat.mate.tier', 2);
@@ -101,7 +121,6 @@ function mountMate(el, item, { say }) {
     hintStep = 0;
     b.removeMarkers(MARKER_TYPE.framePrimary);
     b.removeMarkers(MARKER_TYPE.circlePrimary);
-    note.textContent = '';
   };
   const prove = async () => {
     const mine = round;
@@ -164,7 +183,7 @@ function mountMate(el, item, { say }) {
     item.again = true;
     cue('done');
     say(W.mate.solved(n), 'complete');
-    banner('right', pickOf(W.mate.solvedHead), W.mate.solved(n), W.mate.again);
+    banner(fit, 'right', pickOf(W.mate.solvedHead), W.mate.solved(n), W.mate.again);
   }
 
   function begin(n, fresh = false) {
@@ -172,7 +191,7 @@ function mountMate(el, item, { say }) {
     round++;
     tier = n;
     store('wingbeat.mate.tier', n);
-    for (const t of el.querySelectorAll('[data-tier]')) t.setAttribute('aria-pressed', Number(t.dataset.tier) === n);
+    for (const t of tabs.querySelectorAll('[data-tier]')) t.setAttribute('aria-pressed', Number(t.dataset.tier) === n);
     const seen = stored('wingbeat.mate.daily', {});
     daily = !fresh && !(seen.date === today() && seen.tiers.includes(n));
     const list = positions[n];
@@ -200,7 +219,7 @@ function mountMate(el, item, { say }) {
       hintBtn.textContent = W.mate.explain;
       hintStep = 1;
     } else {
-      note.textContent = step.explain;
+      say(step.explain, 'teach');
       b.addMarker(MARKER_TYPE.circlePrimary, step.from);
       b.addMarker(MARKER_TYPE.circlePrimary, step.to);
       hintBtn.disabled = true;
@@ -218,7 +237,7 @@ function mountMate(el, item, { say }) {
     prove();
   });
   el.querySelector('[data-fresh]').addEventListener('click', () => begin(tier, true));
-  for (const t of el.querySelectorAll('[data-tier]')) t.addEventListener('click', () => begin(Number(t.dataset.tier)));
+  for (const t of tabs.querySelectorAll('[data-tier]')) t.addEventListener('click', () => begin(Number(t.dataset.tier)));
 
   // The positions come over the network the first time Mate opens. With no connection Rosa says so and the banner's
   // button tries again (a fresh URL each time, so a failed load isn't kept and replayed).
@@ -228,23 +247,25 @@ function mountMate(el, item, { say }) {
     } catch {
       tries++;
       if (gone) return;
-      el.replaceChildren();
+      tabs.remove(); // no tiers, hint or undo that lead nowhere: Rosa's line, and the banner's Try again
       say(W.mate.offline, 'think');
-      return banner('', W.mate.offlineHead, W.mate.retryText, W.mate.retry);
+      return banner(fit, '', W.mate.offlineHead, W.mate.retryText, W.mate.retry);
     }
     if (!gone) begin(tier, again);
   })();
-  return () => { gone = true; round++; b?.destroy(); };
+  return () => { gone = true; round++; fit(); b?.destroy(); };
 }
 
 const clockText = (ms) => { const s = Math.ceil(Math.max(0, ms) / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 
 /** Scramble (capture.js). The clock starts on the first move and rests while the page is hidden or the phone on its side. */
-function mountCapture(el, item, { say }) {
-  noMeter();
+function mountCapture(el, item, ctx) {
   const best = stored('wingbeat.capture.best', 0);
-  el.innerHTML = `<div class="hud"><span class="hud-clock" role="timer">${clockText(RUN_MS)}</span><b class="hud-score">0</b><span class="hud-best">${W.capture.best(best)}</span></div><div class="board"></div>`;
-  const [clockEl, scoreEl] = ['.hud-clock', '.hud-score'].map((s) => el.querySelector(s));
+  const hud = inBar(`<span class="hud"><span class="hud-clock" role="timer">${clockText(RUN_MS)}</span><b class="hud-score">0</b><span class="hud-best">${W.capture.best(best)}</span></span>`);
+  el.innerHTML = '<div class="board game"></div>';
+  const [clockEl, scoreEl] = ['.hud-clock', '.hud-score'].map((s) => hud.querySelector(s));
+  const fit = fitGame(el, ctx);
+  const { say } = fit.ctx;
   let state = startCapture();
   let left = RUN_MS, ticking, last, timer;
   const b = board(el.querySelector('.board'), state.fen, 'w');
@@ -266,7 +287,7 @@ function mountCapture(el, item, { say }) {
     if (score > best) store('wingbeat.capture.best', score);
     cue('done');
     say(W.capture.time, 'complete');
-    banner(score > best ? 'right' : '', W.capture.score(score),
+    banner(fit, score > best ? 'right' : '', W.capture.score(score),
       score > best ? (best ? W.capture.newBest(best) : W.capture.first) : W.capture.oldBest(best), W.capture.again);
   };
 
@@ -297,19 +318,21 @@ function mountCapture(el, item, { say }) {
     return true;
   }), 'w');
 
-  return () => { clearInterval(ticking); clearTimeout(timer); b.destroy(); };
+  return () => { clearInterval(ticking); clearTimeout(timer); fit(); b.destroy(); };
 }
 
 /** Play Rosa: a level, then a full game. You change colour each game. */
-function mountRosa(el, item, { say }) {
-  noMeter();
-  el.innerHTML = `<div class="board"></div><div class="choices game-actions"></div><p class="game-note" aria-live="polite"></p>`;
+function mountRosa(el, item, ctx) {
+  const levelEl = inBar('');
+  el.innerHTML = '<div class="board game"></div><div class="choices game-actions"></div>';
   const [boardEl, actions] = [el.querySelector('.board'), el.querySelector('.choices')];
   const colour = item.colour ?? 'w';
   item.colour = colour === 'w' ? 'b' : 'w';
   const g = new Chess();
-  const b = board(boardEl, g.fen(), colour);
   let level, thinker, timer, gone = false;
+  const fit = fitGame(el, ctx, () => level !== undefined); // while her level is picked, the board is only looked at
+  const { say } = fit.ctx;
+  const b = board(boardEl, g.fen(), colour);
 
   const stopThinking = () => { thinker?.cancel(); thinker = null; };
   const refresh = (from, to) => {
@@ -327,11 +350,10 @@ function mountRosa(el, item, { say }) {
   const finish = (words_, tone, mood) => {
     b.disableMoveInput();
     stopThinking();
-    for (const x of actions.children) x.disabled = true;
     cue('done');
     const head = pickOf(words_.head);
     say(head, mood);
-    banner(tone, head, words_.text, W.rosa.again);
+    banner(fit, tone, head, words_.text, W.rosa.again);
   };
 
   const rosaMoves = async () => {
@@ -358,7 +380,6 @@ function mountRosa(el, item, { say }) {
     play('tap');
     stopThinking(); // a hint still working on the old position
     b.removeArrows();
-    note.textContent = '';
     clearTimeout(timer);
     timer = setTimeout(() => {
       refresh(m.from, m.to);
@@ -367,7 +388,6 @@ function mountRosa(el, item, { say }) {
     b.disableMoveInput();
     return true;
   }, () => open()));
-  const note = el.querySelector('.game-note');
   const open = () => { b.disableMoveInput(); b.enableMoveInput(input, colour === 'w' ? 'w' : 'b'); };
 
   function playing() {
@@ -410,11 +430,12 @@ function mountRosa(el, item, { say }) {
   say(W.rosa.pick, 'teach');
   for (const x of actions.querySelectorAll('[data-level]')) x.addEventListener('click', () => {
     level = Number(x.dataset.level);
+    levelEl.textContent = W.rosa.levels[level];
     actions.classList.remove('game-levels');
     playing();
   });
 
-  return () => { gone = true; stopThinking(); clearTimeout(timer); b.destroy(); };
+  return () => { gone = true; stopThinking(); clearTimeout(timer); fit(); b.destroy(); };
 }
 
 export const CHESS_GAMES = [

@@ -75,10 +75,11 @@ export const moveDone = (p = { ...emptyProgress(), start: 'x' }) => {
   return { p, first: all.find((l) => l.id === move.again.lessons[0]) };
 };
 
-/** Plays one Maths lesson through by real taps, from its first item to its summary. */
-export async function playMaths(lesson, { page, touch, btn, swipe, shot }) {
+/** Plays one Maths lesson through by real taps, from its first item to its summary (or up to, not including, item `stopAt`). */
+export async function playMaths(lesson, { page, touch, btn, swipe, shot }, stopAt = Infinity) {
   const bottom = page.locator('.choices');
   for (const [i, item] of lesson.items.entries()) {
+    if (i >= stopAt) return; // before item `stopAt`: the lesson stays open there
     if (shot) await shot(`maths${i}-${item.type}`);
     if (item.type === 'pick') await touch(bottom.getByRole('button', { name: item.options.find((o) => right(item, o)), exact: true }));
     if (item.type === 'build') for (const c of answer(item)) await touch(bottom.getByRole('button', { name: c, exact: true, disabled: false }));
