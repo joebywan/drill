@@ -3086,6 +3086,25 @@ test.describe('a phone on its side', () => {
     await expect(upright(page)).toBeHidden();
   });
 
+  test("turned during a missed Coding run's hold and back, the lesson is where it was", async ({ page }) => {
+    await device(page);
+    await reach(page, 'coding', 'steps-1', 'steps-1-around');
+    const topic = await page.locator('.topic').textContent();
+    const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
+    for (const step of ['right', 'down', 'right', 'up']) await tile(`Step ${step}`).click();
+    await expect(page.locator('#said')).toHaveText(RUN_ENDS.rock);
+    await turnTo(page, ...PHONE_SIDE); // the hold runs on behind the line, as a timer, and ends
+    await expect(upright(page)).toBeVisible();
+    await page.waitForTimeout(3000);
+    await turnTo(page, ...PHONE_UP);
+    await expect(page.locator('.topic')).toHaveText(topic);
+    await expect(page.locator('.program.shown')).toBeVisible();
+    await expect(page.locator('.foot.wrong')).toBeVisible();
+    await expect(page.locator('#said')).toHaveText(RUN_ENDS.way);
+    await continueButton(page).click();
+    await expect(page.locator('.foot.show')).toHaveCount(0);
+  });
+
   test('a tablet on its side is left alone', async ({ page }) => {
     await device(page, 800, 1280);
     await firstVisit(page);
