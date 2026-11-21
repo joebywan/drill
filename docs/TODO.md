@@ -232,7 +232,7 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
 
 **Test by playing**
 
-- **Blank button label in Firefox for Android.** Joseph has seen it a few times, on the JavaScript Meet screen: the green button at full height with no text. It stayed blank until he left and opened the course again, so it is a stuck draw that a rebuilt screen clears, not a slow one. The text and colour are right, so it isn't being drawn. Not reproduced: 39 runs of the old code in Firefox 159 on the emulator, which renders in software, including scrolling during the entrance and a shorter screen.
+- **Blank button label in Firefox for Android.** Joseph has seen it a few times, on the JavaScript Meet screen: the green button at full height with no text. It stayed blank until he left and opened the course again, so it is a stuck draw that a rebuilt screen clears, not a slow one. The text and colour are right, so it isn't being drawn. **Not reproduced.** First 39 runs of the old code in Firefox 159; then a hunt in Firefox 160 (#181, `MEET_REPS=1 npm run phone -- --browser firefox meet`): 220 openings by six routes (from home, after switching course, straight after a reload, flicking the page as it comes in, the browser sent away and brought back, after a whole lesson) and 432 looks at the button as the screen drew it, at the ordinary size, on a short phone and at the largest text. Its words were there every time. Two faults that stopped Firefox drawing for good were found and fixed on the way (under "Firefox" below); neither ever showed a green button without its words, so they are not known to be the cause. **What the emulator cannot show:** it draws in software, and the phone Joseph saw it on draws with its GPU.
 - **A beginner, played blind** (#185, `test/phone/hands.js`; log and pictures in `wingbeat-wt/notes/beginner/`). An agent played from screenshots alone, one real
   tap at a time, without reading the course data: the first visit, the first lesson of every course, the second of Chess, Coding and Japanese, a Calm and a Move
   session, a one-tap habit, the garden. With real hesitation and repeats a lesson took 1:37 to 3:40 and 5 to 10 items; Chess, Maths, Japanese, Coding and
@@ -293,7 +293,23 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
   412x786 and 412x533, light and dark. What does differ, and the specs now allow for: Firefox has no history entry before the first page, so the last back stays on
   home; a click on the board's frame doesn't focus the board (Tab does; mouse-then-arrow-keys on a desktop is the only one a person could meet); `getBBox` is tighter on curves;
   a 2 to 3px strip between two tap targets in a few tight Coding rows.
-  **Still to play:** Firefox for Android itself (its fonts, touch scrolling, `vibrate`, wake lock), which is what Joseph uses. It is not on the emulator image; installing it there waits on his say-so.
+  **Firefox for Android: played** (#181, Firefox 160 on the emulator: `npm run phone -- --browser firefox …`, which drives it through a script the test
+  server adds to the page). The first visit, the walkthrough, home from day 0 to day 60 and in each state, a lesson each of Chess, Maths, Japanese, Coding
+  and JavaScript, the garden, the field guide, the wardrobe, the keyboard, the dark theme, a short phone and the large-text tour at 1.3 all pass.
+  Two faults came out of it, both fixed: a mask on the tabs row (a box that scrolls) stopped Firefox drawing home a month in, and the end screen's three
+  chips, clipping their corners while they fade in, froze every screen after a finished lesson. Leaving the browser and coming back did not bring the
+  screen back. The tabs' fades are plain gradients now and the chips no longer clip; both look as they did.
+  What Firefox does differently there: it asks "Allow … to store data in persistent storage?" across the top of the page on every visit's first save
+  (being fixed, #200); it follows the phone's font size by zooming the whole page, so at 2.0 the page is 216px wide, past what the app promises, and the
+  verdict covered part of the question in every course (to be looked at again now that #201 is in); it has no `navigator.vibrate`, so there are no
+  haptics. Keeping the screen on works and it has a Japanese voice. Its address bar is at the top, clear of Continue; a pull down does not reload the
+  page; the phone's back button walks back through nested screens and leaves from home.
+  With Firefox's toolbar left to slide away, as it ships, a swipe past the end of a box that scrolls slides the toolbar and the page shifts by its height
+  (43px); with the toolbar set to stay, which is how the runner plays, the page stays put, so that is the toolbar's doing and not the page scrolling.
+  **Left:** until the storage prompt is asked once (#200), it takes a tap or a back press meant for the page, so in Firefox the `browser` scenario fails
+  two checks (back on home, and a choice found under Continue after a tap was pressed twice). A full sweep of every scenario in Firefox waits on that.
+  **What the emulator cannot show:** whether either freeze happens on a phone with a GPU (the emulator draws in software), and haptics (Firefox has none
+  to call).
 
 **Coding: played** (2026-11, emulator Pixel 6, `CODING_UNIT=n npm run phone -- coding-all`, `tools/play.js`)
 
@@ -324,7 +340,7 @@ sessions run longer. A quarter to a third of every session is repeats (2 warm-up
   across leaves the whole gap to the narrow one) and tight rows have a little more room sideways: at 412x786 and 375x812 every block reaches 44px each way.
   **Left (low):** on a short phone a 36px go block reaches 40 to 42 across, and in `bug-3-count` and `bug-3-sign` a 28px value reaches 35 to 43 up and
   down; wider rows would push those programs past the tray. The harness measures drawn sizes, so it still lists these.
-- **Still to play:** Firefox for Android, and the drawing trail and live values seen while they move (both in hand, see "Next up"). A finger's part is under "Test by playing".
+- **Firefox for Android:** its first lesson was played there (#181); the rest rests on the desktop Firefox suite. A finger's part is under "Test by playing".
 **Coding: bigger improvements**
 
 - **Fresh numbers.** Done for Coding and Maths (#99, `tools/variants.js`), find-the-bug and the one-offs included. `frac-2-4q` stays
@@ -420,7 +436,7 @@ Short phone (412x533, `CHESS_SMALL=1080x1700`): `mateIn3-1`, `attraction-0`, `fo
   and best, Rosa's level). A board being played keeps 40px squares: the coach's face gives way first, and on a 360px screen the board grows into the gutters. At a
   game's end its buttons go and the whole board sits above the banner. Mate's Explain is said by Rosa. `games.spec.js` holds all of it at 412x533, 360x640 and
   412x786 in both browsers; on the phone `chess-games-small` fails on anything off the screen, and `ROSA_SMALL=1080x1700` plays `chess-rosa-all` on a short phone.
-- **Still to play:** Firefox for Android. Whether a first-time learner follows it is the beginner question under "Test by playing".
+- **Firefox for Android:** its first lesson was played there (#181); the rest rests on the desktop Firefox suite. Whether a first-time learner follows it is the beginner question under "Test by playing".
 **Repetition engine**
 
 - **A second miss of a mirrored item sees the same mirror.** Chess has only two versions of an item; a third go
@@ -442,7 +458,7 @@ read: none wrong.
 
 - **Stacked bars under the verdict on a short phone: fixed** (`fitCard` in `src/fit.js`, `test/e2e/quiz-layout.spec.js`). At 412x533 all three bars of `frac-1-biggest` now sit above the verdict; the bars and their gaps shrink first. `frac-1` played again at 412x533 with no flag.
 - **Short phone, otherwise clean:** `ten-1`, `ten-2` and `neg-0` at 412x533 had no flag.
-- **Still to play:** Firefox for Android. A finger's part is under "Test by playing".
+- **Firefox for Android:** its first lesson was played there (#181); the rest rests on the desktop Firefox suite. A finger's part is under "Test by playing".
 
 **Japanese: played** (2026-11, emulator Pixel 6, `JAPANESE_UNIT=n npm run phone -- japanese-all`, `tools/play.js`, `tools/play-quiz.js`)
 
@@ -459,7 +475,7 @@ that carry a sound, every one called `speechSynthesis.speak` with its text when 
 - **Empty build slots: fixed.** An empty slot is an outlined dashed box the height of a tile (as the Coding builder's), solid once filled.
 - **Matched pairs go under the verdict** (low, left as it is). A 5-pair item has 5 rows; once answered the verdict hides the lower rows, so the last matches turning green are not seen.
 - **Typo fixed:** the explanations of `se1-pairs-323`, `se2-pairs-330` and `se3-pairs-337` read "This is a cat., ..." and ended "tea..". No other content problem found.
-- **Still to play:** Firefox for Android. **What the emulator cannot show:** a voice other than the image's own Google ja-JP one (no other speech engine is on it).
+- **Firefox for Android:** its first lesson was played there (#181), the listening item with a Japanese voice. **What the emulator cannot show:** a voice other than the image's own Google ja-JP one (no other speech engine is on it).
 
 **Device conditions: played** (#186, 2026-11-21; `away`, `away-bare`, `away-bare-app`, `interrupted`, `moving`, and by name `landscape-all`, `landscape-app-all`, `offline-all`; pictures in `wingbeat-wt/notes/device/`)
 
@@ -570,4 +586,4 @@ Found, not fixed (design calls or bigger than a few lines):
   `first-visit`, `walkthrough`, `butterfly`, `garden`, `wardrobe` and `log` all pass with no page error or failed request. The
   first attempt failed at once with `ERR_NAME_NOT_RESOLVED` inside the fresh emulator; the retry was clean.
 - The widget and the daily note are played in the installed app ("The Android app: played"); the field guide's source link opens the museum's page in a new tab and
-  the app's tab is as it was (`touch-links`, #180). **Still to play:** Firefox for Android.
+  the app's tab is as it was (`touch-links`, #180). In Firefox for Android the garden, the field guide and the wardrobe were played too (#181).
