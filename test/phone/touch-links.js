@@ -2,13 +2,16 @@
 // the app's tab as it was when the phone's back brings you home) and privacy.html's links (the issues address leaves in
 // the same tab; "Back to Wingbeat" returns). Chrome's own tab list says what opened; a marker set on the app's window
 // before the tap says it was not reloaded.
+import { writeFileSync } from 'node:fs';
 import { thirtyDays } from './lib/seed.js';
 
 export default async ({ page, seed, touch, btn, shot, check, adb, screenXml, uiNodes, browser }) => {
   // Playwright only lists the tabs it drives, so Chrome's own tab button and address bar (the UI tree) say what opened.
   // Firefox's are its own views outside the page: the tab counter ("2 open tabs…") and the address shown in its toolbar.
   const firefox = async () => {
-    const own = uiNodes(await screenXml()).filter((x) => !x.page).flatMap((x) => [x.text, x.desc]).filter(Boolean);
+    const xml = await screenXml();
+    const own = uiNodes(xml).filter((x) => !x.page).flatMap((x) => [x.text, x.desc]).filter(Boolean);
+    if (!own.some((t) => /open tabs?/i.test(t))) writeFileSync(new URL(`../../test-results/phone/touch-links/ui-${Date.now()}.xml`, import.meta.url), xml); // to teach this reader Firefox's views
     return { n: Number(own.map((t) => t.match(/^(\d+) open tabs?/i)?.[1]).find(Boolean) ?? 0), url: own.find((t) => /^(https?:\/\/)?(localhost:\d+|[\w-]+(\.[\w-]+)+)(\/\S*)?$/.test(t)) ?? '' };
   };
   const chrome = async () => { if (browser === 'firefox') return firefox(); const ui = await screenXml(); return { n: Number(ui.match(/(\d+) tabs?/)?.[1] ?? ui.match(/tab_switcher_button[^>]*text="(\d+)"/)?.[1] ?? 0), url: ui.match(/url_bar"[^>]*text="([^"]*)"/)?.[1] ?? ui.match(/text="([^"]*)"[^>]*resource-id="com.android.chrome:id\/url_bar"/)?.[1] ?? '' }; };

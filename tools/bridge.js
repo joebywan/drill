@@ -292,7 +292,11 @@ export async function bridged(port, launch) {
     waitForFunction: (fn, arg, { timeout: ms = timeout } = {}) => poll_('a function to return true', async () => !!(await evaluate(fn, arg)), ms),
     waitForTimeout: sleep,
     url: () => url,
-    goto: async (to) => { if (!current) { await launch(to); return settle(); } return navigate(() => evaluate((u) => { location.href = u; }, to)); }, // a first page: `launch` waits for it
+    goto: async (to) => {
+      if (!current) { await launch(to); return settle(); } // a first page: `launch` waits for it
+      // From a page that no longer answers (another site, with no bridge: a link followed out), the address is opened anew.
+      return navigate(() => evaluate((u) => { location.href = u; }, to)).catch(async (e) => { if (!/no page loaded/.test(e.message)) throw e; await launch(to); return settle(); });
+    },
     reload: () => navigate(() => evaluate(() => location.reload())),
     locator: (css) => root.locator(css),
     getByRole: (role, o) => root.getByRole(role, o),
