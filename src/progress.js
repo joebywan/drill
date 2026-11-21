@@ -184,8 +184,8 @@ export const choseStart = (progress, subjectId) => !!progress.started?.[subjectI
 
 /**
  * True while a course that follows another (`subject.follows`, its `parent`) waits for it: the parent's first
- * `units` units aren't all done, the learner hasn't chosen to start here anyway (a placement answer: a unit, not
- * a dismissal) and hasn't started it already.
+ * `units` units aren't all done, the learner hasn't chosen to start here anyway (`choseStart`) and hasn't started it
+ * already.
  */
 export const waits = (progress, subject, parent) => !!subject.follows && !choseStart(progress, subject.id)
   && !Object.keys(progress.done).some((id) => id.startsWith(`${subject.id}:`))

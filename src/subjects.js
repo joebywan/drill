@@ -76,7 +76,7 @@ import testingCourse from './code/courses/testing.js';
  * `games`, [{ id, label, entry }]: replayable modes in a small row on the course's home, each `entry` run as a session (chess/games.js);
  * `varied`, { key: [values] }: a timing marked `varies` in TIMINGS, as the routine has it per step.
  * `follows`, { course, units }: a course that builds on another's first `units` units (TypeScript on JavaScript); until those
- * are done, or the learner chooses to start anyway (a placement answer), its tab offers the other course first (progress.js waits).
+ * are done, or the learner chooses to start here anyway (progress.started, kept apart from a placement answer), its tab offers the other course first (progress.js waits).
  * It never stands in the way: answering opens the path at that unit, dismissing it hides the offer.
  * `timings`, another habit's id whose own timings this subject plays by (Wind down plays Calm's);
  * `night`, the session and its end screen in the dim night palette whatever the theme.
