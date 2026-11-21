@@ -190,7 +190,8 @@ try {
     const dpr = await page.evaluate(() => devicePixelRatio);
     const origin = { x: 0, y: 0 };
     const calibrate = async () => {
-      const [sw, sh] = adb('shell', 'wm', 'size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number);
+      let [sw, sh] = adb('shell', 'wm', 'size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number); // always the upright size
+      if (await page.evaluate(() => innerWidth > innerHeight)) [sw, sh] = [sh, sw]; // a phone on its side
       await page.evaluate(() => {
         window.__tap = null;
         document.body.replaceChildren();
@@ -257,17 +258,21 @@ try {
       return device.screenshot({ path: `${out}/${String(n++).padStart(2, '0')}-${label}.png` });
     };
     const uids = () => adb('shell', 'cmd', 'package', 'list', 'packages', '-U', pkg).match(/uid:\d+/g)?.map((u) => u.slice(4)) || [];
-    /** `pkg` is playing sound right now: its stream is started and AudioFlinger has an active track. */
-    const checkSound = () => {
+    /** `pkg` is playing sound right now: its stream is started and AudioFlinger has an active track (both, as booleans). */
+    const playing = () => {
       const ids = uids();
       const started = adb('shell', 'dumpsys', 'audio').split('\n').some((l) => l.includes('state:started') && ids.some((u) => l.includes(`u/pid:${u}/`)));
-      check(`sound: ${pkg} audio stream state:started (dumpsys audio)`, started);
       // A track row: "Id Active Client(pid/uid) ...", e.g. "56    yes    3897/  10160".
       const flinger = adb('shell', 'dumpsys', 'media.audio_flinger');
-      check(`sound: active ${pkg} track (dumpsys media.audio_flinger)`, ids.some((u) => new RegExp(`\\byes\\s+\\d+/\\s*${u}\\b`).test(flinger)));
+      return { started, track: ids.some((u) => new RegExp(`\\byes\\s+\\d+/\\s*${u}\\b`).test(flinger)) };
+    };
+    const checkSound = () => {
+      const { started, track } = playing();
+      check(`sound: ${pkg} audio stream state:started (dumpsys audio)`, started);
+      check(`sound: active ${pkg} track (dumpsys media.audio_flinger)`, track);
     };
     const vibrations = () => (adb('shell', 'dumpsys', 'vibrator_manager').match(new RegExp(pkg.replaceAll('.', '\\.'), 'g')) || []).length;
-    return { page, touch, btn, swipe, dragTo, shot, run, seed, fresh, checkSound, vibrations, calibrate };
+    return { page, touch, btn, swipe, dragTo, shot, run, seed, fresh, checkSound, playing, vibrations, calibrate };
   };
   const page = await ctx.newPage();
   const chrome = await helpersFor(page, 'com.android.chrome', () => page.goto(base, { waitUntil: 'networkidle' }));
@@ -289,13 +294,13 @@ try {
     await declinePrompts();
     try {
       const { default: scenario } = await import(`${ROOT}test/phone/${name}.js`);
-      await scenario({ ...chrome, device, adb, type, check, declinePrompts, screenXml, attach });
+      await scenario({ ...chrome, device, ctx, adb, type, check, declinePrompts, screenXml, attach });
     } catch (e) {
       errors.push(`scenario ${name}: ${e.message.split('\n').filter((l) => !/^Call log:|^\s*$/.test(l)).slice(0, 2).join(' ')}`);
       await chrome.shot('failed').catch(() => {});
     }
     // Chrome may have frozen its page while an app was in front (test/phone/app.js): then skip this.
-    const overflow = await Promise.race([page.evaluate(() => document.documentElement.scrollWidth - innerWidth), sleep(5000).then(() => 0)]);
+    const overflow = await Promise.race([page.evaluate(() => document.documentElement.scrollWidth - innerWidth).catch(() => 0), sleep(5000).then(() => 0)]); // a scenario may have killed Chrome
     check('no sideways overflow', overflow <= 0, overflow > 0 ? `${overflow}px` : '');
     for (const r of results.slice(before.results)) console.log(`  ${r}`);
     for (const e of errors.slice(before.errors)) console.log(`  ERROR ${e}`);
