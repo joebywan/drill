@@ -2325,7 +2325,7 @@ test.describe('a keyboard on a desktop', () => {
   });
 });
 
-test('on a short landscape screen the rail scrolls inside itself, so + Habit is always in reach', async ({ page }) => {
+test('on a short landscape screen the tabs scroll inside the rail, so + Habit is always in reach', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 600 });
   const tracked = [{ id: 'walk' }, { id: 'water' }, { id: 'own-1', name: 'Stretch', plant: 'rose' }];
   await grown(page, ['learn', 'calm', 'walk', 'water', 'own-1'], 3, true, { tracked });
@@ -2334,7 +2334,7 @@ test('on a short landscape screen the rail scrolls inside itself, so + Habit is 
   const box = await rail.boundingBox();
   expect(box.y + box.height).toBeLessThanOrEqual(600);
   const add = page.getByRole('button', { name: 'Add a habit' });
-  await rail.evaluate((el) => { el.scrollTop = el.scrollHeight; }); // the rail scrolls, not the page
+  await rail.locator('.paths').evaluate((el) => { el.scrollTop = el.scrollHeight; }); // the tabs scroll, not the page
   await expect(add).toBeInViewport();
   expect(await page.evaluate(() => scrollY)).toBe(0);
 });

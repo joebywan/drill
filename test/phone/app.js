@@ -93,13 +93,16 @@ export default async ({ adb, attach, check, screenXml, shot, type }) => {
       const xml = await screenXml(); keep('ui-widget-placed.xml', xml);
       const box = widgetBox(xml);
       const none = !new RegExp(`resource-id="${PKG}:id/streak"`).test(xml);
-      check('the widget lands one row high, and a new learner sees no number', !!box && box[3] - box[1] < H / 8 && none, `${box?.join(',')}${none ? '' : ', a number shows'}`);
+      check('a new learner sees no number', none);
       if (box) {
         const cx = (box[0] + box[2]) >> 1;
         sh(`input swipe ${cx} ${box[3]} ${cx} ${box[3] + (box[3] - box[1]) + 60} 1500`); await sleep(1500);
         const tall = widgetBox(await screenXml());
         await shot('widget-two-rows');
-        check('it stretches to two rows', !!tall && tall[3] - tall[1] > (box[3] - box[1]) * 1.5, `${tall?.join(',')}`);
+        // A row is the launcher's own cell, so its height is no fixed share of the screen (a tablet's grid is smaller in
+        // pixels than a phone's, and spaced differently): it landed one row high when a row more makes it about twice as tall.
+        const ratio = tall ? (tall[3] - tall[1]) / (box[3] - box[1]) : 0;
+        check('the widget lands one row high and stretches to two', ratio > 1.5 && ratio < 2.5, `${box.join(',')} -> ${tall?.join(',')}, ${ratio.toFixed(2)}x`);
         sh(`input swipe ${cx} ${tall?.[3] ?? box[3]} ${cx} ${box[3]} 1500`); await sleep(1500); // back to one row for the rest
         await shot('widget-one-row');
       }
@@ -132,9 +135,17 @@ export default async ({ adb, attach, check, screenXml, shot, type }) => {
     loading.push(pixel(12, H >> 1));
   }
   check('first launch: the page\'s light background while it loads, at 1 s and 3 s', loading.every((c) => c === LIGHT_BG), loading.join(', '));
-  let shown = false;
-  while (!(shown = /Small beats go a long way/.test(await screenXml())) && Date.now() - opened < 30000) { await clearTip(); await sleep(500); }
-  check('first launch: the intro shows within 15 s of the tap on a cold emulator', shown && Date.now() - opened < 15000, `${((Date.now() - opened) / 1000).toFixed(1)} s`);
+  // Each look is a `uiautomator dump`, which takes seconds on a big screen: the time counts to the moment the dump that saw
+  // the intro began, so a slow dump on a tablet is not added to the app's start.
+  let shown = false, seen = 0, dump = 0;
+  while (!shown && Date.now() - opened < 30000) {
+    const began = Date.now();
+    shown = /Small beats go a long way/.test(await screenXml());
+    dump = Date.now() - began; seen = began;
+    if (!shown) { await clearTip(); await sleep(500); }
+  }
+  console.log(`  ${sh('logcat -d -s ActivityTaskManager:I | grep "Displayed ${PKG}" | tail -1').trim() || 'no Displayed line'}`);
+  check('first launch: the intro shows within 15 s of the tap on a cold emulator', shown && seen - opened < 15000, `${((seen - opened) / 1000).toFixed(1)} s to the dump that saw it (the dump took ${(dump / 1000).toFixed(1)} s)`);
   await shot('first-launch-intro');
   check('first launch: the app is in front', front());
   await clearTip();

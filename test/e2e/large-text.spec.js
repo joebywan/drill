@@ -284,7 +284,8 @@ test.describe('a tablet on its side, text at 200%', () => {
   test('⋯ is in reach without scrolling the tabs', async ({ page }) => {
     await page.addInitScript((s) => { if (!localStorage.getItem('wingbeat.progress')) { localStorage.setItem('wingbeat.progress', s); localStorage.setItem('wingbeat.habit', 'reflect'); } }, JSON.stringify(daysIn(30)));
     await page.goto('/');
-    expect(await page.locator('.rail').evaluate((r) => r.scrollHeight > r.clientHeight), 'the tabs scroll in themselves').toBe(true);
+    expect(await page.locator('.rail .paths').evaluate((r) => r.scrollHeight > r.clientHeight), 'the tabs scroll in themselves').toBe(true);
+    expect(await page.evaluate(misfits), 'no tab is under ⋯').toEqual([]);
     for (const end of [false, true]) {
       if (end) await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
       const hit = await page.locator('.tabs-row .menu').evaluate((m) => { const r = m.getBoundingClientRect(); return r.bottom <= innerHeight && m.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)); });

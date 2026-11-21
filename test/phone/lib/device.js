@@ -30,6 +30,7 @@ export const audit = (page) => page.evaluate(() => {
   for (const e of app.querySelectorAll('button, a, input, [role="button"]')) {
     if (!shown(e)) continue;
     e.scrollIntoView({ block: 'center', inline: 'center' });
+    { const q = e.getBoundingClientRect(); scrollBy(0, q.top + q.height / 2 - innerHeight / 2); } // Chrome's own centring can stop short of the middle (the garden's first card, on its side): finish it by hand
     const r = e.getBoundingClientRect();
     const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
     if (!hit || !(e === hit || e.contains(hit) || hit.contains(e))) unreachable.push(`${name(e)} is under ${hit ? name(hit) : 'nothing'}`);
