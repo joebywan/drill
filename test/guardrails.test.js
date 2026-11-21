@@ -696,3 +696,8 @@ test('a species named where its picture does not show a butterfly says it is one
     assert.match(LIFE.card(c(k)), /^Blue Triangle butterfly · /);
   }
 });
+
+import { UPRIGHT } from '../src/cast/lines.js';
+test('the line over a lesson on a phone turned on its side is plain: no loss, nagging or urgency', () => {
+  for (const re of [ABILITY, LOSS, URGENCY, NAGGING, SHAMING]) assert.doesNotMatch(UPRIGHT, re, UPRIGHT);
+});

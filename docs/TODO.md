@@ -445,11 +445,23 @@ that carry a sound, every one called `speechSynthesis.speak` with its text when 
 - **A driven page never goes to the background.** The runner's Chrome is started so that it keeps drawing, and the harness holds the screen on, so Home and the
   lock screen do nothing to a page it is attached to. `away-bare` and `away-bare-app` start the routine, let go of the page, put the phone down and look
   again afterwards: use those for anything about being away.
-- **Being fixed:** Calm, Move, Wind down and the screen break do not keep the screen awake (only Focus does), so the phone locks mid-breath; Calm's rain comes
-  back before the paused routine does; with no connection Mate opens an empty screen with an unhandled error; with no speech engine the voice offer does nothing.
-- **On its side** (a page 866x308 in Chrome, 866x364 in the app): home, the garden and Settings hold. Lessons do not: Coding's map shrinks to a thumbnail under
-  the verdict, Maths' picture and number line collapse and `ten-0` cannot be finished, the Chess board is clipped, Calm's circle is cut off. Decided: the app is
-  made for an upright phone (being built: the installed app stays upright on a phone and still turns on a tablet; a browser on its side says so on a lesson screen).
+- **Fixed** (#196): Calm, Move, Wind down and the screen break did not keep the screen awake (only Focus did), so the phone locked mid-breath: every timed
+  routine now keeps the screen on while it plays and lets go when paused, ended or closed (`away-bare`: on while running, off while away, off when back and
+  paused). Calm's rain came back before the paused routine did: sound now rests with the routine until Carry on. With no connection Mate opened an empty
+  screen with an unhandled error: Rosa says the boards could not be fetched and a banner offers Try again. With no speech engine the voice offer did
+  nothing: it is only made when something on the phone can open the engine's install screen.
+- **On its side** (a page 866x308 in Chrome, 866x364 in the app): home, the garden and Settings hold. Lessons did not: Coding's map shrank to a thumbnail under
+  the verdict, Maths' picture and number line collapsed and `ten-0` could not be finished, the Chess board was clipped, Calm's circle was cut off.
+  **Decided and built** (#196, decision 28): Wingbeat is made for an upright phone. The installed app stays upright on a phone and still turns on a tablet.
+  In a browser, a phone on its side shows one line over a lesson or routine ("Turn your phone upright to carry on, right where you were."), a timed routine
+  and Scramble's clock hold, and upright again everything is where it was (`landscape-all`, all five courses). "On its side" is read from the screen,
+  never the page: the keyboard shrinks the page to wider than tall on a common 360-wide phone, and the first version of this took that for a turned phone
+  and covered Reflect while typing (caught in review; `KEYBOARD_SMALL=1080x1700 npm run phone -- touch-keyboard` plays it).
+  **Left:** on an iPhone the line never shows (its screen size does not turn with it), so lessons there are as they were, and this cannot be played on the
+  emulator. The garden on its side has a plant card the audit cannot reach (medium, there before; `landscape-all` exits 1 on it). On a short phone with the
+  keyboard up (a 412x177 page) the field in Make your own, When and Focus sits 15px above the top (low; being fixed with the largest-text work).
+  **What the emulator could not show:** a tablet. The runner could not calibrate Chrome on the tablet image in four tries of four ("calibration tap never
+  reached the page"), so the tablet with the keyboard up is held by a browser test only. The runner needs fixing there.
 - **An incoming call** arrives as a banner and the page is never hidden, so a routine and its rain carry on through it; declining or answering leaves a lesson
   as it was. Whether the rain is heard over the call cannot be told from the emulator.
 - **No network, the live site:** the open page carries on and saves. A reload fails; a new tab loads from the browser's cache for ten minutes and then fails too:

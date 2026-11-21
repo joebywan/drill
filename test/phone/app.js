@@ -8,6 +8,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import butterfly from './butterfly.js';
 import calm from './calm.js';
 import { thirtyDays } from './lib/seed.js';
+import { turn } from './lib/device.js';
 import { fitter, textTour, uiNode } from './lib/fits.js';
 
 const PKG = 'com.joebywan.wingbeat';
@@ -28,7 +29,7 @@ export default async ({ adb, attach, check, screenXml, shot, type }) => {
   const sh = (cmd) => adb('shell', cmd);
   // `APP_ROTATE=1` (or 3) plays the app with the screen turned; `wm size` is the display's natural shape, so swap it.
   const turned = process.env.APP_ROTATE;
-  if (turned) { sh('settings put system accelerometer_rotation 0'); sh(`settings put system user_rotation ${turned}`); await sleep(2500); }
+  if (turned) await turn({ adb }, turned); // a phone stays upright (MainActivity); a tablet turns
   const natural = sh('wm size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number);
   const [W, H] = turned && turned % 2 ? natural.reverse() : natural;
   const key = async (k) => { sh(`input keyevent ${k}`); await sleep(1200); };
@@ -151,10 +152,18 @@ export default async ({ adb, attach, check, screenXml, shot, type }) => {
       await app.touch(app.btn(`Continue · ${japanese.title}`)); await app.run(400); await app.shot(`voice-${name.replace(/\W+/g, '-')}-${tag}`);
     };
     await open('first');
+    // Offered only when something can open the engine's install screen (WingbeatBridge.canInstallVoice): else just the reading.
+    const can = await app.page.evaluate(() => !!WingbeatBridge.canInstallVoice?.());
+    console.log(`  ${name}: the engine's install screen ${can ? 'can' : 'cannot'} be opened`);
+    if (!can) {
+      check(`${name}: nothing can open the engine's screen, so no button, and the reading shows`, !(await getVoice.count()) && await app.page.locator('.reading').isVisible());
+      return;
+    }
     check(`${name}: "Get a Japanese voice" is offered, with the reading shown`, await getVoice.isVisible() && !(await app.page.getByRole('button', { name: 'Hear it again' }).count()));
     clearLogs();
     await app.touch(getVoice); await sleep(2000); await shot(`voice-${name.replace(/\W+/g, '-')}-engine-screen`);
     console.log(`  ${name}: the app ${front() ? 'is still in front (nothing opened)' : 'gave way to the engine\'s screen'}; focus ${sh('dumpsys window | grep mCurrentFocus').trim()}`);
+    check(`${name}: the offered button opens the engine's screen (a button that does nothing is never offered)`, !front());
     sh(`am start -W -n ${PKG}/.MainActivity`); await sleep(1500);
     check(`${name}: tapping it does not crash the app`, front() && !/AndroidRuntime/.test(logs()));
     await app.seed({ start: {} });
@@ -400,6 +409,16 @@ export default async ({ adb, attach, check, screenXml, shot, type }) => {
   const tracked = await app.page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).tracked?.map((t) => t.name));
   check('keyboard: Make your own: the habit is kept with the name as typed', tracked?.includes('Tea time'), `${tracked}`);
   check('keyboard: Make your own: the keyboard is gone and the page is whole again', !keyboard() && await app.page.evaluate(() => innerHeight) === tall);
+  // On a short phone the keyboard leaves the page wider than tall: still upright, so Reflect stays as it is (fit.js SIDEWAYS).
+  sh('wm size 1080x1700'); await sleep(2500); await app.calibrate();
+  try {
+    await app.seed({ start: {}, picked: [] });
+    await app.touch(app.btn(/^Reflect(,|$)/)); await app.touch(app.btn(/^Continue · /)); await app.touch(app.btn('Start'));
+    await app.touch(box); await sleep(1500); await app.run(400); await app.shot('keyboard-reflect-short');
+    const short = await app.page.evaluate(() => ({ page: `${innerWidth}x${innerHeight}`, side: document.documentElement.hasAttribute('data-sideways') }));
+    check(`keyboard, a short phone: the keyboard up is not a phone on its side (page ${short.page})`, keyboard() && !short.side && await below('textarea') <= 0, JSON.stringify(short));
+    await hideKeyboard();
+  } finally { sh('wm size reset'); await sleep(2500); await app.calibrate(); }
 
   // 11. A pull down at the top of a screen must not reload the page, and a long press on a button must not raise the
   // system's Copy toolbar (styles.css: overscroll-behavior-y, user-select on buttons). Both on a real finger in the app.

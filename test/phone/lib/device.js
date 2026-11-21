@@ -7,12 +7,15 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export const within = (p, ms, fallback = null) => Promise.race([p, sleep(ms).then(() => fallback)]);
 const CHROME = 'com.android.chrome';
 
-/** Turns the phone to 'landscape' or 'portrait' (auto-rotate off, the user's rotation set), then measures the page again. */
+/**
+ * Turns the phone to 'landscape' or 'portrait', or to a rotation 0 to 3 (3 is a quarter turn the other way): auto-rotate
+ * off, the user's rotation set. Then, when there is a page, measures it again. The one way scenarios turn the screen.
+ */
 export async function turn({ adb, run, calibrate }, to) {
   adb('shell', 'settings', 'put', 'system', 'accelerometer_rotation', '0');
-  adb('shell', 'settings', 'put', 'system', 'user_rotation', to === 'landscape' ? '1' : '0');
-  await sleep(2500); await run(1000);
-  await calibrate();
+  adb('shell', 'settings', 'put', 'system', 'user_rotation', { landscape: '1', portrait: '0' }[to] ?? String(to));
+  await sleep(2500); await run?.(1000);
+  await calibrate?.();
 }
 
 /** What is wrong with the screen for a person using it: buttons that cannot be reached, bars covering work, sideways overflow. */
