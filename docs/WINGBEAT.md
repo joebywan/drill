@@ -284,6 +284,9 @@ chips, because one tap to play or to switch course is worth more than their row.
 - [x] **E22. Firefox for Android** (#181): played on the emulator through a bridge in the page. Two things stopped it drawing
   for good, the tabs row's mask and the end screen's chips clipping as they came in; both are gone and look the same. The blank
   Meet button was hunted (220 openings, 432 looks) and not seen.
+- [x] **E23. Small leftovers** (#203, #205): "both stars"; a coach's aside only where it fits; a sentence card keeps its rows;
+  Fennel greets each of his four courses in its own words; on a wide screen the tabs end above ⋯; the tablet's app run and the
+  phone-on-its-side run pass, their checks made to say what they mean.
 
 **Waiting on the owner** (found by playing, not changed)
 
