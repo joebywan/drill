@@ -62,9 +62,11 @@ export function fitBoard(boardEl, choices, item, ctx, tapped = () => TAPPED.incl
   const bubble = boardEl.closest('.play')?.querySelector('.bubble');
   const said = item ? sayings(item) : []; // a game's (no item) say their own
   let answered = false;
+  let loose = false; // answered with the board under the verdict: her words keep only the room they take
   /** The coach's words keep the room of the tallest line this item can say, so a shorter one never moves the board up. */
   const hold = () => {
     if (!bubble || !said.length) return;
+    if (loose) { bubble.style.minHeight = ''; return; }
     bubble.style.minHeight = '';
     const copy = bubble.cloneNode(false);
     copy.removeAttribute('id');
@@ -93,6 +95,15 @@ export function fitBoard(boardEl, choices, item, ctx, tapped = () => TAPPED.incl
     if (roomNow() < Math.max(natural, least) && !(foot && tapped()) && !answered && !boardEl.classList.contains('tall')) { boardEl.classList.add('tall'); hold(); }
     // Still no room to play it (a long line from her on a short phone): her face gives way too, and her words take its width.
     if (played && roomNow() < least && !boardEl.classList.contains('tighter')) { boardEl.classList.add('tighter'); hold(); }
+    // Answered, and even at its answered size the board would be under the verdict (larger text keeps tall room for her
+    // words): being in view now comes before keeping still (decisions 21 and 25). Her kept room goes first, then the coach
+    // and the gaps (`tall`), then her face (`tighter`); then the board shrinks to what is left, down to ANSWERED.
+    if (answered && foot) {
+      for (const give of [() => { loose = true; hold(); }, () => boardEl.classList.add('tall'), () => boardEl.classList.add('tighter')]) {
+        if (roomNow() >= Math.min(natural, ANSWERED)) break;
+        give();
+      }
+    }
     // A board as wide as its column (a phone's) may grow into the gutters, 4px short of the edges; a wide screen's keeps its size.
     const widest = natural < boardEl.parentElement.clientWidth - 1 ? natural : innerWidth - 8;
     const side = Math.floor(Math.min(widest, Math.max(least, Math.min(natural, roomNow()))));

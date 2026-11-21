@@ -530,6 +530,7 @@ html { scroll-padding-bottom: min(calc(160px * var(--text-scale, 1)), 40dvh); } 
 
 /* The first-visit intro (app.js intro, want): a list of what Wingbeat does, then two branches of picks. */
 .intro { padding-bottom: calc(150px * var(--text-scale, 1)); } /* room to scroll the last line above the button bar */
+.intro h1 { overflow-wrap: break-word; } /* "Wingbeat?" is wider than a 206px page (Chrome at 200% zoom) can give it */
 /* A solid bar, so a long list scrolls under it instead of showing through the fade. */
 .intro + .cta { padding-top: 12px; background: var(--bg); border-top: 1px solid var(--line); }
 .does { margin: 0; padding: 0; list-style: none; text-align: left; }
