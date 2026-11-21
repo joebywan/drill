@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 // node's mock clock moves Date to the end of a tick() before firing timers, so step a second at a time.
 const run = (ms) => { for (let i = 0; i < ms; i += 1000) mock.timers.tick(Math.min(1000, ms - i)); };
-import { EXHALE, INHALE, breaths, hugTaps, scan, sighs } from '../src/calm/routines.js';
+import { EXHALE, INHALE, breathWords, breaths, hugTaps, scan, sighs } from '../src/calm/routines.js';
 import { countOf, phaseAt, timeline, total } from '../src/practice/timeline.js';
 
 const course = JSON.parse(readFileSync('src/data/calm.json', 'utf8'));
@@ -136,5 +136,27 @@ test("a breath's count goes up with its seconds, 1 to 4, as the teach card says,
   const breathIn = { phase: 'in', seconds: 4, cycle: 0, up: true };
   assert.deepEqual([4, 3, 2, 1].map((left) => countOf(breathIn, left)), [1, 2, 3, 4]);
   assert.equal(countOf({ ...breathIn, up: undefined }, 3), 3, 'other timed steps still count down');
-  assert.match(items[0].text.join(' '), /in for 4 seconds/);
+  assert.match(breathWords(items[0].text.join(' ')), /in for 4 seconds/);
+});
+
+test("a teach card states the breathing seconds the routine will play, the learner's own or the defaults", () => {
+  const card = items[0].text.join(' ');
+  assert.equal(breathWords(card), card.replace(/\{in\}/g, 4).replace(/\{out\}/g, 8), 'nothing set: as it always read');
+  assert.match(breathWords(card), /^Breathe in for 4 seconds, then out slowly for 8\. .*If 8 seconds feels long/);
+  const own = { inhale: 6, exhale: 10 };
+  const [inn, out] = breaths(1, own);
+  const said = breathWords(card, own);
+  assert.match(said, new RegExp(`in for ${inn.seconds} seconds, then out slowly for ${out.seconds}\\.`));
+  assert.match(said, new RegExp(`If ${out.seconds} seconds feels long`));
+  assert.ok(!said.includes('{'), 'every slot filled');
+  assert.equal(breathWords(card, { inhale: 99 }), breathWords(card), 'a value out of range is ignored, as the routine ignores it');
+  // No other teach card in a timed habit states a number a timing can change (the break's 20-20-20 is advice about eyes).
+  for (const f of ['calm', 'move', 'break', 'winddown', 'focus']) {
+    const c = JSON.parse(readFileSync(`src/data/${f}.json`, 'utf8'));
+    for (const it of c.units.flatMap((u) => u.lessons.flatMap((l) => l.items)).filter((i) => i.type === 'teach')) {
+      const text = (it.text || []).join(' ');
+      if (it.id === 'breathe-teach') continue;
+      assert.ok(!/\d+\s*(seconds|minutes|reps|breaths|taps)/.test(text) || it.id.startsWith('break'), `${f} ${it.id} states a changeable number`);
+    }
+  }
 });

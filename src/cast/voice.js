@@ -27,14 +27,16 @@ function usualHour(progress, habit, course) {
  * `streakShown` false (a quiet habit, see showsStreak) leaves the streak count and the days practised out of the facts, so no
  * line states a number.
  * `coach` picks one where a habit has several (Learning's courses: the course shown), and `course` is that
- * course's id: its coach says their course is done today only when a session of it was. With Learning
+ * course's id: its coach says their course is done today only when a session of it was. A course is `first` until a lesson of it is done, and that meeting wins over `elsewhere`. With Learning
  * done today through another course, the state is `elsewhere` (a moment: only pools for it match, and
  * never a dare), and the usual hour is the course's own.
  */
 export function moment(progress, habit, now = new Date(), coach = coachOf(habit.id), streakShown = true, course = null) {
   const date = today(now);
   const lit = LIGHTS[light(progress, now, habit.id)];
-  const elsewhere = !!course && lit === 'done' && !progress.log.some((e) => e.habit === habit.id && e.date === date && e.course === course);
+  // A Learn course has its own first meeting: until one of its lessons is finished (progress.done keys are "<course>:<lesson>").
+  const first = course ? !Object.keys(progress.done).some((k) => k.startsWith(`${course}:`)) : !progress.habits[habit.id]?.last;
+  const elsewhere = !!course && !first && lit === 'done' && !progress.log.some((e) => e.habit === habit.id && e.date === date && e.course === course);
   const last = progress.habits[habit.id]?.last;
   const count = currentStreak(progress, now, habit.id);
   const days = progress.habits[habit.id]?.days || 0;
@@ -46,7 +48,7 @@ export function moment(progress, habit, now = new Date(), coach = coachOf(habit.
       hour: hourBand(now.getHours()),
       light: lit,
       streak: streakBand(count),
-      first: !last,
+      first,
       comeback: !!last && (Date.parse(date) - Date.parse(last)) / 86400000 >= COMEBACK_DAYS,
       ...(course && { elsewhere }),
     },

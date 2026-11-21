@@ -206,6 +206,8 @@ test("a course's coach says their course is done today only after a session of i
   const courses = subjects.filter((s) => s.kind === 'learn');
   // A Chess lesson today, and Maths done on two earlier evenings.
   let p = emptyProgress();
+  // Every other course has been met once, a day before: a course never opened is `first`, which wins over `elsewhere` (below).
+  for (const s of courses) if (!['maths', 'chess'].includes(s.id)) p = finishSession(p, `${s.id}:x`, [{ key: 'k', correct: true }], day(1, 19), { title: 'A', course: s.id });
   for (const d of [2, 3, 4]) p = finishSession(p, 'maths:x', [{ key: 'k', correct: true }], day(d, 19), { title: 'Sums', course: 'maths' });
   p = finishSession(p, 'chess:x', [{ key: 'c', correct: true }], day(5, 8), { title: 'The board', course: 'chess' });
   const lines = (coach, pick) => new Set(pools(coach, pick));
@@ -236,4 +238,23 @@ test("a Learn coach's streak and days lines count lessons, never their own cours
       if (/\{(count|days)\}/.test(text) || (when.streak && when.light !== 'done')) assert.doesNotMatch(text, COURSE, `${coach}: ${text}`);
     }
   }
+});
+
+test("a Learn course is first until one of its own lessons is finished, whichever course came before", () => {
+  const learning = { id: 'learn', name: 'Learning' };
+  const firstOf = (p, coach, course, d = 5) => moment(p, learning, day(d, 9), coach, true, course).state;
+  assert.equal(firstOf(emptyProgress(), 'rosa', 'chess').first, true);
+  assert.equal(firstOf(emptyProgress(), 'ada', 'maths').first, true);
+  let p = finishSession(emptyProgress(), 'chess:x', [{ key: 'c', correct: true }], day(2, 8), { title: 'The board', course: 'chess' });
+  assert.equal(firstOf(p, 'rosa', 'chess').first, false);
+  assert.equal(firstOf(p, 'ada', 'maths').first, true, 'Chess done, Maths never opened: Ada greets a newcomer');
+  // Learning done today through Chess: the first meeting still wins over `elsewhere`, and never dares.
+  const today = firstOf(p, 'ada', 'maths', 2);
+  assert.deepEqual([today.first, today.elsewhere], [true, false]);
+  assert.equal(mayDare({ ...today, dares: true }), false);
+  p = finishSession(p, 'maths:x', [{ key: 'k', correct: true }], day(3, 8), { title: 'Sums', course: 'maths' });
+  assert.equal(firstOf(p, 'ada', 'maths').first, false);
+  assert.equal(firstOf(p, 'ada', 'maths', 3).elsewhere, false, 'Maths itself was done today');
+  // The comeback stays the habit's.
+  assert.equal(firstOf(p, 'ada', 'maths', 20).comeback, true);
 });

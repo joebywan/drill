@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkOptions, chipsOf, grade, pretty, problem, tapsOf, vary } from '../src/code/items.js';
+import { checkOptions, chipsOf, exampleOf, grade, pretty, problem, tapsOf, vary } from '../src/code/items.js';
 // The shipped courses.
 import { tokenize } from '../src/code/interp.js';
 import { WALK_API, optionsOf, answerOf, startOf, trayOf, wayOf, limitOf, withOut } from '../src/code/items.js';
@@ -177,4 +177,18 @@ test('every Test writing build offers a wrong choice, and building with one is a
       assert.ok(graded.some((g) => item.mutants.some((m) => g.why.endsWith(m.says))), `${item.id}: no wrong choice lets a faulty copy through`);
     }
   }
+});
+
+test('a returns goal words its examples as the course writes code: unquoted keys, double-quoted strings, nested the same way', () => {
+  const returns = COURSES.flatMap(itemsOf).filter((i) => i.goal === 'returns');
+  assert.ok(returns.length > 5);
+  for (const item of returns) for (const c of item.cases) {
+    const said = exampleOf(item, c);
+    assert.ok(!/"[A-Za-z_$][\w$]*"\s*:/.test(said), `quoted key in ${said}`);
+    assert.ok(!said.includes("'") || /"[^"]*'[^"]*"/.test(said), said);
+  }
+  const f = { name: 'cost' };
+  assert.equal(exampleOf(f, [[{ name: 'a' }], 0]), 'cost({ name: "a" }) gives 0');
+  assert.equal(exampleOf(f, [[[1, 2], 'x'], [{ a: [1, { b: 'c' }] }, {}]]), 'cost([1, 2], "x") gives [{ a: [1, { b: "c" }] }, {}]');
+  assert.equal(exampleOf(f, [[], 'hi']), 'cost() gives "hi"');
 });
