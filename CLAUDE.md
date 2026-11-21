@@ -83,11 +83,29 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   the screen on), so anything about being away from a routine is played by `away-bare` and `away-bare-app`, which let go of
   the page first. `test/phone/lib/device.js` has `turn` (the one way to turn the screen; `rotate` runs only with `ROTATE` set),
   `putDown`, `screenOff`, `awake`. The browser suites keep their output in `test-results/e2e`, `e2e-firefox` and `live` (each config's `outputDir`), so they never empty the phone's pictures.
+- **Firefox for Android:** `npm run phone -- --browser firefox [scenario...]` plays the same scenarios in Firefox on the emulator.
+  Firefox speaks no protocol Playwright drives, so the test server adds one script to the page (`tools/bridge.js`) that asks the
+  runner for work over plain HTTP, and the runner's `page` answers the part of Playwright's the scenarios use (locators, `evaluate`,
+  the clock, read out of Playwright's own bundle), so a scenario runs unchanged; taps are still `adb`, pictures come off the screen.
+  The APK is `FIREFOX_APK`, else the newest `~/Android/wingbeat-test/fenix-*.apk` (Mozilla's own release, from archive.mozilla.org),
+  installed on the read-only emulator for that run only. The runner taps through Firefox's first run: data collection off under
+  "Manage settings", then Continue, **which agrees to Firefox's Terms of Use on that throwaway install (Joseph agreed, 2026-11-21)**;
+  "Scroll to hide toolbar" is turned off unless `PHONE_TOOLBAR=hides`. `--browser chrome-bridge` drives Chrome the same way, to tell
+  a fault of Firefox's from a fault of the bridge's. A bridged mode has no `--url` and no `attach()`. There a tap is checked where it
+  lands (aimed anew when the page has moved on screen; tapped again only when the page neither heard it nor changed), and a shot
+  reports a BLANK or FROZEN screen; Chrome through Playwright taps as it always did. `PHONE_FONT=1.3` sets the phone's font size and
+  `PHONE_ANIMATIONS=off` Android's "Remove animations"; `PHONE_STYLE='<css>'` and `PHONE_NOANIM='<selector>'` add a style or still an
+  animation on every load, to find which rule a screen's trouble comes from. Scenarios made for it, which run in Chrome too: `meet`
+  (the Meet screen's button looked at as drawn, 12 visits; `MEET_REPS=1` is the full hunt, 102), `browser` (the address bar against
+  the fixed bars, pull to refresh, the back button, a box that scrolls), `persist` (the storage prompt), `stall` (home reloaded until
+  the screen stops changing) and `text` (the large-text tour at the phone's own font size). **What Firefox does differently:** it
+  asks the person before it keeps a site's storage, it follows the phone's font size by zooming the whole page (216px wide at 2.0),
+  and it has no `navigator.vibrate`.
 - `hands` plays by sight: with `HANDS_DIR` set it saves the screen and waits for one command at a time in a file (tap, swipe,
   type, back), each done with a real touch. It is how a blind playthrough is done (an agent that has not read the answers).
 
 - With no `--url` it serves this checkout on a free port forwarded with `adb reverse`; Chrome opens
-  `http://localhost:<port>/`, a secure context, so Wake Lock and the like work as on the real site.
+  `http://localhost:<port>/`, a secure context, so Wake Lock and the like work as on the real site. The server listens on this machine only.
 - A few runs at a time, machine-wide (`PHONE_SLOTS`, default 4), each on its own emulator: a run takes the first
   free slot's lock `/tmp/wingbeat-phone-<n>.lock` (its PID inside; a lock whose process is gone is taken over) and
   prints "waiting for the emulator" until it can. Slot n is `emulator-<5554 + 2n>`; one already running there
@@ -190,7 +208,9 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   Japanese); a box that scrolls ends on a whole row or line. `scrollBox(el)` is the one way to make a box scroll: it
   marks the box `more-above` / `more-below` as it scrolls, resizes or is redrawn, and styles.css lays a plain gradient
   in the box's own colour (`--fade`) over that edge. **Never a CSS mask on a box that scrolls:** it crashes the
-  emulator's software renderer (#164), and scroll-driven animations don't run in Firefox. A screen that
+  emulator's software renderer (#164) and stopped Firefox for Android drawing for good (#181, the tabs row), **nor a rounded box
+  that clips (`overflow: hidden`) while it animates** (the end screen's chips did the same); `test/touch.test.js` holds both.
+  Scroll-driven animations don't run in Firefox. A screen that
   fits is left as it is. On a short phone (a 412x533 page) every course is played this way: `…_SMALL=1080x1700`.
   The verdict gives way too (`giveWay(foot)`): it is at most half the screen (`.foot`, 50dvh); past that its headline is
   held to two lines and to the explanation's size, then its words `scrollBox()`. `verdictHeight()` measures it that way,
@@ -420,7 +440,8 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   and what the path is raising, and "Skip ahead" in the footer, under Continue. **Before adding a row to home, take
   one off** (docs/WINGBEAT.md, decisions 22 to 24).
 - Home lists each habit once: one row of tabs (icon, name, streak coloured by `light()`) that
-  scrolls inside itself, with ⋯ (Settings) pinned at its right end. Sound is a switch on the ⋯ screen.
+  scrolls inside itself, with ⋯ (Settings) pinned at its right end. Its edge fades are gradients laid over the row
+  (`.tabs-row::before`/`::after`), never a mask. Sound is a switch on the ⋯ screen.
 - `src/fitting.js` — pure: fitting the person from the on-device log (docs/TODO.md "Fitting the
   person"). `usualHours`/`reminderHour` (the log's `hour`s; nothing under five sessions);
   `shouldRemind` thins reminders that are only ever cleared (every other day after 3, every third
