@@ -1,7 +1,7 @@
 import course from '../data/calm.json' with { type: 'json' };
 import { breathe, tap } from '../cast/moss.js';
 import { CALM_LINES, line } from '../cast/lines.js';
-import { breaths, hugTaps, scan, sighs } from './routines.js';
+import { breathWords, breaths, hugTaps, scan, sighs } from './routines.js';
 import { pauseButton, routine, steps, teach } from '../practice/kit.js';
 import { buzz, calmSound, move, play, rain } from '../feel.js';
 import { esc } from '../html.js';
@@ -15,7 +15,7 @@ const calm = (kind) => line(kind, Math.random(), CALM_LINES);
  * There is no right or wrong. Returns a cleanup function.
  */
 export function mount(el, item, ctx) {
-  if (item.type === 'teach') return teach(el, item, ctx);
+  if (item.type === 'teach') return teach(el, { ...item, text: item.text?.map((t) => breathWords(t, ctx.timings)) }, ctx);
   return sounded(el, item, ctx, practise);
 }
 

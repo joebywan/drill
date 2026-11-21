@@ -2196,6 +2196,15 @@ test.describe('with a finger', () => {
   test.use({ hasTouch: true, isMobile: true });
   test("a touch during a missed run's hold does the same", ({ page }) => tapDuringHold(page, true));
 });
+test("✕ during a missed run's hold leaves the lesson with that one tap", async ({ page }) => {
+  await reach(page, 'coding', 'steps-1', 'steps-1-around');
+  const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
+  for (const step of ['right', 'down', 'right', 'up']) await tile(`Step ${step}`).click();
+  await expect(page.locator('#said')).toHaveText(RUN_ENDS.rock);
+  await page.getByRole('button', { name: 'Quit lesson' }).click();
+  await expect(page.locator('[data-path="learn"]')).toBeVisible(); // home: the tap that ended the hold was not swallowed
+  await expect(page.getByRole('button', { name: 'Quit lesson' })).toHaveCount(0);
+});
 
 // Garden seasons: the real calendar, by the device's hemisphere. Australia/* is south.
 test.describe('garden seasons in Sydney', () => {

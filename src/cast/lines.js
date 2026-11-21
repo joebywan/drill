@@ -84,14 +84,14 @@ export const LINES = {
     'Not this time. Check what each piece attacks.',
   ],
   run3: [
-    "Three in a row. Now you're reading the board.",
-    "Three! I'm starting to feel competitive.",
-    'Three in a row. Careful, I get jealous.',
+    "Three right in a row. Now you're reading the board.",
+    "Three right in a row! I'm starting to feel competitive.",
+    'Three right in a row. Careful, I get jealous.',
   ],
   run5: [
-    "Five in a row! That's patient, tidy work.",
-    'Five! Somebody fetch my trophy, I may need to defend it.',
-    "Five in a row. I haven't seen focus like that since my club final.",
+    "Five right in a row! That's patient, tidy work.",
+    'Five right! Somebody fetch my trophy, I may need to defend it.',
+    "Five right in a row. That is club-final focus.",
   ],
   tapped: [
     'Take your time. The board will wait. So will I, gorgeously.',
@@ -530,13 +530,13 @@ export const KAEDE_LINES = {
     'Nope, but now you know how that one sounds.',
   ],
   run3: [
-    'Three in a row! My tail is doing the thing.',
-    'Three! Ears up, tail up.',
+    'Three right in a row! My tail is doing the thing.',
+    'Three right! Ears up, tail up.',
   ],
-  'run3:look': ['Three! You are reading, actually reading.'],
+  'run3:look': ['Three right! You are reading, actually reading.'],
   run5: [
-    'Five in a row! I am up on my hind legs. This is my big pose.',
-    'Five! Somebody fetch me a bamboo trophy.',
+    'Five right in a row! I am up on my hind legs. Big pose.',
+    'Five right! Somebody fetch me a bamboo trophy.',
   ],
   tapped: [
     'Yes, I am a red panda. No, not that kind of panda. The original one.',
@@ -611,14 +611,14 @@ export const MATHS_LINES = {
     'Not quite. That one comes back at the end, so you get a rematch.',
   ],
   run3: [
-    'Three in a row. I may need another arm to keep count.',
-    'Three! Bet you can not make it five.',
-    'Three in a row. Now you are doing it in your head.',
+    'Three right in a row. I may need another arm to keep count.',
+    'Three right! Bet you can not make it five.',
+    'Three right in a row. Now you are doing it in your head.',
   ],
   run5: [
-    'Five in a row! I am running out of fingers. Which is saying something.',
-    'Five! That is steady, careful working.',
-    'Five in a row. Fine, I will admit it: that was tidy.',
+    'Five right in a row! I am running out of fingers. Which is saying something.',
+    'Five right! That is steady, careful working.',
+    'Five right in a row. Fine, I will admit it: that was tidy.',
   ],
   tapped: [
     'Eight arms. Yes, I count on them. No, you may not borrow one.',
@@ -803,8 +803,8 @@ export const CODING_LINES = {
   'wrong:look': [
     'Not there. Follow the blocks one at a time, the way I walk them.',
   ],
-  run3: ['Three plans in a row! My ears are tingling.', 'Three in a row. Neat, tidy plans.'],
-  run5: ['Five in a row! One step at a time, every time.', 'Five! Those plans run like clockwork.'],
+  run3: ['Three plans in a row! My ears are tingling.', 'Three right in a row. Neat, tidy plans.'],
+  run5: ['Five right in a row! One step at a time, every time.', 'Five right! Those plans run like clockwork.'],
   tapped: [
     'Computers are like me: they do the steps exactly, in order. No guessing.',
     'My ears hear sand move. They do not hear what you meant, only what you built.',
@@ -856,9 +856,9 @@ export const CODE_LINES = {
     'Good thing it was only a run. Read what happened.',
     "That's what running it is for. Now you know what it did.",
   ],
-  run3: ['Three right first go! My ears are tingling.', 'Three in a row. Tidy code.'],
+  run3: ['Three right first go! My ears are tingling.', 'Three right in a row. Tidy code.'],
   'run3:write': ['Three that ran first go! My ears are tingling.'],
-  run5: ['Five in a row. You are reading it like the computer does.', 'Five! Those lines run like clockwork.'],
+  run5: ['Five right in a row. You are reading it like the computer does.', 'Five right! Those lines run like clockwork.'],
   tapped: [
     'Semicolons are like my paw prints: small, and they show where each step ended.',
     'Words on chips, no typing. My paws approve.',
