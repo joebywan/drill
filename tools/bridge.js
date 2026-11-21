@@ -89,7 +89,15 @@ function client() {
       // Out of the viewport, or under something fixed over it (a bar of buttons): to the middle, where a finger can reach it.
       const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
       const under = top && !el.contains(top) && !top.contains(el);
-      if (under || r.top < 0 || r.left < 0 || r.bottom > innerHeight || r.right > innerWidth) el.scrollIntoView({ block: 'center', inline: 'center' });
+      // Or cut off by a box that scrolls around it (its centre can be past the box's end, over the box's own parent): as
+      // Playwright, which scrolls unless the element is wholly visible (IntersectionObserver's ratio).
+      let clipped = false;
+      for (let p = el.parentElement; p && p !== document.body && !clipped; p = p.parentElement) {
+        if (getComputedStyle(p).overflow === 'visible') continue;
+        const c = p.getBoundingClientRect();
+        clipped = r.top < c.top - 1 || r.bottom > c.bottom + 1 || r.left < c.left - 1 || r.right > c.right + 1;
+      }
+      if (under || clipped || r.top < 0 || r.left < 0 || r.bottom > innerHeight || r.right > innerWidth) el.scrollIntoView({ block: 'center', inline: 'center' });
     },
     eval: ([el], { fn, arg }) => (0, eval)(`(${fn})`)(el, arg),
     evalAll: (els, { fn, arg }) => (0, eval)(`(${fn})`)(els, arg),

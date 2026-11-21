@@ -6,14 +6,17 @@ import { emptyProgress, finishPractice, track } from '../../src/progress.js';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default async ({ page, seed, touch, btn, shot, check, screenXml, uiNodes, tapUi, browser }) => {
-  const asks = browser === 'firefox';
+  // After `persist` in the same run, Firefox already keeps this site's storage (its "Allow"): then nothing is asked, rightly.
+  const kept = await page.evaluate(() => navigator.storage?.persisted?.() ?? false);
+  if (kept) console.log('  storage is already kept on this install (persist ran first in this run): no prompt is the right answer; play it in its own run to see the prompt');
+  const asks = browser === 'firefox' && !kept;
   const prompt = async () => uiNodes(await screenXml()).find((x) => !x.page && /persistent storage/.test(x.text + x.desc))?.text ?? null;
   const learner = track({ ...emptyProgress(), start: 'x', picked: ['walk', 'learn'] }, { id: 'walk', hidden: false });
   await seed(finishPractice(learner, 'walk', null, new Date()), { asked: false });
   await sleep(2500);
   await shot('home');
   const first = await prompt();
-  check(asks ? 'a learner with a log, never asked, is asked on home' : 'Chrome shows no prompt on home', asks ? !!first : !first, `prompt ${first}`);
+  check(asks ? 'a learner with a log, never asked, is asked on home' : `${kept ? 'storage already kept' : 'Chrome'}: no prompt on home`, asks ? !!first : !first, `prompt ${first}`);
   if (asks) { await tapUi(/^Don.t allow$/); await sleep(1500); }
   await touch(page.locator('.menu'));
   await touch(btn('Back')); await sleep(2500);

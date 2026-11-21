@@ -20,7 +20,7 @@ export default async (h) => {
   const count = () => within(page.locator('.count').first().textContent(), 3000, '(no answer)');
   const pause = () => within(page.locator('.practice-pause').getAttribute('aria-pressed'), 3000, '(no answer)');
   const hidden = () => within(page.evaluate(() => document.hidden), 3000, 'frozen');
-  const back = async () => { sh('monkey', '-p', 'com.android.chrome', '-c', 'android.intent.category.LAUNCHER', '1'); await sleep(2500); };
+  const back = async () => { sh('monkey', '-p', h.pkg, '-c', 'android.intent.category.LAUNCHER', '1'); await sleep(2500); };
 
   // The call: rings, is answered (or declined), talks a while, ends.
   const call = async (label, how, during = async () => {}) => {

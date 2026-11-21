@@ -458,6 +458,8 @@ try {
       const [x, y] = [Math.round(origin.x + (b.x + b.width / 2 + off(b.width)) * dpr), Math.round(origin.y + (b.y + b.height / 2 + off(b.height)) * dpr)];
       await loc.evaluate((el) => {
         window.__hit = null;
+        window.__downs = 0; // every finger the page hears from here: two after a tap again is a button pressed twice
+        if (!window.__counting) { window.__counting = true; addEventListener('pointerdown', () => { window.__downs++; }, { capture: true }); }
         addEventListener('pointerdown', (e) => {
           const t = e.target instanceof Element ? e.target : null;
           window.__hit = [e.clientX, e.clientY, !t || el.contains(t) || t.contains(el) ? '' : `${t.tagName.toLowerCase()} "${(t.getAttribute('aria-label') || t.textContent).trim().slice(0, 30)}"`];
@@ -483,6 +485,9 @@ try {
         adb('shell', 'input', 'tap', String(x), String(y));
         await sleep(700);
         hit = await page.evaluate(() => window.__hit).catch(() => undefined);
+        await sleep(1500); // the first tap heard late would come in now
+        const downs = await page.evaluate(() => window.__downs).catch(() => 0);
+        if (downs > 1) console.log(`  PRESSED TWICE: ${loc} heard ${downs} fingers, the first tap late`);
       }
       if (hit?.[2]) console.log(`  a tap aimed at ${loc} landed on ${hit[2]}`);
       if (hit) {
@@ -577,9 +582,14 @@ try {
       check(`sound: active ${pkg} track (dumpsys media.audio_flinger)`, track);
     };
     const vibrations = () => (adb('shell', 'dumpsys', 'vibrator_manager').match(new RegExp(pkg.replaceAll('.', '\\.'), 'g')) || []).length;
+    /** Checks `pkg` buzzed since `before` (a `vibrations()` count), where the page has `navigator.vibrate` to buzz with (Firefox for Android has none). */
+    const checkBuzz = async (name, before) => {
+      if (!(await page.evaluate(() => typeof navigator.vibrate === 'function'))) return console.log(`  ${name}: not checked, this browser has no navigator.vibrate`);
+      check(name, vibrations() > before);
+    };
     /** Where a point of the page (CSS px from its top left) is on the screen, as calibrated. */
     const screenAt = (x, y) => [origin.x + x * dpr, origin.y + y * dpr];
-    return { page, touch, btn, swipe, press, doubleTap, dragTo, shot, run, seed, fresh, checkSound, playing, vibrations, calibrate, screenAt };
+    return { page, touch, btn, swipe, press, doubleTap, dragTo, shot, run, seed, fresh, checkSound, playing, vibrations, checkBuzz, calibrate, screenAt };
   };
   const page = bridge ? bridge.page : await ctx.newPage();
   const chrome = await helpersFor(page, PKG, () => page.goto(base, { waitUntil: 'networkidle' }));

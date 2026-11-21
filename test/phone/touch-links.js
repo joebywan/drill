@@ -4,10 +4,16 @@
 // before the tap says it was not reloaded.
 import { thirtyDays } from './lib/seed.js';
 
-export default async ({ page, seed, touch, btn, shot, check, adb, screenXml }) => {
+export default async ({ page, seed, touch, btn, shot, check, adb, screenXml, uiNodes, browser }) => {
   // Playwright only lists the tabs it drives, so Chrome's own tab button and address bar (the UI tree) say what opened.
-  const chrome = async () => { const ui = await screenXml(); return { n: Number(ui.match(/(\d+) tabs?/)?.[1] ?? ui.match(/tab_switcher_button[^>]*text="(\d+)"/)?.[1] ?? 0), url: ui.match(/url_bar"[^>]*text="([^"]*)"/)?.[1] ?? ui.match(/text="([^"]*)"[^>]*resource-id="com.android.chrome:id\/url_bar"/)?.[1] ?? '' }; };
-  const tabs = () => page.context().pages().map((p) => p.url());
+  // Firefox's are its own views outside the page: the tab counter ("2 open tabs…") and the address shown in its toolbar.
+  const firefox = async () => {
+    const own = uiNodes(await screenXml()).filter((x) => !x.page).flatMap((x) => [x.text, x.desc]).filter(Boolean);
+    return { n: Number(own.map((t) => t.match(/^(\d+) open tabs?/i)?.[1]).find(Boolean) ?? 0), url: own.find((t) => /^(https?:\/\/)?(localhost:\d+|[\w-]+(\.[\w-]+)+)(\/\S*)?$/.test(t)) ?? '' };
+  };
+  const chrome = async () => { if (browser === 'firefox') return firefox(); const ui = await screenXml(); return { n: Number(ui.match(/(\d+) tabs?/)?.[1] ?? ui.match(/tab_switcher_button[^>]*text="(\d+)"/)?.[1] ?? 0), url: ui.match(/url_bar"[^>]*text="([^"]*)"/)?.[1] ?? ui.match(/text="([^"]*)"[^>]*resource-id="com.android.chrome:id\/url_bar"/)?.[1] ?? '' }; };
+  // The addresses open: Playwright's pages in Chrome; a bridged browser has only the address bar.
+  const tabs = async () => (browser === 'chrome' ? page.context().pages().map((p) => p.url()) : [(await chrome()).url]);
   const back = async () => { adb('shell', 'input', 'keyevent', 'KEYCODE_BACK'); await page.waitForTimeout(2500); };
 
   await seed(thirtyDays(1));
@@ -37,8 +43,8 @@ export default async ({ page, seed, touch, btn, shot, check, adb, screenXml }) =
   const issues = page.getByRole('link', { name: /github.com\/joebywan/ });
   check('privacy: the issues link goes to the project on GitHub', (await issues.getAttribute('href')) === 'https://github.com/joebywan/wingbeat/issues');
   await touch(issues); await page.waitForTimeout(4000); await shot('privacy-issues');
-  console.log(`  after the issues tap: ${page.url()} / ${JSON.stringify(tabs())}`);
-  check('privacy: the issues link leaves for the GitHub address', /github\.com\/joebywan\/wingbeat\/issues/.test(tabs().join(' ')) || /github/.test(page.url()), page.url());
+  console.log(`  after the issues tap: ${page.url()} / ${JSON.stringify(await tabs())}`);
+  check('privacy: the issues link leaves for the GitHub address', /github\.com\/joebywan\/wingbeat\/issues/.test((await tabs()).join(' ')) || /github/.test(page.url()), page.url());
   await back();
   check('privacy: the phone back returns to the policy', /privacy\.html/.test(page.url()), page.url());
   await touch(page.getByRole('link', { name: 'Back to Wingbeat' })); await page.waitForTimeout(1500); await shot('privacy-back');

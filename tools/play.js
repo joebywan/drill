@@ -161,7 +161,11 @@ export async function playCourse(h, { course, unit = 1, only, answer, small, par
       for (let i = 0; i < 10 && !part; i++) { // across the middle each way, edge to edge: the rounded corners are no one's
         const f = (i % 5) / 4, x = i < 5 ? r.x + 1 + f * (r.width - 2) : r.x + r.width / 2, y = i < 5 ? r.y + r.height / 2 : r.y + 1 + f * (r.height - 2);
         const o = document.elementFromPoint(x, y)?.closest('button, a, input, [role="button"]');
-        if (o && o !== el && !o.contains(el) && !el.contains(o)) part = name(o);
+        if (o && o !== el && !o.contains(el) && !el.contains(o)) {
+          const box = (q) => `${Math.round(q.top * 10) / 10}-${Math.round(q.bottom * 10) / 10}`;
+          const clip = el.closest('.scrolls');
+          part = `${name(o)} (at y ${Math.round(y * 10) / 10}: this ${box(r)}, that ${box(o.getBoundingClientRect())}${clip ? `, in ${name(clip)} ${box(clip.getBoundingClientRect())} scrolled ${Math.round(clip.scrollTop)}` : ''})`;
+        }
       }
       return { ok: !!t && (el === t || el.contains(t) || t.contains(el)), w: r.width, h: r.height, name: name(el), covered: t && name(t), part };
     });

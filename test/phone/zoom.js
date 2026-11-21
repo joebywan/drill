@@ -9,6 +9,7 @@ import { textTour, uiNode } from './lib/fits.js';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default async (h) => {
+  if (h.browser !== 'chrome') return console.log(`  zoom: Chrome's own Default zoom setting; ${h.browser} follows the phone's font size instead, which text.js plays (PHONE_FONT=1.3, 2.0)`);
   const { page, adb, screenXml, shot, calibrate, check } = h;
   const sh = (c) => adb('shell', c);
   /** Taps the first of Chrome's own views matching `re`, scrolling down a few times to find it. */

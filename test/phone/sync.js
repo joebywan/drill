@@ -4,7 +4,8 @@
 import { API } from '../../src/sync/config.js';
 import { derive, newPairCode, newRecovery, wrap } from '../../src/sync/keys.js';
 
-export default async ({ page, seed, touch, btn, type, shot, check, run }) => {
+export default async ({ page, seed, touch, btn, type, shot, check, run, browser }) => {
+  if (browser !== 'chrome') return console.log(`  sync: the API host is routed to the local worker by page.route, which a bridged browser (${browser}) has not: play it with --browser chrome`);
   const { start } = await import('../../server/dev.js');
   const worker = await start({ port: 0 });
   try {

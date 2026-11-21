@@ -6,6 +6,7 @@ const PKG = 'com.joebywan.wingbeat';
 const APK = process.env.APP_APK || new URL('../../android/app/build/outputs/apk/debug/app-debug.apk', import.meta.url).pathname;
 
 export default async (h) => {
+  if (h.browser !== 'chrome') return console.log(`  away-bare-app: the installed app's WebView is reached through attach(), which a bridged browser (${h.browser}) has not: play it with --browser chrome`);
   if (!existsSync(APK)) { console.log(`  no APK at ${APK}: build it first (CLAUDE.md, Android)`); return; }
   h.adb('install', '-r', APK);
   h.adb('shell', 'am', 'start', '-W', '-n', `${PKG}/.MainActivity`);
