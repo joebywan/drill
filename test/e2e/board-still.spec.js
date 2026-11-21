@@ -39,3 +39,26 @@ for (const [width, height] of [[412, 786], [360, 640], [412, 533]]) {
     expect(bad).toEqual([]);
   });
 }
+
+// Tapping Rosa mid-item says one of her `tapped` lines (app.js): the room her bubble keeps covers the tallest of them.
+test('a tap on Rosa mid-item never moves the board', async ({ page }) => {
+  test.setTimeout(300000);
+  const { LINES } = await import('../../src/cast/lines.js');
+  const kinds = new Map();
+  for (const i of items) if (!kinds.has(kind(i))) kinds.set(kind(i), i);
+  for (const [width, height] of [[360, 640], [412, 533]]) {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    for (const item of kinds.values()) {
+      await page.evaluate(mountChess, item);
+      await page.waitForTimeout(settles(item));
+      const top = () => page.locator('div.board').evaluate((b) => b.getBoundingClientRect().top + scrollY);
+      const asked = await top();
+      for (const text of LINES.tapped) {
+        await page.locator('.bubble').evaluate((el, t) => { el.textContent = t; }, text);
+        expect(await top(), `${item.id} at ${width}x${height}: "${text}"`).toBeCloseTo(asked, 0);
+      }
+    }
+  }
+  await page.evaluate(() => window.stopItem?.());
+});

@@ -223,6 +223,17 @@ for (const look of LOOKS) test.describe(look.name, () => {
     expect(bad).toEqual([]);
   });
 
+  // A new piece's tag hangs half over the board's top edge; at larger text it is bigger, and it needs its own room under the coach's bubble.
+  test("a new piece's tag stays clear of the coach's bubble (moves-0-rook)", async ({ page }) => {
+    test.skip(look.font === 16, 'larger text only');
+    const item = subjects.find((s) => s.id === 'chess').units.flatMap((u) => u.lessons).flatMap((l) => l.items).find((i) => i.id === 'moves-0-rook');
+    await page.goto('/');
+    await page.evaluate(mountChess, item);
+    await page.waitForTimeout(settles(item));
+    const at = await page.evaluate(() => ({ bubble: document.querySelector('.bubble').getBoundingClientRect().bottom, tag: [...document.querySelectorAll('div.board span')].find((e) => /NEW PIECE/.test(e.textContent)).getBoundingClientRect().top }));
+    expect(at.tag, 'the tag starts below the bubble').toBeGreaterThanOrEqual(at.bubble - 1);
+  });
+
   // A practice's end screen gives way (finishRoutine in app.js): the pictures first, then the words get briefer, until
   // the question it ends on is in view above Continue, the page at its top. At 125% it fits as it is: nothing goes.
   for (const habit of ['Calm', 'Move']) test(`${habit}'s end screen: "How do you feel?" is in view above Continue`, async ({ page }) => {

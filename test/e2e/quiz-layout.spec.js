@@ -65,3 +65,20 @@ test.describe('at 412x533', () => {
     expect(Math.max(...bars)).toBeLessThanOrEqual((await rect(page, '.foot.show')).top);
   });
 });
+
+test.describe('at 360x640', () => {
+  test.use({ viewport: { width: 360, height: 640 } });
+
+  // What is under the slots (the tray) stays where it was as the slots fill: a filled word may not make a row of its own.
+  for (const [lesson, id] of [['se1', 'se1-build-319'], ['se3', 'se3-build-332']]) {
+    test(`a sentence's slots keep their height as they fill (${id})`, async ({ page }) => {
+      const item = await reach(page, 'japanese', lesson, id);
+      const slots = page.locator('.quiz .slots');
+      const asked = (await slots.boundingBox()).height;
+      for (const t of item.answer.slice(0, -1)) await page.locator('.quiz .choices .choice:not(:disabled)').filter({ hasText: new RegExp(`^${t}$`) }).first().click();
+      expect((await slots.boundingBox()).height, 'one slot still empty').toBe(asked);
+      await page.locator('.quiz .choices .choice:not(:disabled)').first().click();
+      expect((await slots.boundingBox()).height, 'every slot filled').toBe(asked);
+    });
+  }
+});

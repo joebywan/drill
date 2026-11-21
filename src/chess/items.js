@@ -148,7 +148,7 @@ export const targets = (fen, square) => [...new Set(load(fen).moves({ square, ve
 
 /** Prompt for a stars item that doesn't write its own. */
 export const starsPrompt = (item) => item.prompt ||
-  `Collect ${item.stars.length === 1 ? 'the star' : `all ${item.stars.length} stars`} in ${item.moves} move${item.moves === 1 ? '' : 's'}.`;
+  `Collect ${['', 'the star', 'both stars'][item.stars.length] || `all ${item.stars.length} stars`} in ${item.moves} move${item.moves === 1 ? '' : 's'}.`;
 
 /**
  * The route an item's own words give: the squares its first sentence names, in order, played as moves (a square a piece of

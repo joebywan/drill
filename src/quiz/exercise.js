@@ -180,6 +180,8 @@ const TYPES = {
     choices.innerHTML = tiles.map((t) => button(t)).join('');
     say(item.prompt, 'think');
     const slots = [...card.querySelectorAll('.slot')];
+    // Each slot keeps the room its word will take (in em, so a tighter card scales it): a filled word never makes a row of its own.
+    slots.forEach((s, n) => { s.textContent = item.answer[n]; s.style.minWidth = `${s.offsetWidth / parseFloat(getComputedStyle(s).fontSize)}em`; s.textContent = ''; });
     const empty = () => slots.filter((s) => !s.textContent);
     const put = (slot, b) => {
       if (b.textContent === nextTile(item, slots.indexOf(slot))) {

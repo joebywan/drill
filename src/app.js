@@ -225,7 +225,8 @@ function home(arrived = null, newly = []) {
   const units = waiting ? [] : shownSubjects.flatMap((s) => unitsOf(progress, s));
   // A subject's optional placement question, offered by its path until answered or dismissed.
   const offer = shownSubjects.find((s) => offersPlacement(progress, s));
-  const brandNew = !progress.log.length && !Object.keys(progress.done).length;
+  // Not brand new for a course the learner has just started here ("I know JavaScript"): its coach's own first meeting speaks.
+  const brandNew = !progress.log.length && !Object.keys(progress.done).length && !(parent && typeof progress.start?.[courseShown.id] === 'string');
   // After the intro, Lumi's welcome names the first thing picked.
   // A course pick is kept as the Learning habit; the course it named is the one shown, so that names it.
   const first = progress.picked?.[0];
