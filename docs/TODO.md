@@ -308,15 +308,17 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
   Two faults came out of it, both fixed: a mask on the tabs row (a box that scrolls) stopped Firefox drawing home a month in, and the end screen's three
   chips, clipping their corners while they fade in, froze every screen after a finished lesson. Leaving the browser and coming back did not bring the
   screen back. The tabs' fades are plain gradients now and the chips no longer clip; both look as they did.
-  What Firefox does differently there: it asks "Allow … to store data in persistent storage?" across the top of the page on every visit's first save
-  (being fixed, #200); it follows the phone's font size by zooming the whole page, so at 2.0 the page is 216px wide, past what the app promises, and the
+  What Firefox does differently there: it asks the person before it will keep a site's storage, "Allow … to store data in persistent storage?" across
+  the top of the page. Wingbeat brought that up on every visit's first save, over a lesson's first answer, and "Don't allow" was not remembered. It now
+  asks once ever, on home, once something is in the log, and after that only from a line under ⋯ ("Turn on"), which goes when the browser keeps it
+  (#200, decision 30; played with the real prompt: `npm run phone -- --browser firefox persist` and `persist-logged`). Firefox also follows the phone's font size by zooming the whole page, so at 2.0 the page is 216px wide, past what the app promises, and the
   verdict covered part of the question in every course (to be looked at again now that #201 is in); it has no `navigator.vibrate`, so there are no
   haptics. Keeping the screen on works and it has a Japanese voice. Its address bar is at the top, clear of Continue; a pull down does not reload the
   page; the phone's back button walks back through nested screens and leaves from home.
   With Firefox's toolbar left to slide away, as it ships, a swipe past the end of a box that scrolls slides the toolbar and the page shifts by its height
   (43px); with the toolbar set to stay, which is how the runner plays, the page stays put, so that is the toolbar's doing and not the page scrolling.
-  **Left:** until the storage prompt is asked once (#200), it takes a tap or a back press meant for the page, so in Firefox the `browser` scenario fails
-  two checks (back on home, and a choice found under Continue after a tap was pressed twice). A full sweep of every scenario in Firefox waits on that.
+  **Left:** in Firefox on a short phone a chip of a Test writing build (`tl-2-6`) sits partly under Run's own target, which Chrome's does not, so the
+  `browser` scenario fails that one check there. A sweep of every scenario in Firefox, and large text there again, are under way.
   **What the emulator cannot show:** whether either freeze happens on a phone with a GPU (the emulator draws in software), and haptics (Firefox has none
   to call).
 

@@ -97,7 +97,8 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   `PHONE_ANIMATIONS=off` Android's "Remove animations"; `PHONE_STYLE='<css>'` and `PHONE_NOANIM='<selector>'` add a style or still an
   animation on every load, to find which rule a screen's trouble comes from. Scenarios made for it, which run in Chrome too: `meet`
   (the Meet screen's button looked at as drawn, 12 visits; `MEET_REPS=1` is the full hunt, 102), `browser` (the address bar against
-  the fixed bars, pull to refresh, the back button, a box that scrolls), `persist` (the storage prompt), `stall` (home reloaded until
+  the fixed bars, pull to refresh, the back button, a box that scrolls), `persist` and `persist-logged` (the storage prompt, each on its own fresh Firefox; every other scenario's seed marks it as already
+  asked, so it is in no one's way), `stall` (home reloaded until
   the screen stops changing) and `text` (the large-text tour at the phone's own font size). **What Firefox does differently:** it
   asks the person before it keeps a site's storage, it follows the phone's font size by zooming the whole page (216px wide at 2.0),
   and it has no `navigator.vibrate`.
@@ -152,6 +153,12 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   last reported), so nothing that reads the log sees it. The object carries `version`; `migrate()`
   validates and upgrades every older shape, on load and on import (home's ⋯ saves and
   loads a file). Bump `VERSION` and extend `migrate()` whenever the shape changes.
+- `src/keep.js` — asking the browser to keep progress (`navigator.storage.persist()`). Chrome, Safari and the app's WebView decide
+  by themselves, so `save()` asks quietly on the first save of a visit. Gecko asks the person, over the page, and no API says which
+  kind a call will be (`permissions.query` answers 'prompt' in Chrome too), so `ASKS` is a user-agent test (`window.WINGBEAT_ASKS`
+  sets it in tests). A browser that asks is asked once ever, on home, with something in the log, at most once a visit, never in a
+  lesson (`askToKeep()` in app.js; `wingbeat.kept-asked`, set before the call, per device, never in progress); after that only the
+  ⋯ screen's line (`KEEP_WORDS`) asks, while `persisted()` is false. `shouldAsk()` is the one rule (decision 30).
 - `src/chess/puzzle.js` — pure puzzle rules on chess.js. `src/chess/items.js` — the item types
   (teach, tap, move, true/false, stars, find), their answers and explanations, and `problem()`, the
   rules check every shipped item passes. `src/chess/exercise.js` — the board and buttons.
@@ -485,6 +492,7 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   every screen change goes through it with nothing to call: a screen needs only a back control `BACK`
   matches (`.close`, `.back`, `[data-back]`…), which back presses; a screen with none counts as home,
   and back there leaves the app. An open `<dialog>` closes first. A new screen that isn't home must have one.
+  Everything `BACK` matches is a back control, hidden or not: `[data-keep]` is one, so never use that attribute for anything else.
 - `src/feel.js` — synthesised sounds (mute on the home bar), haptics, and `move()`, which skips
   animation under reduced motion. Lesson moments go through it: `cue(name)` (sound and buzz; the
   sound follows the Sound toggle only, reduced motion skips just the animations) for right, run, wrong, done and unlock;
