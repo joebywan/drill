@@ -245,6 +245,14 @@ export function run(level, program, want, exact = false) {
 /** Whether a run met its level's goal. */
 export const reached = (result) => result.end === 'flower' || result.end === 'drawn';
 
+/** How a run ended, in Fennel's words' terms (RUN_ENDS in src/cast/lines.js): a bump is a rock or the edge, running out says what was missing. */
+export function howEnded(result, level) {
+  const g = parse(level);
+  if (result.end === 'bump') { const [x, y] = result.bumped; return x < 0 || y < 0 || x >= g.w || y >= g.h ? 'edge' : 'rock'; }
+  if (result.end === 'short') return g.shape ? 'shape' : g.flowers.length > 1 ? 'flowers' : 'short';
+  return result.end;
+}
+
 /** Runs an item's level with its own goal: `program` if given, else its own. */
 export const runItem = (item, program = item.program ?? item.way) => run(item.level, program, item.want, finishesExactly(item));
 
