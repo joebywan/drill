@@ -50,7 +50,8 @@ and the Wingbeat screens: butterfly, yours, home-states, stages, field-guide, sk
 looks (the dark theme), home-days (home from day 0 to day 60, with where the path starts; `HOME_SMALL=1080x1700` for
 a short phone), chrysalis (a learner at each stage of a raised butterfly, light and dark), words (what the coaches say after
 a listening item, one miss, a first egg and a lesson in another course), follow-on (a first visit's picks, and
-TypeScript's tab before and after JavaScript) and zoom (Chrome's Default zoom at
+TypeScript's tab before and after JavaScript), feedback (what a beginner meets after a miss: the rock, a still board, a
+build shown back; `FEEDBACK_SMALL=1080x1700`) and zoom (Chrome's Default zoom at
 150% and 200%, set by real taps on its Accessibility screen and put back). Large text has three routes: the app's WebView
 follows the phone's font size (`app`); Chrome for Android has only Default zoom, a whole-page zoom (`zoom`); a larger default
 or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `test/phone/lib/fits.js` holds what those share
@@ -139,6 +140,10 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   leaves the board clear. Never choose by counting characters: the font differs from machine to machine. Every chess word
   is taught on a card before it is used (`src/data/chess-terms.json`, held by `test/items.test.js`); a teach card's
   `topic` heads it in place of its unit's title.
+- **The board never moves from asked to Continue.** `fitBoard` keeps the coach's bubble at the height of the tallest line the
+  item can say (`sayings()`: every line Rosa says mid-item is one constant used by the mount and by `sayings()`), and decides
+  `tall` only while asked. `test/e2e/board-still.spec.js` holds the board's top through every move, right and wrong, at three
+  sizes. A stars item's `intro` stays with its prompt until the first move; the board is `aria-busy` while a demo plays.
 - **Promotion:** `withPromotion()` in exercise.js is the one picker (cm-chessboard's dialog, on every `board()`), used by puzzles, move items, stars, Mate and Play Rosa; Scramble has no pawns of yours. `tryMove()` returns `'piece'` for the right square with a piece the line doesn't need, explained and free; any mate still counts.
 - **Stars** teach pieces by play: move your piece onto every gold star within a move budget; the
   other side never moves, and kings are optional (chess.js `skipValidation`). A piece's first
@@ -165,7 +170,8 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   `pick` (one tap; `listen` plays the sound instead of showing it when there is a voice), `pairs`
   (match two columns), `build` (tap tiles in order). `items.js` is pure (`problem()`), `exercise.js`
   mounts them; `ctx.lang` marks text for the system font and picks the voice (`speak()` in feel.js:
-  `speechSynthesis`, and with no voice or Sound muted the reading is shown instead).
+  `speechSynthesis`, and with no voice or Sound muted the reading is shown instead). A missed build shows what was
+  put under the right answer (`.yours`, "You put …", up to the wrong tile); its line is kept from the start, so nothing moves.
 - Japanese: `src/data/japanese.json` (all of hiragana, the sounds that change and small kana, everyday words,
   greetings, and a first sentence with は: これは ねこです), coached by Kaede, a red panda (`src/cast/kaede.js`,
   rig-posed). Sentences are `build` items with word tiles. `test/quiz.test.js` checks every answer against its own kana
@@ -212,7 +218,8 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   specific line (filled slots like `{usualHour}` count as more specific; a line with an unknown fact
   is skipped), never one of `recent`, and sometimes a dare: once a day, only while the habit isn't
   done today, never first or after a gap. `moment()` in `src/cast/voice.js` reads state and facts
-  from progress (log entries carry `hour`). Home's greeting uses it. New lines are drafted by hand
+  from progress (log entries carry `hour`). Home's greeting uses it. For a Learn course `first` is the course's own:
+  true until a lesson of that course is in `progress.done`, and it wins over `elsewhere` and `comeback`. New lines are drafted by hand
   with `tools/voice-draft.js` (Claude API, `ANTHROPIC_API_KEY`) into `drafts/voice/` for review,
   never into the pool; the guardrail tests lint every pool line and dare.
 - **Words fit what just happened** (lines.js): a verdict pool can be narrowed by how the item was answered, `correct:hear`,
@@ -247,6 +254,10 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   the grid, the blocks and the tiles, and Fennel (`src/cast/fennel.js`, a fennec fox posed with
   `rig()`) walks it. His lines are `CODING_LINES`/`CODING_HEADLINES`, read through the subject's
   `coach.lines`/`coach.headlines`. Home's course switcher (shared with Japanese) shows it.
+  **A missed run is shown before it is replaced:** the learner's own program stays for `MISS_HOLD_MS` (2.4 s, or until a tap;
+  that tap's click never presses the Continue that comes up under it), marked by `markStop()` (`.stopped`, `.unrun`, the
+  rock's `.cell.hit`), with Fennel saying `RUN_ENDS[howEnded()]`, one line for each way a run can end. Then the way that
+  works takes its place and the reason goes first in the verdict. A rock and the edge are on a card before any item needs them.
 - `src/code/` — the JavaScript, TypeScript and Test writing courses, treated like a language course: no typing, word chips placed in
   order, and **right is decided by running**, so any arrangement that does the job passes. `interp.js` is pure and safe: tokens, a parser
   and a tree-walker with a step limit (no eval, no Function, no way to a host prototype), plain-words errors, console.log captured.
@@ -261,6 +272,7 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   in `src/code/courses/` (`author.js` is the shorthand; ids come from a lesson and its place, so add items at a lesson's end). A test checks
   that nothing is asked before a teach card shows it. **Test writing** grades as the rule below says: `given` is the real code, `mutants` hand-made faulty
   copies with `says` in plain words, and a miss names the one that got through. Guardrails bar "broken" in prose, so they are "faulty copies".
+  A value in prose is printed by interp.js's `show(v, false)` (`called()` and `exampleOf()` in items.js): the course's own spelling, never JSON.
 - `src/calm/` — the Calm practice subject. `routines.js` is pure: each routine is a list of timed
   phases (breathing 4 in, 8 out; the sigh 3 in, 1 top-up, 6 out; the butterfly hug's taps; the body scan feet to head), and `timeline()` plays one on a
   pausable clock. `practice.js` mounts teach cards and the routines with Moss (`src/cast/moss.js`)
@@ -269,7 +281,8 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   habit's path at a time (the switcher under the bar, remembered in `wingbeat.habit`). A Calm routine
   opens and closes on a soft bell and can have soft rain under it (`calmSound()`, `rain()` in
   feel.js, both generated): set on the ⋯ screen, both off until turned on, and both silent
-  when Sound is muted or under reduced motion.
+  when Sound is muted or under reduced motion. A teach card states only numbers no timing can change; one that
+  can is a slot (`{in}`, `{out}`) filled by `breathWords()` from the same `timed()` merge the routine plays (a test holds it).
 - `src/reflect/` — the Reflect practice subject: three prompts, each skippable, self-paced like
   grounding, with Lumi coaching. "One good thing" first and "One thing for tomorrow" last never
   change; the middle one comes from the `middle` pool in `reflect.json`, chosen by the date
