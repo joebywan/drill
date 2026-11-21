@@ -166,6 +166,7 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   item can say (`sayings()`: every line Rosa says mid-item is one constant used by the mount and by `sayings()`), and decides
   `tall` only while asked. `test/e2e/board-still.spec.js` holds the board's top through every move, right and wrong, at three
   sizes. A stars item's `intro` stays with its prompt until the first move; the board is `aria-busy` while a demo plays.
+  A tap on the coach mid-item (`run()` in app.js) says only an aside that fits her bubble as it stands, in every course.
   **Once answered, being in view comes first:** if the board could not sit whole above the verdict even at its answered size (larger
   text keeps tall room for her words), her kept room goes, then `tall`, then `tighter`, and only then the board shrinks
   (`test/e2e/large-text.spec.js` plays three items right and wrong at 125% and 200%).
@@ -197,6 +198,7 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   mounts them; `ctx.lang` marks text for the system font and picks the voice (`speak()` in feel.js:
   `speechSynthesis`, and with no voice or Sound muted the reading is shown instead). A missed build shows what was
   put under the right answer (`.yours`, "You put …", up to the wrong tile); its line is kept from the start, so nothing moves.
+  A build's slots keep the rows they will fill to (`--rows`, counted at mount with every slot filled), all one width while empty.
 - Japanese: `src/data/japanese.json` (all of hiragana, the sounds that change and small kana, everyday words,
   greetings, and a first sentence with は: これは ねこです), coached by Kaede, a red panda (`src/cast/kaede.js`,
   rig-posed). Sentences are `build` items with word tiles. `test/quiz.test.js` checks every answer against its own kana
@@ -245,8 +247,8 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   in the pond (too small to read) nor on the launcher icon. Words: `SKIN_WORDS`. `dressed()` in app.js draws Lumi with the learner's butterfly in her head group (`lumi(mood, skin, colours, perch)`), on top of a hat by the skin's `perch` height, and never with the costume.
 - **Coach voice:** each coach's voice sheet and line pools are data, one file each in
   `src/cast/voice/<coach>.json` (`voice`: personality, how they encourage and dare, `never` words;
-  `lines` and `dares`: `{ when, lines }` pools keyed by habit, streak band, hour band, light, and the
-  moments `first`/`comeback`). `say(coach, state, facts, rng, recent)` in lines.js picks the most
+  `lines` and `dares`: `{ when, lines }` pools keyed by habit, streak band, hour band, light, the
+  moments `first`/`comeback`, and `course` for a coach with several: Fennel's first meeting has a pool for each of his four). `say(coach, state, facts, rng, recent)` in lines.js picks the most
   specific line (filled slots like `{usualHour}` count as more specific; a line with an unknown fact
   is skipped), never one of `recent`, and sometimes a dare: once a day, only while the habit isn't
   done today, never first or after a gap. `moment()` in `src/cast/voice.js` reads state and facts
@@ -441,7 +443,8 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   one off** (docs/WINGBEAT.md, decisions 22 to 24).
 - Home lists each habit once: one row of tabs (icon, name, streak coloured by `light()`) that
   scrolls inside itself, with ⋯ (Settings) pinned at its right end. Its edge fades are gradients laid over the row
-  (`.tabs-row::before`/`::after`), never a mask. Sound is a switch on the ⋯ screen.
+  (`.tabs-row::before`/`::after`), never a mask. Sound is a switch on the ⋯ screen. On a wide screen the tabs are a column
+  in the rail and scroll in their own box (`.rail .paths`), which ends above ⋯; `misfits()` (test/phone/lib/fits.js) fails a tab under it.
 - `src/fitting.js` — pure: fitting the person from the on-device log (docs/TODO.md "Fitting the
   person"). `usualHours`/`reminderHour` (the log's `hour`s; nothing under five sessions);
   `shouldRemind` thins reminders that are only ever cleared (every other day after 3, every third
@@ -534,7 +537,8 @@ after `npm ci` at the root. App id `com.joebywan.wingbeat`, locked.
   Above 1 a screen gives way for what it is for (decision 29, through `giveRoom()`): home for the next lesson's node and its coach
   (`roomForHere()`: the bar's second row moves into the page, then the greeting goes, then "See your week"), a practice's end screen
   for "How do you feel?" (`finishRoutine()`: pictures, then briefer words). Nothing changes at ordinary text.
-- **The widget** lands one row high (`minHeight` 40dp) and can be stretched taller; Lumi is sized to the space, at
+- **The widget** lands one row high (`minHeight` 40dp) and can be stretched taller (a row is the launcher's own cell, so
+  `test/phone/app.js` checks that a row more makes it about twice as tall, on a phone and a tablet); Lumi is sized to the space, at
   most 96dp. The launcher's list shows the layout itself (`previewLayout`), with the tagline. A count of 0 is sent as
   null, so there is no number before there is a streak.
 - **Back:** home leaves the app, except within a second of a back that landed there (MainActivity), so a quick

@@ -222,9 +222,14 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
   **Tablet runs work again:** the runner read the tablet's size upright while it runs on its side, so its calibration tap missed the page. Played on the
   tablet since: ⋯ at text 2.0 (home fits), and Reflect on its side with the keyboard up (no upright line, the field and Next clear). A browser suite no
   longer empties the phone runs' pictures: each Playwright config has its own output folder.
-  **Left (low):** at text 2.0 an answered board that fits at its small size keeps her empty room above it, and a new piece's tag overlaps the bottom
-  edge of her bubble; on the tablet at text 2.0 the pinned ⋯ sits over the icon of the tab behind it; the tablet's `app` run fails two checks it failed
-  before (the intro 17 s after a cold start against a 15 s limit, and the widget's one-row box).
+  **Left (low):** at text 2.0 an answered board that fits at its small size keeps her empty room above it.
+- **Tablet and landscape leftovers: done** (#205). On a wide screen ⋯ sat over the tab behind it whenever the tabs outgrew the screen: on the tablet at
+  larger text (2.0, and "+ Habit" at 1.3), and at ordinary text in a short wide window. The tabs now scroll in their own box, which ends above ⋯; the
+  shared audit fails a tab under it. The tablet's `app` run passes: its two failing checks measured the wrong thing (the two seconds a screen dump takes
+  on a big screen were added to the app's start, which is the same 11 s or so on both; and one row of the launcher was taken for an eighth of the screen,
+  where it is the launcher's own cell: a row more now has to make the widget about twice as tall). `landscape-all` passes: the garden's first card on
+  its side was reachable all along, and the page's own scroll padding (room kept for a fixed bar) had the audit's centring start it above the screen.
+  A new piece's tag has its room under the coach's bubble at larger text (#203).
 - **The emulator is the phone.** Each "Not played", "Not covered" and "Not seen" line below is being played on the emulator, or replaced by what
   exactly it cannot show: Firefox for Android itself, a finger (off-centre taps, swipes, the keyboard, links out), device conditions (landscape,
   put down and picked up, screen off, a call, no network), Chess's games and wrong moves, and the Android app's leftovers. Results go in each block
@@ -244,8 +249,10 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
     offers JavaScript first, with "I know JavaScript: start here" one tap away. Every course and habit in the first-visit list has a line saying what
     it is, and what is picked is all home shows; the rest is under + Habit and a "+ Course" chip. Code to read wraps where it ran off the side of its
     box (30 or more cards across the code courses, by up to 77px).
-    **Left (low):** after "start here" a follow-on's own "Skip ahead" is gone (both answers are kept in `progress.start`); a just-opened follow-on is
-    greeted "TypeScript is first", the brand-new line.
+    Then (#203): a course just opened with "start here" is greeted by its coach, and Fennel, who coaches four courses, has first-meeting lines for
+    each (they were all written for Coding: "New to coding? Lovely. We start with one block" met a learner who had just said they knew JavaScript).
+    **Left (low):** after "start here" a follow-on's own "Skip ahead" is gone: both answers are one saved value (`progress.start`), and keeping them
+    apart needs a new saved field.
   - **Fixed** (#192, `npm run phone -- feedback`): in Coding's "Around the rock", walking into a rock ended the run with no word that it had, the rule
     being taught four items later. The lesson's first card now plays it (one step, into the rock, the rest never run), and the first lesson says the
     edge of the grid stops him too. A missed run keeps the learner's own program on screen, the block it stopped on ringed, the steps after it faint and
@@ -256,9 +263,10 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
     board's top still from asked to Continue, played right and wrong, at three sizes. A new piece's introduction was gone before it could be read: it
     stays with the prompt until the first move.
   - **Fixed** (#192): a missed Maths or Japanese build showed only the right answer; it now also shows what was put ("You put ~~18~~").
-    **Left (low):** the code courses still replace a missed run at once (what it printed is shown, so the miss is not unexplained); a Japanese sentence
-    card grows down by a row once its slots fill; tapping Rosa mid-item can show an aside taller than the room kept for her words; "Collect all 2 stars"
-    reads oddly.
+    Then (#203): a sentence card keeps the rows it will fill to from the start, its empty slots all one width (it grew a row as it filled, moving the
+    tiles); a tap on a coach mid-item says only an aside that fits her bubble as it stands, in every course (a taller one moved the board); a puzzle
+    with two stars says "both stars".
+    **Left (low):** the code courses still replace a missed run at once (what it printed is shown, so the miss is not unexplained).
   - **Fixed** (#191, `npm run phone -- words`): a listening item was answered with advice about looking; every course's coach said its course was done
     today after one lesson of another; end screens overstated ("Plenty of bumps" for one miss in eight); nothing said the Blue Triangle was a butterfly; a
     few lines praised what the learner is. A verdict's words now fit how the item was answered (heard, moved, written, looked at). With Learning done today
@@ -267,7 +275,8 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
     virtue (it caught one more line, Moss's). Calm's circle counts a breath's seconds up, as its card says.
     Then (#194): a coach greets you the first time you open their course (the first meeting followed the Learning habit, so only the first course ever
     opened was greeted), and Calm's first card states the learner's own timings where it said "in for 4 seconds, then out slowly for 8" whatever they were.
-    **Left (low):** Calm's lesson titles name a count the learner's own timings can change ("Five slow breaths", "Five long sighs").
+    **Left (low):** Calm's lesson titles name a count the learner's own timings can change ("Five slow breaths", "Five long sighs"). The timing is the
+    habit's, not the lesson's, so both breathing lessons would read the same: it needs a decision on how they should read.
   Worth keeping, in its words: Chess's move dots and stars, Coding's arrow blocks, a miss coming back at the lesson's end, Maths showing its working, Japanese's
   memory pictures, JavaScript's one idea a card, Calm's "nothing to get right", the one-tap habit.
   **What this cannot show:** whether a person finds it calming, fun or worth coming back to tomorrow; anything heard (it saw stills, so listening items were
@@ -498,10 +507,10 @@ that carry a sound, every one called `speechSynthesis.speak` with its text when 
   never the page: the keyboard shrinks the page to wider than tall on a common 360-wide phone, and the first version of this took that for a turned phone
   and covered Reflect while typing (caught in review; `KEYBOARD_SMALL=1080x1700 npm run phone -- touch-keyboard` plays it).
   **Left:** on an iPhone the line never shows (its screen size does not turn with it), so lessons there are as they were, and this cannot be played on the
-  emulator. The garden on its side has a plant card the audit cannot reach (medium, there before; `landscape-all` exits 1 on it). On a short phone with the
+  emulator. The garden on its side: its first card was reachable all along, the audit was wrong (#205), and `landscape-all` passes. On a short phone with the
   keyboard up (a 412x177 page) the field in Make your own, When and Focus sits 15px above the top (low; being fixed with the largest-text work).
-  **What the emulator could not show:** a tablet. The runner could not calibrate Chrome on the tablet image in four tries of four ("calibration tap never
-  reached the page"), so the tablet with the keyboard up is held by a browser test only. The runner needs fixing there.
+  **The tablet:** the runner could not calibrate Chrome on the tablet image at first; it can since #201 (it read the tablet's size as if upright), and
+  Reflect on its side with the keyboard up was played there: no upright line, the field and Next clear.
 - **An incoming call** arrives as a banner and the page is never hidden, so a routine and its rain carry on through it; declining or answering leaves a lesson
   as it was. Whether the rain is heard over the call cannot be told from the emulator.
 - **No network, the live site:** the open page carries on and saves. A reload fails; a new tab loads from the browser's cache for ten minutes and then fails too:
