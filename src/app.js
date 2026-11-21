@@ -1153,7 +1153,18 @@ function run(lessonId, queue, title, extra = null) {
   $('.who').addEventListener('click', () => {
     play('tap');
     sessionCoach.hop();
-    heard = [...heard, line('tapped', Math.random(), who.lines, heard)].slice(-3);
+    // Only an aside that fits the bubble as it stands, so nothing under it ever moves; none fits, she keeps what she was saying.
+    const copy = bubble.cloneNode(false);
+    copy.removeAttribute('id');
+    copy.removeAttribute('aria-live');
+    copy.style.cssText += `;position:absolute;visibility:hidden;width:${bubble.offsetWidth}px`;
+    bubble.after(copy);
+    const pool = (who.lines ?? LINES).tapped;
+    const fit = (list) => list.filter((t) => { copy.textContent = t; return copy.offsetHeight <= bubble.offsetHeight; });
+    const fresh = fit(pool.filter((t) => !heard.includes(t)));
+    copy.remove();
+    if (!fresh.length) return;
+    heard = [...heard, line('tapped', Math.random(), { tapped: fresh })].slice(-3);
     bubble.textContent = heard.at(-1);
     clearTimeout(aside);
     aside = setTimeout(() => { bubble.textContent = said; }, 2500);

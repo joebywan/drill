@@ -817,7 +817,7 @@ body:has(main.night) {
 .quiz .glyph { margin: 0; font-size: clamp(28px, calc(250px / var(--len, 1)), 110px); line-height: 1.15; font-weight: 500; }
 .quiz .reading { margin: 0; font-size: 1.3rem; font-weight: 700; color: var(--muted); }
 .quiz .meaning { margin: 0; padding: 0 48px; font-size: 1.1rem; font-weight: 700; } /* clear of the speaker */
-.quiz .slots { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 8px 0 0; }
+.quiz .slots { --h: 64px; display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start; gap: 8px; margin: 8px 0 0; min-height: calc(var(--rows, 1) * var(--h) + (var(--rows, 1) - 1) * 8px); } /* the rows it will fill to, kept from the start (quiz/exercise.js) */
 .quiz .slot { /* a place something goes: an outlined box the height of a tile, as the Coding builder's empty slot */
   display: grid; place-items: center; min-width: min(64px, 11vw); height: 64px; padding: 0 4px; font-size: min(44px, 9vw); white-space: nowrap;
   border: 2px dashed var(--line); border-radius: 12px;
@@ -831,11 +831,12 @@ body:has(main.night) {
 /* A short phone (src/fit.js fitCard): the card gives up its spare room first. */
 .quiz.tight .card { min-height: 0; padding: 8px; gap: 2px; }
 .quiz.tight .slot { height: 52px; font-size: min(34px, 8vw); }
-.quiz.tight .slots { margin-top: 2px; }
+.quiz.tight .slots { --h: 52px; margin-top: 2px; }
 .quiz.tight .glyph { font-size: clamp(28px, calc(180px / var(--len, 1)), 72px); }
 .quiz.tight .hear.big { width: 72px; height: 72px; font-size: 2rem; }
 .quiz.tight .pic + .pic { margin-top: 2px; }
 .quiz.tighter .slot { height: 40px; min-width: 36px; font-size: min(24px, 6vw); border-radius: 10px; }
+.quiz.tighter .slots { --h: 40px; }
 .quiz.tighter .quiz-pairs { gap: 6px; padding-top: 6px; }
 .quiz.tighter .quiz-pairs .choice { font-size: 1.15rem; line-height: 1.2; padding: 6px; min-height: 44px; }
 .quiz.tighter .meaning { padding: 0 40px; font-size: .9rem; line-height: 1.25; }

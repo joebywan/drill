@@ -261,3 +261,14 @@ test("a Learn course is first until one of its own lessons is finished, whicheve
   const newcomer = firstOf(chessOnly, 'ada', 'maths', 20);
   assert.deepEqual([newcomer.first, newcomer.comeback], [true, false], 'a first meeting is never also a comeback: no line fits both');
 });
+
+test("Fennel's first meeting is written for each of his four courses", () => {
+  const learn = habitsFor(emptyProgress()).find((h) => h.id === 'learn');
+  for (const course of ['coding', 'javascript', 'typescript', 'testing']) {
+    const own = pools('fennel', (w) => w.first && w.course === course);
+    assert.equal(own.length, 3, course);
+    const { coach, state, facts } = moment(emptyProgress(), learn, day(5), 'fennel', true, course);
+    assert.equal(state.course, course);
+    for (let i = 0; i < 10; i++) assert.ok(own.includes(say(coach, state, facts, rngOf(NO_DARE, i / 10)).line), course);
+  }
+});

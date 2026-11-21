@@ -64,7 +64,7 @@ export function fitBoard(boardEl, choices, item, ctx, tapped = () => TAPPED.incl
   let answered = false;
   let loose = false; // answered with the board under the verdict: her words keep only the room they take
   /** The coach's words keep the room of the tallest line this item can say, so a shorter one never moves the board up. */
-  const hold = (asides = true) => {
+  const hold = () => {
     if (!bubble || !said.length) return;
     if (loose) { bubble.style.minHeight = ''; return; }
     bubble.style.minHeight = '';
@@ -73,7 +73,7 @@ export function fitBoard(boardEl, choices, item, ctx, tapped = () => TAPPED.incl
     copy.removeAttribute('aria-live');
     copy.style.cssText = `position:absolute;visibility:hidden;min-height:0;width:${bubble.offsetWidth}px`;
     bubble.after(copy);
-    const most = Math.max(bubble.offsetHeight, ...[...said, ...(asides ? LINES.tapped : [])].map((t) => { copy.textContent = t; return copy.offsetHeight; }));
+    const most = Math.max(bubble.offsetHeight, ...said.map((t) => { copy.textContent = t; return copy.offsetHeight; }));
     copy.remove();
     bubble.style.minHeight = `${most}px`;
   };
@@ -104,8 +104,6 @@ export function fitBoard(boardEl, choices, item, ctx, tapped = () => TAPPED.incl
         give();
       }
     }
-    // Her kept room covers what a tap on her says (LINES.tapped) too; on a screen with no room to spare (a 206px page) the board comes first.
-    if (!answered && roomNow() < Math.min(natural, ANSWERED)) hold(false);
     // A board as wide as its column (a phone's) may grow into the gutters, 4px short of the edges; a wide screen's keeps its size.
     const widest = natural < boardEl.parentElement.clientWidth - 1 ? natural : innerWidth - 8;
     const side = Math.floor(Math.min(widest, Math.max(least, Math.min(natural, roomNow()))));
