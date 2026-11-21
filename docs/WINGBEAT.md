@@ -127,9 +127,15 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
     home says nothing more. A one-tap habit keeps the words, where there is room for them.
 24. **A hint leaves once it has done its job.** A one-tap habit's "One tap when it happens" goes after
     its first day.
+25. **A verdict never takes more than half the screen.** Decision 21 holds against the verdict too. Past
+    half the screen it gives way: its headline first (no bigger than the explanation when text is
+    larger, two lines at most), then its words scroll in their own box, Continue always in view.
+    Whatever fits itself above the verdict gets the other half. On a page past what the app promises
+    (206px wide, Chrome at 200% zoom) nothing is lost: what the verdict covers can be scrolled clear.
 
 Decisions 22 to 24 came out of the pass to take things off home, which the owner asked for; what came
-off was chosen in review, and each can go back on its own. Kept on purpose: the Games row and the course
+off was chosen in review, and each can go back on its own. Decision 25 came out of looking at the app
+with large text in a browser, which the owner asked for; the rule is the review's. Kept on purpose: the Games row and the course
 chips, because one tap to play or to switch course is worth more than their row.
 
 ### Rules for this work
@@ -214,6 +220,21 @@ chips, because one tap to play or to switch course is worth more than their row.
   its job (decisions 22 to 24). A month in, the first unit of Chess starts at 329px of a 786px page
   where it started at 448, and on a short phone the next lesson is in sight where it was under
   Continue. `npm run phone -- home-days` shows home from day 0 to day 60.
+
+**The emulator is the phone** (2026-11-21; what each found is in TODO.md)
+
+- [x] **E1. The chrysalis on a phone page** (#171): seen at every stage, and redrawn so it reads at that size.
+- [x] **E2. Large text in a browser** (#177): a browser's font size reaches the page; Chrome's zoom is toured on the phone.
+- [x] **E3. Firefox in CI** (#172): the browser suite passes in Firefox on every pull request.
+- [x] **E4. The live site from another network** (#170): GitHub plays it after every deploy.
+- [x] **E5. Test writing** (#174): repeats change their values, and every build offers a wrong choice.
+- [x] **E6. Phone runs keep one network** (#175): the emulators' shared Wi-Fi dropping could fail a page mid-load.
+- [x] **E7. Chess with wrong moves, and its three games** (#179): nothing wrong is accepted; every Rosa reply is legal.
+- [x] **E8. What a finger does** (#180): off-centre taps, swipes, the keyboard, links out, long press. A long press no
+  longer raises the copy toolbar, and a pull down no longer reloads the page.
+- [x] **E9. Chess in plain words** (#176): every chess word taught before it is used, and every real-game puzzle
+  says why its line works, proved against its position.
+- [x] **E10. The verdict at large text** (#183, decision 25): held to half the screen.
 
 **Waiting on the owner** (found by playing, not changed)
 

@@ -3,7 +3,7 @@
     {
       "id": "real-0-how",
       "type": "teach",
-      "text": "These come from real games. The other side moves first, then you answer. Only the strongest move counts. If the line goes on, they reply and you keep going."
+      "text": "These come from real games. The other side moves first, then you answer. Only the strongest move counts. If it goes on, they reply and you keep going. Then I show the whole line of moves, and why it works."
     },
     {
       "id": "real-0-black",
@@ -17,7 +17,9 @@
     {
       "id": "mate1-teach",
       "type": "teach",
-      "text": "Mate in one: a checkmate is there to find, this move. Any checkmate counts."
+      "side": "w",
+      "fen": "6k1/Q7/5K2/8/8/8/8/8 w - - 0 1",
+      "text": "Mate in one: a checkmate is there to find, this move. Any checkmate counts. Here it's queen to g7: your king guards her, so the black king can't take her."
     }
   ],
   "hangingPiece-0": [
@@ -60,7 +62,9 @@
     {
       "id": "mate2-teach",
       "type": "teach",
-      "text": "Mate in two: your move, their reply, your checkmate. Look for a first move that leaves them almost no choice, usually a check."
+      "side": "w",
+      "fen": "3r2k1/5ppp/8/8/8/8/4R3/4R1K1 w - - 0 1",
+      "text": "Mate in two: your move, their reply, your checkmate. Start with a move that leaves one reply, usually a check. Here: rook to e8, check. Their rook has to take, and your other rook mates."
     }
   ],
   "discoveredAttack-0": [
@@ -76,9 +80,10 @@
     {
       "id": "enpassant-teach",
       "type": "teach",
+      "topic": "En passant",
       "side": "w",
       "fen": "4k3/8/8/4pP2/8/8/8/4K3 w - e6 0 1",
-      "text": "A rare pawn rule, en passant. A pawn that steps two squares past an enemy pawn can be taken as if it stepped one, on the very next move only. Here f5 takes e5 by landing on e6."
+      "text": "En passant, a rare pawn rule: a pawn that steps two squares past an enemy pawn can be taken as if it stepped one, on the very next move only. Here f5 takes e5 by landing on e6."
     }
   ],
   "doubleCheck-0": [
@@ -94,28 +99,35 @@
     {
       "id": "trapped-teach",
       "type": "teach",
-      "text": "A trapped piece has nowhere safe to go. Attack it, and wherever it runs it can be taken. Look for enemy pieces with few moves."
+      "side": "w",
+      "fen": "n3k3/8/8/P7/8/8/8/1BR1K3 w - - 0 1",
+      "text": "A trapped piece has nowhere safe to go. This knight's squares, b6 and c7, are both attacked. Bishop to e4 attacks it, and wherever it runs it can be taken."
     }
   ],
   "deflection-0": [
     {
       "id": "deflection-teach",
       "type": "teach",
-      "text": "A deflection drags a defender away. Force the piece guarding something to move, and what it was guarding falls."
+      "side": "w",
+      "fen": "3r2k1/5ppp/8/3q4/8/8/8/3RR1K1 w - - 0 1",
+      "text": "A deflection drags a defender away. Only the rook on d8 guards the queen. Rook to e8, check: their rook has to take, and your other rook takes the queen."
     }
   ],
   "attraction-0": [
     {
       "id": "attraction-teach",
       "type": "teach",
-      "text": "An attraction lures a piece, often the king, onto a bad square, usually by offering something to take. Then the trap closes."
+      "side": "w",
+      "fen": "6k1/6pp/1N6/4q3/8/8/8/5RK1 w - - 0 1",
+      "text": "An attraction lures a piece, often the king, onto a bad square, usually by offering something to take. Rook to f8, check: the king has to take, then knight to d7 forks him and the queen."
     },
     {
       "id": "castling-teach",
       "type": "teach",
+      "topic": "Castling",
       "side": "w",
       "fen": "4k3/8/8/8/8/8/8/4K2R w K - 0 1",
-      "text": "One more rule, castling. Once a game, an unmoved king steps two squares toward an unmoved rook, and the rook hops to his other side. Nothing may stand between them, and never out of or through check."
+      "text": "Castling, a king's move once a game: an unmoved king steps two squares toward an unmoved rook, and the rook hops to his other side. Nothing may stand between them, and never out of or through check."
     }
   ],
   "promotion-0": [
@@ -124,14 +136,16 @@
       "type": "teach",
       "side": "w",
       "fen": "8/4P3/8/8/8/8/8/4K2k w - - 0 1",
-      "text": "Promotion: a pawn reaching the far side. You pick what it becomes, nearly always a queen. Clear its way, or win the square it lands on."
+      "text": "Promotion: a pawn reaching the last rank. You pick what it becomes, nearly always a queen. Clear its way, or win the square it lands on."
     }
   ],
   "mateIn3-0": [
     {
       "id": "mate3-teach",
       "type": "teach",
-      "text": "Mate in three: three of your moves, two replies. The same idea as mate in two, looking further ahead."
+      "side": "w",
+      "fen": "2rr2k1/5ppp/8/8/8/4R3/4R3/4Q1K1 w - - 0 1",
+      "text": "Mate in three: three of your moves, two replies. Here every check leaves one reply: rook to e8, your other rook takes on e8, then the queen takes on e8, checkmate."
     }
   ]
 }

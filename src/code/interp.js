@@ -29,8 +29,22 @@ const KEYWORDS = new Set(['let', 'const', 'var', 'if', 'else', 'for', 'of', 'in'
 const OPS = ['===', '!==', '=>', '==', '!=', '<=', '>=', '&&', '||', '++', '--', '+=', '-=', '*=', '/=', '+', '-', '*', '/', '%', '<', '>', '=', '!', '(', ')', '{', '}', '[', ']', ';', ',', '.', ':', '?', '|'];
 const ESCAPES = { n: '\n', t: '\t', '"': '"', "'": "'", '\\': '\\' };
 
-/** Source to tokens: { t: 'num' | 'str' | 'id' | 'kw' | 'op' | 'end', v, raw, line, start, end }. */
+/**
+ * Source to tokens: { t: 'num' | 'str' | 'id' | 'kw' | 'op' | 'end', v, raw, line, start, end }. Frozen and
+ * kept per source, since proving an item's fresh versions reads the same few sources thousands of times.
+ */
+const lexed = new Map();
 export function tokenize(src) {
+  let toks = lexed.get(src);
+  if (!toks) {
+    toks = Object.freeze(lex(src).map(Object.freeze));
+    if (lexed.size >= 2000) lexed.clear();
+    lexed.set(src, toks);
+  }
+  return toks;
+}
+
+function lex(src) {
   const out = [];
   let i = 0, line = 1;
   const push = (t, v, start) => out.push({ t, v, raw: src.slice(start, i), line, start, end: i });

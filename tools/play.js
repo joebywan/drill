@@ -10,7 +10,14 @@
  *   options.answer   async (h, item) => void
  *   options.small    wm size to play at, e.g. '1080x1700', for a short phone
  *   options.parts    selectors of the parts of the course's screen that must not sit on each other (default: Coding's)
+ *   options.wrongOk  a run that answers wrongly on purpose: a wrong answer is not a failed check
  *   options.tray     of those, the ones the verdict may cover: the answer tray (default: '.tiles')
+ *
+ * PLAY_JITTER=0.85 lands each tap at a random spot out to that share of the way to its target's edge (PLAY_SEED varies
+ * the run; same seed, same taps), where a plain run taps dead centre. A tap another element takes is reported with its item
+ * and gets a picture (`miss-<item>-<n>`).
+ *
+ * PLAY_SWIPE=1 also swipes each kind of scrolling box once, with a real finger (see `swipeBoxes`).
  *
  * Time is an estimate at a steady human pace, since the harness taps faster than a person: reading
  * (1.5 s + 0.2 s a word of what the coach says, 0.1 s a word of the explanation after), one second a
@@ -24,8 +31,8 @@ const words = (s) => (String(s ?? '').match(/\S+/g) || []).length;
 
 const PARTS = ['.bubble', '.grid-world', '.vars', '.program', '.tiles']; // Coding's screen
 
-/** What is wrong with the screen right now: clipped or overlapping text, things off the side or behind each other. */
-const scan = ({ parts: all, tray }) => {
+/** What is wrong with the screen right now: clipped or overlapping text, things off the side or behind each other. Run in the page (`page.evaluate(scan, { parts, tray })`); test/e2e/large-text.spec.js uses it too. */
+export const scan = ({ parts: all, tray }) => {
   const out = [];
   const app = document.getElementById('app');
   const shown = (el) => { const s = getComputedStyle(el); const r = el.getBoundingClientRect(); return s.visibility !== 'hidden' && s.display !== 'none' && r.width > 0 && r.height > 0; };
@@ -35,14 +42,14 @@ const scan = ({ parts: all, tray }) => {
     const s = getComputedStyle(el);
     const clip = (axis, size, client) => s[axis] !== 'visible' && s[axis] !== 'auto' && s[axis] !== 'scroll' && client > 0 && size > client + 2;
     if (el.textContent.trim() && clip('overflowX', el.scrollWidth, el.clientWidth)) out.push(`text clipped sideways: ${label(el)}`);
-    if (el.textContent.trim() && clip('overflowY', el.scrollHeight, el.clientHeight)) out.push(`text clipped at the bottom: ${label(el)}`);
+    if (el.textContent.trim() && clip('overflowY', el.scrollHeight, el.clientHeight) && !/^\d/.test(s.webkitLineClamp ?? 'none')) out.push(`text clipped at the bottom: ${label(el)}`); // a clamp is meant (the verdict's headline)
     const r = el.getBoundingClientRect();
     if (!el.children.length && el.textContent.trim() && (r.right > innerWidth + 1 || r.left < -1)) out.push(`text off the side: ${label(el)}`);
   }
   // Things that must not sit on each other: the parts of the screen, and the buttons in them.
   const area = (r) => Math.max(0, r.width) * Math.max(0, r.height);
   const cut = (a, b) => area({ width: Math.min(a.right, b.right) - Math.max(a.left, b.left), height: Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) });
-  const parts = all.map((q) => app.querySelector(q)).filter((e) => e && shown(e));
+  const parts = [...new Set(all.map((q) => app.querySelector(q)))].filter((e) => e && shown(e)); // one element can match two selectors
   for (const [i, a] of parts.entries()) for (const b of parts.slice(i + 1)) if (cut(a.getBoundingClientRect(), b.getBoundingClientRect()) > 16) out.push(`overlap: ${label(a)} and ${label(b)}`);
   const foot = app.querySelector('.foot.show');
   if (foot) for (const e of app.querySelectorAll(all.filter((q) => !tray.includes(q)).join(', '))) if (shown(e) && cut(foot.getBoundingClientRect(), e.getBoundingClientRect()) > 16) out.push(`verdict covers: ${label(e)}`);
@@ -65,10 +72,53 @@ const scan = ({ parts: all, tray }) => {
   return [...new Set(out)];
 };
 
-export async function playCourse(h, { course, unit = 1, only, answer, small, parts = PARTS, tray = ['.tiles'] }) {
+
+/**
+ * PLAY_SWIPE=1: the first time a box that scrolls in itself (`.scrolls`, src/fit.js) shows on a screen, swipe it with a
+ * real finger and report what is wrong: the page moved, its edge marks (`more-above`, `more-below`) are wrong at the top,
+ * the bottom or part way, it did not come to rest, Continue/Run was swiped off the screen, or a swipe that began on a
+ * button pressed it. Gives the lines to report, with a picture taken at the far end.
+ */
+async function swipeBoxes({ page, swipe, shot }, id, seen) {
+  const found = await page.evaluate(() => [...document.querySelectorAll('#app .scrolls')].filter((b) => b.scrollHeight > b.clientHeight + 2).map((b, i) => { b.dataset.sw = i; return `${b.tagName.toLowerCase()}.${b.className.replace(/\b(scrolls|more-\w+)\b/g, '').trim().split(/\s+/)[0]}`; }));
+  const out = [];
+  for (const [i, name] of found.entries()) {
+    if (seen.has(name)) continue;
+    seen.add(name);
+    const box = page.locator(`[data-sw="${i}"]`);
+    const state = () => box.evaluate((b) => ({ top: Math.round(b.scrollTop), max: b.scrollHeight - b.clientHeight, above: b.classList.contains('more-above'), below: b.classList.contains('more-below'), page: Math.round(scrollY), foot: [...document.querySelectorAll('#app .foot.show button, #app .stage > button, #app .tiles > button')].filter((x) => getComputedStyle(x).visibility !== 'hidden').filter((x) => /^(Run|Continue|Check)/.test(x.textContent.trim())).every((x) => { const r = x.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }) }));
+    const edges = (s, where) => { const w = (s.top > 1) !== s.above ? `more-above is ${s.above} at ${s.top}px` : (s.max - s.top > 1) !== s.below ? `more-below is ${s.below} with ${s.max - s.top}px to go` : ''; return w && `${id}: ${name} ${where}: ${w}`; };
+    const at = async (where) => { await page.waitForTimeout(500); const s = await state(); const later = (await page.waitForTimeout(1200), await state()); if (later.top !== s.top) out.push(`${id}: ${name} ${where}: still moving (${s.top} then ${later.top})`); const e = edges(later, where); if (e) out.push(e); return later; };
+    const start = await at('before');
+    const b = await box.boundingBox();
+    const pressed = () => page.evaluate(() => document.querySelector('#app .program, #app .code-program, #app .code-answer')?.textContent ?? '');
+    const text0 = await pressed();
+    // Up first (the content moves up) with a swipe that starts on a button, if the box has one, else mid-box.
+    const onButton = box.locator('button:not([disabled])').first();
+    const grab = (await onButton.count()) && (await onButton.boundingBox());
+    const reach = Math.min(b.height * 0.8, 220);
+    await swipe(grab ? onButton : box, 0, -reach);
+    let s = await at('after one swipe up');
+    if (s.page !== start.page) out.push(`${id}: ${name}: the page moved ${s.page - start.page}px when the box was swiped`);
+    if (s.top === start.top && start.max > 2) out.push(`${id}: ${name}: swiped up, did not scroll`);
+    if (grab && (await pressed()) !== text0) out.push(`${id}: ${name}: a swipe that began on a button pressed it`);
+    for (let k = 0; k < 6 && s.max - s.top > 1; k++) { await swipe(box, 0, -reach); s = await at('on the way down'); }
+    if (s.max - s.top > 1) out.push(`${id}: ${name}: swiped to the end, ${s.max - s.top}px still to go`);
+    if (!s.foot) out.push(`${id}: ${name}: Run or Continue is off the screen after the box was swiped`);
+    if (s.page !== start.page) out.push(`${id}: ${name}: the page moved ${s.page - start.page}px at the end of the box`);
+    await shot(`box-${id}-end`).catch(() => {});
+    for (let k = 0; k < 6 && s.top > 1; k++) { await swipe(box, 0, reach); s = await at('on the way up'); }
+    if (s.top > 1) out.push(`${id}: ${name}: swiped back, ${s.top}px short of the top`);
+  }
+  return out;
+}
+
+export async function playCourse(h, { course, unit = 1, only, answer, small, parts = PARTS, tray = ['.tiles'], wrongOk = false }) {
   const { page, adb, touch, btn, shot, seed, run, check } = h;
+  const swipeSeen = new Set();
   const unitAt = course.units[unit - 1];
   if (!unitAt) throw new Error(`${course.id} has ${course.units.length} units, not ${unit}`);
+  if (process.env.PLAY_JITTER) console.log(`  taps land up to ${process.env.PLAY_JITTER} of the way to the target's edge (seed ${process.env.PLAY_SEED || 1})`);
   const dir = `${OUT}play-${course.id}/`;
   mkdirSync(dir, { recursive: true });
   const saved = (() => { try { return JSON.parse(readFileSync(`${dir}progress.json`, 'utf8')); } catch { return null; } })();
@@ -92,6 +142,7 @@ export async function playCourse(h, { course, unit = 1, only, answer, small, par
 
   let taps = 0;
   let tapEnd = 0;
+  let current = ''; // the item being answered, for what is reported
   const targets = new Map(); // small tap targets, one line per kind
   const trouble = []; // what could not be tapped
   /** A real tap that first checks the target can be hit: on screen, not covered, big enough. */
@@ -112,8 +163,9 @@ export async function playCourse(h, { course, unit = 1, only, answer, small, par
       }
       return { ok: !!t && (el === t || el.contains(t) || t.contains(el)), w: r.width, h: r.height, name: name(el), covered: t && name(t), part };
     });
-    if (!hit.ok) trouble.push(`${hit.name} is covered by ${hit.covered}`);
-    else if (hit.part) trouble.push(`${hit.name} is partly covered by ${hit.part}`);
+    const where = current ? `${current}: ` : '';
+    if (!hit.ok) trouble.push(`${where}${hit.name} is covered by ${hit.covered}`);
+    else if (hit.part) trouble.push(`${where}${hit.name} is partly covered by ${hit.part}`);
     const least = Math.round(Math.min(hit.w, hit.h));
     if (least < 40) { const was = targets.get(hit.name); targets.set(hit.name, { least: Math.min(least, was?.least ?? 99), n: (was?.n ?? 0) + 1 }); }
     taps++;
@@ -127,7 +179,7 @@ export async function playCourse(h, { course, unit = 1, only, answer, small, par
     });
     await touch(at);
     const landed = await page.evaluate(() => window.__landed).catch(() => 'ok'); // a tap that leaves the page is fine
-    if (landed && landed !== 'ok') trouble.push(`${hit.name} was tapped, but ${landed} took it`);
+    if (landed && landed !== 'ok') { trouble.push(`${where}${hit.name} was tapped, but ${landed} took it`); await shot(`miss-${current || 'x'}-${taps}`).catch(() => {}); }
     tapEnd = Date.now();
   };
 
@@ -167,10 +219,12 @@ export async function playCourse(h, { course, unit = 1, only, answer, small, par
         seen = await page.evaluate(() => window.__n);
         const [item, said, topic] = await page.evaluate(() => [window.__item, document.getElementById('said')?.textContent, document.querySelector('.topic')?.textContent]);
         const before = taps;
+        current = item.id;
         row.items++;
         row.kinds[item.type] = (row.kinds[item.type] ?? 0) + 1;
         row.topics[topic] = (row.topics[topic] ?? 0) + 1;
         await look(item, 'asked');
+        if (process.env.PLAY_SWIPE) row.odd.push(...await swipeBoxes(h, item.id, swipeSeen));
         tapEnd = Date.now();
         await answer({ ...h, tap, btn }, item);
         await page.locator('.foot.show').waitFor({ timeout: 30000 });
@@ -208,7 +262,7 @@ export async function playCourse(h, { course, unit = 1, only, answer, small, par
     check(`${r.lesson}: played to the end`, !r.stuck, r.stuck ?? '');
     check(`${r.lesson}: no page errors or failed requests`, !r.errors.length, r.errors.join('; '));
     check(`${r.lesson}: nothing covered`, !r.untappable.length, r.untappable.join('; '));
-    check(`${r.lesson}: every answer right`, !r.wrong);
+    check(`${r.lesson}: every answer right`, wrongOk || !r.wrong);
     check(`${r.lesson}: nothing clipped, overlapping or sideways`, !r.odd.some((o) => !/answered wrongly/.test(o)), r.odd.filter((o) => !/answered wrongly/.test(o)).slice(0, 3).join('; '));
   }
   return report;

@@ -12,6 +12,7 @@ import { worn } from './cast/skins.js';
 import { BOX, butterfly, butterflyToday } from './cast/butterfly.js';
 import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, comeBack, dropEchoes, echoes, fresh, warmUps } from './repeat.js';
 import { GOES, easier, flying, helpFor, misses, noteAnswer, struggling, warmedLast } from './adapt.js';
+import { giveWay, longestVerdict } from './fit.js';
 import { CALM_SOUNDS, DARES_LABEL, SOUND_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, CHOOSE_WORDS, SKIN_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, soundOn } from './feel.js';
 import { southern } from './garden/season.js';
@@ -90,12 +91,13 @@ function adopt(synced) {
   if (app.querySelector('.menu')) home();
 }
 
-// Every item by key, so a review can find what it is reviewing.
+// Every item by key, so a review can find what it is reviewing. Its topic is its unit's title, or a teach card's own `topic`
+// (Chess's castling card, in the Attraction unit only because a puzzle there castles).
 const items = new Map();
 for (const s of subjects)
   for (const u of s.units)
     for (const l of u.lessons.filter((x) => !x.mix)) // a checkpoint only repeats its unit's items
-      for (const item of l.items) items.set(`${s.id}:${item.id}`, { subject: s, item, topic: u.title, lesson: l.id });
+      for (const item of l.items) items.set(`${s.id}:${item.id}`, { subject: s, item, topic: item.topic || u.title, lesson: l.id });
 
 /**
  * A new screen replaces the page, so focus would fall back to the top of the document. This puts
@@ -159,17 +161,23 @@ function showCourse(id) {
 }
 
 /**
- * How much the phone's font size scales text: 1 in a browser, 1.3 in the Android app with the phone's
- * text at 130% (the WebView follows it). Set as --text-scale, so the room kept for text that px can't see
- * (a path row, the space under a fixed bar) grows with it; unset, the CSS falls back to 1.
+ * How much larger than 16px the learner has asked for text: 1.3 in the Android app with the phone's text at 130%
+ * (the WebView's text zoom follows it), 1.25 in a browser whose default font size is 20px (Chrome's "Font size: Large",
+ * Firefox's Fonts setting; they change what 1rem is), more for small text under a minimum font size (a path's labels,
+ * .8rem, at Firefox's or Chrome's "Minimum font size" of 20px: 1.56), 1 otherwise. A browser's zoom isn't text: it
+ * enlarges px too and leaves this at 1. Set as --text-scale, so the room kept for text that px can't see (a path row,
+ * the space under a fixed bar) grows with it; unset, the CSS falls back to 1.
  */
 const TEXT = (() => {
-  const probe = Object.assign(document.createElement('div'), { textContent: 'x' });
-  probe.style.cssText = 'position:absolute;visibility:hidden;font-size:100px;line-height:1';
-  document.body.append(probe);
-  const k = probe.getBoundingClientRect().height / 100;
-  probe.remove();
-  return Math.max(1, Math.round(k * 100) / 100);
+  const k = [6.25, 0.8].map((rem) => { // 100px and a label's 12.8px, at 16px
+    const probe = Object.assign(document.createElement('div'), { textContent: 'x' });
+    probe.style.cssText = `position:absolute;visibility:hidden;font-size:${rem}rem;line-height:1`;
+    document.body.append(probe);
+    const h = probe.getBoundingClientRect().height;
+    probe.remove();
+    return h / (rem * 16);
+  });
+  return Math.max(1, Math.round(Math.max(...k) * 100) / 100);
 })();
 if (TEXT > 1) document.documentElement.style.setProperty('--text-scale', TEXT);
 const ROW = 112 * TEXT; // px from one node to the next; the drawn path assumes it (and .path li's height)
@@ -221,7 +229,10 @@ function home(arrived = null, newly = []) {
   const dueChip = !reviewKeys.length ? ''
     : repair ? `<button class="due" data-review>${esc(line('repair'))} · ${minutes}</button>`
     : `<button class="due" data-review>${due.length} to review · ${minutes}</button>`;
-  const xAt = (i) => Math.round(Math.sin((i * Math.PI) / 3) * SWAY);
+  // On a narrow page (320px, or a phone browser zoomed to 200%: 206px) the path sways less, so a label (half its
+  // max-width, .path .label) stays on the page. ponytail: measured once per drawing; a rotation redraws on the next screen.
+  const sway = Math.max(0, Math.min(SWAY, Math.min(320, app.clientWidth - 32) / 2 - 64 * TEXT));
+  const xAt = (i) => Math.round(Math.sin((i * Math.PI) / 3) * sway);
 
   const node = (n, i) => {
     const here = n === current;
@@ -249,7 +260,7 @@ function home(arrived = null, newly = []) {
     const a = nodes.findIndex((n) => n.id === arrived);
     const fresh = a >= 0 && nodes[a + 1] === current && walked === a + 2;
     const h = (nodes.length - 1) * ROW + 64 * TEXT;
-    return `<svg class="trail" viewBox="-160 0 320 ${h}" width="320" height="${h}" aria-hidden="true">
+    return `<svg class="trail" viewBox="-160 0 320 ${h}" width="100%" height="${h}" preserveAspectRatio="xMidYMin slice" aria-hidden="true">
       <path d="${d(pts.length)}" class="ahead"/>${walked > 1 ? `<path d="${d(fresh ? a + 1 : walked)}" class="walked"/>` : ''}${fresh ? `<path d="${d(a + 2, a)}" class="walked fresh"/>` : ''}
     </svg>`;
   };
@@ -1127,8 +1138,10 @@ function run(lessonId, queue, title, extra = null) {
         meter();
         shine();
         foot.className = `foot show ${correct === null ? 'plain' : correct ? 'right' : 'wrong'}`;
-        foot.querySelector('strong').textContent = kind === 'plain' ? '' : line(kind, Math.random(), who.lines);
+        // WINGBEAT_LONGEST (tests): the longest line of its kind, not one at random, so a check can't pass one run and fail the next.
+        foot.querySelector('strong').textContent = kind === 'plain' ? '' : window.WINGBEAT_LONGEST ? longestVerdict(who.lines, [kind]) : line(kind, Math.random(), who.lines);
         foot.querySelector('p').textContent = leftForReview ? `${text} ${MOVE_ON}` : text;
+        giveWay(foot); // at most half the screen
         // The answer tapped (or, on a board, the verdict) pops when right and gives a small shake when
         // not, unless the item already gave it its own (a quiz's cheer).
         const hit = correct === null ? null : stage.querySelector(correct ? '.choice.right' : '.choice.wrong') || foot.querySelector('strong');

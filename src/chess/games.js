@@ -8,6 +8,7 @@ import { HINT, LEVELS, thinking } from './engine.js';
 import { words } from './items.js';
 import { uci } from './puzzle.js';
 import { rosa } from '../cast/rosa.js';
+import { giveWay } from '../fit.js';
 import { GAME_WORDS } from '../cast/lines.js';
 import { cue, play } from '../feel.js';
 import { today } from '../progress.js';
@@ -32,6 +33,7 @@ function banner(tone, head, text, label) {
   foot.className = `foot show ${tone}`;
   foot.querySelector('strong').textContent = head;
   foot.querySelector('p').textContent = text;
+  giveWay(foot);
   const next = foot.querySelector('.next');
   next.textContent = label;
   next.setAttribute('aria-describedby', 'verdict');
@@ -334,7 +336,7 @@ function mountRosa(el, item, { say }) {
     const m = g.move(san);
     refresh(m.from, m.to);
     if (end()) return;
-    say(g.inCheck() ? W.rosa.check : W.rosa.played(words(m.san).replace(/, check$/, '')), 'teach');
+    say(g.inCheck() ? W.rosa.check : W.rosa.played(words(m.san, m.to).replace(/, check$/, '')), 'teach');
     open();
   };
   const input = withDots(b, () => g.fen(), ({ squareFrom: from, squareTo: to }) => withPromotion(b, g.fen(), from, to, (promotion) => {
@@ -369,7 +371,7 @@ function mountRosa(el, item, { say }) {
       const m = new Chess(g.fen()).move(san);
       b.removeArrows();
       b.addArrow(ARROW_TYPE.default, m.from, m.to);
-      say(W.rosa.hinted(words(m.san).replace(/, check(mate)?$/, '')), 'teach');
+      say(W.rosa.hinted(words(m.san, m.to).replace(/, check(mate)?$/, '')), 'teach');
     });
     actions.querySelector('[data-back]')?.addEventListener('click', () => {
       if (!g.history().length) return;
