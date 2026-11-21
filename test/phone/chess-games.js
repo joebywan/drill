@@ -41,8 +41,7 @@ export default async (h) => {
       const box = await page.locator('div.board').boundingBox();
       await touch(page.locator('[data-hint]'));
       await touch(page.locator('[data-hint]'));
-      const note = await wait(async () => (await page.locator('.game-note').textContent()).length > 10, 15000);
-      check(`mate in 2: Hint then Explain gives a note`, note !== null, await page.locator('.game-note').textContent());
+      check(`mate in 2: Hint then Explain: she explains the move`, await hasSaid(/repl|is checkmate/) !== null, await said());
       check(`mate in 2: the board stays where it was`, JSON.stringify(await page.locator('div.board').boundingBox()) === JSON.stringify(box));
       await shot('mate2-hint');
     }

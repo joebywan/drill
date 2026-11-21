@@ -643,18 +643,22 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 /* --fade is the colour behind the content at the scroller's own edge: the card's only where the scroller is the card or sits in it. */
 .code-given.scrolls, .quiz .card.scrolls, .quiz .card .scrolls { --fade: var(--card); }
 /* A program too tall for the screen: the coach and the gaps give it room, as on a short phone. */
-.play:has(:is(.program, .quiz, .board.lesson).tall) .topic { position: absolute; clip-path: inset(50%); }
-.play:has(:is(.program, .quiz, .board.lesson).tall) .who { width: 44px; }
-.play:has(:is(.program, .quiz, .board.lesson).tall) .coach { margin-bottom: 4px; }
-.play:has(:is(.program, .quiz, .board.lesson).tall) .bubble { margin-bottom: 6px; padding: 6px 10px; }
-.play:has(:is(.program, .quiz, .board.lesson).tall) .grid-world { margin-bottom: 4px; }
+.play:has(:is(.program, .quiz, div.board).tall) .topic { position: absolute; clip-path: inset(50%); }
+.play:has(:is(.program, .quiz, div.board).tall) .who { width: 44px; }
+.play:has(:is(.program, .quiz, div.board).tall) .coach { margin-bottom: 4px; }
+.play:has(:is(.program, .quiz, div.board).tall) .bubble { margin-bottom: 6px; padding: 6px 10px; }
+.play:has(:is(.program, .quiz, div.board).tall) .grid-world { margin-bottom: 4px; }
 /* How tall her words stay is each screen's own rule, never the shared one above: a longer list there once outranked a quiz's. */
 .play:has(.program.tall) .bubble { min-height: calc(5.5em / var(--text-scale, 1)); } /* with larger text, no taller than at 16px: the program needs the room */
 .play:has(.quiz.tall) .bubble { min-height: 0; }
 /* A chess board that is too tall: the coach gives way as above, her words keep two lines so the board never jumps (fitBoard, src/chess/exercise.js). */
-.play:has(.board.lesson.tall) { padding-bottom: 8px; }
-.play:has(.board.lesson.tall) .bubble { min-height: 3.4em; font-size: .9rem; line-height: 1.3; }
-.play:has(.board.lesson.tall) .choices { padding-block: 8px; }
+.play:has(div.board.tall) .bubble { min-height: 3.4em; font-size: .9rem; line-height: 1.3; }
+.play:has(div.board.tall) .choices { padding-block: 8px; }
+.bar:has(+ .play div.board.game.tall) { padding-block: 4px; padding-top: max(4px, env(safe-area-inset-top)); }
+.play:has(div.board.tighter) .who, .play:has(div.board.tighter) .bubble::before { display: none; }
+.play:has(div.board.tighter) .bubble { padding-block: 4px; }
+.play:has(div.board.tighter) .choices { padding-block: 4px; }
+.play:has(div.board.tighter) .choices .choice { padding-block: 9px; } /* still a 44px target */
 .choices.tray { flex-wrap: wrap; gap: 6px; padding-top: 8px; }
 .tray .tile { flex: 1 1 auto; min-width: 22%; min-height: 44px; padding: 4px 8px; white-space: nowrap; }
 /* A tile drawn shorter (a short phone) still answers a thumb across 44px: its rows are 6px apart. */
@@ -944,11 +948,14 @@ body:has(main.night) {
 /* Chess games (chess/games.js): a small row on chess's home, then the session frame. */
 .games { align-items: center; }
 .games > span { font-size: .8rem; font-weight: 700; color: var(--muted); }
-.play:has(.game-note) .bubble, .play:has(.hud) .bubble { min-height: 7.4em; }
+.play:has(div.board.game) .bubble { min-height: 7.4em; }
+.play:has(div.board.game.tall) .bubble { min-height: 3.9em; } /* three lines: her longest but a hint's, so the board doesn't jump as she talks */
+/* What a game counts sits in the session bar, where a lesson's meter is (games.js inBar). */
+.game-bar { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-weight: 700; color: var(--muted); }
 .cm-chessboard.wingbeat .markers .marker.marker-frame-danger { stroke: var(--wrong); stroke-width: 3px; opacity: 1; } /* Scramble's hunted piece */
-.game-tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 10px; }
-.game-tabs .course { padding: 4px 12px; }
-.hud { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; font-weight: 700; color: var(--muted); }
+.game-tabs { display: flex; gap: 8px; }
+.game-tabs .course { min-width: 44px; padding: 4px 0; }
+.hud { flex: 1; display: flex; align-items: baseline; justify-content: space-between; }
 .hud-clock { min-width: 4em; font-variant-numeric: tabular-nums; font-size: 1.15rem; color: var(--text); }
 .hud-score { font-size: 1.6rem; font-variant-numeric: tabular-nums; color: var(--accent); }
 .hud-best { min-width: 4em; text-align: right; font-size: .9rem; }
@@ -956,7 +963,6 @@ body:has(main.night) {
 .game-actions .choice { flex: 1; padding-inline: 4px; }
 .game-actions.game-levels { flex-wrap: wrap; }
 .game-actions.game-levels .choice { flex: 1 1 40%; }
-.game-note { margin: 10px 0 0; min-height: 4.2em; font-size: .95rem; }
 
 /* ---- The code courses (src/code/exercise.js): word chips laid out as lines of code ---- */
 :root { --mono: ui-monospace, Menlo, Consolas, "DejaVu Sans Mono", monospace; }
