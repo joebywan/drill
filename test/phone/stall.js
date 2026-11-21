@@ -29,5 +29,16 @@ export default async (h) => {
       if (spread < 10) { stalled++; await shot(`blank-${i + 1}-${tab}`).catch(() => {}); break; }
     }
   }
+  if (stalled) { // as a person would: leave the browser and come back, and look again
+    h.adb('shell', 'input', 'keyevent', 'KEYCODE_HOME'); await new Promise((r) => setTimeout(r, 3000));
+    h.adb('shell', `monkey -p ${h.pkg} -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1`); await new Promise((r) => setTimeout(r, 3000));
+    await showTab({ page, touch }, 'calm'); await atTop(page);
+    try {
+      const g = grab(), px = [];
+      for (let y = 500; y < 2100; y += 13) for (let x = 40; x < 1040; x += 13) px.push(g.at(x, y).reduce((a, b) => a + b, 0));
+      console.log(`  after leaving the browser and coming back: ${px.join() === last.sum ? 'still the same picture' : 'the screen changed again'}`);
+      await shot('after-away-and-back').catch(() => {});
+    } catch (e) { console.log(`  after leaving and coming back: screencap gave up (${e.message.slice(0, 60)})`); }
+  }
   check(`home a month in is drawn on every load and tab (style: ${css ?? 'none'})`, !stalled);
 };

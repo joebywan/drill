@@ -228,25 +228,37 @@ try {
    * Continue on the screen that says continuing agrees to Firefox's Terms of Use; default browser, sign-in and
    * notifications declined (declinePrompts). One step: true if it did something.
    */
-  let stage = 0; // 0: welcome screen first seen, 1: Manage settings opened, 2: back from it
+  let stage = 0, tries = 0; // stage 0: welcome screen first seen, 1: data settings shown, 2: back from them
   const firstRun = async (nodes) => {
     const terms = nodes.find((x) => !x.page && /agree to the Firefox Terms of Use/.test(x.text + x.desc));
     const manage = nodes.find((x) => !x.page && /Manage settings/.test(x.text + x.desc));
-    const on = nodes.filter((x) => !x.page && x.checked);
-    if (stage === 1 && on.length) { // the data settings: every switch off
+    const data = nodes.some((x) => !x.page && /Send technical and interaction data/.test(x.text));
+    if (data) { // the data settings: every switch on it off, then back
+      const on = nodes.filter((x) => !x.page && x.checked && /Switch|View/.test(x.cls));
       for (const x of on) { adb('shell', 'input', 'tap', String(x.at[0]), String(x.at[1])); await sleep(600); }
-      console.log(`  Firefox first run: turned off ${on.length} data setting(s): ${on.map((x) => x.text || x.desc || x.rid).join(', ')}`);
+      if (on.length) { console.log(`  Firefox first run: turned off ${on.length} data setting(s)`); return true; }
+      adb('shell', 'input', 'keyevent', 'KEYCODE_BACK'); await sleep(1000); stage = 2;
       return true;
     }
-    if (stage === 1 && !terms) { adb('shell', 'input', 'keyevent', 'KEYCODE_BACK'); await sleep(1000); stage = 2; return true; }
-    if (stage === 0 && terms && manage) { // the link is the paragraph's last words
-      adb('shell', 'input', 'tap', String(manage.box.right - 90), String(Math.round((manage.box.top + manage.box.bottom) / 2)));
-      console.log('  Firefox first run: opened Manage settings');
-      await sleep(1500); stage = 1;
+    if (stage < 2 && terms && !manage) { // large text: the welcome card scrolls, and the data line is further down it
+      const card = nodes.find((x) => !x.page && /ScrollView/.test(x.cls)) ?? terms;
+      const [top, bottom] = [card.box.top, card.box.bottom], x = String(card.at[0]);
+      adb('shell', 'input', 'swipe', x, String(Math.round(bottom - (bottom - top) * 0.15)), x, String(Math.round(top + (bottom - top) * 0.15)), '500');
+      await sleep(1000);
+      return true;
+    }
+    if (stage < 2 && terms && manage) { // "Manage settings" is a link in the paragraph's last words: along its last line, then the one above
+      const xs = [0.12, 0.3, 0.45, 0.6, 0.75, 0.9];
+      if (++tries > 2 * xs.length) throw new Error('Firefox first run: could not open "Manage settings" to turn data collection off');
+      const line = tries <= xs.length ? manage.box.bottom - 25 : manage.box.bottom - 80;
+      const at = [manage.box.left + xs[(tries - 1) % xs.length] * (manage.box.right - manage.box.left), line];
+      adb('shell', 'input', 'tap', ...at.map((v) => String(Math.round(v))));
+      console.log('  Firefox first run: opened Manage settings?');
+      await sleep(1500);
       return true;
     }
     if (nodes.some((x) => !x.page && /as your default browser/.test(x.text)) && await tapUi('Cancel')) { console.log('  Firefox first run: declined being the default browser'); return true; }
-    if (terms && await tapUi('Continue')) { console.log('  Firefox first run: Continue (agrees to the Terms of Use)'); return true; }
+    if (stage === 2 && (terms || manage) && await tapUi('Continue')) { console.log('  Firefox first run: Continue (agrees to the Terms of Use; data collection off)'); return true; }
     return false;
   };
   /**
