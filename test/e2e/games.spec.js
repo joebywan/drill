@@ -66,8 +66,31 @@ test("Mate: today's board is played to checkmate against the best defence, and n
   await expect(page.locator('#said')).toContainText(/checkmate|repl/);
   expect(await page.locator('div.board').boundingBox()).toEqual(before);
 
-  const g = new Chess(todays(2).fen);
-  for (let left = 2; left > 0; left--) {
+  await solveToday(page, 2);
+  await expect(page.locator('.foot.show')).toBeVisible();
+  await expect(page.locator('.foot .next')).toHaveText('Another board');
+  await page.locator('.foot .next').click();
+  await expect(page.locator('#said')).toContainText('Another board');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress') || '{}').log?.length ?? 0)).toBe(0);
+});
+
+test('Mate: another tier tapped once a board is done starts that tier clean, with no banner of the last one', async ({ page }) => {
+  await onDay(page);
+  await openGame(page, 'Mate');
+  await solveToday(page, 2);
+  await expect(page.locator('.foot.show')).toBeVisible();
+  await page.locator('[data-tier="3"]').click();
+  await expect(page.locator('[data-tier="3"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#said')).toContainText(/checkmate in 3/);
+  await expect(page.locator('.foot.show')).toHaveCount(0);
+  await expect(page.locator('[data-hint]')).toBeVisible();
+  await expect.poll(() => fenOf(page)).toBe(todays(3).fen.split(' ')[0]);
+});
+
+/** Plays today's board for `tier` to checkmate against the best defence. */
+async function solveToday(page, tier) {
+  const g = new Chess(todays(tier).fen);
+  for (let left = tier; left > 0; left--) {
     const key = forcedMate(g.fen(), left).keys[0];
     await move(page, key.slice(0, 2), key.slice(2, 4));
     g.move({ from: key.slice(0, 2), to: key.slice(2, 4), promotion: key[4] });
@@ -78,12 +101,7 @@ test("Mate: today's board is played to checkmate against the best defence, and n
       await expect.poll(() => fenOf(page)).toBe(g.fen().split(' ')[0]);
     }
   }
-  await expect(page.locator('.foot.show')).toBeVisible();
-  await expect(page.locator('.foot .next')).toHaveText('Another board');
-  await page.locator('.foot .next').click();
-  await expect(page.locator('#said')).toContainText('Another board');
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress') || '{}').log?.length ?? 0)).toBe(0);
-});
+}
 
 test('Mate with no connection: Rosa says so, nothing is left broken, and Try again loads it once it can', async ({ page }) => {
   await onDay(page);

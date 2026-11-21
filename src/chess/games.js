@@ -237,7 +237,13 @@ function mountMate(el, item, ctx) {
     prove();
   });
   el.querySelector('[data-fresh]').addEventListener('click', () => begin(tier, true));
-  for (const t of tabs.querySelectorAll('[data-tier]')) t.addEventListener('click', () => begin(Number(t.dataset.tier)));
+  for (const t of tabs.querySelectorAll('[data-tier]')) t.addEventListener('click', () => {
+    const n = Number(t.dataset.tier);
+    // A board done: its banner stands over the game and its buttons are gone, so a tier starts afresh through the banner's
+    // own button (today's board for that tier, as on opening), never a board under a banner of the last one.
+    if (document.querySelector('.foot.show')) { store('wingbeat.mate.tier', n); item.again = false; document.querySelector('.foot .next').click(); return; }
+    begin(n);
+  });
 
   // The positions come over the network the first time Mate opens. With no connection Rosa says so and the banner's
   // button tries again (a fresh URL each time, so a failed load isn't kept and replayed).
