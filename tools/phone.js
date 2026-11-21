@@ -167,7 +167,8 @@ try {
 
   // Ours among the emulators up. Listing asks each one its model, so one shutting down in another slot can fail it: ask again.
   let device = null, ctx = null;
-  if (bridge) device = { screenshot: async ({ path }) => writeFileSync(path, execFileSync(`${SDK}/platform-tools/adb`, ['-s', serial, 'exec-out', 'screencap', '-p'], { maxBuffer: 1 << 28, timeout: 30_000 })) };
+  // As Playwright's: the PNG as a buffer, and written to `path` when there is one.
+  if (bridge) device = { screenshot: async ({ path } = {}) => { const png = execFileSync(`${SDK}/platform-tools/adb`, ['-s', serial, 'exec-out', 'screencap', '-p'], { maxBuffer: 1 << 28, timeout: 30_000 }); if (path) writeFileSync(path, png); return png; } };
   for (let i = 0; !device; i++) {
     try { device = (await android.devices()).find((d) => d.serial() === serial); } catch (e) { if (i === 5) throw e; }
     if (!device) { if (i === 5) throw new Error(`${serial} is not among adb's devices`); await sleep(1000); }
