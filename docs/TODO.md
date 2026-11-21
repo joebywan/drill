@@ -251,8 +251,8 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
     box (30 or more cards across the code courses, by up to 77px).
     Then (#203): a course just opened with "start here" is greeted by its coach, and Fennel, who coaches four courses, has first-meeting lines for
     each (they were all written for Coding: "New to coding? Lovely. We start with one block" met a learner who had just said they knew JavaScript).
-    **Left (low):** after "start here" a follow-on's own "Skip ahead" is gone: both answers are one saved value (`progress.start`), and keeping them
-    apart needs a new saved field.
+    Then (#208): "start here" is saved apart from a placement answer (`progress.started`), so the course's own "Skip ahead" is still offered after it
+    (it was gone: both answers were one saved value).
   - **Fixed** (#192, `npm run phone -- feedback`): in Coding's "Around the rock", walking into a rock ended the run with no word that it had, the rule
     being taught four items later. The lesson's first card now plays it (one step, into the rock, the rest never run), and the first lesson says the
     edge of the grid stops him too. A missed run keeps the learner's own program on screen, the block it stopped on ringed, the steps after it faint and
@@ -275,8 +275,9 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
     virtue (it caught one more line, Moss's). Calm's circle counts a breath's seconds up, as its card says.
     Then (#194): a coach greets you the first time you open their course (the first meeting followed the Learning habit, so only the first course ever
     opened was greeted), and Calm's first card states the learner's own timings where it said "in for 4 seconds, then out slowly for 8" whatever they were.
-    **Left (low):** Calm's lesson titles name a count the learner's own timings can change ("Five slow breaths", "Five long sighs"). The timing is the
-    habit's, not the lesson's, so both breathing lessons would read the same: it needs a decision on how they should read.
+    Then (#208): a title that names a count drops it once the learner has set that count themselves ("Five slow breaths" and "Six slow breaths" both
+    read "Slow breaths", "Five long sighs" reads "Long sighs"; two lessons may share a name, since with one count they are the same routine). Focus's
+    minutes had the same fault and the same fix. With nothing set, every title reads as written.
   Worth keeping, in its words: Chess's move dots and stars, Coding's arrow blocks, a miss coming back at the lesson's end, Maths showing its working, Japanese's
   memory pictures, JavaScript's one idea a card, Calm's "nothing to get right", the one-tap habit.
   **What this cannot show:** whether a person finds it calming, fun or worth coming back to tomorrow; anything heard (it saw stills, so listening items were

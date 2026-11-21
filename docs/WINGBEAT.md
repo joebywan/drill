@@ -138,7 +138,8 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
 26. **Some courses follow another.** TypeScript and Test writing follow JavaScript's first nine units (a
     test works that number out from every word they show). Until those are done, the follow-on's tab
     offers JavaScript first, with one tap to start anyway ("I know JavaScript: start here"). It is an
-    order, never a lock.
+    order, never a lock. That tap is kept apart from the course's own "Skip ahead", which is still
+    offered after it.
 27. **Home shows what was picked.** In the first-visit list every course and habit has one plain line
     saying what it is, and what the learner picks is all that home shows. The rest is one tap away,
     under + Habit and + Course. Skipping shows everything.
@@ -295,6 +296,8 @@ chips, because one tap to play or to switch course is worth more than their row.
   phone-on-its-side run pass, their checks made to say what they mean.
 - [x] **E24. Firefox's storage prompt, once** (#200, decision 30): it came up on every visit, over a lesson's first answer,
   and took the next tap. Now once ever, on home, and from a line under ⋯ after that.
+- [x] **E25. Two leftovers that needed a decision** (#208): "start here" no longer uses up a course's "Skip ahead"; a title
+  that names a count drops it once the learner has set their own (Calm's breaths and sighs, Focus's minutes).
 
 **Waiting on the owner** (found by playing, not changed)
 

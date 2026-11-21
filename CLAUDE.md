@@ -187,7 +187,7 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   course's cards so its coach runs them. The intro picks courses by course id; `choose()` turns them
   into the Learning tab. A Learn coach's `lines`/`headlines` replace Rosa's in the runner and end screen.
   A course can follow another (`follows: { course, units }` on the course): until those units are done, `waits()`
-  (progress.js) keeps its tab to one line, the other course's button and "I know JavaScript: start here" (a placement
+  (progress.js) keeps its tab to one line, the other course's button and "I know JavaScript: start here" (`progress.started`, kept apart from a placement
   answer in `progress.start`). An order, never a lock. TypeScript and Test writing follow JavaScript's first 9 units;
   `test/code-courses.test.js` works that number out from every word they show and fails on a word taught nowhere.
 - **Chess games** (`src/chess/games.js`, the "Games" row on chess's home, a subject's `games`): replayable modes, each a one-entry session
@@ -384,7 +384,8 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   builder (calm, move, break `routines.js`) goes through; a value out of range falls back to the
   default, and with nothing set the path's own values (cycles, reps rising) hold. Stored in
   `progress.timings` (v8). `timingsView()` in app.js: − and + steppers, the default beside each,
-  "Back to defaults", saved on each tap; opened from the habit view, or from home before a first session.
+  "Back to defaults", saved on each tap; opened from the habit view, or from home before a first session. A lesson whose title
+  names a count ("Five slow breaths") has a `plain` title too, which `unitsOf` shows once the learner has set that count (`countSet()`).
 - `src/garden/model.js` — pure: the garden read from progress. Plants grow from `days` (each
   habit's permanent count of dates practised, never the streak); `RULES` is the achievement table
   (one line of data each), `award()` records what is earned in `progress.garden.earned` and never
