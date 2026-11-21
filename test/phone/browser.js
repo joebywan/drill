@@ -13,7 +13,7 @@ const maths = JSON.parse(readFileSync(new URL('../../src/data/maths.json', impor
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default async (h) => {
-  const { page, adb, touch, btn, shot, seed, run, check, origin, dpr, uiNodes, screenXml, pkg } = h;
+  const { page, adb, touch, btn, shot, seed, run, check, screenAt, uiNodes, screenXml, pkg } = h;
   const sh = (cmd) => adb('shell', cmd);
   const loads = () => page.loads?.() ?? null; // the bridge counts the pages that loaded: a reload nobody asked for shows
   const front = () => new RegExp(`mCurrentFocus=.*${pkg.replaceAll('.', '\\.')}`).test(sh('dumpsys window | grep mCurrentFocus'));
@@ -25,8 +25,10 @@ export default async (h) => {
   /** Where `loc` is on the screen, in screen pixels: from the page's view as the screen has it now (a toolbar that slid away moved it). */
   const onScreen = async (loc) => {
     const b = await loc.first().boundingBox();
-    const view = uiNodes(await screenXml()).find((x) => x.page)?.box.top ?? origin.y;
-    return b && { top: view + b.y * dpr, bottom: view + (b.y + b.height) * dpr };
+    if (!b) return null;
+    const view = uiNodes(await screenXml()).find((x) => x.page)?.box.top;
+    const [, top] = screenAt(0, b.y), [, bottom] = screenAt(0, b.y + b.height), shift = view === undefined ? 0 : view - screenAt(0, 0)[1];
+    return { top: top + shift, bottom: bottom + shift };
   };
   const [, H] = sh('wm size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number);
   /** A real finger drag, screen pixels. */
@@ -42,7 +44,7 @@ export default async (h) => {
   await seed(thirtyDays(1));
   const cont = page.getByRole('button', { name: /^Continue · / });
   const top = await bar();
-  console.log(`  address bar at ${top ? `${top.top}-${top.bottom} (${top.top > H / 2 ? 'bottom' : 'top'})` : 'not found'}; page origin ${Math.round(origin.x)},${Math.round(origin.y)}`);
+  console.log(`  address bar at ${top ? `${top.top}-${top.bottom} (${top.top > H / 2 ? 'bottom' : 'top'})` : 'not found'}; page origin ${screenAt(0, 0).map(Math.round)}`);
   await shot('home-top'); await fixedClear('home at the top', cont);
   await drag(540, H * 0.7, H * 0.3); await drag(540, H * 0.7, H * 0.3);
   await shot('home-scrolled'); await fixedClear('home scrolled down', cont);
@@ -59,7 +61,7 @@ export default async (h) => {
   const pull = async (where) => {
     const before = loads();
     await page.evaluate(() => scrollTo(0, 0)); await sleep(500);
-    await drag(540, origin.y + 40 * dpr, origin.y + 380 * dpr, 600); await sleep(2500);
+    await drag(540, screenAt(0, 40)[1], screenAt(0, 380)[1], 600); await sleep(2500);
     const after = loads();
     console.log(`  pull to refresh ${where}: ${after === null ? 'cannot count loads in this mode' : after > before ? 'the page RELOADED' : 'no reload'}`);
     await shot(`pull-${where}`);
@@ -109,7 +111,7 @@ export default async (h) => {
     probed = true;
     const box = page.locator('.scrolls.more-below').first();
     const b = await box.boundingBox();
-    const x = Math.round(origin.x + (b.x + b.width / 2) * dpr), mid = origin.y + (b.y + b.height / 2) * dpr, reach = b.height * dpr * 0.35;
+    const [cx, mid] = screenAt(b.x + b.width / 2, b.y + b.height / 2), x = Math.round(cx), reach = (screenAt(0, b.height)[1] - screenAt(0, 0)[1]) * 0.35;
     const state = () => page.evaluate(() => ({ box: document.querySelector('.scrolls')?.scrollTop, page: scrollY }));
     const s0 = await state(), l0 = loads();
     await shot('box-before');

@@ -196,7 +196,7 @@ try {
       const a = (k) => un(m[2].match(new RegExp(` ${k}="([^"]*)"`))?.[1] ?? '');
       if (inside === Infinity && /GeckoView|android\.webkit\.WebView/.test(a('class'))) inside = d;
       const b = a('bounds').match(/\d+/g)?.map(Number) ?? [0, 0, 0, 0];
-      out.push({ text: a('text'), desc: a('content-desc'), rid: a('resource-id'), cls: a('class'), page: d >= inside, at: [(b[0] + b[2]) >> 1, (b[1] + b[3]) >> 1], box: { left: b[0], top: b[1], right: b[2], bottom: b[3] } });
+      out.push({ text: a('text'), desc: a('content-desc'), rid: a('resource-id'), cls: a('class'), checked: a('checked') === 'true', clickable: a('clickable') === 'true', page: d >= inside, at: [(b[0] + b[2]) >> 1, (b[1] + b[3]) >> 1], box: { left: b[0], top: b[1], right: b[2], bottom: b[3] } });
       if (!m[3]) depth = d; else if (inside === d) inside = Infinity;
     }
     return out;
@@ -220,7 +220,33 @@ try {
       console.log(`  declined ${BROWSER} prompt: ${label}`);
     }
   };
-  /** Opens `url` in a bridged browser and gets past its first-run screens until the page says hello. */
+  /**
+   * Firefox's first run, as the owner agreed (2026-11-21): data collection turned off under "Manage settings", then
+   * Continue on the screen that says continuing agrees to Firefox's Terms of Use; default browser, sign-in and
+   * notifications declined (declinePrompts). One step: true if it did something.
+   */
+  let stage = 0; // 0: welcome screen first seen, 1: Manage settings opened, 2: back from it
+  const firstRun = async (nodes) => {
+    const terms = nodes.find((x) => !x.page && /agree to the Firefox Terms of Use/.test(x.text + x.desc));
+    const manage = nodes.find((x) => !x.page && /Manage settings/.test(x.text + x.desc));
+    const on = nodes.filter((x) => !x.page && x.checked);
+    if (stage === 1 && on.length) { // the data settings: every switch off
+      for (const x of on) { adb('shell', 'input', 'tap', String(x.at[0]), String(x.at[1])); await sleep(600); }
+      console.log(`  Firefox first run: turned off ${on.length} data setting(s): ${on.map((x) => x.text || x.desc || x.rid).join(', ')}`);
+      return true;
+    }
+    if (stage === 1 && !terms) { adb('shell', 'input', 'keyevent', 'KEYCODE_BACK'); await sleep(1000); stage = 2; return true; }
+    if (stage === 0 && terms && manage) { // the link is the paragraph's last words
+      adb('shell', 'input', 'tap', String(manage.box.right - 90), String(Math.round((manage.box.top + manage.box.bottom) / 2)));
+      console.log('  Firefox first run: opened Manage settings');
+      await sleep(1500); stage = 1;
+      return true;
+    }
+    if (nodes.some((x) => !x.page && /as your default browser/.test(x.text)) && await tapUi('Cancel')) { console.log('  Firefox first run: declined being the default browser'); return true; }
+    if (terms && await tapUi('Continue')) { console.log('  Firefox first run: Continue (agrees to the Terms of Use)'); return true; }
+    return false;
+  };
+  /** Opens `url` in a bridged browser and gets past its first-run screens until the page shows under the address bar. */
   const launch = async (url) => {
     // Chrome's first run is switched off as Playwright does it (its command-line file); Firefox's is got past by declinePrompts.
     if (PKG === 'com.android.chrome') {
@@ -229,13 +255,23 @@ try {
     }
     adb('shell', 'am', 'start', '-a', 'android.intent.action.VIEW', '-d', url, PKG);
     const seen = new Set();
-    for (let i = 0; i < 60 && !bridge.page.loads(); i++) {
+    for (let i = 0; i < 60; i++) {
       await sleep(1500);
-      if (bridge.page.loads()) break;
+      const xml = await screenXml(), nodes = uiNodes(xml);
+      if (bridge.page.loads() && nodes.some((x) => !x.page && /localhost:\d+/.test(x.text + x.desc))) return; // the page, with the browser's own bar over it
+      const shown = nodes.filter((x) => !x.page && (x.text || x.desc)).map((x) => x.text || x.desc).join(' | ');
+      if (!seen.has(shown)) {
+        seen.add(shown); console.log(`  waiting for the page; on screen: ${shown.slice(0, 300)}`);
+        if (process.env.FIRST_RUN_DUMP) { // what each first-run screen is made of, to teach the runner a new one
+          mkdirSync(process.env.FIRST_RUN_DUMP, { recursive: true });
+          writeFileSync(`${process.env.FIRST_RUN_DUMP}/screen-${seen.size}.xml`, xml);
+          await device.screenshot({ path: `${process.env.FIRST_RUN_DUMP}/screen-${seen.size}.png` });
+        }
+      }
+      if (BROWSER === 'firefox' && await firstRun(nodes)) continue;
       await declinePrompts();
-      const shown = uiNodes(await screenXml()).filter((x) => !x.page && (x.text || x.desc)).map((x) => x.text || x.desc).join(' | ');
-      if (!seen.has(shown)) { seen.add(shown); console.log(`  waiting for the page; on screen: ${shown.slice(0, 400)}`); }
     }
+    throw new Error(`the page never showed under ${BROWSER}'s address bar in 90 s (FIRST_RUN_DUMP=<dir> keeps each screen)`);
   };
 
   const [w, h] = adb('shell', 'wm', 'size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number);
@@ -264,11 +300,14 @@ try {
 
     // Where the page's (0,0) is on screen: blank the page, tap, and read where the tap landed. Again (`calibrate`)
     // after the screen size changes (`wm size`, a short phone): Chrome's toolbar moves with it. Leaves the page blank.
-    const dpr = await page.evaluate(() => devicePixelRatio);
+    // Chrome's Default zoom changes devicePixelRatio too (test/phone/zoom.js), so it is read again each time.
+    let dpr = 1;
     const origin = { x: 0, y: 0 };
-    const shown = { height: 0, y: 0, top: false }; // the page as calibrated: its height, where it starts, the toolbar over it
+    const shown = { height: 0, y: 0, top: false, mozY: undefined }; // the page as calibrated: its height, where it starts, the toolbar over it
     const calibrate = async () => {
-      const [sw, sh] = adb('shell', 'wm', 'size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number);
+      let [sw, sh] = adb('shell', 'wm', 'size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number); // always the upright size
+      if (await page.evaluate(() => innerWidth > innerHeight)) [sw, sh] = [sh, sw]; // a phone on its side
+      dpr = await page.evaluate(() => devicePixelRatio);
       await page.evaluate(() => {
         window.__tap = null;
         document.body.replaceChildren();
@@ -285,7 +324,7 @@ try {
       // A browser's toolbar slides away as a finger scrolls the page, and the page grows by its height: at the top, it
       // moves the page up the screen too. Where the toolbar is, and the page's height with it showing, aim taps after.
       const bar = uiNodes(await screenXml()).find((x) => !x.page && /localhost:\d+/.test(x.text + x.desc));
-      Object.assign(shown, { height: await page.evaluate(() => innerHeight), y: origin.y, top: !!bar && bar.at[1] < sh / 2 });
+      Object.assign(shown, { height: await page.evaluate(() => innerHeight), y: origin.y, top: !!bar && bar.at[1] < sh / 2, mozY: await page.evaluate(() => window.mozInnerScreenY) });
       console.log(`page origin on screen (${pkg}): ${Math.round(origin.x)},${Math.round(origin.y)} (dpr ${dpr}, screen ${sw}x${sh}); real frames for shot(): ${await page.evaluate(() => String(window.__frame).includes('[native code]'))}`);
       if (bridge) console.log(`  page ${JSON.stringify(await page.evaluate(() => ({ inner: [innerWidth, innerHeight], visual: [visualViewport.width, visualViewport.height, visualViewport.offsetTop], screen: [mozInnerScreenX, mozInnerScreenY], vh: CSS.supports('height', '1dvh') })).catch((e) => e.message))}`);
     };
@@ -299,14 +338,28 @@ try {
       await page.reload({ waitUntil: 'networkidle' }); await run(800);
     };
     await fresh();
-    const touch = async (loc) => {
+    // A finger is not a point: with PLAY_JITTER=0.85 a tap lands at a random spot out to that share of the way to the
+    // target's edge (seeded by PLAY_SEED, so a run can be repeated); with it unset, dead centre.
+    let seedN = Number(process.env.PLAY_SEED) || 1;
+    const random = () => { seedN = (seedN + 0x6d2b79f5) | 0; let t = Math.imul(seedN ^ (seedN >>> 15), 1 | seedN); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const touch = async (loc, jitter = Number(process.env.PLAY_JITTER) || 0) => {
       loc = loc.first();
       await loc.waitFor();
+      const was = await page.evaluate(() => scrollY);
       await loc.scrollIntoViewIfNeeded();
-      const [b, height] = await Promise.all([loc.boundingBox(), page.evaluate(() => innerHeight)]);
-      // The toolbar at the top slid away (or back): the page grew by at most its height. Shrinking is the keyboard: no move.
-      if (shown.top) origin.y = shown.y - (height > shown.height && height - shown.height <= 80 ? height - shown.height : 0) * dpr;
-      const [x, y] = [Math.round(origin.x + (b.x + b.width / 2) * dpr), Math.round(origin.y + (b.y + b.height / 2) * dpr)];
+      // A page scrolled by script is drawn there a frame or two later (Firefox's compositor scrolls on its own): a finger
+      // put down before that lands on what was there before. Two real frames and a little more.
+      if (await page.evaluate(() => scrollY) !== was) {
+        await Promise.race([page.evaluate(() => new Promise((r) => (window.__frame ?? requestAnimationFrame)(() => (window.__frame ?? requestAnimationFrame)(r)))).catch(() => {}), sleep(1000)]);
+        await sleep(250);
+      }
+      const [b, [height, mozY]] = await Promise.all([loc.boundingBox(), page.evaluate(() => [innerHeight, window.mozInnerScreenY])]);
+      // Firefox says where its page is on screen (mozInnerScreenY, CSS px), toolbar or not. Elsewhere: a toolbar at the top
+      // that slid away (or back) grew the page by at most its height; shrinking is the keyboard, which moves nothing.
+      if (mozY !== undefined) origin.y = shown.y + (mozY - shown.mozY) * dpr;
+      else if (shown.top) origin.y = shown.y - (height > shown.height && height - shown.height <= 80 ? height - shown.height : 0) * dpr;
+      const off = (size) => (random() * 2 - 1) * jitter * size / 2;
+      const [x, y] = [Math.round(origin.x + (b.x + b.width / 2 + off(b.width)) * dpr), Math.round(origin.y + (b.y + b.height / 2 + off(b.height)) * dpr)];
       await loc.evaluate((el) => {
         window.__hit = null;
         addEventListener('pointerdown', (e) => {
@@ -318,23 +371,49 @@ try {
       await sleep(700);
       // Where the finger landed in the page: a page that has moved on screen since calibrating (a browser's toolbar
       // sliding away as the page scrolls) shows as a tap off where it was aimed, and the next tap is aimed anew.
-      const hit = await page.evaluate(() => window.__hit).catch(() => null);
+      let hit = await page.evaluate(() => window.__hit).catch(() => undefined);
+      if (hit === null) { // the page saw no finger at all (it went to the browser, or nowhere): a person taps again
+        console.log(`  a tap aimed at ${loc} never reached the page: tapped again`);
+        adb('shell', 'input', 'tap', String(x), String(y));
+        await sleep(700);
+        hit = await page.evaluate(() => window.__hit).catch(() => undefined);
+      }
       if (hit?.[2]) console.log(`  a tap aimed at ${loc} landed on ${hit[2]}`);
       if (hit) {
-        const off = [x - origin.x - hit[0] * dpr, y - origin.y - hit[1] * dpr];
-        if (Math.hypot(...off) > 2 * dpr) { origin.x += off[0]; origin.y += off[1]; shown.y += off[1]; console.log(`  a tap landed ${off.map(Math.round)} px from where it was aimed: the page moved on screen; origin now ${Math.round(origin.x)},${Math.round(origin.y)}`); }
+        const miss = [x - origin.x - hit[0] * dpr, y - origin.y - hit[1] * dpr];
+        if (Math.hypot(...miss) > 2 * dpr) { origin.x += miss[0]; origin.y += miss[1]; shown.y += miss[1]; console.log(`  a tap landed ${miss.map(Math.round)} px from where it was aimed: the page moved on screen; origin now ${Math.round(origin.x)},${Math.round(origin.y)}`); }
       }
       await page.clock.runFor(700);
     };
     const btn = (name, opts) => page.getByRole('button', { name, ...opts }); // opts: e.g. { exact: true }, so 'Run' isn't a chip named run(
-    /** A real finger drag across the middle of `loc`, `dx` CSS px sideways. */
-    const swipe = async (loc, dx) => {
+    /** `loc`'s box cut to what is on screen (a page-tall element's middle is far below the glass). */
+    const visible = async (loc) => {
       const b = await loc.first().boundingBox();
-      const at = (x) => String(Math.round(origin.x + x * dpr));
-      const y = String(Math.round(origin.y + (b.y + b.height / 2) * dpr));
-      const x0 = b.x + b.width / 2 - dx / 2;
-      adb('shell', 'input', 'swipe', at(x0), y, at(x0 + dx), y, '400');
+      const [vw, vh] = await page.evaluate(() => [innerWidth, innerHeight]);
+      const x = Math.max(b.x, 0), y = Math.max(b.y, 0);
+      return { x, y, width: Math.min(b.x + b.width, vw) - x, height: Math.min(b.y + b.height, vh) - y };
+    };
+    /** A real finger drag across the middle of `loc`, `dx` CSS px sideways and `dy` down (a negative one scrolls the content up). */
+    const swipe = async (loc, dx, dy = 0) => {
+      const b = await visible(loc);
+      const at = (v, o) => String(Math.round(o + v * dpr));
+      const x0 = b.x + b.width / 2 - dx / 2, y0 = b.y + b.height / 2 - dy / 2;
+      adb('shell', 'input', 'swipe', at(x0, origin.x), at(y0, origin.y), at(x0 + dx, origin.x), at(y0 + dy, origin.y), '400');
       await sleep(800);
+    };
+    /** A finger put down on `loc` and held `ms` (a long press). */
+    const press = async (loc, ms = 800) => {
+      const b = await loc.first().boundingBox();
+      const x = String(Math.round(origin.x + (b.x + b.width / 2) * dpr)), y = String(Math.round(origin.y + (b.y + b.height / 2) * dpr));
+      adb('shell', 'input', 'swipe', x, y, x, y, String(ms));
+      await sleep(500);
+    };
+    /** Two taps on the middle of `loc`, one after the other in a single shell (a double tap). */
+    const doubleTap = async (loc) => {
+      const b = await loc.first().boundingBox();
+      const x = Math.round(origin.x + (b.x + b.width / 2) * dpr), y = Math.round(origin.y + (b.y + b.height / 2) * dpr);
+      adb('shell', `input tap ${x} ${y}; input tap ${x} ${y}`);
+      await sleep(800); await page.clock.runFor(700);
     };
     const dragTo = async (from, to) => {
       const at = async (loc) => { const b = await loc.first().boundingBox(); return [origin.x + (b.x + b.width / 2) * dpr, origin.y + (b.y + b.height / 2) * dpr].map((n) => String(Math.round(n))); };
@@ -359,17 +438,23 @@ try {
       return device.screenshot({ path: `${out}/${String(n++).padStart(2, '0')}-${label}.png` });
     };
     const uids = () => adb('shell', 'cmd', 'package', 'list', 'packages', '-U', pkg).match(/uid:\d+/g)?.map((u) => u.slice(4)) || [];
-    /** `pkg` is playing sound right now: its stream is started and AudioFlinger has an active track. */
-    const checkSound = () => {
+    /** `pkg` is playing sound right now: its stream is started and AudioFlinger has an active track (both, as booleans). */
+    const playing = () => {
       const ids = uids();
       const started = adb('shell', 'dumpsys', 'audio').split('\n').some((l) => l.includes('state:started') && ids.some((u) => l.includes(`u/pid:${u}/`)));
-      check(`sound: ${pkg} audio stream state:started (dumpsys audio)`, started);
       // A track row: "Id Active Client(pid/uid) ...", e.g. "56    yes    3897/  10160".
       const flinger = adb('shell', 'dumpsys', 'media.audio_flinger');
-      check(`sound: active ${pkg} track (dumpsys media.audio_flinger)`, ids.some((u) => new RegExp(`\\byes\\s+\\d+/\\s*${u}\\b`).test(flinger)));
+      return { started, track: ids.some((u) => new RegExp(`\\byes\\s+\\d+/\\s*${u}\\b`).test(flinger)) };
+    };
+    const checkSound = () => {
+      const { started, track } = playing();
+      check(`sound: ${pkg} audio stream state:started (dumpsys audio)`, started);
+      check(`sound: active ${pkg} track (dumpsys media.audio_flinger)`, track);
     };
     const vibrations = () => (adb('shell', 'dumpsys', 'vibrator_manager').match(new RegExp(pkg.replaceAll('.', '\\.'), 'g')) || []).length;
-    return { page, touch, btn, swipe, dragTo, shot, run, seed, fresh, checkSound, vibrations, calibrate, origin, dpr };
+    /** Where a point of the page (CSS px from its top left) is on the screen, as calibrated. */
+    const screenAt = (x, y) => [origin.x + x * dpr, origin.y + y * dpr];
+    return { page, touch, btn, swipe, press, doubleTap, dragTo, shot, run, seed, fresh, checkSound, playing, vibrations, calibrate, screenAt };
   };
   const page = bridge ? bridge.page : await ctx.newPage();
   const chrome = await helpersFor(page, PKG, () => page.goto(base, { waitUntil: 'networkidle' }));
@@ -399,13 +484,13 @@ try {
     await declinePrompts();
     try {
       const { default: scenario } = await import(`${ROOT}test/phone/${name}.js`);
-      await scenario({ ...chrome, device, adb, type, check, declinePrompts, screenXml, uiNodes, tapUi, grab, attach, browser: BROWSER, pkg: PKG });
+      await scenario({ ...chrome, device, ctx, adb, type, check, declinePrompts, screenXml, uiNodes, tapUi, grab, attach, browser: BROWSER, pkg: PKG });
     } catch (e) {
       errors.push(`scenario ${name}: ${e.message.split('\n').filter((l) => !/^Call log:|^\s*$/.test(l)).slice(0, 2).join(' ')}`);
       await chrome.shot('failed').catch(() => {});
     }
     // Chrome may have frozen its page while an app was in front (test/phone/app.js): then skip this.
-    const overflow = await Promise.race([page.evaluate(() => document.documentElement.scrollWidth - innerWidth), sleep(5000).then(() => 0)]);
+    const overflow = await Promise.race([page.evaluate(() => document.documentElement.scrollWidth - innerWidth).catch(() => 0), sleep(5000).then(() => 0)]); // a scenario may have killed Chrome
     check('no sideways overflow', overflow <= 0, overflow > 0 ? `${overflow}px` : '');
     for (const r of results.slice(before.results)) console.log(`  ${r}`);
     for (const e of errors.slice(before.errors)) console.log(`  ERROR ${e}`);

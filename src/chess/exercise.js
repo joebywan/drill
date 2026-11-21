@@ -6,55 +6,82 @@ import { Accessibility } from 'cm-chessboard/src/extensions/accessibility/Access
 import { PromotionDialog } from 'cm-chessboard/src/extensions/promotion-dialog/PromotionDialog.js';
 import { startPuzzle, playerColor, tryMove, hint, needed } from './puzzle.js';
 import { answer, explanation, grade, hop, kind, load, meets, solutions, starPath, starsPrompt, targets } from './items.js';
+import { NAMES as PIECE } from './why.js';
 import { move as animate, play } from '../feel.js';
 import { reducedMotion } from '../cast/kit.js';
+import { LINES } from '../cast/lines.js';
+import { verdictHeight } from '../fit.js';
 
 const ASSETS = new URL('../../node_modules/cm-chessboard/assets/', import.meta.url).href;
 const REPLY_DELAY = 450;
-const PIECE = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
 
 /**
  * Mounts one item in `el`. `say(text, mood?)` sets what the coach says, and how she looks;
  * `done(correct, text, { hinted })` is called once, when the item is over: true or false for a marked
  * item (false if any mistake was made; true with `hinted` if it was solved after being shown the
- * hint), null for a teach card, with the explanation to show.
+ * hint), null for a teach card, with the explanation to show: the first of its wordings (items.js `explanation`) whose
+ * verdict leaves the board room, measured on the page.
  * Returns a cleanup function.
  */
 export function mount(el, item, ctx) {
   el.innerHTML = '<div class="board lesson"></div><div class="choices"></div>';
   const stop = fitBoard(el.firstChild, el.lastChild, item, ctx);
+  stop.refit(); // sized before the board is drawn in it, so it isn't drawn twice
   const cleanup = MOUNTS[kind(item)](el.firstChild, el.lastChild, item, stop.ctx);
   stop.refit();
   return () => { stop(); cleanup(); };
 }
 
 const SQUARE_MIN = 40; // a square to tap stays thumb-sized
+const TAPPED = ['tap', 'move', 'stars', 'find']; // a true/false board is only looked at
 const FRAME = 8.7; // a board is its eight squares and a frame of about 0.7 of one
+const ANSWERED = 150; // the smallest an answered board (or a teach card's) gets: nobody taps it, the final position still reads
 
 /**
- * Keeps the board on the screen. Asked, the coach's words and the whole board show together (the page has
- * nothing to scroll), the board giving up size down to SQUARE_MIN squares (to tap) to do it; answered (or a teach card),
- * the whole board sits above the verdict banner, and nobody needs to tap it then, so it may shrink further.
- * A board that already fits is left as it is; one that does not first compacts the coach and the gaps (`tall`, styles.css).
+ * Of `wordings` (best first), the first whose verdict, under the longest headline the coach's `lines` could give,
+ * leaves the board at least ANSWERED px above it, measured on the page as it is now; else the last. With no
+ * verdict banner on the page, the first.
+ */
+export function worded(boardEl, wordings, lines = LINES) {
+  scrollTo(0, 0);
+  const top = boardEl.getBoundingClientRect().top;
+  return wordings.find((w) => innerHeight - verdictHeight(w, lines) - top - 6 >= ANSWERED) ?? wordings.at(-1);
+}
+
+/**
+ * Keeps the board on the screen, a lesson's or a game's (games.js). Played, the coach's words and the whole board show
+ * together above `choices` (the page has nothing to scroll), the board giving up size down to SQUARE_MIN squares (to tap)
+ * to do it, and on a narrow phone growing into the page's gutters to reach them; answered, over (a game's banner), or only
+ * looked at, the whole board sits above the banner or the buttons, and may shrink further. A board that already fits is
+ * left as it is; one that does not first compacts the coach and the gaps (`tall`, styles.css), and then, if it still can't be played,
+ * hides the coach's face (`tighter`). The page under it has only
+ * the room the fixed buttons or banner cover. `tapped()` says whether the board is played (a game's changes: Rosa's while her level is picked).
  * Returns `stop`, with `refit` and the `ctx` to mount with (its say and done refit afterwards).
  */
-function fitBoard(boardEl, choices, item, ctx) {
+export function fitBoard(boardEl, choices, item, ctx, tapped = () => TAPPED.includes(kind(item))) {
   const refit = () => {
     if (!boardEl.isConnected) return;
     scrollTo(0, 0); // measured from the top of the page, where a board that fits stays
     boardEl.style.width = '';
+    boardEl.style.marginInline = '';
     const natural = boardEl.getBoundingClientRect().width;
     const foot = document.querySelector('.foot.show');
-    const tapped = ['tap', 'move', 'stars', 'find'].includes(kind(item)); // a true/false board is only looked at
-    const tray = choices.isConnected && choices.children.length ? choices.offsetHeight : 0;
-    const low = innerHeight - (foot ? foot.offsetHeight : tray);
-    const roomNow = () => low - boardEl.getBoundingClientRect().top - 6;
+    const played = !foot && tapped();
+    // What covers the bottom of the screen, measured again once the gaps have given way (theirs too).
+    const low = () => innerHeight - (foot ? foot.offsetHeight : choices?.isConnected && choices.children.length ? choices.offsetHeight : 0);
+    const roomNow = () => low() - boardEl.getBoundingClientRect().top - 6;
+    const least = played ? SQUARE_MIN * FRAME : ANSWERED;
     // Too tall for the screen: first the coach and the gaps give way (the shared `.tall` rules in styles.css), then the board.
-    if (roomNow() < natural && !(foot && tapped)) boardEl.classList.add('tall');
-    const room = roomNow();
-    const least = foot || !tapped ? 150 : SQUARE_MIN * FRAME;
-    const side = Math.floor(Math.min(natural, Math.max(room, least)));
-    if (side < natural) { boardEl.style.width = `${side}px`; boardEl.style.marginInline = 'auto'; }
+    if (roomNow() < Math.max(natural, least) && !(foot && tapped())) boardEl.classList.add('tall');
+    // Still no room to play it (a long line from her on a short phone): her face gives way too, and her words take its width.
+    if (played && roomNow() < least) boardEl.classList.add('tighter');
+    // A board as wide as its column (a phone's) may grow into the gutters, 4px short of the edges; a wide screen's keeps its size.
+    const widest = natural < boardEl.parentElement.clientWidth - 1 ? natural : innerWidth - 8;
+    const side = Math.floor(Math.min(widest, Math.max(least, Math.min(natural, roomNow()))));
+    if (side !== Math.floor(natural)) { boardEl.style.width = `${side}px`; boardEl.style.marginInline = side > natural ? `${(natural - side) / 2}px` : 'auto'; }
+    // The page scrolls no further than the fixed buttons or banner need; still under them (a 206px page, Chrome at 200% zoom), clear of them.
+    const play = boardEl.closest('.play');
+    if (play) play.style.paddingBottom = `${innerHeight - low() + 4}px`;
   };
   const stop = () => removeEventListener('resize', refit);
   addEventListener('resize', refit);
@@ -63,10 +90,10 @@ function fitBoard(boardEl, choices, item, ctx) {
     ...ctx,
     say: (...a) => { ctx.say(...a); refit(); },
     // Over, the bubble stops asking for more or counting ("Keep going", "Found 2 of 3"); the banner has the explanation.
-    // A true/false claim stays: it is what the explanation is about.
+    // A true/false claim stays: it is what the explanation is about. Then the words give way to the board, not the other way.
     done: (answered, text, kept) => {
       if (answered !== null && kind(item) !== 'truefalse') ctx.say(answered && !kept?.hinted ? "That's it." : "Here's how it goes.");
-      ctx.done(answered, text, kept);
+      ctx.done(answered, Array.isArray(text) ? worded(boardEl, text, ctx.coach?.lines) : text, kept);
       refit();
     },
   };
@@ -230,7 +257,7 @@ function playMove(b, fen, san) {
 }
 
 const feedback = (item) =>
-  (kind(item) === 'truefalse' ? `It's ${answer(item) ? 'true' : 'false'}. ` : '') + explanation(item);
+  explanation(item).map((w) => (kind(item) === 'truefalse' ? `It's ${answer(item) ? 'true' : 'false'}. ` : '') + w);
 
 const MOUNTS = {
   teach(boardEl, choices, item, { say, done }) {
@@ -438,6 +465,10 @@ const MOUNTS = {
     };
     const open = () => b.enableMoveInput(input, b.getOrientation());
     const attempt = (from, to, promotion) => {
+      if (!state.game.moves({ square: from, verbose: true }).some((m) => m.to === to)) { // not a move at all: explained, never counted as a miss
+        say(cantMove(state.game.get(from)?.type), 'think');
+        return false;
+      }
       const result = tryMove(state, from, to, promotion);
       if (result === 'piece') {
         say(`Right move, another piece. This position needs a ${PIECE[needed(state)]}, not a ${PIECE[promotion]}.`, 'think');

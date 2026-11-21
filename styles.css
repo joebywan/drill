@@ -35,10 +35,14 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.4 system-ui, sans-serif;
+  font: 1rem/1.4 system-ui, sans-serif; /* rem: the browser's own font size setting reaches every line */
 }
 #app { position: relative; max-width: 520px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
+/* A pull down from the top of a screen must not hand the page to Chrome's pull-to-refresh, which reloads it and loses the lesson or screen (phone run touch-swipe). */
+html, body { overscroll-behavior-y: none; }
 button { font: inherit; color: inherit; cursor: pointer; }
+/* A held finger on a button or the board must not select its glyph and raise the system's Copy / Share toolbar over the controls. */
+button, .cm-chessboard { -webkit-user-select: none; user-select: none; }
 /* One focus ring for every control, in the text colour so it reads on both themes. */
 :focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
 /* Headings take focus when a screen opens, for screen readers; they aren't controls. */
@@ -64,7 +68,7 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
   margin: 28px auto 12px; width: fit-content; padding: 6px 16px; border-radius: 999px;
   background: var(--card); border: 1px solid var(--line); font-size: 1rem;
 }
-.trailhead { position: relative; width: 320px; margin: 0 auto; }
+.trailhead { position: relative; width: min(320px, 100%); margin: 0 auto; } /* narrower than 320 (a 320px phone, zoomed), the drawn path crops its empty sides (slice) */
 .trail { position: absolute; top: 0; left: 0; }
 .trail path { fill: none; stroke-width: 12; stroke-linecap: round; }
 .trail .ahead { stroke: var(--line); }
@@ -85,9 +89,9 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 .node:active:not(:disabled) { transform: translateY(4px); box-shadow: none; }
 @keyframes beckon { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-5px) scale(1.05); } } /* the next node gently bobs */
 @media (prefers-reduced-motion: reduce) { .node.here { animation: none; } }
-.path .label { margin-top: 10px; max-width: calc(120px * var(--text-scale, 1)); /* as wide as its text is big: the same lines, so the row holds it */ padding: 1px 6px; border-radius: 6px; background: var(--bg); font-size: .8rem; color: var(--muted); text-align: center; }
+.path .label { margin-top: 10px; max-width: calc(128px * var(--text-scale, 1)); /* as wide as its text is big: the same lines, so the row holds it */ padding: 1px 6px; border-radius: 6px; background: var(--bg); font-size: .8rem; color: var(--muted); text-align: center; }
 .path li:has(.here) .label { color: var(--text); font-weight: 700; }
-.guide { position: absolute; top: -6px; width: 72px; }
+.guide { position: absolute; top: -6px; width: min(72px, 22vw); } /* smaller on a narrow page (206px at 200% zoom), so it stays beside its node on the page */
 .guide.left { right: 50%; margin-right: calc(32px * var(--text-scale, 1) + 8px); } /* half a node, and 8px */
 .guide.right { left: 50%; margin-left: calc(32px * var(--text-scale, 1) + 8px); }
 .guide svg { display: block; width: 100%; transform-origin: 50% 100%; }
@@ -147,14 +151,26 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
   padding: 16px; padding-bottom: max(16px, env(safe-area-inset-bottom));
   background: var(--card); border-top: 2px solid var(--line);
   transform: translateY(110%); transition: transform .22s ease-out, visibility 0s .22s; visibility: hidden;
+  /* Never more than half the screen (decision 21 at any text size): past that the verdict's words scroll in their own
+     box (scrollBox() in app.js) and Continue stays in view. verdictHeight() in fit.js measures it so, and what is
+     fitted above it gets the other half. */
+  display: flex; flex-direction: column; max-height: 50dvh;
 }
+.foot .verdict { flex: 0 1 auto; min-height: 0; --fade: var(--card); } /* it scrolls (.scrolls) only when it has to, so a headline's pop isn't clipped */
+.foot.right .verdict { --fade: var(--right-bg); }
+.foot.wrong .verdict { --fade: var(--wrong-bg); }
+.foot .next { flex: none; }
 .foot.show { transform: none; visibility: visible; transition: transform .22s ease-out; }
 .foot.right { background: var(--right-bg); border-color: var(--accent); }
 .foot.wrong { background: var(--wrong-bg); border-color: var(--wrong); }
 .foot.right strong { color: var(--accent); }
 .foot.wrong strong { color: var(--wrong); }
 .foot.plain .verdict { display: none; }
-.verdict strong { display: block; font-size: 1.2rem; }
+/* With larger text the headline (the coach's flourish) stops growing: no bigger than the explanation under it, which is
+   what teaches. 19.2px / --text-scale is 1.2rem at ordinary text; in the Android app the text zoom scales it back up. */
+.verdict strong { display: block; font-size: min(1.2rem, max(1rem, calc(19.2px / var(--text-scale, 1)))); }
+/* Past half the screen it is the first to give way: two lines (giveWay() in fit.js); a screen reader still reads it all. */
+.foot.clamp .verdict strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .verdict p { margin: 6px 0 0; }
 .foot.wrong .next { background: var(--wrong); }
 .foot .next { margin-bottom: 0; }
@@ -257,7 +273,7 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 .duo .lumi { width: 104px; }
 .spark { position: absolute; left: 50%; top: 18%; margin-left: -12px; font-size: 28px; font-style: normal; color: var(--heat-gold); opacity: 0; pointer-events: none; }
 .cheer {
-  position: absolute; right: calc(50% - 128px); top: -6px; margin: 0; padding: 3px 10px; border-radius: 12px;
+  position: absolute; right: max(0px, calc(50% - 128px)); top: -6px; /* on the page at 206px (200% zoom) */ margin: 0; padding: 3px 10px; border-radius: 12px;
   background: var(--card); border: 2px solid var(--line); font-size: .85rem; font-weight: 700; white-space: nowrap;
 }
 .summary h1 { font-size: 1.45rem; line-height: 1.25; margin: 4px 0 8px; text-wrap: balance; }
@@ -627,18 +643,22 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 /* --fade is the colour behind the content at the scroller's own edge: the card's only where the scroller is the card or sits in it. */
 .code-given.scrolls, .quiz .card.scrolls, .quiz .card .scrolls { --fade: var(--card); }
 /* A program too tall for the screen: the coach and the gaps give it room, as on a short phone. */
-.play:has(:is(.program, .quiz, .board.lesson).tall) .topic { position: absolute; clip-path: inset(50%); }
-.play:has(:is(.program, .quiz, .board.lesson).tall) .who { width: 44px; }
-.play:has(:is(.program, .quiz, .board.lesson).tall) .coach { margin-bottom: 4px; }
-.play:has(:is(.program, .quiz, .board.lesson).tall) .bubble { margin-bottom: 6px; padding: 6px 10px; }
-.play:has(:is(.program, .quiz, .board.lesson).tall) .grid-world { margin-bottom: 4px; }
+.play:has(:is(.program, .quiz, div.board).tall) .topic { position: absolute; clip-path: inset(50%); }
+.play:has(:is(.program, .quiz, div.board).tall) .who { width: 44px; }
+.play:has(:is(.program, .quiz, div.board).tall) .coach { margin-bottom: 4px; }
+.play:has(:is(.program, .quiz, div.board).tall) .bubble { margin-bottom: 6px; padding: 6px 10px; }
+.play:has(:is(.program, .quiz, div.board).tall) .grid-world { margin-bottom: 4px; }
 /* How tall her words stay is each screen's own rule, never the shared one above: a longer list there once outranked a quiz's. */
-.play:has(.program.tall) .bubble { min-height: 5.5em; }
+.play:has(.program.tall) .bubble { min-height: calc(5.5em / var(--text-scale, 1)); } /* with larger text, no taller than at 16px: the program needs the room */
 .play:has(.quiz.tall) .bubble { min-height: 0; }
 /* A chess board that is too tall: the coach gives way as above, her words keep two lines so the board never jumps (fitBoard, src/chess/exercise.js). */
-.play:has(.board.lesson.tall) { padding-bottom: 8px; }
-.play:has(.board.lesson.tall) .bubble { min-height: 3.4em; font-size: .9rem; line-height: 1.3; }
-.play:has(.board.lesson.tall) .choices { padding-block: 8px; }
+.play:has(div.board.tall) .bubble { min-height: 3.4em; font-size: .9rem; line-height: 1.3; }
+.play:has(div.board.tall) .choices { padding-block: 8px; }
+.bar:has(+ .play div.board.game.tall) { padding-block: 4px; padding-top: max(4px, env(safe-area-inset-top)); }
+.play:has(div.board.tighter) .who, .play:has(div.board.tighter) .bubble::before { display: none; }
+.play:has(div.board.tighter) .bubble { padding-block: 4px; }
+.play:has(div.board.tighter) .choices { padding-block: 4px; }
+.play:has(div.board.tighter) .choices .choice { padding-block: 9px; } /* still a 44px target */
 .choices.tray { flex-wrap: wrap; gap: 6px; padding-top: 8px; }
 .tray .tile { flex: 1 1 auto; min-width: 22%; min-height: 44px; padding: 4px 8px; white-space: nowrap; }
 /* A tile drawn shorter (a short phone) still answers a thumb across 44px: its rows are 6px apart. */
@@ -928,11 +948,14 @@ body:has(main.night) {
 /* Chess games (chess/games.js): a small row on chess's home, then the session frame. */
 .games { align-items: center; }
 .games > span { font-size: .8rem; font-weight: 700; color: var(--muted); }
-.play:has(.game-note) .bubble, .play:has(.hud) .bubble { min-height: 7.4em; }
+.play:has(div.board.game) .bubble { min-height: 7.4em; }
+.play:has(div.board.game.tall) .bubble { min-height: 3.9em; } /* three lines: her longest but a hint's, so the board doesn't jump as she talks */
+/* What a game counts sits in the session bar, where a lesson's meter is (games.js inBar). */
+.game-bar { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-weight: 700; color: var(--muted); }
 .cm-chessboard.wingbeat .markers .marker.marker-frame-danger { stroke: var(--wrong); stroke-width: 3px; opacity: 1; } /* Scramble's hunted piece */
-.game-tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 10px; }
-.game-tabs .course { padding: 4px 12px; }
-.hud { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; font-weight: 700; color: var(--muted); }
+.game-tabs { display: flex; gap: 8px; }
+.game-tabs .course { min-width: 44px; padding: 4px 0; }
+.hud { flex: 1; display: flex; align-items: baseline; justify-content: space-between; }
 .hud-clock { min-width: 4em; font-variant-numeric: tabular-nums; font-size: 1.15rem; color: var(--text); }
 .hud-score { font-size: 1.6rem; font-variant-numeric: tabular-nums; color: var(--accent); }
 .hud-best { min-width: 4em; text-align: right; font-size: .9rem; }
@@ -940,7 +963,6 @@ body:has(main.night) {
 .game-actions .choice { flex: 1; padding-inline: 4px; }
 .game-actions.game-levels { flex-wrap: wrap; }
 .game-actions.game-levels .choice { flex: 1 1 40%; }
-.game-note { margin: 10px 0 0; min-height: 4.2em; font-size: .95rem; }
 
 /* ---- The code courses (src/code/exercise.js): word chips laid out as lines of code ---- */
 :root { --mono: ui-monospace, Menlo, Consolas, "DejaVu Sans Mono", monospace; }
@@ -997,7 +1019,7 @@ body:has(main.night) {
 .bar .guide-link { margin: 0 0 0 auto; }
 .field-guide { padding: 0 16px 40px; }
 .field-guide h1 { margin: 0 0 12px; font-size: 1.6rem; }
-.guide-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.guide-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(140px * var(--text-scale, 1))), 1fr)); } /* wider with larger text, so a name stays whole */
 .guide-tile {
   display: grid; justify-items: center; gap: 2px; width: 100%; height: 100%; padding: 8px 8px 10px; border-radius: 14px;
   border: 1px solid var(--line); background: var(--card); color: var(--text); text-align: center; font-size: .85rem;
@@ -1040,6 +1062,7 @@ body:has(main.night) {
 
 /* Lumi's wardrobe: a grid of Lumi in every skin; one not given yet is dimmed, with what gives it. */
 .bar .wardrobe-link { margin: 0; }
+.bar:has(.wardrobe-link) { flex-wrap: wrap; row-gap: 4px; } /* on a narrow page (200% zoom) its links take a second row */
 .wardrobe { padding: 0 16px 40px; }
 .wardrobe h1 { margin: 0 0 4px; font-size: 1.6rem; }
 .skins { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }

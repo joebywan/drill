@@ -92,6 +92,8 @@ function client() {
       if (under || r.top < 0 || r.left < 0 || r.bottom > innerHeight || r.right > innerWidth) el.scrollIntoView({ block: 'center', inline: 'center' });
     },
     eval: ([el], { fn, arg }) => (0, eval)(`(${fn})`)(el, arg),
+    evalAll: (els, { fn, arg }) => (0, eval)(`(${fn})`)(els, arg),
+    disabled: ([el]) => disabled(el),
   };
   /** Until the locator is in `state`, or `ms` pass: true or false. */
   const until = (steps, state, ms) => new Promise((done) => {
@@ -220,6 +222,11 @@ export async function bridged(port, launch) {
     }
   };
 
+  const clockDo = async (what, param) => {
+    const args = param === undefined ? '' : `, ${param}`;
+    inits.push(`globalThis.__pwClock.controller.log('${what}', ${Date.now()}${args});`);
+    await evaluate(`globalThis.__pwClock.controller.${what}(${param ?? ''})`);
+  };
   const matcher = (m) => (m === undefined ? undefined : m instanceof RegExp ? { re: m.source, flags: m.flags } : { text: String(m) });
   class Locator {
     constructor(steps) { this.steps = steps; }
@@ -238,6 +245,10 @@ export async function bridged(port, launch) {
     }
     async #attached(op, x) { await this.waitFor({ state: 'attached' }); return this.#op(op, x); }
     count() { return this.#op('count'); }
+    evaluateAll(fn, arg) { return this.#op('evalAll', { fn: String(fn), arg }); }
+    async isDisabled() { await this.waitFor({ state: 'attached' }); return this.#op('disabled'); }
+    async isEnabled() { return !(await this.isDisabled()); }
+    async isHidden() { return !(await this.isVisible()); }
     isVisible() { return this.#op('visible'); }
     allTextContents() { return this.#op('texts'); }
     boundingBox() { return this.#attached('box'); }
@@ -263,12 +274,16 @@ export async function bridged(port, launch) {
         if (current) { await evaluate(script); await evaluate(`globalThis.__pwClock.controller.install(${at})`); }
       },
       runFor: (ms) => evaluate(`globalThis.__pwClock.controller.runFor(${ms})`),
+      // As Playwright does it: logged for the pages to come, and done in this one.
+      resume: () => clockDo('resume'),
+      fastForward: (ms) => clockDo('fastForward', ms),
+      setSystemTime: (t) => clockDo('setSystemTime', +new Date(t)),
     },
     evaluate,
     waitForFunction: (fn, arg, { timeout: ms = timeout } = {}) => poll_('a function to return true', async () => !!(await evaluate(fn, arg)), ms),
     waitForTimeout: sleep,
     url: () => url,
-    goto: (to) => navigate(() => (current ? evaluate((u) => { location.href = u; }, to) : launch(to))),
+    goto: async (to) => { if (!current) { await launch(to); return settle(); } return navigate(() => evaluate((u) => { location.href = u; }, to)); }, // a first page: `launch` waits for it
     reload: () => navigate(() => evaluate(() => location.reload())),
     locator: (css) => root.locator(css),
     getByRole: (role, o) => root.getByRole(role, o),

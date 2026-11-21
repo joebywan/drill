@@ -3,9 +3,9 @@
     "The board": "Find the letter along the bottom first, then count up the numbers on the side. e4 is column e, row 4.",
     "How pieces move": "Rooks go straight, bishops go diagonally, a queen does both, a king steps one square, and a knight jumps in an L. Pick a piece up and the dots show where it can go.",
     "Capturing": "A piece takes by landing on an enemy square, along the way it normally moves. Pawns are the exception: they move straight but take one square diagonally forward.",
-    "Check and checkmate": "Check means the king is attacked. There are three ways out: move the king, block the line, or take the attacker. If none of them works, that is checkmate.",
+    "Check and checkmate": "Check means the king is attacked. There are three ways out: move the king, block the line, or take the attacker.",
     "Forks": "A fork is one piece attacking two at once. Look for a square your piece can reach that touches both targets. Knights are especially good at this.",
-    "Mate in one": "List every check you can give, then test each one: can the king step away, can anything block, can anything take the checker? If all three are no, that's the move.",
+    "Mate in one": "List every check you can give, then test each one: can the king step away, can anything block, can anything take the checking piece? If all three are no, that's the move.",
     "Free pieces": "Before taking, count who guards the piece. If nothing defends it, it is free. If it is defended, compare what you win with what you give up.",
     "Pins": "A pin holds a piece in place because moving it would expose something bigger behind it. Look along straight lines and diagonals for two enemy pieces in a row.",
     "Skewers": "A skewer is a pin the other way round: the big piece is in front, has to move, and the one behind it falls. Look for lines through the king or queen.",
@@ -13,11 +13,11 @@
     "Mate in two": "Start with the move that forces a reply: usually a check. Then ask what the only answer is, and find the mate after it.",
     "Discovered attacks": "Move one piece out of the way and the piece behind it attacks along the opened line. The piece that moved gets a free threat of its own.",
     "Double check": "Two pieces give check at once. Nothing can block both or take both, so the king has to move, which makes the king very easy to chase.",
-    "Trapped pieces": "Look at where the enemy piece can go. If every square it can reach is covered, it can't escape, so attack it and it falls.",
+    "Trapped pieces": "Look at where the enemy piece can go. If every square it can reach is attacked, it can't escape, so attack it and it falls.",
     "Deflection": "Find the piece doing an important job, like guarding a square. Force it to move away, then use the job it left behind.",
     "Attraction": "Offer something on a square that drags a piece, often the king, to where you want it. Then the follow-up works because of where it now stands.",
-    "Promotion": "Clear the way for your pawn. Often a sacrifice or a check gains the one move it needs to reach the last row and become a queen.",
-    "Mate in three": "Work forwards with forcing moves only: checks first, then captures. After each one, ask what replies are possible. Few replies means an easy line to follow."
+    "Promotion": "Clear the way for your pawn. Often giving up a piece, or a check, gains the one move it needs to reach the last row and become a queen.",
+    "Mate in three": "Work forwards with moves that leave few replies: checks first, then captures. After each one, ask what replies are possible. Few replies means an easy line to follow."
   },
   "maths": {
     "Mental maths": "Make the sum easier first. Round one number to a ten, work that out, then fix up what you changed. 38 + 5 is 40 + 3.",
@@ -51,7 +51,7 @@
     "From blocks to code": "It's the same plan in different clothes. A for line is a repeat, its braces hold the inside, and each line ending in a semicolon is one step."
   },
   "javascript": {
-    "Printing": "console.log prints what is in its brackets. Text goes in quote marks, numbers and sums don't. A comparison prints true or false.",
+    "Printing to the screen": "console.log prints what is in its brackets on the screen. Text goes in quote marks, numbers and sums don't. A comparison prints true or false.",
     "Variables": "A name holds a value. let makes one that can change, const one that can't. Reading a name gives its newest value, line by line from the top.",
     "Text": "+ glues text with no space added. .length counts letters, and places start at 0, so the first letter is [0].",
     "Conditions": "Read the test on its own first: is it true right now? True runs the first { }, false runs the else if there is one. && needs both sides, || needs one.",

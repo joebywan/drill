@@ -36,7 +36,12 @@
     ] },
     { "when": { "light": "done", "streak": "month" }, "lines": [
       "Done again. A month of this. I'm up on my hind legs and staying here.",
-      "{days} days of Japanese so far. The kana know your name now."
+      "{days} days of learning so far. The kana have heard your name."
+    ] },
+    { "when": { "elsewhere": true }, "lines": [
+      "Today's learning is done. The kana will keep.",
+      "A lesson done today, just not kana. I'll take a little credit anyway.",
+      "Learning's done for today. I'm off for a bamboo nap. Kana are here whenever."
     ] },
     { "when": { "light": "resting" }, "lines": [
       "A rest day. Red pandas nap up to fifteen hours. I'm just saying.",
@@ -64,11 +69,11 @@
       "Night owl hours. Red panda hours, I mean."
     ] },
     { "when": { "light": "not yet", "streak": "week" }, "lines": [
-      "{count} days of kana in a row. My tail is fluffed.",
-      "A week of Japanese. I've been telling the other pandas."
+      "{count} days of lessons in a row. My tail is fluffed.",
+      "A week of lessons. I've been telling the other pandas."
     ] },
     { "when": { "light": "not yet", "streak": "month" }, "lines": [
-      "A month of kana. I'm framing a maple leaf for you.",
+      "A month of lessons. I'm framing a maple leaf for you.",
       "{count} days in a row. This calls for a pose."
     ] }
   ],

@@ -14,7 +14,7 @@ const COURSES = ['chess', 'maths', 'japanese', 'coding', 'javascript', 'typescri
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default async (h) => {
-  const { page, adb, touch, btn, shot, seed, run, grab, check, origin, dpr, swipe, calibrate, pkg } = h;
+  const { page, adb, touch, btn, shot, seed, run, grab, check, screenAt, calibrate, pkg } = h;
   const times = (n) => Math.ceil(n * (Number(process.env.MEET_REPS) || 1)); // MEET_REPS=0.1 for a quick try
   const small = process.env.MEET_SMALL;
   if (small) { adb('shell', 'wm', 'size', small); await run(1500); await calibrate(); }
@@ -33,7 +33,7 @@ export default async (h) => {
   const tapNow = async (loc) => {
     await loc.first().scrollIntoViewIfNeeded();
     const b = await loc.first().boundingBox();
-    adb('shell', 'input', 'tap', String(Math.round(origin.x + (b.x + b.width / 2) * dpr)), String(Math.round(origin.y + (b.y + b.height / 2) * dpr)));
+    adb('shell', 'input', 'tap', ...screenAt(b.x + b.width / 2, b.y + b.height / 2).map((v) => String(Math.round(v))));
   };
   /** The button as drawn: the share of its pixels unlike its background (its words), and what the page says of it. */
   const look = async (route, when) => {
@@ -57,8 +57,8 @@ export default async (h) => {
       };
     }).catch((e) => ({ error: e.message }));
     if (!state?.box) { looks.push({ route, when, state }); return; }
-    const x0 = Math.round(origin.x + state.box.x * dpr) + 6, y0 = Math.round(origin.y + state.box.y * dpr) + 6;
-    const x1 = Math.round(origin.x + (state.box.x + state.box.width) * dpr) - 6, y1 = Math.round(origin.y + (state.box.y + state.box.height) * dpr) - 6;
+    const [x0, y0] = screenAt(state.box.x, state.box.y).map((v) => Math.round(v) + 6);
+    const [x1, y1] = screenAt(state.box.x + state.box.width, state.box.y + state.box.height).map((v) => Math.round(v) - 6);
     const count = new Map();
     const px = [];
     for (let y = Math.max(0, y0); y < Math.min(screen.height, y1); y += 2) for (let x = Math.max(0, x0); x < Math.min(screen.width, x1); x += 2) {

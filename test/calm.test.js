@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 // node's mock clock moves Date to the end of a tick() before firing timers, so step a second at a time.
 const run = (ms) => { for (let i = 0; i < ms; i += 1000) mock.timers.tick(Math.min(1000, ms - i)); };
 import { EXHALE, INHALE, breaths, hugTaps, scan, sighs } from '../src/calm/routines.js';
-import { phaseAt, timeline, total } from '../src/practice/timeline.js';
+import { countOf, phaseAt, timeline, total } from '../src/practice/timeline.js';
 
 const course = JSON.parse(readFileSync('src/data/calm.json', 'utf8'));
 const lessons = course.units.flatMap((u) => u.lessons.map((l) => ({ ...l, unit: u.title })));
@@ -130,4 +130,11 @@ test('new Calm units only go on the end, so a saved progress never loses an open
     const was = state(before, p), is = state(now, p);
     for (const id of ids) assert.equal(is[id], was[id], `${id} with ${Object.keys(p.done)}`);
   }
+});
+
+test("a breath's count goes up with its seconds, 1 to 4, as the teach card says, not down like a count of breaths left", () => {
+  const breathIn = { phase: 'in', seconds: 4, cycle: 0, up: true };
+  assert.deepEqual([4, 3, 2, 1].map((left) => countOf(breathIn, left)), [1, 2, 3, 4]);
+  assert.equal(countOf({ ...breathIn, up: undefined }, 3), 3, 'other timed steps still count down');
+  assert.match(items[0].text.join(' '), /in for 4 seconds/);
 });

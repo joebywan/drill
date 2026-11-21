@@ -47,8 +47,12 @@ touches (`adb shell input tap`), for what a desktop browser can't show. Not part
 A plain `npm run phone` runs every scenario in `test/phone/*.js` but the `*-all` ones. There is one per habit and
 course, plus onboarding, first-visit, walkthrough, garden, wardrobe, timings, fitting, voice, sync, scan, left and drag,
 and the Wingbeat screens: butterfly, yours, home-states, stages, field-guide, skins, choose, reflect-days, presets and
-looks (the dark theme) and home-days (home from day 0 to day 60, with where the path starts; `HOME_SMALL=1080x1700` for
-a short phone). Large text is the Android app's to show (`app`): Chrome does not pass the phone's font size on to this page.
+looks (the dark theme), home-days (home from day 0 to day 60, with where the path starts; `HOME_SMALL=1080x1700` for
+a short phone), chrysalis (a learner at each stage of a raised butterfly, light and dark) and zoom (Chrome's Default zoom at
+150% and 200%, set by real taps on its Accessibility screen and put back). Large text has three routes: the app's WebView
+follows the phone's font size (`app`); Chrome for Android has only Default zoom, a whole-page zoom (`zoom`); a larger default
+or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `test/phone/lib/fits.js` holds what those share
+(`misfits`, `textTour`, `uiNode`), and `tools/play.js` exports `scan`, the page check for things clipped, overlapping or covered.
 - Scenarios named `*-all` play a whole course through `tools/play.js` and run only by name, one unit at a time:
   `coding-all` (`CODING_UNIT`), `chess-all` (`CHESS_UNIT`), `maths-all` (`MATHS_UNIT`), `japanese-all`
   (`JAPANESE_UNIT`) and `code-all` (`CODE_COURSE=javascript|typescript|testing` with `CODE_UNIT`). Each also takes
@@ -59,7 +63,21 @@ a short phone). Large text is the Android app's to show (`app`): Chrome does not
   another, and with no APK it does nothing): `attach(pkg)` gives a scenario the same helpers for an app's WebView,
   and `screenXml()` the launcher's UI tree.
 - A new scenario is a few lines built from the helpers `tools/phone.js` passes in (`seed`, `touch`, `btn`, `dragTo`,
-  `type`, `shot`, `run`, `check`, `calibrate`); shared seeds are in `test/phone/lib/seed.js`.
+  `swipe`, `press` (a long press), `doubleTap`, `type`, `shot`, `run`, `check`, `calibrate`); shared seeds are in
+  `test/phone/lib/seed.js`, and Chess's move-playing (a chess.js game kept in step with the page) in `test/phone/lib/chess.js`.
+- What a finger does has its own scenarios: `touch-swipe`, `touch-keyboard`, `touch-links`, `touch-press`. On any `*-all`
+  scenario `PLAY_JITTER=0.85` lands each tap at a seeded random point out to that share of the way to its target's edge
+  (`PLAY_SEED` varies it) and `PLAY_SWIPE=1` swipes each box that scrolls in itself. Run the jittered taps after changing the
+  size of anything tapped. Chess also has `chess-games` and `chess-games-small` (Mate and Scramble), `chess-miss` (a puzzle
+  missed on purpose, to read its explanation; `CHESS_MISS`, `CHESS_SMALL`), and by name only
+  `chess-wrong-all` (each lesson answered wrongly first) and `chess-rosa-all` (Play Rosa at every level).
+- The phone as it is held has its own: `away` and `interrupted` (a lesson put down, locked, called), `moving` (bursts of
+  screenshots while Fennel draws), and by name `landscape-all`, `landscape-app-all` and `offline-all` (`--url` the live site).
+  **A page the runner is attached to never goes to the background** (Chrome is started to keep drawing, and the harness holds
+  the screen on), so anything about being away from a routine is played by `away-bare` and `away-bare-app`, which let go of
+  the page first. `test/phone/lib/device.js` has `turn`, `putDown`, `screenOff`, `awake`.
+- `hands` plays by sight: with `HANDS_DIR` set it saves the screen and waits for one command at a time in a file (tap, swipe,
+  type, back), each done with a real touch. It is how a blind playthrough is done (an agent that has not read the answers).
 
 - With no `--url` it serves this checkout on a free port forwarded with `adb reverse`; Chrome opens
   `http://localhost:<port>/`, a secure context, so Wake Lock and the like work as on the real site.
@@ -111,6 +129,13 @@ a short phone). Large text is the Android app's to show (`app`): Chrome does not
 - `src/chess/puzzle.js` — pure puzzle rules on chess.js. `src/chess/items.js` — the item types
   (teach, tap, move, true/false, stars, find), their answers and explanations, and `problem()`, the
   rules check every shipped item passes. `src/chess/exercise.js` — the board and buttons.
+  A real-game puzzle's explanation is its line and then why it works: `src/chess/why.js` works the reason out from the
+  position by its theme (which two pieces a fork hits, what a pin holds to what, why the king had no square) and
+  `test/why.test.js` proves every sentence against its board. `explanation()` returns the wordings best first (the full
+  why, a shorter one, the line alone) and `worded()` in exercise.js shows the first whose verdict, measured on the page,
+  leaves the board clear. Never choose by counting characters: the font differs from machine to machine. Every chess word
+  is taught on a card before it is used (`src/data/chess-terms.json`, held by `test/items.test.js`); a teach card's
+  `topic` heads it in place of its unit's title.
 - **Promotion:** `withPromotion()` in exercise.js is the one picker (cm-chessboard's dialog, on every `board()`), used by puzzles, move items, stars, Mate and Play Rosa; Scramble has no pawns of yours. `tryMove()` returns `'piece'` for the right square with a piece the line doesn't need, explained and free; any mate still counts.
 - **Stars** teach pieces by play: move your piece onto every gold star within a move budget; the
   other side never moves, and kings are optional (chess.js `skipValidation`). A piece's first
@@ -145,6 +170,10 @@ a short phone). Large text is the Android app's to show (`app`): Chrome does not
   in the box's own colour (`--fade`) over that edge. **Never a CSS mask on a box that scrolls:** it crashes the
   emulator's software renderer (#164), and scroll-driven animations don't run in Firefox. A screen that
   fits is left as it is. On a short phone (a 412x533 page) every course is played this way: `…_SMALL=1080x1700`.
+  The verdict gives way too (`giveWay(foot)`): it is at most half the screen (`.foot`, 50dvh); past that its headline is
+  held to two lines and to the explanation's size, then its words `scrollBox()`. `verdictHeight()` measures it that way,
+  under the coach's longest headline (`longestVerdict()`; tests pin that line with `WINGBEAT_LONGEST`). A program is
+  never boxed to under a line: if the verdict would leave less, the coach gives way first.
 - `src/quiz/` also has `line` (drag a marker on a number line, snapped to its ticks, answered on
   release) and takes a `picture` the course draws through the mount's `ctx.art`, plus `ctx.look`
   for a course's own styling.
@@ -209,7 +238,8 @@ a short phone). Large text is the Android app's to show (`app`): Chrome does not
   With `ts: true` it also parses annotations, interfaces, aliases and generics. `types.js` is a small checker for what the course teaches,
   strict-flavoured, not the TypeScript compiler. `items.js` holds the items (teach, build, gap, predict, `asks: 'check'`) and goals
   (`print`, `walk`, `returns` with hidden `cases`, `tests`), `grade()`, `problem()` (the way passes, no decoy swapped in passes) and `vary()`
-  (names, numbers and words swapped, maps flipped, every version through `problem()`). **Chips are chunks at the level of thought:** `coarsened()` (courses/author.js) walks a course in order, a construct's first build (`learns`) is single tokens, and after that `chunksFor()`'s rules make its boilerplate one chip, standing down where a decoy needs a place; a test holds builds to 8 taps but for `learns`. Code is one source string in an item; chips (`chipsOf`),
+  (names, numbers and words swapped, maps flipped, every version through `problem()`; a declared function keeps its name, and in Test
+  writing the values move with the code's edges and what a test expects is worked out again by running `given`). **Chips are chunks at the level of thought:** `coarsened()` (courses/author.js) walks a course in order, a construct's first build (`learns`) is single tokens, and after that `chunksFor()`'s rules make its boilerplate one chip, standing down where a decoy needs a place; a test holds builds to 8 taps but for `learns`. Code is one source string in an item; chips (`chipsOf`),
   lines (`layout`, `pretty`) and answers (printed output, flagged lines) are worked out from it, and prose that says a number must find
   it in the code or set `fixed` (test/code-courses.test.js). `exercise.js` mounts on `src/builder.js`, the quiz's teach and pick, and `src/coding/grid.js`, the
   grid and walker Coding also uses; Fennel's calls map to Coding's `run()`, with `onRock(f)` and `onStep(f)` as his events. Courses are data
@@ -428,7 +458,8 @@ after `npm ci` at the root. App id `com.joebywan.wingbeat`, locked.
 - **Large text:** the WebView follows the phone's font size (`textZoom` is not pinned). app.js measures it once, and
   when it is above 1 sets `--text-scale`, which the path's rows, nodes and labels and the room under fixed bars
   multiply by. A browser never sets it, so the web app is unchanged. A px `line-height` is already scaled by the text
-  zoom, so don't multiply one.
+  zoom, so don't multiply one. In a browser `TEXT` reads the browser's own
+  font size too (probes at 6.25rem and .8rem), so a larger default or minimum font size sets `--text-scale`; zoom never does, since it enlarges px as well.
 - **The widget** lands one row high (`minHeight` 40dp) and can be stretched taller; Lumi is sized to the space, at
   most 96dp. The launcher's list shows the layout itself (`previewLayout`), with the tagline. A count of 0 is sent as
   null, so there is no number before there is a streak.

@@ -8,7 +8,7 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            `last` is the local date (YYYY-MM-DD) of the habit's last finished session;
  *            `forgiven` lists the dates a missed day was forgiven; `days` counts every date with a
  *            session, ever (the log only keeps a year), and only goes up: the garden grows from it
- *   log      [{ date, hour?, habit, title, mins, lesson?, right?, of?, feel? }]  — every finished session,
+ *   log      [{ date, hour?, habit, title, mins, lesson?, course?, right?, of?, feel? }]  — every finished session,
  *            oldest first, for the habit view: what was done each day. `hour` is the local hour
  *            (0–23) it was logged, absent on entries from before version 9
  *   left     [{ date, hour, habit, lessonId, title, step, of }]  — practices closed part-way, oldest
@@ -242,7 +242,8 @@ function practised(progress, habit, now, review) {
  * first time. `lessonId` is null for a review session, which unlocks nothing but is the one thing
  * that repairs a longer gap. A lesson finished during a repairable gap leaves the streak waiting
  * for that review. Nothing is scored: what a session leaves behind is what was learned.
- * `about` is { title, mins } for the log.
+ * `about` is { title, mins, course? } for the log: `course`, the Learn subject's id, lets each course's coach
+ * know whether their own course was done today (cast/voice.js).
  */
 export function finishSession(progress, lessonId, results, now = new Date(), about = {}) {
   const cards = { ...progress.cards };
@@ -253,7 +254,7 @@ export function finishSession(progress, lessonId, results, now = new Date(), abo
   }
   const entry = {
     habit: LEARN, title: about.title || (lessonId ? 'Lesson' : 'Review'), mins: about.mins || 0,
-    right: results.filter((r) => r.correct).length, of: results.length,
+    right: results.filter((r) => r.correct).length, of: results.length, ...(about.course && { course: about.course }),
   };
   return {
     ...progress,

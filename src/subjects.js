@@ -146,7 +146,8 @@ export const ordered = (list, picked = []) => [
 // hand-written Forks unit, whose Lichess puzzles join it as its last lessons; the other Lichess
 // themes follow. chess.json is generated, so the cards teaching each theme are kept in tactics.json
 // (lesson id -> teach cards) and go in front of that lesson here.
-const taught = (unit) => ({ ...unit, lessons: unit.lessons.map((l) => ({ ...l, items: [...(tactics[l.id] || []), ...l.items] })) });
+// Each puzzle carries its lesson's theme ('fork' from 'fork-0'), which says why its line works (chess/why.js).
+const taught = (unit) => ({ ...unit, lessons: unit.lessons.map((l) => ({ ...l, items: [...(tactics[l.id] || []), ...l.items.map((i) => ({ ...i, theme: l.id.replace(/-\d+$/, '') }))] })) });
 const lichessForks = taught(chessCourse.units.find((u) => u.title === 'Forks'));
 const forksUnit = {
   ...forks,
@@ -250,7 +251,7 @@ codeSubject(javascriptCourse, HELLO.javascript, {
   offer: 'Written JavaScript already? Skip ahead',
   question: 'How much JavaScript have you written?',
   options: [
-    ['None yet', 'Printing'],
+    ['None yet', 'Printing to the screen'],
     ['Variables and text are fine', 'Conditions'],
     ['I can write a loop', 'Functions'],
     ['Functions too', 'Arrays'],
