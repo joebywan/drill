@@ -57,6 +57,20 @@ test.describe('at 360x640', () => {
     await expect(page.getByRole('heading', { name: 'When will you do it?' })).toBeVisible();
   });
 
+  // A short phone with the keyboard up leaves a 412x177 page. The field the learner types in is brought wholly into view
+  // there (as the phone does, by scrolling it to the end of the page short of its scroll padding), and Add habit still under it.
+  test('on a 177px page with the keyboard up, the name field is wholly in view, then Add habit', async ({ page }) => {
+    await seed(page);
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Add a habit' }).click();
+    await page.getByRole('button', { name: 'Make your own' }).click();
+    await page.setViewportSize({ width: 412, height: 177 });
+    const name = page.getByRole('textbox', { name: 'Name' });
+    await name.evaluate((e) => { e.focus(); e.scrollIntoView({ block: 'end' }); });
+    await expect(name).toBeInViewport({ ratio: 1 });
+    await expect(page.getByRole('button', { name: 'Add habit' })).toBeInViewport({ ratio: 1 });
+  });
+
   // Before a finished lesson there is nothing being raised, so the test above holds the first screen; after
   // one, the next node already sat below the fold (home scrolls it into view), with or without the line.
   test('a started course shows what it is raising, and its next lesson is still in view', async ({ page }) => {

@@ -48,7 +48,7 @@ button, .cm-chessboard { -webkit-user-select: none; user-select: none; }
 /* Headings take focus when a screen opens, for screen readers; they aren't controls. */
 [tabindex="-1"]:focus { outline: none; }
 /* Fixed footers cover the bottom of the page: keep a focused control clear of them. */
-html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
+html { scroll-padding-bottom: min(calc(160px * var(--text-scale, 1)), 40dvh); } /* a page the keyboard has shrunk to 177px still shows the field typed in */
 
 .bar {
   display: flex; align-items: center; gap: 12px;
