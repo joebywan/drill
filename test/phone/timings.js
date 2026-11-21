@@ -1,4 +1,4 @@
-// Your timings with real taps: Breaths starts at the first lesson's 3 and + gives 4; set Calm's breath in to 6, see the orb hold the in-breath for 6 s, then reset.
+// Your timings with real taps: Breaths starts at the first lesson's 3 and + gives 4; set Calm's breath in to 6, see the orb hold the in-breath for 6 s (counting up), then reset.
 export default async ({ page, seed, touch, btn, shot, run, check }) => {
   await seed();
   await touch(btn(/^Calm(,|$)/));
@@ -16,12 +16,21 @@ export default async ({ page, seed, touch, btn, shot, run, check }) => {
   check('saved at once', JSON.stringify(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).timings)) === '{"calm":{"inhale":6}}');
   await touch(btn('Back').and(page.locator('.back')));
   await touch(btn('Continue · The long out-breath'));
-  await touch(btn('Start')); await shot('inhale');
-  // Real taps let a little real time pass too, so the count is read rather than a precise moment:
-  // the in-breath shows 5 or 6 seconds left, where the default would show 4 at most.
-  const left = Number(await page.locator('.orb .count').textContent());
-  check('the in-breath counts down from 6 s', (await page.locator('.orb').getAttribute('data-phase')) === 'in' && left >= 5, `count ${left}`);
-  await run(6000); await shot('out');
+  await touch(btn('Start'));
+  // A breath's seconds count up, from 1. Real time passes between taps too, so rather than reading one moment the page
+  // keeps the highest count the in-breath showed: 6 with the learner's 6 s, where the default would stop at 4.
+  await page.evaluate(() => {
+    window.__most = 0;
+    const orb = document.querySelector('.orb');
+    new MutationObserver(() => { if (orb.dataset.phase === 'in') window.__most = Math.max(window.__most, Number(orb.textContent)); })
+      .observe(orb, { subtree: true, childList: true, characterData: true, attributes: true });
+  });
+  const first = Number(await page.locator('.orb .count').textContent());
+  check('the in-breath counts up from 1', first <= 2, `count ${first}`);
+  await shot('inhale');
+  await run(7000); await shot('out');
+  const most = await page.evaluate(() => window.__most);
+  check('the in-breath counts up to 6 s', most === 6, `highest count ${most}`);
   check('then the out-breath', (await page.locator('.orb').getAttribute('data-phase')) === 'out');
   await run(40000);
   await touch(btn(/^Continue/));

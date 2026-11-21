@@ -27,7 +27,7 @@
     "items": [
       { "id": "harvest-teach", "type": "teach", "level": ["S..*"], "text": "Harvest time, and I'm gathering the last of the flowers. I follow steps, one at a time, in order. Your steps get me there." },
       { "id": "harvest-line", "type": "build", "level": ["S..*"], "program": [null, null, null], "tiles": ["up", "right"], "prompt": "Three steps along the row. I start as soon as the last one is in.", "explain": "Right, right, right." },
-      { "id": "harvest-back", "type": "build", "level": ["*.S"], "program": [null, null], "tiles": ["left", "right", "up"], "prompt": "This flower is behind me. Two steps.", "explain": "Left, left. I walk whichever way the blocks say." },
+      { "id": "harvest-back", "type": "build", "level": ["*.S"], "program": [null, null], "tiles": ["left", "right", "up"], "prompt": "This flower is to the left. Two steps.", "explain": "Left, left. I walk whichever way the blocks say." },
       { "id": "harvest-corner", "type": "build", "level": ["...*", "S..."], "program": [null, null, null, null], "tiles": ["right", "down", "up"], "prompt": "The last one is up a row. Build the steps.", "explain": "Three right and one up. Up first works too: there's more than one way." }
     ]
   },

@@ -650,11 +650,14 @@ test('your own timings: Calm breathes in for 6 when set, saves at once, and goes
   await page.getByRole('button', { name: 'Start' }).click();
   const orb = page.locator('.orb');
   await expect(orb).toHaveAttribute('data-phase', 'in');
-  await expect(orb.locator('.count')).toHaveText('6');
+  await expect(orb.locator('.count')).toHaveText('1'); // a breath's seconds count up, 1 to 6
   await page.clock.runFor(5_900);
   await expect(orb).toHaveAttribute('data-phase', 'in');
+  await expect(orb.locator('.count')).toHaveText('6');
   await page.clock.runFor(200);
   await expect(orb).toHaveAttribute('data-phase', 'out');
+  await expect(orb.locator('.count')).toHaveText('1');
+  await page.clock.runFor(7_500);
   await expect(orb.locator('.count')).toHaveText('8'); // the out-breath keeps its default
   await page.clock.runFor(3 * 14_000);
   await expect(page.getByText(/^3 breaths · \d+ min$/)).toBeVisible();
@@ -1133,7 +1136,7 @@ test('a fresh garden is one seed; the first lesson grows a sprout and opens a fl
   await finishFirstLesson(page);
   // The first unit is one lesson long, so finishing it is a finished unit: a flower opens.
   // That unit is chess's first, so its egg is laid and hatches at once: only the hatching is said.
-  await expect(page.locator('.arrivals li')).toHaveText(['Your Chess egg hatched into a caterpillar', `A flower opened for ${basics.units[0].title}`]);
+  await expect(page.locator('.arrivals li')).toHaveText(['Your Chess butterfly egg hatched into a caterpillar', `A flower opened for ${basics.units[0].title}`]);
   await expect(page.locator('.arrivals svg.creature')).toBeVisible();
   await continueButton(page).click();
   await expect(strip(page, 1).locator('svg.plant-tree.stage-1')).toBeVisible();
@@ -1146,13 +1149,13 @@ test('a fifth day of Calm hatches its caterpillar, shown on the end screen and i
   await firstVisit(page);
   await breathe(page);
   // The egg and the hatching both arrive now; only the latest is announced.
-  await expect(page.locator('.arrivals li')).toHaveText(['Your Calm egg hatched into a caterpillar', 'A bee found Calm']);
+  await expect(page.locator('.arrivals li')).toHaveText(['Your Calm butterfly egg hatched into a caterpillar', 'A bee found Calm']);
   await expect(page.locator('.arrivals svg.creature')).toBeVisible();
   await continueButton(page).click();
 
   // Home's line for the habit shown, and the strip keeps to emerged butterflies.
   await tab(page, 'Calm').click();
-  await expect(page.locator('.streak-row .raising')).toHaveAccessibleName('Calm is raising a Common Brown');
+  await expect(page.locator('.streak-row .raising')).toHaveAccessibleName('Calm is raising a Common Brown butterfly');
   await expect(strip(page, 2).locator('svg.visitor-butterfly, svg.creature')).toHaveCount(0);
   await strip(page, 2).click();
   await expect(page.getByRole('heading', { name: 'Your garden' })).toBeFocused();
@@ -1161,7 +1164,7 @@ test('a fifth day of Calm hatches its caterpillar, shown on the end screen and i
   await expect(calm).toContainText('Lavender · sapling');
   await expect(calm).toContainText('5 days practised');
   await expect(calm).toContainText('9 more days to young');
-  await expect(calm).toContainText('Common Brown · caterpillar');
+  await expect(calm).toContainText('Common Brown butterfly · caterpillar');
 
   // A card opens that habit's view; Back comes to the garden, then home to the strip.
   await calm.click();
@@ -1330,8 +1333,8 @@ test('a self-reported habit: add Walk, one tap, its streak and plant, and Undo t
   await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
   await expect(page.getByText('Done for today.')).toBeFocused();
   await expect(page.locator('.chip.log')).toContainText('1');
-  await expect(page.locator('.arrivals li')).toHaveText(['Your Walk egg arrived: a Caper White', 'A bee found Walk']);
-  await expect(page.locator('.log-habit .raising')).toHaveText('Walk is raising a Caper White');
+  await expect(page.locator('.arrivals li')).toHaveText(['Your Walk butterfly egg arrived: a Caper White', 'A bee found Walk']);
+  await expect(page.locator('.log-habit .raising')).toHaveText('Walk is raising a Caper White butterfly');
   await expect(walked).toHaveCount(0);
   await expect(page.getByText('How do you feel?')).toHaveCount(0);
   await expect(strip(page, 2).locator('svg.plant-tulip[data-habit="walk"]')).toBeVisible();
@@ -1367,7 +1370,7 @@ test('a habit of your own: name, icon and plant; log it, rename it, and its name
   await expect(tab(page, 'Stretch')).toBeFocused();
   await page.getByRole('button', { name: 'Done today' }).click();
   await expect(tab(page, 'Stretch')).toHaveAccessibleName('Stretch, 1-day streak');
-  await expect(page.locator('.arrivals li')).toHaveText(['Your Stretch egg arrived: a Red Lacewing', 'A bee found Stretch']);
+  await expect(page.locator('.arrivals li')).toHaveText(['Your Stretch butterfly egg arrived: a Red Lacewing', 'A bee found Stretch']);
   await expect(strip(page, 2).locator('svg.plant-cactus[data-habit="own-1"]')).toBeVisible();
 
   const name = '<img src=x onerror=hacked=1>&'; // within the 30-letter name
@@ -1409,7 +1412,7 @@ test('a habit\'s "when": a new preset with one, shown on its panel, changed in i
   await expect(tab(page, 'Floss')).toBeFocused();
   await expect(page.locator('.log-habit .when')).toHaveText('Before bed');
   await page.getByRole('button', { name: 'I flossed today' }).click();
-  await expect(page.locator('.log-habit .raising')).toHaveText('Floss is raising an Orange Migrant');
+  await expect(page.locator('.log-habit .raising')).toHaveText('Floss is raising an Orange Migrant butterfly');
 
   await week(page, 1).click();
   await expect(page.locator('main.habit .when')).toHaveText('Before bed');
@@ -2197,6 +2200,8 @@ test('Wind down: settle in, Calm breathing on your own timings, a sigh, goodnigh
   await page.clock.runFor(20_000);
   // Calm's breathing, with the breath in at the learner's own 6 s.
   await expect(page.getByText('Breath 1 of 3')).toBeVisible();
+  await expect(page.locator('.orb .count')).toHaveText('1'); // a breath's seconds count up
+  await page.clock.runFor(5_500);
   await expect(page.locator('.orb .count')).toHaveText('6');
   await page.getByRole('button', { name: 'Pause' }).click();
   await page.clock.runFor(60_000);
@@ -2691,7 +2696,9 @@ test('every Coding bug can be fixed by tapping the block it names, whichever way
   }
 });
 
-test('the first lesson of each new Coding unit plays through as a real session, and so does one laid out from nothing', async ({ page }) => {
+test('the first lesson of each new Coding unit plays through as a real session, and so does one laid out from nothing', async ({ page, browserName }) => {
+  // Seven whole lessons: 25 to 30 s of the 30 s allowed in Firefox here, and over it on CI's runners.
+  test.slow(browserName === 'firefox', 'seven whole lessons');
   const loops = codingCourse.units.find((u) => u.title === 'Loops');
   for (const [unit, lesson] of [...codingCourse.units.slice(3).map((u) => [u, u.lessons[0]]), [{ ...loops, lessons: loops.lessons }, loops.lessons.at(-1)]]) {
     await page.goto('/');
@@ -2782,7 +2789,7 @@ test("a path's streak row ends with what it is raising, into its field guide pag
   // Move is raising a caterpillar: its picture is the streak row's last item, named by the pill's old words.
   await tab(page, 'Move').click();
   const pic = page.locator('.streak-row > .raising');
-  await expect(pic).toHaveAccessibleName('Move is raising a Wanderer');
+  await expect(pic).toHaveAccessibleName('Move is raising a Wanderer butterfly');
   await expect(pic.locator('svg.creature')).toBeVisible();
   await expect(pic).toHaveText('');
   expect(await page.locator('.streak-row > *').last().evaluate((e) => e.classList.contains('raising'))).toBe(true);
@@ -2803,7 +2810,7 @@ test("a one-tap habit's hint goes once it has been logged", async ({ page }) => 
   await tab(page, 'Walk').click();
   await expect(page.getByRole('button', { name: 'I walked today' })).toBeVisible();
   await expect(page.getByText('One tap when it happens. That is all.')).toHaveCount(0);
-  await expect(page.locator('.log-habit .raising')).toHaveText('Walk is raising a Caper White'); // the panel keeps its pill
+  await expect(page.locator('.log-habit .raising')).toHaveText('Walk is raising a Caper White butterfly'); // the panel keeps its pill
 });
 
 test('the field guide opens from the garden and from home, and shows every kind', async ({ page }) => {
@@ -2818,7 +2825,7 @@ test('the field guide opens from the garden and from home, and shows every kind'
   await page.addInitScript((saved) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', saved); }, JSON.stringify(p));
   await firstVisit(page);
   await tab(page, 'Move').click();
-  await expect(page.locator('.raising')).toHaveAccessibleName('Move is raising a Wanderer');
+  await expect(page.locator('.raising')).toHaveAccessibleName('Move is raising a Wanderer butterfly');
   await page.locator('.raising').click();
   await expect(page.getByRole('heading', { name: 'Wanderer' })).toBeFocused();
   await expect(page.locator('main')).toContainText('8 more days to its chrysalis');
@@ -2826,7 +2833,7 @@ test('the field guide opens from the garden and from home, and shows every kind'
   await expect(page.locator('.raising')).toBeFocused();
 
   await strip(page, 3).click();
-  await expect(page.locator('.plant-card[data-plant="calm"]')).toContainText(/Common Brown · arrived \d+ \w{3}/);
+  await expect(page.locator('.plant-card[data-plant="calm"]')).toContainText(/Common Brown butterfly · arrived \d+ \w{3}/);
   await page.getByRole('button', { name: 'Field guide', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Field guide' })).toBeFocused();
   // Emerged first, in colour; then the one being raised; then a pale silhouette for the rest.

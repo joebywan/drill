@@ -47,7 +47,8 @@ const SIGH_WORDS = { in: 'sighIn', top: 'sighTop', sigh: 'sighOut' };
 /** Breathing (4 in, 8 out) and the sigh (in, a little more, a long sigh out), with Moss along. */
 function breathing(el, item, ctx) {
   const sigh = item.type === 'sigh';
-  const phases = (sigh ? sighs : breaths)(item.cycles, ctx.timings);
+  // The orb counts each breath's seconds up (1, 2, 3, 4), as the teach card says: a count down read as breaths left.
+  const phases = (sigh ? sighs : breaths)(item.cycles, ctx.timings).map((p) => ({ ...p, up: true }));
   const n = phases.at(-1).cycle + 1;
   const name = sigh ? 'Sigh' : 'Breath';
   let size = SIZE.out;
