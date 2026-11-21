@@ -49,7 +49,7 @@ export function moment(progress, habit, now = new Date(), coach = coachOf(habit.
       light: lit,
       streak: streakBand(count),
       first,
-      comeback: !!last && (Date.parse(date) - Date.parse(last)) / 86400000 >= COMEBACK_DAYS,
+      comeback: !first && !!last && (Date.parse(date) - Date.parse(last)) / 86400000 >= COMEBACK_DAYS,
       ...(course && { elsewhere }),
     },
     facts: { habit: habit.name, usualHour: usualHour(progress, habit.id, course), count: streakShown && count >= 2 ? count : null, days: streakShown && days >= 2 ? days : null },

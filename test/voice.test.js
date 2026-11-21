@@ -257,4 +257,7 @@ test("a Learn course is first until one of its own lessons is finished, whicheve
   assert.equal(firstOf(p, 'ada', 'maths', 3).elsewhere, false, 'Maths itself was done today');
   // The comeback stays the habit's.
   assert.equal(firstOf(p, 'ada', 'maths', 20).comeback, true);
+  const chessOnly = finishSession(emptyProgress(), 'chess:x', [{ key: 'c', correct: true }], day(2, 8), { title: 'B', course: 'chess' });
+  const newcomer = firstOf(chessOnly, 'ada', 'maths', 20);
+  assert.deepEqual([newcomer.first, newcomer.comeback], [true, false], 'a first meeting is never also a comeback: no line fits both');
 });
