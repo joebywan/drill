@@ -238,6 +238,10 @@ chips, because one tap to play or to switch course is worth more than their row.
 - [x] **E11. The phone as it is held** (#186): put down, locked, called, on its side, offline. What it found is being fixed.
 - [x] **E12. The installed app's leftovers** (#187): a release build, no voice, a tablet, the keyboard, a link out.
 - [x] **E13. A beginner, played blind** (#185): from screenshots alone. Fourteen stumbles, being fixed.
+- [x] **E14. Chess's three games on a short phone** (#188): each fits one screen by the lessons' own rule, with what it
+  counts in the session bar.
+- [x] **E15. Words that fit what just happened** (#191): a verdict fits how the item was answered, each course's coach
+  speaks for its own course, an end screen claims only what the session did, and a butterfly is called one.
 
 **Waiting on the owner** (found by playing, not changed)
 

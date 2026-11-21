@@ -48,7 +48,8 @@ A plain `npm run phone` runs every scenario in `test/phone/*.js` but the `*-all`
 course, plus onboarding, first-visit, walkthrough, garden, wardrobe, timings, fitting, voice, sync, scan, left and drag,
 and the Wingbeat screens: butterfly, yours, home-states, stages, field-guide, skins, choose, reflect-days, presets and
 looks (the dark theme), home-days (home from day 0 to day 60, with where the path starts; `HOME_SMALL=1080x1700` for
-a short phone), chrysalis (a learner at each stage of a raised butterfly, light and dark) and zoom (Chrome's Default zoom at
+a short phone), chrysalis (a learner at each stage of a raised butterfly, light and dark), words (what the coaches say after
+a listening item, one miss, a first egg and a lesson in another course) and zoom (Chrome's Default zoom at
 150% and 200%, set by real taps on its Accessibility screen and put back). Large text has three routes: the app's WebView
 follows the phone's font size (`app`); Chrome for Android has only Default zoom, a whole-page zoom (`zoom`); a larger default
 or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `test/phone/lib/fits.js` holds what those share
@@ -68,9 +69,10 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
 - What a finger does has its own scenarios: `touch-swipe`, `touch-keyboard`, `touch-links`, `touch-press`. On any `*-all`
   scenario `PLAY_JITTER=0.85` lands each tap at a seeded random point out to that share of the way to its target's edge
   (`PLAY_SEED` varies it) and `PLAY_SWIPE=1` swipes each box that scrolls in itself. Run the jittered taps after changing the
-  size of anything tapped. Chess also has `chess-games` and `chess-games-small` (Mate and Scramble), `chess-miss` (a puzzle
-  missed on purpose, to read its explanation; `CHESS_MISS`, `CHESS_SMALL`), and by name only
-  `chess-wrong-all` (each lesson answered wrongly first) and `chess-rosa-all` (Play Rosa at every level).
+  size of anything tapped. Chess also has `chess-games` and `chess-games-small` (Mate and Scramble; the small one fails on
+  anything off the screen), `chess-miss` (a puzzle missed on purpose, to read its explanation; `CHESS_MISS`, `CHESS_SMALL`),
+  and by name only `chess-wrong-all` (each lesson answered wrongly first) and `chess-rosa-all` (Play Rosa at every level;
+  `ROSA_SMALL=1080x1700` for a short phone).
 - The phone as it is held has its own: `away` and `interrupted` (a lesson put down, locked, called), `moving` (bursts of
   screenshots while Fennel draws), and by name `landscape-all`, `landscape-app-all` and `offline-all` (`--url` the live site).
   **A page the runner is attached to never goes to the background** (Chrome is started to keep drawing, and the harness holds
@@ -147,6 +149,8 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   into the Learning tab. A Learn coach's `lines`/`headlines` replace Rosa's in the runner and end screen.
 - **Chess games** (`src/chess/games.js`, the "Games" row on chess's home, a subject's `games`): replayable modes, each a one-entry session
   for `run()` whose mount never calls `done`, so nothing is scored, scheduled or logged; a `.foot` banner ends a game and its button remounts it.
+  Each game mounts through `fitGame()`, which calls the lessons' `fitBoard` (exercise.js; never a second fitter), and puts what it counts in the
+  session bar with `inBar()`, where a lesson's meter is. A board being played keeps 40px squares; at a game's end its buttons go and the board sits above the banner.
   **Mate** (`mate.js`, `prover.js`, `prover-worker.js`): Daybook's game. `prover.js` is a port of its mate search on its own small
   board, because chess.js is far too slow to prove a mate in 4; it has no imports so it can run in a Worker (import maps don't reach workers).
   `src/data/mate.json` comes from `node tools/mate-positions.js`, Lichess CC0 (`docs/chess-positions/NOTICE.md`). Lazy-loaded. **Scramble** (`capture.js`): our own
@@ -206,6 +210,12 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   from progress (log entries carry `hour`). Home's greeting uses it. New lines are drafted by hand
   with `tools/voice-draft.js` (Claude API, `ANTHROPIC_API_KEY`) into `drafts/voice/` for review,
   never into the pool; the guardrail tests lint every pool line and dare.
+- **Words fit what just happened** (lines.js): a verdict pool can be narrowed by how the item was answered, `correct:hear`,
+  `wrong:move`, `run3:look`… beside the general `correct`/`wrong` (`doing(item)` → hear, move, write or look; `verdicts()`
+  joins the two; a test walks every Learn item). `finished()` picks an end screen's kind from the session's first tries:
+  `nearly` is one miss among three or more right, and no `struggled` line counts misses. Learn log entries carry `course`:
+  with Learning done today through another course, `moment()`'s state is `elsewhere`, which only `{ "elsewhere": true }`
+  pools match, so a coach never says its own course is done when it isn't.
 - `src/habitview.js` — pure helpers and the wording for the habit view (`habitView()` in app.js),
   opened from the "N-day streak · See your week" line over home's path (or a plant). Days without a session are plain, never missed.
 - `src/coding/` — the Coding learn subject, beside chess on the Learning habit. `program.js` is pure: a

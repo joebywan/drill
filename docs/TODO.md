@@ -220,8 +220,14 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
   - Coding's "Around the rock": walking into a rock ended the run with no word that it had, the rule being taught four items later.
   - Chess: after the first move in a stars puzzle the coach's bubble shrank and the board jumped 21px, so the next tap missed; a new piece's
     introduction was gone before it could be read.
-  - A listening item was answered with advice about looking; every course's coach said its course was done today after one lesson of another; end screens
-    overstated ("Plenty of bumps" for one miss in eight); nothing said the Blue Triangle was a butterfly; a few lines praise what the learner is.
+  - **Fixed** (#191, `npm run phone -- words`): a listening item was answered with advice about looking; every course's coach said its course was done
+    today after one lesson of another; end screens overstated ("Plenty of bumps" for one miss in eight); nothing said the Blue Triangle was a butterfly; a
+    few lines praised what the learner is. A verdict's words now fit how the item was answered (heard, moved, written, looked at). With Learning done today
+    through another course, a coach says today's learning is done, never that its own course is. An end screen with one miss in a good session is "nearly",
+    and no line counts misses. Arrivals and the garden's cards say "butterfly". The ability lint also refuses "you are a…", "a natural" and speed as a
+    virtue (it caught one more line, Moss's). Calm's circle counts a breath's seconds up, as its card says.
+    **Left (low):** a coach's `first` greeting follows the Learning habit, not the course, so a course first opened after another is not greeted as new;
+    Calm's first card says "in for 4 seconds, then out slowly for 8" whatever the learner's own timings are.
   - The intro's picks only ordered the tabs, so a learner who ticked two habits saw six.
   Worth keeping, in its words: Chess's move dots and stars, Coding's arrow blocks, a miss coming back at the lesson's end, Maths showing its working, Japanese's
   memory pictures, JavaScript's one idea a card, Calm's "nothing to get right", the one-tap habit.
@@ -364,8 +370,12 @@ Short phone (412x533, `CHESS_SMALL=1080x1700`): `mateIn3-1`, `attraction-0`, `fo
   Warm-up played to checkmate. Mate in 2, 3 and 4 solved with the prover's lines, a wrong first move refused in words, and a Scramble round to the end of its clock with the best kept.
   Fixed: in a puzzle, a move the piece cannot make was counted as a miss; it is explained and free, as in the other items. A stars item's arrows now show the route its
   words name (five items had them differ).
-- **The three games don't fit a short phone** (medium, open): at 412x533 Mate's and Play Rosa's boards are cut off at the bottom of the screen and the coach's line scrolls away
-  to reach them; Scramble's clock and score scroll out of sight while playing; Rosa's end banner sits over her (disabled) buttons. The games aren't fitted by `src/fit.js` yet.
+- **The three games fit a short phone: fixed** (#188). At 412x533 Mate's and Play Rosa's boards were cut off at the bottom of the screen, Scramble's clock and
+  score scrolled out of sight while playing, and Rosa's end banner sat over her buttons. Each game now mounts through `fitGame()`, which calls the lessons'
+  `fitBoard`: there is no second fitter. What a game counts sits in the session bar, where a lesson's meter is (Mate's "Mate in 2 3 4", Scramble's clock, score
+  and best, Rosa's level). A board being played keeps 40px squares: the coach's face gives way first, and on a 360px screen the board grows into the gutters. At a
+  game's end its buttons go and the whole board sits above the banner. Mate's Explain is said by Rosa. `games.spec.js` holds all of it at 412x533, 360x640 and
+  412x786 in both browsers; on the phone `chess-games-small` fails on anything off the screen, and `ROSA_SMALL=1080x1700` plays `chess-rosa-all` on a short phone.
 - **Still to play:** Firefox for Android. Whether a first-time learner follows it is the beginner question under "Test by playing".
 **Repetition engine**
 
