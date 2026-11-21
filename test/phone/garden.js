@@ -33,6 +33,14 @@ export default async ({ page, seed, touch, btn, swipe, shot, run, check, checkSo
     return r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight;
   }, sel);
   check('home: no title bar, no sound button', await page.locator('.bar, .sound').count() === 0);
+  // A wide screen (a tablet) puts the tabs in a column in a rail that scrolls inside itself: ⋯ closes it, reached by scrolling the rail.
+  const wide = await page.evaluate(() => getComputedStyle(document.querySelector('.rail')).position === 'sticky');
+  if (wide) {
+    await page.evaluate(() => document.querySelector('.rail').scrollTo(0, 1e5));
+    check('home (wide): the rail scrolls to ⋯, fully on screen', await inView('.tabs-row > .menu'));
+    await page.evaluate(() => document.querySelector('.rail').scrollTo(0, 0));
+    await shot('rail');
+  } else {
   check('home: ⋯ fully on screen, at the end of the tabs row', await inView('.tabs-row > .menu'));
 
   const tabs = page.locator('.paths');
@@ -41,6 +49,7 @@ export default async ({ page, seed, touch, btn, swipe, shot, run, check, checkSo
   const after = await page.evaluate(() => [scrollX, scrollY, document.querySelector('.paths').scrollLeft]);
   check('tabs: swipe scrolls the tab row', after[2] !== before[2], `scrollLeft ${before[2]} → ${after[2]}`);
   check('tabs: swipe leaves the page still', after[0] === before[0] && after[1] === before[1], `page ${before.slice(0, 2)} → ${after.slice(0, 2)}`);
+  }
 
   // The season is the device's own: its date, and its timezone's hemisphere.
   const tz = await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone);

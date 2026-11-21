@@ -7,6 +7,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import butterfly from './butterfly.js';
 import calm from './calm.js';
+import { thirtyDays } from './lib/seed.js';
 import { fitter, textTour, uiNode } from './lib/fits.js';
 
 const PKG = 'com.joebywan.wingbeat';
@@ -20,12 +21,16 @@ const hex = (rgb) => `#${rgb.match(/\d+/g).slice(0, 3).map((v) => (+v).toString(
 // What the note must never say: absence, loss or a streak at stake.
 const ABSENCE = /miss|lost|lose|gone|away|absen|forgot|been a while|streak|come back|haven't/i;
 
-export default async ({ adb, attach, check, screenXml, shot }) => {
+export default async ({ adb, attach, check, screenXml, shot, type }) => {
   if (!existsSync(APK)) { console.log(`  no APK at ${APK}: build it first (CLAUDE.md, Android)`); return; }
   mkdirSync(OUT, { recursive: true });
   const keep = (name, text) => writeFileSync(`${OUT}${name}`, text);
   const sh = (cmd) => adb('shell', cmd);
-  const [W, H] = sh('wm size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number);
+  // `APP_ROTATE=1` (or 3) plays the app with the screen turned; `wm size` is the display's natural shape, so swap it.
+  const turned = process.env.APP_ROTATE;
+  if (turned) { sh('settings put system accelerometer_rotation 0'); sh(`settings put system user_rotation ${turned}`); await sleep(2500); }
+  const natural = sh('wm size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number);
+  const [W, H] = turned && turned % 2 ? natural.reverse() : natural;
   const key = async (k) => { sh(`input keyevent ${k}`); await sleep(1200); };
   const front = () => /mCurrentFocus=.*com\.joebywan\.wingbeat/.test(sh('dumpsys window | grep mCurrentFocus'));
   const logs = () => adb('logcat', '-d', '-v', 'brief', 'WingbeatBridge:*', 'WingbeatDaily:*', 'AndroidRuntime:E', '*:S');
@@ -40,18 +45,75 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
   const tap = async ([x, y]) => { sh(`input tap ${x} ${y}`); await sleep(1500); };
   /** One screen pixel as #rrggbb, from a raw screencap (its header is whatever precedes W*H*4 bytes of RGBA). */
   const pixel = (x, y) => '#' + sh(`screencap /sdcard/s.raw && s=$(stat -c %s /sdcard/s.raw) && dd if=/sdcard/s.raw bs=1 skip=$((s - ${W * H * 4} + ${(y * W + x) * 4})) count=3 2>/dev/null | od -An -tx1`).trim().split(/\s+/).join('');
+  /** A tablet's launcher covers the first app with "Slow-swipe up to show the Taskbar" (it has focus, not the app): dismiss it. */
+  const clearTip = async () => {
+    if (!/Slow-swipe up to show/.test(await screenXml())) return;
+    sh(`input tap ${W >> 3} ${H >> 1}`); await sleep(1000); // a tap outside it (a swipe up from the bottom would go home)
+    if (/Slow-swipe up to show/.test(await screenXml())) sh('input keyevent KEYCODE_BACK');
+    await sleep(800);
+  };
   let app = null;
   /** Starts the app (from cold when `cold`) and attaches to its WebView. */
   const launch = async (cold) => {
     if (cold) sh(`am force-stop ${PKG}`);
-    sh(`am start -W -n ${PKG}/.MainActivity`); await sleep(2500);
+    sh(`am start -W -n ${PKG}/.MainActivity`); await sleep(2500); await clearTip();
     app = await attach(PKG);
     return app;
   };
 
+  /** The widget, placed through the launcher: long-press the home screen, Widgets, Wingbeat, add. True once it is hosted. */
+  const placeWidget = async () => {
+    await key('KEYCODE_HOME');
+    sh(`input swipe ${W >> 1} ${H >> 1} ${W >> 1} ${H >> 1} 1500`); await sleep(1500); await shot('home-long-press');
+    const widgets = await node(/^Widgets$/, 'home-menu');
+    if (widgets) {
+      await tap(widgets); await shot('widget-list');
+      let entry = await node(/^Wingbeat$/, 'widget-list');
+      for (let i = 0; i < 6 && !entry; i++) { sh(`input swipe ${W >> 3} ${H * 0.8} ${W >> 3} ${H * 0.3} 400`); await sleep(1000); entry = await node(/^Wingbeat$/); }
+      if (entry) { await tap(entry); await shot('widget-wingbeat'); }
+      const preview = await node(/Wingbeat streak/, 'widget-entry');
+      if (preview) {
+        await tap(preview); await shot('widget-tapped');
+        const add = await node(/^Add/, 'widget-tapped');
+        if (add) await tap(add);
+        else { sh(`input draganddrop ${preview.join(' ')} ${W >> 1} ${H >> 1} 2000`); await sleep(2000); }
+      }
+    }
+    await sleep(1500); await shot('widget-placed');
+    const hosted = sh('dumpsys appwidget');
+    keep('dumpsys-appwidget.txt', hosted);
+    const placed = /Widgets:[\s\S]*com\.joebywan\.wingbeat/.test(hosted);
+    check('the widget is on the home screen (dumpsys appwidget)', placed);
+
+    /** The widget's box on screen [left, top, right, bottom], from the launcher's UI tree. */
+    const widgetBox = (xml) => xml.match(new RegExp(`resource-id="${PKG}:id/root"[^>]*bounds="\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]"`))?.slice(1).map(Number);
+    if (placed) {
+      // It lands one row high, and the resize frame is up: stretch it a row taller by its bottom handle.
+      const xml = await screenXml(); keep('ui-widget-placed.xml', xml);
+      const box = widgetBox(xml);
+      const none = !new RegExp(`resource-id="${PKG}:id/streak"`).test(xml);
+      check('the widget lands one row high, and a new learner sees no number', !!box && box[3] - box[1] < H / 8 && none, `${box?.join(',')}${none ? '' : ', a number shows'}`);
+      if (box) {
+        const cx = (box[0] + box[2]) >> 1;
+        sh(`input swipe ${cx} ${box[3]} ${cx} ${box[3] + (box[3] - box[1]) + 60} 1500`); await sleep(1500);
+        const tall = widgetBox(await screenXml());
+        await shot('widget-two-rows');
+        check('it stretches to two rows', !!tall && tall[3] - tall[1] > (box[3] - box[1]) * 1.5, `${tall?.join(',')}`);
+        sh(`input swipe ${cx} ${tall?.[3] ?? box[3]} ${cx} ${box[3]} 1500`); await sleep(1500); // back to one row for the rest
+        await shot('widget-one-row');
+      }
+    }
+    return placed;
+  };
+
   // 1. Install and first launch.
+  try { adb('uninstall', PKG); } catch { /* not installed */ } // a debug build and a release build are signed differently
   adb('install', '-r', APK);
   const pkgInfo = sh(`dumpsys package ${PKG}`);
+  // A release build is not debuggable and its WebView only opens to the driver because this image is (ro.debuggable).
+  const release = !/flags=\[[^\]]*DEBUGGABLE/.test(pkgInfo);
+  console.log(`  ${release ? 'RELEASE' : 'debug'} build; image ro.debuggable=${sh('getprop ro.debuggable').trim()}`);
+  if (release) check('release: not debuggable, signed (dumpsys flags, no DEBUGGABLE)', !/DEBUGGABLE/.test(pkgInfo.match(/flags=\[[^\]]*\]/)?.[0] ?? ''));
   keep('dumpsys-package.txt', pkgInfo);
   check('no INTERNET permission', !pkgInfo.includes('android.permission.INTERNET'));
   clearLogs();
@@ -70,15 +132,35 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
   }
   check('first launch: the page\'s light background while it loads, at 1 s and 3 s', loading.every((c) => c === LIGHT_BG), loading.join(', '));
   let shown = false;
-  while (!(shown = /Small beats go a long way/.test(await screenXml())) && Date.now() - opened < 30000) await sleep(500);
+  while (!(shown = /Small beats go a long way/.test(await screenXml())) && Date.now() - opened < 30000) { await clearTip(); await sleep(500); }
   check('first launch: the intro shows within 15 s of the tap on a cold emulator', shown && Date.now() - opened < 15000, `${((Date.now() - opened) / 1000).toFixed(1)} s`);
   await shot('first-launch-intro');
   check('first launch: the app is in front', front());
+  await clearTip();
   app = await attach(PKG); // clears storage and reloads: a first visit again
 
   // 2. A first day: the intro, a lesson, its wingbeat and home's butterfly; then a Calm routine, heard and felt.
   await butterfly({ ...app, check });
   await calm({ ...app, check });
+
+  /** With no voice: Japanese's first teach card offers one, once; the button opens the engine's own screen. */
+  const offerFlow = async (name) => {
+    const getVoice = app.page.getByRole('button', { name: 'Get a Japanese voice' });
+    const open = async (tag) => {
+      await app.touch(app.btn(/^Learning(,|$)/)); await app.touch(app.btn('Japanese'));
+      await app.touch(app.btn(`Continue · ${japanese.title}`)); await app.run(400); await app.shot(`voice-${name.replace(/\W+/g, '-')}-${tag}`);
+    };
+    await open('first');
+    check(`${name}: "Get a Japanese voice" is offered, with the reading shown`, await getVoice.isVisible() && !(await app.page.getByRole('button', { name: 'Hear it again' }).count()));
+    clearLogs();
+    await app.touch(getVoice); await sleep(2000); await shot(`voice-${name.replace(/\W+/g, '-')}-engine-screen`);
+    console.log(`  ${name}: the app ${front() ? 'is still in front (nothing opened)' : 'gave way to the engine\'s screen'}; focus ${sh('dumpsys window | grep mCurrentFocus').trim()}`);
+    sh(`am start -W -n ${PKG}/.MainActivity`); await sleep(1500);
+    check(`${name}: tapping it does not crash the app`, front() && !/AndroidRuntime/.test(logs()));
+    await app.seed({ start: {} });
+    await open('again');
+    check(`${name}: the offer is made once`, !(await getVoice.count()));
+  };
 
   // 7. Voice: Japanese speaks through the phone's TTS, or offers to get a voice, once.
   await app.seed({ start: {} });
@@ -86,7 +168,6 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
   console.log(`  ja-JP voice: ${hasVoice}; TTS engine: ${sh('settings get secure tts_default_synth').trim()}`);
   await app.touch(app.btn(/^Learning(,|$)/)); await app.touch(app.btn('Japanese'));
   await app.touch(app.btn(`Continue · ${japanese.title}`)); await app.run(400); await app.shot('japanese-teach');
-  const getVoice = app.page.getByRole('button', { name: 'Get a Japanese voice' });
   if (hasVoice) {
     // The engine logs each utterance it starts (MainActivity's UtteranceProgressListener): count them.
     const spoken = () => (logs().match(/voice: speaking/g) || []).length;
@@ -96,59 +177,27 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
     let heard = false;
     for (let i = 0; i < 20 && !heard; i++) { heard = spoken() > before; if (!heard) await sleep(250); }
     check('voice: "Hear it again" is spoken by the TTS engine (logcat)', heard);
-  } else {
-    check('no ja-JP voice: "Get a Japanese voice" is offered', await getVoice.isVisible());
-    await app.touch(getVoice); await sleep(2000); await shot('voice-install-screen');
-    check('it opens the engine\'s own screen', !front());
-    sh(`am start -W -n ${PKG}/.MainActivity`); await sleep(1500);
-    await app.seed({ start: {} });
-    await app.touch(app.btn(/^Learning(,|$)/)); await app.touch(app.btn('Japanese'));
-    await app.touch(app.btn(`Continue · ${japanese.title}`)); await app.run(400); await app.shot('japanese-teach-again');
-    check('the offer is made once', !(await getVoice.count()));
-  }
-
-  // 3. The widget, placed through the launcher: long-press the home screen, Widgets, Wingbeat, add.
-  await key('KEYCODE_HOME');
-  sh(`input swipe ${W >> 1} ${H >> 1} ${W >> 1} ${H >> 1} 1500`); await sleep(1500); await shot('home-long-press');
-  const widgets = await node(/^Widgets$/, 'home-menu');
-  if (widgets) {
-    await tap(widgets); await shot('widget-list');
-    let entry = await node(/^Wingbeat$/, 'widget-list');
-    for (let i = 0; i < 6 && !entry; i++) { sh(`input swipe ${W >> 1} ${H * 0.8} ${W >> 1} ${H * 0.3} 400`); await sleep(1000); entry = await node(/^Wingbeat$/); }
-    if (entry) { await tap(entry); await shot('widget-wingbeat'); }
-    const preview = await node(/Wingbeat streak/, 'widget-entry');
-    if (preview) {
-      await tap(preview); await shot('widget-tapped');
-      const add = await node(/^Add/, 'widget-tapped');
-      if (add) await tap(add);
-      else { sh(`input draganddrop ${preview.join(' ')} ${W >> 1} ${H >> 1} 2000`); await sleep(2000); }
+  } else await offerFlow('no ja-JP voice');
+  // The same with no voice for the course, made here: the engine's data cleared, then the engine switched off for the
+  // user (the emulator is read-only, so nothing lasts). A teach card offers a voice once; its button opens the engine's
+  // own screen (or does nothing when there is no engine); the lesson goes on with the reading shown.
+  const engine = sh('cmd package query-services -a android.intent.action.TTS_SERVICE').match(/packageName=(\S+)/)?.[1]; // the default-engine setting is empty on this image
+  if (hasVoice && engine) {
+    for (const [name, off, on] of [['engine data cleared', `pm clear ${engine}`, ''], ['engine disabled', `pm disable-user --user 0 ${engine}`, `pm enable --user 0 ${engine}`]]) {
+      sh(off); sh(`am force-stop ${PKG}`); await sleep(1000);
+      await launch(false);
+      await app.page.evaluate(() => localStorage.removeItem('wingbeat.voice-offer'));
+      await app.page.reload({ waitUntil: 'networkidle' }); await app.seed({ start: {} });
+      const still = await app.page.evaluate(() => WingbeatBridge.hasVoice('ja-JP'));
+      console.log(`  ${name}: ja-JP voice ${still}${still ? ' (this does not take the voice away: nothing to play)' : ''}`);
+      if (!still) await offerFlow(name);
+      if (on) sh(on);
     }
-  }
-  await sleep(1500); await shot('widget-placed');
-  const hosted = sh('dumpsys appwidget');
-  keep('dumpsys-appwidget.txt', hosted);
-  const placed = /Widgets:[\s\S]*com\.joebywan\.wingbeat/.test(hosted);
-  check('the widget is on the home screen (dumpsys appwidget)', placed);
-
-  /** The widget's box on screen [left, top, right, bottom], from the launcher's UI tree. */
-  const widgetBox = (xml) => xml.match(new RegExp(`resource-id="${PKG}:id/root"[^>]*bounds="\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]"`))?.slice(1).map(Number);
-  if (placed) {
-    // It lands one row high, and the resize frame is up: stretch it a row taller by its bottom handle.
-    const xml = await screenXml(); keep('ui-widget-placed.xml', xml);
-    const box = widgetBox(xml);
-    const none = !new RegExp(`resource-id="${PKG}:id/streak"`).test(xml);
-    check('the widget lands one row high, and a new learner sees no number', !!box && box[3] - box[1] < H / 8 && none, `${box?.join(',')}${none ? '' : ', a number shows'}`);
-    if (box) {
-      const cx = (box[0] + box[2]) >> 1;
-      sh(`input swipe ${cx} ${box[3]} ${cx} ${box[3] + (box[3] - box[1]) + 60} 1500`); await sleep(1500);
-      const tall = widgetBox(await screenXml());
-      await shot('widget-two-rows');
-      check('it stretches to two rows', !!tall && tall[3] - tall[1] > (box[3] - box[1]) * 1.5, `${tall?.join(',')}`);
-      sh(`input swipe ${cx} ${tall?.[3] ?? box[3]} ${cx} ${box[3]} 1500`); await sleep(1500); // back to one row for the rest
-      await shot('widget-one-row');
-    }
+    sh(`am force-stop ${PKG}`); await launch(false); await app.seed({ start: {} });
   }
 
+  // 3. The widget.
+  const placed = await placeWidget();
   /** The widget's own views, as the launcher's UI tree has them: streak and line (a GONE view is absent). */
   const widgetText = async (name) => {
     const xml = await screenXml(); keep(`ui-widget-${name}.xml`, xml);
@@ -207,6 +256,11 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
     check('the app hears it was opened', /note: opened/.test(logs()));
     await shot('note-opened');
   } else sh('cmd statusbar collapse');
+  if (release) { // `force` is debug-only: a second note the same day is not posted
+    sh(`am start -W -n ${PKG}/.MainActivity`); await key('KEYCODE_HOME'); clearLogs();
+    const again = await fire();
+    check('release: a forced reminder is not honoured (already sent today)', again.includes('note: none (already sent today)'), again);
+  }
   sh(`am start -W -n ${PKG}/.MainActivity`);
   await app.seed({ habits: { learn: { count: 4, last: day(0), forgiven: [] } } });
   await key('KEYCODE_HOME'); clearLogs();
@@ -286,6 +340,79 @@ export default async ({ adb, attach, check, screenXml, shot }) => {
     await textTour(app, check, `text ${scale}`);
   }
   sh('settings put system font_scale 1.0');
+
+  // 9. A link that leaves the app: the field guide's source link has no INTERNET to load in the WebView, so the wrapper
+  // (shouldOverrideUrlLoading) hands any address that is not its own to the phone's browser, and the page stays as it was.
+  await launch(true);
+  await app.seed(thirtyDays(1)); // thirty days in: common brown has emerged, so its page has a source
+  await app.touch(app.btn(/^Your garden/)); await app.touch(app.page.locator('.guide-link')); await app.touch(app.page.locator('[data-species="common-brown"]'));
+  const source = app.page.locator('.source a');
+  const [heading, hrefs] = [await app.page.locator('h1').first().textContent(), await source.evaluateAll((a) => a.map((x) => `${x.target} ${x.href}`))];
+  check('link: the species page has a source link that opens a new window (target _blank)', hrefs.length > 0 && hrefs[0].startsWith('_blank https://'), hrefs.join(' | '));
+  const pageUrl = app.page.url();
+  clearLogs(); await app.touch(source); await sleep(4000); await shot('link-out');
+  const focus = sh('dumpsys window | grep mCurrentFocus').trim();
+  console.log(`  link: after the tap, ${focus}`);
+  check('link: the tap leaves the app for the phone\'s browser', !front() && /Window\{\S+ u0 \S+/.test(focus) && !focus.includes(PKG), focus);
+  sh('input keyevent KEYCODE_BACK'); await sleep(1500);
+  if (!front()) sh(`am start -W -n ${PKG}/.MainActivity`); await sleep(2000); await shot('link-back');
+  check('link: back in the app, the same page, nothing loaded in the WebView', front() && app.page.url() === pageUrl && await app.page.locator('h1').first().textContent() === heading, `${app.page.url()}`);
+
+  // 10. The keyboard: Reflect's three lines, then "+ Habit", "Make your own". What is being typed in and the button
+  // after it stay above the keyboard (the page is resized to what is left), what was typed is what is kept, and the
+  // screen is whole again when the keyboard goes.
+  const keyboard = () => /mInputShown=true/.test(sh('dumpsys input_method'));
+  /** How far a control's bottom is below the room the page has left (the keyboard's top, any fixed bar): 0 or less is clear. */
+  const below = (sel) => app.page.evaluate((sel) => {
+    const bars = [...document.querySelectorAll('#app *')].filter((e) => getComputedStyle(e).position === 'fixed' && e.getBoundingClientRect().height && e.getBoundingClientRect().top > innerHeight / 2 && e.getBoundingClientRect().top < innerHeight);
+    const limit = Math.min(innerHeight, ...bars.filter((b) => !b.matches(sel) && !b.querySelector(sel)).map((b) => b.getBoundingClientRect().top));
+    return Math.round(document.querySelector(sel).getBoundingClientRect().bottom - limit);
+  }, sel);
+  const hideKeyboard = async () => { if (keyboard()) { sh('input keyevent KEYCODE_BACK'); await sleep(1200); } };
+  const tall = await app.page.evaluate(() => innerHeight);
+  await app.seed({ start: {}, picked: [] });
+  await app.touch(app.btn(/^Reflect(,|$)/)); await app.touch(app.btn(/^Continue · /)); await app.touch(app.btn('Start'));
+  const box = app.page.getByRole('textbox');
+  await app.touch(box); await sleep(1500); await app.run(400); await app.shot('keyboard-reflect');
+  const room = await app.page.evaluate(() => innerHeight);
+  check('keyboard: Reflect: the keyboard is up and the page is resized to what is left', keyboard() && room < tall * 0.8, `innerHeight ${tall} → ${room}`);
+  await type('Coffee with a friend'); await app.run(400);
+  check('keyboard: Reflect: the box and Next are above the keyboard', await below('textarea') <= 0 && await below('.reflect-on') <= 0, `box ${await below('textarea')}, Next ${await below('.reflect-on')} px under`);
+  await app.shot('keyboard-reflect-typed');
+  await app.touch(app.btn('Next')); await app.touch(app.btn('Skip'));
+  await app.touch(box); await sleep(1200); await type('Go for a walk');
+  check('keyboard: Reflect: the third line\'s box and Finish are above the keyboard', await below('textarea') <= 0 && await below('.reflect-on') <= 0, `box ${await below('textarea')}, Finish ${await below('.reflect-on')} px under`);
+  await app.touch(app.btn(/Next|Finish|Done/)); await hideKeyboard(); await app.run(400); await app.shot('keyboard-reflect-end');
+  const kept = await app.page.evaluate(() => Object.values(JSON.parse(localStorage.getItem('wingbeat.progress')).journal ?? {}).flatMap((d) => Object.values(d)));
+  check('keyboard: Reflect: what was typed is what is kept', kept.includes('Coffee with a friend') && kept.includes('Go for a walk'), kept.join(' | '));
+  check('keyboard: Reflect: the keyboard is gone and the page is whole again', !keyboard() && await app.page.evaluate(() => innerHeight) === tall, `innerHeight ${await app.page.evaluate(() => innerHeight)}, was ${tall}`);
+  await app.seed({ start: {}, picked: [] });
+  await app.touch(app.page.locator('[data-add]')); await app.touch(app.page.locator('[data-own]'));
+  await app.touch(app.page.locator('[name="name"]')); await sleep(1500); await app.run(400);
+  await type('Tea time'); await app.run(400); await app.shot('keyboard-own');
+  const [field, create] = [await below('[name="name"]'), await below('.own-habit .next')];
+  console.log(`  keyboard: Make your own: the name field ${field} px, the Add button ${create} px below the room above the keyboard (innerHeight ${await app.page.evaluate(() => innerHeight)})`);
+  // The page is resized to what the keyboard leaves, and the Add button can be past its end until scrolled (Chrome: the same, 130 px).
+  await app.page.locator('.own-habit .next').evaluate((b) => b.scrollIntoView({ block: 'nearest' })); await app.run(400);
+  check('keyboard: Make your own: the field is above the keyboard, and Add habit comes above it once scrolled to', keyboard() && field <= 0 && await below('.own-habit .next') <= 0, `field ${field}, button ${create} px under before scrolling`);
+  await app.shot('keyboard-own-scrolled');
+  await app.touch(app.page.locator('.own-habit .next')); await hideKeyboard(); await app.run(400);
+  const tracked = await app.page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).tracked?.map((t) => t.name));
+  check('keyboard: Make your own: the habit is kept with the name as typed', tracked?.includes('Tea time'), `${tracked}`);
+  check('keyboard: Make your own: the keyboard is gone and the page is whole again', !keyboard() && await app.page.evaluate(() => innerHeight) === tall);
+
+  // 11. A pull down at the top of a screen must not reload the page, and a long press on a button must not raise the
+  // system's Copy toolbar (styles.css: overscroll-behavior-y, user-select on buttons). Both on a real finger in the app.
+  const MENU = /text="(Copy|Share|Select all|Search|Web search)"/;
+  await app.seed({ start: {}, picked: [] });
+  await app.page.evaluate(() => { window.__stays = 1; scrollTo(0, 0); });
+  sh(`input swipe ${W >> 1} ${H * 0.3 | 0} ${W >> 1} ${H * 0.75 | 0} 500`); await sleep(2500);
+  check('a pull down at the top does not reload the page', await app.page.evaluate(() => window.__stays === 1), 'the page kept what it held in memory');
+  await app.shot('pull-down');
+  await app.press(app.page.locator('.node.here'), 1200); await sleep(600);
+  const held = { selected: await app.page.evaluate(() => String(getSelection())), menu: (await screenXml()).match(MENU)?.[1] };
+  await app.shot('long-press');
+  check('a long press on a path node selects nothing and raises no toolbar', held.selected === '' && !held.menu, `${JSON.stringify(held.selected)}, toolbar ${held.menu ?? 'none in the UI tree'}`);
 
   // 1 again, over the whole run: nothing from the bridge or the widget's side went wrong.
   const all = earlier + logs();
