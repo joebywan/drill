@@ -1,4 +1,4 @@
-import { test, expect, calmFinished } from './fixtures.js';
+import { test, expect, calmFinished, reach } from './fixtures.js';
 import { readFileSync } from 'node:fs';
 import { answer, kind, starPath } from '../../src/chess/items.js';
 import { emptyProgress, finishPractice, finishSession, leavePractice } from '../../src/progress.js';
@@ -6,6 +6,7 @@ import { middleFor } from '../../src/reflect/practice.js';
 import { award } from '../../src/garden/model.js';
 import { answer as stopsAt, fixBug, mirrored, solve as oneWay, tileName } from '../../src/coding/program.js';
 import { withCheckpoint } from '../../src/repeat.js';
+import { RUN_ENDS } from '../../src/cast/lines.js';
 import { subjects } from '../../src/subjects.js';
 
 // The first lesson on the path. Its answers are worked out from the course data with the same
@@ -398,7 +399,7 @@ async function rookAndBishop(page, during = async () => {}) {
   await firstVisit(page);
   await page.getByRole('button', { name: `Continue · ${lesson.title}` }).click();
   for (const [i, item] of lesson.items.entries()) {
-    if (item.demo) await expect(page.locator('#said')).not.toHaveText(item.intro, { timeout: 10000 }); // the piece's demo first
+    if (item.demo) await expect(page.locator('div.board[aria-busy]')).toHaveCount(0, { timeout: 10000 }); // the piece's demo first
     await solve(page, item);
     if (!i) await during();
     await continueButton(page).click();
@@ -2087,6 +2088,56 @@ test('Coding: a full first lesson with Fennel, a wrong run shown and replayed, t
   await expect(page.getByText(`${marked} of ${marked} recalled`)).toBeVisible();
 });
 
+test('Around the rock: the card shows a step into a rock ending the run, and a miss that walks into it is shown, said, then replaced', async ({ page }) => {
+  await reach(page, 'coding', 'steps-1', 'steps-1-rock');
+  // The card: he walks one step, bumps the rock, and the steps after it stay unrun.
+  await expect(page.locator('.program .block.stopped')).toHaveCount(1);
+  await expect(page.locator('.program .block.unrun')).toHaveCount(2);
+  await expect(page.locator('.grid-world .cell.hit')).toHaveCount(1);
+  await continueButton(page).click();
+  // The first build, wrong on purpose: the first step walks into the rock.
+  const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
+  for (const step of ['right', 'down', 'right', 'up']) await tile(`Step ${step}`).click();
+  // Their own program stays, marked where it stopped, and Fennel says why, before anything else comes.
+  await expect(page.locator('#said')).toHaveText(RUN_ENDS.rock);
+  await expect(page.locator('.program .block.stopped')).toHaveAccessibleName('Step right');
+  await expect(page.locator('.program .block.unrun')).toHaveCount(3);
+  await expect(page.locator('.grid-world .cell.hit')).toHaveCount(1);
+  await expect(page.locator('.program.shown')).toHaveCount(0);
+  await expect(page.locator('.foot.show')).toHaveCount(0);
+  // Then the way that works takes its place, still saying why.
+  await expect(page.locator('.program.shown')).toBeVisible({ timeout: 6000 });
+  await expect(page.locator('#said')).toHaveText(RUN_ENDS.way);
+  await expect(page.locator('.foot.wrong')).toBeVisible();
+  expect(await page.locator('.foot.wrong p').textContent()).toMatch(new RegExp(`^${RUN_ENDS.rock.replace(/\./g, '\\.')} `));
+});
+
+/** A miss walked into the rock, then a tap (or a finger's touch) where Continue will be, during the hold. */
+async function tapDuringHold(page, finger) {
+  await reach(page, 'coding', 'steps-1', 'steps-1-around');
+  const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
+  for (const step of ['right', 'down', 'right', 'up']) await tile(`Step ${step}`).click();
+  await expect(page.locator('#said')).toHaveText(RUN_ENDS.rock);
+  await expect(page.locator('.foot.show')).toHaveCount(0);
+  // Where Continue will be: the middle of the bottom of the screen.
+  const next = await page.evaluate(() => [innerWidth / 2, innerHeight - 40]);
+  const asked = Date.now();
+  if (finger) await page.touchscreen.tap(next[0], next[1]); else await page.mouse.click(next[0], next[1]);
+  await expect(page.locator('.program.shown')).toBeVisible();
+  await expect(page.locator('.foot.wrong')).toBeVisible();
+  expect(Date.now() - asked, 'well inside the hold').toBeLessThan(1500);
+  await page.waitForTimeout(800);
+  await expect(page.locator('.foot.wrong'), 'the tap did not also press Continue').toBeVisible();
+  await expect(page.locator('#said')).toHaveText(RUN_ENDS.way);
+  await continueButton(page).click(); // and Continue works as ever after it
+  await expect(page.locator('.foot.show')).toHaveCount(0);
+}
+test("a click during a missed run's hold goes straight to the way that works, and does not press the Continue that comes under it", ({ page }) => tapDuringHold(page, false));
+test.describe('with a finger', () => {
+  test.use({ hasTouch: true, isMobile: true });
+  test("a touch during a missed run's hold does the same", ({ page }) => tapDuringHold(page, true));
+});
+
 // Garden seasons: the real calendar, by the device's hemisphere. Australia/* is south.
 test.describe('garden seasons in Sydney', () => {
   test.use({ timezoneId: 'Australia/Sydney' });
@@ -2395,7 +2446,7 @@ test('Coding, the new blocks on a real page: a bug fixed by tapping, an endless 
     const { mount } = await import('/src/coding/exercise.js');
     document.body.innerHTML = '<div id="t" class="quiz"></div><p id="said"></p>';
     window.result = null;
-    window.wingbeat = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right) { window.result = right; } });
+    window.wingbeat = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right, why) { window.result = right; window.why = why; } });
   }, item);
   const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
   const result = () => page.evaluate(() => window.result);
@@ -2424,7 +2475,7 @@ test('Coding, the new blocks on a real page: a bug fixed by tapping, an endless 
   await tile('Step right').click();
   await tile('Step left').click();
   await expect.poll(result).toBe(false);
-  await expect(page.locator('#said')).toHaveText(/never ends/);
+  expect(await page.evaluate(() => window.why)).toMatch(/^That loop never ends/); // said, then kept first in the verdict
 
   // JavaScript: the code is the blocks' code, holes fill from tiles and a call is a tile.
   await mount({ id: 'j', type: 'build', view: 'js', level: ['..*', '...', 'S..'], program: [{ define: 'hop', do: ['right', 'up'] }, null, null], tiles: [{ call: 'hop' }, 'left'], prompt: 'p', explain: 'e' });
@@ -2446,7 +2497,9 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
   // The widest font a phone or CI is likely to fall back to, so the fit doesn't depend on the machine's fonts.
   await page.addStyleTag({ content: 'body, button { font-family: "DejaVu Sans", Verdana, sans-serif; }' });
   const items = codingCourse.units.flatMap((u) => u.lessons.flatMap((l) => l.items));
-  const bad = await page.evaluate(async (items) => {
+  // The longest line a missed run says: it must fit the bubble's reserved height, or the miss would move the grid.
+  const longestMiss = Object.values(RUN_ENDS).reduce((a, b) => (b.length > a.length ? b : a));
+  const bad = await page.evaluate(async ([items, fail]) => {
     const { mount } = await import('/src/coding/exercise.js');
     const app = document.getElementById('app');
     const out = [];
@@ -2520,7 +2573,6 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
       const clipped = code && code.scrollWidth > code.clientWidth;
       const bottom = prog ? prog.getBoundingClientRect().bottom : 0;
       const reserved = parseFloat(getComputedStyle(bubble).minHeight);
-      const fail = 'That loop never ends, so I stopped it. Here is one way that works.';
       if (item.type !== 'teach') {
         const said = bubble.textContent;
         bubble.textContent = fail;
@@ -2532,11 +2584,11 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
       stop?.();
     }
     return out;
-  }, [...items.filter((i) => i.type !== 'teach' || i.program),
+  }, [[...items.filter((i) => i.type !== 'teach' || i.program),
     ...items.filter((i) => i.type !== 'teach').flatMap((i) => [{ x: true }, { y: true }, { x: true, y: true }].map((flip) => mirrored(i, flip))),
     // Every fresh version, once as blocks or code however its items show it, and at the flip with the longest words.
     ...[...new Map(items.filter((i) => i.family).flatMap((i) => codingPool[i.family].map((e) => [JSON.stringify([i.view, e]), { id: i.id, type: i.type, ...(i.view && { view: i.view }), ...e }]))).values()]
-      .flatMap((v) => [v, mirrored(v, { x: true })])]);
+      .flatMap((v) => [v, mirrored(v, { x: true })])], longestMiss]);
   expect(bad).toEqual([]);
 });
 
@@ -2631,7 +2683,7 @@ test('Coding, laying out a program: the cursor, a limit, Run, and a run with ste
     const { mount } = await import('/src/coding/exercise.js');
     document.body.innerHTML = '<div id="t" class="quiz"></div><p id="said"></p>';
     window.result = null;
-    window.wingbeat = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right) { window.result = right; } });
+    window.wingbeat = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right, why) { window.result = right; window.why = why; } });
   }, item);
   const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
   const run = page.getByRole('button', { name: 'Run', exact: true });
@@ -2663,7 +2715,7 @@ test('Coding, laying out a program: the cursor, a limit, Run, and a run with ste
   await expect(tile('Step down')).toBeDisabled();
   await run.click();
   await expect.poll(result).toBe(false);
-  await expect(page.locator('#said')).toHaveText(/steps to spare/);
+  expect(await page.evaluate(() => window.why)).toMatch(/steps to spare/);
   await expect(page.locator('.program.shown .block.go')).toHaveCount(1);
 
   // Taking out a loop takes what it holds; the cursor stays where it was, so a block can go in the middle.
