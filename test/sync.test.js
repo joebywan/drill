@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { emptyProgress, finishPractice, finishSession, logToday, noteFeel, setWhen, track, writeJournal, currentStreak } from '../src/progress.js';
+import { emptyProgress, finishPractice, finishSession, logToday, noteFeel, setWhen, startHere, track, writeJournal, currentStreak } from '../src/progress.js';
 import { derive, newPairCode, newRecovery, open, readRecovery, seal, unwrap, wrap } from '../src/sync/keys.js';
 import { merge } from '../src/sync/merge.js';
 import { card, lookOf, withLook } from '../src/sync/sync.js';
@@ -244,4 +244,10 @@ test('a pairing link reads back from the drawn svg, and text too long says so', 
   for (const text of ['https://example.test/#pair=012345', LONG]) assert.equal(readQr(matrixOf(qrSvg(text, 'x'))).text, text);
   assert.throws(() => qr('x'.repeat(107)), /too long/);
   assert.equal(readQr(qr('x'.repeat(106))).text, 'x'.repeat(106));
+});
+
+test('a course started here on either device stays started', () => {
+  const m = merge(startHere(emptyProgress(), 'typescript'), startHere(emptyProgress(), 'testing'));
+  assert.deepEqual(m.started, { typescript: true, testing: true });
+  assert.equal('started' in merge(emptyProgress(), emptyProgress()), false);
 });

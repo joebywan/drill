@@ -177,7 +177,22 @@ test('intro, TypeScript only: JavaScript is picked with it, and its tab offers J
   await expect(page.locator('.welcome.greeting')).toBeVisible();
   await page.reload();
   await expect(page.getByRole('button', { name: 'Continue · Say what it holds' })).toBeVisible(); // remembered, like a placement answer
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).start)).toEqual({ typescript: 'Annotations' });
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')));
+  expect(saved.started).toEqual({ typescript: true });
+  expect(saved.start).toBeUndefined(); // not a placement answer: the course's own Skip ahead is still there
+  await page.getByRole('button', { name: 'Used TypeScript already? Skip ahead' }).click();
+  await page.getByRole('button', { name: 'I label my functions' }).click();
+  await page.getByRole('button', { name: 'Start at Unions' }).click();
+  await expect(page.locator('.street', { has: page.getByRole('heading', { name: 'Unions' }) }).locator('.here')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Used TypeScript already? Skip ahead' })).toHaveCount(0);
+});
+
+test('a save from before, with TypeScript\'s first unit in start, does not wait for JavaScript', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => { localStorage.setItem('wingbeat.progress', JSON.stringify({ ...JSON.parse(localStorage.getItem('wingbeat.progress') ?? 'null'), version: 3, picked: [], done: {}, cards: {}, habits: {}, log: [], start: { typescript: 'Annotations' } })); localStorage.setItem('wingbeat.course', 'typescript'); });
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Start JavaScript' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Continue · Say what it holds' })).toBeVisible();
 });
 
 test('a course that follows JavaScript says "Carry on" once JavaScript is begun, and opens by itself once that much is done', async ({ page }) => {
@@ -1193,7 +1208,7 @@ test('Focus with nothing picked, on your own time from the timings', async ({ pa
   for (let i = 0; i < 2; i++) await page.getByRole('button', { name: 'More', exact: true }).click();
   await expect(page.locator('.steppers output')).toContainText('20 min');
   await page.getByRole('button', { name: 'Back', exact: true }).click();
-  await page.getByRole('button', { name: 'Continue · Ten minutes, one thing' }).click();
+  await page.getByRole('button', { name: 'Continue · One thing' }).click();
   await page.getByRole('button', { name: 'Start' }).click();
   await page.getByRole('button', { name: 'Start · 20 min' }).click();
   await expect(page.getByRole('timer')).toHaveText('20:00');

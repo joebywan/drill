@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { TIMINGS, setTiming, timed } from '../src/practice/timings.js';
-import { VERSION, emptyProgress, migrate } from '../src/progress.js';
+import { TIMINGS, setTiming, timed, valueIn } from '../src/practice/timings.js';
+import { VERSION, emptyProgress, migrate, unitsOf } from '../src/progress.js';
+import { subjects } from '../src/subjects.js';
 import { breaths, hugTaps, scan, sighs } from '../src/calm/routines.js';
 import { phases, summary } from '../src/move/routines.js';
 import { STEPS, breakSteps } from '../src/break/routines.js';
@@ -171,4 +172,28 @@ test('a day away from the app counts like a session, unlocks nothing, once a day
   assert.equal(logToday(had, 'calm', 'Away from the app', day(2)), had, 'not when the habit has a session today');
   assert.deepEqual(unlogToday(p, 'calm', day(2)), base, 'undone the same day');
   assert.equal(unlogToday(p, 'calm', day(3)), p, 'not the next day');
+});
+
+const NUMBERS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
+const names = (title) => title.toLowerCase().replace('twenty-five', '25').split(/[^a-z0-9]+/).map((w) => (/^\d+$/.test(w) ? Number(w) : NUMBERS.indexOf(w))).filter((n) => n >= 0);
+
+test('a title that names a count a timing sets shows its plain title once the learner sets it, and is unchanged until then', () => {
+  let counted = 0;
+  for (const s of subjects.filter((x) => TIMINGS[x.habit])) {
+    const shown = (timings) => unitsOf({ ...emptyProgress(), timings }, s).flatMap((u) => u.nodes);
+    const ats = Object.entries(TIMINGS[s.habit]).filter(([, r]) => r.at);
+    const asWritten = shown({});
+    for (const [i, node] of asWritten.entries()) {
+      const set = ats.filter(([, r]) => names(node.lesson.title).includes(valueIn(node.lesson, r.at)));
+      assert.equal(node.lesson.title, s.units.flatMap((u) => u.lessons)[i].title, 'nothing set: as written');
+      for (const [k, r] of set) {
+        counted++;
+        const now = shown({ [s.habit]: { [k]: r.min } })[i].lesson.title;
+        assert.ok(node.lesson.plain, `${node.id} names a count it has no plain title for`);
+        assert.equal(now, node.lesson.plain);
+        assert.deepEqual(names(now).filter((n) => n === valueIn(node.lesson, r.at)), [], `${node.id}: ${now}`);
+      }
+    }
+  }
+  assert.ok(counted >= 6, `the walk found the counted titles: ${counted}`);
 });

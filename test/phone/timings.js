@@ -40,4 +40,19 @@ export default async ({ page, seed, touch, btn, shot, run, check }) => {
   await touch(btn('Your timings'));
   await touch(btn('Back to defaults')); await shot('reset');
   check('Back to defaults puts 4 s back', (await inhale.locator('output').textContent()) === '4 s (default 4)');
+  // A count of their own: the lessons that named a count (Five slow breaths) lose it from their titles.
+  const labels = () => page.locator('.path .label').allTextContents();
+  await touch(breaths.getByRole('button', { name: 'More' }));
+  await touch(btn('Back').and(page.locator('.back')));
+  await touch(btn('Back').and(page.locator('.back')));
+  await page.locator('.path .label', { hasText: 'Slow breaths' }).first().scrollIntoViewIfNeeded();
+  await shot('path-count-set');
+  const set = await labels();
+  check('with their own count, no title on the path names one', set.includes('Slow breaths') && !set.some((t) => /^(Five|Six) slow breaths$/.test(t)), set.join(' | '));
+  await touch(btn(/See your week$/));
+  await touch(btn('Your timings'));
+  await touch(btn('Back to defaults'));
+  await touch(btn('Back').and(page.locator('.back')));
+  await touch(btn('Back').and(page.locator('.back')));
+  check('with nothing set, the titles read as written', (await labels()).includes('Five slow breaths'));
 };

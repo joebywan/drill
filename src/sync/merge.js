@@ -6,7 +6,7 @@ import { LEARN, migrate, nextStreak } from '../progress.js';
  * into one. Pure. Nothing either side did is dropped:
  *   - cards: per card, the latest review wins
  *   - log: a union (a session both sides have counts once; two identical sessions on one side stay two)
- *   - done, garden.earned (the earliest date), journal (per day and line), tracked, start, timings, when: unions,
+ *   - done, garden.earned (the earliest date), journal (per day and line), tracked, start, started, timings, when: unions,
  *     this device winning where both set the same thing
  *   - wings (your butterfly's panels): the longer list
  *   - look (the friends card's name and animal): the latest pick, by its `at`
@@ -39,6 +39,7 @@ export function merge(local, remote) {
       .map((h) => [h, { ...b.timings[h], ...a.timings[h] }])),
     ...((a.start || b.start) && { start: { ...b.start, ...a.start } }),
     ...((a.met || b.met) && { met: { ...b.met, ...a.met } }),
+    ...((a.started || b.started) && { started: { ...b.started, ...a.started } }),
     ...((a.when || b.when) && { when: { ...b.when, ...a.when } }),
     ...((a.answers || b.answers) && { answers: mergeAnswers(a.answers, b.answers) }),
     ...((a.picked || b.picked) && { picked: a.picked ?? b.picked }),

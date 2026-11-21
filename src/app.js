@@ -5,7 +5,7 @@ import { fieldGuide } from './guide.js';
 import { PLANTS, animateLandmarks, animateScene, animateVisitor, drawGarden, flower, landmark, plant, sway, visitor } from './garden/art.js';
 import { ASKS, shouldAsk } from './keep.js';
 import { COMEBACK_WORDS, PAUSED_WORDS, activeComeback, answerComeback, noteReminder, preferred, reminderHour, remindersPaused, shorter, shouldRemind, startComeback, usualHours, usualLine } from './fitting.js';
-import { WINGS, firstToday, emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, setWhen, track, unlogToday, writeJournal, finishSession, meetsCoach, metCoach, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today, waits } from './progress.js';
+import { WINGS, firstToday, emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, setWhen, track, unlogToday, writeJournal, finishSession, meetsCoach, metCoach, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, startHere, choseStart, showsIntro, soonestKeys, today, waits } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, showsStreak, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { flap, lumi, lumiPerched } from './cast/lumi.js';
@@ -243,7 +243,7 @@ function home(arrived = null, newly = []) {
   // A subject's optional placement question, offered by its path until answered or dismissed.
   const offer = shownSubjects.find((s) => offersPlacement(progress, s));
   // Not brand new for a course the learner has just started here ("I know JavaScript"): its coach's own first meeting speaks.
-  const brandNew = !progress.log.length && !Object.keys(progress.done).length && !(parent && typeof progress.start?.[courseShown.id] === 'string');
+  const brandNew = !progress.log.length && !Object.keys(progress.done).length && !(parent && choseStart(progress, courseShown.id));
   // After the intro, Lumi's welcome names the first thing picked.
   // A course pick is kept as the Learning habit; the course it named is the one shown, so that names it.
   const first = progress.picked?.[0];
@@ -415,9 +415,9 @@ function home(arrived = null, newly = []) {
     home();
     focusOn('.cta .next');
   });
-  // Choosing to start here is a placement answer: the course's first unit (progress.start), so it is asked once.
+  // Choosing to start here is kept apart from a placement answer (progress.started), so the course's own "Skip ahead" is still offered.
   app.querySelector('[data-start-here]')?.addEventListener('click', () => {
-    progress = placeAt(progress, courseShown.id, courseShown.units[0].title);
+    progress = startHere(progress, courseShown.id);
     save();
     home();
     focusOn('.cta .next');

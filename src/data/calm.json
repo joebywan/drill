@@ -23,8 +23,8 @@
             { "id": "breathe-3", "type": "breathe", "cycles": 3 }
           ]
         },
-        { "id": "breathe2", "title": "Five slow breaths", "items": [{ "id": "breathe-5", "type": "breathe", "cycles": 5 }] },
-        { "id": "breathe3", "title": "Six slow breaths", "items": [{ "id": "breathe-6", "type": "breathe", "cycles": 6 }] }
+        { "id": "breathe2", "title": "Five slow breaths", "plain": "Slow breaths", "items": [{ "id": "breathe-5", "type": "breathe", "cycles": 5 }] },
+        { "id": "breathe3", "title": "Six slow breaths", "plain": "Slow breaths", "items": [{ "id": "breathe-6", "type": "breathe", "cycles": 6 }] }
       ]
     },
     {
@@ -93,7 +93,7 @@
             { "id": "sigh-3", "type": "sigh", "cycles": 3 }
           ]
         },
-        { "id": "sigh2", "title": "Five long sighs", "items": [{ "id": "sigh-5", "type": "sigh", "cycles": 5 }] }
+        { "id": "sigh2", "title": "Five long sighs", "plain": "Long sighs", "items": [{ "id": "sigh-5", "type": "sigh", "cycles": 5 }] }
       ]
     },
     {

@@ -89,5 +89,12 @@ export function pathTimings(habit, lessons, next, varied = {}) {
       : (r.at && order.map((l) => valueIn(l, r.at)).find((v) => v != null)) ?? r.from]));
 }
 
+/**
+ * True when the learner has set a value that `lesson` keeps (its count, its minutes): a title that names that
+ * number then names the wrong one, and the lesson's `plain` title stands in (unitsOf, the one place titles are made).
+ */
+export const countSet = (habit, lesson, overrides) => Object.entries(TIMINGS[habit] ?? {})
+  .some(([k, r]) => r.at && ok(r, overrides?.[k]) && valueIn(lesson, r.at) != null);
+
 /** The lowest and highest of `values`. */
 export const spread = (values) => [Math.min(...values), Math.max(...values)];
