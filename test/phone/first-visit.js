@@ -6,6 +6,7 @@ export default async ({ page, touch, btn, shot, check }) => {
   const survey = () => page.getByRole('heading', { name: /chess before\?/ }).count();
   const skip = () => page.locator('[data-place]').count();
   check('after Skip: home (garden strip, no survey)', await btn(/^Your garden/).isVisible() && !(await survey()));
+  check('after Skip: every habit and every course shows', (await page.locator('.path-tab[data-path]').count()) === 7 && (await page.locator('[data-course]').count()) === 7);
   check('Learning offers Skip ahead', (await skip()) === 1);
   await shot('home');
   await touch(btn(/^Calm(,|$)/)); await shot('calm');

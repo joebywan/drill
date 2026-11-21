@@ -75,6 +75,8 @@ import testingCourse from './code/courses/testing.js';
  * an optional question home offers by the subject's path (`offer` is the link) to start further on;
  * `games`, [{ id, label, entry }]: replayable modes in a small row on the course's home, each `entry` run as a session (chess/games.js);
  * `varied`, { key: [values] }: a timing marked `varies` in TIMINGS, as the routine has it per step.
+ * `follows`, { course, units }: a course that builds on another's first `units` units (TypeScript on JavaScript); until those
+ * are done, or the learner chooses to start anyway (a placement answer), its tab offers the other course first (progress.js waits).
  * It never stands in the way: answering opens the path at that unit, dismissing it hides the offer.
  * `timings`, another habit's id whose own timings this subject plays by (Wind down plays Calm's);
  * `night`, the session and its end screen in the dim night palette whatever the theme.
@@ -117,10 +119,12 @@ export const OWN_DID = 'Done today';
 /**
  * Every habit for this learner, in tab order: the built-in HABITS, then each tracked log habit in
  * the order it was added, as { id, name, icon, kind: 'log', plant, did, title, hidden? }. Hidden
- * ones are kept (their plant and history stay); only the tabs leave them out. An entry that is
- * neither a preset nor has a name of its own, or that reuses a built-in id, is skipped.
+ * ones are kept (their plant and history stay); only the tabs leave them out. A tracked entry with a
+ * built-in's id only hides or shows it (the intro's picks); one with a course's id is coursesFor's. Any other
+ * entry that is neither a preset nor has a name of its own is skipped.
  */
 export function habitsFor(progress) {
+  const off = new Set((progress?.tracked || []).filter((t) => t.hidden).map((t) => t.id)); // a built-in the intro left off
   const own = (progress?.tracked || []).filter((t) => !HABITS.some((h) => h.id === t.id)).map((t) => {
     const preset = PRESETS.find((x) => x.id === t.id);
     if (preset) return { ...preset, hidden: !!t.hidden };
@@ -130,7 +134,17 @@ export function habitsFor(progress) {
       plant: OWN_PLANTS.includes(t.plant) ? t.plant : OWN_PLANTS[0], did: OWN_DID, title: t.name, hidden: !!t.hidden, own: true,
     };
   }).filter(Boolean);
-  return [...HABITS, ...own.map((h) => ({ ...h, kind: 'log' }))];
+  return [...HABITS.map((h) => (off.has(h.id) ? { ...h, hidden: true } : h)), ...own.map((h) => ({ ...h, kind: 'log' }))];
+}
+
+/**
+ * The courses (`list`, the Learn subjects) the Learning tab's course row shows: all but those the intro left off,
+ * kept in `tracked` as hidden like a habit, and never none.
+ */
+export function coursesFor(progress, list) {
+  const off = new Set((progress?.tracked || []).filter((t) => t.hidden).map((t) => t.id));
+  const shown = list.filter((s) => !off.has(s.id));
+  return shown.length ? shown : list;
 }
 
 /**

@@ -1,10 +1,10 @@
-import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, habitsFor, ordered, subjects } from './subjects.js';
+import { HABITS, OWN_ICONS, OWN_PLANTS, PRESETS, coursesFor, habitsFor, ordered, subjects } from './subjects.js';
 import { GARDEN_WORDS, LIFE, LIFE_WORDS, SKIN_RULES, award, creatures, garden, flowersOpened, guide, listed, moreArrived, plantWords } from './garden/model.js';
 import { lifeArt, lifeBox } from './cast/butterfly.js';
 import { fieldGuide } from './guide.js';
 import { PLANTS, animateLandmarks, animateScene, animateVisitor, drawGarden, flower, landmark, plant, sway, visitor } from './garden/art.js';
 import { COMEBACK_WORDS, PAUSED_WORDS, activeComeback, answerComeback, noteReminder, preferred, reminderHour, remindersPaused, shorter, shouldRemind, startComeback, usualHours, usualLine } from './fitting.js';
-import { WINGS, firstToday, emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, setWhen, track, unlogToday, writeJournal, finishSession, meetsCoach, metCoach, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today } from './progress.js';
+import { WINGS, firstToday, emptyProgress, nextUp, unitsOf, finishPractice, leavePractice, logToday, setWhen, track, unlogToday, writeJournal, finishSession, meetsCoach, metCoach, noteFeel, currentStreak, dueKeys, habitDays, light, migrate, needsRepair, offersPlacement, placeAt, showsIntro, soonestKeys, today, waits } from './progress.js';
 import { FIRST_SQUARE, NO_STREAK, QUIET_DAY, REST_DAY, dateOf, streakLine, showsStreak, dayName, restDays, sessionLine } from './habitview.js';
 import { coach } from './cast/coach.js';
 import { flap, lumi, lumiPerched } from './cast/lumi.js';
@@ -37,6 +37,8 @@ let progress = award(load(), new Date(), (r) => r.habit === null).progress;
 /** Every habit this learner has (built in, then their own; what the intro picked first), and one of them by id. */
 const habits = () => ordered(habitsFor(progress), preferred(progress)); // picks first, then the ones finished most
 const habitOf = (id) => habits().find((h) => h.id === id);
+/** The first habit on the tabs: where home goes when the one it showed is hidden. */
+const firstTab = () => habits().find((h) => !h.hidden)?.id ?? HABITS[0].id;
 /** Lumi in what she wears (the wardrobe) with your butterfly on her head, or in the costume, its wings in your colours; a coach's drawing, Lumi dressed. */
 const dressed = (mood, skin = worn(progress)) => lumi(mood, skin, wingColours(progress), wingColours(progress));
 const drawOf = (c) => (c.draw === lumi ? dressed : c.draw);
@@ -117,7 +119,7 @@ const HABIT_KEY = 'wingbeat.habit';
 let habitShown = (() => {
   let h = null;
   try { h = localStorage.getItem(HABIT_KEY); } catch { /* private mode */ }
-  return habits().some((x) => x.id === h && !x.hidden) ? h : HABITS[0].id;
+  return habits().some((x) => x.id === h && !x.hidden) ? h : firstTab();
 })();
 function showHabit(id) {
   habitShown = id;
@@ -159,6 +161,17 @@ function showCourse(id) {
   courseShown = courses.find((s) => s.id === id) || courses[0];
   try { localStorage.setItem(COURSE_KEY, courseShown.id); } catch { /* lasts the visit */ }
 }
+/** The courses in Learning's course row (what the intro picked, or all), and the course one builds on. */
+const shownCourses = () => coursesFor(progress, courses);
+const parentOf = (s) => (s.follows ? courses.find((c) => c.id === s.follows.course) : undefined);
+/** Puts courses back in the row, each with the course it follows. */
+function showCourses(ids) {
+  for (const id of ids.flatMap((x) => [x, courses.find((c) => c.id === x)?.follows?.course]).filter(Boolean)) {
+    if (progress.tracked.some((t) => t.id === id && t.hidden)) progress = track(progress, { id, hidden: false });
+  }
+}
+/** `{name}`-style slots in our own words, filled. */
+const fill = (text, slots) => text.replace(/\{(\w+)\}/g, (m, k) => slots[k] ?? m);
 
 /**
  * How much larger than 16px the learner has asked for text: 1.3 in the Android app with the phone's text at 130%
@@ -190,13 +203,18 @@ const SWAY = 70; // px a node sits off centre at most
  */
 function home(arrived = null, newly = []) {
   stopHome();
-  if (!habitOf(habitShown) || habitOf(habitShown).hidden) showHabit(HABITS[0].id);
+  if (!habitOf(habitShown) || habitOf(habitShown).hidden) showHabit(firstTab());
   const fitted = startComeback(progress);
   if (fitted !== progress) { progress = fitted; save(); }
   const shownHabit = habitOf(habitShown);
   // A self-reported habit has no path: one big button instead (logPanel).
   const logged = shownHabit.kind === 'log' && light(progress, new Date(), habitShown) === 'bright';
   const learning = habitShown === 'learn';
+  if (learning && !shownCourses().includes(courseShown)) showCourse(shownCourses()[0].id);
+  // A course that follows another, before that much of it is done, offers the other first, and no path (decision 26).
+  const parent = learning ? parentOf(courseShown) : undefined;
+  const waiting = parent && waits(progress, courseShown, parent);
+  const words = parent && { course: courseShown.title, parent: parent.title, units: courseShown.follows.units };
   // Learning shows one course at a time, and reviews that course's cards, so its coach runs them.
   const shownSubjects = learning ? [courseShown] : subjects.filter((s) => s.habit === habitShown);
   const ofCourse = (k) => items.get(k)?.subject === courseShown;
@@ -204,7 +222,7 @@ function home(arrived = null, newly = []) {
   // A repair needs a review even when nothing is due yet: then the soonest cards stand in.
   const repair = learning && needsRepair(progress);
   const reviewKeys = (due.length ? due : repair ? soonestKeys(progress).filter(ofCourse) : []).slice(0, REVIEW_SIZE);
-  const units = shownSubjects.flatMap((s) => unitsOf(progress, s));
+  const units = waiting ? [] : shownSubjects.flatMap((s) => unitsOf(progress, s));
   // A subject's optional placement question, offered by its path until answered or dismissed.
   const offer = shownSubjects.find((s) => offersPlacement(progress, s));
   const brandNew = !progress.log.length && !Object.keys(progress.done).length;
@@ -281,10 +299,12 @@ function home(arrived = null, newly = []) {
       <button class="menu" aria-label="Settings">⋯</button>
       </div>
       </div><div class="pane">
-      ${learning && courses.length > 1 ? `<nav class="courses" aria-label="Course">${courses.map((s) =>
-        `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === courseShown}">${esc(s.title)}</button>`).join('')}</nav>` : ''}
+      ${learning && (shownCourses().length > 1 || shownCourses().length < courses.length) ? `<nav class="courses" aria-label="Course">${shownCourses().map((s) =>
+        `<button class="course" data-course="${esc(s.id)}" aria-pressed="${s === courseShown}">${esc(s.title)}</button>`).join('')}${shownCourses().length < courses.length
+        ? `<button class="course add-tab" data-add-course>${esc(INTRO_WORDS.addCourse)}</button>` : ''}</nav>` : ''}
       ${learning && courseShown.games ? `<nav class="courses games" aria-label="Games"><span>Games</span>${courseShown.games.map((g) => `<button class="course" data-game="${g.id}">${esc(g.label)}</button>`).join('')}</nav>` : ''}
-      ${brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : invite ? ''
+      ${waiting ? `<p class="said welcome follows-line">${esc(fill(INTRO_WORDS.follows, words))}</p>`
+        : brandNew ? `<p class="said welcome">${esc(firstPick ? INTRO_WORDS.first.replace('{name}', firstPick) : line('welcome'))}</p>` : invite ? ''
         : countedAway ? `<p class="said away-line" role="status" tabindex="-1">${esc(CHOOSE_WORDS.counted)} <button class="link" data-unaway>${esc(CHOOSE_WORDS.undo)}</button></p>` : greeting(shownHabit)}
       ${streakRow(progress.habits[habitShown]?.last ? `<button class="streak-line">${esc(streakLine(currentStreak(progress, new Date(), habitShown), true, showsStreak(habitShown, pref('quiet-streaks', false))))}</button>`
         : TIMINGS[timingsOf(habitShown)] ? `<button class="link timings-link">${esc(TIMING_WORDS.link)}</button>` : '',
@@ -302,9 +322,11 @@ function home(arrived = null, newly = []) {
     <footer class="cta">
       ${dueChip}
       ${shownHabit.kind === 'log' ? (logged ? '' : `<button class="next" data-log>${esc(shownHabit.did)}</button>`)
+        : waiting ? `<button class="next" data-parent>${esc(fill(Object.keys(progress.done).some((id) => id.startsWith(`${parent.id}:`)) ? INTRO_WORDS.carryOn : INTRO_WORDS.startParent, words))}</button>`
         : current ? `<button class="next" data-lesson="${current.id}">Continue · ${esc(current.lesson.title)}</button>`
         : repeat ? `<button class="next" data-lesson="${repeat.id}">${esc(again.lessons ? `${again.label} · ${repeat.lesson.title}` : again.label)}</button>` : ''}
       <div class="links">
+        ${waiting ? `<button class="link" data-start-here>${esc(fill(INTRO_WORDS.startHere, words))}</button>` : ''}
         ${short ? `<button class="link short" data-short>${esc(short.words)}</button>` : ''}
         ${finishedUnits.length ? `<button class="link choose" data-choose>${esc(CHOOSE_WORDS.else)}</button>`
           : away ? `<button class="link choose" data-away>${esc(CHOOSE_WORDS.awayOnly)}</button>` : ''}
@@ -362,7 +384,22 @@ function home(arrived = null, newly = []) {
   for (const b of app.querySelectorAll('[data-path]')) {
     b.addEventListener('click', () => { showHabit(b.dataset.path); home(); focusOn(`[data-path="${b.dataset.path}"]`); });
   }
-  app.querySelector('[data-add]').addEventListener('click', addHabit);
+  app.querySelector('[data-add]').addEventListener('click', () => addHabit());
+  app.querySelector('[data-add-course]')?.addEventListener('click', () => addHabit(true));
+  app.querySelector('[data-parent]')?.addEventListener('click', () => {
+    showCourses([parent.id]);
+    save();
+    showCourse(parent.id);
+    home();
+    focusOn('.cta .next');
+  });
+  // Choosing to start here is a placement answer: the course's first unit (progress.start), so it is asked once.
+  app.querySelector('[data-start-here]')?.addEventListener('click', () => {
+    progress = placeAt(progress, courseShown.id, courseShown.units[0].title);
+    save();
+    home();
+    focusOn('.cta .next');
+  });
   for (const b of app.querySelectorAll('[data-course]')) {
     b.addEventListener('click', () => { showCourse(b.dataset.course); home(); focusOn(`[data-course="${b.dataset.course}"]`); });
   }
@@ -899,34 +936,53 @@ function logPanel(h, logged, newly, raised = '') {
 const homeOn = (id) => { showHabit(id); home(); focusOn(`[data-path="${id}"]`); };
 
 /**
- * The "+ Habit" sheet: the presets not yet on the tabs, any hidden habit to bring back (its days
- * kept), and "Make your own". One tap starts tracking.
+ * The "+ Habit" sheet: a built-in habit the intro left off, the presets not yet on the tabs, any hidden habit to
+ * bring back (its days kept), and "Make your own". One tap starts tracking. With `course`, the course row's
+ * "+ Course": the courses the intro left off, each with its line.
  */
-function addHabit() {
+function addHabit(course = false) {
   stopHome();
   const shown = new Set(habits().filter((h) => !h.hidden).map((h) => h.id));
-  const offer = [...PRESETS.filter((p) => !shown.has(p.id)), ...habits().filter((h) => h.own && h.hidden)];
+  const offer = course ? courses.filter((s) => !shownCourses().includes(s))
+    : [...HABITS.filter((h) => !shown.has(h.id)), ...PRESETS.filter((p) => !shown.has(p.id)), ...habits().filter((h) => h.own && h.hidden)];
   app.innerHTML = `
     <header class="bar"><button class="back" aria-label="Back">←</button></header>
-    <main class="survey add-habit">
-      <h1>Add a habit</h1>
-      <p class="said">${esc(LOG_WORDS.add)}</p>
-      <div class="offers">${offer.map((h) => `<button class="choice" data-track="${esc(h.id)}"><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}</button>`).join('')}</div>
-      <button class="choice" data-own>${esc(LOG_WORDS.own)}</button>
+    <main class="survey add-habit${course ? ' add-course' : ''}">
+      <h1>${esc(course ? INTRO_WORDS.addCourseTitle : 'Add a habit')}</h1>
+      <p class="said">${esc(course ? INTRO_WORDS.addCourseSaid : LOG_WORDS.add)}</p>
+      <div class="offers">${offer.map((h) => (course ? choice(`data-track="${esc(h.id)}"`, h, esc(h.title))
+        : `<button class="choice" data-track="${esc(h.id)}"><span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}</button>`)).join('')}</div>
+      ${course ? '' : `<button class="choice" data-own>${esc(LOG_WORDS.own)}</button>`}
     </main>`;
   focusOn('h1');
-  app.querySelector('.back').addEventListener('click', () => { home(); focusOn('[data-add]'); });
+  app.querySelector('.back').addEventListener('click', () => { home(); focusOn(course ? '[data-add-course]' : '[data-add]'); });
   for (const b of app.querySelectorAll('[data-track]')) {
     b.addEventListener('click', () => {
       const id = b.dataset.track;
+      if (course) {
+        showCourses([id]);
+        save();
+        showCourse(id);
+        return homeOn('learn');
+      }
       progress = track(progress, { id, hidden: false });
       save();
       chime('plant');
-      if (progress.when?.[id]) homeOn(id); else whenView(id, () => homeOn(id));
+      // A guided habit has its own path; only a one-tap habit is asked when it happens.
+      if (progress.when?.[id] || HABITS.some((h) => h.id === id)) homeOn(id); else whenView(id, () => homeOn(id));
     });
   }
-  app.querySelector('[data-own]').addEventListener('click', () => editHabit(null));
+  app.querySelector('[data-own]')?.addEventListener('click', () => editHabit(null));
 }
+
+/**
+ * What a course or habit is, in one plain line for someone who has never met it: INTRO_WORDS.about, with "After
+ * JavaScript." on a course that follows another, and a one-tap habit's tap. `choice()` is a pick with that line
+ * under its name, read out as the button's description so its name stays the name.
+ */
+const lineFor = (x) => (x.did ? fill(INTRO_WORDS.oneTap, { did: x.did })
+  : [INTRO_WORDS.about[x.id], x.follows && fill(INTRO_WORDS.after, { parent: parentOf(x).title })].filter(Boolean).join(' '));
+const choice = (attrs, x, label) => `<button class="choice${x.follows ? ' follows' : ''}" ${attrs} aria-describedby="about-${esc(x.id)}">${label}<small class="about" id="about-${esc(x.id)}" aria-hidden="true">${esc(lineFor(x))}</small></button>`;
 
 /**
  * Make a habit of the learner's own (`h` null), or change one: its name, icon and plant, for their
@@ -966,7 +1022,7 @@ function editHabit(h) {
   app.querySelector('[data-hide]')?.addEventListener('click', () => {
     progress = track(progress, { id: h.id, hidden: true });
     save();
-    showHabit(HABITS[0].id);
+    showHabit(firstTab());
     home();
     focusOn('[data-add]');
   });
@@ -1511,16 +1567,20 @@ function intro() {
 
 /**
  * Step 2, and the ⋯ menu's "Change what you see" (`change`): Learn something and Build habits, each
- * opening its own list. Picks are kept in the order tapped; home shows them first (ordered()).
+ * opening its own list, a line under each thing saying what it is. Picks are kept in the order tapped; home shows
+ * them, first (ordered()), and nothing else (choose()). Changing starts from what home shows now.
  */
 function want(change = false) {
   const list = [...HABITS.filter((h) => !courses.some((s) => s.habit === h.id)), ...PRESETS];
   // Courses are picked by course id; choose() turns them into the Learning tab.
   const branch = { learn: courses.map((s) => s.id), habits: list.map((h) => h.id) };
-  let picked = (progress.picked || []).map((id) => (id === courses[0].habit ? courseShown.id : id))
-    .filter((id) => branch.learn.includes(id) || branch.habits.includes(id));
+  const showing = (id) => (branch.learn.includes(id) ? !habitOf(courses[0].habit).hidden && shownCourses().some((s) => s.id === id)
+    : branch.habits.includes(id) && habitOf(id) && !habitOf(id).hidden);
+  let picked = progress.picked?.length ? [...new Set([...progress.picked, ...habits().map((h) => h.id)]
+    .flatMap((id) => (id === courses[0].habit ? [courseShown.id, ...shownCourses().map((s) => s.id)] : [id])).filter(showing))] : [];
   const on = (id) => picked.includes(id);
   const toggle = (attr, id, pressed, label) => `<button class="choice" ${attr}="${esc(id)}" aria-pressed="${pressed}">${label}</button>`;
+  const pickable = (x, label) => choice(`data-pick="${esc(x.id)}" aria-pressed="${on(x.id)}"`, x, label);
   const open = (b) => branch[b].some(on);
   app.innerHTML = `
     ${change ? '' : '<header class="bar"><button class="back" aria-label="Back">←</button></header>'}
@@ -1530,13 +1590,14 @@ function want(change = false) {
       ${toggle('data-want', 'learn', open('learn'), esc(INTRO_WORDS.learn))}
       <section class="branch" data-branch="learn"${open('learn') ? '' : ' hidden'}>
         <h2>${esc(INTRO_WORDS.courses)}</h2>
-        ${courses.map((s) => toggle('data-pick', s.id, on(s.id), esc(s.title))).join('')}
+        ${courses.map((s) => pickable(s, esc(s.title))).join('')}
+        <p class="said picked-too" role="status"></p>
         ${INTRO_WORDS.soonCourses.map((n) => `<button class="choice" disabled>${esc(n)} <small>· ${esc(INTRO_WORDS.soon)}</small></button>`).join('')}
       </section>
       ${toggle('data-want', 'habits', open('habits'), esc(INTRO_WORDS.habits))}
       <section class="branch" data-branch="habits"${open('habits') ? '' : ' hidden'}>
         <h2>${esc(INTRO_WORDS.habitList)}</h2>
-        ${list.map((h) => toggle('data-pick', h.id, on(h.id), `<span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}`)).join('')}
+        ${list.map((h) => pickable(h, `<span aria-hidden="true">${esc(h.icon)}</span> ${esc(h.name)}`)).join('')}
       </section>
     </main>
     <footer class="cta">
@@ -1547,8 +1608,13 @@ function want(change = false) {
   const press = (b, pressed) => b.setAttribute('aria-pressed', pressed);
   for (const b of app.querySelectorAll('[data-pick]')) {
     b.addEventListener('click', () => {
-      picked = on(b.dataset.pick) ? picked.filter((id) => id !== b.dataset.pick) : [...picked, b.dataset.pick];
-      press(b, on(b.dataset.pick));
+      const id = b.dataset.pick;
+      // A course that follows another brings that one along, and says so.
+      const parent = parentOf(courses.find((s) => s.id === id) ?? {});
+      const also = !on(id) && parent && !on(parent.id);
+      picked = on(id) ? picked.filter((x) => x !== id) : [...picked, ...(also ? [parent.id] : []), id];
+      if (also) app.querySelector('.picked-too').textContent = fill(INTRO_WORDS.alsoPicked, { parent: parent.title });
+      for (const p of app.querySelectorAll('[data-pick]')) press(p, on(p.dataset.pick));
     });
   }
   // Opening a branch shows its list; with one live course, Learn picks it straight away. Closing
@@ -1564,21 +1630,31 @@ function want(change = false) {
       for (const p of app.querySelectorAll(`[data-branch="${id}"] [data-pick]`)) press(p, on(p.dataset.pick));
     });
   }
-  app.querySelector('[data-done]').addEventListener('click', () => choose(picked));
+  // A list opened with nothing in it picked means all of it: Learning with every course, or every guided habit.
+  const all = (b) => (open(b) || app.querySelector(`[data-want="${b}"]`).getAttribute('aria-pressed') !== 'true' ? [] : b === 'learn' ? [courses[0].habit]
+    : list.filter((h) => HABITS.includes(h)).map((h) => h.id));
+  app.querySelector('[data-done]').addEventListener('click', () => choose([...picked, ...all('learn'), ...all('habits')]));
   app.querySelector('[data-skip]')?.addEventListener('click', () => choose([]));
   app.querySelector('[data-back]')?.addEventListener('click', () => { home(); focusOn('.menu'); });
   app.querySelector('.back')?.addEventListener('click', intro);
 }
 
 /**
- * Home after the intro: the picks come first and the first is shown; picked one-tap habits are
- * switched on the way + Habit does (track). [] is a skip: today's default home.
+ * Home after the intro: what was picked is what home shows, the first shown first; the rest wait one tap away under
+ * + Habit and + Course, hidden the way + Habit hides (track). A course that follows another brings that one along.
+ * [] is a skip: today's default home, everything shown.
  */
 function choose(picked) {
-  const course = picked.find((id) => courses.some((s) => s.id === id));
+  const isCourse = (id) => courses.some((s) => s.id === id);
+  picked = [...new Set(picked.flatMap((id) => [parentOf(courses.find((s) => s.id === id) ?? {})?.id, id]).filter(Boolean))];
+  const course = picked.find(isCourse);
   if (course) showCourse(course);
-  picked = [...new Set(picked.map((id) => (courses.some((s) => s.id === id) ? courses[0].habit : id)))];
-  for (const id of picked) if (PRESETS.some((p) => p.id === id)) progress = track(progress, { id, hidden: false });
+  const tracked = (id) => progress.tracked.some((t) => t.id === id);
+  const hide = (id, hidden) => { if (hidden || tracked(id)) progress = track(progress, { id, hidden }); };
+  for (const s of courses) hide(s.id, !!course && !picked.includes(s.id));
+  picked = [...new Set(picked.map((id) => (isCourse(id) ? courses[0].habit : id)))];
+  for (const h of HABITS) hide(h.id, picked.length > 0 && !picked.includes(h.id));
+  for (const { id } of PRESETS) if (picked.includes(id)) progress = track(progress, { id, hidden: false }); else if (picked.length && tracked(id)) hide(id, true);
   progress = { ...progress, picked };
   save();
   if (picked.length) showHabit(picked[0]);

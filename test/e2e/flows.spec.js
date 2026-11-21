@@ -6,6 +6,7 @@ import { middleFor } from '../../src/reflect/practice.js';
 import { award } from '../../src/garden/model.js';
 import { answer as stopsAt, fixBug, mirrored, solve as oneWay, tileName } from '../../src/coding/program.js';
 import { withCheckpoint } from '../../src/repeat.js';
+import { subjects } from '../../src/subjects.js';
 
 // The first lesson on the path. Its answers are worked out from the course data with the same
 // item logic the app uses, so the test follows the content when it changes.
@@ -96,7 +97,7 @@ test('intro, learn only: Learn something lists the live courses, the others are 
   await expect(page.getByRole('heading', { name: 'What can Wingbeat do for you?' })).toHaveCount(0);
 });
 
-test('intro, habits only: the picks come first in the order tapped, and a tracker is switched on', async ({ page }) => {
+test('intro, habits only: home shows the picks alone, in the order tapped, and a tracker is switched on', async ({ page }) => {
   await toStepTwo(page);
   await pick(page, 'Build habits').click();
   await pick(page, 'Walk').click();
@@ -105,13 +106,19 @@ test('intro, habits only: the picks come first in the order tapped, and a tracke
   await pick(page, 'Read').click(); // changed my mind
   await expect(pick(page, 'Read')).toHaveAttribute('aria-pressed', 'false');
   await page.getByRole('button', { name: 'Show my home' }).click();
-  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'winddown', 'focus']);
+  expect(await tabOrder(page)).toEqual(['walk', 'calm']);
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'walk');
   await expect(page.getByText('Walk is first. Start with the button below.')).toBeVisible();
   await page.getByRole('button', { name: 'I walked today' }).click();
   await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
   await page.reload();
-  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'winddown', 'focus']);
+  expect(await tabOrder(page)).toEqual(['walk', 'calm']);
+  // The rest are one tap away: a built-in comes back on its own tab, with no "when" to ask.
+  await page.getByRole('button', { name: 'Add a habit' }).click();
+  for (const id of ['learn', 'break', 'reflect', 'move', 'winddown', 'focus', 'read']) await expect(page.locator(`[data-track="${id}"]`)).toHaveCount(1);
+  await page.locator('[data-track="reflect"]').click();
+  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'reflect']);
+  await expect(pressedTab(page)).toHaveAttribute('data-path', 'reflect');
 });
 
 test('once Walk is logged today, Lumi greets from her done-today lines, not an invite', async ({ page }) => {
@@ -128,6 +135,63 @@ test('once Walk is logged today, Lumi greets from her done-today lines, not an i
   expect(doneLines).toContain(said);
   await page.reload();
   expect(doneLines).toContain((await page.locator('.greeting').textContent()).replace(/^Lumi\s*/, ''));
+});
+
+test('intro: each course and habit says in one line what it is, and a course that follows another sits under it', async ({ page }) => {
+  await toStepTwo(page);
+  await expect(page.getByText('Home shows just these, and you can add the others any time.')).toBeVisible();
+  await pick(page, 'Learn something').click();
+  await pick(page, 'Build habits').click();
+  for (const [name, line] of [['Coding', 'Arrow blocks that steer a fox. No typing.'], ['JavaScript', 'Real code, tapped in word by word.'],
+    ['TypeScript', 'Labels that catch mistakes in JavaScript. After JavaScript.'], ['Test writing', 'Code that checks code works. After JavaScript.'],
+    ['Calm', 'Slow breathing, a few minutes.'], ['Walk', 'One tap: “I walked today”']]) await expect(pick(page, name)).toHaveAccessibleDescription(line);
+  const x = async (name) => (await pick(page, name).boundingBox()).x;
+  expect(await x('TypeScript')).toBeGreaterThan(await x('JavaScript')); // under it, set in
+  // At 360px every line fits on its button, and nothing scrolls sideways.
+  await page.setViewportSize({ width: 360, height: 640 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+  for (const b of await page.locator('[data-pick] .about').all()) expect((await b.boundingBox()).height, await b.textContent()).toBeLessThan(40); // two lines at most
+});
+
+test('intro, TypeScript only: JavaScript is picked with it, and its tab offers JavaScript first or a start here', async ({ page }) => {
+  await toStepTwo(page);
+  await pick(page, 'Learn something').click();
+  await pick(page, 'TypeScript').click();
+  await expect(pick(page, 'JavaScript')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('status').filter({ hasText: 'JavaScript comes first, so it is picked too.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Show my home' }).click();
+  expect(await tabOrder(page)).toEqual(['learn']);
+  expect(await page.locator('[data-course]').evaluateAll((b) => b.map((x) => x.dataset.course))).toEqual(['javascript', 'typescript']);
+  await expect(page.getByText('JavaScript is first. Start with the button below.')).toBeVisible();
+  await page.locator('[data-course="typescript"]').click();
+  await expect(page.getByText('TypeScript follows JavaScript. It uses what the first 9 units of JavaScript teach.')).toBeVisible();
+  await expect(page.locator('.path .node')).toHaveCount(0); // no path, no locks: an order, not a wall
+  await page.getByRole('button', { name: 'Start JavaScript' }).click();
+  await expect(page.locator('[data-course="javascript"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: /^Continue · / })).toBeVisible();
+  await page.locator('[data-course="typescript"]').click();
+  await page.getByRole('button', { name: 'I know JavaScript: start here' }).click();
+  await expect(page.getByRole('button', { name: 'Continue · Say what it holds' })).toBeFocused();
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Continue · Say what it holds' })).toBeVisible(); // remembered, like a placement answer
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).start)).toEqual({ typescript: 'Annotations' });
+});
+
+test('a course that follows JavaScript says "Carry on" once JavaScript is begun, and opens by itself once that much is done', async ({ page }) => {
+  const js = subjects.find((s) => s.id === 'javascript');
+  const ts = subjects.find((s) => s.id === 'testing');
+  const lessons = js.units.slice(0, ts.follows.units).flatMap((u) => u.lessons);
+  const seed = (n) => page.evaluate(([p, c]) => { localStorage.setItem('wingbeat.progress', p); localStorage.setItem('wingbeat.course', c); }, [JSON.stringify(
+    lessons.slice(0, n).reduce((p, l) => finishSession(p, `javascript:${l.id}`, []), { ...emptyProgress(), picked: [] })), 'testing']);
+  await page.goto('/');
+  await seed(1);
+  await page.reload();
+  await expect(page.getByText('Test writing follows JavaScript.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Carry on with JavaScript' })).toBeVisible();
+  await seed(lessons.length);
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Carry on with JavaScript' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: `Continue · ${ts.units[0].lessons[0].title}` })).toBeVisible();
 });
 
 test("intro, skipped at either step: today's default home, and the intro never comes back", async ({ page }) => {
@@ -187,10 +251,24 @@ test('"Change what you see" in the ⋯ menu reopens step 2 with the picks, and B
   await page.getByRole('button', { name: 'Change what you see' }).click();
   await pick(page, 'Calm').click();
   await pick(page, 'Screen break').click();
-  await pick(page, 'Learn something').click();
+  await pick(page, 'Learn something').click(); // opened with no course picked: all of them
   await page.getByRole('button', { name: 'Show my home' }).click();
-  expect(await tabOrder(page)).toEqual(['break', 'learn', 'calm', 'reflect', 'move', 'winddown', 'focus']);
+  expect(await tabOrder(page)).toEqual(['break', 'learn']);
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'break');
+  await tab(page, 'Learning').click();
+  await expect(page.locator('[data-course]')).toHaveCount(7);
+
+  // Changing starts from what home shows, and what it sets is what shows.
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Change what you see' }).click();
+  for (const name of ['Screen break', 'Chess', 'Test writing']) await expect(pick(page, name)).toHaveAttribute('aria-pressed', 'true');
+  await expect(pick(page, 'Calm')).toHaveAttribute('aria-pressed', 'false');
+  for (const name of ['Chess', 'Maths', 'Japanese', 'Coding', 'JavaScript', 'TypeScript', 'Test writing']) if (name !== 'Coding') await pick(page, name).click();
+  await page.getByRole('button', { name: 'Show my home' }).click();
+  expect(await tabOrder(page)).toEqual(['break', 'learn']);
+  await tab(page, 'Learning').click();
+  expect(await page.locator('[data-course]').evaluateAll((b) => b.map((x) => x.dataset.course))).toEqual(['coding']);
+  await expect(page.getByRole('button', { name: '+ Course' })).toBeVisible();
 });
 
 test('skipping the intro lands on home with a welcome and no questions; Learning starts straight in', async ({ page }) => {
@@ -2013,7 +2091,10 @@ test('intro: Coding is a live course; picking it puts Learning first, showing Co
   await expect(page.getByText('Coding is first. Start with the button below.')).toBeVisible();
   await expect(page.locator('[data-course="coding"]')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('button', { name: `Continue · ${firstCoding.title}` })).toBeVisible();
-  await page.locator('[data-course="chess"]').click();
+  await expect(page.locator('[data-course]')).toHaveCount(1); // only what was picked
+  await page.getByRole('button', { name: '+ Course' }).click();
+  await expect(page.getByRole('button', { name: 'Chess', exact: true })).toHaveAccessibleDescription('How each piece moves, then tactics.');
+  await page.locator('[data-track="chess"]').click();
   await expect(page.getByRole('button', { name: `Continue · ${first.title}` })).toBeVisible();
   await page.reload();
   await expect(page.locator('[data-course="chess"]')).toHaveAttribute('aria-pressed', 'true'); // remembered
