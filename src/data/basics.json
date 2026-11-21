@@ -29,7 +29,7 @@
               "type": "teach",
               "side": "w",
               "fen": "8/8/8/8/8/8/4K3/8 w - - 0 1",
-              "text": "You have the white pieces, at the bottom. Tap a piece, then tap a dot to move it. The king steps one square, any direction, diagonals too."
+              "text": "You have the white pieces, at the bottom. In the puzzles, you tap a piece, then tap a dot to move it. The king steps one square, any direction, diagonals too."
             },
             {
               "id": "board-0-king-e4",

@@ -265,7 +265,7 @@ codeSubject(javascriptCourse, HELLO.javascript, {
   offer: 'Written JavaScript already? Skip ahead',
   question: 'How much JavaScript have you written?',
   options: [
-    ['None yet', 'Printing'],
+    ['None yet', 'Printing to the screen'],
     ['Variables and text are fine', 'Conditions'],
     ['I can write a loop', 'Functions'],
     ['Functions too', 'Arrays'],

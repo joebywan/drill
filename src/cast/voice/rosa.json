@@ -25,7 +25,7 @@
     ] },
     { "when": { "light": "done" }, "lines": [
       "Lesson done today. I'm telling the pigeons.",
-      "That's today's chess. Go and gloat somewhere.",
+      "That's today's chess. Gloat now, or play another. Both are allowed.",
       "Done for today. The knights are resting their hooves."
     ] },
     { "when": { "light": "done", "hour": "night" }, "lines": [
@@ -36,7 +36,12 @@
     ] },
     { "when": { "light": "done", "streak": "month" }, "lines": [
       "Done again. Somebody fetch my reading glasses, I want to admire this.",
-      "{days} days of chess so far. The pieces know you now."
+      "{days} days of learning so far. The pieces have heard all about you."
+    ] },
+    { "when": { "elsewhere": true }, "lines": [
+      "Today's learning is done. The board will keep, darling, it always does.",
+      "A lesson done today, just not chess. I'll allow it. I'll be polishing the knights.",
+      "Learning's done for today. Chess is here whenever you fancy it."
     ] },
     { "when": { "light": "resting" }, "lines": [
       "A rest day for the board. Even I take those. Rarely.",
@@ -64,12 +69,12 @@
       "A late one? One puzzle, then bed. I insist."
     ] },
     { "when": { "light": "not yet", "streak": "week" }, "lines": [
-      "{count} days of chess in a row. That's a habit, darling.",
+      "{count} days of lessons in a row. That's a habit, darling.",
       "A week of lessons. I've started mentioning you at the club."
     ] },
     { "when": { "light": "not yet", "streak": "month" }, "lines": [
-      "A month of chess. The club wants your autograph. I said later.",
-      "{count} days on the board. I'm having it framed."
+      "A month of lessons. The club wants your autograph. I said later.",
+      "{count} days of lessons in a row. I'm having it framed."
     ] }
   ],
   "dares": [

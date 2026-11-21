@@ -51,7 +51,7 @@
     "From blocks to code": "It's the same plan in different clothes. A for line is a repeat, its braces hold the inside, and each line ending in a semicolon is one step."
   },
   "javascript": {
-    "Printing": "console.log prints what is in its brackets. Text goes in quote marks, numbers and sums don't. A comparison prints true or false.",
+    "Printing to the screen": "console.log prints what is in its brackets on the screen. Text goes in quote marks, numbers and sums don't. A comparison prints true or false.",
     "Variables": "A name holds a value. let makes one that can change, const one that can't. Reading a name gives its newest value, line by line from the top.",
     "Text": "+ glues text with no space added. .length counts letters, and places start at 0, so the first letter is [0].",
     "Conditions": "Read the test on its own first: is it true right now? True runs the first { }, false runs the else if there is one. && needs both sides, || needs one.",

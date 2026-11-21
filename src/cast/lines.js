@@ -41,7 +41,7 @@ export const HELLO = {
   },
   javascript: {
     line: "Fennel again. Real JavaScript this time, and I still do exactly what it says.",
-    expect: ['No typing. You tap words into place, like a sentence, and press Run.', 'Printing and variables first, then ifs, loops, functions, lists and objects.', 'It really runs, so any code that does the job is right.'],
+    expect: ['No typing. You tap words into place, like a sentence, and press Run.', 'Printing to the screen and variables first, then ifs, loops, functions, lists and objects.', 'It really runs, so any code that does the job is right.'],
     go: "Let's run it",
   },
   typescript: {
@@ -57,24 +57,29 @@ export const HELLO = {
 };
 
 export const LINES = {
+  // A verdict's lines: `correct` and `wrong` fit any item; `correct:move`, `wrong:hear`… only the
+  // items `doing()` says were answered that way (see `verdict`).
   correct: [
     'Well spotted.',
-    "That's the move. I'd have played it myself.",
     'Ooh. That one had my name on it.',
-    'Yes! You checked every target first.',
     'Correct. Write that one down, darling.',
     'There it is. Textbook.',
-    'Mm. A move with manners.',
     "That's how I won the club final in '74. Near enough.",
-    "Right, and you didn't rush it. Good.",
+    'Right. Tidy work, darling.',
+  ],
+  'correct:move': [
+    "That's the move. I'd have played it myself.",
+    'Mm. A move with manners.',
     'Lovely. You looked before you leapt.',
   ],
   wrong: [
-    'Not quite. I played that once too. Once.',
     'Hm. Bold. Wrong, but bold.',
-    'Close. Look again, the board is telling you something.',
+    'Not that. Look again, the board is telling you something.',
     "Not this one, love. Read why, then it's yours.",
     'Nope. But that is exactly the mistake worth making today.',
+  ],
+  'wrong:move': [
+    'Not quite. I played that once too. Once.',
     'Ah. Every opponent I ever played tried that one.',
     'Not this time. Check what each piece attacks.',
   ],
@@ -108,19 +113,24 @@ export const LINES = {
   perfect: [
     "Every one right first time. That's careful play.",
     'Not a single slip. I checked twice, out of habit.',
-    'Right first time, every one. You looked at the whole board.',
+    'Right first time, every one. The board had no secrets today.',
   ],
   fast: [
     'Quick and right, every one. That is checking done well.',
-    'Fast, and not a guess among them. You looked first.',
+    'Fast, and right first time, every one.',
+  ],
+  // One or two misses, with more right than not (see `finished`).
+  nearly: [
+    'The one that got away comes back in review, so it sticks.',
+    'A slip, and the rest went right. That is how the patterns settle in.',
   ],
   struggled: [
-    'Every miss you fixed is one you will spot next time.',
-    'You worked those out. That is where the learning happens.',
+    'Every miss is one you will know better next time.',
+    'You worked through those. That is where the learning happens.',
     'The tricky ones come back in review. That is the plan, not a penalty.',
   ],
   review: [
-    'Review done. Those patterns are sticking.',
+    'Review done, every one remembered. Those patterns are sticking.',
     'Recall like that is how the patterns settle in.',
   ],
   relit: ['That review has your butterfly flying again. Welcome back to the board.'],
@@ -150,9 +160,13 @@ export const HEADLINES = {
     'Done already? My tea is still hot!',
     'Blink and I missed it. Play it again slower so I can take the credit.',
   ],
+  nearly: [
+    'One slip. I make one a game, and I still win the cardigan prize.',
+    'Nearly flawless. I will allow it. Just.',
+  ],
   struggled: [
-    'Ooh, that took some wrestling. And you won the bout.',
-    'Messy in the middle, tidy at the end. Just like my 1979 final.',
+    'Ooh, that took some wrestling. You stayed in the bout.',
+    'Not a smooth ride. Neither was my 1979 final.',
     'You fought for that one. I respect a fight.',
   ],
   review: [
@@ -181,9 +195,27 @@ export const CELEBRATIONS = ['run3', 'run5', 'perfect', 'fast', 'relit', 'wingbe
 /** The banner line kind for a right answer, given the run of right answers so far. */
 export const rightAnswer = (run) => (run === 5 ? 'run5' : run === 3 ? 'run3' : 'correct');
 
-/** The end-screen kind for a finished session: picks both the headline and the subline. */
-export const finished = ({ review, perfect, relit, fast = false, missed = false }) =>
-  review ? (relit ? 'relit' : 'review') : perfect ? (fast ? 'fast' : 'perfect') : missed ? 'struggled' : 'complete';
+/**
+ * How an item was answered, for the verdict lines that fit only some items: 'hear' (a sound played,
+ * nothing shown to read), 'move' (a piece moved on the board: chess moves, puzzles, stars), 'write'
+ * (tiles, blocks or chips put together and run), else 'look' (something shown, then a tap).
+ * By item type, which means the same in every course; a chess puzzle has none.
+ */
+const DOING = { move: 'move', find: 'move', stars: 'move', build: 'write', gap: 'write', unscramble: 'write', palette: 'write', free: 'write', bug: 'write' };
+export const doing = (item) => (item.listen ? 'hear' : DOING[item.type || 'find'] || 'look');
+/** The verdict's lines for `kind` ('correct', 'run3', 'wrong'…) on `item`: the general pool and `kind:how`, how it was answered. */
+export const verdicts = (lines, kind, item) => [...lines[kind], ...(lines[`${kind}:${doing(item)}`] || [])];
+
+/**
+ * The end-screen kind for a finished session: picks both the headline and the subline. `misses` and
+ * `right` count first tries. The words of each kind hold for every session it is shown for
+ * (test/guardrails.test.js "end-screen words fit the session"): 'nearly' is one miss among three or more
+ * right, 'struggled' any other miss, so its lines never count misses; speed is praised only with none.
+ */
+export const finished = ({ review, perfect, relit, fast = false, misses = 0, right = 0 }) =>
+  review && relit ? 'relit'
+    : misses ? (misses === 1 && right >= 3 ? 'nearly' : 'struggled')
+      : review ? 'review' : perfect ? (fast ? 'fast' : 'perfect') : 'complete';
 
 /** End-screen chip labels: the first band whose floor the value reaches. */
 const band = (bands, value) => bands.find(([floor]) => value >= floor)[1];
@@ -218,7 +250,7 @@ export const CALM_LINES = {
     'I am very relaxed. It took years of lying in warm water.',
   ],
   // The end screen: settled, not a party.
-  done: ['That was a few quiet minutes, just for you.', 'Done. Have a moment to notice how you are.', 'Nicely done. Slow and steady.'],
+  done: ['That was a quiet moment, just for you.', 'Done. Have a moment to notice how you are.', 'Nicely done. Slow and steady.'],
   'calmer': ['Good. Keep a bit of that for later.', "That's nice to hear. The breath is always there when you want it."],
   'about the same': ["That's fine. Some days it's just a pause, and a pause still counts.", 'Fair enough. Thanks for taking the time anyway.'],
   'no different': ["That's alright. Thanks for telling me. Some days are heavy, and that's not on you."],
@@ -260,7 +292,7 @@ export const WINDDOWN_LINES = {
   // The end screen: settled, not a party.
   done: ['All wound down. Goodnight.', 'Quiet now. Goodnight.', 'That was a soft end to the day.'],
   'settled': ['Good. Take that with you.', 'Lovely. Rest easy.'],
-  'about the same': ["That's fine. A quiet few minutes still counts.", 'Fair enough. Thanks for winding down with me.'],
+  'about the same': ["That's fine. A quiet moment still counts.", 'Fair enough. Thanks for winding down with me.'],
   'no different': ["That's alright. Thanks for telling me. Some nights are heavy, and that's not on you."],
 };
 
@@ -349,7 +381,7 @@ export const MOVE_LINES = {
     'All that turning and twisting? I deserve a flop. A big one.',
   ],
   // The end screen: settled, not a party.
-  done: ['A few minutes of moving, just for you.', 'Done. Nice and easy does it.', 'All moved. Have a sip of water.'],
+  done: ['That was some moving, just for you.', 'Done. Nice and easy does it.', 'All moved. Have a sip of water.'],
   'better': ['Lovely. Hold on to that for later.', 'Good to hear. Your body says thanks.'],
   'about the same': ["That's fine. Some days it just feels like moving, and that counts.", 'Fair enough. Thanks for moving with me.'],
   'no different': ["That's alright. Thanks for telling me. Go gently today."],
@@ -470,24 +502,38 @@ export const INTRO_WORDS = {
  */
 export const KAEDE_LINES = {
   correct: [
-    'Yes! Read like a local.',
     'That one is yours now.',
     'Right. I am standing on my back legs about it.',
-    'Correct. You looked at the shape first. Good habit.',
     'Nailed it. I would offer you bamboo, but it is mine.',
-    'Exactly that sound.',
+    'Exactly that.',
+  ],
+  'correct:look': [
+    'Yes! Read right off the page.',
+    'Correct. The shape gave it away. Good eyes on that one.',
+  ],
+  'correct:hear': [
+    'Yes. Your ears had that one.',
+    'That is the sound. Ears up, like mine.',
   ],
   wrong: [
-    'Not that one. These two are twins, almost. Read why.',
+    "Hm, not that one. Read why, then it's yours.",
+    'Not quite. Everyone mixes these up at first. Even me. Once.',
+  ],
+  'wrong:look': [
+    'Not that one. Some of these are twins, almost. Read why.',
     'Nope, but now you have seen the difference.',
-    'Close. Look at the little strokes, that is where it hides.',
-    'Not quite. Everyone mixes these up on day one. Even me. Once.',
+    'Not that one. Look at the little strokes, that is where it hides.',
     'Hm, no. The mnemonic is the trick: picture it again.',
+  ],
+  'wrong:hear': [
+    'Not that one. Sounds that close are tricky. Read which it was.',
+    'Nope, but now you know how that one sounds.',
   ],
   run3: [
     'Three in a row! My tail is doing the thing.',
-    'Three! You are reading, actually reading.',
+    'Three! Ears up, tail up.',
   ],
+  'run3:look': ['Three! You are reading, actually reading.'],
   run5: [
     'Five in a row! I am up on my hind legs. This is my big pose.',
     'Five! Somebody fetch me a bamboo trophy.',
@@ -506,19 +552,23 @@ export const KAEDE_LINES = {
     'That is the lesson. New shapes, new sounds, all yours.',
   ],
   perfect: [
-    'Every one right first time. You read every stroke.',
+    'Every one right first time. Every stroke, every sound.',
     'Not one slip. I checked with my whiskers.',
   ],
   fast: [
     'Quick and right, every one. Those shapes are sinking in.',
-    'Fast, and not a guess among them.',
+    'Fast, and right first time, every one.',
+  ],
+  nearly: [
+    'The one mix-up comes back in review, so it sticks.',
+    'One mix-up, and the rest went right. The kana are sinking in.',
   ],
   struggled: [
-    'Every mix-up you sorted out is one you will spot next time.',
+    'Every mix-up is one you will know better next time.',
     'The tricky ones come back in review. That is the plan, not a penalty.',
   ],
   review: [
-    'Review done. Those kana are moving in to stay.',
+    'Review done, every one remembered. Those kana are moving in to stay.',
     'Recall like that is how a script settles in.',
   ],
   relit: ['That review has your butterfly flying again. Welcome back to the kana.'],
@@ -529,7 +579,8 @@ export const KAEDE_HEADLINES = {
   complete: ['Lesson done! Tail up, ears up.', 'And that is a lesson. Bamboo for everyone. Well, for me.'],
   perfect: ['Flawless! I am standing on my hind legs right now.', 'Perfect. I will be taking some credit for this.'],
   fast: ['Done already? I had barely finished my bamboo.', 'Whoosh. That was quick and right.'],
-  struggled: ['That took some wrestling, and you won.', 'Messy in the middle, tidy at the end.'],
+  nearly: ['Nearly flawless! One tail flick short.', 'Nearly all first time. I am up on one hind leg.'],
+  struggled: ['That took some wrestling, and you kept at it.', 'Mix-ups are how kana stick. Tail up.'],
   review: ['Look at that recall!', 'Remembered! The kana are settling in.'],
   relit: ['Flying again! I am up on my back legs to wave it off.'],
 };
@@ -553,7 +604,7 @@ export const MATHS_LINES = {
   ],
   wrong: [
     'Not quite. Read the working, then it is yours.',
-    'Close. Take it in smaller steps and look again.',
+    'Not quite. Take it in smaller steps and look again.',
     'Nope, but that is the slip worth making today.',
     'Not this one. I got that wrong for years. Well, minutes.',
     'Hm. The numbers fibbed to you there. Check why.',
@@ -595,15 +646,19 @@ export const MATHS_LINES = {
   ],
   fast: [
     'Quick and right, every one. That is mental maths.',
-    'Fast, and not a guess among them.',
+    'Fast, and right first time, every one.',
+  ],
+  nearly: [
+    'The one that slipped comes back in review, so it sticks.',
+    'One slip, and the rest added up. Tidy enough for my fridge.',
   ],
   struggled: [
-    'Every slip you fixed is one you will spot next time.',
-    'You worked those out. That is where the learning happens.',
+    'Every slip is one you will know better next time.',
+    'You worked through those. That is where the learning happens.',
     'The tricky ones come back in review. That is the plan, not a penalty.',
   ],
   review: [
-    'Review done. Those tricks are sticking.',
+    'Review done, every one remembered. Those tricks are sticking.',
     'Recall like that is how sums get easy.',
   ],
   relit: ['That review has your butterfly flying again. Welcome back to the numbers.'],
@@ -624,9 +679,13 @@ export const MATHS_HEADLINES = {
     'Done already? I was still sharpening my pencil.',
     'That was quick. I needed all eight arms to keep up.',
   ],
+  nearly: [
+    'Nearly flawless. I only had to uncurl one arm.',
+    'Nearly all first time. I am putting most of it on the fridge.',
+  ],
   struggled: [
-    'That took some wrestling, and you came out on top.',
-    'Messy in the middle, tidy at the end. That is real working.',
+    'That took some wrestling, and you kept at it.',
+    'Not a smooth ride, and that is real working.',
   ],
   review: [
     'Look at that recall. Somebody has been practising.',
@@ -706,19 +765,30 @@ export const REMINDER_WORDS = {
 export const CODING_LINES = {
   correct: [
     'Exactly right. I did just what the blocks said.',
-    'Every step in the right order. Lovely plan.',
     'That works. I can feel it in my ears.',
-    "Yes! You read the grid first. That's the trick.",
-    'Spot on. You followed every block through.',
+    'Spot on. Every block, followed through.',
+  ],
+  'correct:write': [
+    'Every step in the right order. Lovely plan.',
+    'That plan works. My paws agree.',
+  ],
+  'correct:look': [
+    "Yes! You followed me there before I set off.",
+    'Spot on. That is exactly where I stop.',
   ],
   wrong: [
     'Not quite. I only do what the blocks say, so follow along with me.',
-    "Close. Read why, then you'll have it.",
+    "Not this time. Read why, then you'll have it.",
+  ],
+  'wrong:write': [
     'Bump! Steps are fussy about order. Look at where I stopped.',
     "That's a useful one to try. Now you can see what the blocks did.",
   ],
+  'wrong:look': [
+    'Not there. Follow the blocks one at a time, the way I walk them.',
+  ],
   run3: ['Three plans in a row! My ears are tingling.', 'Three in a row. Neat, tidy plans.'],
-  run5: ['Five in a row! You think like a programmer: one step at a time.', 'Five! Those plans run like clockwork.'],
+  run5: ['Five in a row! One step at a time, every time.', 'Five! Those plans run like clockwork.'],
   tapped: [
     'Computers are like me: they do the steps exactly, in order. No guessing.',
     'My ears hear sand move. They do not hear what you meant, only what you built.',
@@ -727,22 +797,24 @@ export const CODING_LINES = {
     'Read a program like a recipe: top to bottom, one line at a time.',
     'Lumi tried to repeat lunch forever. That is called an infinite loop.',
   ],
-  complete: ['Lesson done. These come back in review, so they stick.', 'That is the lesson. Plan made, plan run.'],
-  perfect: ['Every plan right first time. You followed each step through.', 'Not one bump. You checked every square.'],
-  fast: ['Quick and right, every one. You read the grid first.', 'Fast, and every plan reached the flower.'],
+  complete: ['Lesson done. These come back in review, so they stick.', 'That is the lesson. Ears up for the next one.'],
+  perfect: ['Every plan right first time. You followed each step through.', 'Not one bump. Every square where it should be.'],
+  fast: ['Quick and right, every one. My ears could barely keep up.', 'Fast, and right first time, every one.'],
+  nearly: ['The one bump comes back in review, so it sticks.', 'One bump, and the rest ran smooth. Ears up.'],
   struggled: [
-    'Every bump you fixed is a bug you will spot next time.',
-    'Finding where a plan goes wrong is most of coding. You did lots of it.',
+    'Every bump is a bug you will know better next time.',
+    'Finding where a plan goes wrong is most of coding. You did some of it today.',
     'The tricky ones come back in review. That is the plan, not a penalty.',
   ],
-  review: ['Review done. Those ideas are sticking.', 'Recall like that is how the ideas settle in.'],
+  review: ['Review done, every one remembered. Those ideas are sticking.', 'Recall like that is how the ideas settle in.'],
   relit: ['That review has your butterfly flying again. Welcome back to the grid.'],
 };
 export const CODING_HEADLINES = {
   complete: ['Lesson done. The flower thanks you.', 'And that is a lesson. My ears approve.'],
   perfect: ['Flawless! Not a single bump.', 'Every plan perfect. I may frame them.'],
   fast: ['Done already? I had barely started trotting.', 'Zoom! That was a quick little program.'],
-  struggled: ['Plenty of bumps. That is how a plan gets better.', 'A bumpy walk, and I saw every step of it. We go again.'],
+  nearly: ['Nearly flawless! One bump, and I hardly felt it.', 'Nearly every plan first time. My ears approve.'],
+  struggled: ['Bumps are how a plan gets better.', 'A bumpy walk, and I saw every step of it. We go again.'],
   review: ['Look at that recall. The plans are in there.', 'Review done. Steps, loops, ifs: all at home.'],
   relit: ['Flying again! Ears up.', 'Your butterfly is flying again. My ears followed it all the way.'],
 };
@@ -750,19 +822,26 @@ export const CODING_HEADLINES = {
 /** Fennel on real code: the JavaScript, TypeScript and test-writing courses. */
 export const CODE_LINES = {
   correct: [
+    'That works. I read it twice to be sure.',
+    'Yes! Line by line, exactly right.',
+    'Right. Off I trot.',
+  ],
+  'correct:write': [
     'It runs, and it does the job.',
     'Every word in its place. Off I trot.',
-    'That works. I read it twice to be sure.',
-    'Yes! You read it line by line.',
     'Neat. The computer has no complaints, and neither do I.',
   ],
   wrong: [
     'Not that time. Code does what it says, not what it meant, so read why.',
-    'Close. One word changes everything in code.',
+    'Not that one. Go through it line by line with me, then it is yours.',
+  ],
+  'wrong:write': [
+    'Not that one. One word can change what code does.',
     'Good thing it was only a run. Read what happened.',
     "That's what running it is for. Now you know what it did.",
   ],
-  run3: ['Three that ran first go! My ears are tingling.', 'Three in a row. Tidy code.'],
+  run3: ['Three right first go! My ears are tingling.', 'Three in a row. Tidy code.'],
+  'run3:write': ['Three that ran first go! My ears are tingling.'],
   run5: ['Five in a row. You are reading it like the computer does.', 'Five! Those lines run like clockwork.'],
   tapped: [
     'Semicolons are like my paw prints: small, and they show where each step ended.',
@@ -772,17 +851,19 @@ export const CODE_LINES = {
     'Read it out loud. If it sounds wrong to you, it is wrong to me.',
   ],
   complete: ['That is another piece of the language.', 'Words you can read now, and use.'],
-  perfect: ['Not one error. You read before you ran.', 'No error messages today. They can have the day off.'],
-  fast: ['Quick, and it all still ran.', 'Reading code gets faster. There it is.'],
-  struggled: ['Errors are how code talks back. You listened.', 'Every miss came back and landed.'],
-  review: ['Those lines stayed with you.', 'Old code, still making sense to you.'],
+  perfect: ['Not one miss. Right first time, all the way down.', 'No error messages today. They can have the day off.'],
+  fast: ['Quick, and right first time, every one.', 'Quick and right. My paws barely touched the sand.'],
+  nearly: ['The one miss comes back in review, so it sticks.', 'One miss, and the rest went right.'],
+  struggled: ['Misses are how code talks back. You kept reading.', 'What you missed comes back in review. That is the plan.'],
+  review: ['Those lines stayed with you, every one.', 'Old code, still making sense to you.'],
   relit: ['Good to run some code.', 'Back at it. The code was waiting right here.'],
 };
 export const CODE_HEADLINES = {
-  complete: ['Lesson done. It all ran.', 'And that is a lesson. Nothing left to run.'],
-  perfect: ['Every line ran first time.', 'First go, all of it. I may frame this.'],
-  fast: ['Done already? You read fast.', 'Zoom! That ran quickly.'],
-  struggled: ['Some errors, then it ran. That is real coding.', 'You read the errors and got there. That is the job.'],
+  complete: ['Lesson done. Off I trot.', 'And that is a lesson. Ears up.'],
+  perfect: ['Every one right first time.', 'First go, all of it. I may frame this.'],
+  fast: ['Done already? My tail is still swishing.', 'Zoom! Quick and right.'],
+  nearly: ['Nearly flawless. One miss, and the rest just ran.', 'Nearly all first time. I may frame most of it.'],
+  struggled: ['Missing and trying again is real coding.', 'You kept reading and kept going. That is the job.'],
   review: ['Look at that recall. The code is in there.', 'Review done. It all still runs.'],
   relit: ['Flying again! Ears up.', 'Your butterfly is flying again, and the code still runs.'],
 };
@@ -793,13 +874,14 @@ export const CODE_HEADLINES = {
  * a habit id when a coach has a second voice for it (Moss at bedtime is `winddown`).
  * Pools are { when, lines }: `when` names the state it is for (habit, streak 'none'|'short'|'week'|
  * 'month', hour 'morning'|'afternoon'|'evening'|'night', light 'done'|'not yet'|'resting', and the
- * moments `first` and `comeback`). Drafted with tools/voice-draft.js, reviewed, then written here.
+ * moments `first`, `comeback` and, for a Learn course's coach, `elsewhere`). Drafted with tools/voice-draft.js, reviewed, then written here.
  */
 export const VOICES = { ada, clover, fennel, hazel, kaede, lumi, mira, moss, rosa, winddown };
 
 // A moment must match exactly (a pool without `first` is never said on a first session), so first
-// sessions and comebacks get their own lines; any other key a pool leaves out matches anything.
-const MOMENTS = ['first', 'comeback'];
+// sessions, comebacks and `elsewhere` (Learning done today through another course: voice.js moment())
+// get their own lines; any other key a pool leaves out matches anything.
+const MOMENTS = ['first', 'comeback', 'elsewhere'];
 const fits = (when, state) => MOMENTS.every((k) => !!when[k] === !!state[k])
   && Object.entries(when).every(([k, v]) => MOMENTS.includes(k) || state[k] === v);
 
