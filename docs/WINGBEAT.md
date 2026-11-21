@@ -254,7 +254,9 @@ chips, because one tap to play or to switch course is worth more than their row.
   speaks for its own course, an end screen claims only what the session did, and a butterfly is called one.
 - [x] **E16. Course order and the first visit** (#190, decisions 26 and 27): TypeScript and Test writing wait for
   JavaScript, the first-visit list says what each thing is, and home shows what was picked.
-- [x] **E17. Small words** (#194): a coach greets you the first time you open their course, Calm's card states your own
+- [x] **E17. Lesson feedback a beginner tripped on** (#192): a rock is taught before it is met and a missed run is shown and
+  said before the way that works; a chess board never moves from asked to Continue; a missed build shows what was put.
+- [x] **E18. Small words** (#194): a coach greets you the first time you open their course, Calm's card states your own
   timings, an example reads the way the course writes code, and a run of five says five of what.
 
 **Waiting on the owner** (found by playing, not changed)

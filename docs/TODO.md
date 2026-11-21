@@ -225,9 +225,19 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
     box (30 or more cards across the code courses, by up to 77px).
     **Left (low):** after "start here" a follow-on's own "Skip ahead" is gone (both answers are kept in `progress.start`); a just-opened follow-on is
     greeted "TypeScript is first", the brand-new line.
-  - Coding's "Around the rock": walking into a rock ended the run with no word that it had, the rule being taught four items later.
-  - Chess: after the first move in a stars puzzle the coach's bubble shrank and the board jumped 21px, so the next tap missed; a new piece's
-    introduction was gone before it could be read.
+  - **Fixed** (#192, `npm run phone -- feedback`): in Coding's "Around the rock", walking into a rock ended the run with no word that it had, the rule
+    being taught four items later. The lesson's first card now plays it (one step, into the rock, the rest never run), and the first lesson says the
+    edge of the grid stops him too. A missed run keeps the learner's own program on screen, the block it stopped on ringed, the steps after it faint and
+    the rock ringed, with Fennel saying why, for 2.4 seconds or until a tap; then the way that works takes its place and the reason comes first in the
+    verdict. Every way a run can end has its own words (`RUN_ENDS`).
+  - **Fixed** (#192): in Chess, after the first move in a stars puzzle the coach's bubble shrank and the board jumped 21px, so the next tap missed (an
+    answered true/false jumped 88px). The bubble now keeps the room of the tallest line the item can say, and `test/e2e/board-still.spec.js` holds the
+    board's top still from asked to Continue, played right and wrong, at three sizes. A new piece's introduction was gone before it could be read: it
+    stays with the prompt until the first move.
+  - **Fixed** (#192): a missed Maths or Japanese build showed only the right answer; it now also shows what was put ("You put ~~18~~").
+    **Left (low):** the code courses still replace a missed run at once (what it printed is shown, so the miss is not unexplained); a Japanese sentence
+    card grows down by a row once its slots fill; tapping Rosa mid-item can show an aside taller than the room kept for her words; "Collect all 2 stars"
+    reads oddly.
   - **Fixed** (#191, `npm run phone -- words`): a listening item was answered with advice about looking; every course's coach said its course was done
     today after one lesson of another; end screens overstated ("Plenty of bumps" for one miss in eight); nothing said the Blue Triangle was a butterfly; a
     few lines praised what the learner is. A verdict's words now fit how the item was answered (heard, moved, written, looked at). With Learning done today
