@@ -43,8 +43,11 @@ export default async (h, { notes = [], light = !!process.env.LANDSCAPE_LIGHT } =
       h.check(`${name}: on its side, one line asks for the phone upright, over the screen`, !!r.line && r.stage === 'hidden', JSON.stringify(r));
     };
     const where = () => page.evaluate(() => ({ topic: document.querySelector('.topic')?.textContent, said: document.querySelector('#said')?.textContent, count: document.querySelector('.count')?.textContent ?? null, paused: document.querySelector('.practice-pause')?.getAttribute('aria-pressed') ?? null }));
+    // Mid-lesson the page can't be measured again (calibrate() blanks it), so these turns don't: what is done upright is
+    // done with Playwright's clicks, and the touches on its side keep the origin measured on its side at the start.
+    const to = (side) => turn({ adb: h.adb, run }, side);
     const upright = async (name, before) => {
-      await turn(h, 'portrait'); await h.shot(`${name}-upright`);
+      await to('portrait'); await h.shot(`${name}-upright`);
       const now = await where();
       h.check(`${name}: upright again, exactly where it was`, now.topic === before.topic && now.said === before.said && now.count === before.count, `${JSON.stringify(before)} -> ${JSON.stringify(now)}`);
       h.check(`${name}: upright again, the line is gone`, !(await page.locator('.upright').isVisible()));
@@ -55,16 +58,16 @@ export default async (h, { notes = [], light = !!process.env.LANDSCAPE_LIGHT } =
     await showTab(h, 'calm');
     await touch(btn(/^Continue · /)); await sideways('calm-teach');
     await upright('calm-teach', await where());
-    await touch(btn('Start')); await run(1500);
-    await turn(h, 'landscape'); await run(1000);
+    await btn('Start').click(); await run(1500);
+    await to('landscape'); await run(1000);
     await sideways('calm-running');
     const held = await where();
     h.check('calm-running: turned on its side, the routine holds', held.paused === 'true', JSON.stringify(held));
     await run(30000);
     await upright('calm-running', held);
-    await touch(btn('Carry on'));
+    await btn('Carry on').click();
     for (let i = 0; i < 12 && !(await page.locator('.summary').count()); i++) await run(30000);
-    await turn(h, 'landscape');
+    await to('landscape');
     await look(h, 'calm-end', notes); // the end screen is a reading screen: it works on its side
     await touch(btn(/^Continue/));
 
@@ -75,8 +78,8 @@ export default async (h, { notes = [], light = !!process.env.LANDSCAPE_LIGHT } =
       await touch(btn(/^Continue · /)); await run(1500);
       await sideways(`${course}-lesson`);
       await upright(`${course}-lesson`, await where());
-      await touch(btn('Quit lesson'));
-      await turn(h, 'landscape');
+      await btn('Quit lesson').click();
+      await to('landscape');
     }
   } finally {
     await turn(h, 'portrait');
