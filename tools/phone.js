@@ -400,7 +400,7 @@ try {
     /** Back to the page as a first visit sees it: storage cleared, reloaded. */
     const fresh = async () => {
       await page.goto(home, { waitUntil: 'networkidle' });
-      await page.evaluate(() => localStorage.clear());
+      await page.evaluate(() => { localStorage.clear(); localStorage.setItem('wingbeat.kept-asked', 'on'); }); // see seed
       await page.reload({ waitUntil: 'networkidle' }); await run(800);
     };
     await fresh();
@@ -527,10 +527,12 @@ try {
       await sleep(800);
     };
     /** Starts from the home path, skipping placement, with `patch` merged into the saved progress. */
-    const seed = async (patch = {}) => {
-      await page.evaluate((patch) => localStorage.setItem('wingbeat.progress', JSON.stringify({
+    // Firefox asks the person before keeping storage, once ever (src/keep.js): so no scenario is in its way, every seed marks
+    // that as already asked. Only `persist` plays it, with `{ asked: false }`.
+    const seed = async (patch = {}, { asked = true } = {}) => {
+      await page.evaluate(([patch, asked]) => { if (asked) localStorage.setItem('wingbeat.kept-asked', 'on'); else localStorage.removeItem('wingbeat.kept-asked'); localStorage.setItem('wingbeat.progress', JSON.stringify({
         version: 2, habits: { learn: { count: 0, last: null, forgiven: [] } }, log: [], done: {}, cards: {}, start: 'x', met: Object.fromEntries(['chess', 'maths', 'japanese', 'coding', 'javascript', 'typescript', 'testing'].map((c) => [c, true])), ...patch,
-      })), patch);
+      })); }, [patch, asked]);
       await page.reload({ waitUntil: 'networkidle' }); await run(800);
     };
     // Lumi's hop after a lesson (walkTo) runs on real time, 1.65 s: let it land before the shot.

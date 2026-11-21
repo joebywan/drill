@@ -1,13 +1,17 @@
-// The app asks the browser to keep its storage (navigator.storage.persist(), once a visit, on the first save). Chrome
-// answers quietly; Firefox for Android asks the person ("Allow … to store data in persistent storage?"). This makes the
-// first save of a visit (Walk's "I walked today") and looks at what the browser shows, whether the page is drawn under
-// it, after a tap on the page beside it, after each answer, and on the next visit. Made for `--browser firefox`.
+// Keeping the learner's storage (src/keep.js). Chrome and the WebView decide by themselves; Firefox for Android asks the
+// person ("Allow … to store data in persistent storage?"), over the page, and does not remember "Don't allow". The app
+// brings it up once ever, at home, when something is logged, and never mid-lesson; after that only the ⋯ line's button asks.
+// Plays: a first visit (no prompt before the first log entry, the prompt after it, a tap beside it, "Don't allow"), a lesson
+// item answered (no prompt), a second visit (no prompt; the ⋯ line, its button, "Allow"), a third (no prompt, no line). Made for `--browser firefox`; in Chrome the same play must show no prompt and no line.
 import { emptyProgress, track } from '../../src/progress.js';
+import { subjects } from '../../src/subjects.js';
+import { playMaths, showTab } from './lib/seed.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export default async ({ page, seed, touch, btn, shot, check, grab, screenXml, uiNodes, tapUi, adb, pkg }) => {
-  /** How much the page's part of the screen varies: about 0 is a page drawn as its background (or a dimmed one) only. */
+export default async (ctx) => {
+  const { page, seed, touch, btn, shot, check, grab, screenXml, uiNodes, tapUi, adb, browser } = ctx;
+  const asks = browser === 'firefox';
   const drawn = () => {
     const s = grab();
     const px = [];
@@ -16,40 +20,65 @@ export default async ({ page, seed, touch, btn, shot, check, grab, screenXml, ui
     return Math.round(Math.sqrt(px.reduce((a, b) => a + (b - mean) ** 2, 0) / px.length));
   };
   const prompt = async () => uiNodes(await screenXml()).find((x) => !x.page && /persistent storage/.test(x.text + x.desc))?.text ?? null;
+  const kept = () => page.evaluate(() => navigator.storage.persisted()).catch(() => '?');
+  const line = () => page.evaluate(() => { const l = document.querySelector('[data-persist]'); return !!l && !l.hidden; });
   const state = async (label) => {
-    const [d, p, kept] = [drawn(), await prompt(), await page.evaluate(() => navigator.storage.persisted()).catch(() => '?')];
-    console.log(`  ${label}: page drawn ${d}, prompt ${p ? 'shown' : 'none'}, persisted ${kept}`);
+    const [d, p, k] = [drawn(), await prompt(), await kept()];
+    console.log(`  ${label}: page drawn ${d}, prompt ${p ? 'shown' : 'none'}, persisted ${k}`);
     await shot(label);
-    return { d, p };
+    return { d, p, k };
   };
-  const walk = { ...track({ ...emptyProgress(), start: 'x', picked: ['walk'] }, { id: 'walk', hidden: false }) };
-  const firstSave = async (label) => {
-    await seed(walk);
-    await touch(btn(/^Walk(,|$)/));
-    await state(`${label}-before`);
-    await touch(btn('I walked today')); await sleep(1500);
-    return state(`${label}-saved`);
-  };
+  const reload = async () => { await page.reload({ waitUntil: 'networkidle' }); await sleep(2500); };
+  const noPrompt = async (label, what) => { const s = await state(label); check(`${what}: no prompt`, !s.p, 'the browser asked'); return s; };
+  const answerPrompt = async (label) => { await tapUi(label); await sleep(1500); };
 
-  const asked = await firstSave('visit1');
-  check('the first save of a visit asks the person nothing', !asked.p, 'Firefox asks to allow persistent storage');
-  if (!asked.p) return;
-  // A tap on the page beside the prompt, as a person might, wanting to carry on.
-  adb('shell', 'input', 'tap', '540', '1500'); await sleep(1500);
-  const beside = await state('visit1-tap-beside');
-  for (let i = 0; i < 3; i++) { adb('shell', 'input', 'tap', '540', '1500'); await sleep(800); }
-  await state('visit1-more-taps');
-  if (await prompt()) { await tapUi(/^Don.t allow$/); await sleep(1500); }
-  await state('visit1-after-dont-allow');
-  // Away and back: does a page left undrawn come back?
-  adb('shell', 'input', 'keyevent', 'KEYCODE_HOME'); await sleep(2500);
-  adb('shell', `monkey -p ${pkg} -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1`); await sleep(3000);
-  await state('visit1-away-and-back');
+  const maths = subjects.find((s) => s.id === 'maths').units[0].lessons[0];
+  const learner = track({ ...emptyProgress(), start: 'x', picked: ['walk', 'learn'] }, { id: 'walk', hidden: false });
+  // Visit 1: nothing logged yet; the first entry is the learner's tap on home.
+  await seed(learner, { asked: false });
+  await page.evaluate(() => localStorage.setItem('wingbeat.course', 'maths'));
+  await reload();
+  await touch(btn(/^Walk(,|$)/));
+  await noPrompt('visit1-home', 'home with an empty log');
+  await touch(btn('I walked today')); await sleep(2500);
+  const first = await state('visit1-first-entry');
+  check(asks ? 'the first log entry, on home, brings the prompt up' : 'Chrome shows no prompt after the first entry', asks ? !!first.p : !first.p, `prompt ${first.p}`);
+  if (asks) {
+    // A tap on the page beside the prompt, as a person might, wanting to carry on; the page stays drawn.
+    adb('shell', 'input', 'tap', '540', '1500'); await sleep(1500);
+    const beside = await state('visit1-tap-beside');
+    check('a page with a prompt beside it is still drawn after a tap on it', beside.d > 5, `drawn ${beside.d}`);
+    await answerPrompt(/^Don.t allow$/);
+    const after = await state('visit1-after-dont-allow');
+    check('"Don\'t allow" closes the prompt and storage is not kept', !after.p && after.k === false, `prompt ${after.p}, persisted ${after.k}`);
+  }
 
-  const again = await firstSave('visit2');
-  console.log(`  after "Don't allow", the next visit ${again.p ? 'asks again' : 'does not ask'}`);
-  if (again.p) { await tapUi('Allow'); await sleep(1500); await state('visit2-after-allow'); }
-  const third = await firstSave('visit3');
-  console.log(`  after "Allow", the next visit ${third.p ? 'asks again' : 'does not ask'}`);
-  check('a page with a prompt beside it is still drawn after a tap on it', beside.d > 5, `drawn ${beside.d}`);
+  // The same visit, mid-lesson: an answered item is a save, and no prompt comes up.
+  await showTab(ctx, 'learn');
+  await touch(btn(`Continue · ${maths.title}`));
+  await playMaths(maths, ctx, 2);
+  await noPrompt('visit1-lesson-answered', 'mid-lesson');
+
+  // Visit 2: nothing asks; ⋯ has the line, its button asks, "Allow" keeps it.
+  await reload();
+  await noPrompt('visit2-home', 'a second visit');
+  await touch(page.locator('.menu'));
+  await shot('visit2-settings');
+  check(asks ? 'the ⋯ line is there while storage is not kept' : 'Chrome has no ⋯ line', (await line()) === asks, `line ${await line()}`);
+  if (asks) {
+    await touch(btn('Turn on')); await sleep(2000);
+    const p = await state('visit2-asked-by-button');
+    check('the line\'s button brings the prompt up', !!p.p, 'no prompt');
+    await answerPrompt('Allow');
+    const done = await state('visit2-after-allow');
+    const status = await page.evaluate(() => document.querySelector('[role="status"]').textContent);
+    check('after "Allow": persisted, the line gone, the status line says so', done.k === true && !(await line()) && /keeping/.test(status), `persisted ${done.k}, status "${status}"`);
+  }
+
+  // Visit 3: kept (or Chrome's own business): no prompt, no line.
+  await reload();
+  await noPrompt('visit3-home', 'a third visit');
+  await touch(page.locator('.menu'));
+  await sleep(500);
+  check('the third visit has no ⋯ line', !(await line()), 'the line is there');
 };
