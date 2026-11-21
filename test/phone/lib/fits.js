@@ -31,6 +31,12 @@ export function misfits() {
     const node = li.querySelector('.node'), mark = node?.querySelector('span')?.getBoundingClientRect(), box = node?.getBoundingClientRect();
     if (mark && (mark.bottom > box.bottom + 1 || mark.top < box.top - 1)) out.push(`mark out of its node: ${what(node)}`);
   });
+  // A wide screen's rail: ⋯ closes the column of tabs, and no tab (what shows of it in the tabs' own box) is under it.
+  const rail = document.querySelector('.rail'), menu = rail && getComputedStyle(rail).display !== 'contents' ? rail.querySelector('.tabs-row .menu').getBoundingClientRect() : null; // a phone has no rail
+  if (menu) for (const t of document.querySelectorAll('.rail .path-tab')) {
+    const r = t.getBoundingClientRect(), box = t.closest('.paths').getBoundingClientRect();
+    if (Math.min(r.bottom, box.bottom) > menu.top + 1 && Math.max(r.top, box.top) < menu.bottom - 1 && r.right > menu.left && r.left < menu.right) out.push(`under the rail's ⋯: ${what(t)}`);
+  }
   scrollTo(0, document.documentElement.scrollHeight);
   const bars = [...document.querySelectorAll('#app *')].filter((e) => {
     const cs = getComputedStyle(e), r = e.getBoundingClientRect();

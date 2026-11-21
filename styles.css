@@ -735,17 +735,16 @@ html { scroll-padding-bottom: min(calc(160px * var(--text-scale, 1)), 40dvh); } 
   /* Capped at the screen's height and scrolling inside itself, so + Habit is always in reach. The
      6px inset keeps the focus ring clear of the scroll clip. */
   .rail {
-    display: block; flex: none; width: calc(var(--rail) + 12px); margin: -6px; padding: 6px;
-    position: sticky; top: 10px; max-height: calc(100dvh - 20px); overflow-y: auto; /* 10px clear above and below */
+    display: flex; flex-direction: column; flex: none; width: calc(var(--rail) + 12px); margin: -6px; padding: 6px;
+    position: sticky; top: 10px; max-height: calc(100dvh - 20px); /* 10px clear above and below */
   }
+  .rail > * { flex: none; }
   .pane { display: block; flex: 1; min-width: 0; }
-  .rail .paths { flex-direction: column; margin: 0; padding: 0; overflow: visible; }
-  .rail .tabs-row::before, .rail .tabs-row::after { display: none; }
-  /* ⋯ closes the tabs column, under + Habit. */
-  .rail .tabs-row { flex-direction: column; align-items: flex-start; gap: 8px; margin: 0; }
-  .rail .tabs-row .paths { align-self: stretch; }
-  /* When the tabs outgrow the screen (larger text), ⋯ keeps to the rail's bottom edge, in reach without scrolling it. */
-  .rail .tabs-row .menu { position: sticky; bottom: 0; z-index: 1; box-shadow: 0 0 0 6px var(--bg); }
+  /* ⋯ closes the tabs column, under + Habit. When the tabs outgrow the screen (larger text) they scroll in their own box,
+     which ends above ⋯: ⋯ stays in reach and nothing of a tab is under it. The 6px inset keeps focus rings clear of the clip. */
+  .rail .tabs-row { flex: 0 1 auto; min-height: 0; flex-direction: column; align-items: flex-start; gap: 8px; margin: 0; }
+  .rail .tabs-row::before, .rail .tabs-row::after { display: none; } /* the row's side fades are for the phone's sideways row */
+  .rail .tabs-row .paths { flex: 0 1 auto; min-height: 0; flex-direction: column; align-self: stretch; margin: -6px; padding: 6px; overflow-y: auto; }
   .rail .path-tab { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 16px; }
   /* Home's Continue bar spans the pane only, so its fade never covers the rail. */
   .home + .cta {
