@@ -36,7 +36,12 @@
     ] },
     { "when": { "light": "done", "streak": "month" }, "lines": [
       "Done again. A month of this. I've checked it twice. It adds up.",
-      "{days} days of maths so far. That's a lot of tidy working."
+      "{days} days of learning so far. That's a lot of tidy working."
+    ] },
+    { "when": { "elsewhere": true }, "lines": [
+      "Today's learning is done. The numbers will keep. They're patient like that.",
+      "A lesson done today, just not maths. I counted it anyway.",
+      "Learning's done for today. My pencil can have a rest."
     ] },
     { "when": { "light": "resting" }, "lines": [
       "A rest day. Even a pencil needs a break from sharpening.",
@@ -64,11 +69,11 @@
       "Midnight maths. Very mysterious of you."
     ] },
     { "when": { "light": "not yet", "streak": "week" }, "lines": [
-      "{count} days of sums in a row. I counted. Twice.",
-      "A week of maths. My pencil has never been so proud."
+      "{count} days of lessons in a row. I counted. Twice.",
+      "A week of lessons. My pencil has never been so proud."
     ] },
     { "when": { "light": "not yet", "streak": "month" }, "lines": [
-      "A month of maths. That's about thirty. I checked.",
+      "A month of lessons. That's about thirty. I checked.",
       "{count} days in a row. That number looks good on you."
     ] }
   ],

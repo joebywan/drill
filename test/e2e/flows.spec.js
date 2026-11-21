@@ -6,6 +6,7 @@ import { middleFor } from '../../src/reflect/practice.js';
 import { award } from '../../src/garden/model.js';
 import { answer as stopsAt, fixBug, mirrored, solve as oneWay, tileName } from '../../src/coding/program.js';
 import { withCheckpoint } from '../../src/repeat.js';
+import { subjects } from '../../src/subjects.js';
 
 // The first lesson on the path. Its answers are worked out from the course data with the same
 // item logic the app uses, so the test follows the content when it changes.
@@ -96,7 +97,7 @@ test('intro, learn only: Learn something lists the live courses, the others are 
   await expect(page.getByRole('heading', { name: 'What can Wingbeat do for you?' })).toHaveCount(0);
 });
 
-test('intro, habits only: the picks come first in the order tapped, and a tracker is switched on', async ({ page }) => {
+test('intro, habits only: home shows the picks alone, in the order tapped, and a tracker is switched on', async ({ page }) => {
   await toStepTwo(page);
   await pick(page, 'Build habits').click();
   await pick(page, 'Walk').click();
@@ -105,13 +106,19 @@ test('intro, habits only: the picks come first in the order tapped, and a tracke
   await pick(page, 'Read').click(); // changed my mind
   await expect(pick(page, 'Read')).toHaveAttribute('aria-pressed', 'false');
   await page.getByRole('button', { name: 'Show my home' }).click();
-  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'winddown', 'focus']);
+  expect(await tabOrder(page)).toEqual(['walk', 'calm']);
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'walk');
   await expect(page.getByText('Walk is first. Start with the button below.')).toBeVisible();
   await page.getByRole('button', { name: 'I walked today' }).click();
   await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
   await page.reload();
-  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'learn', 'break', 'reflect', 'move', 'winddown', 'focus']);
+  expect(await tabOrder(page)).toEqual(['walk', 'calm']);
+  // The rest are one tap away: a built-in comes back on its own tab, with no "when" to ask.
+  await page.getByRole('button', { name: 'Add a habit' }).click();
+  for (const id of ['learn', 'break', 'reflect', 'move', 'winddown', 'focus', 'read']) await expect(page.locator(`[data-track="${id}"]`)).toHaveCount(1);
+  await page.locator('[data-track="reflect"]').click();
+  expect(await tabOrder(page)).toEqual(['walk', 'calm', 'reflect']);
+  await expect(pressedTab(page)).toHaveAttribute('data-path', 'reflect');
 });
 
 test('once Walk is logged today, Lumi greets from her done-today lines, not an invite', async ({ page }) => {
@@ -128,6 +135,63 @@ test('once Walk is logged today, Lumi greets from her done-today lines, not an i
   expect(doneLines).toContain(said);
   await page.reload();
   expect(doneLines).toContain((await page.locator('.greeting').textContent()).replace(/^Lumi\s*/, ''));
+});
+
+test('intro: each course and habit says in one line what it is, and a course that follows another sits under it', async ({ page }) => {
+  await toStepTwo(page);
+  await expect(page.getByText('Home shows just these, and you can add the others any time.')).toBeVisible();
+  await pick(page, 'Learn something').click();
+  await pick(page, 'Build habits').click();
+  for (const [name, line] of [['Coding', 'Arrow blocks that steer a fox. No typing.'], ['JavaScript', 'Real code, tapped in word by word.'],
+    ['TypeScript', 'Labels that catch mistakes in JavaScript. After JavaScript.'], ['Test writing', 'Code that checks code works. After JavaScript.'],
+    ['Calm', 'Slow breathing, a few minutes.'], ['Walk', 'One tap: “I walked today”']]) await expect(pick(page, name)).toHaveAccessibleDescription(line);
+  const x = async (name) => (await pick(page, name).boundingBox()).x;
+  expect(await x('TypeScript')).toBeGreaterThan(await x('JavaScript')); // under it, set in
+  // At 360px every line fits on its button, and nothing scrolls sideways.
+  await page.setViewportSize({ width: 360, height: 640 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+  for (const b of await page.locator('[data-pick] .about').all()) expect((await b.boundingBox()).height, await b.textContent()).toBeLessThan(40); // two lines at most
+});
+
+test('intro, TypeScript only: JavaScript is picked with it, and its tab offers JavaScript first or a start here', async ({ page }) => {
+  await toStepTwo(page);
+  await pick(page, 'Learn something').click();
+  await pick(page, 'TypeScript').click();
+  await expect(pick(page, 'JavaScript')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('status').filter({ hasText: 'JavaScript comes first, so it is picked too.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Show my home' }).click();
+  expect(await tabOrder(page)).toEqual(['learn']);
+  expect(await page.locator('[data-course]').evaluateAll((b) => b.map((x) => x.dataset.course))).toEqual(['javascript', 'typescript']);
+  await expect(page.getByText('JavaScript is first. Start with the button below.')).toBeVisible();
+  await page.locator('[data-course="typescript"]').click();
+  await expect(page.getByText('TypeScript follows JavaScript. It uses what the first 9 units of JavaScript teach.')).toBeVisible();
+  await expect(page.locator('.path .node')).toHaveCount(0); // no path, no locks: an order, not a wall
+  await page.getByRole('button', { name: 'Start JavaScript' }).click();
+  await expect(page.locator('[data-course="javascript"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: /^Continue · / })).toBeVisible();
+  await page.locator('[data-course="typescript"]').click();
+  await page.getByRole('button', { name: 'I know JavaScript: start here' }).click();
+  await expect(page.getByRole('button', { name: 'Continue · Say what it holds' })).toBeFocused();
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Continue · Say what it holds' })).toBeVisible(); // remembered, like a placement answer
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).start)).toEqual({ typescript: 'Annotations' });
+});
+
+test('a course that follows JavaScript says "Carry on" once JavaScript is begun, and opens by itself once that much is done', async ({ page }) => {
+  const js = subjects.find((s) => s.id === 'javascript');
+  const ts = subjects.find((s) => s.id === 'testing');
+  const lessons = js.units.slice(0, ts.follows.units).flatMap((u) => u.lessons);
+  const seed = (n) => page.evaluate(([p, c]) => { localStorage.setItem('wingbeat.progress', p); localStorage.setItem('wingbeat.course', c); }, [JSON.stringify(
+    lessons.slice(0, n).reduce((p, l) => finishSession(p, `javascript:${l.id}`, []), { ...emptyProgress(), picked: [] })), 'testing']);
+  await page.goto('/');
+  await seed(1);
+  await page.reload();
+  await expect(page.getByText('Test writing follows JavaScript.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Carry on with JavaScript' })).toBeVisible();
+  await seed(lessons.length);
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Carry on with JavaScript' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: `Continue · ${ts.units[0].lessons[0].title}` })).toBeVisible();
 });
 
 test("intro, skipped at either step: today's default home, and the intro never comes back", async ({ page }) => {
@@ -187,10 +251,24 @@ test('"Change what you see" in the ⋯ menu reopens step 2 with the picks, and B
   await page.getByRole('button', { name: 'Change what you see' }).click();
   await pick(page, 'Calm').click();
   await pick(page, 'Screen break').click();
-  await pick(page, 'Learn something').click();
+  await pick(page, 'Learn something').click(); // opened with no course picked: all of them
   await page.getByRole('button', { name: 'Show my home' }).click();
-  expect(await tabOrder(page)).toEqual(['break', 'learn', 'calm', 'reflect', 'move', 'winddown', 'focus']);
+  expect(await tabOrder(page)).toEqual(['break', 'learn']);
   await expect(pressedTab(page)).toHaveAttribute('data-path', 'break');
+  await tab(page, 'Learning').click();
+  await expect(page.locator('[data-course]')).toHaveCount(7);
+
+  // Changing starts from what home shows, and what it sets is what shows.
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Change what you see' }).click();
+  for (const name of ['Screen break', 'Chess', 'Test writing']) await expect(pick(page, name)).toHaveAttribute('aria-pressed', 'true');
+  await expect(pick(page, 'Calm')).toHaveAttribute('aria-pressed', 'false');
+  for (const name of ['Chess', 'Maths', 'Japanese', 'Coding', 'JavaScript', 'TypeScript', 'Test writing']) if (name !== 'Coding') await pick(page, name).click();
+  await page.getByRole('button', { name: 'Show my home' }).click();
+  expect(await tabOrder(page)).toEqual(['break', 'learn']);
+  await tab(page, 'Learning').click();
+  expect(await page.locator('[data-course]').evaluateAll((b) => b.map((x) => x.dataset.course))).toEqual(['coding']);
+  await expect(page.getByRole('button', { name: '+ Course' })).toBeVisible();
 });
 
 test('skipping the intro lands on home with a welcome and no questions; Learning starts straight in', async ({ page }) => {
@@ -649,11 +727,14 @@ test('your own timings: Calm breathes in for 6 when set, saves at once, and goes
   await page.getByRole('button', { name: 'Start' }).click();
   const orb = page.locator('.orb');
   await expect(orb).toHaveAttribute('data-phase', 'in');
-  await expect(orb.locator('.count')).toHaveText('6');
+  await expect(orb.locator('.count')).toHaveText('1'); // a breath's seconds count up, 1 to 6
   await page.clock.runFor(5_900);
   await expect(orb).toHaveAttribute('data-phase', 'in');
+  await expect(orb.locator('.count')).toHaveText('6');
   await page.clock.runFor(200);
   await expect(orb).toHaveAttribute('data-phase', 'out');
+  await expect(orb.locator('.count')).toHaveText('1');
+  await page.clock.runFor(7_500);
   await expect(orb.locator('.count')).toHaveText('8'); // the out-breath keeps its default
   await page.clock.runFor(3 * 14_000);
   await expect(page.getByText(/^3 breaths · \d+ min$/)).toBeVisible();
@@ -1132,7 +1213,7 @@ test('a fresh garden is one seed; the first lesson grows a sprout and opens a fl
   await finishFirstLesson(page);
   // The first unit is one lesson long, so finishing it is a finished unit: a flower opens.
   // That unit is chess's first, so its egg is laid and hatches at once: only the hatching is said.
-  await expect(page.locator('.arrivals li')).toHaveText(['Your Chess egg hatched into a caterpillar', `A flower opened for ${basics.units[0].title}`]);
+  await expect(page.locator('.arrivals li')).toHaveText(['Your Chess butterfly egg hatched into a caterpillar', `A flower opened for ${basics.units[0].title}`]);
   await expect(page.locator('.arrivals svg.creature')).toBeVisible();
   await continueButton(page).click();
   await expect(strip(page, 1).locator('svg.plant-tree.stage-1')).toBeVisible();
@@ -1145,13 +1226,13 @@ test('a fifth day of Calm hatches its caterpillar, shown on the end screen and i
   await firstVisit(page);
   await breathe(page);
   // The egg and the hatching both arrive now; only the latest is announced.
-  await expect(page.locator('.arrivals li')).toHaveText(['Your Calm egg hatched into a caterpillar', 'A bee found Calm']);
+  await expect(page.locator('.arrivals li')).toHaveText(['Your Calm butterfly egg hatched into a caterpillar', 'A bee found Calm']);
   await expect(page.locator('.arrivals svg.creature')).toBeVisible();
   await continueButton(page).click();
 
   // Home's line for the habit shown, and the strip keeps to emerged butterflies.
   await tab(page, 'Calm').click();
-  await expect(page.locator('.streak-row .raising')).toHaveAccessibleName('Calm is raising a Common Brown');
+  await expect(page.locator('.streak-row .raising')).toHaveAccessibleName('Calm is raising a Common Brown butterfly');
   await expect(strip(page, 2).locator('svg.visitor-butterfly, svg.creature')).toHaveCount(0);
   await strip(page, 2).click();
   await expect(page.getByRole('heading', { name: 'Your garden' })).toBeFocused();
@@ -1160,7 +1241,7 @@ test('a fifth day of Calm hatches its caterpillar, shown on the end screen and i
   await expect(calm).toContainText('Lavender · sapling');
   await expect(calm).toContainText('5 days practised');
   await expect(calm).toContainText('9 more days to young');
-  await expect(calm).toContainText('Common Brown · caterpillar');
+  await expect(calm).toContainText('Common Brown butterfly · caterpillar');
 
   // A card opens that habit's view; Back comes to the garden, then home to the strip.
   await calm.click();
@@ -1329,8 +1410,8 @@ test('a self-reported habit: add Walk, one tap, its streak and plant, and Undo t
   await expect(tab(page, 'Walk')).toHaveAccessibleName('Walk, 1-day streak');
   await expect(page.getByText('Done for today.')).toBeFocused();
   await expect(page.locator('.chip.log')).toContainText('1');
-  await expect(page.locator('.arrivals li')).toHaveText(['Your Walk egg arrived: a Caper White', 'A bee found Walk']);
-  await expect(page.locator('.log-habit .raising')).toHaveText('Walk is raising a Caper White');
+  await expect(page.locator('.arrivals li')).toHaveText(['Your Walk butterfly egg arrived: a Caper White', 'A bee found Walk']);
+  await expect(page.locator('.log-habit .raising')).toHaveText('Walk is raising a Caper White butterfly');
   await expect(walked).toHaveCount(0);
   await expect(page.getByText('How do you feel?')).toHaveCount(0);
   await expect(strip(page, 2).locator('svg.plant-tulip[data-habit="walk"]')).toBeVisible();
@@ -1366,7 +1447,7 @@ test('a habit of your own: name, icon and plant; log it, rename it, and its name
   await expect(tab(page, 'Stretch')).toBeFocused();
   await page.getByRole('button', { name: 'Done today' }).click();
   await expect(tab(page, 'Stretch')).toHaveAccessibleName('Stretch, 1-day streak');
-  await expect(page.locator('.arrivals li')).toHaveText(['Your Stretch egg arrived: a Red Lacewing', 'A bee found Stretch']);
+  await expect(page.locator('.arrivals li')).toHaveText(['Your Stretch butterfly egg arrived: a Red Lacewing', 'A bee found Stretch']);
   await expect(strip(page, 2).locator('svg.plant-cactus[data-habit="own-1"]')).toBeVisible();
 
   const name = '<img src=x onerror=hacked=1>&'; // within the 30-letter name
@@ -1408,7 +1489,7 @@ test('a habit\'s "when": a new preset with one, shown on its panel, changed in i
   await expect(tab(page, 'Floss')).toBeFocused();
   await expect(page.locator('.log-habit .when')).toHaveText('Before bed');
   await page.getByRole('button', { name: 'I flossed today' }).click();
-  await expect(page.locator('.log-habit .raising')).toHaveText('Floss is raising an Orange Migrant');
+  await expect(page.locator('.log-habit .raising')).toHaveText('Floss is raising an Orange Migrant butterfly');
 
   await week(page, 1).click();
   await expect(page.locator('main.habit .when')).toHaveText('Before bed');
@@ -1951,7 +2032,10 @@ test('intro: Coding is a live course; picking it puts Learning first, showing Co
   await expect(page.getByText('Coding is first. Start with the button below.')).toBeVisible();
   await expect(page.locator('[data-course="coding"]')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('button', { name: `Continue · ${firstCoding.title}` })).toBeVisible();
-  await page.locator('[data-course="chess"]').click();
+  await expect(page.locator('[data-course]')).toHaveCount(1); // only what was picked
+  await page.getByRole('button', { name: '+ Course' }).click();
+  await expect(page.getByRole('button', { name: 'Chess', exact: true })).toHaveAccessibleDescription('How each piece moves, then tactics.');
+  await page.locator('[data-track="chess"]').click();
   await expect(page.getByRole('button', { name: `Continue · ${first.title}` })).toBeVisible();
   await page.reload();
   await expect(page.locator('[data-course="chess"]')).toHaveAttribute('aria-pressed', 'true'); // remembered
@@ -2172,6 +2256,8 @@ test('Wind down: settle in, Calm breathing on your own timings, a sigh, goodnigh
   await page.clock.runFor(20_000);
   // Calm's breathing, with the breath in at the learner's own 6 s.
   await expect(page.getByText('Breath 1 of 3')).toBeVisible();
+  await expect(page.locator('.orb .count')).toHaveText('1'); // a breath's seconds count up
+  await page.clock.runFor(5_500);
   await expect(page.locator('.orb .count')).toHaveText('6');
   await page.getByRole('button', { name: 'Pause' }).click();
   await page.clock.runFor(60_000);
@@ -2668,7 +2754,9 @@ test('every Coding bug can be fixed by tapping the block it names, whichever way
   }
 });
 
-test('the first lesson of each new Coding unit plays through as a real session, and so does one laid out from nothing', async ({ page }) => {
+test('the first lesson of each new Coding unit plays through as a real session, and so does one laid out from nothing', async ({ page, browserName }) => {
+  // Seven whole lessons: 25 to 30 s of the 30 s allowed in Firefox here, and over it on CI's runners.
+  test.slow(browserName === 'firefox', 'seven whole lessons');
   const loops = codingCourse.units.find((u) => u.title === 'Loops');
   for (const [unit, lesson] of [...codingCourse.units.slice(3).map((u) => [u, u.lessons[0]]), [{ ...loops, lessons: loops.lessons }, loops.lessons.at(-1)]]) {
     await page.goto('/');
@@ -2759,7 +2847,7 @@ test("a path's streak row ends with what it is raising, into its field guide pag
   // Move is raising a caterpillar: its picture is the streak row's last item, named by the pill's old words.
   await tab(page, 'Move').click();
   const pic = page.locator('.streak-row > .raising');
-  await expect(pic).toHaveAccessibleName('Move is raising a Wanderer');
+  await expect(pic).toHaveAccessibleName('Move is raising a Wanderer butterfly');
   await expect(pic.locator('svg.creature')).toBeVisible();
   await expect(pic).toHaveText('');
   expect(await page.locator('.streak-row > *').last().evaluate((e) => e.classList.contains('raising'))).toBe(true);
@@ -2780,7 +2868,7 @@ test("a one-tap habit's hint goes once it has been logged", async ({ page }) => 
   await tab(page, 'Walk').click();
   await expect(page.getByRole('button', { name: 'I walked today' })).toBeVisible();
   await expect(page.getByText('One tap when it happens. That is all.')).toHaveCount(0);
-  await expect(page.locator('.log-habit .raising')).toHaveText('Walk is raising a Caper White'); // the panel keeps its pill
+  await expect(page.locator('.log-habit .raising')).toHaveText('Walk is raising a Caper White butterfly'); // the panel keeps its pill
 });
 
 test('the field guide opens from the garden and from home, and shows every kind', async ({ page }) => {
@@ -2795,7 +2883,7 @@ test('the field guide opens from the garden and from home, and shows every kind'
   await page.addInitScript((saved) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', saved); }, JSON.stringify(p));
   await firstVisit(page);
   await tab(page, 'Move').click();
-  await expect(page.locator('.raising')).toHaveAccessibleName('Move is raising a Wanderer');
+  await expect(page.locator('.raising')).toHaveAccessibleName('Move is raising a Wanderer butterfly');
   await page.locator('.raising').click();
   await expect(page.getByRole('heading', { name: 'Wanderer' })).toBeFocused();
   await expect(page.locator('main')).toContainText('8 more days to its chrysalis');
@@ -2803,7 +2891,7 @@ test('the field guide opens from the garden and from home, and shows every kind'
   await expect(page.locator('.raising')).toBeFocused();
 
   await strip(page, 3).click();
-  await expect(page.locator('.plant-card[data-plant="calm"]')).toContainText(/Common Brown · arrived \d+ \w{3}/);
+  await expect(page.locator('.plant-card[data-plant="calm"]')).toContainText(/Common Brown butterfly · arrived \d+ \w{3}/);
   await page.getByRole('button', { name: 'Field guide', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Field guide' })).toBeFocused();
   // Emerged first, in colour; then the one being raised; then a pale silhouette for the rest.

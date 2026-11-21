@@ -13,8 +13,8 @@ import { LINES } from './cast/lines.js';
  * it before it comes. Never more than half the screen: past that its words scroll in their own box (styles.css,
  * `.foot`), so whatever fits itself above it gets the other half. 0 with no banner on the page.
  */
-/** The longest headline the runner's verdict can show of `kinds` with a coach's `lines` (Rosa's, `LINES`, for a coach with none of their own). */
-export const longestVerdict = (lines = LINES, kinds = ['correct', 'run3', 'run5', 'wrong']) => kinds.flatMap((k) => lines[k] ?? []).reduce((a, b) => (b.length > a.length ? b : a), 'x');
+/** The longest headline the runner's verdict can show of `kinds` with a coach's `lines` (Rosa's, `LINES`, for a coach with none of their own), for any item: `correct:move` and the like count too. */
+export const longestVerdict = (lines = LINES, kinds = ['correct', 'run3', 'run5', 'wrong']) => kinds.flatMap((k) => Object.entries(lines).filter(([key]) => key.split(':')[0] === k).flatMap(([, v]) => v)).reduce((a, b) => (b.length > a.length ? b : a), 'x');
 
 export function verdictHeight(words, lines) {
   const foot = document.querySelector('.foot');

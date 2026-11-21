@@ -67,7 +67,7 @@ test.describe('at 360x640', () => {
         habits: { learn: { count: 1, last: date, forgiven: [], days: 1 } }, log: [{ date, habit: 'learn', lesson: 'chess:board-0', title: 'Squares and coordinates', mins: 1 }] }));
     });
     await page.goto('/');
-    await expect(page.locator('.streak-row .raising')).toHaveAccessibleName('Chess is raising a Chequered Swallowtail');
+    await expect(page.locator('.streak-row .raising')).toHaveAccessibleName('Chess is raising a Chequered Swallowtail butterfly');
     const [node, cta] = await Promise.all(['.node.here', '.cta'].map((s) => page.locator(s).boundingBox()));
     expect(node.y).toBeGreaterThan(0);
     expect(node.y + node.height).toBeLessThan(cta.y);

@@ -48,7 +48,9 @@ A plain `npm run phone` runs every scenario in `test/phone/*.js` but the `*-all`
 course, plus onboarding, first-visit, walkthrough, garden, wardrobe, timings, fitting, voice, sync, scan, left and drag,
 and the Wingbeat screens: butterfly, yours, home-states, stages, field-guide, skins, choose, reflect-days, presets and
 looks (the dark theme), home-days (home from day 0 to day 60, with where the path starts; `HOME_SMALL=1080x1700` for
-a short phone), chrysalis (a learner at each stage of a raised butterfly, light and dark) and zoom (Chrome's Default zoom at
+a short phone), chrysalis (a learner at each stage of a raised butterfly, light and dark), words (what the coaches say after
+a listening item, one miss, a first egg and a lesson in another course), follow-on (a first visit's picks, and
+TypeScript's tab before and after JavaScript) and zoom (Chrome's Default zoom at
 150% and 200%, set by real taps on its Accessibility screen and put back). Large text has three routes: the app's WebView
 follows the phone's font size (`app`); Chrome for Android has only Default zoom, a whole-page zoom (`zoom`); a larger default
 or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `test/phone/lib/fits.js` holds what those share
@@ -68,9 +70,17 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
 - What a finger does has its own scenarios: `touch-swipe`, `touch-keyboard`, `touch-links`, `touch-press`. On any `*-all`
   scenario `PLAY_JITTER=0.85` lands each tap at a seeded random point out to that share of the way to its target's edge
   (`PLAY_SEED` varies it) and `PLAY_SWIPE=1` swipes each box that scrolls in itself. Run the jittered taps after changing the
-  size of anything tapped. Chess also has `chess-games` and `chess-games-small` (Mate and Scramble), `chess-miss` (a puzzle
-  missed on purpose, to read its explanation; `CHESS_MISS`, `CHESS_SMALL`), and by name only
-  `chess-wrong-all` (each lesson answered wrongly first) and `chess-rosa-all` (Play Rosa at every level).
+  size of anything tapped. Chess also has `chess-games` and `chess-games-small` (Mate and Scramble; the small one fails on
+  anything off the screen), `chess-miss` (a puzzle missed on purpose, to read its explanation; `CHESS_MISS`, `CHESS_SMALL`),
+  and by name only `chess-wrong-all` (each lesson answered wrongly first) and `chess-rosa-all` (Play Rosa at every level;
+  `ROSA_SMALL=1080x1700` for a short phone).
+- The phone as it is held has its own: `away` and `interrupted` (a lesson put down, locked, called), `moving` (bursts of
+  screenshots while Fennel draws), and by name `landscape-all`, `landscape-app-all` and `offline-all` (`--url` the live site).
+  **A page the runner is attached to never goes to the background** (Chrome is started to keep drawing, and the harness holds
+  the screen on), so anything about being away from a routine is played by `away-bare` and `away-bare-app`, which let go of
+  the page first. `test/phone/lib/device.js` has `turn`, `putDown`, `screenOff`, `awake`.
+- `hands` plays by sight: with `HANDS_DIR` set it saves the screen and waits for one command at a time in a file (tap, swipe,
+  type, back), each done with a real touch. It is how a blind playthrough is done (an agent that has not read the answers).
 
 - With no `--url` it serves this checkout on a free port forwarded with `adb reverse`; Chrome opens
   `http://localhost:<port>/`, a secure context, so Wake Lock and the like work as on the real site.
@@ -138,8 +148,14 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   time (`courseShown`, the switcher under the tabs, remembered in `wingbeat.course`), and reviews that
   course's cards so its coach runs them. The intro picks courses by course id; `choose()` turns them
   into the Learning tab. A Learn coach's `lines`/`headlines` replace Rosa's in the runner and end screen.
+  A course can follow another (`follows: { course, units }` on the course): until those units are done, `waits()`
+  (progress.js) keeps its tab to one line, the other course's button and "I know JavaScript: start here" (a placement
+  answer in `progress.start`). An order, never a lock. TypeScript and Test writing follow JavaScript's first 9 units;
+  `test/code-courses.test.js` works that number out from every word they show and fails on a word taught nowhere.
 - **Chess games** (`src/chess/games.js`, the "Games" row on chess's home, a subject's `games`): replayable modes, each a one-entry session
   for `run()` whose mount never calls `done`, so nothing is scored, scheduled or logged; a `.foot` banner ends a game and its button remounts it.
+  Each game mounts through `fitGame()`, which calls the lessons' `fitBoard` (exercise.js; never a second fitter), and puts what it counts in the
+  session bar with `inBar()`, where a lesson's meter is. A board being played keeps 40px squares; at a game's end its buttons go and the board sits above the banner.
   **Mate** (`mate.js`, `prover.js`, `prover-worker.js`): Daybook's game. `prover.js` is a port of its mate search on its own small
   board, because chess.js is far too slow to prove a mate in 4; it has no imports so it can run in a Worker (import maps don't reach workers).
   `src/data/mate.json` comes from `node tools/mate-positions.js`, Lichess CC0 (`docs/chess-positions/NOTICE.md`). Lazy-loaded. **Scramble** (`capture.js`): our own
@@ -199,6 +215,12 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   from progress (log entries carry `hour`). Home's greeting uses it. New lines are drafted by hand
   with `tools/voice-draft.js` (Claude API, `ANTHROPIC_API_KEY`) into `drafts/voice/` for review,
   never into the pool; the guardrail tests lint every pool line and dare.
+- **Words fit what just happened** (lines.js): a verdict pool can be narrowed by how the item was answered, `correct:hear`,
+  `wrong:move`, `run3:look`… beside the general `correct`/`wrong` (`doing(item)` → hear, move, write or look; `verdicts()`
+  joins the two; a test walks every Learn item). `finished()` picks an end screen's kind from the session's first tries:
+  `nearly` is one miss among three or more right, and no `struggled` line counts misses. Learn log entries carry `course`:
+  with Learning done today through another course, `moment()`'s state is `elsewhere`, which only `{ "elsewhere": true }`
+  pools match, so a coach never says its own course is done when it isn't.
 - `src/habitview.js` — pure helpers and the wording for the habit view (`habitView()` in app.js),
   opened from the "N-day streak · See your week" line over home's path (or a plant). Days without a session are plain, never missed.
 - `src/coding/` — the Coding learn subject, beside chess on the Learning habit. `program.js` is pure: a
@@ -549,10 +571,13 @@ What is still open: `docs/TODO.md` ("Still open") and `docs/HABITS.md`.
   text says "Knight to c7", never "Nc7+" (`words()` turns SAN into words). Boards show coordinates.
 - **No questions in the way.** A first visit opens a short, skippable intro (`intro()`/`want()` in
   app.js, words in `INTRO_WORDS`): what Wingbeat does, then Learn something / Build habits, each opening
-  its list. The picks go in `progress.picked` and home orders its tabs by them through ONE function,
-  `ordered()` in subjects.js; picked one-tap habits are switched on with `track()`. Skip is today's
-  home (Lumi's welcome line, the garden, every habit). Shown once (`showsIntro`); saves from before
-  v7 never see it. The ⋯ menu's "Change what you see" reopens the second step. It never asks placement. Placement is an optional part of a subject: its `placement` (chess has one) shows as a
+  its list, with one line under each thing saying what it is (`INTRO_WORDS.about`; a one-tap habit shows its tap).
+  The picks go in `progress.picked` and are what home shows, first (ONE function orders the tabs, `ordered()` in
+  subjects.js): everything else is hidden through `tracked` (`{ id, hidden: true }`, for a built-in habit or a course
+  too; `habitsFor()` and `coursesFor()` read it), one tap away under + Habit and the course row's + Course.
+  Picked one-tap habits are switched on with `track()`. Skip is today's home (Lumi's welcome line, the garden,
+  everything shown), and a save from before this shows what it showed. Shown once (`showsIntro`); saves from before
+  v7 never see it. The ⋯ menu's "Change what you see" reopens the second step, starting from what home shows. It never asks placement. Placement is an optional part of a subject: its `placement` (chess has one) shows as a
   "Skip ahead" link under Continue; the question then suggests a starting unit, or the learner starts
   from the beginning. Answering or dismissing (×) hides the offer for good (`progress.start`, per
   subject), and so does finishing the subject's first unit; starting a lesson never asks. Units before the start stay open.

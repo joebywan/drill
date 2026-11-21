@@ -86,7 +86,8 @@ export async function onShortPhone({ adb, run, calibrate }, size, fn) {
  */
 export const fitProblems = (page) => page.evaluate(() => {
   const under = [], off = [];
-  for (const q of ['.board', '.game-actions', '.choices', '.game-tabs', '.hud', '.bubble']) for (const el of document.querySelectorAll(`#app ${q}`)) {
+  if (document.documentElement.scrollHeight > innerHeight + 1) off.push(`the page scrolls ${document.documentElement.scrollHeight - innerHeight}px`);
+  for (const q of ['div.board', '.game-actions', '.choices', '.game-bar', '.bubble']) for (const el of document.querySelectorAll(`#app ${q}`)) {
     const r = el.getBoundingClientRect();
     if (!r.width || !r.height) continue;
     if (r.top < -1 || r.bottom > innerHeight + 1 || r.left < -1 || r.right > innerWidth + 1) off.push(`${q} ${Math.round(r.top)}..${Math.round(r.bottom)} of ${innerHeight}`);

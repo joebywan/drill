@@ -8,7 +8,7 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            `last` is the local date (YYYY-MM-DD) of the habit's last finished session;
  *            `forgiven` lists the dates a missed day was forgiven; `days` counts every date with a
  *            session, ever (the log only keeps a year), and only goes up: the garden grows from it
- *   log      [{ date, hour?, habit, title, mins, lesson?, right?, of?, feel? }]  — every finished session,
+ *   log      [{ date, hour?, habit, title, mins, lesson?, course?, right?, of?, feel? }]  — every finished session,
  *            oldest first, for the habit view: what was done each day. `hour` is the local hour
  *            (0–23) it was logged, absent on entries from before version 9
  *   left     [{ date, hour, habit, lessonId, title, step, of }]  — practices closed part-way, oldest
@@ -25,7 +25,8 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            (src/garden/model.js). Earned once, kept forever: nothing removes an entry
  *   tracked  [{ id, name?, icon?, plant?, hidden? }]  — the self-reported habits the learner added,
  *            in order: a preset is just its id ('walk'); one of their own ('own-1') carries its name,
- *            icon and plant. `hidden` takes it off the tabs and keeps everything else (subjects.js habitsFor)
+ *            icon and plant. `hidden` takes it off the tabs and keeps everything else (subjects.js habitsFor).
+ *            A built-in habit's id or a course's carries only `hidden`: what the intro's picks left off home
  *   picked   [habitId]  — what the first-visit intro was asked for, in the order picked: home puts
  *            these first (subjects.js ordered). Absent until the intro is answered or skipped ([])
  *   timings  { habitId: { key: value } }  — the learner's own practice timings (practice/timings.js),
@@ -169,6 +170,15 @@ export const offersPlacement = (progress, subject) => !!subject.placement && !(s
 /** Progress with a subject's placement answered (its path starts at `unit`) or dismissed (`unit` null). */
 export const placeAt = (progress, subjectId, unit) => ({ ...progress, start: { ...progress.start, [subjectId]: unit } });
 
+/**
+ * True while a course that follows another (`subject.follows`, its `parent`) waits for it: the parent's first
+ * `units` units aren't all done, the learner hasn't chosen to start here anyway (a placement answer: a unit, not
+ * a dismissal) and hasn't started it already.
+ */
+export const waits = (progress, subject, parent) => !!subject.follows && typeof progress.start?.[subject.id] !== 'string'
+  && !Object.keys(progress.done).some((id) => id.startsWith(`${subject.id}:`))
+  && !parent.units.slice(0, subject.follows.units).every((u) => u.lessons.every((l) => l.mix || progress.done[`${parent.id}:${l.id}`]));
+
 /** True for a first visit: the intro is neither answered nor skipped, and nothing has been done yet. */
 export const showsIntro = (progress) => !progress.picked && !progress.log.length && !Object.keys(progress.done).length && !progress.tracked?.length;
 
@@ -242,7 +252,8 @@ function practised(progress, habit, now, review) {
  * first time. `lessonId` is null for a review session, which unlocks nothing but is the one thing
  * that repairs a longer gap. A lesson finished during a repairable gap leaves the streak waiting
  * for that review. Nothing is scored: what a session leaves behind is what was learned.
- * `about` is { title, mins } for the log.
+ * `about` is { title, mins, course? } for the log: `course`, the Learn subject's id, lets each course's coach
+ * know whether their own course was done today (cast/voice.js).
  */
 export function finishSession(progress, lessonId, results, now = new Date(), about = {}) {
   const cards = { ...progress.cards };
@@ -253,7 +264,7 @@ export function finishSession(progress, lessonId, results, now = new Date(), abo
   }
   const entry = {
     habit: LEARN, title: about.title || (lessonId ? 'Lesson' : 'Review'), mins: about.mins || 0,
-    right: results.filter((r) => r.correct).length, of: results.length,
+    right: results.filter((r) => r.correct).length, of: results.length, ...(about.course && { course: about.course }),
   };
   return {
     ...progress,

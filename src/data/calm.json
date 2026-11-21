@@ -13,11 +13,11 @@
               "id": "breathe-teach",
               "type": "teach",
               "help": true,
-              "say": "Hello. I'm Moss. We're going to do some breathing. You're already good at the basic version.",
+              "say": "Hello. I'm Moss. We're going to do some breathing. You've been doing the basic version all your life.",
               "text": [
-                "Breathe in for 4, then out slowly for 8.",
+                "Breathe in for 4 seconds, then out slowly for 8. The number in the circle counts the seconds with you.",
                 "A long, slow out-breath is the body's own way of easing off. Your heartbeat settles a touch with each one, and your shoulders tend to follow.",
-                "No need to get it perfect. If 8 feels long, breathe out as slowly as is comfortable."
+                "No need to get it perfect. If 8 seconds feels long, breathe out as slowly as is comfortable."
               ]
             },
             { "id": "breathe-3", "type": "breathe", "cycles": 3 }
