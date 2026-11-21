@@ -8,12 +8,12 @@ import { answer, armsOf, fixBug, kind, isBuilt, solve } from '../../src/coding/p
 import { withCheckpoint } from '../../src/repeat.js';
 import { playCourse } from '../../tools/play.js';
 
-const course = { id: 'coding', units: JSON.parse(readFileSync(new URL('../../src/data/coding.json', import.meta.url))).units.map(withCheckpoint) };
+export const course = { id: 'coding', units: JSON.parse(readFileSync(new URL('../../src/data/coding.json', import.meta.url))).units.map(withCheckpoint) };
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const emptied = (b) => (typeof b === 'object' && armsOf(b).length ? { ...b, ...Object.fromEntries(armsOf(b).map((k) => [k, []])) } : b);
 
 /** Taps one Coding item in, worked out from the item itself with the same functions the course is checked with. */
-async function answerCoding({ page, tap, btn }, item) {
+export async function answerCoding({ page, tap, btn }, item) {
   const k = kind(item);
   if (k === 'teach') return;
   if (k === 'predict') {
