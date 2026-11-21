@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { withCheckpoint } from '../../src/repeat.js';
 import testing from '../../src/code/courses/testing.js';
 import { playCourse } from '../../tools/play.js';
-import { answerCode } from './code-all.js';
+import { PARTS, TRAY, answerCode } from './code-all.js';
 import { thirtyDays } from './lib/seed.js';
 
 const maths = JSON.parse(readFileSync(new URL('../../src/data/maths.json', import.meta.url))).units[0].lessons[0];
@@ -143,9 +143,8 @@ export default async (h) => {
     check('pulling past the box\'s top neither moves nor reloads the page', s3.page === s2.page && !again, `${s2.page} -> ${s3.page}${again ? ', reloaded' : ''}`);
   };
   const course = { id: 'testing', units: testing.units.map(withCheckpoint) };
-  // Here only to reach a box that scrolls: only the topic line is checked as a part, so this lesson's layout is left to code-all (CODE_SMALL=1080x1700),
-  // which reports it (on this short phone the verdict covers .code-program after an answer, in Chrome and Firefox alike).
-  await playCourse(h, { course, unit: 4, only: ['tl-2'], small: '1080x1700', parts: ['.topic'], tray: [],
+  // Played whole, with code-all's own checks: after a finger has scrolled the box, each answered item must still sit clear of the verdict.
+  await playCourse(h, { course, unit: 4, only: ['tl-2'], small: '1080x1700', parts: PARTS, tray: TRAY,
     answer: async (hh, it) => { await probe(); return answerCode(hh, it); } });
   if (!probed) console.log('  no box scrolled in itself in that lesson');
   await run(500);
