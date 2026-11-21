@@ -313,13 +313,29 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
   the top of the page. Wingbeat brought that up on every visit's first save, over a lesson's first answer, and "Don't allow" was not remembered. It now
   asks once ever, on home, once something is in the log, and after that only from a line under ⋯ ("Turn on"), which goes when the browser keeps it
   (#200, decision 30; played with the real prompt: `npm run phone -- --browser firefox persist` and `persist-logged`). Firefox also follows the phone's font size by zooming the whole page, so at 2.0 the page is 216px wide, past what the app promises, and the
-  verdict covered part of the question in every course (to be looked at again now that #201 is in); it has no `navigator.vibrate`, so there are no
+  verdict covered part of the question in every course; since #201 what it covers there can be reached by scrolling, but for the last pixel of
+  Japanese's explanation (#210); it has no `navigator.vibrate`, so there are no
   haptics. Keeping the screen on works and it has a Japanese voice. Its address bar is at the top, clear of Continue; a pull down does not reload the
   page; the phone's back button walks back through nested screens and leaves from home.
   With Firefox's toolbar left to slide away, as it ships, a swipe past the end of a box that scrolls slides the toolbar and the page shifts by its height
   (43px); with the toolbar set to stay, which is how the runner plays, the page stays put, so that is the toolbar's doing and not the page scrolling.
-  **Left:** in Firefox on a short phone a chip of a Test writing build (`tl-2-6`) sits partly under Run's own target, which Chrome's does not, so the
-  `browser` scenario fails that one check there. A sweep of every scenario in Firefox, and large text there again, are under way.
+  **Every scenario, played there** (#210): the 60 a plain `npm run phone` plays. 50 pass. Five cannot be played through the bridge and say so in one
+  line (the installed app's two, `sync`, Chrome's own zoom, `away-bare`), and `rotate` is skipped as it is in Chrome. Most of what failed on the way
+  was the test bridge's doing and is fixed there: a chip cut off by its own scroll box was never scrolled into it (that was the `tl-2-6` chip "under
+  Run"), `hasText` was ignored so Japanese tapped the first choice, and `away` and `interrupted` brought Chrome to the front in place of Firefox.
+  One fault was the app's, in every browser: in Mate, a tier tapped once a board was solved started the new board under the last one's banner, with
+  Hint, Undo and New board gone. It starts clean now (`games.spec.js` holds it; seen on the phone in Chrome). The Meet button was looked at 37 more
+  times, its words there every time.
+  Two things the sweep showed about the tests themselves, both fixed (#211). `words` had failed in Chrome too since #194 made a course's first
+  meeting come before "today's learning is done": its learner had never done a Maths lesson, so Ada rightly said her first line; the scenario's
+  learner has now done one. And a run that died of an error nothing awaited left its emulator running with no lock (one sat in the first slot
+  for 1 h 45 min, so every later run went to the next); the runner shuts it down then too.
+  **Left:** `text` at the phone's font size 1.3 and 2.0: an answered chess board runs under the verdict by about 40px on a page 324px wide (medium;
+  the sweep measured the same in Chromium at 324x612, for 312 puzzles), and at 2.0 (216px, past what the app promises) most of the board is under it. `japanese`:
+  the 🔊 button's content measures a few px wider than its box in Firefox, so "nothing overflows" fails there, though it is drawn whole (low).
+  `moving`: once, a value changed while Fennel was between squares (`var-3-free`; seen once, cause not found; low). `words` has not been played
+  again in Firefox since its seed was fixed. What `away-bare` checks (a routine paused, quiet and letting the screen sleep after Home) is not
+  checked in Firefox.
   **What the emulator cannot show:** whether either freeze happens on a phone with a GPU (the emulator draws in software), and haptics (Firefox has none
   to call).
 

@@ -99,6 +99,9 @@ let tidying = null;
 const tidy = async () => { for (const f of cleanup.splice(0)) await Promise.resolve().then(f).catch((e) => console.error('cleanup:', e.message)); };
 // Ctrl-C (or a kill) still shuts down the emulator and the server, then lets go of the lock.
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, async () => { console.log(`\n${sig}: cleaning up`); await (tidying ??= tidy()); process.exit(130); });
+// So does an error nothing awaited (a scenario's promise left to itself): Node would end there, past the `finally`
+// below, and leave the emulator running in its slot with no lock to say whose it is.
+for (const ev of ['uncaughtException', 'unhandledRejection']) process.on(ev, async (e) => { console.error(e); await (tidying ??= tidy()); process.exit(1); });
 try {
   const port = await takeSlot();
   // Serve this checkout unless told where to go.
