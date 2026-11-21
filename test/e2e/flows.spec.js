@@ -321,7 +321,7 @@ async function rookAndBishop(page, during = async () => {}) {
   await firstVisit(page);
   await page.getByRole('button', { name: `Continue · ${lesson.title}` }).click();
   for (const [i, item] of lesson.items.entries()) {
-    if (item.demo) await expect(page.locator('#said')).not.toHaveText(item.intro, { timeout: 10000 }); // the piece's demo first
+    if (item.demo) await expect(page.locator('div.board[aria-busy]')).toHaveCount(0, { timeout: 10000 }); // the piece's demo first
     await solve(page, item);
     if (!i) await during();
     await continueButton(page).click();
@@ -2023,8 +2023,9 @@ test('Around the rock: the card shows a step into a rock ending the run, and a m
   await expect(page.locator('.foot.show')).toHaveCount(0);
   // Then the way that works takes its place, still saying why.
   await expect(page.locator('.program.shown')).toBeVisible({ timeout: 6000 });
-  await expect(page.locator('#said')).toHaveText(`${RUN_ENDS.rock} ${RUN_ENDS.way}`);
+  await expect(page.locator('#said')).toHaveText(RUN_ENDS.way);
   await expect(page.locator('.foot.wrong')).toBeVisible();
+  expect(await page.locator('.foot.wrong p').textContent()).toMatch(new RegExp(`^${RUN_ENDS.rock.replace(/\./g, '\\.')} `));
 });
 
 // Garden seasons: the real calendar, by the device's hemisphere. Australia/* is south.
@@ -2333,7 +2334,7 @@ test('Coding, the new blocks on a real page: a bug fixed by tapping, an endless 
     const { mount } = await import('/src/coding/exercise.js');
     document.body.innerHTML = '<div id="t" class="quiz"></div><p id="said"></p>';
     window.result = null;
-    window.wingbeat = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right) { window.result = right; } });
+    window.wingbeat = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right, why) { window.result = right; window.why = why; } });
   }, item);
   const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
   const result = () => page.evaluate(() => window.result);
@@ -2362,7 +2363,7 @@ test('Coding, the new blocks on a real page: a bug fixed by tapping, an endless 
   await tile('Step right').click();
   await tile('Step left').click();
   await expect.poll(result).toBe(false);
-  await expect(page.locator('#said')).toHaveText(/never ends/);
+  expect(await page.evaluate(() => window.why)).toMatch(/^That loop never ends/); // said, then kept first in the verdict
 
   // JavaScript: the code is the blocks' code, holes fill from tiles and a call is a tile.
   await mount({ id: 'j', type: 'build', view: 'js', level: ['..*', '...', 'S..'], program: [{ define: 'hop', do: ['right', 'up'] }, null, null], tiles: [{ call: 'hop' }, 'left'], prompt: 'p', explain: 'e' });
@@ -2384,8 +2385,8 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
   // The widest font a phone or CI is likely to fall back to, so the fit doesn't depend on the machine's fonts.
   await page.addStyleTag({ content: 'body, button { font-family: "DejaVu Sans", Verdana, sans-serif; }' });
   const items = codingCourse.units.flatMap((u) => u.lessons.flatMap((l) => l.items));
-  // The longest line a missed run ends on: it must fit the bubble's reserved height, or the miss would move the grid.
-  const longestMiss = Object.entries(RUN_ENDS).filter(([k]) => k !== 'way').map(([, t]) => `${t} ${RUN_ENDS.way}`).reduce((a, b) => (b.length > a.length ? b : a));
+  // The longest line a missed run says: it must fit the bubble's reserved height, or the miss would move the grid.
+  const longestMiss = Object.values(RUN_ENDS).reduce((a, b) => (b.length > a.length ? b : a));
   const bad = await page.evaluate(async ([items, fail]) => {
     const { mount } = await import('/src/coding/exercise.js');
     const app = document.getElementById('app');
@@ -2567,7 +2568,7 @@ test('Coding, laying out a program: the cursor, a limit, Run, and a run with ste
     const { mount } = await import('/src/coding/exercise.js');
     document.body.innerHTML = '<div id="t" class="quiz"></div><p id="said"></p>';
     window.result = null;
-    window.wingbeat = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right) { window.result = right; } });
+    window.wingbeat = mount(document.getElementById('t'), item, { say(t) { document.getElementById('said').textContent = t; }, done(right, why) { window.result = right; window.why = why; } });
   }, item);
   const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
   const run = page.getByRole('button', { name: 'Run', exact: true });
@@ -2599,7 +2600,7 @@ test('Coding, laying out a program: the cursor, a limit, Run, and a run with ste
   await expect(tile('Step down')).toBeDisabled();
   await run.click();
   await expect.poll(result).toBe(false);
-  await expect(page.locator('#said')).toHaveText(/steps to spare/);
+  expect(await page.evaluate(() => window.why)).toMatch(/steps to spare/);
   await expect(page.locator('.program.shown .block.go')).toHaveCount(1);
 
   // Taking out a loop takes what it holds; the cursor stays where it was, so a block can go in the middle.

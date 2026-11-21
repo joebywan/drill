@@ -37,7 +37,8 @@ async function rock(h) {
   await run(1500);
   await shot('rock-miss-way');
   check(`he says the rock stopped him (${said.join(' | ')})`, said.includes(RUN_ENDS.rock));
-  check('the way that works comes after', await page.locator('.program.shown').count() === 1 && (await page.locator('#said').textContent()) === `${RUN_ENDS.rock} ${RUN_ENDS.way}`);
+  check('the way that works comes after, the reason first in the verdict', await page.locator('.program.shown').count() === 1
+    && (await page.locator('#said').textContent()) === RUN_ENDS.way && (await page.locator('.foot.show p').textContent()).startsWith(RUN_ENDS.rock));
   await touch(btn('Quit lesson'));
 }
 

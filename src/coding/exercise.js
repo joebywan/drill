@@ -72,7 +72,7 @@ export function mount(el, item, { say, done, coach }) {
 
   /**
    * Runs a finished program: Fennel walks it. A miss stays on screen, marked where it stopped and said why, for
-   * MISS_HOLD_MS, then `oneWay()` takes its place. Then the item is done.
+   * MISS_HOLD_MS, then `oneWay()` takes its place and the reason goes first in the verdict. Then the item is done.
    */
   const perform = async (program, oneWay, fixed = false) => {
     const result = runItem(item, program);
@@ -80,18 +80,18 @@ export function mount(el, item, { say, done, coach }) {
     await walk(result);
     if (gone) return;
     const right = reached(result);
+    const why = right ? '' : RUN_ENDS[howEnded(result, item.level)];
     if (!right) {
-      const why = RUN_ENDS[howEnded(result, item.level)];
       markStop(result);
       say(why, 'wrong');
       await new Promise((r) => { setTimeout(r, MISS_HOLD_MS); });
       if (gone) return;
       programEl.innerHTML = oneWay();
       programEl.classList.add('shown');
-      say(`${why} ${RUN_ENDS.way}`, 'wrong');
+      say(RUN_ENDS.way, 'wrong');
     }
     flourish(programEl, right ? 'pop' : 'shake'); // the runner cues the sound and buzz
-    done(right, item.explain);
+    done(right, right ? item.explain : `${why} ${item.explain}`); // the reason stays, first in the verdict
     settle(matters(result, right, fixed));
   };
 

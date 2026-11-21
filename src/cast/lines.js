@@ -673,7 +673,8 @@ export const REMINDER_WORDS = {
 
 /**
  * What Fennel says when a run misses, one line for every way it can end (`howEnded()` in src/coding/program.js), said
- * while the learner's own program still shows; then `way`, once the program that works takes its place.
+ * while the learner's own program still shows; then `way`, once the program that works takes its place, the reason
+ * kept first in the verdict.
  */
 export const RUN_ENDS = {
   rock: 'I walked into the rock, so I stopped. The rest never ran.',

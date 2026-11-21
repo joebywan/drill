@@ -460,7 +460,8 @@ const MOUNTS = {
     }, open));
 
     (async () => {
-      if (item.demo) { // the piece shows how it moves first, then goes back
+      if (item.demo) { // the piece shows how it moves first, then goes back; the board is busy (not yet played) till then
+        boardEl.setAttribute('aria-busy', 'true');
         say(starsFirst(item), 'teach');
         await wait(600);
         for (let i = 1; i < item.demo.length && !gone; i++) {
@@ -475,6 +476,7 @@ const MOUNTS = {
         if (gone) return;
       }
       say(starsFirst(item), 'think');
+      boardEl.removeAttribute('aria-busy');
       open();
     })().catch(() => {}); // the board was taken down mid-demo
     return () => { gone = true; clearTimeout(timer); b.destroy(); };
