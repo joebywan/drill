@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures.js';
+import { test, expect, reach } from './fixtures.js';
 import { readFileSync } from 'node:fs';
 import { answer } from '../../src/maths/items.js';
 import { continueButton, pickMaths, playLesson, solve } from './maths-play.js';
@@ -68,6 +68,40 @@ test('a wrong tile ends the item with the answer shown, and the item comes back 
   await continueButton(page).click();
   const n = marked(first).length;
   await expect(page.getByText(`${n - 1} of ${n} right first try`)).toBeVisible();
+});
+
+test('a miss on a build shows what was put, marked as theirs, with the right answer, and the card does not move', async ({ page }) => {
+  await pickMaths(page);
+  await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
+  const tiles = first.items.find((i) => i.type === 'build' && answer(i).length > 1);
+  for (const item of first.items.slice(0, first.items.indexOf(tiles))) { await solve(page, item); await continueButton(page).click(); }
+  const right = [...answer(tiles)]; // its digits, one to a slot
+  const card = () => page.locator('.quiz .card').boundingBox();
+  const asked = await card();
+  await page.locator('.choices .choice').filter({ hasText: new RegExp(`^${right[0]}$`) }).first().click();
+  const slip = page.locator('.choices .choice:not(:disabled)').filter({ hasNotText: new RegExp(`^${right[1]}$`) }).first();
+  const put = await slip.textContent();
+  await slip.click();
+  await expect(page.locator('.foot.wrong')).toBeVisible();
+  await expect(page.locator('.quiz .yours')).toBeVisible();
+  await expect(page.locator('.quiz .yours')).toHaveText(`You put ${right[0]}${put}`);
+  await expect(page.locator('.quiz .slot')).toHaveText(right);
+  expect(await card()).toEqual(asked);
+});
+
+// Japanese builds share it: a five-word sentence missed on its second tile shows the two words put, and no more.
+for (const [width, height] of [[412, 786], [412, 533]]) test(`a Japanese sentence missed on its second tile shows what was put, at ${width}x${height}`, async ({ page }) => {
+  await page.setViewportSize({ width, height });
+  const item = await reach(page, 'japanese', 'se3', 'se3-build-332');
+  const card = await page.locator('.quiz .card').boundingBox();
+  const tile = (t) => page.locator('.choices .choice:not(:disabled)').filter({ hasText: new RegExp(`^${t}$`) }).first();
+  await tile(item.answer[0]).click();
+  await tile('です').click();
+  await expect(page.locator('.foot.wrong')).toBeVisible();
+  await page.screenshot({ path: test.info().outputPath(`japanese-miss-${width}x${height}.png`) });
+  await expect(page.locator('.quiz .yours')).toHaveText(`You put ${item.answer[0]} です`);
+  await expect(page.locator('.quiz .yours')).toBeInViewport({ ratio: 1 });
+  expect((await page.locator('.quiz .card').boundingBox()).y).toBe(card.y); // full slots may take a second row: the card grows down, never moves
 });
 
 test('maths cards come back in review, on the shared Learning review', async ({ page }) => {

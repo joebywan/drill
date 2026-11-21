@@ -59,11 +59,28 @@ export function worded(boardEl, wordings, lines = LINES) {
  * Returns `stop`, with `refit` and the `ctx` to mount with (its say and done refit afterwards).
  */
 export function fitBoard(boardEl, choices, item, ctx, tapped = () => TAPPED.includes(kind(item))) {
+  const bubble = boardEl.closest('.play')?.querySelector('.bubble');
+  const said = item ? sayings(item) : []; // a game's (no item) say their own
+  let answered = false;
+  /** The coach's words keep the room of the tallest line this item can say, so a shorter one never moves the board up. */
+  const hold = () => {
+    if (!bubble || !said.length) return;
+    bubble.style.minHeight = '';
+    const copy = bubble.cloneNode(false);
+    copy.removeAttribute('id');
+    copy.removeAttribute('aria-live');
+    copy.style.cssText = `position:absolute;visibility:hidden;min-height:0;width:${bubble.offsetWidth}px`;
+    bubble.after(copy);
+    const most = Math.max(bubble.offsetHeight, ...said.map((t) => { copy.textContent = t; return copy.offsetHeight; }));
+    copy.remove();
+    bubble.style.minHeight = `${most}px`;
+  };
   const refit = () => {
     if (!boardEl.isConnected) return;
     scrollTo(0, 0); // measured from the top of the page, where a board that fits stays
     boardEl.style.width = '';
     boardEl.style.marginInline = '';
+    hold();
     const natural = boardEl.getBoundingClientRect().width;
     const foot = document.querySelector('.foot.show');
     const played = !foot && tapped();
@@ -72,9 +89,10 @@ export function fitBoard(boardEl, choices, item, ctx, tapped = () => TAPPED.incl
     const roomNow = () => low() - boardEl.getBoundingClientRect().top - 6;
     const least = played ? SQUARE_MIN * FRAME : ANSWERED;
     // Too tall for the screen: first the coach and the gaps give way (the shared `.tall` rules in styles.css), then the board.
-    if (roomNow() < Math.max(natural, least) && !(foot && tapped())) boardEl.classList.add('tall');
+    // Decided while asked (each class once, her words' room measured again under it): once answered, the board's top stays.
+    if (roomNow() < Math.max(natural, least) && !(foot && tapped()) && !answered && !boardEl.classList.contains('tall')) { boardEl.classList.add('tall'); hold(); }
     // Still no room to play it (a long line from her on a short phone): her face gives way too, and her words take its width.
-    if (played && roomNow() < least) boardEl.classList.add('tighter');
+    if (played && roomNow() < least && !boardEl.classList.contains('tighter')) { boardEl.classList.add('tighter'); hold(); }
     // A board as wide as its column (a phone's) may grow into the gutters, 4px short of the edges; a wide screen's keeps its size.
     const widest = natural < boardEl.parentElement.clientWidth - 1 ? natural : innerWidth - 8;
     const side = Math.floor(Math.min(widest, Math.max(least, Math.min(natural, roomNow()))));
@@ -83,7 +101,7 @@ export function fitBoard(boardEl, choices, item, ctx, tapped = () => TAPPED.incl
     const play = boardEl.closest('.play');
     if (play) play.style.paddingBottom = `${innerHeight - low() + 4}px`;
   };
-  const stop = () => removeEventListener('resize', refit);
+  const stop = () => { removeEventListener('resize', refit); if (bubble) bubble.style.minHeight = ''; };
   addEventListener('resize', refit);
   stop.refit = refit;
   stop.ctx = {
@@ -91,14 +109,56 @@ export function fitBoard(boardEl, choices, item, ctx, tapped = () => TAPPED.incl
     say: (...a) => { ctx.say(...a); refit(); },
     // Over, the bubble stops asking for more or counting ("Keep going", "Found 2 of 3"); the banner has the explanation.
     // A true/false claim stays: it is what the explanation is about. Then the words give way to the board, not the other way.
-    done: (answered, text, kept) => {
-      if (answered !== null && kind(item) !== 'truefalse') ctx.say(answered && !kept?.hinted ? "That's it." : "Here's how it goes.");
-      ctx.done(answered, Array.isArray(text) ? worded(boardEl, text, ctx.coach?.lines) : text, kept);
+    done: (right, text, kept) => {
+      if (right !== null && kind(item) !== 'truefalse') ctx.say(right && !kept?.hinted ? OVER[0] : OVER[1]);
+      if (right !== null) answered = true;
+      ctx.done(right, Array.isArray(text) ? worded(boardEl, text, ctx.coach?.lines) : text, kept);
       refit();
     },
   };
   return stop;
 }
+
+const OVER = ["That's it.", "Here's how it goes."];
+const KING_CHECK = 'That leaves your king in check. Try again.';
+const FOUND = (got, of) => (of > 1 ? ` Found ${got} of ${of}.` : '');
+const FURTHER = (found) => `It can go further that way.${found}`;
+const ALL_STARS = 'Every star collected.';
+const OUT_OF_MOVES = "Out of moves. Here's one way.";
+/** What she says in a puzzle, for `side` ('White' or 'Black') to play. */
+const PUZZLE = {
+  ask: (side) => `${side} to play. Find the best move.`,
+  marked: (side) => `Not that. The marked piece moves — ${side} to play.`,
+  again: (side) => `Not that one. ${side} to play.`,
+  more: (side) => `Good. Keep going — ${side} to play.`,
+};
+const starsLeft = (stars, moves) => `${stars} star${stars === 1 ? '' : 's'} to go, ${moves} move${moves === 1 ? '' : 's'} left.`;
+/** A stars item's first words: a new piece's introduction stays with the prompt until the first move. */
+const starsFirst = (item) => (item.intro ? `${item.intro} ${starsPrompt(item)}` : starsPrompt(item));
+
+/**
+ * Every line the coach can say during `item`, from asked to Continue (each MOUNTS entry's say calls), so her words
+ * keep the room of the tallest: a shorter line never gives height back and moves the board.
+ */
+function sayings(item) {
+  const k = kind(item);
+  const cant = Object.keys(PIECE).map(cantMove);
+  if (k === 'teach') return [item.text];
+  if (k === 'truefalse') return [item.prompt];
+  if (k === 'tap') {
+    const n = answer(item).length, found = FOUND(n - 1, n);
+    return [item.prompt + found, FURTHER(found), ...OVER];
+  }
+  if (k === 'move') return [item.prompt, KING_CHECK, ...cant, ...OVER];
+  if (k === 'stars') {
+    const s = item.stars.length, m = item.moves;
+    return [starsFirst(item), ...[[s - 1, m - 1], [1, 1], [s - 1, 1], [1, m - 1]].filter(([a, b]) => a > 0 && b > 0).map(([a, b]) => starsLeft(a, b)),
+      ALL_STARS, OUT_OF_MOVES, ...cant, ...OVER];
+  }
+  const side = playerColor(startPuzzle(item)) === 'w' ? 'White' : 'Black'; // find
+  return [item.prompt || PUZZLE.ask(side), ...cant, rightPiece('knight', 'bishop'), PUZZLE.marked(side), PUZZLE.again(side), PUZZLE.more(side), ...OVER];
+}
+const rightPiece = (needs, played) => `Right move, another piece. This position needs a ${needs}, not a ${played}.`;
 
 // A gold star, drawn by Markers like its own sprites: with cached sprites (cm-chessboard's
 // default) a marker is `<use href="#slice">`, so the star only has to be in the document once.
@@ -280,12 +340,12 @@ const MOUNTS = {
     if (item.square) b.addMarker(MARKER_TYPE.square, item.square);
     // For 'ends', a nearer square on a right line is a nudge, not a miss.
     const along = item.rule === 'ends' ? answer({ ...item, rule: 'moves' }) : [];
-    const progress = () => (want.length > 1 ? ` Found ${found.size} of ${want.length}.` : '');
+    const progress = () => FOUND(found.size, want.length);
     let over = false;
     const pick = ({ square }) => {
       if (over || !square || square === item.square || found.has(square)) return;
       const right = want.includes(square);
-      if (!right && along.includes(square)) { say(`It can go further that way.${progress()}`, 'think'); return; }
+      if (!right && along.includes(square)) { say(FURTHER(progress()), 'think'); return; }
       if (right) {
         found.add(square);
         b.addMarker(MARKER_TYPE.framePrimary, square);
@@ -321,7 +381,7 @@ const MOUNTS = {
       const result = meets(item, { from, to, promotion });
       if (!result.legal) {
         say(game.inCheck()
-          ? 'That leaves your king in check. Try again.'
+          ? KING_CHECK
           : cantMove(game.get(from)?.type), 'think');
         return false;
       }
@@ -357,7 +417,6 @@ const MOUNTS = {
   stars(boardEl, choices, item, { say, done }) {
     choices.remove();
     const b = board(boardEl, item.fen, item.side);
-    const prompt = starsPrompt(item);
     const left = new Set(item.stars);
     let fen = item.fen;
     let budget = item.moves;
@@ -390,11 +449,11 @@ const MOUNTS = {
       if (result.played.promotion) timer = setTimeout(() => b.setPosition(fen), REPLY_DELAY);
       if (!left.size) {
         b.disableMoveInput();
-        say(`Every star collected.`);
+        say(ALL_STARS);
         done(true, explanation(item));
       } else if (!budget) {
         b.disableMoveInput();
-        say(`Out of moves. Here's one way.`, 'think');
+        say(OUT_OF_MOVES, 'think');
         timer = setTimeout(() => {
           b.setPosition(item.fen, true);
           left.clear();
@@ -404,15 +463,16 @@ const MOUNTS = {
         }, REPLY_DELAY);
         done(false, explanation(item));
       } else {
-        say(`${left.size} star${left.size === 1 ? '' : 's'} to go, ${budget} move${budget === 1 ? '' : 's'} left.`, 'think');
+        say(starsLeft(left.size, budget), 'think');
         if (promotion) open();
       }
       return true;
     }, open));
 
     (async () => {
-      if (item.demo) { // the piece shows how it moves first, then goes back
-        say(item.intro || prompt, 'teach');
+      if (item.demo) { // the piece shows how it moves first, then goes back; the board is busy (not yet played) till then
+        boardEl.setAttribute('aria-busy', 'true');
+        say(starsFirst(item), 'teach');
         await wait(600);
         for (let i = 1; i < item.demo.length && !gone; i++) {
           b.addArrow(ARROW_TYPE.default, item.demo[i - 1], item.demo[i]);
@@ -425,7 +485,8 @@ const MOUNTS = {
         await wait(300);
         if (gone) return;
       }
-      say(prompt, 'think');
+      say(starsFirst(item), 'think');
+      boardEl.removeAttribute('aria-busy');
       open();
     })().catch(() => {}); // the board was taken down mid-demo
     return () => { gone = true; clearTimeout(timer); b.destroy(); };
@@ -471,7 +532,7 @@ const MOUNTS = {
       }
       const result = tryMove(state, from, to, promotion);
       if (result === 'piece') {
-        say(`Right move, another piece. This position needs a ${PIECE[needed(state)]}, not a ${PIECE[promotion]}.`, 'think');
+        say(rightPiece(PIECE[needed(state)], PIECE[promotion]), 'think');
         return false;
       }
       if (result === 'wrong') {
@@ -479,9 +540,9 @@ const MOUNTS = {
         if (mistakes >= 2) {
           b.removeMarkers(MARKER_TYPE.circlePrimary);
           for (const sq of hint(state)) b.addMarker(MARKER_TYPE.circlePrimary, sq);
-          say(`Not that. The marked piece moves — ${side} to play.`, 'struggling');
+          say(PUZZLE.marked(side), 'struggling');
         } else {
-          say(`Not that one. ${side} to play.`, 'wrong');
+          say(PUZZLE.again(side), 'wrong');
         }
         return false;
       }
@@ -496,14 +557,14 @@ const MOUNTS = {
           if (mistakes >= 2) done(true, explanation(item), { hinted: true });
           else done(mistakes === 0, explanation(item));
         } else {
-          say(`Good. Keep going — ${side} to play.`, 'think');
+          say(PUZZLE.more(side), 'think');
           open();
         }
       }, REPLY_DELAY);
       return true;
     };
 
-    say(item.prompt || `${side} to play. Find the best move.`, 'think');
+    say(item.prompt || PUZZLE.ask(side), 'think');
     timer = setTimeout(() => {
       show();
       open();
