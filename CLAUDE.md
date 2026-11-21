@@ -212,7 +212,8 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   specific line (filled slots like `{usualHour}` count as more specific; a line with an unknown fact
   is skipped), never one of `recent`, and sometimes a dare: once a day, only while the habit isn't
   done today, never first or after a gap. `moment()` in `src/cast/voice.js` reads state and facts
-  from progress (log entries carry `hour`). Home's greeting uses it. New lines are drafted by hand
+  from progress (log entries carry `hour`). Home's greeting uses it. For a Learn course `first` is the course's own:
+  true until a lesson of that course is in `progress.done`, and it wins over `elsewhere` and `comeback`. New lines are drafted by hand
   with `tools/voice-draft.js` (Claude API, `ANTHROPIC_API_KEY`) into `drafts/voice/` for review,
   never into the pool; the guardrail tests lint every pool line and dare.
 - **Words fit what just happened** (lines.js): a verdict pool can be narrowed by how the item was answered, `correct:hear`,
@@ -261,6 +262,7 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   in `src/code/courses/` (`author.js` is the shorthand; ids come from a lesson and its place, so add items at a lesson's end). A test checks
   that nothing is asked before a teach card shows it. **Test writing** grades as the rule below says: `given` is the real code, `mutants` hand-made faulty
   copies with `says` in plain words, and a miss names the one that got through. Guardrails bar "broken" in prose, so they are "faulty copies".
+  A value in prose is printed by interp.js's `show(v, false)` (`called()` and `exampleOf()` in items.js): the course's own spelling, never JSON.
 - `src/calm/` — the Calm practice subject. `routines.js` is pure: each routine is a list of timed
   phases (breathing 4 in, 8 out; the sigh 3 in, 1 top-up, 6 out; the butterfly hug's taps; the body scan feet to head), and `timeline()` plays one on a
   pausable clock. `practice.js` mounts teach cards and the routines with Moss (`src/cast/moss.js`)
@@ -269,7 +271,8 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   habit's path at a time (the switcher under the bar, remembered in `wingbeat.habit`). A Calm routine
   opens and closes on a soft bell and can have soft rain under it (`calmSound()`, `rain()` in
   feel.js, both generated): set on the ⋯ screen, both off until turned on, and both silent
-  when Sound is muted or under reduced motion.
+  when Sound is muted or under reduced motion. A teach card states only numbers no timing can change; one that
+  can is a slot (`{in}`, `{out}`) filled by `breathWords()` from the same `timed()` merge the routine plays (a test holds it).
 - `src/reflect/` — the Reflect practice subject: three prompts, each skippable, self-paced like
   grounding, with Lumi coaching. "One good thing" first and "One thing for tomorrow" last never
   change; the middle one comes from the `middle` pool in `reflect.json`, chosen by the date

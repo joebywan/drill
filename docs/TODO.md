@@ -234,8 +234,9 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
     through another course, a coach says today's learning is done, never that its own course is. An end screen with one miss in a good session is "nearly",
     and no line counts misses. Arrivals and the garden's cards say "butterfly". The ability lint also refuses "you are a…", "a natural" and speed as a
     virtue (it caught one more line, Moss's). Calm's circle counts a breath's seconds up, as its card says.
-    **Left (low):** a coach's `first` greeting follows the Learning habit, not the course, so a course first opened after another is not greeted as new;
-    Calm's first card says "in for 4 seconds, then out slowly for 8" whatever the learner's own timings are.
+    Then (#194): a coach greets you the first time you open their course (the first meeting followed the Learning habit, so only the first course ever
+    opened was greeted), and Calm's first card states the learner's own timings where it said "in for 4 seconds, then out slowly for 8" whatever they were.
+    **Left (low):** Calm's lesson titles name a count the learner's own timings can change ("Five slow breaths", "Five long sighs").
   Worth keeping, in its words: Chess's move dots and stars, Coding's arrow blocks, a miss coming back at the lesson's end, Maths showing its working, Japanese's
   memory pictures, JavaScript's one idea a card, Calm's "nothing to get right", the one-tap habit.
   **What this cannot show:** whether a person finds it calming, fun or worth coming back to tomorrow; anything heard (it saw stills, so listening items were
@@ -334,8 +335,10 @@ none near 6 minutes or 20 items. The longest are `jsn-1` and `jsl-3` (~1:35 each
 - **Answers a little taller than the verdict** (low): on a 412x533 page a check card's three rows of answers stand about 10px taller than a verdict with a one-line
   heading, so the top edge of the first row shows above it once answered.
 - **A filled block is 32px high** (low): a placed word in the answer (`button.block`); the tray's chips are all 40 or more.
-- **Wording** (low): "For example `cost({"name":"a"}) gives 0`" writes the input as JSON (quoted keys) before the course has shown that form;
-  "Five! Those lines run like clockwork." and "Five in a row." appear on a streak with no mention of what the five are.
+- **Wording: fixed** (#194). "For example `cost({"name":"a"}) gives 0`" wrote the input as JSON (quoted keys) before the course had shown that form: a value
+  in prose is now written the way the course writes code (`cost({ name: "a" }) gives 0`). "Five! Those lines run like clockwork." and "Five in a row." did
+  not say five of what: every run-of-three and run-of-five line now says what is counted ("Five right in a row…"). A verdict headline cannot grow freely:
+  `chess-short.spec.js` holds the longest (a longer Rosa line put a board under the verdict on a short phone).
 - **Harness bug found and fixed in passing:** `btn(name)` in `tools/phone.js` ignored `{ exact: true }`, so `btn('Continue', { exact: true })` could hit a
   chip named `continue` and `btn('Run')` a chip named `run(`, stalling `jsl-4` and `jse-1` until the fix.
 - **Fresh versions in Test writing** change their values (#174): inputs and the code's edges move together, and what each test expects is worked out by running the real code (48 of 59 items). Eleven still only rename, where the values are the point or the code computes with them (0 and 1, % 2, + 1, one-letter text); the list and the reasons are in `test/test-writing-vary.test.js`. No fresh version in any code course renames a function.
