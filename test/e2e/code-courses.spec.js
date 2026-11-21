@@ -61,7 +61,7 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
         if (r.bottom > roof + 1) note(`the answer runs under the tray: ${Math.round(r.bottom)} over ${Math.round(roof)}`);
         if (r.height < 44) note(`only ${Math.round(r.height)}px for the answer`);
         if (prog.scrollWidth > prog.clientWidth + 1) note('the answer scrolls sideways');
-        for (const b of prog.querySelectorAll('button:not(.slot)')) if (b.getBoundingClientRect().height < 26) note('a placed word is under 26px');
+        for (const b of prog.querySelectorAll('button:not(.slot)')) if (b.getBoundingClientRect().height < 40) note(`a placed word is ${Math.round(b.getBoundingClientRect().height)}px high, under 40`); // as tall as anything else tapped
       }
       const given = app.querySelector('.code-given');
       if (given && tiles && given.getBoundingClientRect().bottom > tiles.getBoundingClientRect().top) note('the given code runs under the tray');
@@ -174,7 +174,7 @@ test('a box that scrolls marks more above and below, and drops the marks as it s
 });
 
 // A code card (teach, predict, check) through the quiz, as the runner shows it: asked, its card ends above the answers; answered,
-// above the verdict; code that can't all show scrolls in its own box down to the last line. Chrome on a phone measures vh with
+// above the verdict, which covers the answers it replaces even with its shortest headline (none of a check card's rows shows above it); code that can't all show scrolls in its own box down to the last line. Chrome on a phone measures vh with
 // its address bar hidden, but lays the page out under it while it shows: a page 533px high has vh of 589px. Playwright has no
 // address bar, so `bar` makes one: the page is that much taller (vh as the phone's) and starts that much lower (room as the phone's).
 for (const [width, height, bar] of [[412, 533, 0], [412, 533, 56], [412, 786, 56]]) test(`every code card fits a ${width}x${height} page${bar ? ' under an address bar' : ''}, asked and answered`, async ({ page }) => {
@@ -187,6 +187,7 @@ for (const [width, height, bar] of [[412, 533, 0], [412, 533, 56], [412, 786, 56
     const { mount } = await import('/src/code/exercise.js');
     const { optionsOf } = await import('/src/code/items.js');
     const { CODE_LINES } = await import('/src/cast/lines.js');
+    const { giveWay } = await import('/src/fit.js');
     const app = document.getElementById('app');
     const out = [];
     for (const item of items) {
@@ -194,8 +195,10 @@ for (const [width, height, bar] of [[412, 533, 0], [412, 533, 56], [412, 786, 56
         <div class="coach"><button class="who"></button><p class="bubble"></p></div><div class="stage"></div></main>
         <footer class="foot"><div class="verdict"><strong></strong><p></p></div><button class="next">Continue</button></footer>`;
       const bubble = app.querySelector('.bubble'), foot = app.querySelector('.foot');
-      const longest = Object.values(CODE_LINES).flat().filter((l) => typeof l === 'string').reduce((a, b) => (b.length > a.length ? b : a), '');
-      const done = (right, why = '') => { foot.className = `foot show ${right === null ? 'plain' : right ? 'right' : 'wrong'}`; foot.querySelector('strong').textContent = longest; foot.querySelector('p').textContent = why; };
+      const lines = Object.values(CODE_LINES).flat().filter((l) => typeof l === 'string');
+      const longest = lines.reduce((a, b) => (b.length > a.length ? b : a), '');
+      let said = '';
+      const done = (right, why = '') => { foot.className = `foot show ${right === null ? 'plain' : right ? 'right' : 'wrong'}`; foot.querySelector('strong').textContent = longest; foot.querySelector('p').textContent = said = why; giveWay(foot); };
       const stop = mount(app.querySelector('.stage'), item, { say(t) { bubble.textContent = t; }, done, coach: { lines: CODE_LINES } });
       const note = (why) => out.push(`${item.id}: ${why}`);
       const card = app.querySelector('.quiz .card');
@@ -216,6 +219,13 @@ for (const [width, height, bar] of [[412, 533, 0], [412, 533, 56], [412, 786, 56
           const last = code.getBoundingClientRect();
           if (code.scrollTop + code.clientHeight < code.scrollHeight - 1) note('the last line of the code cannot be scrolled to');
           if (last.bottom > Math.min(roof, innerHeight) + 1) note('the last line of the code is under the verdict');
+        }
+        if (choices?.children.length) {
+          foot.querySelector('strong').textContent = lines.reduce((a, b) => (b.length < a.length ? b : a));
+          foot.querySelector('p').textContent = said;
+          giveWay(foot);
+          const shows = foot.getBoundingClientRect().top - choices.getBoundingClientRect().top;
+          if (shows > 0.5) note(`answered with a short verdict, ${Math.round(shows)}px of the answers show above it`);
         }
       }
       stop?.();

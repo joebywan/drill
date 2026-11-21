@@ -111,6 +111,35 @@ for (const look of LOOKS) test.describe(look.name, () => {
     expect(bad).toEqual([]);
   });
 
+  // Home gives way for the path (roomForHere in app.js): Skip ahead leaves the bar, then the greeting goes, and the next
+  // lesson and its coach are above Continue with the page at its top. At 200% a node a row further down can't be brought
+  // up so: nothing gives way, and the page scrolls to it.
+  test('home: the next lesson and its coach are above Continue, the garden in sight', async ({ page }) => {
+    test.skip(look.font === 16, 'larger text only: at 16px home is as it was');
+    const met = Object.fromEntries(subjects.filter((s) => s.kind === 'learn').map((s) => [s.id, true]));
+    const learn = { count: 3, last: new Date().toISOString().slice(0, 10), forgiven: [] };
+    const open = async (done) => {
+      await page.goto('/');
+      await page.evaluate((s) => { localStorage.clear(); localStorage.setItem('wingbeat.course', 'chess'); localStorage.setItem('wingbeat.progress', s); },
+        JSON.stringify({ version: 2, habits: { learn }, log: [], done, cards: {}, start: {}, met, picked: [] }));
+      await page.reload();
+      return page.evaluate(() => {
+        const end = (s) => document.querySelector(s).getBoundingClientRect().bottom + scrollY;
+        return { here: Math.max(end('.node.here'), end('.guide')), bar: document.querySelector('.cta').getBoundingClientRect().top, garden: end('.garden-link') - scrollY };
+      });
+    };
+    const at = await open({});
+    expect(at.here, 'the next lesson and its coach end above Continue').toBeLessThanOrEqual(at.bar);
+    expect(at.garden, 'the garden in sight').toBeGreaterThan(0);
+    if (look.font < 32) return; // at 125% it fits as it is: Skip ahead stays in the bar
+    await expect(page.locator('.cta .offer')).toHaveCount(0);
+    await expect(page.locator('.home .offer')).toBeAttached(); // under the unit, a scroll away
+    await open({ 'chess:board-0': true });
+    await expect(page.locator('.said.welcome')).not.toHaveClass(/visually-hidden/);
+    await expect(page.locator('.streak-line')).toHaveText(/See your week/);
+    await expect(page.locator('.node.here')).toBeInViewport();
+  });
+
   // One item of each kind, asked and then answered (right or not): the lesson, its first item of that kind (after teach cards), the screen's parts.
   for (const [kind, course, lesson, item, parts] of [
     ['a Chess board (true or false)', 'chess', 'check-0', 'check-0-yes', CHESS],
@@ -153,6 +182,50 @@ for (const look of LOOKS) test.describe(look.name, () => {
     expect(await wrong(page, 'end screen')).toEqual([]);
   });
 
+  // The first visit's list, then a follow-on course waiting for its first (no path, so no node to make room for): the
+  // list fits, and the waiting line, Start JavaScript and both links of the bar's second row are in view, nothing thrown.
+  test('the first-visit list, and TypeScript waiting for JavaScript', async ({ page }) => {
+    test.skip(look.font === 16, 'larger text only');
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Next' }).click();
+    await page.locator('[data-want="learn"]').click();
+    await page.locator('[data-pick="typescript"]').click();
+    await expect(page.locator('.picked-too')).toHaveText(/JavaScript comes first/);
+    expect(await wrong(page, 'the first-visit list')).toEqual([]);
+    await page.getByRole('button', { name: 'Show my home' }).click();
+    await page.locator('[data-course="typescript"]').click();
+    const at = await page.evaluate(() => ({ line: document.querySelector('.follows-line').getBoundingClientRect().bottom, bar: document.querySelector('.cta').getBoundingClientRect().top }));
+    expect(at.line, 'the waiting line ends above the bar').toBeLessThanOrEqual(at.bar);
+    for (const b of ['[data-parent]', '[data-start-here]', '[data-place]']) await expect(page.locator(b)).toBeInViewport({ ratio: 1 });
+    expect(errors).toEqual([]);
+  });
+
+  // A practice's end screen gives way (finishRoutine in app.js): the pictures first, then the words get briefer, until
+  // the question it ends on is in view above Continue, the page at its top. At 125% it fits as it is: nothing goes.
+  for (const habit of ['Calm', 'Move']) test(`${habit}'s end screen: "How do you feel?" is in view above Continue`, async ({ page }) => {
+    test.skip(look.font === 16, 'larger text only');
+    const ago = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
+    const habits = { learn: { count: 3, last: ago(0), forgiven: [] }, calm: { count: 2, last: ago(1), forgiven: [] }, move: { count: 1, last: ago(1), forgiven: [] } };
+    await page.clock.install();
+    await page.goto('/');
+    await page.evaluate((s) => { localStorage.clear(); localStorage.setItem('wingbeat.progress', s); }, JSON.stringify({ version: 2, log: [], done: {}, cards: {}, start: {}, picked: [], habits, wings: ['learn', 'learn', 'calm'] }));
+    await page.reload();
+    await page.locator(`.path-tab[data-path="${habit.toLowerCase()}"]`).click();
+    await page.getByRole('button', { name: /^Continue · / }).click();
+    await page.getByRole('button', { name: 'Start' }).click();
+    for (let i = 0; i < 30 && !(await page.locator('.summary').count()); i++) {
+      await page.clock.runFor(30000);
+      const next = page.getByRole('button', { name: /^(Next|Done)/ });
+      if (await next.count()) await next.first().click();
+    }
+    await expect(page.locator('.wingbeat-moment')).toBeVisible(); // the day's first: the wingbeat and what arrived are there too
+    const at = await page.evaluate(() => ({ end: document.querySelector('#feel-q').getBoundingClientRect().bottom + scrollY, bar: document.querySelector('.cta').getBoundingClientRect().top }));
+    expect(at.end, 'the question ends above Continue').toBeLessThanOrEqual(at.bar);
+    if (look.font < 32) await expect(page.locator('.summary > .hero')).not.toHaveClass(/visually-hidden/);
+  });
+
   test('the garden, field guide, a species, wardrobe, Settings and + Habit fit', async ({ page }) => {
     await page.addInitScript((s) => { if (!localStorage.getItem('wingbeat.progress')) localStorage.setItem('wingbeat.progress', s); }, JSON.stringify(daysIn(30)));
     await page.goto('/');
@@ -180,6 +253,24 @@ test.describe('a minimum font size of 20px', () => {
     const bad = [];
     for (const path of ['learn', 'calm', 'move']) { await page.locator(`[data-path="${path}"]`).click(); bad.push(...await wrong(page, path)); }
     expect(bad).toEqual([]);
+  });
+});
+
+// A tablet on its side (1280x720) with text at 200%: the column of tabs outgrows the screen and scrolls in itself, and ⋯
+// at its end stays in reach without scrolling it, at the top of the page and at its end.
+test.describe('a tablet on its side, text at 200%', () => {
+  test.use({ viewport: { width: 1280, height: 720 }, font: 32 });
+  test('⋯ is in reach without scrolling the tabs', async ({ page }) => {
+    await page.addInitScript((s) => { if (!localStorage.getItem('wingbeat.progress')) { localStorage.setItem('wingbeat.progress', s); localStorage.setItem('wingbeat.habit', 'reflect'); } }, JSON.stringify(daysIn(30)));
+    await page.goto('/');
+    expect(await page.locator('.rail').evaluate((r) => r.scrollHeight > r.clientHeight), 'the tabs scroll in themselves').toBe(true);
+    for (const end of [false, true]) {
+      if (end) await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+      const hit = await page.locator('.tabs-row .menu').evaluate((m) => { const r = m.getBoundingClientRect(); return r.bottom <= innerHeight && m.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)); });
+      expect(hit, `⋯ answers a tap with the page at its ${end ? 'end' : 'top'}`).toBe(true);
+    }
+    await page.locator('.tabs-row .menu').click();
+    await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
   });
 });
 
