@@ -191,7 +191,10 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   The verdict gives way too (`giveWay(foot)`): it is at most half the screen (`.foot`, 50dvh); past that its headline is
   held to two lines and to the explanation's size, then its words `scrollBox()`. `verdictHeight()` measures it that way,
   under the coach's longest headline (`longestVerdict()`; tests pin that line with `WINGBEAT_LONGEST`). A program is
-  never boxed to under a line: if the verdict would leave less, the coach gives way first.
+  never boxed to under a line: if the verdict would leave less, the coach gives way first. A verdict is never shorter
+  than the fixed tray of answers it replaces, so no row shows above it. `giveRoom(over, steps)` is the one helper for a
+  whole screen giving way: each step is a give and its undo, taken in order while something is still covered, and all
+  undone if together they cannot be enough.
 - `src/quiz/` also has `line` (drag a marker on a number line, snapped to its ticks, answered on
   release) and takes a `picture` the course draws through the mount's `ctx.art`, plus `ctx.look`
   for a course's own styling.
@@ -501,6 +504,9 @@ after `npm ci` at the root. App id `com.joebywan.wingbeat`, locked.
   multiply by. A browser never sets it, so the web app is unchanged. A px `line-height` is already scaled by the text
   zoom, so don't multiply one. In a browser `TEXT` reads the browser's own
   font size too (probes at 6.25rem and .8rem), so a larger default or minimum font size sets `--text-scale`; zoom never does, since it enlarges px as well.
+  Above 1 a screen gives way for what it is for (decision 29, through `giveRoom()`): home for the next lesson's node and its coach
+  (`roomForHere()`: the bar's second row moves into the page, then the greeting goes, then "See your week"), a practice's end screen
+  for "How do you feel?" (`finishRoutine()`: pictures, then briefer words). Nothing changes at ordinary text.
 - **The widget** lands one row high (`minHeight` 40dp) and can be stretched taller; Lumi is sized to the space, at
   most 96dp. The launcher's list shows the layout itself (`previewLayout`), with the tagline. A count of 0 is sent as
   null, so there is no number before there is a streak.

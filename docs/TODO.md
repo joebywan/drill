@@ -204,6 +204,16 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
   to half the screen, its headline giving way and then its words scrolling in their own box (#183, decision 25), and every item is in view above it, in a browser
   and in the app at the phone's largest text. On a 206x393 page (Chrome at 200% zoom, past what the app promises) the board, a ten frame and a program are still partly
   covered once answered, and a build sits under its tray while asked: all of it can be scrolled clear.
+- **Home and the end screens at the largest text: done** (#197, decision 29). At text 2.0 the next lesson's node sat under Continue (570 to 698 against a bar
+  from 598) and a practice's "How do you feel?" was off the screen (877 against a bar at 733). Each screen now gives way for what it is for, only as far as
+  it takes: home moves the bar's second row into the page, then drops the greeting, then "See your week"; an end screen drops its pictures, then says less.
+  Nothing changes at ordinary text or at 1.3. The first-visit list and a follow-on course's waiting tab were looked at at 2.0 too. A verdict is now at least
+  as tall as the tray it replaces, so no row of answers shows above it. On the tablet, ⋯ keeps to the bottom of the rail where larger text had pushed it
+  out of reach.
+  **Left:** on a 360-wide phone at 2.0 home and the end screens cannot fit even after giving way, so the page scrolls as before. The first-visit list is 2px
+  too wide at 206px. **Being fixed** (two things today's other merges brought, found here): at text 2.0 an answered Chess board sits under the verdict where
+  the coach's words are long (a stars item with an introduction, a long puzzle), since the board no longer moves up when her words shorten (#192); and on a
+  short phone one Coding item's verdict covers its program (`loops-2-read`).
 - **The emulator is the phone.** Each "Not played", "Not covered" and "Not seen" line below is being played on the emulator, or replaced by what
   exactly it cannot show: Firefox for Android itself, a finger (off-centre taps, swipes, the keyboard, links out), device conditions (landscape,
   put down and picked up, screen off, a call, no network), Chess's games and wrong moves, and the Android app's leftovers. Results go in each block
@@ -260,7 +270,8 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
   Two bugs came out of it, both fixed: a long press on a tile or the board selected its glyph and raised Android's Copy / Share toolbar over the controls; a pull down
   at the top of a screen handed the page to Chrome's pull-to-refresh, which reloaded it and lost the lesson or screen.
   Run the jittered taps again after any change to a tray, tile, button or board size.
-  **Open (low, design):** "Make your own" leaves its Add habit button about 130px under the keyboard until the page is scrolled; the other forms keep theirs above it.
+  "Make your own" left its Add habit button about 130px under the keyboard until the page was scrolled: it now keeps to the bottom of the page over the
+  picks (#197), and on a short phone with the keyboard up (a 412x177 page) the field and the button are both in view (`KEYBOARD_SMALL=1080x1700`).
   **What the emulator cannot show:** a flick with a real finger's inertia (`adb input swipe` is one even stroke), and a hardware keyboard.
 - **Coding's drawing trail and live values, seen moving** (#186, `npm run phone -- moving`): bursts of screenshots during `draw-0`, `draw-3`, `var-0` and `var-3`
   show the trail growing behind Fennel, values changing only on the square they belong to, no jump and no flash. **What the emulator cannot show:** whether a
@@ -298,8 +309,10 @@ sessions run longer. A quarter to a third of every session is repeats (2 warm-up
   measuring where the page sits before `wm size` moved Chrome's toolbar. It now measures again after the resize, flags a target partly covered by
   another, and flags a tap that a different element took. Short-phone runs before this (`small-u8`, `small-u11`) were aimed low too. A wrong pick in
   find-the-bug was never a trap: tapping another block picks that one instead, and filling the wrong one counts as a miss with the explanation.
-  Still narrow: blocks 28 to 30px wide or tall that sit 0 to 6px from a neighbour get only half the gap, so a tight row on a short phone gives
-  a thumb less than 44px; that needs more room between rows, a layout change. The harness measures drawn sizes, so it still lists these.
+  Blocks 28 to 30px wide or tall that sat 0 to 6px from a neighbour got only half the gap. Now (#197) a gap is shared by need (a neighbour already 44px
+  across leaves the whole gap to the narrow one) and tight rows have a little more room sideways: at 412x786 and 375x812 every block reaches 44px each way.
+  **Left (low):** on a short phone a 36px go block reaches 40 to 42 across, and in `bug-3-count` and `bug-3-sign` a 28px value reaches 35 to 43 up and
+  down; wider rows would push those programs past the tray. The harness measures drawn sizes, so it still lists these.
 - **Still to play:** Firefox for Android, and the drawing trail and live values seen while they move (both in hand, see "Next up"). A finger's part is under "Test by playing".
 **Coding: bigger improvements**
 
@@ -342,9 +355,9 @@ none near 6 minutes or 20 items. The longest are `jsn-1` and `jsl-3` (~1:35 each
   the page kept whatever offset the last item left it at, which could also cut the ✕ off at the top. Every item now starts at the top of the page (`step()` in `src/app.js`).
 - **The coach's bubble grew when a quiz card had to give way: fixed.** Since the Chess fix (#162) the shared rule for a tall screen outranked the quiz's own,
   so a Maths, Japanese or code card that was too tall got a bubble 88px high where it should have been as short as her words. With it right, `tsi-2-4` shows all 8 lines on a 412x533 page.
-- **Answers a little taller than the verdict** (low): on a 412x533 page a check card's three rows of answers stand about 10px taller than a verdict with a one-line
-  heading, so the top edge of the first row shows above it once answered.
-- **A filled block is 32px high** (low): a placed word in the answer (`button.block`); the tray's chips are all 40 or more.
+- **Answers taller than the verdict: fixed** (#197). On a 412x533 page a check card's rows of answers stood taller than a short verdict, so 6 to 28px of them
+  (up to 67px on a predict card) showed above it once answered. A verdict is now at least as tall as the tray it replaces.
+- **A placed word was 32px high: fixed** (#197). It is 40px, like everything else tapped; the code fit specs pass at 360x582, 360x640, 375x812 and 412x533.
 - **Wording: fixed** (#194). "For example `cost({"name":"a"}) gives 0`" wrote the input as JSON (quoted keys) before the course had shown that form: a value
   in prose is now written the way the course writes code (`cost({ name: "a" }) gives 0`). "Five! Those lines run like clockwork." and "Five in a row." did
   not say five of what: every run-of-three and run-of-five line now says what is counted ("Five right in a row…"). A verdict headline cannot grow freely:
