@@ -164,7 +164,7 @@ try {
 
   // Ours among the emulators up. Listing asks each one its model, so one shutting down in another slot can fail it: ask again.
   let device = null, ctx = null;
-  if (bridge) device = { screenshot: async ({ path }) => writeFileSync(path, execFileSync(`${SDK}/platform-tools/adb`, ['-s', serial, 'exec-out', 'screencap', '-p'], { maxBuffer: 1 << 28 })) };
+  if (bridge) device = { screenshot: async ({ path }) => writeFileSync(path, execFileSync(`${SDK}/platform-tools/adb`, ['-s', serial, 'exec-out', 'screencap', '-p'], { maxBuffer: 1 << 28, timeout: 30_000 })) };
   for (let i = 0; !device; i++) {
     try { device = (await android.devices()).find((d) => d.serial() === serial); } catch (e) { if (i === 5) throw e; }
     if (!device) { if (i === 5) throw new Error(`${serial} is not among adb's devices`); await sleep(1000); }
@@ -203,7 +203,8 @@ try {
   };
   // The browser's own prompts sit over the page: Chrome's ("Chrome notifications make things easier", …) and Firefox's first run.
   // Chrome's own views have a resource-id, the page's (e.g. a × labelled "No thanks") none; Firefox's are those outside its GeckoView.
-  const PROMPTS = BROWSER === 'firefox' ? ['Not now', 'Not Now', 'No thanks', 'No, thanks', 'Skip', 'Maybe later', 'Dismiss', 'Got it'] : ['No thanks', 'No, thanks', 'Not now'];
+  // Firefox's include its site prompts, such as "Allow … to store data in persistent storage?", declined (test/phone/persist.js looks at that one).
+  const PROMPTS = BROWSER === 'firefox' ? ['Not now', 'Not Now', 'No thanks', 'No, thanks', 'Skip', 'Maybe later', 'Dismiss', 'Got it', 'Don’t allow', "Don't allow"] : ['No thanks', 'No, thanks', 'Not now'];
   const own = (node) => (BROWSER === 'firefox' ? !node.page : !!node.rid);
   /** Taps the browser's own control (never the page's) whose text or description `label` matches: true if there was one. */
   const tapUi = async (label, xml) => {
@@ -374,6 +375,7 @@ try {
       let hit = await page.evaluate(() => window.__hit).catch(() => undefined);
       if (hit === null) { // the page saw no finger at all (it went to the browser, or nowhere): a person taps again
         console.log(`  a tap aimed at ${loc} never reached the page: tapped again`);
+        await declinePrompts(); // a prompt of the browser's over the page takes the tap
         adb('shell', 'input', 'tap', String(x), String(y));
         await sleep(700);
         hit = await page.evaluate(() => window.__hit).catch(() => undefined);
@@ -435,7 +437,18 @@ try {
       // emulator the screen shows a heavy frame a few hundred ms after the page has drawn it.
       await Promise.race([page.evaluate(() => new Promise((r) => (window.__frame ?? requestAnimationFrame)(() => (window.__frame ?? requestAnimationFrame)(r)))).catch(() => {}), sleep(1000)]);
       await sleep(400);
-      return device.screenshot({ path: `${out}/${String(n++).padStart(2, '0')}-${label}.png` });
+      const path = `${out}/${String(n++).padStart(2, '0')}-${label}.png`;
+      await device.screenshot({ path });
+      if (bridge) { // a page whole in the DOM but drawn on screen as its background only: say so, with what the browser shows
+        const g = grab(), px = [];
+        for (let y = Math.round(origin.y) + 60; y < g.height - 300; y += 13) for (let x = 40; x < g.width - 40; x += 13) px.push(g.at(x, y).reduce((a, b) => a + b, 0));
+        const mean = px.reduce((a, b) => a + b, 0) / px.length;
+        const spread = Math.sqrt(px.reduce((a, b) => a + (b - mean) ** 2, 0) / px.length);
+        if (spread < 4 && await page.evaluate(() => document.getElementById('app')?.innerText.trim().length > 0).catch(() => false)) {
+          const own = uiNodes(await screenXml()).filter((x) => !x.page && (x.text || x.desc)).map((x) => x.text || x.desc).join(' | ');
+          console.log(`  BLANK: ${path.split('/').slice(-2).join('/')} shows the page's background only (the page has content); browser shows: ${own.slice(0, 200)}`);
+        }
+      }
     };
     const uids = () => adb('shell', 'cmd', 'package', 'list', 'packages', '-U', pkg).match(/uid:\d+/g)?.map((u) => u.slice(4)) || [];
     /** `pkg` is playing sound right now: its stream is started and AudioFlinger has an active track (both, as booleans). */
@@ -467,7 +480,7 @@ try {
   };
   /** The screen as raw pixels (`screencap` without -p): `at(x, y)` is a screen pixel's [r, g, b]. */
   const grab = () => {
-    const raw = execFileSync(`${SDK}/platform-tools/adb`, ['-s', serial, 'exec-out', 'screencap'], { maxBuffer: 1 << 28 });
+    const raw = execFileSync(`${SDK}/platform-tools/adb`, ['-s', serial, 'exec-out', 'screencap'], { maxBuffer: 1 << 28, timeout: 30_000 }) // a screen that stopped drawing can hold it forever;
     const [width, height] = [raw.readUInt32LE(0), raw.readUInt32LE(4)];
     const head = raw.length - width * height * 4; // the header's length differs between Android versions
     return { width, height, at: (x, y) => { const i = head + (y * width + x) * 4; return [raw[i], raw[i + 1], raw[i + 2]]; } };
