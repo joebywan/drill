@@ -758,6 +758,22 @@ export const REMINDER_WORDS = {
 };
 
 /**
+ * What Fennel says when a run misses, one line for every way it can end (`howEnded()` in src/coding/program.js), said
+ * while the learner's own program still shows; then `way`, once the program that works takes its place, the reason
+ * kept first in the verdict.
+ */
+export const RUN_ENDS = {
+  rock: 'I walked into the rock, so I stopped. The rest never ran.',
+  edge: 'That step left the grid, so I stopped. The rest never ran.',
+  spare: 'I got there with steps to spare.',
+  endless: 'That loop never ends, so I stopped it.',
+  short: 'The blocks ran out before the flower.',
+  flowers: 'The blocks ran out without the right flowers.',
+  shape: "The blocks ran out, and that isn't the shape.",
+  way: "Here's one way that works.",
+};
+
+/**
  * Fennel, the Coding coach: a fennec fox who loves a plan and follows one to the letter, ears
  * first. Earnest, a little proud of his ears, fond of digging. The same kinds as LINES, so the
  * lesson and its end screen read his lines in place of Rosa's (subject `coach.lines`/`headlines`).

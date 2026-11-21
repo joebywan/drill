@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { answer, blockCount, changed, fewestSteps, fill, fixBug, fromTree, holes, jsFace, mirrored, parse, parts, pieces, problem, punch, reached, reaches, run, runItem, solve, tileName, toJS, vary } from '../src/coding/program.js';
+import { answer, blockCount, changed, fewestSteps, fill, fixBug, fromTree, holes, howEnded, jsFace, mirrored, parse, parts, pieces, problem, punch, reached, reaches, run, runItem, solve, tileName, toJS, vary } from '../src/coding/program.js';
 import course from '../src/data/coding.json' with { type: 'json' };
+import { RUN_ENDS } from '../src/cast/lines.js';
 
 const level = ['S.#*', '....'];
 const units = course.units;
@@ -136,6 +137,42 @@ test('the bump rule is shown before it is asked, and the demos do what their car
     const i = items.find((x) => x.id === id);
     assert.equal(run(i.level, i.program).end, 'flower', id);
   }
+});
+
+test('a rock and the edge are on a card before any item a run could walk into one, and the rock is shown', () => {
+  const asked = (i) => i.level && i.type !== 'teach';
+  const firstAsked = allItems.findIndex(asked);
+  const firstRock = allItems.findIndex((i) => asked(i) && i.level.some((r) => r.includes('#')));
+  const edge = allItems.findIndex((i) => i.type === 'teach' && /\b(edge|off the grid)\b/.test(i.text));
+  assert.ok(edge >= 0 && edge < firstAsked, 'the edge is said before the first item');
+  // Shown, not only said: a card plays a step into a rock, and the steps after it never run.
+  const shown = allItems.findIndex((i) => i.type === 'teach' && i.program && howEnded(run(i.level, i.program), i.level) === 'rock');
+  assert.ok(shown >= 0 && shown < firstRock, `a card plays a bump into a rock before ${allItems[firstRock].id}`);
+  const card = allItems[shown];
+  assert.ok(run(card.level, card.program).path.length - 1 < card.program.length - 1, `${card.id}: steps are left over after the bump`);
+  assert.match(card.text, /rock/);
+});
+
+test('every way a missed run can end has its own words', () => {
+  const ends = {
+    rock: run(['S#*'], ['right']),
+    edge: run(['S.*'], ['up']),
+    spare: run(['S*.'], ['right', 'right'], undefined, true),
+    endless: run(['S.*'], [{ until: 'flower', do: [] }]),
+    short: run(['S..*'], ['right']),
+    flowers: run(['S*.*'], ['right']),
+    shape: run(['So.', '...'], ['down']),
+  };
+  const levels = { rock: ['S#*'], edge: ['S.*'], spare: ['S*.'], endless: ['S.*'], short: ['S..*'], flowers: ['S*.*'], shape: ['So.', '...'] };
+  for (const [want, result] of Object.entries(ends)) {
+    assert.ok(!reached(result), want);
+    assert.equal(howEnded(result, levels[want]), want);
+    assert.ok(RUN_ENDS[want], `words for ${want}`);
+  }
+  const said = Object.keys(ends).map((k) => RUN_ENDS[k]);
+  assert.equal(new Set(said).size, said.length, 'each its own');
+  // Every end run() gives that is not reached is one of those.
+  assert.deepEqual(new Set(Object.values(ends).map((r) => r.end)), new Set(['bump', 'spare', 'endless', 'short']));
 });
 
 test('every shipped Coding item passes problem(), and ids are unique', () => {
