@@ -130,7 +130,7 @@ function client() {
 }
 
 /**
- * A bridge and the server that carries it, on `port` (all interfaces, for `adb reverse`). `launch(url)` opens a
+ * A bridge and the server that carries it, on `port` (loopback, for `adb reverse`). `launch(url)` opens a
  * first page in the browser when there is none (adb's VIEW intent). Gives { page, close }.
  */
 export async function bridged(port, launch) {
@@ -189,7 +189,7 @@ export async function bridged(port, launch) {
     const status = await answer(req, res, '<script src="/__bridge/page.js"></script>').finally(() => { inflight--; last = Date.now(); });
     if (status >= 400) events.emit('response', { status: () => status, url: () => `http://localhost:${port}${req.url}` });
   });
-  await new Promise((r) => server.listen(port, '0.0.0.0', r));
+  await new Promise((r) => server.listen(port, '127.0.0.1', r)); // loopback only: it runs what it is sent, and adb reverse connects from this machine
 
   /** Sends one thing to run in the page: a function and its argument, or an expression. */
   // At most a minute: a page the browser has closed or frozen (back out of it, another app in front) never answers.

@@ -111,7 +111,8 @@ try {
       bridge = await bridged(port, (url) => launch(url));
       cleanup.push(() => bridge.close());
     } else {
-      const server = spawn(process.execPath, [`${ROOT}tools/serve.js`], { env: { ...process.env, HOST: '0.0.0.0', PORT: String(port) }, stdio: 'ignore' });
+      // Loopback only: adb reverse connects to it from this machine.
+      const server = spawn(process.execPath, [`${ROOT}tools/serve.js`], { env: { ...process.env, HOST: '127.0.0.1', PORT: String(port) }, stdio: 'ignore' });
       cleanup.push(() => server.kill());
     }
     served = port;
@@ -377,10 +378,13 @@ try {
       Object.assign(origin, { x: (sw >> 1) - cx * dpr, y: Math.round(sh * 0.6) - cy * dpr });
       // A browser's toolbar slides away as a finger scrolls the page, and the page grows by its height: at the top, it
       // moves the page up the screen too. Where the toolbar is, and the page's height with it showing, aim taps after.
-      const bar = uiNodes(await screenXml()).find((x) => !x.page && /localhost:\d+/.test(x.text + x.desc));
-      Object.assign(shown, { height: await page.evaluate(() => innerHeight), y: origin.y, top: BROWSER !== 'firefox' && !!bar && bar.at[1] < sh / 2 }); // Firefox's innerHeight grows by its toolbar on any page that scrolls, toolbar shown or not
+      // (A bridged browser only; Chrome through Playwright is aimed from this calibration alone.)
+      if (bridge) {
+        const bar = uiNodes(await screenXml()).find((x) => !x.page && /localhost:\d+/.test(x.text + x.desc));
+        // Firefox's innerHeight grows by its toolbar on any page that scrolls, toolbar shown or not: there the tap's own landing corrects the aim.
+        Object.assign(shown, { height: await page.evaluate(() => innerHeight), y: origin.y, top: BROWSER !== 'firefox' && !!bar && bar.at[1] < sh / 2 });
+      }
       console.log(`page origin on screen (${pkg}): ${Math.round(origin.x)},${Math.round(origin.y)} (dpr ${dpr}, screen ${sw}x${sh}); real frames for shot(): ${await page.evaluate(() => String(window.__frame).includes('[native code]'))}`);
-      if (bridge) console.log(`  page ${JSON.stringify(await page.evaluate(() => ({ inner: [innerWidth, innerHeight], visual: [visualViewport.width, visualViewport.height, visualViewport.offsetTop], screen: [mozInnerScreenX, mozInnerScreenY], vh: CSS.supports('height', '1dvh') })).catch((e) => e.message))}`);
     };
     await calibrate();
 
@@ -399,6 +403,16 @@ try {
     const touch = async (loc, jitter = Number(process.env.PLAY_JITTER) || 0) => {
       loc = loc.first();
       await loc.waitFor();
+      const off = (size) => (random() * 2 - 1) * jitter * size / 2;
+      // Chrome through Playwright and an app's WebView: aimed from the calibration alone. What follows is for a bridged
+      // browser, whose page moves under it (Firefox's toolbar and compositor) and whose prompts can take a tap.
+      if (!bridge) {
+        await loc.scrollIntoViewIfNeeded();
+        const b = await loc.boundingBox();
+        adb('shell', 'input', 'tap', String(Math.round(origin.x + (b.x + b.width / 2 + off(b.width)) * dpr)), String(Math.round(origin.y + (b.y + b.height / 2 + off(b.height)) * dpr)));
+        await sleep(700); await page.clock.runFor(700);
+        return;
+      }
       const was = await page.evaluate(() => scrollY);
       await loc.scrollIntoViewIfNeeded();
       // A page scrolled by script settles a moment later: Firefox draws it a frame or two after. Until it has stayed put
@@ -415,7 +429,7 @@ try {
       // Firefox for Android scrolled by script to the page's end slides back by its toolbar's height (the page can only
       // reach its end with the toolbar slid away, which a finger does): a target left under a fixed bar is brought out
       // as a person would, a finger drag up the page.
-      for (let i = 0; bridge && i < 3; i++) {
+      for (let i = 0; i < 3; i++) {
         const under = await loc.evaluate((el) => {
           const r = el.getBoundingClientRect();
           const t = document.elementFromPoint(r.x + r.width / 2, Math.min(r.y + r.height / 2, innerHeight - 1));
@@ -433,7 +447,6 @@ try {
       // keyboard, which moves nothing. Firefox's innerHeight and mozInnerScreenY change when its page doesn't move:
       // there the tap's own landing, below, corrects the aim.
       if (shown.top) origin.y = shown.y - (height > shown.height && height - shown.height <= 80 ? height - shown.height : 0) * dpr;
-      const off = (size) => (random() * 2 - 1) * jitter * size / 2;
       const [x, y] = [Math.round(origin.x + (b.x + b.width / 2 + off(b.width)) * dpr), Math.round(origin.y + (b.y + b.height / 2 + off(b.height)) * dpr)];
       await loc.evaluate((el) => {
         window.__hit = null;

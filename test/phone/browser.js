@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { withCheckpoint } from '../../src/repeat.js';
 import testing from '../../src/code/courses/testing.js';
 import { playCourse } from '../../tools/play.js';
-import { PARTS, TRAY, answerCode } from './code-all.js';
+import { answerCode } from './code-all.js';
 import { thirtyDays } from './lib/seed.js';
 
 const maths = JSON.parse(readFileSync(new URL('../../src/data/maths.json', import.meta.url))).units[0].lessons[0];
@@ -16,7 +16,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export default async (h) => {
   const { page, adb, touch, btn, shot, seed, run, check, screenAt, uiNodes, screenXml, pkg } = h;
   const sh = (cmd) => adb('shell', cmd);
-  const loads = () => page.loads?.() ?? null; // the bridge counts the pages that loaded: a reload nobody asked for shows
+  const loads = () => page.loads?.() ?? null; // the bridge counts the pages that loaded
+  // A reload nobody asked for, in any mode: a mark left on the page is gone.
+  const mark = () => page.evaluate(() => { window.__still = true; });
+  const reloaded = async () => !(await page.evaluate(() => window.__still === true).catch(() => false));
   const front = () => new RegExp(`mCurrentFocus=.*${pkg.replaceAll('.', '\\.')}`).test(sh('dumpsys window | grep mCurrentFocus'));
   /** The browser's address bar on screen (the node showing the page's host), or null when it has slid away. */
   const bar = async () => {
@@ -68,13 +71,13 @@ export default async (h) => {
 
   // 2. Pull to refresh: a finger pulled down from the top of the page, mid-lesson and on home.
   const pull = async (where) => {
-    const before = loads();
+    await mark();
     await page.evaluate(() => scrollTo(0, 0)); await sleep(500);
     await drag(540, screenAt(0, 40)[1], screenAt(0, 380)[1], 600); await sleep(2500);
-    const after = loads();
-    console.log(`  pull to refresh ${where}: ${after === null ? 'cannot count loads in this mode' : after > before ? 'the page RELOADED' : 'no reload'}`);
+    const again = await reloaded();
+    console.log(`  pull to refresh ${where}: ${again ? 'the page RELOADED' : 'no reload'}`);
     await shot(`pull-${where}`);
-    return after !== null && after > before;
+    return again;
   };
   const reloadedMid = await pull('mid-lesson');
   check('pull to refresh mid-lesson leaves the lesson where it was', !reloadedMid);
@@ -102,6 +105,8 @@ export default async (h) => {
   await touch(btn(/^Continue · /)); await step('lesson'); await shot('back-lesson');
   await back(); await shot('back-from-lesson');
   check('back from a lesson closes it', (await step('back from lesson'))?.screen.includes('home'));
+  if (h.browser === 'chrome') console.log('  back on home: not played in Chrome through Playwright, where leaving the page would leave the page it drives behind (bridged browsers play it)');
+  else {
   const pages = loads();
   await back(); await shot('back-from-home');
   const left = !front() || pages !== loads();
@@ -112,6 +117,7 @@ export default async (h) => {
   sh(`am start -a android.intent.action.VIEW -d ${page.url()} ${pkg}`);
   for (let i = 0; i < 30 && n !== null && loads() === n; i++) await sleep(1000);
   await sleep(2000);
+  }
 
   // 4. A box that scrolls in itself, on a short phone: a Test writing lesson with the longest code under test (unit 4, tl-2).
   let probed = false;
@@ -122,7 +128,8 @@ export default async (h) => {
     const b = await box.boundingBox();
     const [cx, mid] = screenAt(b.x + b.width / 2, b.y + b.height / 2), x = Math.round(cx), reach = (screenAt(0, b.height)[1] - screenAt(0, 0)[1]) * 0.35;
     const state = () => page.evaluate(() => ({ box: document.querySelector('.scrolls')?.scrollTop, page: scrollY }));
-    const s0 = await state(), l0 = loads();
+    const s0 = await state();
+    await mark();
     await shot('box-before');
     await drag(x, mid + reach, mid - reach); const s1 = await state(); await shot('box-swiped');
     for (let i = 0; i < 3; i++) await drag(x, mid + reach, mid - reach);
@@ -132,10 +139,13 @@ export default async (h) => {
     console.log(`  scroll box ${await box.evaluate((e) => e.className)}: ${JSON.stringify([s0, s1, s2, s3])}`);
     check('a finger scrolls the box', s1.box > s0.box);
     check('swiping past the box\'s end leaves the page behind it put', s2.page === s1.page, `${s1.page} -> ${s2.page}`);
-    check('pulling past the box\'s top neither moves nor reloads the page', s3.page === s2.page && loads() === l0, `${s2.page} -> ${s3.page}, loads ${l0} -> ${loads()}`);
+    const again = await reloaded();
+    check('pulling past the box\'s top neither moves nor reloads the page', s3.page === s2.page && !again, `${s2.page} -> ${s3.page}${again ? ', reloaded' : ''}`);
   };
   const course = { id: 'testing', units: testing.units.map(withCheckpoint) };
-  await playCourse(h, { course, unit: 4, only: ['tl-2'], small: '1080x1700', parts: PARTS, tray: TRAY,
+  // Here only to reach a box that scrolls: only the topic line is checked as a part, so this lesson's layout is left to code-all (CODE_SMALL=1080x1700),
+  // which reports it (on this short phone the verdict covers .code-program after an answer, in Chrome and Firefox alike).
+  await playCourse(h, { course, unit: 4, only: ['tl-2'], small: '1080x1700', parts: ['.topic'], tray: [],
     answer: async (hh, it) => { await probe(); return answerCode(hh, it); } });
   if (!probed) console.log('  no box scrolled in itself in that lesson');
   await run(500);

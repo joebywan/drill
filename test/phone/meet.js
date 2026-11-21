@@ -1,7 +1,8 @@
 // "Meet Fennel", the JavaScript course's first screen, opened again and again by the routes a person takes, looking
 // each time for its big green button drawn without its words (seen in Firefox for Android, never reproduced): the
 // button's pixels on screen against the label the page says it has. Made for `--browser firefox`; runs in Chrome too.
-//   MEET_REPS=2 ...          each route twice as often (default 1: 102 visits, 3 looks each)
+//   (default)                a light pass, each route a tenth as often: 12 visits, 3 looks each
+//   MEET_REPS=1 ...          the full hunt: 102 visits (MEET_REPS=2, twice that)
 //   MEET_SMALL=1080x1700 ... on a short phone; PHONE_FONT=2.0 for large text
 // Every look goes to test-results/phone/meet/looks.json; a blank one keeps its picture, the page's state, the
 // computed styles of the button and its ancestors and the animations running, beside it.
@@ -15,7 +16,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default async (h) => {
   const { page, adb, touch, btn, shot, seed, run, grab, check, screenAt, calibrate, pkg } = h;
-  const times = (n) => Math.ceil(n * (Number(process.env.MEET_REPS) || 1)); // MEET_REPS=0.1 for a quick try
+  const times = (n) => Math.ceil(n * (Number(process.env.MEET_REPS) || 0.1)); // a light pass by default; MEET_REPS=1 for the full hunt
   const small = process.env.MEET_SMALL;
   if (small) { adb('shell', 'wm', 'size', small); await run(1500); await calibrate(); }
   const looks = [];
