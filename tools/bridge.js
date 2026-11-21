@@ -242,7 +242,9 @@ export async function bridged(port, launch) {
     #with(step) { return new Locator([...this.steps, step]); }
     toString() { return JSON.stringify(this.steps); }
     // Playwright's own additions to CSS that scenarios use: `a >> b` (b inside a), `nth=N` and a trailing `:visible`.
-    locator(css) {
+    locator(css, { hasText, ...rest } = {}) {
+      if (Object.keys(rest).length) throw new Error(`locator options ${Object.keys(rest).join(', ')}: not in the bridge`);
+      if (hasText !== undefined) return this.locator(css).filter({ hasText });
       return css.split('>>').map((p) => p.trim()).reduce((l, p) => {
         const nth = p.match(/^nth=(-?\d+)$/);
         if (nth) return l.#with({ nth: Number(nth[1]) });
@@ -308,7 +310,7 @@ export async function bridged(port, launch) {
       return navigate(() => evaluate((u) => { location.href = u; }, to)).catch(async (e) => { if (!/no page loaded/.test(e.message)) throw e; await launch(to); return settle(); });
     },
     reload: () => navigate(() => evaluate(() => location.reload())),
-    locator: (css) => root.locator(css),
+    locator: (css, o) => root.locator(css, o),
     getByRole: (role, o) => root.getByRole(role, o),
     getByText: (text, o) => root.getByText(text, o),
     route: async () => { throw new Error('page.route: not in the bridge (Firefox) mode'); },
