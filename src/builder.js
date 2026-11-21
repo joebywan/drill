@@ -84,30 +84,30 @@ const THUMB = 44; // px a tap target should span, each way
 
 /**
  * How far the tappable box `boxes[i]` ({ top, bottom, left, right, fixed? }) may reach past its edges, invisibly,
- * toward a thumb's 44px each way: into empty space, but only halfway to any other tappable box in its way (all the
- * way to a `fixed` one, which reaches nowhere itself), so none covers another. Returns { up, down, left, right } in px.
+ * toward a thumb's 44px each way: into empty space, but only into its share of the gap to any other tappable box in its
+ * way, so none covers another. The share is half the gap, or more where the other needs less of it to reach 44px itself
+ * (all of it to a `fixed` one, which reaches nowhere). Returns { up, down, left, right } in px.
  */
 export function reachOf(boxes, i) {
   const a = boxes[i];
-  const v = Math.max(0, (THUMB - (a.bottom - a.top)) / 2), h = Math.max(0, (THUMB - (a.right - a.left)) / 2);
-  const out = { up: v, down: v, left: h, right: h };
+  const want = (b, across) => Math.max(0, (THUMB - (across ? b.right - b.left : b.bottom - b.top)) / 2);
+  const share = (gap, b, across) => (b.fixed ? gap : gap - Math.min(want(b, across), gap / 2));
+  const out = { up: want(a, false), down: want(a, false), left: want(a, true), right: want(a, true) };
   const others = boxes.filter((_, j) => j !== i);
   for (const b of others) {
-    const share = b.fixed ? 1 : 2;
     if (b.left < a.right && b.right > a.left) { // above or below
-      if (b.bottom <= a.top) out.up = Math.min(out.up, (a.top - b.bottom) / share);
-      if (b.top >= a.bottom) out.down = Math.min(out.down, (b.top - a.bottom) / share);
+      if (b.bottom <= a.top) out.up = Math.min(out.up, share(a.top - b.bottom, b, false));
+      if (b.top >= a.bottom) out.down = Math.min(out.down, share(b.top - a.bottom, b, false));
     } else if (b.top < a.bottom && b.bottom > a.top) { // beside
-      if (b.right <= a.left) out.left = Math.min(out.left, (a.left - b.right) / share);
-      if (b.left >= a.right) out.right = Math.min(out.right, (b.left - a.right) / share);
+      if (b.right <= a.left) out.left = Math.min(out.left, share(a.left - b.right, b, true));
+      if (b.left >= a.right) out.right = Math.min(out.right, share(b.left - a.right, b, true));
     }
   }
   // Something off at a corner: the reach gives way sideways, where a thumb has more room than up and down.
   for (const b of others) {
-    const share = b.fixed ? 1 : 2;
     if (b.left < a.right + out.right && b.right > a.left - out.left && b.top < a.bottom + out.down && b.bottom > a.top - out.up) {
-      if (b.right <= a.left) out.left = Math.min(out.left, (a.left - b.right) / share);
-      if (b.left >= a.right) out.right = Math.min(out.right, (b.left - a.right) / share);
+      if (b.right <= a.left) out.left = Math.min(out.left, share(a.left - b.right, b, true));
+      if (b.left >= a.right) out.right = Math.min(out.right, share(b.left - a.right, b, true));
     }
   }
   return out;

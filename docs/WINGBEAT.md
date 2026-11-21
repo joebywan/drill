@@ -139,13 +139,26 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
 27. **Home shows what was picked.** In the first-visit list every course and habit has one plain line
     saying what it is, and what the learner picks is all that home shows. The rest is one tap away,
     under + Habit and + Course. Skipping shows everything.
+28. **Made for an upright phone.** The installed app stays upright on a phone and turns on a tablet. In
+    a browser, a phone on its side shows one line over a lesson or routine asking for it upright, and
+    everything is where it was when it is turned back. Home, the garden and the reading screens work
+    on their side as they are. A timed routine keeps the screen on while it plays, and its sound rests
+    with it.
+29. **At larger text a screen gives way for what it is for.** Home is for the next lesson and its
+    coach: the bar's second row moves into the page, then the greeting goes, then "See your week". A
+    practice's end screen is for "How do you feel?": the pictures go first, then the words get
+    briefer. Only as much as it takes, nothing at ordinary text, and nothing at all where it could
+    not be enough.
 
 Decisions 22 to 24 came out of the pass to take things off home, which the owner asked for; what came
 off was chosen in review, and each can go back on its own. Decision 25 came out of looking at the app
 with large text in a browser, which the owner asked for; the rule is the review's. Decisions 26 and 27
 came out of the blind beginner playthrough (a beginner opened TypeScript on day one, and ticked two
 habits and got six); the order, the way past it and hiding what was not picked are the review's
-choices. Kept on purpose: the Games row and the course
+choices. Decision 28 came out of playing the phone on its side, where lessons could not be finished;
+laying every lesson out a second time was the other choice, and it was not taken. Decision 29 came out
+of the app at the phone's largest text, where the next lesson and the closing question were off the
+screen; what gives way, and in what order, is the review's choice. Kept on purpose: the Games row and the course
 chips, because one tap to play or to switch course is worth more than their row.
 
 ### Rules for this work
@@ -254,6 +267,14 @@ chips, because one tap to play or to switch course is worth more than their row.
   speaks for its own course, an end screen claims only what the session did, and a butterfly is called one.
 - [x] **E16. Course order and the first visit** (#190, decisions 26 and 27): TypeScript and Test writing wait for
   JavaScript, the first-visit list says what each thing is, and home shows what was picked.
+- [x] **E17. Lesson feedback a beginner tripped on** (#192): a rock is taught before it is met and a missed run is shown and
+  said before the way that works; a chess board never moves from asked to Continue; a missed build shows what was put.
+- [x] **E18. Small words** (#194): a coach greets you the first time you open their course, Calm's card states your own
+  timings, an example reads the way the course writes code, and a run of five says five of what.
+- [x] **E19. The phone in a hand** (#196, decision 28): the screen stays on through a routine and its sound rests with it,
+  Mate says when it has no connection, a phone on its side is asked upright, and a voice is offered only where one can be had.
+- [x] **E20. The largest text and small targets** (#197, decision 29): home and the end screens give way at the largest
+  text, a verdict covers the tray it replaces, a placed word is 40px, and tight Coding blocks reach a thumb's 44px.
 
 **Waiting on the owner** (found by playing, not changed)
 

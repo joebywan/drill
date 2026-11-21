@@ -8,7 +8,7 @@ import { HINT, LEVELS, thinking } from './engine.js';
 import { words } from './items.js';
 import { uci } from './puzzle.js';
 import { rosa } from '../cast/rosa.js';
-import { giveWay } from '../fit.js';
+import { SIDEWAYS, giveWay } from '../fit.js';
 import { GAME_WORDS } from '../cast/lines.js';
 import { cue, play } from '../feel.js';
 import { today } from '../progress.js';
@@ -86,6 +86,7 @@ function ask(fn, ...args) {
 
 const W = GAME_WORDS;
 let positions;
+let tries = 0;
 
 /**
  * Mate: three tiers, today's board first and then fresh ones. The opponent's reply comes from the
@@ -186,6 +187,7 @@ function mountMate(el, item, ctx) {
   }
 
   function begin(n, fresh = false) {
+    if (!positions) return; // still loading, or offline
     round++;
     tier = n;
     store('wingbeat.mate.tier', n);
@@ -237,8 +239,18 @@ function mountMate(el, item, ctx) {
   el.querySelector('[data-fresh]').addEventListener('click', () => begin(tier, true));
   for (const t of tabs.querySelectorAll('[data-tier]')) t.addEventListener('click', () => begin(Number(t.dataset.tier)));
 
+  // The positions come over the network the first time Mate opens. With no connection Rosa says so and the banner's
+  // button tries again (a fresh URL each time, so a failed load isn't kept and replayed).
   (async () => {
-    positions ??= (await import('../data/mate.json', { with: { type: 'json' } })).default;
+    try {
+      positions ??= (await import(`../data/mate.json${tries ? `?try=${tries}` : ''}`, { with: { type: 'json' } })).default;
+    } catch {
+      tries++;
+      if (gone) return;
+      tabs.remove(); // no tiers, hint or undo that lead nowhere: Rosa's line, and the banner's Try again
+      say(W.mate.offline, 'think');
+      return banner(fit, '', W.mate.offlineHead, W.mate.retryText, W.mate.retry);
+    }
     if (!gone) begin(tier, again);
   })();
   return () => { gone = true; round++; fit(); b?.destroy(); };
@@ -246,7 +258,7 @@ function mountMate(el, item, ctx) {
 
 const clockText = (ms) => { const s = Math.ceil(Math.max(0, ms) / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 
-/** Scramble (capture.js). The clock starts on the first move and rests while the page is hidden. */
+/** Scramble (capture.js). The clock starts on the first move and rests while the page is hidden or the phone on its side. */
 function mountCapture(el, item, ctx) {
   const best = stored('wingbeat.capture.best', 0);
   const hud = inBar(`<span class="hud"><span class="hud-clock" role="timer">${clockText(RUN_MS)}</span><b class="hud-score">0</b><span class="hud-best">${W.capture.best(best)}</span></span>`);
@@ -263,7 +275,7 @@ function mountCapture(el, item, ctx) {
 
   const tick = () => {
     const now = Date.now();
-    if (!document.hidden) left -= now - last;
+    if (!document.hidden && !SIDEWAYS?.matches) left -= now - last; // nor while the phone is on its side, the board out of sight
     last = now;
     clockEl.textContent = clockText(left);
     if (left <= 0) finish();

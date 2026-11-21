@@ -12,8 +12,8 @@ import { worn } from './cast/skins.js';
 import { BOX, butterfly, butterflyToday } from './cast/butterfly.js';
 import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, comeBack, dropEchoes, echoes, fresh, warmUps } from './repeat.js';
 import { GOES, easier, flying, helpFor, misses, noteAnswer, struggling, warmedLast } from './adapt.js';
-import { giveWay, longestVerdict } from './fit.js';
-import { CALM_SOUNDS, DARES_LABEL, SOUND_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, LOG_WORDS, CHOOSE_WORDS, SKIN_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, LINES, line, paceLabel, rightAnswer, say, verdicts, VOICES } from './cast/lines.js';
+import { SIDEWAYS, giveRoom, giveWay, longestVerdict } from './fit.js';
+import { CALM_SOUNDS, DARES_LABEL, SOUND_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, UPRIGHT, LOG_WORDS, CHOOSE_WORDS, SKIN_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, LINES, line, paceLabel, rightAnswer, say, verdicts, VOICES } from './cast/lines.js';
 import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, soundOn, voice } from './feel.js';
 import { southern } from './garden/season.js';
 import { lessonOf } from './garden/events.js';
@@ -338,8 +338,12 @@ function home(arrived = null, newly = []) {
   // The current lesson is brought into view, centred, only when it is out of view (the fixed
   // footer covers the bottom 160px), so the garden at the top stays in sight when there's room.
   const showHere = () => {
+    // With larger text the bar is measured: it grows with the text, and shrinks when its second row gives way.
+    const target = app.querySelector('.here') ?? app.querySelector('.follows-line');
+    if (TEXT > 1 && target) roomForHere(target);
     const r = app.querySelector('.here')?.getBoundingClientRect();
-    if (r && (r.top < 0 || r.bottom > innerHeight - 160)) app.querySelector('.here').scrollIntoView({ block: 'center' });
+    const bar = TEXT > 1 ? app.querySelector('.cta').getBoundingClientRect().top : innerHeight - 160;
+    if (r && (r.top < 0 || r.bottom > bar)) app.querySelector('.here').scrollIntoView({ block: 'center' });
   };
   const guide = app.querySelector('.guide');
   if (guide) {
@@ -452,6 +456,31 @@ function home(arrived = null, newly = []) {
     focusOn('.cta .next');
   });
 }
+
+/**
+ * With larger text, home gives way so the next lesson's node and its coach are in view above Continue with the page at
+ * its top (decisions 22 to 24: the path is the point of the screen). In turn: the bar's second row ("Skip ahead",
+ * "Something else") leaves the bar for the page, under the unit being walked; the coach's greeting goes (still read by
+ * a screen reader); the streak line keeps its count and lets "See your week" go. Only as much as that takes, and none
+ * of it if it can't be enough (a node further down the path is scrolled to instead). A follow-on course waiting for
+ * its first (no path yet) does the same for its line: its bar's second row comes up under it.
+ */
+function roomForHere(here) {
+  const cta = app.querySelector('.cta');
+  const row = [...cta.querySelectorAll(':scope > .links, :scope > .offer')].filter((e) => e.children.length);
+  const moved = Object.assign(document.createElement('div'), { className: 'from-bar' });
+  const line = app.querySelector('.streak-line'), words = line?.textContent ?? '';
+  giveRoom(() => Math.max(endOf(here), endOf(app.querySelector('.guide'))) - cta.getBoundingClientRect().top, [
+    [() => { (here.closest('.street') ?? here).after(moved); moved.append(...row); }, () => { cta.append(...row); moved.remove(); }],
+    hidden(app.querySelector('.pane > .said.welcome:not(.follows-line)')),
+    [() => { if (words.includes(' · ')) { line.textContent = words.split(' · ')[0]; line.setAttribute('aria-label', words); } },
+      () => { if (line) { line.textContent = words; line.removeAttribute('aria-label'); } }],
+  ]);
+}
+/** A step for giveRoom(): `el` (if any) goes from sight, still read by a screen reader. */
+const hidden = (el) => [() => el?.classList.add('visually-hidden'), () => el?.classList.remove('visually-hidden')];
+/** Where `el` ends on the page (as if scrolled to the top); 0 if it isn't drawn. */
+const endOf = (el) => (el?.getBoundingClientRect().height ? el.getBoundingClientRect().bottom + scrollY : 0);
 
 /** Counts today for a guided habit done away from the app: the streak, the day and the wing as a session, nothing unlocked. */
 function awayToday(habit) {
@@ -1059,6 +1088,17 @@ function walkTo(guide, fromNode, toNode) {
 }
 
 /**
+ * A phone on its side (fit.js SIDEWAYS): a lesson or routine asks to be turned upright (styles.css .upright). The line
+ * is written as it turns and emptied as it comes back, so a screen reader hears it once per turn.
+ */
+function sideways() {
+  const on = !!SIDEWAYS?.matches;
+  document.documentElement.toggleAttribute('data-sideways', on);
+  const line = app.querySelector('.upright');
+  if (line) line.textContent = on ? UPRIGHT : '';
+}
+
+/**
  * Plays a session: a lesson (lessonId set) or a review (null). An item missed the first time
  * comes back once at the end; only the first try counts toward review scheduling.
  */
@@ -1076,6 +1116,7 @@ function run(lessonId, queue, title, extra = null) {
   let cleanup = () => {};
   const started = Date.now();
   app.innerHTML = `
+    <p class="upright" role="status"></p>
     <header class="bar">
       <button class="close" aria-label="${practice ? 'Stop' : 'Quit lesson'}">✕</button>
       <div ${practice ? 'hidden ' : ''}class="meter" data-heat="0" role="progressbar" aria-label="Lesson progress" aria-valuemin="0"><div class="fill"><i class="shine"></i></div><span class="flare" aria-hidden="true"></span></div>
@@ -1092,6 +1133,7 @@ function run(lessonId, queue, title, extra = null) {
       <div class="verdict" id="verdict"><strong></strong><p></p></div>
       <button class="next">Continue</button>
     </footer>`;
+  sideways();
   const $ = (sel) => app.querySelector(sel);
   const [topic, bubble, stage, foot, next] = ['.topic', '.bubble', '.stage', '.foot', '.next'].map($);
   const sessionCoach = coach($('.who'), drawOf(who));
@@ -1236,7 +1278,7 @@ function run(lessonId, queue, title, extra = null) {
       <main class="summary practice-end${subject.night ? ' night' : ''}">
         <div class="hero"></div>
         <p class="kicker">${esc(technique)}</p>
-        <h1>${esc(line('done', Math.random(), who.lines))}</h1>
+        <h1>${esc(window.WINGBEAT_LONGEST ? longestVerdict(who.lines, ['done']) : line('done', Math.random(), who.lines))}</h1>
         <p class="said">${esc([...did, `${mins} min`].join(' · '))}</p>
         <div class="chips">
           ${showsStreak(h.id, pref('quiet-streaks', false)) ? chip(h.id, `${h.name.toUpperCase()} STREAK`, `${h.icon} ${n}`) : ''}
@@ -1253,6 +1295,24 @@ function run(lessonId, queue, title, extra = null) {
       <footer class="cta"><button class="next">Continue</button></footer>`;
     const endCoach = coach(app.querySelector('.hero'), drawOf(who));
     endCoach.set('done');
+    // With larger text the question it ends on is in view above Continue (decision 19: what matters first, and briefly).
+    // In turn: the pictures give way, the coach first, then Lumi and your butterfly beside the wingbeat; the headline and the wingbeat's line
+    // are no bigger than the rest; what arrived is one line and "N more"; then the line of what was done, the routine's name,
+    // the streak chip.
+    if (TEXT > 1) {
+      const main = app.querySelector('.summary'), list = app.querySelector('.arrivals');
+      const brief = list && Object.assign(document.createElement('div'), { innerHTML: arrivals(newly, 1) }).firstElementChild;
+      giveRoom(() => endOf(app.querySelector('#feel-q')) - app.querySelector('.cta').getBoundingClientRect().top, [
+        hidden(main.querySelector(':scope > .hero')),
+        hidden(main.querySelector('.wing-lumi')),
+        hidden(main.querySelector('.wingbeat-moment > svg')),
+        [() => main.classList.add('brief'), () => main.classList.remove('brief')],
+        [() => list?.replaceWith(brief), () => brief?.replaceWith(list)],
+        hidden(main.querySelector(':scope > .said')),
+        hidden(main.querySelector(':scope > .kicker')),
+        hidden(main.querySelector(':scope > .chips')),
+      ]);
+    }
     if (beats) beat(app.querySelector('.wingbeat-moment'), newPanel, () => app.querySelector('.wing-lumi'), 600);
     arrive(newly, 400);
     focusOn('h1');
@@ -1676,6 +1736,8 @@ const bars = () => tellBars(getComputedStyle(document.body).backgroundColor);
 new MutationObserver(bars).observe(app, { childList: true });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', bars);
 bars();
+SIDEWAYS?.addEventListener('change', sideways);
+sideways();
 const start = () => { if (showsIntro(progress)) intro(); else home(); };
 if (!openPairLink({ app, progress: () => progress, adopt, back: start, focusOn })) start();
 syncSoon(0);

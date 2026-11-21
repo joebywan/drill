@@ -50,7 +50,8 @@ and the Wingbeat screens: butterfly, yours, home-states, stages, field-guide, sk
 looks (the dark theme), home-days (home from day 0 to day 60, with where the path starts; `HOME_SMALL=1080x1700` for
 a short phone), chrysalis (a learner at each stage of a raised butterfly, light and dark), words (what the coaches say after
 a listening item, one miss, a first egg and a lesson in another course), follow-on (a first visit's picks, and
-TypeScript's tab before and after JavaScript) and zoom (Chrome's Default zoom at
+TypeScript's tab before and after JavaScript), feedback (what a beginner meets after a miss: the rock, a still board, a
+build shown back; `FEEDBACK_SMALL=1080x1700`) and zoom (Chrome's Default zoom at
 150% and 200%, set by real taps on its Accessibility screen and put back). Large text has three routes: the app's WebView
 follows the phone's font size (`app`); Chrome for Android has only Default zoom, a whole-page zoom (`zoom`); a larger default
 or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `test/phone/lib/fits.js` holds what those share
@@ -75,10 +76,13 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   and by name only `chess-wrong-all` (each lesson answered wrongly first) and `chess-rosa-all` (Play Rosa at every level;
   `ROSA_SMALL=1080x1700` for a short phone).
 - The phone as it is held has its own: `away` and `interrupted` (a lesson put down, locked, called), `moving` (bursts of
-  screenshots while Fennel draws), and by name `landscape-all`, `landscape-app-all` and `offline-all` (`--url` the live site).
+  screenshots while Fennel draws), and by name `landscape-all` (on its side a lesson shows the upright line; upright again it
+  is where it was), `landscape-app-all` (a phone's app stays upright, a tablet's turns) and `offline-all` (this checkout,
+  refusing requests while "offline"; `--url` the live site). `KEYBOARD_SMALL=1080x1700` plays `touch-keyboard` on a short phone.
   **A page the runner is attached to never goes to the background** (Chrome is started to keep drawing, and the harness holds
   the screen on), so anything about being away from a routine is played by `away-bare` and `away-bare-app`, which let go of
-  the page first. `test/phone/lib/device.js` has `turn`, `putDown`, `screenOff`, `awake`.
+  the page first. `test/phone/lib/device.js` has `turn` (the one way to turn the screen; `rotate` runs only with `ROTATE` set),
+  `putDown`, `screenOff`, `awake`. Never run the Playwright e2e during a phone run: it empties `test-results/`, the phone's pictures with it.
 - `hands` plays by sight: with `HANDS_DIR` set it saves the screen and waits for one command at a time in a file (tap, swipe,
   type, back), each done with a real touch. It is how a blind playthrough is done (an agent that has not read the answers).
 
@@ -139,6 +143,10 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   leaves the board clear. Never choose by counting characters: the font differs from machine to machine. Every chess word
   is taught on a card before it is used (`src/data/chess-terms.json`, held by `test/items.test.js`); a teach card's
   `topic` heads it in place of its unit's title.
+- **The board never moves from asked to Continue.** `fitBoard` keeps the coach's bubble at the height of the tallest line the
+  item can say (`sayings()`: every line Rosa says mid-item is one constant used by the mount and by `sayings()`), and decides
+  `tall` only while asked. `test/e2e/board-still.spec.js` holds the board's top through every move, right and wrong, at three
+  sizes. A stars item's `intro` stays with its prompt until the first move; the board is `aria-busy` while a demo plays.
 - **Promotion:** `withPromotion()` in exercise.js is the one picker (cm-chessboard's dialog, on every `board()`), used by puzzles, move items, stars, Mate and Play Rosa; Scramble has no pawns of yours. `tryMove()` returns `'piece'` for the right square with a piece the line doesn't need, explained and free; any mate still counts.
 - **Stars** teach pieces by play: move your piece onto every gold star within a move budget; the
   other side never moves, and kings are optional (chess.js `skipValidation`). A piece's first
@@ -158,14 +166,15 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   session bar with `inBar()`, where a lesson's meter is. A board being played keeps 40px squares; at a game's end its buttons go and the board sits above the banner.
   **Mate** (`mate.js`, `prover.js`, `prover-worker.js`): Daybook's game. `prover.js` is a port of its mate search on its own small
   board, because chess.js is far too slow to prove a mate in 4; it has no imports so it can run in a Worker (import maps don't reach workers).
-  `src/data/mate.json` comes from `node tools/mate-positions.js`, Lichess CC0 (`docs/chess-positions/NOTICE.md`). Lazy-loaded. **Scramble** (`capture.js`): our own
+  `src/data/mate.json` comes from `node tools/mate-positions.js`, Lichess CC0 (`docs/chess-positions/NOTICE.md`). Lazy-loaded: with no connection Rosa says so and a banner tries again. **Scramble** (`capture.js`): our own
   capture game; pure rules on chess.js, the best on the device in `wingbeat.capture.best`. **Play Rosa** (`engine.js`): alpha-beta on chess.js as a
   generator, run in timer slices so the page stays live; `LEVELS` is its four levels. Words in `GAME_WORDS`, linted.
 - `src/quiz/` — course-free tap-and-match items any course can use: `teach` (a big glyph or word),
   `pick` (one tap; `listen` plays the sound instead of showing it when there is a voice), `pairs`
   (match two columns), `build` (tap tiles in order). `items.js` is pure (`problem()`), `exercise.js`
   mounts them; `ctx.lang` marks text for the system font and picks the voice (`speak()` in feel.js:
-  `speechSynthesis`, and with no voice or Sound muted the reading is shown instead).
+  `speechSynthesis`, and with no voice or Sound muted the reading is shown instead). A missed build shows what was
+  put under the right answer (`.yours`, "You put …", up to the wrong tile); its line is kept from the start, so nothing moves.
 - Japanese: `src/data/japanese.json` (all of hiragana, the sounds that change and small kana, everyday words,
   greetings, and a first sentence with は: これは ねこです), coached by Kaede, a red panda (`src/cast/kaede.js`,
   rig-posed). Sentences are `build` items with word tiles. `test/quiz.test.js` checks every answer against its own kana
@@ -182,7 +191,10 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   The verdict gives way too (`giveWay(foot)`): it is at most half the screen (`.foot`, 50dvh); past that its headline is
   held to two lines and to the explanation's size, then its words `scrollBox()`. `verdictHeight()` measures it that way,
   under the coach's longest headline (`longestVerdict()`; tests pin that line with `WINGBEAT_LONGEST`). A program is
-  never boxed to under a line: if the verdict would leave less, the coach gives way first.
+  never boxed to under a line: if the verdict would leave less, the coach gives way first. A verdict is never shorter
+  than the fixed tray of answers it replaces, so no row shows above it. `giveRoom(over, steps)` is the one helper for a
+  whole screen giving way: each step is a give and its undo, taken in order while something is still covered, and all
+  undone if together they cannot be enough.
 - `src/quiz/` also has `line` (drag a marker on a number line, snapped to its ticks, answered on
   release) and takes a `picture` the course draws through the mount's `ctx.art`, plus `ctx.look`
   for a course's own styling.
@@ -212,7 +224,8 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   specific line (filled slots like `{usualHour}` count as more specific; a line with an unknown fact
   is skipped), never one of `recent`, and sometimes a dare: once a day, only while the habit isn't
   done today, never first or after a gap. `moment()` in `src/cast/voice.js` reads state and facts
-  from progress (log entries carry `hour`). Home's greeting uses it. New lines are drafted by hand
+  from progress (log entries carry `hour`). Home's greeting uses it. For a Learn course `first` is the course's own:
+  true until a lesson of that course is in `progress.done`, and it wins over `elsewhere` and `comeback`. New lines are drafted by hand
   with `tools/voice-draft.js` (Claude API, `ANTHROPIC_API_KEY`) into `drafts/voice/` for review,
   never into the pool; the guardrail tests lint every pool line and dare.
 - **Words fit what just happened** (lines.js): a verdict pool can be narrowed by how the item was answered, `correct:hear`,
@@ -247,6 +260,10 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   the grid, the blocks and the tiles, and Fennel (`src/cast/fennel.js`, a fennec fox posed with
   `rig()`) walks it. His lines are `CODING_LINES`/`CODING_HEADLINES`, read through the subject's
   `coach.lines`/`coach.headlines`. Home's course switcher (shared with Japanese) shows it.
+  **A missed run is shown before it is replaced:** the learner's own program stays for `MISS_HOLD_MS` (2.4 s, or until a tap;
+  that tap's click never presses the Continue that comes up under it), marked by `markStop()` (`.stopped`, `.unrun`, the
+  rock's `.cell.hit`), with Fennel saying `RUN_ENDS[howEnded()]`, one line for each way a run can end. Then the way that
+  works takes its place and the reason goes first in the verdict. A rock and the edge are on a card before any item needs them.
 - `src/code/` — the JavaScript, TypeScript and Test writing courses, treated like a language course: no typing, word chips placed in
   order, and **right is decided by running**, so any arrangement that does the job passes. `interp.js` is pure and safe: tokens, a parser
   and a tree-walker with a step limit (no eval, no Function, no way to a host prototype), plain-words errors, console.log captured.
@@ -261,6 +278,7 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   in `src/code/courses/` (`author.js` is the shorthand; ids come from a lesson and its place, so add items at a lesson's end). A test checks
   that nothing is asked before a teach card shows it. **Test writing** grades as the rule below says: `given` is the real code, `mutants` hand-made faulty
   copies with `says` in plain words, and a miss names the one that got through. Guardrails bar "broken" in prose, so they are "faulty copies".
+  A value in prose is printed by interp.js's `show(v, false)` (`called()` and `exampleOf()` in items.js): the course's own spelling, never JSON.
 - `src/calm/` — the Calm practice subject. `routines.js` is pure: each routine is a list of timed
   phases (breathing 4 in, 8 out; the sigh 3 in, 1 top-up, 6 out; the butterfly hug's taps; the body scan feet to head), and `timeline()` plays one on a
   pausable clock. `practice.js` mounts teach cards and the routines with Moss (`src/cast/moss.js`)
@@ -269,7 +287,8 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   habit's path at a time (the switcher under the bar, remembered in `wingbeat.habit`). A Calm routine
   opens and closes on a soft bell and can have soft rain under it (`calmSound()`, `rain()` in
   feel.js, both generated): set on the ⋯ screen, both off until turned on, and both silent
-  when Sound is muted or under reduced motion.
+  when Sound is muted or under reduced motion. A teach card states only numbers no timing can change; one that
+  can is a slot (`{in}`, `{out}`) filled by `breathWords()` from the same `timed()` merge the routine plays (a test holds it).
 - `src/reflect/` — the Reflect practice subject: three prompts, each skippable, self-paced like
   grounding, with Lumi coaching. "One good thing" first and "One thing for tomorrow" last never
   change; the middle one comes from the `middle` pool in `reflect.json`, chosen by the date
@@ -307,14 +326,23 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   between reps) and balance (the `wall` prop, her right hand on it). Seated is all on a chair and
   Balance keeps a hand on the wall (move.test.js checks both). Guardrails bar pushing, health claims
   and body or weight words, and check the safety line is on every unit's first lesson and after "Not really".
+- **A timed routine holds the phone for you** (`routine()` in `src/practice/kit.js`, every practice habit's): the screen stays on
+  while it plays (`stayAwake()`, the Wake Lock) and is let go when it is paused, ended, closed or hidden; its sound rests with
+  it (`hush()` in feel.js, the one rule for when sound rests: the page hidden, or a held routine), so rain never comes back
+  before the routine does.
+- **Made for an upright phone** (decision 28). `SIDEWAYS` in `src/fit.js` says a phone is on its side, read from the screen
+  (`screen.orientation`, a short side under 500px, a coarse pointer), never from the page: the keyboard shrinks the page
+  (`interactive-widget=resizes-content`, the app's `adjustResize`) to wider than tall on a 360-wide phone. app.js sets
+  `html[data-sideways]`; styles.css puts `.upright` (one line, `UPRIGHT`) over `main.play` only, a timed routine and
+  Scramble's clock hold, and turned back everything is where it was. Null where `screen.orientation` is missing, and an
+  iPhone's screen size does not turn, so there it never shows. MainActivity locks the app upright below 600dp.
 - **Calm is not therapy.** `test/guardrails.test.js` bars health claims, diagnosis words and urgency
   in Calm's text, and checks the Lifeline help line (13 11 14, as plain text) is on the first Calm
   lesson and after "Not really".
 - `src/focus/` — the Focus practice subject: "What are you focusing on?" (presets or your own words,
   optional; kept in `progress.journal[date].focus`, never the log, shown by its `dayDetail`), then
   one long `clock` phase (m:ss, `countOf`) with Hazel the beaver (`src/cast/hazel.js`, posed with
-  `rig()`) holding her stick. Pause and "I'm done" end it like any other; `stayAwake()` in
-  practice/kit.js keeps the screen on. The end screen's question comes from `coach.ask` ("How did it go?").
+  `rig()`) holding her stick. Pause and "I'm done" end it like any other. The end screen's question comes from `coach.ask` ("How did it go?").
   Its garden plant is bamboo. Guardrails bar productivity guilt and distraction counting.
 - `src/practice/timings.js` — the learner's own timings: `TIMINGS` (each practice habit's settable
   values, ranges, fixed defaults) and `timed(habit, defaults, overrides)`, the one merge every routine
@@ -463,7 +491,8 @@ after `npm ci` at the root. App id `com.joebywan.wingbeat`, locked.
 - **What the WebView lacks:** `speechSynthesis`, so `speak()`/`voice()` in feel.js use `WingbeatBridge.hasVoice`/`speak` (Android's
   TextToSpeech; the manifest's `<queries>` lets it find the engine). With no voice for the course, a teach card offers
   "Get a Japanese voice" once (`offerVoice()`, `wingbeat.voice-offer`), which opens the engine's ACTION_INSTALL_TTS_DATA
-  screen (`WingbeatBridge.installVoice`). `navigator.vibrate` needs the VIBRATE permission.
+  screen (`WingbeatBridge.installVoice`), and only when something can open it (`WingbeatBridge.canInstallVoice()`: no engine,
+  or one turned off, and nothing is offered). `navigator.vibrate` needs the VIBRATE permission.
 - **System bars follow the page:** on every screen change and theme change app.js hands the body's background to
   `tellBars()` (widget.js), which keeps `<meta name="theme-color">` current and calls `WingbeatBridge.bars(color, light)`,
   so Wind down's night palette darkens the bars in light mode too.
@@ -475,6 +504,9 @@ after `npm ci` at the root. App id `com.joebywan.wingbeat`, locked.
   multiply by. A browser never sets it, so the web app is unchanged. A px `line-height` is already scaled by the text
   zoom, so don't multiply one. In a browser `TEXT` reads the browser's own
   font size too (probes at 6.25rem and .8rem), so a larger default or minimum font size sets `--text-scale`; zoom never does, since it enlarges px as well.
+  Above 1 a screen gives way for what it is for (decision 29, through `giveRoom()`): home for the next lesson's node and its coach
+  (`roomForHere()`: the bar's second row moves into the page, then the greeting goes, then "See your week"), a practice's end screen
+  for "How do you feel?" (`finishRoutine()`: pictures, then briefer words). Nothing changes at ordinary text.
 - **The widget** lands one row high (`minHeight` 40dp) and can be stretched taller; Lumi is sized to the space, at
   most 96dp. The launcher's list shows the layout itself (`previewLayout`), with the tagline. A count of 0 is sent as
   null, so there is no number before there is a streak.

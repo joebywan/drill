@@ -2,6 +2,7 @@ package com.joebywan.wingbeat
 
 import android.Manifest
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -43,6 +44,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (BuildConfig.DEBUG) WebView.setWebContentsDebuggingEnabled(true)
+        // Made for an upright phone (docs/WINGBEAT.md): a phone stays upright, a tablet (600dp and wider) turns.
+        if (resources.configuration.smallestScreenWidthDp < 600) requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         lateinit var engine: TextToSpeech
         engine = TextToSpeech(this) {
@@ -164,6 +167,11 @@ class MainActivity : ComponentActivity() {
         fun installVoice() {
             runCatching { startActivity(Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA)) }
         }
+
+        /** Whether anything can open that screen: no engine, or one turned off, and feel.js offers nothing. */
+        @JavascriptInterface
+        fun canInstallVoice(): Boolean =
+            Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA).resolveActivity(packageManager) != null
 
         /** What became of the notes since last asked, as a JSON array, for `window.wingbeat.noteReminder`. */
         @JavascriptInterface

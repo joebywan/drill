@@ -60,7 +60,7 @@ test('a part-written answer: chips fill the holes in order, tapping one empties 
   assert.deepEqual(placed(s.tree), [0, 1]);
 });
 
-test('a thumb target reaches toward 44px into empty space, and only halfway to another tappable thing', () => {
+test('a thumb target reaches toward 44px into empty space, and only into its share of the gap to another tappable thing', () => {
   const box = (top, left, h = 28, w = 28) => ({ top, left, bottom: top + h, right: left + w });
   assert.deepEqual(reachOf([box(100, 100)], 0), { up: 8, down: 8, left: 8, right: 8 }, 'alone: 44px each way');
   assert.deepEqual(reachOf([box(100, 100, 44, 44)], 0), { up: 0, down: 0, left: 0, right: 0 }, 'already big enough');
@@ -73,6 +73,12 @@ test('a thumb target reaches toward 44px into empty space, and only halfway to a
   assert.equal(reachOf([box(100, 100), box(128, 100)], 0).down, 0);
   const pair = [box(100, 100), box(100, 134)];
   assert.deepEqual([reachOf(pair, 0).right, reachOf(pair, 1).left], [3, 3]);
+  // A neighbour already 44px across needs none of the gap: a 28px slot 8px from it takes all 8, and reaches 44px.
+  const slot = [box(100, 100), box(100, 136, 44, 60)];
+  assert.equal(reachOf(slot, 0).right, 8);
+  assert.equal(reachOf(slot, 1).left, 0);
+  // One that needs some of it keeps that much: a 36px block 8px away wants 4, so the slot takes the other 4.
+  assert.equal(reachOf([box(100, 100), box(100, 136, 36, 36)], 0).right, 4);
   // A neighbour that reaches nowhere itself (a loop's head): all the way to it.
   assert.equal(reachOf([box(100, 100), { ...box(132, 110), fixed: true }], 0).down, 4);
   // Far off to the side, something below is not in the way.

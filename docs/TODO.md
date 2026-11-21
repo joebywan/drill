@@ -204,6 +204,16 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
   to half the screen, its headline giving way and then its words scrolling in their own box (#183, decision 25), and every item is in view above it, in a browser
   and in the app at the phone's largest text. On a 206x393 page (Chrome at 200% zoom, past what the app promises) the board, a ten frame and a program are still partly
   covered once answered, and a build sits under its tray while asked: all of it can be scrolled clear.
+- **Home and the end screens at the largest text: done** (#197, decision 29). At text 2.0 the next lesson's node sat under Continue (570 to 698 against a bar
+  from 598) and a practice's "How do you feel?" was off the screen (877 against a bar at 733). Each screen now gives way for what it is for, only as far as
+  it takes: home moves the bar's second row into the page, then drops the greeting, then "See your week"; an end screen drops its pictures, then says less.
+  Nothing changes at ordinary text or at 1.3. The first-visit list and a follow-on course's waiting tab were looked at at 2.0 too. A verdict is now at least
+  as tall as the tray it replaces, so no row of answers shows above it. On the tablet, ⋯ keeps to the bottom of the rail where larger text had pushed it
+  out of reach.
+  **Left:** on a 360-wide phone at 2.0 home and the end screens cannot fit even after giving way, so the page scrolls as before. The first-visit list is 2px
+  too wide at 206px. **Being fixed** (two things today's other merges brought, found here): at text 2.0 an answered Chess board sits under the verdict where
+  the coach's words are long (a stars item with an introduction, a long puzzle), since the board no longer moves up when her words shorten (#192); and on a
+  short phone one Coding item's verdict covers its program (`loops-2-read`).
 - **The emulator is the phone.** Each "Not played", "Not covered" and "Not seen" line below is being played on the emulator, or replaced by what
   exactly it cannot show: Firefox for Android itself, a finger (off-centre taps, swipes, the keyboard, links out), device conditions (landscape,
   put down and picked up, screen off, a call, no network), Chess's games and wrong moves, and the Android app's leftovers. Results go in each block
@@ -225,17 +235,28 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
     box (30 or more cards across the code courses, by up to 77px).
     **Left (low):** after "start here" a follow-on's own "Skip ahead" is gone (both answers are kept in `progress.start`); a just-opened follow-on is
     greeted "TypeScript is first", the brand-new line.
-  - Coding's "Around the rock": walking into a rock ended the run with no word that it had, the rule being taught four items later.
-  - Chess: after the first move in a stars puzzle the coach's bubble shrank and the board jumped 21px, so the next tap missed; a new piece's
-    introduction was gone before it could be read.
+  - **Fixed** (#192, `npm run phone -- feedback`): in Coding's "Around the rock", walking into a rock ended the run with no word that it had, the rule
+    being taught four items later. The lesson's first card now plays it (one step, into the rock, the rest never run), and the first lesson says the
+    edge of the grid stops him too. A missed run keeps the learner's own program on screen, the block it stopped on ringed, the steps after it faint and
+    the rock ringed, with Fennel saying why, for 2.4 seconds or until a tap; then the way that works takes its place and the reason comes first in the
+    verdict. Every way a run can end has its own words (`RUN_ENDS`).
+  - **Fixed** (#192): in Chess, after the first move in a stars puzzle the coach's bubble shrank and the board jumped 21px, so the next tap missed (an
+    answered true/false jumped 88px). The bubble now keeps the room of the tallest line the item can say, and `test/e2e/board-still.spec.js` holds the
+    board's top still from asked to Continue, played right and wrong, at three sizes. A new piece's introduction was gone before it could be read: it
+    stays with the prompt until the first move.
+  - **Fixed** (#192): a missed Maths or Japanese build showed only the right answer; it now also shows what was put ("You put ~~18~~").
+    **Left (low):** the code courses still replace a missed run at once (what it printed is shown, so the miss is not unexplained); a Japanese sentence
+    card grows down by a row once its slots fill; tapping Rosa mid-item can show an aside taller than the room kept for her words; "Collect all 2 stars"
+    reads oddly.
   - **Fixed** (#191, `npm run phone -- words`): a listening item was answered with advice about looking; every course's coach said its course was done
     today after one lesson of another; end screens overstated ("Plenty of bumps" for one miss in eight); nothing said the Blue Triangle was a butterfly; a
     few lines praised what the learner is. A verdict's words now fit how the item was answered (heard, moved, written, looked at). With Learning done today
     through another course, a coach says today's learning is done, never that its own course is. An end screen with one miss in a good session is "nearly",
     and no line counts misses. Arrivals and the garden's cards say "butterfly". The ability lint also refuses "you are a…", "a natural" and speed as a
     virtue (it caught one more line, Moss's). Calm's circle counts a breath's seconds up, as its card says.
-    **Left (low):** a coach's `first` greeting follows the Learning habit, not the course, so a course first opened after another is not greeted as new;
-    Calm's first card says "in for 4 seconds, then out slowly for 8" whatever the learner's own timings are.
+    Then (#194): a coach greets you the first time you open their course (the first meeting followed the Learning habit, so only the first course ever
+    opened was greeted), and Calm's first card states the learner's own timings where it said "in for 4 seconds, then out slowly for 8" whatever they were.
+    **Left (low):** Calm's lesson titles name a count the learner's own timings can change ("Five slow breaths", "Five long sighs").
   Worth keeping, in its words: Chess's move dots and stars, Coding's arrow blocks, a miss coming back at the lesson's end, Maths showing its working, Japanese's
   memory pictures, JavaScript's one idea a card, Calm's "nothing to get right", the one-tap habit.
   **What this cannot show:** whether a person finds it calming, fun or worth coming back to tomorrow; anything heard (it saw stills, so listening items were
@@ -249,7 +270,8 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
   Two bugs came out of it, both fixed: a long press on a tile or the board selected its glyph and raised Android's Copy / Share toolbar over the controls; a pull down
   at the top of a screen handed the page to Chrome's pull-to-refresh, which reloaded it and lost the lesson or screen.
   Run the jittered taps again after any change to a tray, tile, button or board size.
-  **Open (low, design):** "Make your own" leaves its Add habit button about 130px under the keyboard until the page is scrolled; the other forms keep theirs above it.
+  "Make your own" left its Add habit button about 130px under the keyboard until the page was scrolled: it now keeps to the bottom of the page over the
+  picks (#197), and on a short phone with the keyboard up (a 412x177 page) the field and the button are both in view (`KEYBOARD_SMALL=1080x1700`).
   **What the emulator cannot show:** a flick with a real finger's inertia (`adb input swipe` is one even stroke), and a hardware keyboard.
 - **Coding's drawing trail and live values, seen moving** (#186, `npm run phone -- moving`): bursts of screenshots during `draw-0`, `draw-3`, `var-0` and `var-3`
   show the trail growing behind Fennel, values changing only on the square they belong to, no jump and no flash. **What the emulator cannot show:** whether a
@@ -287,8 +309,10 @@ sessions run longer. A quarter to a third of every session is repeats (2 warm-up
   measuring where the page sits before `wm size` moved Chrome's toolbar. It now measures again after the resize, flags a target partly covered by
   another, and flags a tap that a different element took. Short-phone runs before this (`small-u8`, `small-u11`) were aimed low too. A wrong pick in
   find-the-bug was never a trap: tapping another block picks that one instead, and filling the wrong one counts as a miss with the explanation.
-  Still narrow: blocks 28 to 30px wide or tall that sit 0 to 6px from a neighbour get only half the gap, so a tight row on a short phone gives
-  a thumb less than 44px; that needs more room between rows, a layout change. The harness measures drawn sizes, so it still lists these.
+  Blocks 28 to 30px wide or tall that sat 0 to 6px from a neighbour got only half the gap. Now (#197) a gap is shared by need (a neighbour already 44px
+  across leaves the whole gap to the narrow one) and tight rows have a little more room sideways: at 412x786 and 375x812 every block reaches 44px each way.
+  **Left (low):** on a short phone a 36px go block reaches 40 to 42 across, and in `bug-3-count` and `bug-3-sign` a 28px value reaches 35 to 43 up and
+  down; wider rows would push those programs past the tray. The harness measures drawn sizes, so it still lists these.
 - **Still to play:** Firefox for Android, and the drawing trail and live values seen while they move (both in hand, see "Next up"). A finger's part is under "Test by playing".
 **Coding: bigger improvements**
 
@@ -331,11 +355,13 @@ none near 6 minutes or 20 items. The longest are `jsn-1` and `jsl-3` (~1:35 each
   the page kept whatever offset the last item left it at, which could also cut the ✕ off at the top. Every item now starts at the top of the page (`step()` in `src/app.js`).
 - **The coach's bubble grew when a quiz card had to give way: fixed.** Since the Chess fix (#162) the shared rule for a tall screen outranked the quiz's own,
   so a Maths, Japanese or code card that was too tall got a bubble 88px high where it should have been as short as her words. With it right, `tsi-2-4` shows all 8 lines on a 412x533 page.
-- **Answers a little taller than the verdict** (low): on a 412x533 page a check card's three rows of answers stand about 10px taller than a verdict with a one-line
-  heading, so the top edge of the first row shows above it once answered.
-- **A filled block is 32px high** (low): a placed word in the answer (`button.block`); the tray's chips are all 40 or more.
-- **Wording** (low): "For example `cost({"name":"a"}) gives 0`" writes the input as JSON (quoted keys) before the course has shown that form;
-  "Five! Those lines run like clockwork." and "Five in a row." appear on a streak with no mention of what the five are.
+- **Answers taller than the verdict: fixed** (#197). On a 412x533 page a check card's rows of answers stood taller than a short verdict, so 6 to 28px of them
+  (up to 67px on a predict card) showed above it once answered. A verdict is now at least as tall as the tray it replaces.
+- **A placed word was 32px high: fixed** (#197). It is 40px, like everything else tapped; the code fit specs pass at 360x582, 360x640, 375x812 and 412x533.
+- **Wording: fixed** (#194). "For example `cost({"name":"a"}) gives 0`" wrote the input as JSON (quoted keys) before the course had shown that form: a value
+  in prose is now written the way the course writes code (`cost({ name: "a" }) gives 0`). "Five! Those lines run like clockwork." and "Five in a row." did
+  not say five of what: every run-of-three and run-of-five line now says what is counted ("Five right in a row…"). A verdict headline cannot grow freely:
+  `chess-short.spec.js` holds the longest (a longer Rosa line put a board under the verdict on a short phone).
 - **Harness bug found and fixed in passing:** `btn(name)` in `tools/phone.js` ignored `{ exact: true }`, so `btn('Continue', { exact: true })` could hit a
   chip named `continue` and `btn('Run')` a chip named `run(`, stalling `jsl-4` and `jse-1` until the fix.
 - **Fresh versions in Test writing** change their values (#174): inputs and the code's edges move together, and what each test expects is worked out by running the real code (48 of 59 items). Eleven still only rename, where the values are the point or the code computes with them (0 and 1, % 2, + 1, one-letter text); the list and the reasons are in `test/test-writing-vary.test.js`. No fresh version in any code course renames a function.
@@ -432,11 +458,23 @@ that carry a sound, every one called `speechSynthesis.speak` with its text when 
 - **A driven page never goes to the background.** The runner's Chrome is started so that it keeps drawing, and the harness holds the screen on, so Home and the
   lock screen do nothing to a page it is attached to. `away-bare` and `away-bare-app` start the routine, let go of the page, put the phone down and look
   again afterwards: use those for anything about being away.
-- **Being fixed:** Calm, Move, Wind down and the screen break do not keep the screen awake (only Focus does), so the phone locks mid-breath; Calm's rain comes
-  back before the paused routine does; with no connection Mate opens an empty screen with an unhandled error; with no speech engine the voice offer does nothing.
-- **On its side** (a page 866x308 in Chrome, 866x364 in the app): home, the garden and Settings hold. Lessons do not: Coding's map shrinks to a thumbnail under
-  the verdict, Maths' picture and number line collapse and `ten-0` cannot be finished, the Chess board is clipped, Calm's circle is cut off. Decided: the app is
-  made for an upright phone (being built: the installed app stays upright on a phone and still turns on a tablet; a browser on its side says so on a lesson screen).
+- **Fixed** (#196): Calm, Move, Wind down and the screen break did not keep the screen awake (only Focus did), so the phone locked mid-breath: every timed
+  routine now keeps the screen on while it plays and lets go when paused, ended or closed (`away-bare`: on while running, off while away, off when back and
+  paused). Calm's rain came back before the paused routine did: sound now rests with the routine until Carry on. With no connection Mate opened an empty
+  screen with an unhandled error: Rosa says the boards could not be fetched and a banner offers Try again. With no speech engine the voice offer did
+  nothing: it is only made when something on the phone can open the engine's install screen.
+- **On its side** (a page 866x308 in Chrome, 866x364 in the app): home, the garden and Settings hold. Lessons did not: Coding's map shrank to a thumbnail under
+  the verdict, Maths' picture and number line collapsed and `ten-0` could not be finished, the Chess board was clipped, Calm's circle was cut off.
+  **Decided and built** (#196, decision 28): Wingbeat is made for an upright phone. The installed app stays upright on a phone and still turns on a tablet.
+  In a browser, a phone on its side shows one line over a lesson or routine ("Turn your phone upright to carry on, right where you were."), a timed routine
+  and Scramble's clock hold, and upright again everything is where it was (`landscape-all`, all five courses). "On its side" is read from the screen,
+  never the page: the keyboard shrinks the page to wider than tall on a common 360-wide phone, and the first version of this took that for a turned phone
+  and covered Reflect while typing (caught in review; `KEYBOARD_SMALL=1080x1700 npm run phone -- touch-keyboard` plays it).
+  **Left:** on an iPhone the line never shows (its screen size does not turn with it), so lessons there are as they were, and this cannot be played on the
+  emulator. The garden on its side has a plant card the audit cannot reach (medium, there before; `landscape-all` exits 1 on it). On a short phone with the
+  keyboard up (a 412x177 page) the field in Make your own, When and Focus sits 15px above the top (low; being fixed with the largest-text work).
+  **What the emulator could not show:** a tablet. The runner could not calibrate Chrome on the tablet image in four tries of four ("calibration tap never
+  reached the page"), so the tablet with the keyboard up is held by a browser test only. The runner needs fixing there.
 - **An incoming call** arrives as a banner and the page is never hidden, so a routine and its rain carry on through it; declining or answering leaves a lesson
   as it was. Whether the rain is heard over the call cannot be told from the emulator.
 - **No network, the live site:** the open page carries on and saves. A reload fails; a new tab loads from the browser's cache for ten minutes and then fails too:

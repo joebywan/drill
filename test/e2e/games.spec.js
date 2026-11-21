@@ -85,6 +85,27 @@ test("Mate: today's board is played to checkmate against the best defence, and n
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress') || '{}').log?.length ?? 0)).toBe(0);
 });
 
+test('Mate with no connection: Rosa says so, nothing is left broken, and Try again loads it once it can', async ({ page }) => {
+  await onDay(page);
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.route('**/src/data/mate.json*', (r) => r.abort('internetdisconnected'));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Skip', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Games' }).getByRole('button', { name: 'Mate', exact: true }).click();
+  await expect(page.locator('#said')).toContainText('no connection');
+  await expect(page.locator('.foot.show')).toContainText('No connection');
+  // No tiers, hint or undo that lead nowhere: the banner's Try again is the one button.
+  await expect(page.locator('.stage button')).toHaveCount(0);
+  await expect(page.locator('[data-tier]')).toBeHidden();
+  expect(errors).toEqual([]);
+  await page.unroute('**/src/data/mate.json*');
+  await page.getByRole('button', { name: 'Try again' }).click();
+  await expect(page.locator('.board svg')).toBeVisible();
+  await expect(page.locator('#said')).toContainText("Today's board");
+  expect(errors).toEqual([]);
+});
+
 test('Mate: a move that gives the mate up gets the best reply, is called out, and Undo takes it back', async ({ page }) => {
   await onDay(page);
   await openGame(page, 'Mate');

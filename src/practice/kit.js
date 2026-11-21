@@ -1,6 +1,7 @@
 import { esc } from '../html.js';
 import { countOf, timeline } from './timeline.js';
-import { move, play } from '../feel.js';
+import { hush, move, play } from '../feel.js';
+import { SIDEWAYS } from '../fit.js';
 
 /**
  * The parts every practice habit's mount reuses, so Calm, Move, Eyes and the rest share one
@@ -85,8 +86,9 @@ const pauseFace = (button, word, icon) => { button.textContent = icon; button.se
  * phase and returns its animations, which pause and play with the clock. `paused` is the coach's
  * line while paused. Any `.count` in `el` shows the seconds left in the phase, or for a phase with
  * `reps`, which rep it is on (see countOf). `ctx.reached(index, phases.length)` hears each phase
- * start, so a routine closed part-way can say how far it got. Ends with
- * `ctx.done(null, summary)`. Returns the cleanup function.
+ * start, so a routine closed part-way can say how far it got. While it plays the screen is kept on
+ * (`stayAwake`); paused, ended or closed it lets go, and its sound rests with it (`hush`). A phone turned on
+ * its side holds it too (`SIDEWAYS`), but for Focus. Ends with `ctx.done(null, summary)`. Returns the cleanup function.
  */
 export function routine(el, phases, ctx, draw, summary, paused, { hidden: away = 'pause' } = {}) {
   let anims = [];
@@ -100,8 +102,12 @@ export function routine(el, phases, ctx, draw, summary, paused, { hidden: away =
     onTick: (s) => { const c = el.querySelector('.count'); if (c) c.textContent = countOf(now, s); },
     onEnd: () => { cleanup(); ctx.done(null, summary); },
   });
+  // Nobody touches the phone during a routine: the screen stays on while it plays, and only then.
+  let awake = stayAwake();
   const hold = () => {
     clock.pause();
+    awake();
+    hush(true);
     for (const a of anims) a.pause();
     pauseFace(pause, 'Carry on', '▶\uFE0E');
     pause.setAttribute('aria-pressed', 'true');
@@ -111,6 +117,8 @@ export function routine(el, phases, ctx, draw, summary, paused, { hidden: away =
     pauseFace(pause, 'Pause', '❚❚');
     pause.setAttribute('aria-pressed', 'false');
     ctx.say(said);
+    awake = stayAwake();
+    hush(false);
     for (const a of anims) a.play();
     clock.resume();
   };
@@ -119,8 +127,17 @@ export function routine(el, phases, ctx, draw, summary, paused, { hidden: away =
     if (away === 'run') { if (!document.hidden && !clock.paused) { clock.pause(); clock.resume(); } } // catch up at once
     else if (document.hidden && !clock.paused) hold();
   };
+  // Turned on its side the routine can't be seen (app.js asks for the phone upright): it waits where it is.
+  const turned = () => { if (SIDEWAYS?.matches && away !== 'run' && !clock.paused) hold(); };
   document.addEventListener('visibilitychange', hidden);
-  const cleanup = () => { clock.stop(); document.removeEventListener('visibilitychange', hidden); };
+  SIDEWAYS?.addEventListener('change', turned);
+  const cleanup = () => {
+    clock.stop();
+    awake();
+    hush(false);
+    document.removeEventListener('visibilitychange', hidden);
+    SIDEWAYS?.removeEventListener('change', turned);
+  };
   return cleanup;
 }
 

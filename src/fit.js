@@ -8,6 +8,29 @@ import { LINES } from './cast/lines.js';
  */
 
 /**
+ * A phone on its side. Wingbeat is made for an upright phone, so a lesson or routine asks to be turned back (app.js sets
+ * `data-sideways` on <html>, styles.css shows `.upright` over `main.play`) and a timed routine holds where it is. Read
+ * from the screen, never the page: the keyboard shrinks the page (`interactive-widget=resizes-content`, the app's
+ * adjustResize) to wider than tall on a short phone, and that is not a phone on its side. So: a touch screen, turned to
+ * landscape, whose short side is a phone's (under 500 CSS px; a tablet's is 600 or more). Where the browser has no
+ * `screen.orientation` it is never sideways. `matches`, and a 'change' event, like a MediaQueryList.
+ */
+export const SIDEWAYS = (() => {
+  const turned = globalThis.screen?.orientation;
+  if (!turned || typeof matchMedia !== 'function') return null;
+  const coarse = matchMedia('(pointer: coarse)');
+  // The type and the screen's own shape both say landscape (a desktop browser emulating touch reports a landscape type
+  // for any page; a phone turns both together).
+  const now = () => coarse.matches && turned.type.startsWith('landscape') && screen.width > screen.height && screen.height < 500;
+  const side = new EventTarget();
+  let was = now();
+  const check = () => { if (now() !== was) { was = !was; side.dispatchEvent(new Event('change')); } };
+  turned.addEventListener('change', check);
+  addEventListener('resize', check); // some browsers turn the page before they say so
+  return Object.defineProperty(side, 'matches', { get: now });
+})();
+
+/**
  * How tall the runner's verdict banner will be with `words` in it (null: a teach card's, Continue alone) under the
  * longest verdict the coach's `lines` could give, by measuring a hidden copy, so a tall program can be fitted above
  * it before it comes. Never more than half the screen: past that its words scroll in their own box (styles.css,
@@ -39,12 +62,32 @@ export function verdictHeight(words, lines) {
  */
 export function giveWay(foot, scrolls = true) {
   const box = foot.querySelector('.verdict');
+  // It covers the answers it replaces: never shorter than their tray (a code check card's rows), up to half the screen.
+  const tray = Math.max(0, ...[...document.querySelectorAll('.play .choices')].filter((t) => t.children.length && getComputedStyle(t).position === 'fixed').map((t) => t.offsetHeight));
+  foot.style.minHeight = tray ? `${Math.min(tray, Math.floor(innerHeight / 2))}px` : '';
   const over = () => box.scrollHeight > box.clientHeight + 1;
   foot.classList.remove('clamp');
   box.classList.remove('scrolls');
   box.scrollTop = 0;
   if (over()) foot.classList.add('clamp');
   if (over() && scrolls) scrollBox(box);
+}
+
+/**
+ * A screen giving way, in order: each of `steps` ([give, undo]) is taken while `over()` (px of what matters past what
+ * covers it) is above 0. If all of them together can't bring it to 0, none is kept and the screen is as it was (home
+ * then scrolls to it). A screen that fits is left as it is. Returns whether it fits.
+ */
+export function giveRoom(over, steps) {
+  const taken = [];
+  for (const [give, undo] of steps) {
+    if (over() <= 0) return true;
+    give();
+    taken.unshift(undo);
+  }
+  if (over() <= 0) return true;
+  for (const undo of taken) undo();
+  return false;
 }
 
 /** Scrolls `box` (never the page) so `el` in it shows: smoothly, unless motion is reduced. */
