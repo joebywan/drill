@@ -12,5 +12,7 @@ export default async (h) => {
     textScale: getComputedStyle(document.documentElement).getPropertyValue('--text-scale').trim() || null,
   }));
   console.log(`  font_scale ${font}: the page sees ${JSON.stringify(sees)}`);
-  await textTour(h, check, `font-${font}`);
+  // Under 320px is past what the app promises (Firefox at 2.0 is 216px wide), as zoom.js's 200 %: nothing lost, all reachable.
+  if (sees.width < 320) console.log(`  ${sees.width}px wide, under the 320px the app promises: what the verdict covers only has to be reachable by scrolling`);
+  await textTour(h, check, `font-${font}`, { reach: sees.width < 320 });
 };

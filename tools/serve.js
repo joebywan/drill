@@ -23,14 +23,14 @@ const TYPES = {
 
 /**
  * Answers one request with a file from this checkout, and gives its status. `head`, test-only, goes at the end of
- * index.html's <head>: the phone runner's bridge (tools/bridge.js) is the one user, and `npm start` never passes it.
+ * every page's <head> (index.html, privacy.html): the phone runner's bridge (tools/bridge.js) is the one user, and `npm start` never passes it.
  */
 export async function answer(req, res, head = '') {
   let path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (path === '/') path = '/index.html';
   try {
     let body = await readFile(join(ROOT, normalize(path).replace(/^(\.\.[/\\])+/, '')));
-    if (head && path === '/index.html') body = String(body).replace('</head>', `${head}\n</head>`);
+    if (head && path.endsWith('.html')) body = String(body).replace('</head>', `${head}\n</head>`);
     res.writeHead(200, { 'Content-Type': TYPES[extname(path)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
     res.end(body);
     return 200;

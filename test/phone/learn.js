@@ -6,7 +6,7 @@ import { answer, kind, starPath } from '../../src/chess/items.js';
 
 const first = JSON.parse(readFileSync(new URL('../../src/data/basics.json', import.meta.url))).units[0].lessons[0];
 
-export default async ({ page, touch, btn, shot, run, check, checkSound, vibrations }) => {
+export default async ({ page, touch, btn, shot, run, check, checkSound, vibrations, checkBuzz }) => {
   const square = (sq) => page.locator(`.board rect[data-square="${sq}"]`);
   await touch(btn('Skip')); // the first-visit intro (its own scenario is onboarding)
   await shot('home');
@@ -26,7 +26,7 @@ export default async ({ page, touch, btn, shot, run, check, checkSound, vibratio
     await touch(btn('Continue', { exact: true }));
   }
   await shot('summary'); checkSound(); // lesson complete, under the petals
-  check('haptics: new com.android.chrome vibrations (dumpsys vibrator_manager)', vibrations() > buzzed);
+  await checkBuzz('haptics: new vibrations (dumpsys vibrator_manager)', buzzed);
   await touch(btn('Continue', { exact: true })); await run(1800); await shot('home-after');
   checkSound(); // Lumi lands and the next node unlocks
 };

@@ -72,6 +72,8 @@ function client() {
       } else if (s.text) els = els.flatMap((e) => byText(e, s));
       else if (s.hasText) els = els.filter((el) => matches(s.hasText, el.textContent, false));
       else if ('nth' in s) els = [els.at(s.nth)].filter(Boolean);
+      else if (s.visible) els = els.filter(visible);
+      else if (s.and) { const also = new Set(find(s.and)); els = els.filter((el) => also.has(el)); }
       els = [...new Set(els)];
     }
     return els.filter((e) => e !== document);
@@ -88,8 +90,16 @@ function client() {
       const r = el.getBoundingClientRect();
       // Out of the viewport, or under something fixed over it (a bar of buttons): to the middle, where a finger can reach it.
       const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-      const under = top && !el.contains(top) && !top.contains(el);
-      if (under || r.top < 0 || r.left < 0 || r.bottom > innerHeight || r.right > innerWidth) el.scrollIntoView({ block: 'center', inline: 'center' });
+      const under = top && !el.contains(top) && !top.contains(el) && getComputedStyle(el).pointerEvents !== 'none'; // a pin marks a spot under things
+      // Or cut off by a box that scrolls around it (its centre can be past the box's end, over the box's own parent): as
+      // Playwright, which scrolls unless the element is wholly visible (IntersectionObserver's ratio).
+      let clipped = false;
+      for (let p = el.parentElement; p && p !== document.body && !clipped; p = p.parentElement) {
+        if (getComputedStyle(p).overflow === 'visible') continue;
+        const c = p.getBoundingClientRect();
+        clipped = r.top < c.top - 1 || r.bottom > c.bottom + 1 || r.left < c.left - 1 || r.right > c.right + 1;
+      }
+      if (under || clipped || r.top < 0 || r.left < 0 || r.bottom > innerHeight || r.right > innerWidth) el.scrollIntoView({ block: 'center', inline: 'center' });
     },
     eval: ([el], { fn, arg }) => (0, eval)(`(${fn})`)(el, arg),
     evalAll: (els, { fn, arg }) => (0, eval)(`(${fn})`)(els, arg),
@@ -232,10 +242,22 @@ export async function bridged(port, launch) {
     constructor(steps) { this.steps = steps; }
     #with(step) { return new Locator([...this.steps, step]); }
     toString() { return JSON.stringify(this.steps); }
-    locator(css) { return this.#with({ css }); }
+    // Playwright's own additions to CSS that scenarios use: `a >> b` (b inside a), `nth=N` and a trailing `:visible`.
+    locator(css, { hasText, ...rest } = {}) {
+      if (Object.keys(rest).length) throw new Error(`locator options ${Object.keys(rest).join(', ')}: not in the bridge`);
+      if (hasText !== undefined) return this.locator(css).filter({ hasText });
+      return css.split('>>').map((p) => p.trim()).reduce((l, p) => {
+        const nth = p.match(/^nth=(-?\d+)$/);
+        if (nth) return l.#with({ nth: Number(nth[1]) });
+        const vis = p.endsWith(':visible');
+        const at = l.#with({ css: vis ? p.slice(0, -':visible'.length) : p });
+        return vis ? at.#with({ visible: true }) : at;
+      }, this);
+    }
     getByRole(role, o = {}) { return this.#with({ role, name: matcher(o.name), exact: !!o.exact, disabled: o.disabled, pressed: o.pressed }); }
     getByText(text, o = {}) { return this.#with({ text: matcher(text), exact: !!o.exact }); }
     filter({ hasText }) { return this.#with({ hasText: matcher(hasText) }); }
+    and(other) { return this.#with({ and: other.steps }); }
     first() { return this.#with({ nth: 0 }); }
     last() { return this.#with({ nth: -1 }); }
     nth(i) { return this.#with({ nth: i }); }
@@ -254,6 +276,7 @@ export async function bridged(port, launch) {
     boundingBox() { return this.#attached('box'); }
     textContent() { return this.#attached('text'); }
     innerText() { return this.#attached('innerText'); }
+    innerHTML() { return this.evaluate((el) => el.innerHTML); }
     getAttribute(name) { return this.#attached('attr', name); }
     scrollIntoViewIfNeeded() { return this.#attached('scroll'); }
     evaluate(fn, arg) { return this.#attached('eval', { fn: String(fn), arg }); }
@@ -283,9 +306,13 @@ export async function bridged(port, launch) {
     waitForFunction: (fn, arg, { timeout: ms = timeout } = {}) => poll_('a function to return true', async () => !!(await evaluate(fn, arg)), ms),
     waitForTimeout: sleep,
     url: () => url,
-    goto: async (to) => { if (!current) { await launch(to); return settle(); } return navigate(() => evaluate((u) => { location.href = u; }, to)); }, // a first page: `launch` waits for it
+    goto: async (to) => {
+      if (!current) { await launch(to); return settle(); } // a first page: `launch` waits for it
+      // From a page that no longer answers (another site, with no bridge: a link followed out), the address is opened anew.
+      return navigate(() => evaluate((u) => { location.href = u; }, to)).catch(async (e) => { if (!/no page loaded/.test(e.message)) throw e; await launch(to); return settle(); });
+    },
     reload: () => navigate(() => evaluate(() => location.reload())),
-    locator: (css) => root.locator(css),
+    locator: (css, o) => root.locator(css, o),
     getByRole: (role, o) => root.getByRole(role, o),
     getByText: (text, o) => root.getByText(text, o),
     route: async () => { throw new Error('page.route: not in the bridge (Firefox) mode'); },

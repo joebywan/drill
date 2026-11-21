@@ -167,7 +167,8 @@ try {
 
   // Ours among the emulators up. Listing asks each one its model, so one shutting down in another slot can fail it: ask again.
   let device = null, ctx = null;
-  if (bridge) device = { screenshot: async ({ path }) => writeFileSync(path, execFileSync(`${SDK}/platform-tools/adb`, ['-s', serial, 'exec-out', 'screencap', '-p'], { maxBuffer: 1 << 28, timeout: 30_000 })) };
+  // As Playwright's: the PNG as a buffer, and written to `path` when there is one.
+  if (bridge) device = { screenshot: async ({ path } = {}) => { const png = execFileSync(`${SDK}/platform-tools/adb`, ['-s', serial, 'exec-out', 'screencap', '-p'], { maxBuffer: 1 << 28, timeout: 30_000 }); if (path) writeFileSync(path, png); return png; } };
   for (let i = 0; !device; i++) {
     try { device = (await android.devices()).find((d) => d.serial() === serial); } catch (e) { if (i === 5) throw e; }
     if (!device) { if (i === 5) throw new Error(`${serial} is not among adb's devices`); await sleep(1000); }
@@ -439,6 +440,7 @@ try {
       // as a person would, a finger drag up the page.
       for (let i = 0; i < 3; i++) {
         const under = await loc.evaluate((el) => {
+          if (getComputedStyle(el).pointerEvents === 'none') return 0; // a pin marking a spot: the tap is for whatever is there
           const r = el.getBoundingClientRect();
           const t = document.elementFromPoint(r.x + r.width / 2, Math.min(r.y + r.height / 2, innerHeight - 1));
           return t && (el.contains(t) || t.contains(el)) ? 0 : Math.round(r.y + r.height / 2 - innerHeight / 2);
@@ -458,6 +460,8 @@ try {
       const [x, y] = [Math.round(origin.x + (b.x + b.width / 2 + off(b.width)) * dpr), Math.round(origin.y + (b.y + b.height / 2 + off(b.height)) * dpr)];
       await loc.evaluate((el) => {
         window.__hit = null;
+        window.__downs = 0; // every finger the page hears from here: two after a tap again is a button pressed twice
+        if (!window.__counting) { window.__counting = true; addEventListener('pointerdown', () => { window.__downs++; }, { capture: true }); }
         addEventListener('pointerdown', (e) => {
           const t = e.target instanceof Element ? e.target : null;
           window.__hit = [e.clientX, e.clientY, !t || el.contains(t) || t.contains(el) ? '' : `${t.tagName.toLowerCase()} "${(t.getAttribute('aria-label') || t.textContent).trim().slice(0, 30)}"`];
@@ -470,7 +474,14 @@ try {
       await sleep(700);
       // Where the finger landed in the page: a page that has moved on screen since calibrating (a browser's toolbar
       // sliding away as the page scrolls) shows as a tap off where it was aimed, and the next tap is aimed anew.
-      let hit = await page.evaluate(() => window.__hit).catch(() => undefined);
+      // A tap on a link out leaves the page for a site with no bridge, which never answers: the browser's address bar says so.
+      let hit = await Promise.race([page.evaluate(() => window.__hit).catch(() => undefined), sleep(3000).then(() => 'gone')]);
+      if (hit === 'gone') {
+        const bar = uiNodes(await screenXml()).find((x) => !x.page && /Search or enter address|url_bar/.test(x.desc + x.rid));
+        const at = bar && (bar.text || bar.desc);
+        if (at && !/localhost:\d+/.test(at)) return console.log(`  a tap aimed at ${loc} left the page: the address bar shows ${at.trim().slice(0, 60)}`);
+        hit = await page.evaluate(() => window.__hit).catch(() => undefined);
+      }
       // A busy page can take a while to hear the finger: up to 2 s more, until it does or shows something new.
       for (let t = 0; hit === null && t < 2000; t += 250) {
         if (await looks() !== before) { hit = undefined; console.log(`  a tap aimed at ${loc} changed the page before its pointerdown was read: not tapped again`); break; }
@@ -483,6 +494,9 @@ try {
         adb('shell', 'input', 'tap', String(x), String(y));
         await sleep(700);
         hit = await page.evaluate(() => window.__hit).catch(() => undefined);
+        await sleep(1500); // the first tap heard late would come in now
+        const downs = await page.evaluate(() => window.__downs).catch(() => 0);
+        if (downs > 1) console.log(`  PRESSED TWICE: ${loc} heard ${downs} fingers, the first tap late`);
       }
       if (hit?.[2]) console.log(`  a tap aimed at ${loc} landed on ${hit[2]}`);
       if (hit) {
@@ -577,9 +591,14 @@ try {
       check(`sound: active ${pkg} track (dumpsys media.audio_flinger)`, track);
     };
     const vibrations = () => (adb('shell', 'dumpsys', 'vibrator_manager').match(new RegExp(pkg.replaceAll('.', '\\.'), 'g')) || []).length;
+    /** Checks `pkg` buzzed since `before` (a `vibrations()` count), where the page has `navigator.vibrate` to buzz with (Firefox for Android has none). */
+    const checkBuzz = async (name, before) => {
+      if (!(await page.evaluate(() => typeof navigator.vibrate === 'function'))) return console.log(`  ${name}: not checked, this browser has no navigator.vibrate`);
+      check(name, vibrations() > before);
+    };
     /** Where a point of the page (CSS px from its top left) is on the screen, as calibrated. */
     const screenAt = (x, y) => [origin.x + x * dpr, origin.y + y * dpr];
-    return { page, touch, btn, swipe, press, doubleTap, dragTo, shot, run, seed, fresh, checkSound, playing, vibrations, calibrate, screenAt };
+    return { page, touch, btn, swipe, press, doubleTap, dragTo, shot, run, seed, fresh, checkSound, playing, vibrations, checkBuzz, calibrate, screenAt };
   };
   const page = bridge ? bridge.page : await ctx.newPage();
   const chrome = await helpersFor(page, PKG, () => page.goto(base, { waitUntil: 'networkidle' }));

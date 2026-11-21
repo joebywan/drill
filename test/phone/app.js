@@ -22,7 +22,8 @@ const hex = (rgb) => `#${rgb.match(/\d+/g).slice(0, 3).map((v) => (+v).toString(
 // What the note must never say: absence, loss or a streak at stake.
 const ABSENCE = /miss|lost|lose|gone|away|absen|forgot|been a while|streak|come back|haven't/i;
 
-export default async ({ adb, attach, check, screenXml, shot, type }) => {
+export default async ({ adb, attach, check, screenXml, shot, type, browser }) => {
+  if (browser !== 'chrome') return console.log(`  app: the installed app's WebView is reached through attach(), which a bridged browser (${browser}) has not: play it with --browser chrome`);
   if (!existsSync(APK)) { console.log(`  no APK at ${APK}: build it first (CLAUDE.md, Android)`); return; }
   mkdirSync(OUT, { recursive: true });
   const keep = (name, text) => writeFileSync(`${OUT}${name}`, text);

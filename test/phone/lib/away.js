@@ -14,7 +14,7 @@ const coding = JSON.parse(readFileSync(new URL('../../../src/data/coding.json', 
 const chess = subjects.find((s) => s.id === 'chess').units[0].lessons[0];
 const AWAY = Number(process.env.AWAY_SECS ?? 20);
 
-export default async function away(h, { pkg = 'com.android.chrome', dir = 'away' } = {}) {
+export default async function away(h, { pkg = h.pkg ?? 'com.android.chrome', dir = 'away' } = {}) {
   const { page, adb, seed, touch, btn, shot, run, check, playing } = h;
   const notes = process.env.AWAY_NOTES ?? new URL(`../../../test-results/phone/${dir}/`, import.meta.url).pathname;
   const say = (m) => console.log(`  ${m}`);

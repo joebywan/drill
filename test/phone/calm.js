@@ -1,7 +1,7 @@
 // Calm breathing on the phone, with the sound and haptics checks a desktop browser can't do.
 import { ago } from './lib/seed.js';
 
-export default async ({ page, seed, touch, btn, shot, run, checkSound, vibrations, check }) => {
+export default async ({ page, seed, touch, btn, shot, run, checkSound, vibrations, checkBuzz, check }) => {
   await seed();
   // The bell is off until turned on; turning it on rings it once. Nothing else has played since
   // the reload, so Chrome's stream starting here is the bell.
@@ -15,7 +15,7 @@ export default async ({ page, seed, touch, btn, shot, run, checkSound, vibration
   await touch(btn('Start')); await run(1500); await shot('inhale');
   checkSound();
   await run(4000); await shot('exhale');
-  check('haptics: new vibrations (dumpsys vibrator_manager)', vibrations() > buzzed);
+  await checkBuzz('haptics: new vibrations (dumpsys vibrator_manager)', buzzed);
   await run(40000); await shot('end');
   checkSound(); // the closing bell, still ringing out on the end screen
   await touch(btn('Calmer')); await shot('felt');

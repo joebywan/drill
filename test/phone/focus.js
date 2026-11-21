@@ -1,7 +1,7 @@
 // Focus: a preset tap, the timer on the clock with Pause and "I'm done", and a buzz at the end. The
 // page is on localhost (adb reverse), a secure context, so Chrome's real Wake Lock holds the screen:
 // stayAwake() marks <html data-awake> while a lock is held.
-export default async ({ page, seed, touch, btn, type, shot, run, check, vibrations }) => {
+export default async ({ page, seed, touch, btn, type, shot, run, check, vibrations, checkBuzz }) => {
   const left = () => page.getByRole('timer').innerText();
   await seed();
   await touch(btn(/^Focus(,|$)/)); await shot('home');
@@ -22,7 +22,7 @@ export default async ({ page, seed, touch, btn, type, shot, run, check, vibratio
   const buzzed = vibrations();
   await run(480_000); await page.waitForTimeout(1000); await shot('end');
   check('the end screen asks how it went', await page.getByRole('heading', { name: 'How did it go?' }).isVisible());
-  check('the end buzzes (dumpsys vibrator_manager)', vibrations() > buzzed);
+  await checkBuzz('the end buzzes (dumpsys vibrator_manager)', buzzed);
   check('the wake lock is let go at the end', !(await awake()));
   await touch(btn('Focused')); await touch(btn(/^Continue/)); await shot('home-after');
   // Your own words, then done early.

@@ -20,7 +20,7 @@ export default async (h) => {
   const count = () => within(page.locator('.count').first().textContent(), 3000, '(no answer)');
   const pause = () => within(page.locator('.practice-pause').getAttribute('aria-pressed'), 3000, '(no answer)');
   const hidden = () => within(page.evaluate(() => document.hidden), 3000, 'frozen');
-  const back = async () => { sh('monkey', '-p', 'com.android.chrome', '-c', 'android.intent.category.LAUNCHER', '1'); await sleep(2500); };
+  const back = async () => { sh('monkey', '-p', h.pkg, '-c', 'android.intent.category.LAUNCHER', '1'); await sleep(2500); };
 
   // The call: rings, is answered (or declined), talks a while, ends.
   const call = async (label, how, during = async () => {}) => {
@@ -78,8 +78,13 @@ export default async (h) => {
   await seed();
   await page.evaluate(() => { localStorage.setItem('wingbeat.bell', 'on'); localStorage.setItem('wingbeat.rain', 'on'); });
   await page.reload({ waitUntil: 'networkidle' }); await run(800);
-  await touch(btn(/^Calm(,|$)/)); await touch(btn(/^Continue · /)); await touch(btn('Start')); await run(2500);
+  const start = async () => { await touch(btn(/^Calm(,|$)/)); await touch(btn(/^Continue · /)); await touch(btn('Start')); await run(2500); };
+  await start();
   const running = async (label) => {
+    // Each interruption meets a routine with time left: real time runs on page.clock too, and a slower browser (Firefox, through
+    // the bridge) can reach the routine's end during the calls before. On its last breath or ended, it starts afresh from home.
+    const last = /Breath (\d+) of \1\b/.test(await page.evaluate(() => document.getElementById('app').innerText));
+    if (last || await page.locator('.summary').count()) { await page.reload({ waitUntil: 'networkidle' }); await run(800); await start(); say(`${label}: the routine was on its last breath or ended: started again`); }
     if (await pause() === 'true') { await touch(page.locator('.practice-pause')); await run(2500); }
     const s = { count: await count(), sound: playing(), hidden: await hidden() };
     say(`${label}: routine running: count ${s.count}, sound ${JSON.stringify(s.sound)}`);
