@@ -210,10 +210,21 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
   Nothing changes at ordinary text or at 1.3. The first-visit list and a follow-on course's waiting tab were looked at at 2.0 too. A verdict is now at least
   as tall as the tray it replaces, so no row of answers shows above it. On the tablet, ⋯ keeps to the bottom of the rail where larger text had pushed it
   out of reach.
-  **Left:** on a 360-wide phone at 2.0 home and the end screens cannot fit even after giving way, so the page scrolls as before. The first-visit list is 2px
-  too wide at 206px. **Being fixed** (two things today's other merges brought, found here): at text 2.0 an answered Chess board sits under the verdict where
-  the coach's words are long (a stars item with an introduction, a long puzzle), since the board no longer moves up when her words shorten (#192); and on a
-  short phone one Coding item's verdict covers its program (`loops-2-read`).
+  **Left:** on a 360-wide phone at 2.0 home and the end screens cannot fit even after giving way, so the page scrolls as before.
+- **Answered boards and programs above the verdict: done** (#201). Two things the play for #197 found. At text 2.0 an answered Chess board sat under the
+  verdict where the coach's words are long (the board to 461 against a verdict from 393 to 437; five of six plays), since her bubble now keeps its room
+  (#192). Once answered, her kept room goes first, then the coach and the gaps, then her face, and only then does the board shrink; while asked nothing
+  changes, and the board-still spec passes as it was. On a short phone a Coding item's verdict covered its program (`loops-2-read`, 15px of it showing).
+  That was not new: every commit back to before #190 does the same under the coach's longest headline, and earlier runs passed because a shorter
+  headline happened to come up. Under the longest headlines on a 412x533 page, 9 predict items were covered when answered right and 39 when missed; now
+  none: the map, no longer tapped, gives way first, then the coach. The browser suite answers every Coding item at four sizes. The first-visit heading no
+  longer runs 2px past a 206px page.
+  **Tablet runs work again:** the runner read the tablet's size upright while it runs on its side, so its calibration tap missed the page. Played on the
+  tablet since: ⋯ at text 2.0 (home fits), and Reflect on its side with the keyboard up (no upright line, the field and Next clear). A browser suite no
+  longer empties the phone runs' pictures: each Playwright config has its own output folder.
+  **Left (low):** at text 2.0 an answered board that fits at its small size keeps her empty room above it, and a new piece's tag overlaps the bottom
+  edge of her bubble; on the tablet at text 2.0 the pinned ⋯ sits over the icon of the tab behind it; the tablet's `app` run fails two checks it failed
+  before (the intro 17 s after a cold start against a 15 s limit, and the widget's one-row box).
 - **The emulator is the phone.** Each "Not played", "Not covered" and "Not seen" line below is being played on the emulator, or replaced by what
   exactly it cannot show: Firefox for Android itself, a finger (off-centre taps, swipes, the keyboard, links out), device conditions (landscape,
   put down and picked up, screen off, a call, no network), Chess's games and wrong moves, and the Android app's leftovers. Results go in each block
