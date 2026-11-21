@@ -262,6 +262,7 @@ export async function bridged(port, launch) {
     boundingBox() { return this.#attached('box'); }
     textContent() { return this.#attached('text'); }
     innerText() { return this.#attached('innerText'); }
+    innerHTML() { return this.evaluate((el) => el.innerHTML); }
     getAttribute(name) { return this.#attached('attr', name); }
     scrollIntoViewIfNeeded() { return this.#attached('scroll'); }
     evaluate(fn, arg) { return this.#attached('eval', { fn: String(fn), arg }); }
