@@ -401,6 +401,19 @@ export default async ({ adb, attach, check, screenXml, shot, type }) => {
   check('keyboard: Make your own: the habit is kept with the name as typed', tracked?.includes('Tea time'), `${tracked}`);
   check('keyboard: Make your own: the keyboard is gone and the page is whole again', !keyboard() && await app.page.evaluate(() => innerHeight) === tall);
 
+  // 11. A pull down at the top of a screen must not reload the page, and a long press on a button must not raise the
+  // system's Copy toolbar (styles.css: overscroll-behavior-y, user-select on buttons). Both on a real finger in the app.
+  const MENU = /text="(Copy|Share|Select all|Search|Web search)"/;
+  await app.seed({ start: {}, picked: [] });
+  await app.page.evaluate(() => { window.__stays = 1; scrollTo(0, 0); });
+  sh(`input swipe ${W >> 1} ${H * 0.3 | 0} ${W >> 1} ${H * 0.75 | 0} 500`); await sleep(2500);
+  check('a pull down at the top does not reload the page', await app.page.evaluate(() => window.__stays === 1), 'the page kept what it held in memory');
+  await app.shot('pull-down');
+  await app.press(app.page.locator('.node.here'), 1200); await sleep(600);
+  const held = { selected: await app.page.evaluate(() => String(getSelection())), menu: (await screenXml()).match(MENU)?.[1] };
+  await app.shot('long-press');
+  check('a long press on a path node selects nothing and raises no toolbar', held.selected === '' && !held.menu, `${JSON.stringify(held.selected)}, toolbar ${held.menu ?? 'none in the UI tree'}`);
+
   // 1 again, over the whole run: nothing from the bridge or the widget's side went wrong.
   const all = earlier + logs();
   keep('logcat.txt', all);
