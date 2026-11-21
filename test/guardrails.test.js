@@ -93,8 +93,9 @@ test("Ada's lines cover every kind the runner asks for, and the maths course pas
 });
 
 test('what Rosa says mid-puzzle passes the same lint', () => {
-  const said = [...readFileSync('src/chess/exercise.js', 'utf8').matchAll(/say\(`([^`]*)`/g)].map((m) => m[1]);
-  assert.ok(said.length > 0);
+  // Her lines are constants and small functions now (one each, for the room the bubble keeps): every sentence in the file.
+  const said = [...readFileSync('src/chess/exercise.js', 'utf8').matchAll(/(['"`])((?:(?!\1)[^\n\\])* (?:(?!\1)[^\n\\])*[.?}])\1/g)].map((m) => m[2]);
+  assert.ok(said.some((t) => t.startsWith('Not that one.')) && said.some((t) => t.startsWith('Out of moves.')) && said.some((t) => t.startsWith('It can go further')), said.join(' | '));
   for (const text of said) {
     assert.doesNotMatch(text, ABILITY, text);
     assert.doesNotMatch(text, LOSS, text);
