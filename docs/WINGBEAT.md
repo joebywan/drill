@@ -235,6 +235,9 @@ chips, because one tap to play or to switch course is worth more than their row.
 - [x] **E9. Chess in plain words** (#176): every chess word taught before it is used, and every real-game puzzle
   says why its line works, proved against its position.
 - [x] **E10. The verdict at large text** (#183, decision 25): held to half the screen.
+- [x] **E11. The phone as it is held** (#186): put down, locked, called, on its side, offline. What it found is being fixed.
+- [x] **E12. The installed app's leftovers** (#187): a release build, no voice, a tablet, the keyboard, a link out.
+- [x] **E13. A beginner, played blind** (#185): from screenshots alone. Fourteen stumbles, being fixed.
 
 **Waiting on the owner** (found by playing, not changed)
 
