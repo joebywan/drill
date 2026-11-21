@@ -215,8 +215,16 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
 - **A beginner, played blind** (#185, `test/phone/hands.js`; log and pictures in `wingbeat-wt/notes/beginner/`). An agent played from screenshots alone, one real
   tap at a time, without reading the course data: the first visit, the first lesson of every course, the second of Chess, Coding and Japanese, a Calm and a Move
   session, a one-tap habit, the garden. With real hesitation and repeats a lesson took 1:37 to 3:40 and 5 to 10 items; Chess, Maths, Japanese, Coding and
-  JavaScript's first lesson were small wins with nothing near a slog. What stumbled, all being fixed:
-  - TypeScript and Test writing are open on day one and assume JavaScript (`function`, `let`, `===`), and the first-visit list is bare names.
+  JavaScript's first lesson were small wins with nothing near a slog. What stumbled:
+  - **Fixed** (#190, decisions 26 and 27, `npm run phone -- follow-on`): TypeScript and Test writing were open on day one and assume JavaScript
+    (`function`, `let`, `===`), the first-visit list was bare names, and the intro's picks only ordered the tabs, so a learner who ticked two habits
+    saw six. The two courses now follow JavaScript's first nine units (a test works the number out from every word they show; it also found `false`
+    never written on a JavaScript card, a `null` decoy nothing teaches and a union label Test writing never teaches, all fixed). Until then their tab
+    offers JavaScript first, with "I know JavaScript: start here" one tap away. Every course and habit in the first-visit list has a line saying what
+    it is, and what is picked is all home shows; the rest is under + Habit and a "+ Course" chip. Code to read wraps where it ran off the side of its
+    box (30 or more cards across the code courses, by up to 77px).
+    **Left (low):** after "start here" a follow-on's own "Skip ahead" is gone (both answers are kept in `progress.start`); a just-opened follow-on is
+    greeted "TypeScript is first", the brand-new line.
   - Coding's "Around the rock": walking into a rock ended the run with no word that it had, the rule being taught four items later.
   - Chess: after the first move in a stars puzzle the coach's bubble shrank and the board jumped 21px, so the next tap missed; a new piece's
     introduction was gone before it could be read.
@@ -228,7 +236,6 @@ block below; the fixes that came out of them are in docs/WINGBEAT.md under "Foun
     virtue (it caught one more line, Moss's). Calm's circle counts a breath's seconds up, as its card says.
     **Left (low):** a coach's `first` greeting follows the Learning habit, not the course, so a course first opened after another is not greeted as new;
     Calm's first card says "in for 4 seconds, then out slowly for 8" whatever the learner's own timings are.
-  - The intro's picks only ordered the tabs, so a learner who ticked two habits saw six.
   Worth keeping, in its words: Chess's move dots and stars, Coding's arrow blocks, a miss coming back at the lesson's end, Maths showing its working, Japanese's
   memory pictures, JavaScript's one idea a card, Calm's "nothing to get right", the one-tap habit.
   **What this cannot show:** whether a person finds it calming, fun or worth coming back to tomorrow; anything heard (it saw stills, so listening items were

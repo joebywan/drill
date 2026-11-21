@@ -132,10 +132,20 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
     larger, two lines at most), then its words scroll in their own box, Continue always in view.
     Whatever fits itself above the verdict gets the other half. On a page past what the app promises
     (206px wide, Chrome at 200% zoom) nothing is lost: what the verdict covers can be scrolled clear.
+26. **Some courses follow another.** TypeScript and Test writing follow JavaScript's first nine units (a
+    test works that number out from every word they show). Until those are done, the follow-on's tab
+    offers JavaScript first, with one tap to start anyway ("I know JavaScript: start here"). It is an
+    order, never a lock.
+27. **Home shows what was picked.** In the first-visit list every course and habit has one plain line
+    saying what it is, and what the learner picks is all that home shows. The rest is one tap away,
+    under + Habit and + Course. Skipping shows everything.
 
 Decisions 22 to 24 came out of the pass to take things off home, which the owner asked for; what came
 off was chosen in review, and each can go back on its own. Decision 25 came out of looking at the app
-with large text in a browser, which the owner asked for; the rule is the review's. Kept on purpose: the Games row and the course
+with large text in a browser, which the owner asked for; the rule is the review's. Decisions 26 and 27
+came out of the blind beginner playthrough (a beginner opened TypeScript on day one, and ticked two
+habits and got six); the order, the way past it and hiding what was not picked are the review's
+choices. Kept on purpose: the Games row and the course
 chips, because one tap to play or to switch course is worth more than their row.
 
 ### Rules for this work
@@ -242,6 +252,8 @@ chips, because one tap to play or to switch course is worth more than their row.
   counts in the session bar.
 - [x] **E15. Words that fit what just happened** (#191): a verdict fits how the item was answered, each course's coach
   speaks for its own course, an end screen claims only what the session did, and a butterfly is called one.
+- [x] **E16. Course order and the first visit** (#190, decisions 26 and 27): TypeScript and Test writing wait for
+  JavaScript, the first-visit list says what each thing is, and home shows what was picked.
 
 **Waiting on the owner** (found by playing, not changed)
 

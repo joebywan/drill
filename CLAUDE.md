@@ -49,7 +49,8 @@ course, plus onboarding, first-visit, walkthrough, garden, wardrobe, timings, fi
 and the Wingbeat screens: butterfly, yours, home-states, stages, field-guide, skins, choose, reflect-days, presets and
 looks (the dark theme), home-days (home from day 0 to day 60, with where the path starts; `HOME_SMALL=1080x1700` for
 a short phone), chrysalis (a learner at each stage of a raised butterfly, light and dark), words (what the coaches say after
-a listening item, one miss, a first egg and a lesson in another course) and zoom (Chrome's Default zoom at
+a listening item, one miss, a first egg and a lesson in another course), follow-on (a first visit's picks, and
+TypeScript's tab before and after JavaScript) and zoom (Chrome's Default zoom at
 150% and 200%, set by real taps on its Accessibility screen and put back). Large text has three routes: the app's WebView
 follows the phone's font size (`app`); Chrome for Android has only Default zoom, a whole-page zoom (`zoom`); a larger default
 or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `test/phone/lib/fits.js` holds what those share
@@ -147,6 +148,10 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   time (`courseShown`, the switcher under the tabs, remembered in `wingbeat.course`), and reviews that
   course's cards so its coach runs them. The intro picks courses by course id; `choose()` turns them
   into the Learning tab. A Learn coach's `lines`/`headlines` replace Rosa's in the runner and end screen.
+  A course can follow another (`follows: { course, units }` on the course): until those units are done, `waits()`
+  (progress.js) keeps its tab to one line, the other course's button and "I know JavaScript: start here" (a placement
+  answer in `progress.start`). An order, never a lock. TypeScript and Test writing follow JavaScript's first 9 units;
+  `test/code-courses.test.js` works that number out from every word they show and fails on a word taught nowhere.
 - **Chess games** (`src/chess/games.js`, the "Games" row on chess's home, a subject's `games`): replayable modes, each a one-entry session
   for `run()` whose mount never calls `done`, so nothing is scored, scheduled or logged; a `.foot` banner ends a game and its button remounts it.
   Each game mounts through `fitGame()`, which calls the lessons' `fitBoard` (exercise.js; never a second fitter), and puts what it counts in the
@@ -566,10 +571,13 @@ What is still open: `docs/TODO.md` ("Still open") and `docs/HABITS.md`.
   text says "Knight to c7", never "Nc7+" (`words()` turns SAN into words). Boards show coordinates.
 - **No questions in the way.** A first visit opens a short, skippable intro (`intro()`/`want()` in
   app.js, words in `INTRO_WORDS`): what Wingbeat does, then Learn something / Build habits, each opening
-  its list. The picks go in `progress.picked` and home orders its tabs by them through ONE function,
-  `ordered()` in subjects.js; picked one-tap habits are switched on with `track()`. Skip is today's
-  home (Lumi's welcome line, the garden, every habit). Shown once (`showsIntro`); saves from before
-  v7 never see it. The ⋯ menu's "Change what you see" reopens the second step. It never asks placement. Placement is an optional part of a subject: its `placement` (chess has one) shows as a
+  its list, with one line under each thing saying what it is (`INTRO_WORDS.about`; a one-tap habit shows its tap).
+  The picks go in `progress.picked` and are what home shows, first (ONE function orders the tabs, `ordered()` in
+  subjects.js): everything else is hidden through `tracked` (`{ id, hidden: true }`, for a built-in habit or a course
+  too; `habitsFor()` and `coursesFor()` read it), one tap away under + Habit and the course row's + Course.
+  Picked one-tap habits are switched on with `track()`. Skip is today's home (Lumi's welcome line, the garden,
+  everything shown), and a save from before this shows what it showed. Shown once (`showsIntro`); saves from before
+  v7 never see it. The ⋯ menu's "Change what you see" reopens the second step, starting from what home shows. It never asks placement. Placement is an optional part of a subject: its `placement` (chess has one) shows as a
   "Skip ahead" link under Continue; the question then suggests a starting unit, or the learner starts
   from the beginning. Answering or dismissing (×) hides the offer for good (`progress.start`, per
   subject), and so does finishing the subject's first unit; starting a lesson never asks. Units before the start stay open.
