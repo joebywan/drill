@@ -1,5 +1,5 @@
-// Each Chess game once on a short phone (a 412x533 page): the whole board and its controls on screen, nothing under another
-// thing, a move made, then the same after Rosa has answered / the banner is up. Pictures go to test-results/phone/.
+// Each Chess game once on a short phone (a 412x533 page): the coach, the counters, the whole board and its controls on one
+// screen with nothing to scroll (fitBoard), nothing under another thing, a move made, then the same after Rosa has answered / the banner is up. Pictures go to test-results/phone/.
 import { Chess } from 'chess.js';
 import { fitProblems, onShortPhone, openGame, placement, square } from './lib/chess.js';
 
@@ -10,7 +10,7 @@ export default async (h) => {
     const fits = async (tag) => {
       const { under, off } = await fitProblems(page);
       check(`short phone, ${tag}: nothing under anything`, !under.length, under.join('; '));
-      if (off.length) console.log(`  NOTE short phone, ${tag}: not all on this screen (the page scrolls): ${off.join('; ')}`); // a finding, not a failure: see the report
+      check(`short phone, ${tag}: all on this screen, nothing to scroll`, !off.length, off.join('; '));
       await shot(`small-${tag.replace(/\W+/g, '-')}`);
     };
     console.log(`  page ${await page.evaluate(() => `${innerWidth}x${innerHeight}`)}`);

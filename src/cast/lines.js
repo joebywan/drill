@@ -814,7 +814,7 @@ export function say(coach, state, facts = {}, rng = Math.random, recent = []) {
 /** What Rosa says in the chess games (chess/games.js). No notation: moves go through words(). */
 export const GAME_WORDS = {
   mate: {
-    tier: (n) => `Mate in ${n}`,
+    tier: (n) => `Mate in ${n}`, tiers: 'Mate in',
     today: (side, n) => `Today's board. ${side} to move, checkmate in ${n}. I defend as well as I can.`,
     another: (side, n) => `Another board. ${side} to move, checkmate in ${n}. I defend as well as I can.`,
     onward: (n) => `Good. Still mate in ${n}.`,
