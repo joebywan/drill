@@ -590,3 +590,8 @@ test('a habit\'s "when" is the learner\'s own: escaped where drawn, never linted
   assert.doesNotMatch(app, /\$\{\s*(progress\.when\[|set\b)/, 'drawn only through esc()');
   assert.equal(app.match(/esc\(progress\.when\[/g).length, 2, 'the panel and the habit view');
 });
+
+import { UPRIGHT } from '../src/cast/lines.js';
+test('the line over a lesson on a phone turned on its side is plain: no loss, nagging or urgency', () => {
+  for (const re of [ABILITY, LOSS, URGENCY, NAGGING, SHAMING]) assert.doesNotMatch(UPRIGHT, re, UPRIGHT);
+});
