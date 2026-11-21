@@ -3,6 +3,8 @@
 import { ago } from './seed.js';
 import { subjects } from '../../../src/subjects.js';
 import { scan } from '../../../tools/play.js';
+import { kind } from '../../../src/chess/items.js';
+import { plays, settles } from '../../e2e/chess-plays.js';
 
 /**
  * Run in the page (`page.evaluate(misfits)`): what doesn't fit the screen as it is. Nothing wider than the page or cut
@@ -204,6 +206,26 @@ export async function textTour(h, check, tag, { reach = false } = {}) {
     found.push(...await page.evaluate(verdictRule));
     await h.shot(`${tag.replaceAll(' ', '-')}-answered-${id}-end`); // the verdict's box scrolled to its end
     check(`${tag}: ${name} answered: the question in view above a verdict of at most half the screen`, !found.length, found.slice(0, 4).join('; '));
+  }
+  // A chess board answered right by real taps: a new piece's stars and a real-game puzzle. Still while asked, and
+  // once the verdict comes the whole board is above it (fitBoard in src/chess/exercise.js).
+  for (const lessonId of ['moves-0', 'fork-0']) {
+    const unit = subjects.find((s) => s.id === 'chess').units.find((u) => u.lessons.some((l) => l.id === lessonId));
+    const at = unit.lessons.findIndex((l) => l.id === lessonId);
+    const item = unit.lessons[at].items.find((i) => kind(i) !== 'teach');
+    await home({ start: { chess: unit.title }, done: Object.fromEntries(unit.lessons.slice(0, at).map((l) => [`chess:${l.id}`, true])) });
+    await touch(btn(/^Learning(,|$)/)); await touch(pressed('Chess'));
+    await touch(btn(`Continue · ${unit.lessons[at].title}`));
+    for (let i = 0; i < 6 && await page.locator('.foot.show.plain').count(); i++) await touch(pressed('Continue')); // teach cards
+    await run(settles(item));
+    await h.shot(`${tag.replaceAll(' ', '-')}-board-${lessonId}-asked`);
+    for (const step of plays(item, true)) {
+      for (const sq of step.tap ? [step.tap] : [step.from, step.to]) await touch(page.locator(`.board rect[data-square="${sq}"]`));
+      await run(800); // a reply comes after REPLY_DELAY
+    }
+    await run(1000); await h.shot(`${tag.replaceAll(' ', '-')}-board-${lessonId}-answered`);
+    const b = await page.evaluate(() => ({ board: Math.round(document.querySelector('div.board').getBoundingClientRect().bottom), verdict: Math.round(document.querySelector('.foot.show')?.getBoundingClientRect().top ?? -1) }));
+    check(`${tag}: Chess ${lessonId} answered: the whole board above the verdict`, b.verdict > 0 && b.board <= b.verdict + 1, JSON.stringify(b));
   }
   await routine('Calm', 'calm');
   await routine('Move', 'move');

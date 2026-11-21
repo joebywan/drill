@@ -178,10 +178,21 @@ export function fitter({ program, tray, world = null, g = null, lines }) {
     const foot = document.querySelector('.foot.show');
     if (foot) {
       const bottom = innerHeight - foot.offsetHeight;
-      // A verdict taller than foreseen (a miss puts its reason first) that leaves under a line: the coach gives way now.
-      if (bottom - topOf(program) - 8 < LINE) program.classList.add('tall');
+      const over = () => program.scrollHeight - (bottom - topOf(program) - 8);
+      // Answered, the map is no longer tapped: if the program can't show whole above the verdict as it really came, the
+      // map gives way first, down to an untapped map's squares (a predict item's were kept thumb-sized while asked).
+      if (over() > 0 && world?.isConnected) {
+        const high = world.getBoundingClientRect().height;
+        const fits = Math.max(g.h * SQUARE, high - over() - 4);
+        if (fits < high) world.style.width = `${(fits * g.w) / g.h}px`;
+      }
+      // Then, while a verdict taller than foreseen (a miss puts its reason first) leaves under a line: the coach gives way
+      // (`.tall`), then her words keep only the room they take (`.tighter`).
+      for (const c of ['tall', 'tighter']) if (bottom - topOf(program) - 8 < Math.min(LINE, program.scrollHeight) + 1) program.classList.add(c);
       // Never boxed to less than a LINE: past what the app promises (a 206px page) the page scrolls it clear of the verdict.
-      boxTo(program, Math.max(bottom, topOf(program) + 8 + LINE), always);
+      // A box kept short above a tall tray while asked opens to the verdict once the tray has gone.
+      const end = Math.max(bottom, topOf(program) + 8 + LINE);
+      boxTo(program, end, always || parseFloat(program.style.maxHeight) < Math.min(program.scrollHeight, end - topOf(program) - 8));
     }
     keep(el);
   };

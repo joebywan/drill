@@ -6,6 +6,8 @@ const port = process.env.E2E_PORT || 8124;
 
 export default defineConfig({
   testDir: 'test/e2e',
+  // Its own folder: Playwright empties its outputDir when it starts, and test-results/phone holds the phone runs' pictures.
+  outputDir: 'test-results/e2e',
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   use: {
