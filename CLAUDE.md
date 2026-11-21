@@ -76,10 +76,13 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   and by name only `chess-wrong-all` (each lesson answered wrongly first) and `chess-rosa-all` (Play Rosa at every level;
   `ROSA_SMALL=1080x1700` for a short phone).
 - The phone as it is held has its own: `away` and `interrupted` (a lesson put down, locked, called), `moving` (bursts of
-  screenshots while Fennel draws), and by name `landscape-all`, `landscape-app-all` and `offline-all` (`--url` the live site).
+  screenshots while Fennel draws), and by name `landscape-all` (on its side a lesson shows the upright line; upright again it
+  is where it was), `landscape-app-all` (a phone's app stays upright, a tablet's turns) and `offline-all` (this checkout,
+  refusing requests while "offline"; `--url` the live site). `KEYBOARD_SMALL=1080x1700` plays `touch-keyboard` on a short phone.
   **A page the runner is attached to never goes to the background** (Chrome is started to keep drawing, and the harness holds
   the screen on), so anything about being away from a routine is played by `away-bare` and `away-bare-app`, which let go of
-  the page first. `test/phone/lib/device.js` has `turn`, `putDown`, `screenOff`, `awake`.
+  the page first. `test/phone/lib/device.js` has `turn` (the one way to turn the screen; `rotate` runs only with `ROTATE` set),
+  `putDown`, `screenOff`, `awake`. Never run the Playwright e2e during a phone run: it empties `test-results/`, the phone's pictures with it.
 - `hands` plays by sight: with `HANDS_DIR` set it saves the screen and waits for one command at a time in a file (tap, swipe,
   type, back), each done with a real touch. It is how a blind playthrough is done (an agent that has not read the answers).
 
@@ -163,7 +166,7 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   session bar with `inBar()`, where a lesson's meter is. A board being played keeps 40px squares; at a game's end its buttons go and the board sits above the banner.
   **Mate** (`mate.js`, `prover.js`, `prover-worker.js`): Daybook's game. `prover.js` is a port of its mate search on its own small
   board, because chess.js is far too slow to prove a mate in 4; it has no imports so it can run in a Worker (import maps don't reach workers).
-  `src/data/mate.json` comes from `node tools/mate-positions.js`, Lichess CC0 (`docs/chess-positions/NOTICE.md`). Lazy-loaded. **Scramble** (`capture.js`): our own
+  `src/data/mate.json` comes from `node tools/mate-positions.js`, Lichess CC0 (`docs/chess-positions/NOTICE.md`). Lazy-loaded: with no connection Rosa says so and a banner tries again. **Scramble** (`capture.js`): our own
   capture game; pure rules on chess.js, the best on the device in `wingbeat.capture.best`. **Play Rosa** (`engine.js`): alpha-beta on chess.js as a
   generator, run in timer slices so the page stays live; `LEVELS` is its four levels. Words in `GAME_WORDS`, linted.
 - `src/quiz/` — course-free tap-and-match items any course can use: `teach` (a big glyph or word),
@@ -320,14 +323,23 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   between reps) and balance (the `wall` prop, her right hand on it). Seated is all on a chair and
   Balance keeps a hand on the wall (move.test.js checks both). Guardrails bar pushing, health claims
   and body or weight words, and check the safety line is on every unit's first lesson and after "Not really".
+- **A timed routine holds the phone for you** (`routine()` in `src/practice/kit.js`, every practice habit's): the screen stays on
+  while it plays (`stayAwake()`, the Wake Lock) and is let go when it is paused, ended, closed or hidden; its sound rests with
+  it (`hush()` in feel.js, the one rule for when sound rests: the page hidden, or a held routine), so rain never comes back
+  before the routine does.
+- **Made for an upright phone** (decision 28). `SIDEWAYS` in `src/fit.js` says a phone is on its side, read from the screen
+  (`screen.orientation`, a short side under 500px, a coarse pointer), never from the page: the keyboard shrinks the page
+  (`interactive-widget=resizes-content`, the app's `adjustResize`) to wider than tall on a 360-wide phone. app.js sets
+  `html[data-sideways]`; styles.css puts `.upright` (one line, `UPRIGHT`) over `main.play` only, a timed routine and
+  Scramble's clock hold, and turned back everything is where it was. Null where `screen.orientation` is missing, and an
+  iPhone's screen size does not turn, so there it never shows. MainActivity locks the app upright below 600dp.
 - **Calm is not therapy.** `test/guardrails.test.js` bars health claims, diagnosis words and urgency
   in Calm's text, and checks the Lifeline help line (13 11 14, as plain text) is on the first Calm
   lesson and after "Not really".
 - `src/focus/` — the Focus practice subject: "What are you focusing on?" (presets or your own words,
   optional; kept in `progress.journal[date].focus`, never the log, shown by its `dayDetail`), then
   one long `clock` phase (m:ss, `countOf`) with Hazel the beaver (`src/cast/hazel.js`, posed with
-  `rig()`) holding her stick. Pause and "I'm done" end it like any other; `stayAwake()` in
-  practice/kit.js keeps the screen on. The end screen's question comes from `coach.ask` ("How did it go?").
+  `rig()`) holding her stick. Pause and "I'm done" end it like any other. The end screen's question comes from `coach.ask` ("How did it go?").
   Its garden plant is bamboo. Guardrails bar productivity guilt and distraction counting.
 - `src/practice/timings.js` — the learner's own timings: `TIMINGS` (each practice habit's settable
   values, ranges, fixed defaults) and `timed(habit, defaults, overrides)`, the one merge every routine
@@ -476,7 +488,8 @@ after `npm ci` at the root. App id `com.joebywan.wingbeat`, locked.
 - **What the WebView lacks:** `speechSynthesis`, so `speak()`/`voice()` in feel.js use `WingbeatBridge.hasVoice`/`speak` (Android's
   TextToSpeech; the manifest's `<queries>` lets it find the engine). With no voice for the course, a teach card offers
   "Get a Japanese voice" once (`offerVoice()`, `wingbeat.voice-offer`), which opens the engine's ACTION_INSTALL_TTS_DATA
-  screen (`WingbeatBridge.installVoice`). `navigator.vibrate` needs the VIBRATE permission.
+  screen (`WingbeatBridge.installVoice`), and only when something can open it (`WingbeatBridge.canInstallVoice()`: no engine,
+  or one turned off, and nothing is offered). `navigator.vibrate` needs the VIBRATE permission.
 - **System bars follow the page:** on every screen change and theme change app.js hands the body's background to
   `tellBars()` (widget.js), which keeps `<meta name="theme-color">` current and calls `WingbeatBridge.bars(color, light)`,
   so Wind down's night palette darkens the bars in light mode too.
