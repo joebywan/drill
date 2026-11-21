@@ -121,7 +121,7 @@ export default coarsened({
         Q('let n = 3; if (n > 5) { console.log("x"); } else if (n > 1) { console.log("y"); } else if (n > 0) { console.log("z"); }', ['z', 'y\nz'], 'Once one test holds, the rest are not even asked, though n > 0 is also true.', { fixed: true }),
       ]),
       lesson('jsc-3', 'And, or, not', [
-        T('&& needs both sides true. || needs either one. ! flips true and false.', 'let n = 5; console.log(n > 1 && n < 9); console.log(n > 8 || n < 2); console.log(!(n > 1)); console.log(!true);'),
+        T('&& needs both sides true. || needs either one. ! flips true and false.', 'let n = 5; console.log(n > 1 && n < 9); console.log(n > 8 || n < 2); console.log(!(n > 1)); console.log(!true); console.log(!false);'),
         T('Use them right inside an if test.', 'let n = 5; if (n > 1 && n < 9) { console.log("in"); }'),
         Q('console.log(2 > 1 && 1 > 2);', ['true', '2'], '&& needs both, and the second is false.', { fixed: true }),
         Q('console.log(2 > 1 || 1 > 2);', ['false', '1'], '|| needs one, and the first holds.', { fixed: true }),

@@ -25,7 +25,8 @@ import { fsrs, createEmptyCard, Rating } from 'ts-fsrs';
  *            (src/garden/model.js). Earned once, kept forever: nothing removes an entry
  *   tracked  [{ id, name?, icon?, plant?, hidden? }]  — the self-reported habits the learner added,
  *            in order: a preset is just its id ('walk'); one of their own ('own-1') carries its name,
- *            icon and plant. `hidden` takes it off the tabs and keeps everything else (subjects.js habitsFor)
+ *            icon and plant. `hidden` takes it off the tabs and keeps everything else (subjects.js habitsFor).
+ *            A built-in habit's id or a course's carries only `hidden`: what the intro's picks left off home
  *   picked   [habitId]  — what the first-visit intro was asked for, in the order picked: home puts
  *            these first (subjects.js ordered). Absent until the intro is answered or skipped ([])
  *   timings  { habitId: { key: value } }  — the learner's own practice timings (practice/timings.js),
@@ -168,6 +169,15 @@ export const offersPlacement = (progress, subject) => !!subject.placement && !(s
 
 /** Progress with a subject's placement answered (its path starts at `unit`) or dismissed (`unit` null). */
 export const placeAt = (progress, subjectId, unit) => ({ ...progress, start: { ...progress.start, [subjectId]: unit } });
+
+/**
+ * True while a course that follows another (`subject.follows`, its `parent`) waits for it: the parent's first
+ * `units` units aren't all done, the learner hasn't chosen to start here anyway (a placement answer: a unit, not
+ * a dismissal) and hasn't started it already.
+ */
+export const waits = (progress, subject, parent) => !!subject.follows && typeof progress.start?.[subject.id] !== 'string'
+  && !Object.keys(progress.done).some((id) => id.startsWith(`${subject.id}:`))
+  && !parent.units.slice(0, subject.follows.units).every((u) => u.lessons.every((l) => l.mix || progress.done[`${parent.id}:${l.id}`]));
 
 /** True for a first visit: the intro is neither answered nor skipped, and nothing has been done yet. */
 export const showsIntro = (progress) => !progress.picked && !progress.log.length && !Object.keys(progress.done).length && !progress.tracked?.length;

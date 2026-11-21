@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { checkOptions, chipsOf, grade, pretty, problem, tapsOf, vary } from '../src/code/items.js';
 // The shipped courses.
-import { tokenize } from '../src/code/interp.js';
+import { parse, tokenize } from '../src/code/interp.js';
 import { WALK_API, optionsOf, answerOf, startOf, trayOf, wayOf, limitOf, withOut } from '../src/code/items.js';
 import { subjects } from '../src/subjects.js';
 import javascript from '../src/code/courses/javascript.js';
@@ -47,6 +47,40 @@ test('nothing is asked before a teach card has shown it', () => {
     const asked = item.goal === 'tests' && item.type === 'gap' ? item.code.replace(/___/g, '0') : item.code && item.type === 'predict' ? item.code : wayOf(item);
     if (item.ts && item.type === 'predict') continue; // checker questions show the mistake being asked about
     for (const w of ruleWords(asked)) assert.ok(taught.has(w), `${item.id}: "${w}" has not been taught`);
+  }
+});
+
+/**
+ * Everything an item puts in front of the learner as code: a card's code, a question's code, the code
+ * already written (`given`), and every chip, right or wrong. Labels (`a: number`) count as 'labels'.
+ */
+const shownWords = (item) => {
+  const parts = [item.code ?? '', item.given ?? '', item.type === 'build' ? wayOf(item) : '', ...(item.fill ?? []), ...(item.decoys ?? [])];
+  const typed = [item.given, item.code, item.type === 'build' ? wayOf(item) : null].some((src) => {
+    if (!src || !item.ts) return false;
+    try { parse(src.replace(/___/g, '0')); return false; } catch { return true; } // plain JavaScript can't read it
+  });
+  return [...parts.flatMap((p) => ruleWords(p)), ...(typed ? ['labels'] : [])];
+};
+/** The first JavaScript unit (0-based) whose teach cards show each word. */
+const firstTaught = new Map();
+javascript.units.forEach((u, i) => u.lessons.flatMap((l) => l.items).filter((t) => t.type === 'teach')
+  .forEach((t) => ruleWords(t.code ?? '').forEach((w) => firstTaught.has(w) || firstTaught.set(w, i))));
+firstTaught.set('.', 0);
+
+test('a course that follows JavaScript uses only what it teaches itself or what the JavaScript units it names teach, and names no more units than it needs', () => {
+  for (const c of [typescript, testingCourse]) {
+    assert.equal(c.follows?.course, 'javascript', c.id);
+    // A word JavaScript teaches is JavaScript's: only those named units teach it. Any other word is the course's
+    // own, taught the first time one of its teach cards shows it.
+    const taught = new Set([...firstTaught].filter(([, i]) => i < c.follows.units).map(([w]) => w));
+    let needs = 0;
+    for (const item of itemsOf(c)) for (const w of shownWords(item)) {
+      if (firstTaught.has(w)) needs = Math.max(needs, firstTaught.get(w) + 1);
+      else if (item.type === 'teach') taught.add(w);
+      assert.ok(taught.has(w), `${c.id} ${item.id}: "${w}" is taught neither by ${c.title} before here nor by JavaScript's first ${c.follows.units} units`);
+    }
+    assert.equal(c.follows.units, needs, `${c.id} needs JavaScript's first ${needs} units`);
   }
 });
 
