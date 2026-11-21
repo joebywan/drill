@@ -26,12 +26,14 @@ const REPLY_DELAY = 450;
 export function mount(el, item, ctx) {
   el.innerHTML = '<div class="board lesson"></div><div class="choices"></div>';
   const stop = fitBoard(el.firstChild, el.lastChild, item, ctx);
+  stop.refit(); // sized before the board is drawn in it, so it isn't drawn twice
   const cleanup = MOUNTS[kind(item)](el.firstChild, el.lastChild, item, stop.ctx);
   stop.refit();
   return () => { stop(); cleanup(); };
 }
 
 const SQUARE_MIN = 40; // a square to tap stays thumb-sized
+const TAPPED = ['tap', 'move', 'stars', 'find']; // a true/false board is only looked at
 const FRAME = 8.7; // a board is its eight squares and a frame of about 0.7 of one
 const ANSWERED = 150; // the smallest an answered board (or a teach card's) gets: nobody taps it, the final position still reads
 
@@ -47,25 +49,29 @@ export function worded(boardEl, wordings, lines = LINES) {
 }
 
 /**
- * Keeps the board on the screen. Asked, the coach's words and the whole board show together (the page has
- * nothing to scroll), the board giving up size down to SQUARE_MIN squares (to tap) to do it; answered (or a teach card),
- * the whole board sits above the verdict banner, and nobody needs to tap it then, so it may shrink further.
- * A board that already fits is left as it is; one that does not first compacts the coach and the gaps (`tall`, styles.css).
+ * Keeps the board on the screen, a lesson's or a game's (games.js). Played, the coach's words and the whole board show
+ * together above `choices` (the page has nothing to scroll), the board giving up size down to SQUARE_MIN squares (to tap)
+ * to do it, and on a narrow phone growing into the page's gutters to reach them; answered, over (a game's banner), or only
+ * looked at, the whole board sits above the banner or the buttons, and may shrink further. A board that already fits is
+ * left as it is; one that does not first compacts the coach and the gaps (`tall`, styles.css), and then, if it still can't be played,
+ * hides the coach's face (`tighter`). The page under it has only
+ * the room the fixed buttons or banner cover. `tapped()` says whether the board is played (a game's changes: Rosa's while her level is picked).
  * Returns `stop`, with `refit` and the `ctx` to mount with (its say and done refit afterwards).
  */
-function fitBoard(boardEl, choices, item, ctx) {
+export function fitBoard(boardEl, choices, item, ctx, tapped = () => TAPPED.includes(kind(item))) {
   const bubble = boardEl.closest('.play')?.querySelector('.bubble');
-  const said = sayings(item);
+  const said = item ? sayings(item) : []; // a game's (no item) say their own
   let answered = false;
   /** The coach's words keep the room of the tallest line this item can say, so a shorter one never moves the board up. */
   const hold = () => {
-    if (!bubble) return;
+    if (!bubble || !said.length) return;
+    bubble.style.minHeight = '';
     const copy = bubble.cloneNode(false);
     copy.removeAttribute('id');
     copy.removeAttribute('aria-live');
     copy.style.cssText = `position:absolute;visibility:hidden;min-height:0;width:${bubble.offsetWidth}px`;
     bubble.after(copy);
-    const most = Math.max(...said.map((t) => { copy.textContent = t; return copy.offsetHeight; }));
+    const most = Math.max(bubble.offsetHeight, ...said.map((t) => { copy.textContent = t; return copy.offsetHeight; }));
     copy.remove();
     bubble.style.minHeight = `${most}px`;
   };
@@ -73,23 +79,27 @@ function fitBoard(boardEl, choices, item, ctx) {
     if (!boardEl.isConnected) return;
     scrollTo(0, 0); // measured from the top of the page, where a board that fits stays
     boardEl.style.width = '';
+    boardEl.style.marginInline = '';
     hold();
     const natural = boardEl.getBoundingClientRect().width;
     const foot = document.querySelector('.foot.show');
-    const tapped = ['tap', 'move', 'stars', 'find'].includes(kind(item)); // a true/false board is only looked at
-    const tray = choices.isConnected && choices.children.length ? choices.offsetHeight : 0;
-    const low = innerHeight - (foot ? foot.offsetHeight : tray);
-    const roomNow = () => low - boardEl.getBoundingClientRect().top - 6;
+    const played = !foot && tapped();
+    // What covers the bottom of the screen, measured again once the gaps have given way (theirs too).
+    const low = () => innerHeight - (foot ? foot.offsetHeight : choices?.isConnected && choices.children.length ? choices.offsetHeight : 0);
+    const roomNow = () => low() - boardEl.getBoundingClientRect().top - 6;
+    const least = played ? SQUARE_MIN * FRAME : ANSWERED;
     // Too tall for the screen: first the coach and the gaps give way (the shared `.tall` rules in styles.css), then the board.
-    // Decided while asked: once answered the board only gets smaller, its top where it was.
-    if (roomNow() < natural && !answered && !boardEl.classList.contains('tall')) { boardEl.classList.add('tall'); hold(); }
-    const room = roomNow();
-    const least = foot || !tapped ? ANSWERED : SQUARE_MIN * FRAME;
-    const side = Math.floor(Math.min(natural, Math.max(room, least)));
-    if (side < natural) { boardEl.style.width = `${side}px`; boardEl.style.marginInline = 'auto'; }
-    // Still under the verdict (a 206px page, Chrome at 200% zoom): the page gets room to scroll the board clear of it.
+    // Decided while asked (each class once, her words' room measured again under it): once answered, the board's top stays.
+    if (roomNow() < Math.max(natural, least) && !(foot && tapped()) && !answered && !boardEl.classList.contains('tall')) { boardEl.classList.add('tall'); hold(); }
+    // Still no room to play it (a long line from her on a short phone): her face gives way too, and her words take its width.
+    if (played && roomNow() < least && !boardEl.classList.contains('tighter')) { boardEl.classList.add('tighter'); hold(); }
+    // A board as wide as its column (a phone's) may grow into the gutters, 4px short of the edges; a wide screen's keeps its size.
+    const widest = natural < boardEl.parentElement.clientWidth - 1 ? natural : innerWidth - 8;
+    const side = Math.floor(Math.min(widest, Math.max(least, Math.min(natural, roomNow()))));
+    if (side !== Math.floor(natural)) { boardEl.style.width = `${side}px`; boardEl.style.marginInline = side > natural ? `${(natural - side) / 2}px` : 'auto'; }
+    // The page scrolls no further than the fixed buttons or banner need; still under them (a 206px page, Chrome at 200% zoom), clear of them.
     const play = boardEl.closest('.play');
-    if (play) play.style.paddingBottom = foot && boardEl.getBoundingClientRect().bottom > low ? `${innerHeight - low + 8}px` : '';
+    if (play) play.style.paddingBottom = `${innerHeight - low() + 4}px`;
   };
   const stop = () => { removeEventListener('resize', refit); if (bubble) bubble.style.minHeight = ''; };
   addEventListener('resize', refit);

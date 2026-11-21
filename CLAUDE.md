@@ -71,6 +71,13 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   size of anything tapped. Chess also has `chess-games` and `chess-games-small` (Mate and Scramble), `chess-miss` (a puzzle
   missed on purpose, to read its explanation; `CHESS_MISS`, `CHESS_SMALL`), and by name only
   `chess-wrong-all` (each lesson answered wrongly first) and `chess-rosa-all` (Play Rosa at every level).
+- The phone as it is held has its own: `away` and `interrupted` (a lesson put down, locked, called), `moving` (bursts of
+  screenshots while Fennel draws), and by name `landscape-all`, `landscape-app-all` and `offline-all` (`--url` the live site).
+  **A page the runner is attached to never goes to the background** (Chrome is started to keep drawing, and the harness holds
+  the screen on), so anything about being away from a routine is played by `away-bare` and `away-bare-app`, which let go of
+  the page first. `test/phone/lib/device.js` has `turn`, `putDown`, `screenOff`, `awake`.
+- `hands` plays by sight: with `HANDS_DIR` set it saves the screen and waits for one command at a time in a file (tap, swipe,
+  type, back), each done with a real touch. It is how a blind playthrough is done (an agent that has not read the answers).
 
 - With no `--url` it serves this checkout on a free port forwarded with `adb reverse`; Chrome opens
   `http://localhost:<port>/`, a secure context, so Wake Lock and the like work as on the real site.
