@@ -463,12 +463,21 @@ try {
           window.__hit = [e.clientX, e.clientY, !t || el.contains(t) || t.contains(el) ? '' : `${t.tagName.toLowerCase()} "${(t.getAttribute('aria-label') || t.textContent).trim().slice(0, 30)}"`];
         }, { once: true, capture: true });
       });
+      // What the page shows, roughly: a tap that did something changes it.
+      const looks = () => page.evaluate(() => `${document.querySelectorAll('#app *').length}|${document.querySelector('#app > main')?.className}|${location.href}`).catch(() => null);
+      const before = await looks();
       adb('shell', 'input', 'tap', String(x), String(y));
       await sleep(700);
       // Where the finger landed in the page: a page that has moved on screen since calibrating (a browser's toolbar
       // sliding away as the page scrolls) shows as a tap off where it was aimed, and the next tap is aimed anew.
       let hit = await page.evaluate(() => window.__hit).catch(() => undefined);
-      if (hit === null) { // the page saw no finger at all (it went to the browser, or nowhere): a person taps again
+      // A busy page can take a while to hear the finger: up to 2 s more, until it does or shows something new.
+      for (let t = 0; hit === null && t < 2000; t += 250) {
+        if (await looks() !== before) { hit = undefined; console.log(`  a tap aimed at ${loc} changed the page before its pointerdown was read: not tapped again`); break; }
+        await sleep(250);
+        hit = await page.evaluate(() => window.__hit).catch(() => undefined);
+      }
+      if (hit === null) { // the page saw no finger and nothing changed (a prompt of the browser's took it): a person taps again
         console.log(`  a tap aimed at ${loc} never reached the page: tapped again`);
         await declinePrompts(); // a prompt of the browser's over the page takes the tap
         adb('shell', 'input', 'tap', String(x), String(y));
