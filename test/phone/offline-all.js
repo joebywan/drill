@@ -1,5 +1,7 @@
 // No network. Run it against the live site (the page is served from GitHub Pages with max-age=600 and no service worker):
 //   npm run phone -- offline-all --url https://knowhowit.com.au/wingbeat/
+// Against this checkout (no --url), adb reverse still reaches the page with airplane mode on, so its requests are refused
+// by Playwright instead (OFFLINE_WAIT_SECS=0 then: the cache rounds mean nothing).
 // One lesson played online, then airplane mode on: carry on in the open page (a lesson, a lazy-loaded game); reload; open
 // the site in a new tab; each right after the load (the files are fresh in Chrome's cache) and again after more than ten
 // minutes (they are not). Nothing is fixed or built: this says what there is. Then the installed app, which carries its own
@@ -38,7 +40,11 @@ export default async (h) => {
     const loadedAt = Date.now();
 
     await airplane(true);
-    say(`airplane mode: ${sh('settings', 'get', 'global', 'airplane_mode_on').trim()}; the open page: ${await reach(page)}`);
+    const reached = await reach(page);
+    say(`airplane mode: ${sh('settings', 'get', 'global', 'airplane_mode_on').trim()}; the open page: ${reached}`);
+    // Served from this checkout, adb reverse still reaches it with the radio off: refuse every request here instead, as no
+    // connection would (the HTTP cache is not consulted then, so the reload and new-tab rounds say nothing about it).
+    if (/^reached/.test(reached)) { await ctx.route('**/*', (r) => r.abort('internetdisconnected')); say(`a local page: its requests refused while "offline"; the open page: ${await reach(page)}`); }
 
     // 1. Carry on in the open page.
     for (const item of coding.items.slice(1, 4)) { // three builds, by taps, offline
@@ -64,6 +70,11 @@ export default async (h) => {
     if (await mate.count()) {
       await touch(mate); await run(1500); await shot('offline-mate-game');
       say(`offline, a lazily loaded game (Mate): ${await page.locator('.foot, .board').count() ? 'something drew' : 'nothing drew'}; text: ${(await page.locator('#app').innerText()).replace(/\s+/g, ' ').slice(0, 120)}`);
+      const said = await page.locator('#said').innerText();
+      check('offline, Mate: Rosa says there is no connection, and the banner offers Try again', /no connection/.test(said) && await btn('Try again').isVisible(), said);
+      await touch(btn('Try again')); await run(1500); await shot('offline-mate-again');
+      check('offline, Mate: Try again with still no connection says so again, nothing broken', /no connection/.test(await page.locator('#said').innerText()) && !(await page.locator('.stage button').count()));
+      await touch(btn('Quit lesson'));
     } else say('offline: no Mate game on chess home to open');
 
     // 2. Reload, 3. a new tab: right after the load, then once the cache has gone stale.
@@ -92,12 +103,13 @@ export default async (h) => {
 
     // Back online: nothing the learner did is gone.
     await airplane(false);
+    await ctx.unroute('**/*');
     await page.reload({ waitUntil: 'networkidle', timeout: 60000 }).catch((e) => say(`back online, reload: ${e.message.split('\n')[0]}`));
     await run(800);
     const back = await stateOf(page);
     say(`back online: ${back.saved ? `progress has ${Object.keys(JSON.parse(back.saved).done).length} finished lessons (was ${Object.keys(JSON.parse(savedOnline).done).length} when the network went)` : 'no progress read'}`);
     check('back online: the lessons finished online and offline are both kept', !!back.saved && JSON.parse(back.saved).done['coding:steps-0'] === true && Object.keys(JSON.parse(back.saved).done).length >= Object.keys(JSON.parse(savedOnline).done).length + 1);
-  } finally { await airplane(false).catch(() => {}); }
+  } finally { await airplane(false).catch(() => {}); await ctx.unroute('**/*').catch(() => {}); }
 
   // The installed app carries its own files.
   if (!existsSync(APK)) { say(`no APK at ${APK}: build it first`); return; }

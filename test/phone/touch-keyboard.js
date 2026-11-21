@@ -2,11 +2,18 @@
 // "Make your own", Focus's "your own words" and a habit's "when". Each time, with the keyboard really up (dumpsys
 // input_method), the field and the button that follows must be inside what the learner can see (the visual viewport,
 // which the keyboard shrinks) and not under a fixed bar; the text typed is what is kept; and once the keyboard goes the
-// page is whole again.
+// page is whole again. The keyboard up is never "on its side" (no "turn upright" line, nothing held), on any phone:
+// `KEYBOARD_SMALL=1080x1700` plays it on a short phone, whose page the keyboard leaves wider than tall.
 import { emptyProgress, finishPractice, today } from '../../src/progress.js';
 import { daysAgo } from './lib/seed.js';
 
-export default async ({ page, seed, touch, btn, type, shot, check, adb, run }) => {
+export default async (h) => {
+  const small = process.env.KEYBOARD_SMALL;
+  if (small) { h.adb('shell', 'wm', 'size', small); await h.run(1500); await h.calibrate(); }
+  try { await typing(h); } finally { if (small) { h.adb('shell', 'wm', 'size', 'reset'); await h.run(1500); await h.calibrate(); } }
+};
+
+async function typing({ page, seed, touch, btn, type, shot, check, adb, run }) {
   const keyboard = () => /mInputShown=true/.test(adb('shell', 'dumpsys', 'input_method'));
   /** Whether `loc` is wholly in what can be seen, and the element at its middle is it (or in it): nothing fixed over it. */
   const seen = (loc) => loc.first().evaluate((el) => {
@@ -16,6 +23,8 @@ export default async ({ page, seed, touch, btn, type, shot, check, adb, run }) =
   });
   const above = async (name, ...locs) => {
     check(`${name}: the keyboard is up`, keyboard());
+    const page_ = await page.evaluate(() => `${innerWidth}x${innerHeight}`);
+    check(`${name}: the keyboard up is not a phone on its side (page ${page_})`, !(await page.evaluate(() => document.documentElement.hasAttribute('data-sideways'))));
     for (const [i, l] of locs.entries()) {
       let s = await seen(l);
       // The button after a long form may sit below the keyboard: the finding is noted, and it must be a scroll away.

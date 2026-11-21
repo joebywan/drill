@@ -1,12 +1,8 @@
-// The phone on its side (about 915 x 330 CSS px): home on each tab for someone a month in, the garden, Settings, a Calm
-// routine running and ended, and one lesson of each course played by real taps (tools/play.js reports what is covered,
-// clipped or off the screen; each screen is also audited for buttons a person cannot reach). Shared by landscape-all
-// (Chrome) and landscape-app-all (the installed app). Leaves the phone upright.
-import { answerCoding, course as coding } from '../coding-all.js';
-import chess from '../chess-all.js';
-import code from '../code-all.js';
-import maths from '../maths-all.js';
-import { playCourse } from '../../../tools/play.js';
+// The phone on its side (about 866 x 308 CSS px in Chrome): home on each tab for someone a month in, the garden and
+// Settings, which work on their side; then a Calm routine and a lesson of each course, which ask for the phone upright
+// (docs/WINGBEAT.md: made for an upright phone) and are exactly where they were once it is (each screen is also audited for
+// buttons a person cannot reach). Shared by landscape-all (Chrome) and landscape-app-all (the installed app, on a tablet:
+// a phone's app stays upright). Leaves the phone upright.
 import { atTop, daysIn, showTab } from './seed.js';
 import { audit, turn } from './device.js';
 
@@ -22,7 +18,6 @@ const look = async (h, name, notes) => {
 
 export default async (h, { notes = [], light = !!process.env.LANDSCAPE_LIGHT } = {}) => { // light: two tabs, a Coding and a Maths lesson
   const { page, touch, btn, seed, run } = h;
-  process.env.PLAY_SHOTS = '1';
   await turn(h, 'landscape');
   try {
     await seed(daysIn(30));
@@ -41,21 +36,51 @@ export default async (h, { notes = [], light = !!process.env.LANDSCAPE_LIGHT } =
     await touch(btn('Back'));
     await touch(btn('Settings')); await look(h, 'settings', notes); await touch(btn('Back'));
 
-    // A Calm routine, running and ended.
-    await showTab(h, 'calm');
-    await touch(btn(/^Continue · /)); await look(h, 'calm-teach', notes);
-    await touch(btn('Start')); await run(1500); await look(h, 'calm-running', notes);
-    for (let i = 0; i < 12 && !(await page.locator('.summary').count()); i++) await run(30000);
-    await look(h, 'calm-end', notes);
+    // What a lesson or routine shows on its side: the one line, and none of the screen under it.
+    const sideways = async (name) => {
+      await look(h, name, notes);
+      const r = await page.evaluate(() => ({ line: (() => { const u = document.querySelector('.upright'); return u && getComputedStyle(u).display !== 'none' ? u.textContent : null; })(), stage: getComputedStyle(document.querySelector('.stage')).visibility }));
+      h.check(`${name}: on its side, one line asks for the phone upright, over the screen`, !!r.line && r.stage === 'hidden', JSON.stringify(r));
+    };
+    const where = () => page.evaluate(() => ({ topic: document.querySelector('.topic')?.textContent, said: document.querySelector('#said')?.textContent, count: document.querySelector('.count')?.textContent ?? null, paused: document.querySelector('.practice-pause')?.getAttribute('aria-pressed') ?? null }));
+    // Mid-lesson the page can't be measured again (calibrate() blanks it), so these turns don't: what is done upright is
+    // done with Playwright's clicks, and the touches on its side keep the origin measured on its side at the start.
+    const to = (side) => turn({ adb: h.adb, run }, side);
+    const upright = async (name, before) => {
+      await to('portrait'); await h.shot(`${name}-upright`);
+      const now = await where();
+      h.check(`${name}: upright again, exactly where it was`, now.topic === before.topic && now.said === before.said && now.count === before.count, `${JSON.stringify(before)} -> ${JSON.stringify(now)}`);
+      h.check(`${name}: upright again, the line is gone`, !(await page.locator('.upright').isVisible()));
+      return now;
+    };
 
-    // One lesson of each course, played through.
-    await page.evaluate(() => localStorage.setItem('wingbeat.habit', 'learn')); // home shows Learning again, where the courses are
-    const env = (o) => { for (const [k, v] of Object.entries(o)) process.env[k] = v; };
-    const unitOf = (id) => coding.units.findIndex((u) => u.lessons.some((l) => l.id === id)) + 1;
-    for (const id of light ? ['steps-0'] : ['steps-0', 'draw-0']) await playCourse(h, { course: coding, unit: unitOf(id), only: [id], answer: answerCoding });
-    if (!light) { env({ CODE_COURSE: 'javascript', CODE_UNIT: '1', CODE_LESSONS: 'jsv-1' }); await code(h); }
-    env({ MATHS_UNIT: '1', MATHS_LESSONS: 'ten-0' }); await maths(h);
-    if (!light) { env({ CHESS_UNIT: '1', CHESS_LESSONS: 'board-0' }); await chess(h); }
+    // A Calm routine: begun on its side, started upright, turned mid-breath, carried on upright, ended on its side.
+    await showTab(h, 'calm');
+    await touch(btn(/^Continue · /)); await sideways('calm-teach');
+    await upright('calm-teach', await where());
+    await btn('Start').click(); await run(1500);
+    await to('landscape'); await run(1000);
+    await sideways('calm-running');
+    const held = await where();
+    h.check('calm-running: turned on its side, the routine holds', held.paused === 'true', JSON.stringify(held));
+    await run(30000);
+    await upright('calm-running', held);
+    await btn('Carry on').click();
+    for (let i = 0; i < 12 && !(await page.locator('.summary').count()); i++) await run(30000);
+    await to('landscape');
+    await look(h, 'calm-end', notes); // the end screen is a reading screen: it works on its side
+    await touch(btn(/^Continue/));
+
+    // A lesson of each course, opened on its side: the line; upright, the lesson as it was; ✕ and on its side again.
+    await showTab(h, 'learn');
+    for (const course of light ? ['coding', 'maths'] : ['coding', 'maths', 'chess', 'javascript', 'japanese']) {
+      await touch(page.locator(`[data-course="${course}"]`));
+      await touch(btn(/^Continue · /)); await run(1500);
+      await sideways(`${course}-lesson`);
+      await upright(`${course}-lesson`, await where());
+      await btn('Quit lesson').click();
+      await to('landscape');
+    }
   } finally {
     await turn(h, 'portrait');
   }

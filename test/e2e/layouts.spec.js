@@ -129,9 +129,18 @@ test.describe('at 360x640', () => {
     await page.getByRole('button', { name: /^Continue/ }).click();
     await expect(page.locator('.reading')).toBeVisible();
     await expect(page.locator('.get-voice')).toHaveCount(0);
+    // A phone whose speech engine can't open its install screen (none, or turned off): the reading, no button, offer kept.
+    await page.addInitScript(() => {
+      window.WingbeatBridge = { summary() {}, art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]', hasVoice: () => false, speak() {}, installVoice() {}, canInstallVoice: () => false };
+    });
+    await page.goto('/');
+    await page.locator('[data-course="japanese"]').click();
+    await page.getByRole('button', { name: /^Continue/ }).click();
+    await expect(page.locator('.reading')).toBeVisible();
+    await expect(page.locator('.get-voice')).toHaveCount(0);
     await page.addInitScript(() => {
       window.installs = 0;
-      window.WingbeatBridge = { summary() {}, art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]', hasVoice: () => false, speak() {}, installVoice: () => window.installs++ };
+      window.WingbeatBridge = { summary() {}, art() {}, remindersOn: () => false, reminders() {}, notes: () => '[]', hasVoice: () => false, speak() {}, installVoice: () => window.installs++, canInstallVoice: () => true };
     });
     await page.goto('/');
     await page.locator('[data-course="japanese"]').click();
