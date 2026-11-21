@@ -43,6 +43,21 @@ export function misfits() {
   return out;
 }
 
+/**
+ * Run in the page (`page.evaluate(stack)`): what stands above the fixed bar, top to bottom, in CSS px of an
+ * `innerHeight` page: the bar's top, the screen's rows (home's, nested in its rail and pane, by name) and home's first node.
+ */
+export function stack() {
+  const cs = (e) => getComputedStyle(e);
+  const bar = [...document.querySelectorAll('#app *')].filter((e) => cs(e).position === 'fixed' && cs(e).visibility !== 'hidden' && e.getBoundingClientRect().top > innerHeight / 2 && e.getBoundingClientRect().top < innerHeight)
+    .reduce((m, e) => Math.min(m, e.getBoundingClientRect().top), innerHeight);
+  const root = document.querySelector('#app main') ?? document.querySelector('#app');
+  const rows = (root.matches('.home') ? [...root.querySelectorAll(':scope .garden-link, :scope .tabs-row, :scope .courses:not(.games), :scope .said, :scope .streak-row, :scope .street > h2')] : [...root.children])
+    .filter((e) => e.getBoundingClientRect().height).map((e) => `${e.className.toString().split(' ')[0] || e.tagName.toLowerCase()} ${Math.round(e.getBoundingClientRect().top)}-${Math.round(e.getBoundingClientRect().bottom)}`);
+  const node = document.querySelector('.path .node');
+  return `height ${innerHeight}, bar from ${Math.round(bar)}; ${rows.join(', ')}${node ? `; first node ${Math.round(node.getBoundingClientRect().top)}-${Math.round(node.getBoundingClientRect().bottom)}` : ''}`;
+}
+
 /** The first of Android's own views in `xml` (a `uiautomator dump`) whose text or description matches `re`: its centre and text. */
 export function uiNode(xml, re) {
   for (const [tag] of xml.matchAll(/<node [^>]*>/g)) {
@@ -115,6 +130,7 @@ export function reachable({ parts, tray }) {
 /** `fits(tag, name)`: a picture named `<tag>-<name>`, and a check that the screen fits (`misfits`). */
 export const fitter = ({ page, run, shot }, check) => async (tag, name) => {
   await run(400); await shot(`${tag.replaceAll(' ', '-')}-${name}`);
+  console.log(`  layout ${tag} ${name}: ${await page.evaluate(stack)}`);
   const m = await page.evaluate(misfits);
   check(`${tag}: ${name} fits`, !m.length, m.slice(0, 4).join('; '));
 };
