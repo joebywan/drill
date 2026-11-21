@@ -26,6 +26,8 @@ test('picking Maths in the intro opens its path on Learning; a whole lesson play
   await expect(page.getByRole('button', { name: 'Learning, 1-day streak' })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('button', { name: 'Maths', exact: true })).toHaveAttribute('aria-pressed', 'true'); // remembered
+  await expect(page.locator('[data-course]')).toHaveCount(1); // only what was picked; the rest are under + Course
+  await page.getByRole('button', { name: '+ Course' }).click();
   await page.getByRole('button', { name: 'Chess', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'The board' })).toBeVisible();
 });
@@ -133,6 +135,7 @@ test("maths' skip-ahead is an optional offer, and starts the path at the unit pi
   await page.getByRole('button', { name: 'Start at Times tables you can see' }).click();
   await expect(page.locator('.street', { has: page.getByRole('heading', { name: 'Times tables you can see' }) }).locator('.here')).toHaveCount(1);
   await expect(skip).toHaveCount(0);
+  await page.getByRole('button', { name: '+ Course' }).click();
   await page.getByRole('button', { name: 'Chess', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Know some chess already? Skip ahead' })).toBeVisible(); // each course its own
 });
