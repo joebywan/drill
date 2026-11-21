@@ -2558,7 +2558,7 @@ test('Coding, the new blocks on a real page: a bug fixed by tapping, an endless 
 
 // Each size has its own layout rules, so a tall phone gets the grid at full size: all must fit. 360x582 is a
 // 360x640 phone in the Android wrapper, where Chrome's toolbar takes more.
-for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every Coding item fits a ${width}x${height} phone: no sideways scroll, the program clear of the tiles`, async ({ page }) => {
+for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every Coding item fits a ${width}x${height} phone: no sideways scroll, the program clear of the tiles, and of the verdict once answered`, async ({ page }) => {
   test.setTimeout(120000);
   await page.setViewportSize({ width, height });
   await page.goto('/');
@@ -2658,6 +2658,69 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
     ...[...new Map(items.filter((i) => i.family).flatMap((i) => codingPool[i.family].map((e) => [JSON.stringify([i.view, e]), { id: i.id, type: i.type, ...(i.view && { view: i.view }), ...e }]))).values()]
       .flatMap((v) => [v, mirrored(v, { x: true })])], longestMiss]);
   expect(bad).toEqual([]);
+  // Answered, as the runner shows it (the verdict under the coach's longest headline): the program whole above the
+  // verdict, or in its own box ending above it with at least a line of it showing (a block's invisible thumb reach makes
+  // a box scroll by a few px, so what counts is a block cut off). Every item played right; a predict
+  // item also wrong (a miss's verdict is longer). The map, no longer tapped, and the coach give way first (settle() in fit.js).
+  const answeredAt = (items) => page.evaluate(async (items) => {
+    const { mount } = await import('/src/coding/exercise.js');
+    const { answer, fixBug, solve, tileName } = await import('/src/coding/program.js');
+    const { CODING_LINES } = await import('/src/cast/lines.js');
+    const { giveWay, longestVerdict } = await import('/src/fit.js');
+    const app = document.getElementById('app');
+    const out = [];
+    const click = (sel) => app.querySelector(sel).click();
+    const tile = (t) => [...app.querySelectorAll('.tiles button')].find((b) => b.getAttribute('aria-label') === tileName(t)).click();
+    for (const item of items) {
+      for (const right of item.type === 'predict' ? [true, false] : [true]) {
+        app.innerHTML = `<header class="bar" style="height:44px"></header><main class="play"><p class="topic">Topic</p>
+          <div class="coach"><button class="who"></button><p class="bubble"></p></div><div class="stage"></div></main>
+          <footer class="foot"><div class="verdict"><strong></strong><p></p></div><button class="next">Continue</button></footer>`;
+        const foot = app.querySelector('.foot');
+        let answeredNow;
+        const shown = new Promise((r) => { answeredNow = r; });
+        const done = (ok, why) => {
+          foot.className = `foot show ${ok ? 'right' : 'wrong'}`;
+          foot.querySelector('strong').textContent = longestVerdict(CODING_LINES, [ok ? 'correct' : 'wrong']);
+          foot.querySelector('p').textContent = why;
+          giveWay(foot);
+          answeredNow();
+        };
+        const stop = mount(app.querySelector('.stage'), item, { say(t) { app.querySelector('.bubble').textContent = t; }, done, coach: { lines: CODING_LINES } });
+        if (item.type === 'predict') { const [x, y] = answer(item); click(`[aria-label="Column ${(right ? x : x ? 0 : 1) + 1}, row ${y + 1}"]`); }
+        else if (item.type === 'build') solve(item).forEach(tile);
+        else if (item.type === 'bug') { const { part, tile: t } = fixBug(item); click(`.program [data-part="${part}"]`); tile(t); }
+        else if (item.way) {
+          const used = new Set();
+          const lay = (list, path) => list.forEach((b, i) => {
+            const empty = typeof b === 'object' ? JSON.stringify({ ...b, ...Object.fromEntries(['do', 'then', 'else'].filter((k) => k in b).map((k) => [k, []])) }) : JSON.stringify(b);
+            const at = item.chips.findIndex((c, n) => JSON.stringify(c) === empty && (item.type !== 'unscramble' || !used.has(n)));
+            used.add(at);
+            click(`.tiles [data-chip="${at}"]`);
+            ['do', 'then', 'else'].filter((k) => k in Object(b)).forEach((k, a) => { click(`.program button.slot[data-list="${[...path, i, a].join()}"]`); lay(b[k], [...path, i, a]); });
+            if (typeof b === 'object' && ('do' in b || 'then' in b)) click(`.program button.slot[data-list="${path.join()}"]`);
+          });
+          lay(item.way, []);
+          click('.tiles .run');
+        } else { stop?.(); continue; }
+        await Promise.race([shown, new Promise((r) => setTimeout(r, 5000))]);
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const prog = app.querySelector('.program'), p = prog.getBoundingClientRect(), f = foot.getBoundingClientRect();
+        if (!foot.classList.contains('show')) out.push(`${item.id}: no verdict came`);
+        else if (p.bottom > f.top + 1 || (p.height < 43 && [...prog.querySelectorAll('.block')].some((b) => b.getBoundingClientRect().bottom > p.bottom + 1))) out.push(`${item.id}${right ? '' : ' (missed)'}: program ${Math.round(p.top)}-${Math.round(p.bottom)} against a verdict from ${Math.round(f.top)}`);
+        stop?.();
+      }
+    }
+    return out;
+  }, items);
+  const played = items.filter((i) => i.type !== 'teach');
+  expect(await answeredAt(played)).toEqual([]);
+  // And on the shortest page the app promises (412x533, a short phone under Chrome's bar), answered only: asked, the
+  // runner fits a program above the verdict to come, which this page without a runner can't show.
+  if (width === 360 && height === 640) {
+    await page.setViewportSize({ width: 412, height: 533 });
+    expect(await answeredAt(played), 'at 412x533').toEqual([]);
+  }
 });
 
 // A tall program on a 412x786 phone: the coach, the gaps and the map make room, so it reads whole above the tray
