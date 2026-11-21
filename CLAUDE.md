@@ -101,7 +101,10 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   asked, so it is in no one's way), `stall` (home reloaded until
   the screen stops changing) and `text` (the large-text tour at the phone's own font size). **What Firefox does differently:** it
   asks the person before it keeps a site's storage, it follows the phone's font size by zooming the whole page (216px wide at 2.0),
-  and it has no `navigator.vibrate`.
+  and it has no `navigator.vibrate`. What a bridged browser cannot do prints one line there and is not counted: haptics (`checkBuzz`),
+  `attach()`, `page.route`, Chrome's Default zoom and its devtools socket (`app`, `away-bare-app`, `sync`, `zoom`, `away-bare`). Every page
+  served carries the bridge; its locators take `hasText`, `>>`, `nth=`, `:visible` and `.and`, and any other option throws. In a plain run
+  `persist` comes before `persist-logged`, which then says storage is already kept and checks that nothing is asked.
 - `hands` plays by sight: with `HANDS_DIR` set it saves the screen and waits for one command at a time in a file (tap, swipe,
   type, back), each done with a real touch. It is how a blind playthrough is done (an agent that has not read the answers).
 
@@ -112,7 +115,7 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   prints "waiting for the emulator" until it can. Slot n is `emulator-<5554 + 2n>`; one already running there
   that no run started is waited for the same way. Then it boots the AVD (`--avd`, else `PHONE_AVD`, default
   `splendor36`; `--avd daybook_tablet` for a tablet) `-read-only` (which lets one AVD run several times over),
-  shuts it down at the end and lets go of the lock, on an error or Ctrl-C too. SDK from `ANDROID_HOME` or `~/Android/Sdk`.
+  shuts it down at the end and lets go of the lock, on an error (one nothing awaited too) or Ctrl-C. SDK from `ANDROID_HOME` or `~/Android/Sdk`.
 - Screenshots of the whole screen (keyboard included) go to `test-results/phone/<scenario>/NN-name.png`.
 - It prints page errors, failed requests, sideways overflow, and the device checks: during Calm,
   Chrome's stream is `state:started` in `dumpsys audio` with an active track in
@@ -191,7 +194,7 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   answer in `progress.start`). An order, never a lock. TypeScript and Test writing follow JavaScript's first 9 units;
   `test/code-courses.test.js` works that number out from every word they show and fails on a word taught nowhere.
 - **Chess games** (`src/chess/games.js`, the "Games" row on chess's home, a subject's `games`): replayable modes, each a one-entry session
-  for `run()` whose mount never calls `done`, so nothing is scored, scheduled or logged; a `.foot` banner ends a game and its button remounts it.
+  for `run()` whose mount never calls `done`, so nothing is scored, scheduled or logged; a `.foot` banner ends a game and its button remounts it (a Mate tier tapped while it stands goes through that button, so the board starts clean).
   Each game mounts through `fitGame()`, which calls the lessons' `fitBoard` (exercise.js; never a second fitter), and puts what it counts in the
   session bar with `inBar()`, where a lesson's meter is. A board being played keeps 40px squares; at a game's end its buttons go and the board sits above the banner.
   **Mate** (`mate.js`, `prover.js`, `prover-worker.js`): Daybook's game. `prover.js` is a port of its mate search on its own small

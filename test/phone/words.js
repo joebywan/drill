@@ -5,8 +5,9 @@
 //   then the same lesson again with no miss. Unit 1 done, its butterfly egg hatches there, and the garden's card says
 //   it is a butterfly.
 // - Maths' first lesson from nothing: its first egg arrives as a butterfly egg, and the garden's card says so.
-// - Maths' tab after a Chess lesson today (the log as a finished Chess lesson leaves it): Ada says today's learning is
-//   done, never that Maths is; Chess's tab says chess is.
+// - Maths' tab after a Chess lesson today (the log as a finished Chess lesson leaves it), for a learner who has done a
+//   Maths lesson before (a course's first meeting comes before this): Ada says today's learning is done, never that
+//   Maths is; Chess's tab says chess is.
 import { KAEDE_LINES, VOICES, verdicts } from '../../src/cast/lines.js';
 import { emptyProgress, finishSession } from '../../src/progress.js';
 import { subjects } from '../../src/subjects.js';
@@ -108,9 +109,10 @@ export default async (h) => {
   await page.evaluate(() => scrollTo(0, document.body.scrollHeight)); await shot('maths-egg-end');
   await garden('maths', /Blue Triangle butterfly · egg/);
 
-  // Maths' tab after a Chess lesson today.
+  // Maths' tab after a Chess lesson today. Ada has met this learner: until a Maths lesson is done she says her first
+  // meeting's line, which wins over this one.
   const chess = subjects.find((s) => s.id === 'chess').units[0].lessons[0];
-  const p = finishSession(base(), `chess:${chess.id}`, [{ key: 'chess:x', correct: true }], new Date(), { title: chess.title, mins: 3, course: 'chess' });
+  const p = finishSession({ ...base(), done: { [`maths:${maths.id}`]: true } }, `chess:${chess.id}`, [{ key: 'chess:x', correct: true }], new Date(), { title: chess.title, mins: 3, course: 'chess' });
   await page.evaluate(() => localStorage.setItem('wingbeat.course', 'maths'));
   await seed(p);
   await touch(btn(/^Learning(,|$)/)); await page.evaluate(() => scrollTo(0, 0)); await run(400);
