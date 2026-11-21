@@ -154,6 +154,8 @@ try {
     adb('install', '-r', '-g', apk); // -g: its runtime permissions granted, so Android's own notification dialog doesn't stand over the page
   }
   if (process.env.PHONE_FONT) adb('shell', 'settings', 'put', 'system', 'font_scale', process.env.PHONE_FONT);
+  // PHONE_ANIMATIONS=off: Android's "Remove animations", which browsers pass on as prefers-reduced-motion.
+  if (process.env.PHONE_ANIMATIONS === 'off') for (const k of ['animator_duration_scale', 'transition_animation_scale', 'window_animation_scale']) adb('shell', 'settings', 'put', 'global', k, '0');
 
   // localhost on the phone is this machine's port: a secure context, unlike http://10.0.2.2.
   if (served) {
@@ -247,6 +249,38 @@ try {
     if (terms && await tapUi('Continue')) { console.log('  Firefox first run: Continue (agrees to the Terms of Use)'); return true; }
     return false;
   };
+  /**
+   * Firefox's "Scroll to hide toolbar" turned off (Settings › Customize), unless PHONE_TOOLBAR=hides. With it on, the
+   * page's geometry and the screen disagree by the toolbar's height whenever it might slide: a fixed bottom bar's box
+   * is reported below the screen (its Continue under nothing the page can name), and a page scrolled by script to its
+   * end slides back. Taps aimed from the page would miss; test/phone/browser.js plays the default (hides) on purpose.
+   */
+  const keepToolbar = async () => {
+    const find = async (re, scrolls = 5) => {
+      for (let i = 0; i <= scrolls; i++) {
+        if (await tapUi(re)) { await sleep(1200); return true; }
+        adb('shell', 'input', 'swipe', '540', '1700', '540', '900', '300'); await sleep(800);
+      }
+      return false;
+    };
+    if (!(await tapUi(/^(More options|Main menu|Menu)$/))) return console.log('  Firefox: no menu button found, toolbar left as it is');
+    await sleep(1200);
+    if (!(await find(/^Settings$/, 2)) || !(await find(/^Customi[sz]e$/))) { adb('shell', 'input', 'keyevent', 'KEYCODE_BACK'); return console.log('  Firefox: Customize not found, toolbar left as it is'); }
+    for (let i = 0; i < 5; i++) {
+      const nodes = uiNodes(await screenXml());
+      const row = nodes.find((x) => !x.page && /Scroll to hide toolbar/i.test(x.text));
+      if (!row) { adb('shell', 'input', 'swipe', '540', '1700', '540', '900', '300'); await sleep(800); continue; }
+      // Its own switch: the one whose middle is level with the label's (the rows sit close; the one above is Pull to refresh).
+      const near = (x) => /Switch/.test(x.cls) && Math.abs(x.at[1] - row.at[1]) < 50;
+      const sw = nodes.find((x) => near(x) && x.checked);
+      if (process.env.FIRST_RUN_DUMP) writeFileSync(`${process.env.FIRST_RUN_DUMP}/customize.xml`, await screenXml());
+      if (sw) { adb('shell', 'input', 'tap', String(sw.at[0]), String(sw.at[1])); await sleep(1000); }
+      const on = !!sw, now = uiNodes(await screenXml()).some((x) => near(x) && x.checked);
+      console.log(`  Firefox: "Scroll to hide toolbar" ${on ? (now ? 'is still on' : 'turned off') : 'was already off'}`);
+      break;
+    }
+    for (let i = 0; i < 4 && !uiNodes(await screenXml()).some((x) => !x.page && /localhost:\d+/.test(x.text + x.desc)); i++) { adb('shell', 'input', 'keyevent', 'KEYCODE_BACK'); await sleep(1000); }
+  };
   /** Opens `url` in a bridged browser and gets past its first-run screens until the page shows under the address bar. */
   const launch = async (url) => {
     // Chrome's first run is switched off as Playwright does it (its command-line file); Firefox's is got past by declinePrompts.
@@ -259,7 +293,10 @@ try {
     for (let i = 0; i < 60; i++) {
       await sleep(1500);
       const xml = await screenXml(), nodes = uiNodes(xml);
-      if (bridge.page.loads() && nodes.some((x) => !x.page && /localhost:\d+/.test(x.text + x.desc))) return; // the page, with the browser's own bar over it
+      if (bridge.page.loads() && nodes.some((x) => !x.page && /localhost:\d+/.test(x.text + x.desc))) { // the page, with the browser's own bar over it
+        if (BROWSER === 'firefox' && process.env.PHONE_TOOLBAR !== 'hides') await keepToolbar();
+        return;
+      }
       const shown = nodes.filter((x) => !x.page && (x.text || x.desc)).map((x) => x.text || x.desc).join(' | ');
       if (!seen.has(shown)) {
         seen.add(shown); console.log(`  waiting for the page; on screen: ${shown.slice(0, 300)}`);
@@ -295,6 +332,10 @@ try {
     // page.clock replaces it, so shot() can wait for frames the screen will really show.
     await page.addInitScript(() => { window.WINGBEAT_PLAIN = true; window.__frame = requestAnimationFrame.bind(window); });
     await page.clock.install(); // timed routines run on page.clock, so minutes take seconds
+    // PHONE_STYLE='<css>' adds a style to every page load: to find which rule a screen's trouble comes from (bisecting).
+    // PHONE_NOANIM='<selector>': Web Animations on the elements it matches (or inside them) run at once, for the same.
+    if (process.env.PHONE_NOANIM) await page.addInitScript((sel) => { const real = Element.prototype.animate; Element.prototype.animate = function (k, o) { return real.call(this, k, this.closest(sel) ? { ...(typeof o === 'number' ? {} : o), duration: 0, delay: 0, iterations: 1 } : o); }; }, process.env.PHONE_NOANIM);
+    if (process.env.PHONE_STYLE) await page.addInitScript((c) => addEventListener('DOMContentLoaded', () => { const s = document.createElement('style'); s.textContent = c; document.head.append(s); }), process.env.PHONE_STYLE);
     await load();
     await declinePrompts();
     const home = page.url();
@@ -304,7 +345,7 @@ try {
     // Chrome's Default zoom changes devicePixelRatio too (test/phone/zoom.js), so it is read again each time.
     let dpr = 1;
     const origin = { x: 0, y: 0 };
-    const shown = { height: 0, y: 0, top: false, mozY: undefined }; // the page as calibrated: its height, where it starts, the toolbar over it
+    const shown = { height: 0, y: 0, top: false }; // the page as calibrated: its height, where it starts, the toolbar over it
     const calibrate = async () => {
       let [sw, sh] = adb('shell', 'wm', 'size').match(/(\d+)x(\d+)\s*$/).slice(1).map(Number); // always the upright size
       if (await page.evaluate(() => innerWidth > innerHeight)) [sw, sh] = [sh, sw]; // a phone on its side
@@ -325,7 +366,7 @@ try {
       // A browser's toolbar slides away as a finger scrolls the page, and the page grows by its height: at the top, it
       // moves the page up the screen too. Where the toolbar is, and the page's height with it showing, aim taps after.
       const bar = uiNodes(await screenXml()).find((x) => !x.page && /localhost:\d+/.test(x.text + x.desc));
-      Object.assign(shown, { height: await page.evaluate(() => innerHeight), y: origin.y, top: !!bar && bar.at[1] < sh / 2, mozY: await page.evaluate(() => window.mozInnerScreenY) });
+      Object.assign(shown, { height: await page.evaluate(() => innerHeight), y: origin.y, top: BROWSER !== 'firefox' && !!bar && bar.at[1] < sh / 2 }); // Firefox's innerHeight grows by its toolbar on any page that scrolls, toolbar shown or not
       console.log(`page origin on screen (${pkg}): ${Math.round(origin.x)},${Math.round(origin.y)} (dpr ${dpr}, screen ${sw}x${sh}); real frames for shot(): ${await page.evaluate(() => String(window.__frame).includes('[native code]'))}`);
       if (bridge) console.log(`  page ${JSON.stringify(await page.evaluate(() => ({ inner: [innerWidth, innerHeight], visual: [visualViewport.width, visualViewport.height, visualViewport.offsetTop], screen: [mozInnerScreenX, mozInnerScreenY], vh: CSS.supports('height', '1dvh') })).catch((e) => e.message))}`);
     };
@@ -348,17 +389,38 @@ try {
       await loc.waitFor();
       const was = await page.evaluate(() => scrollY);
       await loc.scrollIntoViewIfNeeded();
-      // A page scrolled by script is drawn there a frame or two later (Firefox's compositor scrolls on its own): a finger
-      // put down before that lands on what was there before. Two real frames and a little more.
-      if (await page.evaluate(() => scrollY) !== was) {
-        await Promise.race([page.evaluate(() => new Promise((r) => (window.__frame ?? requestAnimationFrame)(() => (window.__frame ?? requestAnimationFrame)(r)))).catch(() => {}), sleep(1000)]);
-        await sleep(250);
+      // A page scrolled by script settles a moment later: Firefox draws it a frame or two after. Until it has stayed put
+      // for 400 ms (at most 3 s), so a finger isn't put down on what was there before.
+      const settle = async (from) => {
+        for (let at = await page.evaluate(() => scrollY), still = 0, t = 0; at !== from && still < 400 && t < 3000; t += 100) {
+          await sleep(100);
+          const now = await page.evaluate(() => scrollY);
+          still = now === at ? still + 100 : 0;
+          at = now;
+        }
+      };
+      await settle(was);
+      // Firefox for Android scrolled by script to the page's end slides back by its toolbar's height (the page can only
+      // reach its end with the toolbar slid away, which a finger does): a target left under a fixed bar is brought out
+      // as a person would, a finger drag up the page.
+      for (let i = 0; bridge && i < 3; i++) {
+        const under = await loc.evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          const t = document.elementFromPoint(r.x + r.width / 2, Math.min(r.y + r.height / 2, innerHeight - 1));
+          return t && (el.contains(t) || t.contains(el)) ? 0 : Math.round(r.y + r.height / 2 - innerHeight / 2);
+        });
+        if (under <= 0) break;
+        const from = await page.evaluate(() => scrollY);
+        const mid = Math.round(screenAt(0, (await page.evaluate(() => innerHeight)) * 0.6)[1]);
+        adb('shell', 'input', 'swipe', '540', String(mid), '540', String(Math.round(mid - Math.min(under, 300) * dpr)), '500');
+        console.log(`  ${loc} was under a fixed bar: a finger drag brought it up`);
+        await sleep(600); await settle(from);
       }
-      const [b, [height, mozY]] = await Promise.all([loc.boundingBox(), page.evaluate(() => [innerHeight, window.mozInnerScreenY])]);
-      // Firefox says where its page is on screen (mozInnerScreenY, CSS px), toolbar or not. Elsewhere: a toolbar at the top
-      // that slid away (or back) grew the page by at most its height; shrinking is the keyboard, which moves nothing.
-      if (mozY !== undefined) origin.y = shown.y + (mozY - shown.mozY) * dpr;
-      else if (shown.top) origin.y = shown.y - (height > shown.height && height - shown.height <= 80 ? height - shown.height : 0) * dpr;
+      const [b, height] = await Promise.all([loc.boundingBox(), page.evaluate(() => innerHeight)]);
+      // A toolbar at the top that slid away (or back) grew the page by at most its height (Chrome); shrinking is the
+      // keyboard, which moves nothing. Firefox's innerHeight and mozInnerScreenY change when its page doesn't move:
+      // there the tap's own landing, below, corrects the aim.
+      if (shown.top) origin.y = shown.y - (height > shown.height && height - shown.height <= 80 ? height - shown.height : 0) * dpr;
       const off = (size) => (random() * 2 - 1) * jitter * size / 2;
       const [x, y] = [Math.round(origin.x + (b.x + b.width / 2 + off(b.width)) * dpr), Math.round(origin.y + (b.y + b.height / 2 + off(b.height)) * dpr)];
       await loc.evaluate((el) => {
@@ -430,6 +492,7 @@ try {
       await page.reload({ waitUntil: 'networkidle' }); await run(800);
     };
     // Lumi's hop after a lesson (walkTo) runs on real time, 1.65 s: let it land before the shot.
+    let lastShot = null;
     const shot = async (label) => {
       // At most 3 s: a page out of sight (another app in front) may never finish an animation.
       await Promise.race([page.evaluate(() => Promise.all(document.querySelector('.guide')?.getAnimations().map((a) => a.finished.catch(() => {})) ?? [])).catch(() => {}), sleep(3000)]);
@@ -444,7 +507,12 @@ try {
         for (let y = Math.round(origin.y) + 60; y < g.height - 300; y += 13) for (let x = 40; x < g.width - 40; x += 13) px.push(g.at(x, y).reduce((a, b) => a + b, 0));
         const mean = px.reduce((a, b) => a + b, 0) / px.length;
         const spread = Math.sqrt(px.reduce((a, b) => a + (b - mean) ** 2, 0) / px.length);
-        if (spread < 4 && await page.evaluate(() => document.getElementById('app')?.innerText.trim().length > 0).catch(() => false)) {
+        // The same picture as the shot before while the page now says something else: the screen stopped changing.
+        const text = await page.evaluate(() => document.getElementById('app')?.innerText ?? '').catch(() => '');
+        const sig = px.join();
+        if (lastShot && lastShot.sig === sig && lastShot.text !== text) console.log(`  FROZEN: ${path.split('/').slice(-2).join('/')} shows the same picture as ${lastShot.path.split('/').slice(-2).join('/')}, though the page has changed`);
+        lastShot = { sig, text, path };
+        if (spread < 4 && text.trim().length > 0) {
           const own = uiNodes(await screenXml()).filter((x) => !x.page && (x.text || x.desc)).map((x) => x.text || x.desc).join(' | ');
           console.log(`  BLANK: ${path.split('/').slice(-2).join('/')} shows the page's background only (the page has content); browser shows: ${own.slice(0, 200)}`);
         }

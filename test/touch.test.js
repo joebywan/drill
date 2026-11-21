@@ -23,3 +23,12 @@ test('no box that scrolls has a CSS mask', () => {
   const masked = rules.filter((r) => /mask(-image)?:\s*(?!none)/.test(r.body)).flatMap((r) => r.sel);
   assert.deepEqual(masked.filter((s) => scrolls.has(s) || [...scrolls].some((x) => x.endsWith(` ${s}`) || s.endsWith(` ${x}`))), []);
 });
+
+// The end screen's chips fade and rise in (app.js); with overflow: hidden on their rounded box, Firefox for Android on the
+// emulator stopped drawing at that frame for good, every page after it frozen, until the chips' clip was taken off
+// (phone runs ff17 to ff26: the freeze came and went with this one property).
+test('the end screen\'s chips, which animate in, do not clip their rounded corners', () => {
+  const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const chip = css.match(/(^|\n)\.chip \{([^}]*)\}/)[2];
+  assert.doesNotMatch(chip, /overflow:\s*hidden/);
+});

@@ -2,6 +2,7 @@
 // bar, top or bottom and sliding away as the page scrolls, against the app's fixed bars; the phone's back button
 // through nested screens (src/nav.js); swiping a box that scrolls in itself (scrollBox() in src/fit.js) and the page
 // behind it; pull to refresh at the top of home and mid-lesson. Prints what it measures; checks what must hold.
+// In Firefox run it with its toolbar as it ships, sliding away: `PHONE_TOOLBAR=hides npm run phone -- --browser firefox browser`.
 import { readFileSync } from 'node:fs';
 import { withCheckpoint } from '../../src/repeat.js';
 import testing from '../../src/code/courses/testing.js';
@@ -40,8 +41,16 @@ export default async (h) => {
     if (c) check(`${where}: the bottom button sits in the thumb's reach (lower third)`, c.top > H * 0.6, `${Math.round(c.top)} of ${H}`);
   };
 
-  // 1. The address bar against the app's fixed bars: home at the top and scrolled, a lesson, its verdict.
+  // 0. What this browser offers the app: haptics, keeping the screen on, a voice (src/feel.js, src/practice/kit.js).
   await seed(thirtyDays(1));
+  const apis = await page.evaluate(async () => {
+    const lock = navigator.wakeLock ? await navigator.wakeLock.request('screen').then((l) => { l.release(); return 'granted'; }, (e) => `refused: ${e.name}`) : 'missing';
+    const voices = typeof speechSynthesis === 'undefined' ? null : await new Promise((r) => { const v = speechSynthesis.getVoices(); if (v.length) r(v); else { speechSynthesis.onvoiceschanged = () => r(speechSynthesis.getVoices()); setTimeout(() => r(speechSynthesis.getVoices()), 3000); } });
+    return { vibrate: typeof navigator.vibrate, vibrateAnswers: navigator.vibrate?.(1) ?? null, wakeLock: lock, speech: voices === null ? 'missing' : `${voices.length} voices${voices.some((v) => /^ja/.test(v.lang)) ? ', Japanese among them' : ''}`, persist: !!navigator.storage?.persist };
+  });
+  console.log(`  this browser offers: ${JSON.stringify(apis)}`);
+
+  // 1. The address bar against the app's fixed bars: home at the top and scrolled, a lesson, its verdict.
   const cont = page.getByRole('button', { name: /^Continue · / });
   const top = await bar();
   console.log(`  address bar at ${top ? `${top.top}-${top.bottom} (${top.top > H / 2 ? 'bottom' : 'top'})` : 'not found'}; page origin ${screenAt(0, 0).map(Math.round)}`);

@@ -1,13 +1,12 @@
 // Firefox for Android on the emulator stopped drawing home a month in: the page whole in the DOM, the screen its
 // background only, then `screencap` never returning and Android's graphics composer and allocator at full CPU until
 // system_server restarted. This loads that home again and again and times a screenshot each time, so the screen
-// stalling shows as a number. STALL_STYLE='<css>' adds a style to every load, to find the rule that does it.
+// stalling shows as a number. PHONE_STYLE='<css>' (tools/phone.js) adds a style to every load, to find the rule that does it.
 import { atTop, showTab, thirtyDays } from './lib/seed.js';
 
 export default async (h) => {
   const { page, seed, touch, check, grab, shot } = h;
-  const css = process.env.STALL_STYLE;
-  if (css) await page.addInitScript((c) => addEventListener('DOMContentLoaded', () => { const s = document.createElement('style'); s.textContent = c; document.head.append(s); }), css);
+  const css = process.env.PHONE_STYLE;
   console.log(`  style added: ${css ?? 'none'}`);
   let stalled = 0, last = null;
   for (let i = 0; i < 8 && !stalled; i++) {

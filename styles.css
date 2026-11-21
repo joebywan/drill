@@ -278,7 +278,9 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 }
 .summary h1 { font-size: 1.45rem; line-height: 1.25; margin: 4px 0 8px; text-wrap: balance; }
 .chips { display: flex; gap: 10px; margin: 0 0 12px; }
-.chip { flex: 1; min-width: 0; border-radius: 14px; border: 2px solid var(--c); background: var(--c); overflow: hidden; }
+/* No overflow: hidden: the chips fade in (app.js), and a rounded box that clips while it animates stopped Firefox for
+   Android drawing for good on the emulator, every page after it frozen (phone runs ff17 to ff26). Its own corners fit. */
+.chip { flex: 1; min-width: 0; border-radius: 14px; border: 2px solid var(--c); background: var(--c); }
 .chip span { display: block; padding: 4px 2px; font-size: .7rem; font-weight: 800; letter-spacing: .05em; color: var(--chip-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chip b { display: block; padding: 10px 4px; border-radius: 12px; background: var(--card); color: var(--c); font-size: 1.3rem; }
 .chip.acc { --c: var(--chip-acc); }
