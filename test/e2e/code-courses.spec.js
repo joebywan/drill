@@ -76,6 +76,8 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
       const reserved = parseFloat(getComputedStyle(bubble).minHeight);
       if (item.prompt && bubble.offsetHeight > reserved + 1) note(`the prompt outgrows the bubble: ${bubble.offsetHeight} over ${reserved}`);
       if (document.documentElement.scrollWidth > innerWidth) note(`sideways ${document.documentElement.scrollWidth - innerWidth}`);
+      // Code to read never runs off the side of its box (Test writing's first card once did): a long line wraps.
+      for (const box of app.querySelectorAll('.quiz .card .glyph, .code-given')) if (box.scrollWidth > box.clientWidth + 1) note(`code runs ${box.scrollWidth - box.clientWidth}px off the side of its box`);
       stop?.();
     }
     return out;

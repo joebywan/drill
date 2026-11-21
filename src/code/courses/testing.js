@@ -16,8 +16,8 @@ const dbl = 'function dbl(n: number): number { return n * 2; }';
 const dblBroken = [broken('it adds 2 instead of doubling.', 'function dbl(n: number): number { return n + 2; }')];
 const isAdult = 'function isAdult(age: number): boolean { return age >= 18; }';
 const adultBroken = [broken('it says 18 is too young: > instead of >=.', 'function isAdult(age: number): boolean { return age > 18; }'), broken('it says yes to everyone.', 'function isAdult(age: number): boolean { return true; }')];
-const last = 'function last(xs: number[]): number | undefined { return xs[xs.length - 1]; }';
-const lastBroken = [broken('it gives the first one, not the last.', 'function last(xs: number[]): number | undefined { return xs[0]; }')];
+const last = 'function last(xs: number[]): number { return xs[xs.length - 1]; }';
+const lastBroken = [broken('it gives the first one, not the last.', 'function last(xs: number[]): number { return xs[0]; }')];
 const total = 'function total(xs: number[]): number { let t = 0; for (const x of xs) { t += x; } return t; }';
 const totalBroken = [broken('it skips the first number.', 'function total(xs: number[]): number { let t = 0; for (let i = 1; i < xs.length; i++) { t += xs[i]; } return t; }'), broken('it starts from 1, not 0.', 'function total(xs: number[]): number { let t = 1; for (const x of xs) { t += x; } return t; }')];
 const evens = 'function evens(xs: number[]): number[] { return xs.filter((x) => x % 2 === 0); }';
@@ -33,11 +33,12 @@ const gradeBroken = [broken('80 lands in mid: > instead of >=.', 'function band(
 
 const course = {
   id: 'testing',
+  follows: { course: 'javascript', units: 9 }, // the JavaScript it builds on: its first units (test/code-courses.test.js works it out)
   title: 'Test writing',
   units: [
     unit('Your first test',
       lesson('tt-1', 'Check an answer', [
-        T('A test is code that checks code. It calls a function with values you pick, and says what should come back. test gives it a name.', `${add} test("adds", () => { expect(add(2, 3)).toBe(5); });`),
+        T('A test is code that checks code. expect(add(2, 3)).toBe(5) says add(2, 3) should give 5, and test gives the check a name. Labels like a: number say what each input holds.', `${add} test("adds", () => { expect(add(2, 3)).toBe(5); });`),
         T('Here is how I grade you: your test must pass on the real code above it, and then fail on faulty copies I made. If a faulty copy gets through, your test missed it.', `${dbl} test("doubles", () => { expect(dbl(3)).toBe(6); });`),
         F(add, addBroken, 'test("adds", () => { expect(add(2, 3)).toBe(___); });', ['5'], 'What should add(2, 3) give?', 'Right on the real code, and it catches both faulty copies.', ['6', '23']),
         F(dbl, dblBroken, 'test("doubles", () => { expect(dbl(3)).___(6); });', ['toBe'], 'Which word compares the answer?', 'expect(...).toBe(...) is the whole shape.', ['expect', 'test']),

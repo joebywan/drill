@@ -542,6 +542,13 @@ html { scroll-padding-bottom: calc(160px * var(--text-scale, 1)); }
 .intro .choice[aria-pressed="true"] { border-color: var(--accent); }
 .intro .choice[aria-pressed="true"]::after { content: '✓' / ''; background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
 .branch .choice:disabled { color: var(--muted); border-style: dashed; }
+/* What each thing is, in one line under its name; a course that follows another sits under it. */
+.choice .about { display: block; margin-top: 2px; font-size: .8rem; font-weight: 400; line-height: 1.3; color: var(--muted); }
+.survey .choice:has(.about) { padding-top: 10px; padding-bottom: 10px; }
+.branch .choice.follows { width: calc(100% - 16px); margin-left: 16px; }
+.picked-too { margin: 4px 0; font-size: .85rem; text-align: left; }
+.picked-too:empty { display: none; }
+.add-course .offers { grid-template-columns: 1fr; }
 
 /* Your timings (app.js timingsView): a − and + stepper per value, thumb-sized, the default beside it. */
 .habit :is(.timings-link, .when-link) { margin: 8px 0 0; padding-left: 0; }
@@ -970,7 +977,7 @@ body:has(main.night) {
 .code-item .grid-world { width: min(100%, calc(var(--w) * 40px), calc(var(--w) * 16vh / var(--h))); margin-bottom: 6px; }
 .code-goal { display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 4px 8px; margin: 0 0 6px; font-size: .85rem; color: var(--muted); }
 .code-goal :is(code, .code-out) { min-width: 0; margin: 0; max-height: 4.6em; overflow-y: auto; padding: 2px 8px; border-radius: 6px; background: var(--card); border: 1px solid var(--line); color: var(--text); font: 600 .85rem/1.4 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
-.code-given { overflow-x: auto; margin-bottom: 6px; font-size: .78rem; } /* as tall as fits: share() in src/code/exercise.js */
+.code-given { white-space: pre-wrap; overflow-wrap: anywhere; margin-bottom: 6px; font-size: .78rem; } /* as tall as fits: share() in src/code/exercise.js */
 .code-program { display: block; overflow-y: auto; }
 .code-program .code { overflow: auto; max-height: 100%; font-size: .8rem; }
 .code-program.shown .code { border-color: var(--accent); }
@@ -997,7 +1004,7 @@ body:has(main.night) {
 .quiz.code-look.tight .card { padding: 8px; } /* giving way, as other cards do (.quiz.tight .card) */
 .quiz.code-look .card:not(:has(*)) { display: none; }
 /* Ahead of .quiz.tight's glyph by specificity, not by place in the file: code keeps its size when the card gives way. */
-.quiz.code-look .card .glyph { font: 600 .9rem/1.5 var(--mono); text-align: left; white-space: pre; overflow-x: auto; } /* as tall as fits: fitCard() */
+.quiz.code-look .card .glyph { font: 600 .9rem/1.5 var(--mono); text-align: left; white-space: pre-wrap; overflow-wrap: anywhere; } /* as tall as fits: fitCard(); a line too long for a phone wraps rather than run off the side */
 .quiz.code-look .reading { font: 600 .85rem/1.4 var(--mono); text-align: left; white-space: pre-wrap; }
 .quiz.code-look .choices { flex-wrap: wrap; }
 .quiz.code-look .choices .choice { flex: 1 1 40%; min-height: 48px; padding: 8px; font: 700 .95rem/1.3 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }

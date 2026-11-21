@@ -131,7 +131,9 @@ export async function playCourse(h, { course, unit = 1, only, answer, small, par
   const restored = unit > 1 && saved && before.every((l) => saved.done?.[key(l)]) ? saved : null;
   // A short phone first, so the taps are aimed where its smaller screen puts the page (`calibrate` blanks the page; seed loads it).
   if (small) { adb('shell', 'wm', 'size', small); await run(1500); await h.calibrate?.(); }
-  await seed(restored ? { ...restored, done } : { done }); // only what is behind this unit counts as done, so a unit can be played again
+  // A course that follows another is played as by someone who chose "I know JavaScript: start here" (progress.js waits).
+  const chosen = course.follows ? { start: { ...restored?.start, [course.id]: restored?.start?.[course.id] ?? course.units[0].title } } : {};
+  await seed(restored ? { ...restored, done, ...chosen } : { done, ...chosen }); // only what is behind this unit counts as done, so a unit can be played again
 
   await page.evaluate(() => { window.WINGBEAT_PLAIN = false; }); // the app reads it as it goes: warm-ups, echoes and checkpoints on, as a learner has them
   const events = [];
