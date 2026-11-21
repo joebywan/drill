@@ -238,7 +238,7 @@ chips, because one tap to play or to switch course is worth more than their row.
   bubble again (it had been growing since F4).
 - [x] **F8. Firefox:** (#167) the browser suite and a walk through the main screens, run in desktop Firefox:
   nothing a person would notice differs. `npm run e2e:firefox` runs it, silently. Firefox for Android itself
-  is still unplayed.
+  was played later (E22).
 
 **A lighter home**
 
@@ -281,6 +281,9 @@ chips, because one tap to play or to switch course is worth more than their row.
 - [x] **E21. In view once answered** (#201): an answered chess board at the largest text and an answered Coding program on a
   short phone sit above the verdict, the coach's kept room and the map giving way first; tablet runs calibrate; the browser
   suites keep out of the phone's pictures.
+- [x] **E22. Firefox for Android** (#181): played on the emulator through a bridge in the page. Two things stopped it drawing
+  for good, the tabs row's mask and the end screen's chips clipping as they came in; both are gone and look the same. The blank
+  Meet button was hunted (220 openings, 432 looks) and not seen.
 
 **Waiting on the owner** (found by playing, not changed)
 
