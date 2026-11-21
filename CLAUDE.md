@@ -82,7 +82,7 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   **A page the runner is attached to never goes to the background** (Chrome is started to keep drawing, and the harness holds
   the screen on), so anything about being away from a routine is played by `away-bare` and `away-bare-app`, which let go of
   the page first. `test/phone/lib/device.js` has `turn` (the one way to turn the screen; `rotate` runs only with `ROTATE` set),
-  `putDown`, `screenOff`, `awake`. Never run the Playwright e2e during a phone run: it empties `test-results/`, the phone's pictures with it.
+  `putDown`, `screenOff`, `awake`. The browser suites keep their output in `test-results/e2e`, `e2e-firefox` and `live` (each config's `outputDir`), so they never empty the phone's pictures.
 - `hands` plays by sight: with `HANDS_DIR` set it saves the screen and waits for one command at a time in a file (tap, swipe,
   type, back), each done with a real touch. It is how a blind playthrough is done (an agent that has not read the answers).
 
@@ -109,7 +109,8 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   the software-rendered emulator. Playwright pins `prefers-color-scheme` to light, so the runner turns that off
   (`emulateMedia({ colorScheme: null })`) and the phone's own night mode shows. After `wm size` (a short phone)
   Chrome's toolbar moves and the page sits elsewhere on screen: `calibrate()` measures it again, and `tools/play.js`
-  calls it. `play.js` also flags a tap that another element took, or a target partly under another's.
+  calls it. It reads the screen as it is now (`dumpsys window displays`, `cur=`), so a tablet that boots on its side is measured
+  right, taps off to the side on every other try (a first-run overlay can sit over the middle) and works the origin out from the tap that landed. `play.js` also flags a tap that another element took, or a target partly under another's.
 - **One network that stays put.** The emulators share one simulated Wi-Fi (the emulator's `netsimd`), which drops when
   another emulator starts or stops; Android then moves to mobile data and Chrome fails whatever it is fetching
   (`net::ERR_NETWORK_CHANGED` on the page's own files, or a page that never loads). The runner turns Wi-Fi off and
@@ -147,6 +148,9 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   item can say (`sayings()`: every line Rosa says mid-item is one constant used by the mount and by `sayings()`), and decides
   `tall` only while asked. `test/e2e/board-still.spec.js` holds the board's top through every move, right and wrong, at three
   sizes. A stars item's `intro` stays with its prompt until the first move; the board is `aria-busy` while a demo plays.
+  **Once answered, being in view comes first:** if the board could not sit whole above the verdict even at its answered size (larger
+  text keeps tall room for her words), her kept room goes, then `tall`, then `tighter`, and only then the board shrinks
+  (`test/e2e/large-text.spec.js` plays three items right and wrong at 125% and 200%).
 - **Promotion:** `withPromotion()` in exercise.js is the one picker (cm-chessboard's dialog, on every `board()`), used by puzzles, move items, stars, Mate and Play Rosa; Scramble has no pawns of yours. `tryMove()` returns `'piece'` for the right square with a piece the line doesn't need, explained and free; any mate still counts.
 - **Stars** teach pieces by play: move your piece onto every gold star within a move budget; the
   other side never moves, and kings are optional (chess.js `skipValidation`). A piece's first
@@ -191,7 +195,9 @@ or minimum font size in a desktop browser is `test/e2e/large-text.spec.js`. `tes
   The verdict gives way too (`giveWay(foot)`): it is at most half the screen (`.foot`, 50dvh); past that its headline is
   held to two lines and to the explanation's size, then its words `scrollBox()`. `verdictHeight()` measures it that way,
   under the coach's longest headline (`longestVerdict()`; tests pin that line with `WINGBEAT_LONGEST`). A program is
-  never boxed to under a line: if the verdict would leave less, the coach gives way first. A verdict is never shorter
+  never boxed to under a line: answered, `settle()` has the map give way first (it is no longer tapped: down to 28px squares),
+  then the coach (`.tall`), then her words keep only the room they take (`.tighter`); `flows.spec.js` answers every Coding item
+  under the longest headline at four sizes. A verdict is never shorter
   than the fixed tray of answers it replaces, so no row shows above it. `giveRoom(over, steps)` is the one helper for a
   whole screen giving way: each step is a give and its undo, taken in order while something is still covered, and all
   undone if together they cannot be enough.
