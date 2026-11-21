@@ -225,7 +225,8 @@ function home(arrived = null, newly = []) {
   const units = waiting ? [] : shownSubjects.flatMap((s) => unitsOf(progress, s));
   // A subject's optional placement question, offered by its path until answered or dismissed.
   const offer = shownSubjects.find((s) => offersPlacement(progress, s));
-  const brandNew = !progress.log.length && !Object.keys(progress.done).length;
+  // Not brand new for a course the learner has just started here ("I know JavaScript"): its coach's own first meeting speaks.
+  const brandNew = !progress.log.length && !Object.keys(progress.done).length && !(parent && typeof progress.start?.[courseShown.id] === 'string');
   // After the intro, Lumi's welcome names the first thing picked.
   // A course pick is kept as the Learning habit; the course it named is the one shown, so that names it.
   const first = progress.picked?.[0];
@@ -1152,7 +1153,16 @@ function run(lessonId, queue, title, extra = null) {
   $('.who').addEventListener('click', () => {
     play('tap');
     sessionCoach.hop();
-    heard = [...heard, line('tapped', Math.random(), who.lines, heard)].slice(-3);
+    // Only an aside that fits the bubble as it stands, so nothing under it ever moves; none fits, she keeps what she was saying.
+    const copy = bubble.cloneNode(false);
+    copy.removeAttribute('id');
+    copy.removeAttribute('aria-live');
+    copy.style.cssText += `;position:absolute;visibility:hidden;width:${bubble.offsetWidth}px`;
+    bubble.after(copy);
+    const fits = (who.lines ?? LINES).tapped.filter((t) => { copy.textContent = t; return copy.offsetHeight <= bubble.offsetHeight; });
+    copy.remove();
+    if (!fits.length) return;
+    heard = [...heard, line('tapped', Math.random(), { tapped: fits }, heard)].slice(-3); // not one of the last few, unless only those fit
     bubble.textContent = heard.at(-1);
     clearTimeout(aside);
     aside = setTimeout(() => { bubble.textContent = said; }, 2500);

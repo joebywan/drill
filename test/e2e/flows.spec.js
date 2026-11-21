@@ -173,6 +173,8 @@ test('intro, TypeScript only: JavaScript is picked with it, and its tab offers J
   await page.locator('[data-course="typescript"]').click();
   await page.getByRole('button', { name: 'I know JavaScript: start here' }).click();
   await expect(page.getByRole('button', { name: 'Continue · Say what it holds' })).toBeFocused();
+  await expect(page.getByText('TypeScript is first.')).toHaveCount(0); // that line is for a first pick; here the course's coach meets them
+  await expect(page.locator('.welcome.greeting')).toBeVisible();
   await page.reload();
   await expect(page.getByRole('button', { name: 'Continue · Say what it holds' })).toBeVisible(); // remembered, like a placement answer
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wingbeat.progress')).start)).toEqual({ typescript: 'Annotations' });

@@ -7,7 +7,7 @@ import tactics from '../src/data/tactics.json' with { type: 'json' };
 import { subjects } from '../src/subjects.js';
 import { Chess } from 'chess.js';
 import { uci } from '../src/chess/puzzle.js';
-import { answer, attacked, explanation, grade, hop, kind, meets, problem, solutions, starPath, words } from '../src/chess/items.js';
+import { answer, attacked, explanation, grade, hop, kind, meets, problem, solutions, starPath, starsPrompt, words } from '../src/chess/items.js';
 import { helpFor } from '../src/adapt.js';
 import terms from '../src/data/chess-terms.json' with { type: 'json' };
 
@@ -231,4 +231,11 @@ test('a stars item\'s arrows go through the squares its first sentence names, in
     }
     assert.equal(problem(item), null, item.id);
   }
+});
+
+test('a stars prompt reads naturally for one, two and more stars', () => {
+  const p = (n) => starsPrompt({ stars: ['a1', 'a2', 'a3', 'a4'].slice(0, n), moves: 2 });
+  assert.equal(p(1), 'Collect the star in 2 moves.');
+  assert.equal(p(2), 'Collect both stars in 2 moves.');
+  assert.equal(p(3), 'Collect all 3 stars in 2 moves.');
 });

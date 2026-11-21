@@ -442,6 +442,7 @@ const MOUNTS = {
     drawStars();
     if (item.new) {
       boardEl.style.position = 'relative';
+      boardEl.style.marginTop = 'calc((var(--text-scale, 1) - 1) * 12px)'; // the tag hangs over the top edge and grows with the text: room under the bubble, none at ordinary text
       boardEl.insertAdjacentHTML('beforeend', `<span style="position:absolute;top:0;left:50%;transform:translate(-50%,-50%);z-index:2;
         padding:2px 10px;border-radius:999px;background:var(--accent);color:var(--accent-text);font-size:.75rem;font-weight:800;
         letter-spacing:.08em;white-space:nowrap;pointer-events:none">NEW PIECE · ${item.new.toUpperCase()}</span>`);

@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures.js';
+import { test, expect, reach } from './fixtures.js';
 import { subjects } from '../../src/subjects.js';
 import { kind } from '../../src/chess/items.js';
 import { mountChess, plays, playSteps, settles } from './chess-plays.js';
@@ -37,5 +37,27 @@ for (const [width, height] of [[412, 786], [360, 640], [412, 533]]) {
     }
     await page.evaluate(() => window.stopItem?.());
     expect(bad).toEqual([]);
+  });
+}
+
+// Tapping Rosa mid-item (the runner's `.who` click, app.js): she says only an aside that fits her bubble as it stands, so a
+// dozen taps never move the board; where there is room (a taller phone) one of her asides is said.
+const rook = chess.units.flatMap((u) => u.lessons).flatMap((l) => l.items).find((i) => i.id === 'moves-0-rook');
+for (const [width, height] of [[360, 640], [412, 533], [412, 786]]) {
+  test(`a tap on Rosa mid-item never moves the board, at ${width}x${height}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await reach(page, 'chess', 'moves-0', rook.id);
+    await page.waitForTimeout(settles(rook));
+    const top = () => page.locator('div.board').evaluate((b) => b.getBoundingClientRect().top + scrollY);
+    const asked = await top();
+    const { LINES } = await import('../../src/cast/lines.js');
+    let aside = false;
+    for (let n = 0; n < 12; n++) {
+      await page.locator('.who').click();
+      aside ||= LINES.tapped.includes(await page.locator('.bubble').textContent());
+      expect(await top(), `tap ${n}`).toBeCloseTo(asked, 0);
+      await page.waitForTimeout(150);
+    }
+    if (width === 412 && height === 786) expect(aside, 'one of her asides is said').toBe(true);
   });
 }

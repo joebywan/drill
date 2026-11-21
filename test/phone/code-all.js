@@ -13,11 +13,11 @@ import testing from '../../src/code/courses/testing.js';
 
 const COURSES = { javascript, typescript, testing };
 // The parts of a code screen that must not sit on each other; the verdict may cover the tray, and the answers a quiz card offers.
-const PARTS = ['.bubble', '.grid-world', '.code-given', '.code-program', '.code-out', '.quiz .card', '.quiz .choices', '.tiles'];
-const TRAY = ['.tiles', '.quiz .choices'];
+export const PARTS = ['.bubble', '.grid-world', '.code-given', '.code-program', '.code-out', '.quiz .card', '.quiz .choices', '.tiles'];
+export const TRAY = ['.tiles', '.quiz .choices'];
 
 /** Taps one code item in, worked out from the item itself with the functions test/code-courses.test.js proves it with. */
-async function answerCode({ page, tap, btn }, item) {
+export async function answerCode({ page, tap, btn }, item) {
   if (item.type === 'teach') return;
   if (item.type === 'predict') {
     const { answer } = optionsOf(item);

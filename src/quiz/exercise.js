@@ -180,6 +180,10 @@ const TYPES = {
     choices.innerHTML = tiles.map((t) => button(t)).join('');
     say(item.prompt, 'think');
     const slots = [...card.querySelectorAll('.slot')];
+    // The slots keep the rows they will take once every one is filled (styles.css reads --rows), so filling never moves what is under them.
+    slots.forEach((s, n) => { s.textContent = item.answer[n]; });
+    card.querySelector('.slots').style.setProperty('--rows', new Set(slots.map((s) => s.offsetTop)).size);
+    slots.forEach((s) => { s.textContent = ''; });
     const empty = () => slots.filter((s) => !s.textContent);
     const put = (slot, b) => {
       if (b.textContent === nextTile(item, slots.indexOf(slot))) {

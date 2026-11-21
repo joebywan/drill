@@ -130,8 +130,11 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
 25. **A verdict never takes more than half the screen.** Decision 21 holds against the verdict too. Past
     half the screen it gives way: its headline first (no bigger than the explanation when text is
     larger, two lines at most), then its words scroll in their own box, Continue always in view.
-    Whatever fits itself above the verdict gets the other half. On a page past what the app promises
-    (206px wide, Chrome at 200% zoom) nothing is lost: what the verdict covers can be scrolled clear.
+    Whatever fits itself above the verdict gets the other half. While an item is played, what is
+    tapped stays where it is; once it is answered, being in view above the verdict comes first (the
+    coach's kept room and a map no longer tapped give way before the board or the program does).
+    On a page past what the app promises (206px wide, Chrome at 200% zoom) nothing is lost: what
+    the verdict covers can be scrolled clear.
 26. **Some courses follow another.** TypeScript and Test writing follow JavaScript's first nine units (a
     test works that number out from every word they show). Until those are done, the follow-on's tab
     offers JavaScript first, with one tap to start anyway ("I know JavaScript: start here"). It is an
@@ -235,7 +238,7 @@ chips, because one tap to play or to switch course is worth more than their row.
   bubble again (it had been growing since F4).
 - [x] **F8. Firefox:** (#167) the browser suite and a walk through the main screens, run in desktop Firefox:
   nothing a person would notice differs. `npm run e2e:firefox` runs it, silently. Firefox for Android itself
-  is still unplayed.
+  was played later (E22).
 
 **A lighter home**
 
@@ -275,6 +278,12 @@ chips, because one tap to play or to switch course is worth more than their row.
   Mate says when it has no connection, a phone on its side is asked upright, and a voice is offered only where one can be had.
 - [x] **E20. The largest text and small targets** (#197, decision 29): home and the end screens give way at the largest
   text, a verdict covers the tray it replaces, a placed word is 40px, and tight Coding blocks reach a thumb's 44px.
+- [x] **E21. In view once answered** (#201): an answered chess board at the largest text and an answered Coding program on a
+  short phone sit above the verdict, the coach's kept room and the map giving way first; tablet runs calibrate; the browser
+  suites keep out of the phone's pictures.
+- [x] **E22. Firefox for Android** (#181): played on the emulator through a bridge in the page. Two things stopped it drawing
+  for good, the tabs row's mask and the end screen's chips clipping as they came in; both are gone and look the same. The blank
+  Meet button was hunted (220 openings, 432 looks) and not seen.
 
 **Waiting on the owner** (found by playing, not changed)
 
