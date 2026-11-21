@@ -394,12 +394,13 @@ test('the timings screen makes no claims, never hurries and never pushes', () =>
 
 // Coding: Fennel's lines and the course's words get the same lint as Rosa's, and his lines cover
 // every kind a learn session and its end screen ask for.
-import { CODE_HEADLINES, CODE_LINES, CODING_HEADLINES, CODING_LINES } from '../src/cast/lines.js';
+import { CODE_HEADLINES, CODE_LINES, CODING_HEADLINES, CODING_LINES, RUN_ENDS } from '../src/cast/lines.js';
 import codingCourse from '../src/data/coding.json' with { type: 'json' };
 
 test("Fennel's lines and the Coding course pass the lint, and cover every kind a lesson uses", () => {
   const text = [
     ...[CODING_LINES, CODING_HEADLINES].flatMap((all) => Object.entries(all).flatMap(([kind, list]) => list.map((t) => [kind, t]))),
+    ...Object.entries(RUN_ENDS).map(([end, t]) => [`RUN_ENDS.${end}`, t]),
     ...strings(codingCourse).filter((t) => /\s/.test(t)).map((t) => ['coding.json', t]),
     ...strings(JSON.parse(readFileSync('src/data/coding-variants.json', 'utf8'))).filter((t) => /\s/.test(t)).map((t) => ['coding-variants.json', t]),
     ...strings(JSON.parse(readFileSync('src/data/maths-variants.json', 'utf8'))).filter((t) => /\s/.test(t)).map((t) => ['maths-variants.json', t]),

@@ -68,6 +68,35 @@ test('a wrong tile ends the item with the answer shown, and the item comes back 
   await expect(page.getByText(`${n - 1} of ${n} right first try`)).toBeVisible();
 });
 
+test('a miss on a build shows what was put, marked as theirs, with the right answer, and the card does not move', async ({ page }) => {
+  await pickMaths(page);
+  await page.getByRole('button', { name: `Continue · ${first.title}` }).click();
+  const tiles = first.items.find((i) => i.type === 'build' && answer(i).length > 1);
+  for (const item of first.items.slice(0, first.items.indexOf(tiles))) { await solve(page, item); await continueButton(page).click(); }
+  const right = [...answer(tiles)]; // its digits, one to a slot
+  const card = () => page.locator('.quiz .card').boundingBox();
+  const asked = await card();
+  await page.locator('.choices .choice').filter({ hasText: new RegExp(`^${right[0]}$`) }).first().click();
+  const slip = page.locator('.choices .choice:not(:disabled)').filter({ hasNotText: new RegExp(`^${right[1]}$`) }).first();
+  const put = await slip.textContent();
+  await slip.click();
+  await expect(page.locator('.foot.wrong')).toBeVisible();
+  await expect(page.locator('.quiz .yours')).toBeVisible();
+  await expect(page.locator('.quiz .yours')).toHaveText(`You put ${right[0]}${put}${'_'.repeat(right.length - 2)}`);
+  await expect(page.locator('.quiz .slot')).toHaveText(right);
+  expect(await card()).toEqual(asked);
+
+  // Japanese builds share it: word tiles are put back with spaces.
+  await page.evaluate(async () => {
+    const { mount } = await import('/src/quiz/exercise.js');
+    document.getElementById('app').innerHTML = '<main class="play"><div class="stage"></div></main>';
+    mount(document.querySelector('.stage'), { id: 'j', type: 'build', prompt: 'p', answer: ['これは', 'ねこです'], tiles: ['いぬです'], explain: 'e' }, { say() {}, done() {}, lang: 'ja-JP' });
+  });
+  await page.locator('.choices .choice', { hasText: 'これは' }).click();
+  await page.locator('.choices .choice', { hasText: 'いぬです' }).click();
+  await expect(page.locator('.quiz .yours')).toHaveText('You put これは いぬです');
+});
+
 test('maths cards come back in review, on the shared Learning review', async ({ page }) => {
   const then = new Date();
   then.setDate(then.getDate() - 30);

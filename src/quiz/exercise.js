@@ -24,7 +24,7 @@ export function mount(el, item, ctx) {
   const glyph = (text) => `<p class="glyph" style="--len:${[...text].length}">${esc(text)}</p>`;
   const art = item.picture && ctx.art ? ctx.art(item.picture) : '';
   el.innerHTML = `<div class="quiz ${esc(ctx.look || '')}" lang="${esc(lang)}">
-    <div class="card">${art}${item.type === 'build' ? `${item.show ? `<p class="meaning">${esc(item.show)}</p>` : ''}<p class="slots">${item.answer.map(() => '<span class="slot"></span>').join('')}</p>`
+    <div class="card">${art}${item.type === 'build' ? `${item.show ? `<p class="meaning">${esc(item.show)}</p>` : ''}<p class="slots">${item.answer.map(() => '<span class="slot"></span>').join('')}</p><p class="yours" lang="en"></p>`
       : item.type === 'pairs' || listening || !item.show ? '' : glyph(item.show)}
       ${item.type === 'teach' && item.read ? `<p class="reading" lang="en">${esc(item.read)}</p>` : ''}${item.type === 'pairs' ? '' : speaker}
       ${item.type === 'teach' && item.speak && offerVoice(lang) ? `<button class="link get-voice" lang="en">Get a ${esc(new Intl.DisplayNames(['en'], { type: 'language' }).of(lang.split('-')[0]))} voice</button>` : ''}</div>
@@ -190,6 +190,10 @@ const TYPES = {
         if (empty().length) return play('tap');
       } else {
         b.classList.add('wrong');
+        // What they put stays in sight, marked as theirs, over the right answer in the slots (its room was kept from the start).
+        const theirs = slots.map((s) => (s === slot ? b.textContent : s.textContent || '_'));
+        card.querySelector('.yours').innerHTML = `You put <s>${esc(theirs.join(theirs.every((t) => [...t].length === 1) ? '' : ' '))}</s>`;
+        card.querySelector('.yours').classList.add('said');
         for (const s of empty()) { s.textContent = item.answer[slots.indexOf(s)]; s.classList.add('shown'); }
       }
       for (const x of choices.children) x.disabled = true;

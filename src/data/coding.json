@@ -10,7 +10,7 @@
           "title": "First steps",
           "items": [
             { "id": "steps-0-meet", "type": "teach", "level": ["S..*"],
-              "text": "I follow steps, one at a time, in order. Your steps get me to the flower." },
+              "text": "I follow steps, one at a time, in order. Your steps get me to the flower. A step off the grid stops me." },
             { "id": "steps-0-one", "family": "walk-line", "type": "build", "level": [".S*."], "program": [null], "tiles": ["left","up","right"],
               "prompt": "Tap a step to get me to the flower.",
               "explain": "One step right and I'm there." },
@@ -40,8 +40,8 @@
           "id": "steps-1",
           "title": "Around the rock",
           "items": [
-            { "id": "steps-1-rock", "type": "teach", "level": ["S#*","..."],
-              "text": "Rocks are in the way. I can't walk through them, so the steps go around." },
+            { "id": "steps-1-rock", "type": "teach", "level": ["S.#*","...."], "program": ["right","right","down","right"],
+              "text": "Watch. A step into a rock stops me, and the steps after it never run. The edge of the grid stops me too. So your steps go around rocks." },
             { "id": "steps-1-around", "family": "rock-round", "type": "build", "level": ["S#*","..."], "program": [null,null,null,null], "tiles": ["right","up","down"],
               "prompt": "Get me round the rock to the flower.",
               "explain": "Down, right, right, up: under the rock and back up." },

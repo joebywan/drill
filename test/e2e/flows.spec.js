@@ -1,4 +1,4 @@
-import { test, expect, calmFinished } from './fixtures.js';
+import { test, expect, calmFinished, reach } from './fixtures.js';
 import { readFileSync } from 'node:fs';
 import { answer, kind, starPath } from '../../src/chess/items.js';
 import { emptyProgress, finishPractice, finishSession, leavePractice } from '../../src/progress.js';
@@ -6,6 +6,7 @@ import { middleFor } from '../../src/reflect/practice.js';
 import { award } from '../../src/garden/model.js';
 import { answer as stopsAt, fixBug, mirrored, solve as oneWay, tileName } from '../../src/coding/program.js';
 import { withCheckpoint } from '../../src/repeat.js';
+import { RUN_ENDS } from '../../src/cast/lines.js';
 
 // The first lesson on the path. Its answers are worked out from the course data with the same
 // item logic the app uses, so the test follows the content when it changes.
@@ -2003,6 +2004,29 @@ test('Coding: a full first lesson with Fennel, a wrong run shown and replayed, t
   await expect(page.getByText(`${marked} of ${marked} recalled`)).toBeVisible();
 });
 
+test('Around the rock: the card shows a step into a rock ending the run, and a miss that walks into it is shown, said, then replaced', async ({ page }) => {
+  await reach(page, 'coding', 'steps-1', 'steps-1-rock');
+  // The card: he walks one step, bumps the rock, and the steps after it stay unrun.
+  await expect(page.locator('.program .block.stopped')).toHaveCount(1);
+  await expect(page.locator('.program .block.unrun')).toHaveCount(2);
+  await expect(page.locator('.grid-world .cell.hit')).toHaveCount(1);
+  await continueButton(page).click();
+  // The first build, wrong on purpose: the first step walks into the rock.
+  const tile = (name) => page.locator('.tiles').getByRole('button', { name, exact: true });
+  for (const step of ['right', 'down', 'right', 'up']) await tile(`Step ${step}`).click();
+  // Their own program stays, marked where it stopped, and Fennel says why, before anything else comes.
+  await expect(page.locator('#said')).toHaveText(RUN_ENDS.rock);
+  await expect(page.locator('.program .block.stopped')).toHaveAccessibleName('Step right');
+  await expect(page.locator('.program .block.unrun')).toHaveCount(3);
+  await expect(page.locator('.grid-world .cell.hit')).toHaveCount(1);
+  await expect(page.locator('.program.shown')).toHaveCount(0);
+  await expect(page.locator('.foot.show')).toHaveCount(0);
+  // Then the way that works takes its place, still saying why.
+  await expect(page.locator('.program.shown')).toBeVisible({ timeout: 6000 });
+  await expect(page.locator('#said')).toHaveText(`${RUN_ENDS.rock} ${RUN_ENDS.way}`);
+  await expect(page.locator('.foot.wrong')).toBeVisible();
+});
+
 // Garden seasons: the real calendar, by the device's hemisphere. Australia/* is south.
 test.describe('garden seasons in Sydney', () => {
   test.use({ timezoneId: 'Australia/Sydney' });
@@ -2360,7 +2384,9 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
   // The widest font a phone or CI is likely to fall back to, so the fit doesn't depend on the machine's fonts.
   await page.addStyleTag({ content: 'body, button { font-family: "DejaVu Sans", Verdana, sans-serif; }' });
   const items = codingCourse.units.flatMap((u) => u.lessons.flatMap((l) => l.items));
-  const bad = await page.evaluate(async (items) => {
+  // The longest line a missed run ends on: it must fit the bubble's reserved height, or the miss would move the grid.
+  const longestMiss = Object.entries(RUN_ENDS).filter(([k]) => k !== 'way').map(([, t]) => `${t} ${RUN_ENDS.way}`).reduce((a, b) => (b.length > a.length ? b : a));
+  const bad = await page.evaluate(async ([items, fail]) => {
     const { mount } = await import('/src/coding/exercise.js');
     const app = document.getElementById('app');
     const out = [];
@@ -2431,7 +2457,6 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
       const clipped = code && code.scrollWidth > code.clientWidth;
       const bottom = prog ? prog.getBoundingClientRect().bottom : 0;
       const reserved = parseFloat(getComputedStyle(bubble).minHeight);
-      const fail = 'That loop never ends, so I stopped it. Here is one way that works.';
       if (item.type !== 'teach') {
         const said = bubble.textContent;
         bubble.textContent = fail;
@@ -2443,11 +2468,11 @@ for (const [width, height] of [[360, 582], [360, 640], [375, 812]]) test(`every 
       stop?.();
     }
     return out;
-  }, [...items.filter((i) => i.type !== 'teach' || i.program),
+  }, [[...items.filter((i) => i.type !== 'teach' || i.program),
     ...items.filter((i) => i.type !== 'teach').flatMap((i) => [{ x: true }, { y: true }, { x: true, y: true }].map((flip) => mirrored(i, flip))),
     // Every fresh version, once as blocks or code however its items show it, and at the flip with the longest words.
     ...[...new Map(items.filter((i) => i.family).flatMap((i) => codingPool[i.family].map((e) => [JSON.stringify([i.view, e]), { id: i.id, type: i.type, ...(i.view && { view: i.view }), ...e }]))).values()]
-      .flatMap((v) => [v, mirrored(v, { x: true })])]);
+      .flatMap((v) => [v, mirrored(v, { x: true })])], longestMiss]);
   expect(bad).toEqual([]);
 });
 

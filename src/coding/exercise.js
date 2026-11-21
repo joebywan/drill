@@ -1,15 +1,14 @@
-import { ARROW, answer, armsOf, fill, fixBug, fromTree, holes, isBuilt, isStep, jsFace, kind, listKind, names, parse, punch, reached, runItem, solve, tileKind, tileName, toJS, writeLook } from './program.js';
+import { ARROW, answer, armsOf, fill, fixBug, fromTree, holes, howEnded, isBuilt, isStep, jsFace, kind, listKind, names, parse, punch, reached, runItem, solve, tileKind, tileName, toJS, writeLook } from './program.js';
 import { builder, thumbTargets } from '../builder.js';
 import { gridHtml, walkerOn } from './grid.js';
 import { dragTile } from '../drag.js';
 import { flourish, play } from '../feel.js';
 import { fitter, scrollBox } from '../fit.js';
 import { esc } from '../html.js';
+import { RUN_ENDS } from '../cast/lines.js';
 
 const DEMO_WAIT_MS = 900; // long enough to see the grid before a teach card's program plays
-/** The bubble's line for a failed run: a loop that never ends is said out loud, or it just looks stuck. */
-const afterFail = (result) => (result.end === 'endless' ? 'That loop never ends, so I stopped it. Here is one way that works.'
-  : result.end === 'spare' ? 'I got there with steps to spare. Here is one way that works.' : 'Here is one way that works.');
+export const MISS_HOLD_MS = 2400; // a missed run's own program stays up, marked where it stopped, this long before the way that works replaces it
 
 /**
  * Mounts one Coding item in `el` (the subject contract: see src/subjects.js). The grid sits on
@@ -39,6 +38,15 @@ export function mount(el, item, { say, done, coach }) {
   const { walk, backToStart, cellAt, stop } = walkerOn(world, g, showValues, (result, i) => keep(blockAt(result.at[i])));
   /** The block that matters once a run is over: where it stopped, or a hole's fill (the fix, or the way after a miss). */
   const matters = (result, right, fixed) => (fixed || !right ? programEl.querySelector('.filled') : null) ?? blockAt(result.next ?? result.at.at(-1));
+  /** Where a run stopped, left on screen: the block it stopped on, the steps after it that never ran, the rock it walked into. */
+  const markStop = (result) => {
+    if (result.next == null) return;
+    blockAt(result.next)?.classList.add('stopped');
+    const later = programEl.querySelector('[data-at]') ? [...programEl.querySelectorAll('[data-at]')].filter((b) => +b.dataset.at > result.next)
+      : [...programEl.querySelectorAll('[data-take]')].slice(result.next + 1);
+    for (const b of later) b.classList.add('unrun');
+    if (result.bumped) cellAt(result.bumped)?.classList.add('hit');
+  };
   const show = (program, picks = [], locked = true, tappable = null) => (item.view === 'js' ? '' : blocks(program, picks, locked, tappable))
     + (item.view ? code(program, picks, locked) : '');
 
@@ -49,7 +57,8 @@ export function mount(el, item, { say, done, coach }) {
     if (!item.level) world.remove();
     if (item.program) {
       programEl.innerHTML = show(item.program);
-      const wait = setTimeout(() => walk(runItem(item)), DEMO_WAIT_MS);
+      const result = runItem(item);
+      const wait = setTimeout(() => walk(result).then(() => { if (!gone) markStop(result); }), DEMO_WAIT_MS);
       say(item.text, 'teach');
       done(null);
       fit(null);
@@ -61,7 +70,10 @@ export function mount(el, item, { say, done, coach }) {
     return cleanup;
   }
 
-  /** Runs a finished program: Fennel walks it, a miss shows `oneWay()`, then the item is done. */
+  /**
+   * Runs a finished program: Fennel walks it. A miss stays on screen, marked where it stopped and said why, for
+   * MISS_HOLD_MS, then `oneWay()` takes its place. Then the item is done.
+   */
   const perform = async (program, oneWay, fixed = false) => {
     const result = runItem(item, program);
     say(reached(result) ? 'Here I go!' : 'Here I go...', 'think');
@@ -69,9 +81,14 @@ export function mount(el, item, { say, done, coach }) {
     if (gone) return;
     const right = reached(result);
     if (!right) {
+      const why = RUN_ENDS[howEnded(result, item.level)];
+      markStop(result);
+      say(why, 'wrong');
+      await new Promise((r) => { setTimeout(r, MISS_HOLD_MS); });
+      if (gone) return;
       programEl.innerHTML = oneWay();
       programEl.classList.add('shown');
-      say(afterFail(result), 'wrong');
+      say(`${why} ${RUN_ENDS.way}`, 'wrong');
     }
     flourish(programEl, right ? 'pop' : 'shake'); // the runner cues the sound and buzz
     done(right, item.explain);
@@ -128,6 +145,7 @@ export function mount(el, item, { say, done, coach }) {
         await walk(result);
         if (gone) return;
         cellAt(want).classList.add('right');
+        markStop(result);
         flourish(c, right ? 'pop' : 'shake'); // the runner cues the sound and buzz
         done(right, item.explain);
         settle(matters(result, true));
