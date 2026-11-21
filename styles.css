@@ -278,7 +278,9 @@ html { scroll-padding-bottom: min(calc(160px * var(--text-scale, 1)), 40dvh); } 
 }
 .summary h1 { font-size: 1.45rem; line-height: 1.25; margin: 4px 0 8px; text-wrap: balance; }
 .chips { display: flex; gap: 10px; margin: 0 0 12px; }
-.chip { flex: 1; min-width: 0; border-radius: 14px; border: 2px solid var(--c); background: var(--c); overflow: hidden; }
+/* No overflow: hidden: the chips fade in (app.js), and a rounded box that clips while it animates stopped Firefox for
+   Android drawing for good on the emulator, every page after it frozen (phone runs ff17 to ff26). Its own corners fit. */
+.chip { flex: 1; min-width: 0; border-radius: 14px; border: 2px solid var(--c); background: var(--c); }
 .chip span { display: block; padding: 4px 2px; font-size: .7rem; font-weight: 800; letter-spacing: .05em; color: var(--chip-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chip b { display: block; padding: 10px 4px; border-radius: 12px; background: var(--card); color: var(--c); font-size: 1.3rem; }
 .chip.acc { --c: var(--chip-acc); }
@@ -320,13 +322,7 @@ html { scroll-padding-bottom: min(calc(160px * var(--text-scale, 1)), 40dvh); } 
   overflow-x: auto; scrollbar-width: none; position: relative; /* offsetLeft is measured from here */
   /* A swipe settles with a tab just clear of the fade, never cut at the screen edge or faded. */
   scroll-snap-type: x mandatory; scroll-padding-inline: 40px;
-  /* An edge with more tabs past it fades out (app.js sets .more-start/.more-end on scroll), so a
-     cut tab reads as "more this way"; an edge with nothing past it stays sharp. */
-  --fade-start: 0px; --fade-end: 0px;
-  mask-image: linear-gradient(to right, transparent, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent);
 }
-.paths.more-start { --fade-start: 36px; }
-.paths.more-end { --fade-end: 36px; }
 .path-tab { flex: none; scroll-snap-align: start; }
 .paths::-webkit-scrollbar { display: none; }
 /* A tab's streak, in a small pill so today's light reads on the pressed tab too. */
@@ -448,7 +444,14 @@ html { scroll-padding-bottom: min(calc(160px * var(--text-scale, 1)), 40dvh); } 
 .garden-view svg.plant { cursor: pointer; }
 .garden-link { position: relative; }
 /* The tabs scroll in the room ⋯ leaves them: ⋯ is pinned at the row's right end, so the right fade ends at it. */
-.tabs-row { display: flex; align-items: center; gap: 4px; margin: 4px 0 0 -16px; }
+/* An edge with more tabs past it fades out (app.js sets .more-start/.more-end on scroll), so a cut tab reads as
+   "more this way"; an edge with nothing past it stays sharp. A plain gradient in the page's colour over the row, not a
+   mask on the box that scrolls: that stalled Firefox's drawing on the emulator for good (test/phone/stall.js), as #164's did Chrome's. */
+.tabs-row { display: flex; align-items: center; gap: 4px; margin: 4px 0 0 -16px; position: relative; }
+.tabs-row::before, .tabs-row::after { content: ''; position: absolute; top: 0; bottom: 0; width: 36px; pointer-events: none; opacity: 0; z-index: 1; }
+.tabs-row::before { left: 0; background: linear-gradient(to right, var(--bg), transparent); }
+.tabs-row::after { right: 48px; background: linear-gradient(to left, var(--bg), transparent); } /* ends at ⋯: 44px and the 4px gap */
+.tabs-row:has(> .paths.more-start)::before, .tabs-row:has(> .paths.more-end)::after { opacity: 1; }
 .tabs-row .paths { flex: 1; min-width: 0; margin: 0; padding-right: 4px; }
 .tabs-row .menu {
   flex: none; width: 44px; height: 44px; padding: 0; display: grid; place-items: center;
@@ -736,7 +739,8 @@ html { scroll-padding-bottom: min(calc(160px * var(--text-scale, 1)), 40dvh); } 
     position: sticky; top: 10px; max-height: calc(100dvh - 20px); overflow-y: auto; /* 10px clear above and below */
   }
   .pane { display: block; flex: 1; min-width: 0; }
-  .rail .paths { flex-direction: column; margin: 0; padding: 0; overflow: visible; mask-image: none; }
+  .rail .paths { flex-direction: column; margin: 0; padding: 0; overflow: visible; }
+  .rail .tabs-row::before, .rail .tabs-row::after { display: none; }
   /* ⋯ closes the tabs column, under + Habit. */
   .rail .tabs-row { flex-direction: column; align-items: flex-start; gap: 8px; margin: 0; }
   .rail .tabs-row .paths { align-self: stretch; }
