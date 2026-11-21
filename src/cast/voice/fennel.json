@@ -36,7 +36,12 @@
     ] },
     { "when": { "light": "done", "streak": "month" }, "lines": [
       "Done again. A month of this. I'm proud right to the tips of my ears.",
-      "{days} days of coding so far. That's a lot of tidy steps."
+      "{days} days of learning so far. That's a lot of tidy steps."
+    ] },
+    { "when": { "elsewhere": true }, "lines": [
+      "Today's learning is done. I'll keep my ears warm till whenever.",
+      "A lesson done today, somewhere else. My ears noticed.",
+      "Learning's done for today. I'm off to dig a little hole."
     ] },
     { "when": { "light": "resting" }, "lines": [
       "A rest day. Foxes nap in the shade at midday. Very sensible.",
@@ -64,11 +69,11 @@
       "Late-night coding. Very fennec of you."
     ] },
     { "when": { "light": "not yet", "streak": "week" }, "lines": [
-      "{count} days of coding in a row. My ears are proud.",
-      "A week of plans. You and the grid get on well."
+      "{count} days of lessons in a row. My ears are proud.",
+      "A week of lessons. You and I get on well."
     ] },
     { "when": { "light": "not yet", "streak": "month" }, "lines": [
-      "A month of coding. I've dug you a trophy. It's a hole.",
+      "A month of lessons. I've dug you a trophy. It's a hole.",
       "{count} days in a row. That's a long, tidy program."
     ] }
   ],

@@ -120,17 +120,19 @@ const NEXT = ['', 'hatching', 'its chrysalis', 'emerging'];
 /**
  * The words for raised butterflies, linted with the garden's. `arrived[k](by, name)` is the end
  * screen's line for reaching stage k; `raising` is home's line; `next` says what comes next.
+ * Wherever a species or a stage is named and its picture is an egg, caterpillar or chrysalis (or no picture),
+ * the words say it is a butterfly's: "Blue Triangle" alone reads as a shape, "Blue Tiger" as a cat.
  */
 export const LIFE_WORDS = {
   arrived: [
-    (by, name) => `Your ${by} egg arrived: ${an(name)}`,
-    (by) => `Your ${by} egg hatched into a caterpillar`,
-    (by) => `Your ${by} caterpillar made its chrysalis`,
+    (by, name) => `Your ${by} butterfly egg arrived: ${an(name)}`,
+    (by) => `Your ${by} butterfly egg hatched into a caterpillar`,
+    (by) => `Your ${by} butterfly's caterpillar made its chrysalis`,
     (by, name) => `Your ${by} butterfly is out: ${an(name)}`,
   ],
-  raising: (c) => (c.k === 3 ? `${c.name} raised ${an(c.species.name)}` : `${c.name} is raising ${an(c.species.name)}`),
+  raising: (c) => `${c.name} ${c.k === 3 ? 'raised' : 'is raising'} ${an(c.species.name)} butterfly`,
   next: (n) => (n ? `${n.in} more ${n.unit}${n.in === 1 ? '' : 's'} to ${NEXT[n.stage]}` : ''),
-  card: (c) => `${c.species.name} · ${c.k === 3 ? 'arrived' : c.stage}`,
+  card: (c) => `${c.species.name} butterfly · ${c.k === 3 ? 'arrived' : c.stage}`,
   by: (name) => (name ? `Raised by ${name}` : 'Raised by a habit of your own'),
   title: 'Field guide',
   open: 'Field guide',

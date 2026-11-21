@@ -9,8 +9,16 @@ import unitHelp from '../src/data/help.json' with { type: 'json' };
 import lessonHelp from '../src/data/lesson-help.json' with { type: 'json' };
 import { DARES_LABEL, QUIET_STREAK_LABEL, SOUND_LABEL, GAME_WORDS, MOVE_ON, HELLO, ACCURACY, BREAK_LINES, FOCUS_LINES, CALM_SOUNDS, SAFETY_LINE, CALM_LINES, REFLECT_LINES, REFLECT_WORDS, MOVE_LINES, MOVE_SAFETY, KAEDE_LINES, KAEDE_HEADLINES, MATHS_LINES, MATHS_HEADLINES, CELEBRATIONS, FEELS, feelsFor, HEADLINES, HELP_LINE, LINES, PACE, STREAK_LABEL, accuracyLabel, finished, paceLabel, rightAnswer } from '../src/cast/lines.js';
 
-// Praise the process, never the person: no ability words. No absence, loss or guilt either.
-const ABILITY = /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intelligen\w*|born to)\b/i;
+// Praise the process, never the person: no ability words, nothing about what the learner is ("you are a…",
+// "you think like a programmer", "read like a local"), and no speed as a virtue of theirs ("you read fast").
+// No absence, loss or guilt either.
+const ABILITY = new RegExp([
+  /\b(smart|clever|genius|gifted|talent\w*|natural|brilliant|intelligen\w*|born to)\b/,
+  /\byou(?:'re| are) (?:already |so |such |really |a |an )*(?:\w+ )?(?:good|great|gifted|expert|pro|programmer|coder|mathematician|player|reader|star|whiz|wizard|master|champion|local|native)\b/,
+  /\b(?:you|they) (?:think|read|play|count|code|talk|sound)s? like\b/,
+  /\blike an? (?:local|native|pro|programmer|coder|mathematician|grandmaster|champion|master|expert|genius)\b/,
+  /\byou(?:'re| are)? (?:\w+ )?(?:fast|quick|speedy|swift|rapid)(?:ly)?\b/,
+].map((r) => r.source).join('|'), 'i');
 const LOSS = /\b(lose|losing|lost|gone|we miss you|missed you|sad|disappoint\w*|abandon\w*|forg[eo]t\w*|broke(n)?|break(ing)? your|come back (soon|to us|tomorrow)|where were you|absen\w*|guilt\w*|shame)\b/i;
 
 const hellos = [
@@ -50,7 +58,7 @@ test('every way a session ends has a headline, and chip bands cover every value'
 });
 
 test("a Learn coach's own lines cover every kind the lesson runner and end screen ask for", () => {
-  for (const [kind, list] of Object.entries(LINES)) if (!['repair', 'welcome', 'lumi'].includes(kind)) assert.ok(KAEDE_LINES[kind]?.length, `Kaede: ${kind}`);
+  for (const [kind, list] of Object.entries(LINES)) if (!['repair', 'welcome', 'lumi'].includes(kind) && !kind.includes(':')) assert.ok(KAEDE_LINES[kind]?.length, `Kaede: ${kind}`);
   for (const kind of Object.keys(HEADLINES)) assert.ok(KAEDE_HEADLINES[kind]?.length, `Kaede headline: ${kind}`);
   for (const s of subjects.filter((x) => x.kind === 'learn' && x.coach.lines))
     for (const kind of [...CELEBRATIONS.filter((k) => !WING_WORDS[k]), 'correct', 'wrong', 'tapped']) assert.ok(s.coach.lines[kind]?.length, `${s.id}: ${kind}`);
@@ -73,7 +81,7 @@ test('no character line mentions absence, loss or guilt', () => {
 });
 
 test("Ada's lines cover every kind the runner asks for, and the maths course passes the lint", () => {
-  for (const kind of Object.keys(LINES).filter((k) => !['repair', 'welcome', 'lumi'].includes(k))) assert.ok(MATHS_LINES[kind]?.length, kind);
+  for (const kind of Object.keys(LINES).filter((k) => !['repair', 'welcome', 'lumi'].includes(k) && !k.includes(':'))) assert.ok(MATHS_LINES[kind]?.length, kind);
   for (const kind of Object.keys(HEADLINES)) assert.ok(MATHS_HEADLINES[kind]?.length, kind);
   const all = (v) => (typeof v === 'string' ? [v] : v && typeof v === 'object' ? Object.values(v).flatMap(all) : []);
   const maths = all(JSON.parse(readFileSync('src/data/maths.json', 'utf8'))).filter((t) => /\s/.test(t));
@@ -589,6 +597,102 @@ test('a habit\'s "when" is the learner\'s own: escaped where drawn, never linted
   const app = readFileSync('src/app.js', 'utf8');
   assert.doesNotMatch(app, /\$\{\s*(progress\.when\[|set\b)/, 'drawn only through esc()');
   assert.equal(app.match(/esc\(progress\.when\[/g).length, 2, 'the panel and the habit view');
+});
+
+// --- Words that fit what just happened -------------------------------------------------------
+
+import { doing, verdicts } from '../src/cast/lines.js';
+import { LIFE_WORDS as LIFE } from '../src/garden/model.js';
+
+test('the ability lint catches praise of what the learner is, and lets praise of what they did through', () => {
+  for (const bad of ['Yes! Read like a local.', 'Five in a row! You think like a programmer: one step at a time.', 'Done already? You read fast.',
+    "You're a natural.", 'You are quick!', "You're already good at the basic version.", 'You are a real coder now.'])
+    assert.match(bad, ABILITY, bad);
+  for (const fine of ['Five in a row. You are reading it like the computer does.', 'Quick and right, every one.', 'Fast, and right first time, every one.',
+    'Spot on. Every block, followed through.', 'Done already? My tea is still hot!'])
+    assert.doesNotMatch(fine, ABILITY, fine);
+});
+
+// What a verdict line may only say of some items, by how the item was answered (doing() in lines.js).
+const ONLY = {
+  // Seeing the thing asked about: never said of a sound.
+  sight: [/\b(look(ed)? at|shape|strokes?|seen|page|good eyes)\b/i, (how) => how !== 'hear'],
+  // A piece moved on the board.
+  move: [/\b(the move|a move|played|leapt|attacks|opponent)\b/i, (how) => how === 'move'],
+  // Pieces of a program or sentence put together and run.
+  write: [/\b(runs|plan works|right order|in its place|only a run|running it|one word|useful one to try|what the blocks did|fussy about order)\b/i, (how) => how === 'write'],
+  // A sound heard.
+  ears: [/\b(your ears|how that one sounds|sounds that close)\b/i, (how) => how === 'hear'],
+  // Reading something shown, or code that ran.
+  reading: [/\bactually reading\b/i, (how) => how === 'look'],
+  ran: [/\bthat ran\b/i, (how) => how === 'write'],
+};
+
+test('every verdict line fits the kind of item it answers: no "look at the strokes" on a sound, no "the move" on a tap', () => {
+  const learn = subjects.filter((s) => s.kind === 'learn');
+  const seen = new Set();
+  for (const s of learn) {
+    const lines = s.coach.lines || LINES;
+    for (const key of Object.keys(lines).filter((k) => k.includes(':')))
+      assert.ok(['move', 'write', 'look', 'hear'].includes(key.split(':')[1]), `${s.id}: ${key} is for a way of answering doing() gives`);
+    const items = s.units.flatMap((u) => u.lessons.flatMap((l) => l.items || []));
+    // Japanese asks by ear on a repeat (quiz/vary.js): every pick can come as a listening item.
+    const asked = [...items, ...items.filter((i) => i.type === 'pick').map((i) => ({ ...i, listen: true }))];
+    for (const how of new Set(asked.map(doing))) {
+      seen.add(how);
+      for (const kind of ['correct', 'run3', 'run5', 'wrong']) {
+        for (const text of verdicts(lines, kind, asked.find((i) => doing(i) === how))) {
+          for (const [name, [words, fits]] of Object.entries(ONLY)) if (words.test(text)) assert.ok(fits(how), `${s.id} ${kind} on a "${how}" item says ${name}: ${text}`);
+        }
+      }
+    }
+  }
+  assert.deepEqual([...seen].sort(), ['hear', 'look', 'move', 'write']);
+  assert.equal(doing({ type: 'pick', listen: true }), 'hear');
+  assert.equal(doing({ fen: 'x', moves: [] }), 'move', 'a chess puzzle has no type');
+});
+
+// What an end-screen line claims about its session, and the sessions it may show for: { right, misses, fast }.
+const CLAIMS_OF = [
+  [/(?<!nearly )\b(every one|all of it|not one|not a single|flawless|perfect|no error|right first time|first go)\b/i, (x) => x.misses === 0],
+  [/\b(nearly|the rest|(?<!not )one (slip|miss|bump|mix-up)|a slip)\b/i, (x) => x.misses === 1 && x.right >= 3],
+  [/\b(a few|several|plenty|lots|many) \w*\s?(slips?|miss\w*|bumps?|mix-ups?|errors?|knocks?)\b|\bbumps\. |\bplenty\b|\blots of\b/i, () => false],
+  [/\b(fast|quick\w*|already|blink|whoosh|zoom|barely)\b/i, (x) => x.fast && x.misses === 0],
+  [/\bguess/i, () => false],
+];
+
+test('end-screen words fit the session: one miss in eight is not "plenty of bumps", and nothing claims what the app cannot know', () => {
+  const sets = [[LINES, HEADLINES], [KAEDE_LINES, KAEDE_HEADLINES], [MATHS_LINES, MATHS_HEADLINES], [CODING_LINES, CODING_HEADLINES], [CODE_LINES, CODE_HEADLINES]];
+  const shownFor = new Map();
+  for (const review of [true, false]) for (const relit of [true, false]) for (const fast of [true, false])
+    for (let of = 0; of <= 12; of++) for (let misses = 0; misses <= of; misses++) {
+      const right = of - misses;
+      const kind = finished({ review, relit: review && relit, perfect: of > 0 && !misses, fast: fast && !misses, misses, right });
+      for (const lines of sets.flat()) for (const text of lines[kind] ?? []) {
+        for (const [words, holds] of CLAIMS_OF) if (words.test(text)) assert.ok(holds({ right, misses, fast }), `"${text}" (${kind}) shown for ${right} right and ${misses} missed${fast ? ', fast' : ''}`);
+        shownFor.set(text, true);
+      }
+    }
+  // The examples from the playthrough.
+  assert.equal(finished({ misses: 1, right: 7 }), 'nearly');
+  assert.equal(finished({ misses: 0, right: 8, perfect: true, fast: true }), 'fast');
+  assert.equal(finished({ misses: 2, right: 6 }), 'struggled');
+  for (const [lines, heads] of sets) for (const kind of ['nearly', 'struggled']) assert.ok(lines[kind]?.length >= 2 && heads[kind]?.length >= 2, kind);
+  for (const text of [...LINES.fast, ...KAEDE_LINES.fast, ...MATHS_LINES.fast, ...CODING_LINES.fast]) assert.ok(shownFor.has(text));
+  // A practice end screen shows over any length of session, one minute too: no "few minutes".
+  for (const text of [CALM_LINES, MOVE_LINES, FOCUS_LINES, BREAK_LINES, WINDDOWN_LINES, REFLECT_LINES].flatMap((l) => Object.values(l).flat()))
+    assert.doesNotMatch(text, /\b(few|several|many) (quiet )?minutes\b|\bminutes of\b/i, text);
+});
+
+test('a species named where its picture does not show a butterfly says it is one', () => {
+  const c = (k) => ({ name: 'Maths', k, stage: ['egg', 'caterpillar', 'chrysalis', 'butterfly'][k], species: { name: 'Blue Triangle' } });
+  assert.equal(LIFE.arrived[0]('Maths', 'Blue Triangle'), 'Your Maths butterfly egg arrived: a Blue Triangle');
+  // The first a learner hears of it may be a later stage (a placement skips units, or a unit hatches the egg at once).
+  for (const say of LIFE.arrived) assert.match(say('Maths', 'Blue Triangle'), /\bbutterfly\b/);
+  for (const k of [0, 1, 2, 3]) {
+    assert.match(LIFE.raising(c(k)), /Blue Triangle butterfly$/);
+    assert.match(LIFE.card(c(k)), /^Blue Triangle butterfly · /);
+  }
 });
 
 import { UPRIGHT } from '../src/cast/lines.js';

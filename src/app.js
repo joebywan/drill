@@ -13,8 +13,8 @@ import { BOX, butterfly, butterflyToday } from './cast/butterfly.js';
 import { CHECKPOINT, ECHOES, WARM_UPS, checkpoint, comeBack, dropEchoes, echoes, fresh, warmUps } from './repeat.js';
 import { GOES, easier, flying, helpFor, misses, noteAnswer, struggling, warmedLast } from './adapt.js';
 import { SIDEWAYS, giveWay, longestVerdict } from './fit.js';
-import { CALM_SOUNDS, DARES_LABEL, SOUND_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, UPRIGHT, LOG_WORDS, CHOOSE_WORDS, SKIN_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, line, paceLabel, rightAnswer, say, VOICES } from './cast/lines.js';
-import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, soundOn } from './feel.js';
+import { CALM_SOUNDS, DARES_LABEL, SOUND_LABEL, QUIET_STREAK_LABEL, MOVE_ON, REMINDER_WORDS, SOUTH_LABEL, feelsFor, INTRO_WORDS, UPRIGHT, LOG_WORDS, CHOOSE_WORDS, SKIN_WORDS, WING_WORDS, STREAK_LABEL, accuracyLabel, finished, HEADLINES, LINES, line, paceLabel, rightAnswer, say, verdicts, VOICES } from './cast/lines.js';
+import { buzz, calmPref, chime, cue, flourish, move, petals, play, pref, setPref, soundOn, voice } from './feel.js';
 import { southern } from './garden/season.js';
 import { lessonOf } from './garden/events.js';
 import { moment } from './cast/voice.js';
@@ -132,9 +132,9 @@ const greeted = new Map();
 function greeting(h) {
   // On Learning, the course shown speaks: Rosa, Kaede, Ada…
   const course = h.id === 'learn' ? courseShown.coach.name.toLowerCase() : undefined;
-  const { coach: who, state, facts } = moment(progress, h, new Date(), course, showsStreak(h.id, pref('quiet-streaks', false)));
+  const { coach: who, state, facts } = moment(progress, h, new Date(), course, showsStreak(h.id, pref('quiet-streaks', false)), course && courseShown.id);
   const dares = pref('dares', true);
-  const key = `${h.id} ${who} ${state.light} ${state.today} ${dares} ${facts.count}`;
+  const key = `${h.id} ${course && courseShown.id} ${who} ${state.light} ${state.elsewhere} ${state.today} ${dares} ${facts.count}`;
   if (!greeted.has(key)) {
     let kept = {};
     try { kept = JSON.parse(localStorage.getItem(SAID)) || {}; } catch { /* private mode or unreadable */ }
@@ -1140,7 +1140,10 @@ function run(lessonId, queue, title, extra = null) {
         shine();
         foot.className = `foot show ${correct === null ? 'plain' : correct ? 'right' : 'wrong'}`;
         // WINGBEAT_LONGEST (tests): the longest line of its kind, not one at random, so a check can't pass one run and fail the next.
-        foot.querySelector('strong').textContent = kind === 'plain' ? '' : window.WINGBEAT_LONGEST ? longestVerdict(who.lines, [kind]) : line(kind, Math.random(), who.lines);
+        // A line that fits how the item was answered (doing() in lines.js): a listening item with no voice was shown, so read.
+        const asked = entry.item.listen && !voice(entry.subject.lang ?? 'en') ? { ...entry.item, listen: false } : entry.item;
+        foot.querySelector('strong').textContent = kind === 'plain' ? '' : window.WINGBEAT_LONGEST ? longestVerdict(who.lines, [kind])
+          : line('pool', Math.random(), { pool: verdicts(who.lines || LINES, kind, asked) });
         foot.querySelector('p').textContent = leftForReview ? `${text} ${MOVE_ON}` : text;
         giveWay(foot); // at most half the screen
         // The answer tapped (or, on a board, the verdict) pops when right and gives a small shake when
@@ -1242,19 +1245,19 @@ function run(lessonId, queue, title, extra = null) {
     const beats = firstToday(progress), panels = progress.wings.length;
     const firstTime = lessonId && !progress.done[lessonId];
     const seconds = Math.round((Date.now() - started) / 1000);
-    progress = finishSession(progress, lessonId, results, new Date(), { title: title || 'Review', mins: Math.max(1, Math.round(seconds / 60)) });
+    progress = finishSession(progress, lessonId, results, new Date(), { title: title || 'Review', mins: Math.max(1, Math.round(seconds / 60)), course: queue[0].subject.id });
     let newly;
     ({ progress, newly } = award(progress));
     save();
     const newPanel = progress.wings.length > panels;
     const right = results.filter((r) => r.correct).length;
     const perfect = perfectRun();
-    const missed = results.some((r) => !r.correct);
+    const misses = results.length - right;
     // Speed is only praised when it wasn't bought with mistakes.
-    const pace = missed ? 'STEADY' : paceLabel(seconds / queue.length);
+    const pace = misses ? 'STEADY' : paceLabel(seconds / queue.length);
     const kind = finished({
       review: !lessonId, perfect, relit: relit && !needsRepair(progress),
-      fast: pace !== 'STEADY', missed,
+      fast: pace !== 'STEADY', misses, right,
     });
     const percent = results.length ? Math.round((100 * right) / results.length) : null;
     const clock = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
