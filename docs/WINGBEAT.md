@@ -152,6 +152,10 @@ The habit side was reviewed the same way, by what each habit offers on day 60, n
     practice's end screen is for "How do you feel?": the pictures go first, then the words get
     briefer. Only as much as it takes, nothing at ordinary text, and nothing at all where it could
     not be enough.
+30. **The app brings up a browser's own prompt at most once.** Chrome, Safari and the Android app decide
+    by themselves whether to keep a site's storage, so they are asked quietly, as before. Firefox asks
+    the person, over the page. There Wingbeat asks once ever, on home, once something is in the log,
+    never in a lesson. After that, one line under ⋯ asks again when it is tapped.
 
 Decisions 22 to 24 came out of the pass to take things off home, which the owner asked for; what came
 off was chosen in review, and each can go back on its own. Decision 25 came out of looking at the app
@@ -161,7 +165,9 @@ habits and got six); the order, the way past it and hiding what was not picked a
 choices. Decision 28 came out of playing the phone on its side, where lessons could not be finished;
 laying every lesson out a second time was the other choice, and it was not taken. Decision 29 came out
 of the app at the phone's largest text, where the next lesson and the closing question were off the
-screen; what gives way, and in what order, is the review's choice. Kept on purpose: the Games row and the course
+screen; what gives way, and in what order, is the review's choice. Decision 30 came out of playing Firefox for
+Android, which asked on every visit, over a lesson's first answer; once, where and the line under ⋯ are the review's
+choices. Kept on purpose: the Games row and the course
 chips, because one tap to play or to switch course is worth more than their row.
 
 ### Rules for this work
@@ -287,6 +293,8 @@ chips, because one tap to play or to switch course is worth more than their row.
 - [x] **E23. Small leftovers** (#203, #205): "both stars"; a coach's aside only where it fits; a sentence card keeps its rows;
   Fennel greets each of his four courses in its own words; on a wide screen the tabs end above ⋯; the tablet's app run and the
   phone-on-its-side run pass, their checks made to say what they mean.
+- [x] **E24. Firefox's storage prompt, once** (#200, decision 30): it came up on every visit, over a lesson's first answer,
+  and took the next tap. Now once ever, on home, and from a line under ⋯ after that.
 
 **Waiting on the owner** (found by playing, not changed)
 
